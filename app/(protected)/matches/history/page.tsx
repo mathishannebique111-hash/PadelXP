@@ -1,0 +1,524 @@
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import Link from "next/link";
+import NavigationBar from "@/components/NavigationBar";
+import LogoutButton from "@/components/LogoutButton";
+export const dynamic = "force-dynamic";
+
+// Créer un client admin pour bypass RLS dans les requêtes critiques
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+export default async function MatchHistoryPage() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10">
+        <h1 className="text-xl font-semibold text-white">Accès restreint</h1>
+        <Link href="/login" className="text-blue-400 underline">Se connecter</Link>
+      </div>
+    );
+  }
+
+  // supabase déjà instancié ci-dessus
+
+  // Récupérer le club_id de l'utilisateur
+  const { data: userProfile } = await supabase
+    .from("profiles")
+    .select("club_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  
+  let userClubId = userProfile?.club_id || null;
+
+  if (!userClubId) {
+    try {
+      const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
+        .from("profiles")
+        .select("club_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (adminProfileError) {
+        console.error("[MatchHistory] Failed to fetch profile via admin client", {
+          message: adminProfileError.message,
+          details: adminProfileError.details,
+          hint: adminProfileError.hint,
+          code: adminProfileError.code,
+        });
+      }
+      if (adminProfile?.club_id) {
+        userClubId = adminProfile.club_id;
+      }
+    } catch (e) {
+      console.error("[MatchHistory] Unexpected error when fetching profile via admin client", e);
+    }
+  }
+
+  if (!userClubId) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8 text-white">
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
+            <LogoutButton />
+          </div>
+          <NavigationBar currentPage="history" />
+        </div>
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+          <p>Vous devez être rattaché à un club pour consulter l’historique des matchs. Contactez votre club / complexe pour obtenir le code d’invitation.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Récupérer tous les match_ids du joueur (uniquement les matchs où il est un user, pas guest)
+  const { data: userParticipations, error: partError } = await supabase
+    .from("match_participants")
+    .select("match_id, team")
+    .eq("user_id", user.id)
+    .eq("player_type", "user");
+
+  console.log("[MatchHistory] User participations:", userParticipations, "Error:", partError);
+
+  if (partError) {
+    console.error("Error fetching participations:", partError);
+  }
+
+  if (!userParticipations || userParticipations.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
+          </div>
+          <NavigationBar currentPage="history" />
+        </div>
+        <div className="rounded-2xl bg-white p-8 text-center">
+          <p className="text-gray-600">Aucun match enregistré pour le moment.</p>
+          <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+            Enregistrer un match
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Récupérer tous les matchs correspondants (on filtrera après par club)
+  const matchIds = userParticipations.map((p: any) => p.match_id);
+  
+  console.log("[MatchHistory] Match IDs to fetch:", matchIds);
+
+  if (matchIds.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
+          </div>
+          <NavigationBar currentPage="history" />
+        </div>
+        <div className="rounded-2xl bg-white p-8 text-center">
+          <p className="text-gray-600">Aucun match enregistré pour le moment.</p>
+          <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+            Enregistrer un match
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Récupérer tous les matchs (on les filtrera après par club)
+  const { data: allMatches, error: matchesError } = await supabase
+    .from("matches")
+    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at, decided_by_tiebreak")
+    .in("id", matchIds)
+    .order("created_at", { ascending: false });
+  
+  // Transformer les données pour générer winner_team et score formaté
+  // (on filtrera les matchs après avoir vérifié les participants)
+  const transformedMatches = (allMatches || []).map((match: any) => {
+    const winner_team = match.winner_team_id === match.team1_id ? 1 : 2;
+    const score = `${match.score_team1 || 0}-${match.score_team2 || 0}`;
+    return {
+      ...match,
+      winner_team,
+      score
+    };
+  });
+
+  console.log("[MatchHistory] All matches fetched:", allMatches, "Error:", matchesError);
+
+  if (matchesError) {
+    console.error("Error fetching matches:", matchesError);
+  }
+
+  if (!transformedMatches || transformedMatches.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
+          </div>
+          <NavigationBar currentPage="history" />
+        </div>
+        <div className="rounded-2xl bg-white p-8 text-center">
+          <p className="text-gray-600">Aucun match enregistré pour le moment.</p>
+          <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+            Enregistrer un match
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Récupérer les détails de tous les participants pour chaque match (users et guests)
+  // Utiliser une approche sans jointures pour éviter les problèmes RLS
+  console.log("[MatchHistory] Fetching participants for match IDs:", matchIds);
+  
+  // Récupérer d'abord les participants sans jointures
+  const { data: participantsSimple, error: simpleError } = await supabase
+    .from("match_participants")
+    .select("match_id, user_id, player_type, guest_player_id, team")
+    .in("match_id", matchIds);
+
+  if (simpleError) {
+    console.error("❌ Error fetching participants:", simpleError);
+    console.error("❌ Error details:", {
+      message: simpleError.message,
+      details: simpleError.details,
+      hint: simpleError.hint,
+      code: simpleError.code,
+    });
+  }
+
+  let allParticipants: any[] = participantsSimple || [];
+  let participantsByMatch: Record<string, any[]> = {};
+  let validMatchIds: Set<string> = new Set();
+  console.log("[MatchHistory] Participants fetched (base):", allParticipants.length);
+  
+  // Enrichir avec les noms des joueurs
+  if (allParticipants.length > 0) {
+    // Récupérer les IDs uniques des users et guests
+    const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
+    const guestIds = [...new Set(allParticipants.filter(p => p.player_type === "guest" && p.guest_player_id).map(p => p.guest_player_id))];
+    
+    console.log("[MatchHistory] Enriching with names - User IDs:", userIds.length, "Guest IDs:", guestIds.length);
+    
+    // Récupérer les profils des users (filtrés par club) - utiliser admin pour bypass RLS
+    const profilesMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      let profilesQuery = supabaseAdmin
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", userIds);
+      
+      // Filtrer par club_id si disponible
+      if (userClubId) {
+        profilesQuery = profilesQuery.eq("club_id", userClubId);
+      }
+      
+      const { data: profiles, error: profilesError } = await profilesQuery;
+      
+      if (profilesError) {
+        const errorDetails = {
+          message: profilesError.message || "Unknown error",
+          details: profilesError.details || null,
+          hint: profilesError.hint || null,
+          code: profilesError.code || null
+        };
+        if (!errorDetails.message && !errorDetails.details && !errorDetails.hint && !errorDetails.code) {
+          console.error("❌ Error fetching profiles:", profilesError);
+        } else {
+          console.error("❌ Error fetching profiles:", errorDetails);
+        }
+      } else if (profiles) {
+        profiles.forEach(p => {
+          profilesMap.set(p.id, p.display_name);
+        });
+        console.log("[MatchHistory] Profiles loaded:", profiles.length);
+      }
+    }
+    
+    // Récupérer les guest players
+    const guestsMap = new Map<string, { first_name: string; last_name: string }>();
+    if (guestIds.length > 0) {
+      const { data: guests, error: guestsError } = await supabase
+        .from("guest_players")
+        .select("id, first_name, last_name")
+        .in("id", guestIds);
+      
+      if (guestsError) {
+        console.error("❌ Error fetching guest players:", guestsError);
+      } else if (guests) {
+        guests.forEach(g => guestsMap.set(g.id, { first_name: g.first_name, last_name: g.last_name }));
+        console.log("[MatchHistory] Guest players loaded:", guests.length);
+      }
+    }
+    
+    // Créer un Set des userIds valides (du même club)
+    const validUserIds = new Set(profilesMap.keys());
+    
+    // Filtrer les participants pour ne garder que ceux du même club
+    const filteredParticipants = userClubId 
+      ? allParticipants.filter((p: any) => {
+          if (p.player_type === "user" && p.user_id) {
+            return validUserIds.has(p.user_id);
+          }
+          return p.player_type === "guest"; // Garder les guests
+        })
+      : allParticipants;
+    
+    console.log("[MatchHistory] Participants after club filtering:", filteredParticipants.length);
+    
+    // Filtrer les matchs : ne garder que ceux où TOUS les participants users appartiennent au même club
+    const participantsByMatchTemp = filteredParticipants.reduce((acc: Record<string, any[]>, p: any) => {
+      if (!acc[p.match_id]) {
+        acc[p.match_id] = [];
+      }
+      acc[p.match_id].push(p);
+      return acc;
+    }, {});
+    
+    const validMatchIds = new Set<string>();
+    Object.entries(participantsByMatchTemp).forEach(([matchId, participants]: [string, any[]]) => {
+      // Vérifier que tous les participants users appartiennent au même club
+      const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
+      const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
+      
+      if (allUsersInSameClub) {
+        validMatchIds.add(matchId);
+      } else {
+        console.log(`[MatchHistory] Filtering out match ${matchId} - not all users in same club`);
+      }
+    });
+    
+    console.log("[MatchHistory] Valid matches (all users in same club):", validMatchIds.size);
+    
+    // Filtrer les participants pour ne garder que ceux des matchs valides
+    const finalFilteredParticipants = filteredParticipants.filter((p: any) => validMatchIds.has(p.match_id));
+    
+    // Enrichir les participants avec les noms
+    const enrichedParticipants = finalFilteredParticipants.map(p => {
+      const enriched: any = { ...p };
+      
+      if (p.player_type === "user" && p.user_id) {
+        const displayName = profilesMap.get(p.user_id);
+        enriched.profiles = displayName ? { display_name: displayName } : null;
+      } else if (p.player_type === "guest" && p.guest_player_id) {
+        const guest = guestsMap.get(p.guest_player_id);
+        enriched.guest_players = guest || null;
+      }
+      
+      return enriched;
+    });
+    
+    console.log("[MatchHistory] Participants enriched:", enrichedParticipants.length);
+    
+    // Mettre à jour allParticipants avec les participants enrichis
+    allParticipants = enrichedParticipants;
+    
+    // Préparer participantsByMatch pour affichage
+    participantsByMatch = enrichedParticipants.reduce((acc: Record<string, any[]>, participant: any) => {
+      if (!acc[participant.match_id]) {
+        acc[participant.match_id] = [];
+      }
+      acc[participant.match_id].push(participant);
+      return acc;
+    }, {});
+  } else {
+    participantsByMatch = allParticipants.reduce((acc: Record<string, any[]>, participant: any) => {
+      if (!acc[participant.match_id]) {
+        acc[participant.match_id] = [];
+      }
+      acc[participant.match_id].push(participant);
+      return acc;
+    }, {});
+  }
+
+  // Filtrer les matchs pour ne garder que ceux où tous les participants appartiennent au même club
+  // (utiliser validMatchIds si disponible, sinon utiliser tous les matchs)
+  let validMatchIdsForDisplay: Set<string>;
+  if (validMatchIds.size > 0 && userClubId) {
+    // validMatchIds a été créé dans le bloc précédent et contient les matchs valides
+    validMatchIdsForDisplay = validMatchIds;
+  } else {
+    // Si pas de filtrage par club ou pas de matchs valides, utiliser tous les matchs
+    validMatchIdsForDisplay = new Set(transformedMatches.map((m: any) => m.id));
+  }
+  
+  const finalMatches = transformedMatches.filter((match: any) => validMatchIdsForDisplay.has(match.id));
+  
+  console.log("[MatchHistory] Final matches after filtering:", finalMatches.length);
+
+  // Créer un map pour accéder rapidement à la team du joueur pour chaque match
+  const userTeamByMatch: Record<string, number> = {};
+  userParticipations.forEach((p: any) => {
+    userTeamByMatch[p.match_id] = p.team;
+  });
+
+  // Calculer les stats du joueur uniquement sur les matchs valides
+  let totalWins = 0;
+  let totalLosses = 0;
+  finalMatches.forEach((match: any) => {
+    const userTeam = userTeamByMatch[match.id];
+    const won = match.winner_team === userTeam;
+    if (won) totalWins++;
+    else totalLosses++;
+  });
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-4 py-8">
+      <div className="mb-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-white">Historique des matchs <span className="ml-2">📊</span></h1>
+          <LogoutButton />
+        </div>
+        <NavigationBar currentPage="history" />
+      </div>
+
+      {/* Stats globales */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-xl bg-white p-4">
+          <div className="text-sm text-gray-600">Total Matchs</div>
+          <div className="text-2xl font-bold text-gray-900">{finalMatches.length}</div>
+        </div>
+        <div className="rounded-xl bg-white p-4">
+          <div className="text-sm text-gray-600">Victoires</div>
+          <div className="text-2xl font-bold text-green-600">{totalWins}</div>
+        </div>
+        <div className="rounded-xl bg-white p-4">
+          <div className="text-sm text-gray-600">Défaites</div>
+          <div className="text-2xl font-bold text-red-600">{totalLosses}</div>
+        </div>
+      </div>
+
+      {/* Liste des matchs */}
+      <div className="space-y-4">
+        {finalMatches.map((match: any) => {
+          const participants = participantsByMatch[match.id] || [];
+          const team1 = participants.filter((p: any) => p.team === 1);
+          const team2 = participants.filter((p: any) => p.team === 2);
+          const userTeam = userTeamByMatch[match.id];
+          const won = match.winner_team === userTeam;
+          const matchDate = new Date(match.created_at);
+          const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+          const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+          return (
+            <div
+              key={match.id}
+              className={`rounded-2xl border-2 p-6 transition-all ${
+                won
+                  ? "border-green-500 bg-green-50"
+                  : "border-red-300 bg-red-50"
+              }`}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className={`text-2xl ${won ? "text-green-600" : "text-red-600"}`}>
+                    {won ? "🏆" : "❌"}
+                  </span>
+                  <div>
+                    <div className="font-semibold text-gray-900">
+                      {won ? "Victoire" : "Défaite"}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {dateStr} à {timeStr}
+                    </div>
+                    {match.decided_by_tiebreak && (
+                      <div className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                        won
+                          ? "border-amber-300 bg-amber-50 text-amber-700"
+                          : "border-red-300 bg-red-50 text-red-700"
+                      }`}>
+                        <span>⚡</span>
+                        <span>{won ? "Victoire au tie-break" : "Défaite au tie-break"}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {match.score && (
+                  <div className="rounded-lg bg-white px-4 py-2 text-lg font-bold text-gray-900">
+                    {match.score}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* Équipe 1 */}
+                <div className="rounded-lg border border-gray-200 bg-white p-4">
+                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-600">Équipe 1 {match.winner_team === 1 && "🏆"}</div>
+                  <div className="divide-y divide-gray-100">
+                    {team1.map((p: any) => {
+                      const isGuest = p.player_type === "guest";
+                      const displayName = isGuest && p.guest_players
+                        ? `${p.guest_players.first_name} ${p.guest_players.last_name}`.trim()
+                        : p.profiles?.display_name || "Joueur";
+                      const isCurrentUser = !isGuest && p.user_id === user.id;
+                      
+                      return (
+                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1.5">
+                          {isCurrentUser ? (
+                            <>
+                              <span className="text-[15px] font-semibold text-gray-900 tracking-tight">{displayName}</span>
+                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">VOUS</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[15px] font-medium text-gray-900 tracking-tight">{displayName}</span>
+                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600">Invité</span>}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Équipe 2 */}
+                <div className="rounded-lg border border-gray-200 bg-white p-4">
+                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-600">Équipe 2 {match.winner_team === 2 && "🏆"}</div>
+                  <div className="divide-y divide-gray-100">
+                    {team2.map((p: any) => {
+                      const isGuest = p.player_type === "guest";
+                      const displayName = isGuest && p.guest_players
+                        ? `${p.guest_players.first_name} ${p.guest_players.last_name}`.trim()
+                        : p.profiles?.display_name || "Joueur";
+                      const isCurrentUser = !isGuest && p.user_id === user.id;
+                      
+                      return (
+                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1.5">
+                          {isCurrentUser ? (
+                            <>
+                              <span className="text-[15px] font-semibold text-gray-900 tracking-tight">{displayName}</span>
+                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">VOUS</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[15px] font-medium text-gray-900 tracking-tight">{displayName}</span>
+                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600">Invité</span>}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+

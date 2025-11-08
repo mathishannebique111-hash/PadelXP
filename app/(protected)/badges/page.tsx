@@ -1,0 +1,319 @@
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import Link from "next/link";
+import NavigationBar from "@/components/NavigationBar";
+import LogoutButton from "@/components/LogoutButton";
+import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
+import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
+import BadgeIcon from "@/components/icons/BadgeIcon";
+
+export const dynamic = "force-dynamic";
+
+// Créer un client admin pour bypass RLS dans les requêtes critiques
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// Calculer la série de victoires consécutives
+async function calculateStreak(supabase: any, userId: string): Promise<number> {
+  const { data: mp } = await supabase
+    .from("match_participants")
+    .select("match_id, team")
+    .eq("user_id", userId)
+    .eq("player_type", "user");
+
+  if (!mp || mp.length === 0) return 0;
+
+  const matchIds = mp.map((m: any) => m.match_id);
+  if (matchIds.length === 0) return 0;
+  
+  const { data: ms } = await supabase
+    .from("matches")
+    .select("id, winner_team_id, team1_id, team2_id, created_at")
+    .in("id", matchIds)
+    .order("created_at", { ascending: false });
+
+  if (!ms || ms.length === 0) return 0;
+
+  const winnerByMatch: Record<string, number> = {};
+  ms.forEach((m: any) => {
+    if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
+    winnerByMatch[m.id] = m.winner_team_id === m.team1_id ? 1 : 2;
+  });
+
+  // trier les participations par date du match desc
+  const mpSorted = [...mp].sort((a: any, b: any) => {
+    const aDate = ms.find((m: any) => m.id === a.match_id)?.created_at || "";
+    const bDate = ms.find((m: any) => m.id === b.match_id)?.created_at || "";
+    return bDate.localeCompare(aDate);
+  });
+
+  let streak = 0;
+  let bestStreak = 0;
+  for (const p of mpSorted) {
+    const winnerTeam = winnerByMatch[p.match_id];
+    if (!winnerTeam) continue;
+    if (winnerTeam === p.team) {
+      streak += 1;
+      if (streak > bestStreak) bestStreak = streak;
+    } else {
+      streak = 0;
+    }
+  }
+  return bestStreak;
+}
+
+export default async function BadgesPage() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10">
+        <h1 className="text-xl font-semibold text-white">Accès restreint</h1>
+        <Link href="/login" className="text-blue-400 underline">Se connecter</Link>
+      </div>
+    );
+  }
+  
+  // Récupérer le club_id de l'utilisateur
+  const { data: userProfile } = await supabase
+    .from("profiles")
+    .select("club_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  
+  let userClubId = userProfile?.club_id || null;
+
+  if (!userClubId) {
+    try {
+      const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
+        .from("profiles")
+        .select("club_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (adminProfileError) {
+        console.error("[Badges] Failed to fetch profile via admin client", {
+          message: adminProfileError.message,
+          details: adminProfileError.details,
+          hint: adminProfileError.hint,
+          code: adminProfileError.code,
+        });
+      }
+      if (adminProfile?.club_id) {
+        userClubId = adminProfile.club_id;
+      }
+    } catch (e) {
+      console.error("[Badges] Unexpected error when fetching profile via admin client", e);
+    }
+  }
+
+  if (!userClubId) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-8 text-white">
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Badges & récompenses</h1>
+            <LogoutButton />
+          </div>
+          <NavigationBar currentPage="badges" />
+        </div>
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+          <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d’invitation communiqué par votre club.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Calculer les stats du joueur
+  const { data: mp } = await supabase
+    .from("match_participants")
+    .select("match_id, team")
+    .eq("user_id", user.id)
+    .eq("player_type", "user");
+
+  let wins = 0;
+  let losses = 0;
+  let matches = 0;
+  
+  if (mp && mp.length) {
+    const matchIds = mp.map((m: any) => m.match_id);
+    
+    // Si on a un club_id, filtrer les matchs pour ne garder que ceux du même club
+    let validMatchIds = matchIds;
+    if (userClubId) {
+      // Récupérer tous les participants de ces matchs
+      const { data: allParticipants } = await supabase
+        .from("match_participants")
+        .select("match_id, user_id, player_type")
+        .in("match_id", matchIds)
+        .eq("player_type", "user");
+      
+      // Récupérer les profils pour vérifier les club_id - utiliser admin pour bypass RLS
+      const participantUserIds = [...new Set((allParticipants || []).map((p: any) => p.user_id).filter(Boolean))];
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, club_id")
+        .in("id", participantUserIds)
+        .eq("club_id", userClubId);
+      
+      const validUserIds = new Set((profiles || []).map((p: any) => p.id));
+      
+      // Filtrer les matchs : ne garder que ceux où tous les participants users appartiennent au même club
+      validMatchIds = matchIds.filter(matchId => {
+        const participants = (allParticipants || []).filter((p: any) => p.match_id === matchId);
+        return participants.every((p: any) => 
+          p.player_type === "guest" || validUserIds.has(p.user_id)
+        );
+      });
+    }
+    
+    const { data: ms } = await supabase
+      .from("matches")
+      .select("id, winner_team_id, team1_id, team2_id")
+      .in("id", validMatchIds);
+      
+    const byId: Record<string, number> = {};
+    (ms || []).forEach((m: any) => {
+      if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
+      const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
+      byId[m.id] = winner_team;
+    });
+    
+    // Filtrer mp pour ne garder que les matchs valides
+    const filteredMp = userClubId 
+      ? mp.filter((p: any) => validMatchIds.includes(p.match_id))
+      : mp;
+    
+    filteredMp.forEach((p: any) => {
+      if (byId[p.match_id] === p.team) wins += 1;
+      else if (byId[p.match_id]) losses += 1;
+    });
+    matches = filteredMp.filter((p: any) => !!byId[p.match_id]).length;
+  }
+
+  const points = wins * 10 + losses * 3;
+  const streak = await calculateStreak(supabase, user.id);
+
+  // Obtenir les badges débloqués (basés sur les stats)
+  const stats: PlayerStats = { wins, losses, matches, points, streak };
+  const obtainedBadges = getBadges(stats);
+  const obtainedBadgeIcons = new Set(obtainedBadges.map(b => b.icon));
+
+  // Badges liés aux avis: Pionier (premier avis) & Contributeur (premier avis du joueur)
+  const { data: allReviews } = await supabase
+    .from("reviews")
+    .select("id, user_id, created_at")
+    .order("created_at", { ascending: true });
+  
+  const firstReview = (allReviews && allReviews.length > 0) ? allReviews[0] : null;
+  
+  // Un joueur peut avoir plusieurs avis; utiliser un COUNT fiable plutôt que maybeSingle()
+  const { count: myReviewsCount } = await supabase
+    .from("reviews")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  const extraObtained = new Set<string>();
+  if (firstReview && firstReview.user_id === user.id) extraObtained.add("🛡️"); // Pionier
+  if ((myReviewsCount || 0) > 0) extraObtained.add("💬"); // Contributeur: au moins 1 avis
+
+  // Créer la liste avec le statut de chaque badge
+  let badgesWithStatus = ALL_BADGES.map((badge) => ({
+    ...badge,
+    obtained: obtainedBadgeIcons.has(badge.icon) || extraObtained.has(badge.icon),
+  }));
+  // Mettre le badge Contributeur en premier pour qu'il apparaisse sur la première ligne
+  badgesWithStatus = badgesWithStatus.sort((a, b) => {
+    const weight = (bd: typeof a) => {
+      if (bd.icon === "🏆") return 0; // Première victoire en premier
+      if (bd.icon === "💬") return 1; // Contributeur en second
+      return 2;
+    };
+    return weight(a) - weight(b);
+  });
+
+  const obtainedCount = badgesWithStatus.filter((b) => b.obtained).length;
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-8">
+      {/* Pop-up de célébration pour les nouveaux badges */}
+      <BadgesUnlockNotifier obtained={obtainedBadges} />
+      <div className="mb-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            Badges
+            <BadgeIcon size={32} />
+          </h1>
+          <LogoutButton />
+        </div>
+        <NavigationBar currentPage="badges" />
+      </div>
+
+      {/* Statistiques */}
+      <div className="mb-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-8 border-2 border-blue-400 shadow-xl">
+        <div className="mb-4 text-center">
+          <div className="mb-3 text-5xl font-bold text-white">
+            <span className="text-yellow-300">{obtainedCount}</span>
+            <span className="text-white/80">/{ALL_BADGES.length}</span>
+          </div>
+          <div className="text-2xl font-bold text-white mb-2">
+            Badge{obtainedCount > 1 ? "s" : ""} débloqué{obtainedCount > 1 ? "s" : ""}
+          </div>
+        </div>
+        {obtainedCount < ALL_BADGES.length && (
+          <div className="text-center">
+            <Link href="/match/new" className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-6 py-3 border-2 border-white/30 hover:bg-white/25 hover:translate-y-[-1px] transition-all cursor-pointer">
+              <span className="text-2xl">🎾</span>
+              <span className="text-lg font-bold text-white">
+                Jouez des matchs pour débloquer de nouveaux badges !
+              </span>
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Grille des badges */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        {badgesWithStatus.map((badge, idx) => (
+          <div
+            key={idx}
+            className={`rounded-xl border px-3 pt-5 pb-3 transition-all hover:scale-[1.005] hover:shadow-md flex flex-col min-h-[140px] items-center text-center ${
+              badge.obtained
+                ? "border-blue-500 bg-white shadow-md"
+                : "border-gray-200 bg-gray-50 opacity-75"
+            }`}
+          >
+            <div className="mb-3 flex flex-col items-center gap-3 flex-1">
+              <span
+                className={`text-4xl transition-all ${
+                  badge.obtained ? "" : "grayscale opacity-50"
+                }`}
+              >
+                {badge.icon}
+              </span>
+              <div className="flex-1">
+                <h3 className={`text-sm font-semibold leading-tight ${badge.obtained ? "text-gray-900" : "text-gray-500"}`}>
+                  {badge.title}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-gray-600">{badge.description}</p>
+              </div>
+            </div>
+            {badge.obtained && (
+              <div className="mt-auto w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
+                ✓ Débloqué
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+

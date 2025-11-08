@@ -1,0 +1,363 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #3B82F6;
+}
+
+/* Améliorer le rendu des polices */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  background-color: #000; /* noir absolu */
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-black text-white;
+  background-color: #000; /* noir absolu */
+  color: #fff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.5;
+  font-feature-settings: 'tnum' 1; /* Chiffres tabulaires */
+}
+
+/* Hiérarchie typographique */
+h1 {
+  font-size: 2rem; /* 32px */
+  font-weight: 700; /* Bold */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 600; /* Semibold */
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+p {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Utilitaires typographiques */
+.tabular-nums {
+  font-feature-settings: 'tnum' 1;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-feature-settings: 'tnum' 1; /* Chiffres tabulaires */
+}
+
+.text-secondary {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 400;
+  color: #6b7280;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Landing page specific styles */
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+/* Reviews page animations */
+.animate-slide-in { animation: slide-in 600ms ease-out both; }
+@keyframes slide-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.animate-fade-in { animation: fadein 600ms ease-out forwards; }
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.animate-bounce-slow { animation: bounce 2.2s infinite; }
+
+/* Tier badge shimmer animation */
+@keyframes shimmer {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+.animate-shimmer {
+  animation: shimmer 3s infinite;
+}
+
+/* Glow pulsé bleu pour la raquette */
+@keyframes glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(0,102,255,0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 60px rgba(0,102,255,0.8));
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Glowing frame for top 3 cards */
+.glow-frame{position:relative}
+.glow-frame::before{
+  content:"";
+  position:absolute;
+  inset:-4px;
+  border-radius:inherit;
+  background:conic-gradient(from 0deg, #06b6d4, #3b82f6, #8b5cf6, #bfff00, #06b6d4);
+  filter:blur(14px);
+  opacity:.35;
+  z-index:0;
+  animation:glow-rotate 8s linear infinite;
+}
+.glow-frame > *{position:relative; z-index:1}
+@keyframes glow-rotate{to{transform:rotate(360deg)}}
+
+/* ===== Podium shine animations ===== */
+@keyframes shine-gold {
+  0% {
+    transform: translate(-150%, -150%);
+  }
+  100% {
+    transform: translate(150%, 150%);
+  }
+}
+
+@keyframes shine-silver {
+  0% {
+    transform: translate(-150%, -150%);
+  }
+  100% {
+    transform: translate(150%, 150%);
+  }
+}
+
+@keyframes shine-bronze {
+  0% {
+    transform: translate(-150%, -150%);
+  }
+  100% {
+    transform: translate(150%, 150%);
+  }
+}
+
+.podium-gold {
+  position: relative;
+  overflow: hidden;
+}
+
+.podium-gold::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(255, 215, 0, 0.3) 45%,
+    rgba(255, 215, 0, 0.6) 50%,
+    rgba(255, 215, 0, 0.3) 55%,
+    transparent 70%
+  );
+  animation: shine-gold 3s infinite linear;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.podium-silver {
+  position: relative;
+  overflow: hidden;
+}
+
+.podium-silver::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(192, 192, 192, 0.3) 45%,
+    rgba(192, 192, 192, 0.6) 50%,
+    rgba(192, 192, 192, 0.3) 55%,
+    transparent 70%
+  );
+  animation: shine-silver 3s infinite linear;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.podium-bronze {
+  position: relative;
+  overflow: hidden;
+}
+
+.podium-bronze::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(205, 127, 50, 0.3) 45%,
+    rgba(205, 127, 50, 0.6) 50%,
+    rgba(205, 127, 50, 0.3) 55%,
+    transparent 70%
+  );
+  animation: shine-bronze 3s infinite linear;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== Podium diagonal shimmer layers ===== */
+.shimmer-layer{position:absolute; inset:-20%; border-radius:inherit; pointer-events:none; z-index:2; background:linear-gradient(135deg, rgba(255,255,255,0) 35%, var(--shimmer) 50%, rgba(255,255,255,0) 65%); filter:blur(10px); transform:translate(-150%, -150%); animation:shimmer-move var(--shimmer-duration,3s) linear infinite;}
+.shimmer-gold{ --shimmer: rgba(255, 215, 0, 0.5); --shimmer-duration: 2.5s; }
+.shimmer-silver{ --shimmer: rgba(192, 192, 192, 0.4); --shimmer-duration: 3s; }
+.shimmer-bronze{ --shimmer: rgba(205, 127, 50, 0.4); --shimmer-duration: 3.5s; }
+@keyframes shimmer-move{ to { transform: translate(150%, 150%); } }
+
+/* Animations pour le header du classement */
+@keyframes shimmer {
+  0%, 100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 221, 68, 0.4), 0 0 16px rgba(255, 221, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 221, 68, 0.6), 0 0 32px rgba(255, 221, 68, 0.3);
+  }
+}
+
+@keyframes pulse-glow-silver {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(184, 184, 184, 0.4), 0 0 16px rgba(184, 184, 184, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(184, 184, 184, 0.6), 0 0 32px rgba(184, 184, 184, 0.3);
+  }
+}
+
+@keyframes pulse-glow-bronze {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 192, 133, 0.4), 0 0 16px rgba(255, 192, 133, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 192, 133, 0.6), 0 0 32px rgba(255, 192, 133, 0.3);
+  }
+}
+
+@keyframes pulse-glow-dark {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(31, 41, 55, 0.4), 0 0 16px rgba(31, 41, 55, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(31, 41, 55, 0.6), 0 0 32px rgba(31, 41, 55, 0.3);
+  }
+}
+
+.rank-badge-gold {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.rank-badge-silver {
+  animation: pulse-glow-silver 2.5s ease-in-out infinite;
+}
+
+.rank-badge-bronze {
+  animation: pulse-glow-bronze 2.2s ease-in-out infinite;
+}
+
+.rank-badge-dark {
+  animation: pulse-glow-dark 2.3s ease-in-out infinite;
+}

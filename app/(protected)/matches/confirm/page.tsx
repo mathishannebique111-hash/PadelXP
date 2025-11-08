@@ -1,0 +1,138 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import LogoutButton from "@/components/LogoutButton";
+
+export default function MatchConfirmPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const token = searchParams.get("token");
+  const status = searchParams.get("status");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(status === "success" || status === "already-confirmed");
+
+  const handleConfirm = async () => {
+    if (!token) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/matches/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, action: "confirm" }),
+      });
+
+      if (response.ok) {
+        setConfirmed(true);
+        setTimeout(() => {
+          router.push("/home");
+        }, 2000);
+      } else {
+        const data = await response.json();
+        setError(data.error || "Erreur lors de la confirmation");
+      }
+    } catch (error) {
+      setError("Erreur lors de la confirmation");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (status === "already-confirmed") {
+    return (
+      <div className="mx-auto w-full max-w-2xl px-4 py-16">
+        <div className="mb-4 flex justify-end">
+          <LogoutButton />
+        </div>
+        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
+          <div className="mb-4 text-6xl">✅</div>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">Match déjà confirmé</h1>
+          <p className="mb-6 text-gray-600">Vous avez déjà confirmé ce match.</p>
+          <Link href="/home" className="inline-block rounded-md bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500">
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <div className="mx-auto w-full max-w-2xl px-4 py-16">
+        <div className="mb-4 flex justify-end">
+          <LogoutButton />
+        </div>
+        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
+          <div className="mb-4 text-6xl" style={{ animation: "bounce 1s ease-in-out infinite" }}>🎾</div>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">Match confirmé !</h1>
+          <p className="mb-6 text-gray-600">Votre confirmation a été enregistrée. Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.</p>
+          <p className="mb-6 text-sm text-gray-500">Redirection en cours...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!token) {
+    return (
+      <div className="mx-auto w-full max-w-2xl px-4 py-16">
+        <div className="mb-4 flex justify-end">
+          <LogoutButton />
+        </div>
+        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
+          <h1 className="mb-4 text-2xl font-bold text-gray-900">Token manquant</h1>
+          <p className="mb-6 text-gray-600">Le lien de confirmation est invalide.</p>
+          <Link href="/home" className="inline-block rounded-md bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500">
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-2xl px-4 py-16">
+      <div className="mb-4 flex justify-end">
+        <LogoutButton />
+      </div>
+      <div className="rounded-2xl bg-white p-8 shadow-lg">
+        <div className="mb-6 text-center">
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Confirmer le match</h1>
+          <p className="text-gray-600">Un joueur a enregistré un match avec vous. Veuillez confirmer le score.</p>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>
+        )}
+
+        <div className="mb-6 space-y-4">
+          <div className="rounded-lg bg-gray-50 p-4">
+            <p className="text-sm text-gray-600">Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.</p>
+          </div>
+        </div>
+
+        <div className="flex gap-4">
+          <button
+            onClick={handleConfirm}
+            disabled={loading || confirmed}
+            className="flex-1 rounded-md bg-green-600 px-6 py-3 font-semibold text-white transition-all hover:bg-green-500 disabled:opacity-50"
+          >
+            {loading ? "Confirmation..." : confirmed ? "Confirmé ✓" : "Confirmer le match"}
+          </button>
+          <Link
+            href="/home"
+            className="flex-1 rounded-md border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-700 transition-all hover:bg-gray-50"
+          >
+            Plus tard
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+

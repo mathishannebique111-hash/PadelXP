@@ -1,0 +1,775 @@
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import PlayerSummary from "@/components/PlayerSummary";
+import NavigationBar from "@/components/NavigationBar";
+import LogoutButton from "@/components/LogoutButton";
+import Top3Notification from "@/components/Top3Notification";
+import TierBadge from "@/components/TierBadge";
+import RankBadge from "@/components/RankBadge";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+// Créer un client admin pour bypass RLS dans les requêtes critiques
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+export default async function HomePage() {
+  const supabase = createClient();
+  
+  // Vérifier d'abord la session utilisateur
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10">
+        <h1 className="text-xl font-semibold">Session requise</h1>
+        <a className="text-blue-600 underline" href="/login">Se connecter</a>
+      </div>
+    );
+  }
+
+  // Ensuite récupérer le profil
+  let profile: any = null;
+  {
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    profile = data ?? null;
+  }
+
+  if (!profile || !profile.club_id) {
+    try {
+      const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, first_name, last_name, email, club_id, club_slug")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (adminProfileError) {
+        console.error("[Home] Failed to fetch profile via admin client", {
+          message: adminProfileError.message,
+          details: adminProfileError.details,
+          hint: adminProfileError.hint,
+          code: adminProfileError.code,
+        });
+      }
+      if (adminProfile) {
+        profile = { ...profile, ...adminProfile };
+      }
+    } catch (e) {
+      console.error("[Home] Unexpected error when fetching profile via admin client", e);
+    }
+  }
+
+  // Si le profil n'existe pas, essayer de le créer directement
+  if (!profile && user) {
+    const displayName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "Joueur";
+    
+    // Essayer d'insérer le profil (sera bloqué par RLS si policy manquante)
+    const { data: insertedData, error: insertError } = await supabase
+      .from("profiles")
+      .insert({ id: user.id, display_name: displayName })
+      .select()
+      .single();
+    
+    if (insertError) {
+      // Si l'erreur indique que le profil existe déjà (duplicate key), on le relit
+      if (insertError.code === "23505" || insertError.message?.includes("duplicate")) {
+        const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+        profile = data ?? null;
+      } else {
+        // Autre erreur (probablement RLS bloquant l'INSERT) → fallback local
+        profile = { id: user.id, display_name: displayName } as any;
+      }
+    } else if (insertedData) {
+      profile = insertedData as any;
+    }
+  }
+
+  // Sécurité: si malgré tout le profil est absent, on construit un profil minimal pour débloquer l'UI
+  if (!profile) {
+    const fallbackName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "Joueur";
+    profile = { id: user.id, display_name: fallbackName } as any;
+  }
+
+  // Récupérer le club_id de l'utilisateur pour filtrer les données
+  const userClubId = profile?.club_id || null;
+
+  let clubName: string | null = null;
+  if (userClubId) {
+    const { data: clubData } = await supabase
+      .from("clubs")
+      .select("name")
+      .eq("id", userClubId)
+      .maybeSingle();
+    clubName = clubData?.name || null;
+  }
+
+  if (!userClubId) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 text-white">
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Bienvenue !</h1>
+            <LogoutButton />
+          </div>
+          <NavigationBar currentPage="home" />
+        </div>
+        <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+          <p>Vous devez être rattaché à un club pour accéder à votre espace joueur. Vérifiez que vous avez saisi le bon code d’invitation ou contactez votre club.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Agrégation des stats avec users ET guests (depuis matches / match_participants)
+  // Utiliser une approche en deux étapes pour éviter les problèmes RLS avec les jointures
+  console.log("[Home] Fetching ALL match participants...");
+  
+  // Étape 1: Récupérer tous les participants sans jointure
+  // IMPORTANT: Filtrer pour ne compter que les matchs où player_type = 'user'
+  // (comme la vue leaderboard et PlayerSummary)
+  const { data: participantsData, error: participantsError } = await supabase
+    .from("match_participants")
+    .select("user_id, player_type, guest_player_id, team, match_id")
+    .eq("player_type", "user");
+  
+  if (participantsError) {
+    console.error("❌ Error fetching match participants:", {
+      message: participantsError.message,
+      details: participantsError.details,
+      hint: participantsError.hint,
+      code: participantsError.code,
+    });
+  }
+  
+  console.log("[Home] Total participants fetched:", participantsData?.length || 0);
+  
+  // Étape 2: Récupérer tous les matchs uniques
+  const allParticipants = participantsData || [];
+  const uniqueMatchIds = [...new Set(allParticipants.map((p: any) => p.match_id))];
+  console.log("[Home] Unique matches found:", uniqueMatchIds.length);
+  
+  // Récupérer les données des matchs
+  const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string; created_at: string }>();
+  
+  if (uniqueMatchIds.length > 0) {
+    const { data: matchesData, error: matchesError } = await supabase
+      .from("matches")
+      .select("id, winner_team_id, team1_id, team2_id, created_at")
+      .in("id", uniqueMatchIds);
+    
+    if (matchesError) {
+      console.error("❌ Error fetching matches:", {
+        message: matchesError.message,
+        details: matchesError.details,
+        hint: matchesError.hint,
+        code: matchesError.code,
+      });
+    } else if (matchesData) {
+      matchesData.forEach((m: any) => {
+        matchesMap.set(m.id, {
+          winner_team_id: m.winner_team_id,
+          team1_id: m.team1_id,
+          team2_id: m.team2_id,
+          created_at: m.created_at,
+        });
+      });
+      console.log("[Home] Matches loaded:", matchesData.length);
+    }
+  }
+  
+  // Récupérer les profils
+  const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
+  const guestIds = [...new Set(allParticipants.filter(p => p.player_type === "guest" && p.guest_player_id).map(p => p.guest_player_id))];
+  
+  const profilesMap = new Map<string, string>();
+  const profilesFirstNameMap = new Map<string, string>();
+  const profilesLastNameMap = new Map<string, string>();
+  
+  if (userIds.length > 0) {
+    // Utiliser le client admin pour bypass RLS et récupérer tous les profils nécessaires
+    let profilesQuery = supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, first_name, last_name, club_id")
+      .in("id", userIds);
+    
+    // Filtrer par club_id si disponible
+    if (userClubId) {
+      profilesQuery = profilesQuery.eq("club_id", userClubId);
+    }
+    
+    const { data: profiles, error: profilesError } = await profilesQuery;
+    
+    if (profilesError) {
+      // Extraire les propriétés de l'erreur de manière sécurisée
+      const errorDetails: Record<string, any> = {};
+      if (profilesError.message) errorDetails.message = profilesError.message;
+      if (profilesError.details) errorDetails.details = profilesError.details;
+      if (profilesError.hint) errorDetails.hint = profilesError.hint;
+      if (profilesError.code) errorDetails.code = profilesError.code;
+      
+      // Si aucune propriété standard n'est trouvée, logger des informations de debug
+      if (Object.keys(errorDetails).length === 0) {
+        const allKeys = Object.keys(profilesError);
+        const errorType = typeof profilesError;
+        const errorString = String(profilesError);
+        console.error("[Home] Error fetching profiles (empty error object):", {
+          type: errorType,
+          keys: allKeys,
+          stringRepresentation: errorString !== "[object Object]" ? errorString : undefined,
+          rawError: profilesError
+        });
+      } else {
+        console.error("[Home] Error fetching profiles:", errorDetails);
+      }
+    } else if (profiles) {
+      profiles.forEach(p => {
+        profilesMap.set(p.id, p.display_name);
+        if (p.first_name) {
+          profilesFirstNameMap.set(p.id, p.first_name);
+        } else if (p.display_name) {
+          const nameParts = p.display_name.trim().split(/\s+/);
+          profilesFirstNameMap.set(p.id, nameParts[0] || "");
+        }
+        if (p.last_name) {
+          profilesLastNameMap.set(p.id, p.last_name);
+        } else if (p.display_name) {
+          const nameParts = p.display_name.trim().split(/\s+/);
+          profilesLastNameMap.set(p.id, nameParts.slice(1).join(" ") || "");
+        }
+      });
+      console.log("[Home] Profiles loaded:", profiles.length);
+    }
+  }
+  
+  // Créer un Set des userIds valides (du même club)
+  const validUserIds = new Set(profilesMap.keys());
+  
+  console.log("[Home] Valid user IDs (same club):", validUserIds.size);
+  console.log("[Home] Total participants before filtering:", allParticipants.length);
+  
+  // Filtrer les participants pour ne garder que ceux du même club
+  const filteredParticipants = userClubId 
+    ? allParticipants.filter((p: any) => {
+        if (p.player_type === "user" && p.user_id) {
+          const isValid = validUserIds.has(p.user_id);
+          if (!isValid) {
+            console.log(`[Home] Filtering out participant ${p.user_id} - not in same club`);
+          }
+          return isValid;
+        }
+        return p.player_type === "guest"; // Garder les guests
+      })
+    : allParticipants;
+  
+  console.log("[Home] Participants after club filtering:", filteredParticipants.length);
+  
+  // Filtrer les matchs : ne garder que ceux où TOUS les participants users appartiennent au même club
+  // (comme dans l'historique des matchs)
+  const participantsByMatch = filteredParticipants.reduce((acc: Record<string, any[]>, p: any) => {
+    if (!acc[p.match_id]) {
+      acc[p.match_id] = [];
+    }
+    acc[p.match_id].push(p);
+    return acc;
+  }, {});
+  
+  const validMatchIds = new Set<string>();
+  Object.entries(participantsByMatch).forEach(([matchId, participants]: [string, any[]]) => {
+    // Vérifier que tous les participants users appartiennent au même club
+    const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
+    const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
+    
+    if (allUsersInSameClub) {
+      validMatchIds.add(matchId);
+    } else {
+      console.log(`[Home] Filtering out match ${matchId} - not all users in same club`);
+    }
+  });
+  
+  console.log("[Home] Valid matches (all users in same club):", validMatchIds.size);
+  console.log("[Home] Total matches before filtering:", Object.keys(participantsByMatch).length);
+  
+  // Filtrer les participants pour ne garder que ceux des matchs valides
+  const finalFilteredParticipants = filteredParticipants.filter((p: any) => validMatchIds.has(p.match_id));
+  
+  console.log("[Home] Participants after match filtering:", finalFilteredParticipants.length);
+  
+  // Enrichir les participants filtrés avec les données des matchs
+  const agg = finalFilteredParticipants.map((p: any) => ({
+    ...p,
+    matches: matchesMap.get(p.match_id) || null,
+  }));
+
+  const byPlayer: Record<string, { 
+    name: string; 
+    wins: number; 
+    losses: number; 
+    matches: number; 
+    isGuest: boolean;
+    playerId: string;
+  }> = {};
+  
+  // Calculer les stats sans les noms d'abord
+  // Inclure TOUS les matchs avec un winner_team_id valide
+  let validMatches = 0;
+  let skippedMatches = 0;
+  
+  agg.forEach((row: any) => {
+    // Vérifier que le match existe et a un winner_team_id (match terminé)
+    if (!row.matches) {
+      skippedMatches++;
+      console.warn("[Home] Skipping participant without match data:", row.match_id);
+      return;
+    }
+    
+    if (!row.matches.winner_team_id || !row.matches.team1_id || !row.matches.team2_id) {
+      skippedMatches++;
+      console.warn("[Home] Skipping match without winner_team_id:", row.match_id);
+      return;
+    }
+    
+    validMatches++;
+    
+    // Déterminer winner_team (1 ou 2) à partir de winner_team_id
+    const winner_team = row.matches.winner_team_id === row.matches.team1_id ? 1 : 2;
+    const win = winner_team === row.team;
+    const isGuest = row.player_type === "guest";
+    
+    // Identifier unique du joueur : user_id pour users, guest_player_id pour guests
+    let playerId: string;
+    
+    if (isGuest && row.guest_player_id) {
+      playerId = 'guest_' + row.guest_player_id;
+    } else if (row.user_id) {
+      playerId = row.user_id;
+    } else {
+      // Ignorer les participants sans identifiant valide
+      skippedMatches++;
+      console.warn("[Home] Skipping participant without valid ID:", row);
+      return;
+    }
+    
+    if (!byPlayer[playerId]) {
+      byPlayer[playerId] = { 
+        name: "", // Sera rempli plus tard
+        wins: 0, 
+        losses: 0, 
+        matches: 0,
+        isGuest,
+        playerId
+      };
+    }
+    byPlayer[playerId].matches += 1;
+    if (win) byPlayer[playerId].wins += 1; else byPlayer[playerId].losses += 1;
+  });
+  
+  console.log("[Home] Valid matches processed:", validMatches);
+  console.log("[Home] Skipped matches:", skippedMatches);
+  console.log("[Home] Players aggregated:", Object.keys(byPlayer).length);
+  
+  // Récupérer les IDs des joueurs pour les guests (les profils users sont déjà chargés)
+  // Note: guestIds est déjà déclaré plus haut (ligne 147), on le réutilise ici
+  const userIdsForGuests = [...new Set(Object.keys(byPlayer).filter(id => !id.startsWith("guest_") && byPlayer[id].isGuest === false && id))];
+  // Utiliser les guestIds déjà déclarés plus haut, mais aussi récupérer ceux de byPlayer pour être sûr
+  const guestIdsFromByPlayer = [...new Set(Object.keys(byPlayer).filter(id => id.startsWith("guest_")).map(id => id.replace("guest_", "")))];
+  // Combiner les deux sources de guestIds
+  const allGuestIds = [...new Set([...guestIds, ...guestIdsFromByPlayer])];
+
+  console.log("[Home] Fetching names - User IDs:", userIdsForGuests.length, "Guest IDs:", allGuestIds.length);
+  
+  // Récupérer les guest players
+  const guestsMap = new Map<string, { first_name: string; last_name: string }>();
+  if (allGuestIds.length > 0) {
+    const { data: guests, error: guestsError } = await supabase
+      .from("guest_players")
+      .select("id, first_name, last_name")
+      .in("id", allGuestIds);
+    
+    if (guestsError) {
+      console.error("❌ Error fetching guest players:", {
+        message: guestsError.message,
+        details: guestsError.details,
+        hint: guestsError.hint,
+        code: guestsError.code
+      });
+    } else if (guests) {
+      guests.forEach(g => guestsMap.set(g.id, { first_name: g.first_name, last_name: g.last_name }));
+      console.log("[Home] Guest players loaded:", guests.length);
+    }
+  }
+  
+  // Assigner les noms aux joueurs
+  Object.keys(byPlayer).forEach(playerId => {
+    if (byPlayer[playerId].isGuest) {
+      const guestId = playerId.replace("guest_", "");
+      const guest = guestsMap.get(guestId);
+      byPlayer[playerId].name = guest ? (guest.first_name + " " + guest.last_name).trim() : "Joueur invité";
+    } else {
+      // Utiliser first_name et last_name depuis Supabase si disponibles
+      const firstName = profilesFirstNameMap.get(playerId);
+      const lastName = profilesLastNameMap.get(playerId);
+      if (firstName) {
+        byPlayer[playerId].name = (firstName + (lastName ? " " + lastName : "")).trim();
+      } else {
+        // Fallback sur display_name si first_name n'est pas disponible
+      const displayName = profilesMap.get(playerId);
+      byPlayer[playerId].name = displayName || "Joueur";
+      }
+    }
+  });
+  
+  console.log("[Home] Names assigned to players");
+  
+  // Log des statistiques par joueur pour debug (après assignation des noms)
+  Object.entries(byPlayer).forEach(([playerId, stats]) => {
+    if (stats.matches > 0) {
+      console.log('[Home] Player ' + playerId + ' (' + stats.name + '): ' + stats.matches + ' matches, ' + stats.wins + ' wins, ' + stats.losses + ' losses');
+    }
+  });
+  
+  // Vérifier les doublons de user_id avant la construction du leaderboard
+  const userIdsInByPlayer = Object.keys(byPlayer).filter(id => !id.startsWith("guest_"));
+  const uniqueUserIds = new Set(userIdsInByPlayer);
+  if (userIdsInByPlayer.length !== uniqueUserIds.size) {
+    console.warn("[Home] ⚠️ Doublons de user_id détectés dans byPlayer!");
+    const duplicates = userIdsInByPlayer.filter((id, index) => userIdsInByPlayer.indexOf(id) !== index);
+    console.warn("[Home] User IDs en doublon:", [...new Set(duplicates)]);
+  }
+
+  // Bonus premier avis: +10 points pour les users ayant au moins un avis
+  const bonusMap = new Map<string, number>();
+  {
+    const userIdsForBonus = Object.keys(byPlayer).filter(id => !id.startsWith("guest_") && byPlayer[id].isGuest === false);
+    if (userIdsForBonus.length > 0) {
+      const { data: reviewers } = await supabase
+        .from("reviews")
+        .select("user_id")
+        .in("user_id", userIdsForBonus);
+      const hasReview = new Set((reviewers || []).map((r: any) => r.user_id));
+      userIdsForBonus.forEach(uid => {
+        if (hasReview.has(uid)) bonusMap.set(uid, 10);
+      });
+    }
+  }
+
+  // Récupérer tous les joueurs pour l'affichage intelligent des noms
+  const { getPlayerDisplayName } = await import("@/lib/utils/player-utils");
+  const allPlayers = Object.values(byPlayer).map(p => ({
+    first_name: p.name.split(new RegExp("\\s+")).slice(0,1)[0] || "",
+    last_name: p.name.split(new RegExp("\\s+")).slice(1).join(" ") || "",
+  }));
+
+  // Construire le leaderboard (uniquement les joueurs du même club)
+  const leaderboard = Object.entries(byPlayer)
+    .filter(([playerId, s]) => {
+      // Exclure complètement les joueurs non connectés à un club (guests)
+      if (playerId.startsWith("guest_")) return false;
+      // Si on a un club_id, ne garder que les joueurs du même club
+      if (userClubId) {
+        return validUserIds.has(playerId);
+      }
+      return true;
+    })
+    .map(([playerId, s]) => {
+      // Utiliser l'affichage intelligent des noms
+      const displayName = getPlayerDisplayName(
+        { first_name: s.name.split(new RegExp("\\s+")).slice(0,1)[0] || "", last_name: s.name.split(new RegExp("\\s+")).slice(1).join(" ") || "" },
+        allPlayers
+      );
+      
+      const bonus = bonusMap.get(playerId) || 0;
+      return {
+        rank: 0,
+        user_id: playerId,
+        player_name: displayName,
+        points: s.wins * 10 + s.losses * 3 + bonus,
+        wins: s.wins,
+        losses: s.losses,
+        matches: s.matches,
+        badges: [],
+        isGuest: s.isGuest,
+      };
+    })
+    .sort((a, b) => b.points - a.points)
+    .map((r, idx) => ({ ...r, rank: idx + 1 }));
+
+  // Détecter les doublons de noms dans le leaderboard
+  const nameCounts = new Map<string, number>();
+  leaderboard.forEach(p => {
+    const normalizedName = p.player_name.toLowerCase().trim();
+    nameCounts.set(normalizedName, (nameCounts.get(normalizedName) || 0) + 1);
+  });
+  
+  const duplicates = Array.from(nameCounts.entries())
+    .filter(([name, count]) => count > 1)
+    .map(([name]) => name);
+  
+  if (duplicates.length > 0) {
+    console.warn("[Home] ⚠️ Doublons détectés dans le leaderboard:", duplicates);
+    duplicates.forEach(dupName => {
+      const playersWithSameName = leaderboard.filter(p => p.player_name.toLowerCase().trim() === dupName);
+      console.warn(`[Home] Joueurs avec le nom "${dupName}":`, playersWithSameName.map(p => ({
+        user_id: p.user_id,
+        player_name: p.player_name,
+        points: p.points,
+        matches: p.matches
+      })));
+    });
+  }
+
+  // Résumé final du classement
+  const totalMatchesInLeaderboard = leaderboard.reduce((sum, p) => sum + p.matches, 0);
+  const totalWinsInLeaderboard = leaderboard.reduce((sum, p) => sum + p.wins, 0);
+  const totalLossesInLeaderboard = leaderboard.reduce((sum, p) => sum + p.losses, 0);
+  
+  // Ne pas afficher les points/stats si moins de 2 vrais joueurs dans la base de données
+  const { count: totalProfilesCount } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true });
+  
+  const hasMultipleRealPlayersInDB = (totalProfilesCount || 0) >= 2;
+  const realPlayers = leaderboard.filter(p => !p.isGuest);
+  const hasMultipleRealPlayersInLeaderboard = realPlayers.length >= 2;
+  const shouldShowPoints = hasMultipleRealPlayersInDB && hasMultipleRealPlayersInLeaderboard && totalMatchesInLeaderboard > 0;
+  
+  console.log("[Home] ===== LEADERBOARD SUMMARY =====");
+  console.log("[Home] Total profiles in database:", totalProfilesCount);
+  console.log("[Home] Total players in leaderboard:", leaderboard.length);
+  console.log("[Home] Real players (non-guests) in leaderboard:", realPlayers.length);
+  console.log("[Home] Total matches counted:", totalMatchesInLeaderboard);
+  console.log("[Home] Total wins:", totalWinsInLeaderboard);
+  console.log("[Home] Total losses:", totalLossesInLeaderboard);
+  console.log("[Home] Valid matches processed:", validMatches);
+  console.log("[Home] Skipped matches:", skippedMatches);
+  console.log("[Home] Has multiple real players in DB:", hasMultipleRealPlayersInDB);
+  console.log("[Home] Has multiple real players in leaderboard:", hasMultipleRealPlayersInLeaderboard);
+  console.log("[Home] Should show points:", shouldShowPoints);
+  console.log("[Home] ================================");
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-8 py-8">
+      <Top3Notification currentUserId={profile.id} />
+      <div className="mb-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+          <h1 className="text-3xl font-bold text-white">Bienvenue {profile.display_name} !</h1>
+            {clubName && <p className="text-white/60 text-sm">Club : {clubName}</p>}
+          </div>
+          <LogoutButton />
+        </div>
+        <NavigationBar currentPage="home" />
+      </div>
+      
+      <div className="grid gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-4 space-y-6">
+          <PlayerSummary profileId={profile.id} />
+          <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}>Enregistrer un match</a>
+        </div>
+        <div className="lg:col-span-8 lg:mt-0 space-y-6">
+          {leaderboard.length >= 3 && (
+            <div className="mb-8">
+              <div className="mb-4 flex items-center justify-center gap-3">
+                <span className="h-px w-10 bg-gray-300" />
+                <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
+                  Top joueurs du moment <span aria-hidden>✨</span>
+                </span>
+                <span className="h-px w-10 bg-gray-300" />
+              </div>
+              <div className="hidden md:flex items-end justify-center gap-6 w-full mt-8">
+                <div className="flex-1 max-w-[240px]">
+                  <div 
+                    className="podium-silver border-2 border-gray-300 rounded-2xl p-8 hover:border-gray-400 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
+                    }}
+                  >
+                    <div className="absolute top-2 right-2 text-5xl z-20 opacity-90 drop-shadow-md">🥈</div>
+                    <div className="text-center relative z-10 pt-5">
+                      <h3 className="text-2xl font-extrabold mb-8 text-gray-900 tracking-tight">
+                        {leaderboard[1].player_name}
+                      </h3>
+                      <div className="flex items-center justify-center mt-4">
+                        <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-zinc-500 ring-2 ring-zinc-300 shadow-lg shadow-zinc-300/70">
+                          <span className="text-2xl font-extrabold text-gray-900 tabular-nums">{leaderboard[1].points.toLocaleString()}</span>
+                          <span className="text-xs font-semibold text-gray-800 uppercase tracking-wider">points</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 max-w-[280px]">
+                  <div 
+                    className="podium-gold border-2 border-yellow-400 rounded-2xl p-9 hover:border-yellow-500 transition-all shadow-xl transform hover:scale-[1.02] relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)',
+                      boxShadow: '0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6)'
+                    }}
+                  >
+                    <div className="absolute top-2 right-2 text-5xl z-20 opacity-95 drop-shadow-lg">🥇</div>
+                    <div className="absolute top-1 left-1 z-20">
+                      <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold shadow-sm border border-yellow-300">Meilleur joueur</span>
+                    </div>
+                    <div className="text-center relative z-10 pt-6">
+                      <h3 className="text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow-sm">
+                        {leaderboard[0].player_name}
+                      </h3>
+                      <div className="flex items-center justify-center mt-4">
+                        <div className="inline-flex items-center gap-3 rounded-full px-6 py-2.5 bg-white/95 backdrop-blur border-2 border-yellow-500 ring-2 ring-yellow-300 shadow-xl shadow-yellow-300/70">
+                          <span className="text-3xl font-extrabold text-gray-900 tabular-nums">{leaderboard[0].points.toLocaleString()}</span>
+                          <span className="text-xs font-semibold text-gray-900 uppercase tracking-wider">points</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 max-w-[240px]">
+                  <div 
+                    className="podium-bronze border-2 border-orange-300 rounded-2xl p-8 hover:border-orange-400 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
+                    }}
+                  >
+                    <div className="absolute top-2 right-2 text-5xl z-20 opacity-90 drop-shadow-md">🥉</div>
+                    <div className="text-center relative z-10 pt-5">
+                      <h3 className="text-lg font-extrabold mb-8 text-gray-900 tracking-tight">
+                        {(() => { var parts = (leaderboard[2].player_name || '').split(' '); var f = parts[0] || ''; var l = parts.slice(1).join(' '); return (<span><span className="text-xl">{f}</span>{l ? ' ' + l : ''}</span>); })()}
+                      </h3>
+                      <div className="flex items-center justify-center mt-4">
+                        <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-orange-500 ring-2 ring-orange-300 shadow-lg shadow-orange-300/70">
+                          <span className="text-2xl font-extrabold text-gray-900 tabular-nums">{leaderboard[2].points.toLocaleString()}</span>
+                          <span className="text-xs font-semibold text-gray-800 uppercase tracking-wider">points</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="md:hidden space-y-4 mt-8">
+                {leaderboard.slice(0, 3).map(function(player, index) {
+                  var icons = ['🥇', '🥈', '🥉'];
+                  var borderColors = [
+                    'border-yellow-400',
+                    'border-gray-300',
+                    'border-orange-300'
+                  ];
+                  var borderWidth = 'border-2';
+                  var shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
+                  var bgGradients = [
+                    { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
+                    { background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' },
+                    { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
+                  ];
+                  return (
+                    <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl p-5 shadow-2xl relative overflow-hidden')} style={bgGradients[index]}>
+                      <div className={"absolute top-2 right-2 z-20 opacity-90 drop-shadow-md text-5xl"}>{icons[index]}</div>
+                      <div className="relative z-10 pt-4">
+                        <h3 className={"font-extrabold mb-6 text-center text-gray-900 " + (index === 0 ? 'text-2xl' : index === 1 ? 'text-xl' : 'text-lg')}>
+                          {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-xl">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}
+                        </h3>
+                        <div className="flex items-center justify-center mt-2">
+                          <div className={"inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-white/95 backdrop-blur border-2 shadow-lg " + (index === 0 ? 'border-yellow-500 ring-2 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-2 ring-zinc-300' : 'border-orange-500 ring-2 ring-orange-300')}>
+                            <span className="text-lg font-extrabold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
+                            <span className="text-xs font-semibold text-gray-900 uppercase tracking-wider">points</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {leaderboard.length > 0 ? (
+            <div className="overflow-hidden">
+              <div className="px-5 pt-5">
+                <div className="mb-4 flex items-center justify-center gap-3">
+                  <span className="h-px w-10 bg-gray-300" />
+                  <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
+                    Classement global <span aria-hidden>🏆</span>
+                  </span>
+                  <span className="h-px w-10 bg-gray-300" />
+                </div>
+              </div>
+              <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Joueur</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Niveau</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Points</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Winrate</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0">V</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0">D</th>
+                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">MJ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {leaderboard.map(function(player, idx) {
+                      var isCurrentUser = player.user_id === profile.id;
+                      var winRate = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
+                      // Même logique que PlayerSummary.tierForPoints
+                      var tierLabel = (player.points >= 500) ? 'Champion' : (player.points >= 300) ? 'Diamant' : (player.points >= 200) ? 'Or' : (player.points >= 100) ? 'Argent' : 'Bronze';
+                      var tierClassName = (player.points >= 500) ? 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white' :
+                                         (player.points >= 300) ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' :
+                                         (player.points >= 200) ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-white' :
+                                         (player.points >= 100) ? 'bg-gradient-to-r from-zinc-300 to-zinc-400 text-zinc-800' :
+                                                                 'bg-gradient-to-r from-orange-400 to-orange-600 text-white';
+                      // Utiliser first_name depuis Supabase si disponible
+                      var firstName = profilesFirstNameMap.get(player.user_id) || '';
+                      var lastName = profilesLastNameMap.get(player.user_id) || '';
+                      // Si first_name n'est pas disponible, diviser depuis player_name
+                      if (!firstName && player.player_name) {
+                      var nameParts = (player.player_name || '').trim().split(' ');
+                        firstName = nameParts[0] || '';
+                        lastName = nameParts.slice(1).join(' ');
+                      }
+                      var rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
+                      return (
+                        <tr key={player.user_id} className={rowClass}>
+                          <td className="px-4 py-3 text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
+                            <RankBadge rank={player.rank} size="md" />
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
+                            <span><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? ' (vous)' : ''}</span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center border-l border-gray-200 first:border-l-0">
+                            <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
+                          </td>
+                          <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
+                          <td className="px-4 py-3 text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: winRate > 60 ? '#10B981' : winRate >= 40 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
+                          <td className="px-4 py-3 text-sm text-center tabular-nums text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.wins}</td>
+                          <td className="px-4 py-3 text-sm text-center tabular-nums text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.losses}</td>
+                          <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold">{player.matches}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-10 text-gray-500 text-sm">Aucun joueur dans le classement</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
