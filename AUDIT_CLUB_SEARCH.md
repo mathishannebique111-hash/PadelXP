@@ -192,3 +192,4 @@ npx playwright test tests/e2e/player-search-club-isolation.test.ts
 4. **Backfill:** Le script `backfill_tcam_data.sql` doit être exécuté pour normaliser les données existantes. Il peut être ré-exécuté plusieurs fois sans problème.
 
 
+
