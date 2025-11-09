@@ -92,16 +92,52 @@ async function saveChallenges(clubId: string, records: ChallengeRecord[]) {
 
 async function resolveClubId(userId: string) {
   if (!supabaseAdmin) return null;
-  const { data, error } = await supabaseAdmin
+  
+  // Essayer via le profil (pour les joueurs)
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("club_id")
+    .select("club_id, club_slug")
     .eq("id", userId)
     .maybeSingle();
-  if (error) {
-    console.error("[api/clubs/challenges] resolveClubId error", error);
-    return null;
+  
+  if (profile?.club_id) {
+    return profile.club_id;
   }
-  return data?.club_id ?? null;
+  
+  // Essayer via club_slug du profil
+  if (profile?.club_slug) {
+    const { data: club } = await supabaseAdmin
+      .from("clubs")
+      .select("id")
+      .eq("slug", profile.club_slug)
+      .maybeSingle();
+    if (club?.id) {
+      return club.id;
+    }
+  }
+  
+  // Essayer via user_metadata (pour les admins de club)
+  const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId);
+  const clubIdFromMeta = user?.user_metadata?.club_id;
+  const clubSlugFromMeta = user?.user_metadata?.club_slug;
+  
+  if (clubIdFromMeta) {
+    return clubIdFromMeta;
+  }
+  
+  if (clubSlugFromMeta) {
+    const { data: club } = await supabaseAdmin
+      .from("clubs")
+      .select("id")
+      .eq("slug", clubSlugFromMeta)
+      .maybeSingle();
+    if (club?.id) {
+      return club.id;
+    }
+  }
+  
+  console.warn("[api/clubs/challenges] resolveClubId: aucun club trouvé pour userId", userId);
+  return null;
 }
 
 function sanitisePayload(payload: any): ChallengePayload {
@@ -116,8 +152,12 @@ function sanitisePayload(payload: any): ChallengePayload {
   if (!name || !objective || !startDate || !endDate || !rewardLabel) {
     throw new Error("Tous les champs sont requis");
   }
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  
+  // Parser les dates au format YYYY-MM-DD et les garder au format ISO date (sans heure)
+  // pour éviter les problèmes de fuseau horaire
+  const start = new Date(startDate + "T00:00:00.000Z");
+  const end = new Date(endDate + "T23:59:59.999Z");
+  
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
     throw new Error("Dates invalides");
   }
@@ -125,7 +165,14 @@ function sanitisePayload(payload: any): ChallengePayload {
     throw new Error("La date de fin doit être postérieure au début");
   }
 
-  return { name, objective, startDate: start.toISOString(), endDate: end.toISOString(), rewardType, rewardLabel };
+  return { 
+    name, 
+    objective, 
+    startDate: start.toISOString(), 
+    endDate: end.toISOString(), 
+    rewardType, 
+    rewardLabel 
+  };
 }
 
 export async function GET(request: Request) {

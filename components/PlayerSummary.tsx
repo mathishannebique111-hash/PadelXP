@@ -20,14 +20,18 @@ const supabaseAdmin = createAdminClient(
 export default async function PlayerSummary({ profileId }: { profileId: string }) {
   const supabase = createClient();
   
-  // Récupérer le club_id du joueur pour filtrer les matchs
-  const { data: playerProfile } = await supabase
+  // Récupérer le club_id ET les points de challenges du joueur (utiliser admin pour bypass RLS)
+  const { data: playerProfile } = await supabaseAdmin
     .from("profiles")
-    .select("club_id")
+    .select("club_id, points")
     .eq("id", profileId)
     .maybeSingle();
   
   const playerClubId = playerProfile?.club_id || null;
+  const challengePoints = playerProfile?.points || 0;
+  
+  console.log(`[PlayerSummary] Player ${profileId.substring(0, 8)} - Challenge points from DB:`, challengePoints);
+  console.log(`[PlayerSummary] Player profile data:`, playerProfile);
   
   // Calcule les stats globales
   // Utiliser une approche en deux étapes pour éviter les problèmes RLS
@@ -142,8 +146,9 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     }
   }
 
-  // Points: 10 par victoire, 3 par défaite + bonus premier avis
-  const points = wins * 10 + losses * 3 + reviewsBonus;
+  // Points: 10 par victoire, 3 par défaite + bonus premier avis + points de challenges
+  const matchPoints = wins * 10 + losses * 3 + reviewsBonus;
+  const points = matchPoints + challengePoints;
 
   function tierForPoints(p: number) {
     if (p >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white" };
@@ -221,8 +226,13 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       {/* Grid 2x3 compact pour les stats */}
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-lg p-3 bg-gray-50">
-          <div className="text-xs text-gray-600 mb-1">Points</div>
+          <div className="text-xs text-gray-600 mb-1">Points totaux</div>
           <div className="text-2xl font-bold text-gray-900 tabular-nums">{points}</div>
+          {challengePoints > 0 && (
+            <div className="mt-1 text-[10px] text-amber-600 font-medium">
+              +{challengePoints} challenges 🏆
+            </div>
+          )}
         </div>
         <div className="rounded-lg p-3 bg-gray-50">
           <div className="text-xs text-gray-600 mb-1">Matchs</div>

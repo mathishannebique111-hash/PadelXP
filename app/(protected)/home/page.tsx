@@ -467,6 +467,25 @@ export default async function HomePage() {
     }
   }
 
+  // Récupérer les points de challenges pour tous les joueurs
+  const challengePointsMap = new Map<string, number>();
+  {
+    const userIdsForChallenges = Object.keys(byPlayer).filter(id => !id.startsWith("guest_") && byPlayer[id].isGuest === false);
+    if (userIdsForChallenges.length > 0) {
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, points")
+        .in("id", userIdsForChallenges);
+      
+      (profiles || []).forEach((p: any) => {
+        if (p.points && p.points > 0) {
+          challengePointsMap.set(p.id, p.points);
+          console.log(`[Home] Player ${p.id.substring(0, 8)} has ${p.points} challenge points`);
+        }
+      });
+    }
+  }
+
   // Récupérer tous les joueurs pour l'affichage intelligent des noms
   const { getPlayerDisplayName } = await import("@/lib/utils/player-utils");
   const allPlayers = Object.values(byPlayer).map(p => ({
@@ -493,11 +512,14 @@ export default async function HomePage() {
       );
       
       const bonus = bonusMap.get(playerId) || 0;
+      const challengePoints = challengePointsMap.get(playerId) || 0;
+      const totalPoints = s.wins * 10 + s.losses * 3 + bonus + challengePoints;
+      
       return {
         rank: 0,
         user_id: playerId,
         player_name: displayName,
-        points: s.wins * 10 + s.losses * 3 + bonus,
+        points: totalPoints,
         wins: s.wins,
         losses: s.losses,
         matches: s.matches,

@@ -276,12 +276,15 @@ export async function POST(req: Request) {
   }
 
   try {
+    console.log("🔄 Revalidating paths after match submission...");
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/historique");
     revalidatePath("/dashboard/classement");
     revalidatePath("/dashboard/membres");
+    revalidatePath("/challenges");
+    console.log("✅ All paths revalidated, including /challenges");
   } catch (revalidateError) {
-    console.warn("⚠️ Failed to revalidate club pages after match submission", revalidateError);
+    console.warn("⚠️ Failed to revalidate pages after match submission", revalidateError);
   }
 
   console.log("✅ Match submission completed successfully");

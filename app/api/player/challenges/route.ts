@@ -35,6 +35,7 @@ type ChallengeResponse = {
   createdAt: string;
   status: "upcoming" | "active" | "completed";
   progress: { current: number; target: number };
+  rewardClaimed: boolean;
 };
 
 function computeStatus(record: ChallengeRecord): "upcoming" | "active" | "completed" {
@@ -48,16 +49,20 @@ function computeStatus(record: ChallengeRecord): "upcoming" | "active" | "comple
 
 async function resolveClubId(userId: string) {
   if (!supabaseAdmin) return null;
-  const { data, error } = await supabaseAdmin
+  
+  // Essayer via le profil (pour les joueurs)
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("club_id")
     .eq("id", userId)
     .maybeSingle();
-  if (error) {
-    console.error("[api/player/challenges] resolveClubId error", error);
-    return null;
+  
+  if (profile?.club_id) {
+    return profile.club_id;
   }
-  return data?.club_id ?? null;
+  
+  console.warn("[api/player/challenges] resolveClubId: aucun club trouvé pour userId", userId);
+  return null;
 }
 
 async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
@@ -91,7 +96,7 @@ function extractTarget(objective: string): number {
 
 function isWinObjective(objective: string) {
   const lower = objective.toLowerCase();
-  return /(remporter|gagner|victoire)/.test(lower);
+  return /(remporter|gagner|victoire|victoires|remporte|gagne|gagné|remporté|win|wins|won)/.test(lower);
 }
 
 type MatchHistoryItem = {
@@ -102,42 +107,59 @@ type MatchHistoryItem = {
 
 async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
   if (!supabaseAdmin) return [];
-  const { data, error } = await supabaseAdmin
+  
+  console.log(`[loadPlayerHistory] Fetching matches for userId: ${userId}`);
+  
+  // ÉTAPE 1: Récupérer les match_ids du joueur (EXACTEMENT comme dans la page historique)
+  const { data: userParticipations, error: partError } = await supabaseAdmin
     .from("match_participants")
-    .select(`match_id, team, matches!inner(played_at, winner_team_id, team1_id, team2_id, score_team1, score_team2)`)
-    .eq("player_type", "user")
+    .select("match_id, team")
     .eq("user_id", userId)
-    .order("played_at", { referencedTable: "matches", ascending: true });
+    .eq("player_type", "user");
 
-  if (error || !data) {
-    if (error) {
-      console.warn("[api/player/challenges] history error", error);
-    }
+  console.log(`[loadPlayerHistory] User participations:`, userParticipations?.length || 0, "Error:", partError);
+
+  if (partError || !userParticipations || userParticipations.length === 0) {
+    console.warn(`[loadPlayerHistory] ⚠️ NO PARTICIPATIONS found for user ${userId}`);
     return [];
   }
 
-  return (data as any[]).map((row) => {
-    const matchId: string = row.match_id;
-    const team: number | null = typeof row.team === "number" ? row.team : row.team ? Number(row.team) : null;
-    const match = row.matches || {};
-    const winnerTeamId: string | null = match.winner_team_id ?? null;
-    const team1Id: string | null = match.team1_id ?? null;
-    const team2Id: string | null = match.team2_id ?? null;
-    const scoreTeam1 = match.score_team1 != null ? Number(match.score_team1) : null;
-    const scoreTeam2 = match.score_team2 != null ? Number(match.score_team2) : null;
+  const matchIds = userParticipations.map((p) => p.match_id);
+  const teamMap = new Map(userParticipations.map((p) => [p.match_id, p.team]));
+  console.log(`[loadPlayerHistory] Found ${matchIds.length} match IDs for user`);
 
+  // ÉTAPE 2: Récupérer les détails des matchs
+  const { data: matches, error: matchError } = await supabaseAdmin
+    .from("matches")
+    .select("id, played_at, winner_team_id, team1_id, team2_id, score_team1, score_team2")
+    .in("id", matchIds)
+    .order("played_at", { ascending: true });
+
+  console.log(`[loadPlayerHistory] Matches fetched:`, matches?.length || 0, "Error:", matchError);
+
+  if (matchError || !matches) {
+    console.warn(`[loadPlayerHistory] ⚠️ Error fetching matches:`, matchError);
+    return [];
+  }
+
+  console.log(`[loadPlayerHistory] ✅ Found ${matches.length} matches for user ${userId}`);
+
+  return matches.map((match) => {
+    const team = teamMap.get(match.id) || null;
+    const teamNum = typeof team === "number" ? team : team ? Number(team) : null;
+    
     let isWinner = false;
-    if (winnerTeamId && team) {
-      const participantTeamId = team === 1 ? team1Id : team2Id;
-      if (participantTeamId) {
-        isWinner = winnerTeamId === participantTeamId;
-      }
-    } else if (team && scoreTeam1 != null && scoreTeam2 != null && scoreTeam1 !== scoreTeam2) {
-      isWinner = team === 1 ? scoreTeam1 > scoreTeam2 : scoreTeam2 > scoreTeam1;
+    if (match.winner_team_id && teamNum) {
+      const participantTeamId = teamNum === 1 ? match.team1_id : match.team2_id;
+      isWinner = match.winner_team_id === participantTeamId;
+    } else if (teamNum && match.score_team1 != null && match.score_team2 != null && match.score_team1 !== match.score_team2) {
+      isWinner = teamNum === 1 ? match.score_team1 > match.score_team2 : match.score_team2 > match.score_team1;
     }
 
+    console.log(`[loadPlayerHistory] Match ${match.id.substring(0, 8)}: team=${teamNum}, isWinner=${isWinner}, playedAt=${match.played_at}`);
+
     return {
-      matchId,
+      matchId: match.id,
       playedAt: match.played_at ?? null,
       isWinner,
     };
@@ -147,21 +169,50 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
 function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): { current: number; target: number } {
   const target = Math.max(1, extractTarget(record.objective));
   const metricIsWin = isWinObjective(record.objective);
+  
+  // Convertir les dates en objets Date et normaliser au début/fin de journée en UTC
   const start = new Date(record.start_date);
   const end = new Date(record.end_date);
-  start.setHours(0, 0, 0, 0);
-  end.setHours(23, 59, 59, 999);
+  
+  // Normaliser au début de la journée (00:00:00) en UTC pour start
+  start.setUTCHours(0, 0, 0, 0);
+  
+  // Normaliser à la fin de la journée (23:59:59) en UTC pour end
+  end.setUTCHours(23, 59, 59, 999);
+
+  console.log(`[Challenge ${record.id}] Computing progress:`, {
+    objective: record.objective,
+    target,
+    metricIsWin,
+    period: { 
+      start: start.toISOString(), 
+      end: end.toISOString(),
+      startLocal: start.toString(),
+      endLocal: end.toString()
+    },
+    totalMatches: history.length
+  });
 
   const relevant = history.filter((item) => {
-    if (!item.playedAt) return false;
+    if (!item.playedAt) {
+      console.log(`  ❌ Match ${item.matchId.substring(0, 8)} excluded: no playedAt`);
+      return false;
+    }
     const played = new Date(item.playedAt);
-    if (Number.isNaN(played.getTime())) return false;
-    return played >= start && played <= end;
+    if (Number.isNaN(played.getTime())) {
+      console.log(`  ❌ Match ${item.matchId.substring(0, 8)} excluded: invalid date`);
+      return false;
+    }
+    const inPeriod = played >= start && played <= end;
+    console.log(`  ${inPeriod ? '✅' : '❌'} Match ${item.matchId.substring(0, 8)}: played=${played.toISOString()} (${played.toString()}), isWinner=${item.isWinner}, inPeriod=${inPeriod}`);
+    return inPeriod;
   });
 
   const current = metricIsWin
     ? relevant.filter((item) => item.isWinner).length
     : relevant.length;
+
+  console.log(`[Challenge ${record.id}] Result: ${current}/${target} (${relevant.length} relevant matches, ${metricIsWin ? 'counting wins only' : 'counting all'})`);
 
   return {
     current: Math.min(current, target),
@@ -189,26 +240,70 @@ export async function GET(request: Request) {
   }
 
   const records = await loadChallenges(clubId);
+  console.log(`[Player ${user.id}] Loaded ${records.length} challenges for club ${clubId}`);
+  if (records.length > 0) {
+    console.log(`[Player ${user.id}] Challenges:`, records.map(r => ({
+      id: r.id.substring(0, 8),
+      title: r.title,
+      start_date: r.start_date,
+      end_date: r.end_date,
+      objective: r.objective
+    })));
+  }
+  
   if (records.length === 0) {
     return NextResponse.json({ challenges: [] });
   }
 
+  console.log(`[api/player/challenges] About to load player history for user ${user.id}`);
   const history = await loadPlayerHistory(user.id);
+  console.log(`[api/player/challenges] Player ${user.id} - Loaded ${history.length} matches from history`);
+  
+  if (history.length > 0) {
+    console.log(`[api/player/challenges] Recent matches:`, history.slice(-5).map(h => ({
+      matchId: h.matchId.substring(0, 8),
+      playedAt: h.playedAt,
+      isWinner: h.isWinner
+    })));
+  } else {
+    console.warn(`[api/player/challenges] ⚠️ NO MATCHES FOUND for user ${user.id} - this will cause progress to be 0`);
+  }
+
+  // Récupérer les récompenses déjà réclamées
+  let claimedSet = new Set<string>();
+  try {
+    const { data: claimedRewards, error: rewardsError } = await supabaseAdmin!
+      .from("challenge_rewards")
+      .select("challenge_id")
+      .eq("user_id", user.id);
+    
+    if (rewardsError) {
+      console.warn("[api/player/challenges] ⚠️ Could not fetch rewards (table may not exist yet):", rewardsError.message);
+    } else {
+      claimedSet = new Set(claimedRewards?.map(r => r.challenge_id) || []);
+    }
+  } catch (err) {
+    console.warn("[api/player/challenges] ⚠️ Exception fetching rewards:", err);
+  }
 
   const challenges: ChallengeResponse[] = records
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
-    .map((record) => ({
-      id: record.id,
-      title: record.title,
-      startDate: record.start_date,
-      endDate: record.end_date,
-      objective: record.objective,
-      rewardType: record.reward_type,
-      rewardLabel: record.reward_label,
-      createdAt: record.created_at,
-      status: computeStatus(record),
-      progress: computeProgress(record, history),
-    }));
+    .map((record) => {
+      const progress = computeProgress(record, history);
+      return {
+        id: record.id,
+        title: record.title,
+        startDate: record.start_date,
+        endDate: record.end_date,
+        objective: record.objective,
+        rewardType: record.reward_type,
+        rewardLabel: record.reward_label,
+        createdAt: record.created_at,
+        status: computeStatus(record),
+        progress,
+        rewardClaimed: claimedSet.has(record.id),
+      };
+    });
 
   return NextResponse.json({ challenges });
 }

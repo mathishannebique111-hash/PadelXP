@@ -48,6 +48,15 @@ export default function ChallengesPage() {
 
   const rewardLabel = rewardType === "points" ? rewardPoints.trim() : rewardBadgeTitle.trim();
 
+  // Date minimale = aujourd'hui (format YYYY-MM-DD)
+  const today = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
   const isValid = useMemo(() => {
     if (!name.trim() || !objective.trim()) return false;
     if (!startDate || !endDate) return false;
@@ -169,6 +178,7 @@ export default function ChallengesPage() {
               <input
                 type="date"
                 value={startDate}
+                min={today}
                 onChange={(event) => setStartDate(event.target.value)}
                 className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                 required
@@ -179,7 +189,7 @@ export default function ChallengesPage() {
               <input
                 type="date"
                 value={endDate}
-                min={startDate || undefined}
+                min={startDate || today}
                 onChange={(event) => setEndDate(event.target.value)}
                 className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                 required
@@ -274,25 +284,54 @@ export default function ChallengesPage() {
           ) : (
             challenges.map((challenge) => {
               const tag = statusTag(challenge.status);
+              const rewardBadgeClasses = challenge.rewardType === "points"
+                ? "border-2 border-yellow-400/30 bg-yellow-400/10 text-yellow-200 shadow-[0_0_20px_rgba(250,204,21,0.15)]"
+                : "border-2 border-violet-400/30 bg-violet-400/10 text-violet-200 shadow-[0_0_20px_rgba(167,139,250,0.15)]";
+              const rewardIcon = challenge.rewardType === "points" ? "💎" : "🏅";
+              
               return (
                 <article
                   key={challenge.id}
-                  className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 text-white"
+                  className="group relative overflow-hidden rounded-[28px] border-2 border-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-6 text-white shadow-[0_8px_32px_rgba(37,99,235,0.15)] backdrop-blur-sm transition-all duration-300 hover:border-blue-400/30 hover:shadow-[0_12px_40px_rgba(37,99,235,0.25)]"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-2">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${tag.classes}`}>
-                        {tag.label}
-                      </span>
-                      <h3 className="text-lg font-semibold text-white">{challenge.title}</h3>
-                      <p className="text-sm text-white/70">{challenge.objective}</p>
-                    </div>
-                    <div className="text-right text-sm text-white/70">
-                      <div>
-                        <span className="font-semibold text-white">Durée :</span> {formatRange(challenge.startDate, challenge.endDate)}
+                  {/* Effet de brillance animé au survol */}
+                  <div className="pointer-events-none absolute -inset-full opacity-0 transition-all duration-700 group-hover:opacity-100">
+                    <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-1000" />
+                  </div>
+
+                  <div className="relative space-y-5">
+                    {/* En-tête avec statut et titre */}
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="flex-1 space-y-3">
+                        <span className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider shadow-lg ${tag.classes}`}>
+                          {tag.label}
+                        </span>
+                        <h3 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-lg">{challenge.title}</h3>
                       </div>
-                      <div className="mt-1">
-                        <span className="font-semibold text-white">Récompense :</span> {challenge.rewardType === "points" ? `${challenge.rewardLabel} points` : `Badge “${challenge.rewardLabel}”`}
+                      
+                      {/* Badge récompense élégant */}
+                      <div className={`flex items-center gap-2.5 rounded-2xl px-5 py-3 text-sm font-bold backdrop-blur-sm transition-all ${rewardBadgeClasses}`}>
+                        <span className="text-xl">{rewardIcon}</span>
+                        <span>
+                          {challenge.rewardType === "points" 
+                            ? `${challenge.rewardLabel} points`
+                            : challenge.rewardLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Objectif avec effet glassmorphism */}
+                    <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-blue-500/25 via-blue-600/20 to-indigo-600/25 px-5 py-4 shadow-[0_0_30px_rgba(37,99,235,0.2)] backdrop-blur-md">
+                      <p className="text-xs font-bold uppercase tracking-widest text-blue-300">🎯 Objectif</p>
+                      <p className="mt-2 text-base font-semibold leading-relaxed text-white">{challenge.objective}</p>
+                    </div>
+
+                    {/* Durée avec style amélioré */}
+                    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
+                      <span className="text-xl">📅</span>
+                      <div className="flex-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Période</p>
+                        <p className="mt-0.5 font-semibold text-white/95">{formatRange(challenge.startDate, challenge.endDate)}</p>
                       </div>
                     </div>
                   </div>
