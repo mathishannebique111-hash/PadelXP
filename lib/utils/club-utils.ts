@@ -10,10 +10,98 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
     })
   : null;
 
+const PUBLIC_INFO_BUCKET = "club-public-info";
+
+type ClubOpeningHours = Record<string, { open: string | null; close: string | null; closed?: boolean }>;
+
+export type ClubPublicExtras = {
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  phone: string | null;
+  website: string | null;
+  number_of_courts: number | null;
+  court_type: string | null;
+  description: string | null;
+  opening_hours: ClubOpeningHours | null;
+};
+
+export async function getClubPublicExtras(clubId: string): Promise<ClubPublicExtras> {
+  if (!supabaseAdmin) {
+    return {
+      address: null,
+      postal_code: null,
+      city: null,
+      phone: null,
+      website: null,
+      number_of_courts: null,
+      court_type: null,
+      description: null,
+      opening_hours: null,
+    };
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin.storage.from(PUBLIC_INFO_BUCKET).download(`${clubId}.json`);
+    if (error || !data) {
+      if (error && !error.message?.toLowerCase().includes("not found")) {
+        console.warn("[club-utils] getClubPublicExtras storage error", error);
+      }
+      return {
+        address: null,
+        postal_code: null,
+        city: null,
+        phone: null,
+        website: null,
+        number_of_courts: null,
+        court_type: null,
+        description: null,
+        opening_hours: null,
+      };
+    }
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    return {
+      address: typeof parsed?.address === "string" ? parsed.address : null,
+      postal_code: typeof parsed?.postal_code === "string" ? parsed.postal_code : null,
+      city: typeof parsed?.city === "string" ? parsed.city : null,
+      phone: typeof parsed?.phone === "string" ? parsed.phone : null,
+      website: typeof parsed?.website === "string" ? parsed.website : null,
+      number_of_courts:
+        typeof parsed?.number_of_courts === "number"
+          ? parsed.number_of_courts
+          : typeof parsed?.number_of_courts === "string" && parsed.number_of_courts.trim()
+            ? (() => {
+                const value = Number.parseInt(parsed.number_of_courts, 10);
+                return Number.isNaN(value) ? null : value;
+              })()
+            : null,
+      court_type: typeof parsed?.court_type === "string" ? parsed.court_type : null,
+      description: typeof parsed?.description === "string" ? parsed.description : null,
+      opening_hours: typeof parsed?.opening_hours === "object" ? parsed.opening_hours as ClubOpeningHours : null,
+    };
+  } catch (error) {
+    console.warn("[club-utils] getClubPublicExtras unexpected error", error);
+    return {
+      address: null,
+      postal_code: null,
+      city: null,
+      phone: null,
+      website: null,
+      number_of_courts: null,
+      court_type: null,
+      description: null,
+      opening_hours: null,
+    };
+  }
+}
+
 export type ClubInfo = {
   clubId: string | null;
   clubSlug: string | null;
   userId: string | null;
+  clubName: string | null;
+  clubLogoUrl: string | null;
 };
 
 export type ClubMember = {
@@ -51,11 +139,13 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
 
   if (!user) {
     console.warn("[club-utils] getUserClubInfo: no authenticated user");
-    return { clubId: null, clubSlug: null, userId: null };
+    return { clubId: null, clubSlug: null, userId: null, clubName: null, clubLogoUrl: null };
   }
 
   let clubId: string | null = null;
   let clubSlug: string | null = null;
+  let clubName: string | null = null;
+  let clubLogoUrl: string | null = null;
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -75,32 +165,57 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
     });
   }
 
-  if (!clubId && user.user_metadata?.club_id) {
-    clubId = user.user_metadata.club_id as string;
+  const metadata = user.user_metadata || {};
+
+  if (!clubId && metadata?.club_id) {
+    clubId = metadata.club_id as string;
   }
-  if (!clubSlug && user.user_metadata?.club_slug) {
-    clubSlug = user.user_metadata.club_slug as string;
+  if (!clubSlug && metadata?.club_slug) {
+    clubSlug = metadata.club_slug as string;
+  }
+  if (metadata?.club_name) {
+    clubName = metadata.club_name as string;
+  }
+  if (metadata?.club_logo_url) {
+    clubLogoUrl = metadata.club_logo_url as string;
   }
 
-  if ((!clubId || !clubSlug) && supabaseAdmin) {
+  if (supabaseAdmin) {
     const { data: adminProfile, error: adminError } = await supabaseAdmin
       .from("profiles")
-      .select("club_id, club_slug")
+      .select("club_id, club_slug, clubs(name, logo_url)")
       .eq("id", user.id)
       .maybeSingle();
-
-    if (adminError) {
-      console.error("[club-utils] getUserClubInfo: admin profile error", {
-        message: adminError.message,
-        details: adminError.details,
-        hint: adminError.hint,
-        code: adminError.code,
-      });
-    }
 
     if (adminProfile) {
       clubId = clubId ?? adminProfile.club_id ?? null;
       clubSlug = clubSlug ?? adminProfile.club_slug ?? null;
+      if (adminProfile.clubs) {
+        clubName = clubName ?? (adminProfile.clubs as any).name ?? null;
+        clubLogoUrl = clubLogoUrl ?? (adminProfile.clubs as any).logo_url ?? null;
+      }
+    } else if (adminError) {
+      console.warn("[club-utils] getUserClubInfo: admin profile lookup failed", adminError.message ?? adminError);
+    }
+
+    if ((!clubName || !clubLogoUrl) && (clubId || clubSlug)) {
+      const query = supabaseAdmin
+        .from("clubs")
+        .select("id, name, logo_url")
+        .limit(1);
+
+      if (clubId) {
+        query.eq("id", clubId);
+      } else if (clubSlug) {
+        query.eq("slug", clubSlug);
+      }
+
+      const { data: clubRecord } = await query.maybeSingle();
+      if (clubRecord) {
+        clubId = clubId ?? (clubRecord.id as string | null);
+        clubName = clubName ?? (clubRecord.name as string | null);
+        clubLogoUrl = clubLogoUrl ?? (clubRecord.logo_url as string | null);
+      }
     }
   }
 
@@ -108,9 +223,16 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
     userId: user.id,
     clubId,
     clubSlug,
+    clubName,
   });
 
-  return { clubId: clubId ?? null, clubSlug: clubSlug ?? null, userId: user.id };
+  return {
+    clubId: clubId ?? null,
+    clubSlug: clubSlug ?? null,
+    userId: user.id,
+    clubName: clubName ?? null,
+    clubLogoUrl: clubLogoUrl ?? null,
+  };
 }
 
 export async function getUserClubId(): Promise<string | null> {

@@ -44,12 +44,24 @@ export default function EmailLoginForm({
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.session) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("club_slug")
-          .eq("id", data.user.id)
-          .maybeSingle();
+        const profileInit = await fetch("/api/profile/init", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Authorization": `Bearer ${data.session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!profileInit.ok) {
+          const json = await profileInit.json().catch(() => ({}));
+          await supabase.auth.signOut();
+          setError(json?.error || "Aucun compte joueur trouvé pour cet email. Créez d’abord votre compte via l’inscription joueurs.");
+          setLoading(false);
+          return;
+        }
 
+        const payload = await profileInit.json();
+        const profile = payload?.profile ?? null;
         if (!profile) {
           await supabase.auth.signOut();
           setError("Aucun compte joueur trouvé pour cet email. Créez d’abord votre compte via l’inscription joueurs.");

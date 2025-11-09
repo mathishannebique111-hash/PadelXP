@@ -1,5 +1,5 @@
 import Link from "next/link";
-import BadgeIcon from "./icons/BadgeIcon";
+import BadgeIcon from "../icons/BadgeIcon";
 
 type NavKey = "home" | "match" | "history" | "badges" | "club" | "challenges" | "reviews";
 
@@ -44,4 +44,3 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
     </div>
   );
 }
-
