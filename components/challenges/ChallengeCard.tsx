@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import BadgeIcon from "@/components/icons/BadgeIcon";
 
 interface PlayerChallenge {
   id: string;
@@ -57,29 +58,35 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
   const [claiming, setClaiming] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
   const [rewardValue, setRewardValue] = useState("");
+  const [hasClaimed, setHasClaimed] = useState(false);
 
+  const now = new Date();
+  const endDate = new Date(challenge.endDate);
+  const isExpired = now > endDate;
   const isCompleted = challenge.progress.current >= challenge.progress.target;
-  const canClaim = isCompleted && !challenge.rewardClaimed;
+  const isFailed = isExpired && !isCompleted;
+  const canClaim = isCompleted && !challenge.rewardClaimed && !hasClaimed && !isExpired;
 
-  console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] "${challenge.title}" - Progress: ${challenge.progress.current}/${challenge.progress.target}, isCompleted: ${isCompleted}, canClaim: ${canClaim}, rewardClaimed: ${challenge.rewardClaimed}`);
+  console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] "${challenge.title}" - Progress: ${challenge.progress.current}/${challenge.progress.target}, isCompleted: ${isCompleted}, isExpired: ${isExpired}, isFailed: ${isFailed}, canClaim: ${canClaim}, rewardClaimed: ${challenge.rewardClaimed}, hasClaimed: ${hasClaimed}`);
 
-  // Auto-claim quand le challenge est complété
+  // Auto-claim quand le challenge est complété (uniquement si pas expiré)
   useEffect(() => {
-    console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] useEffect triggered - canClaim: ${canClaim}, claiming: ${claiming}`);
-    if (canClaim && !claiming) {
+    console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] useEffect triggered - canClaim: ${canClaim}`);
+    if (canClaim) {
       console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🎯 Attempting to claim reward...`);
       claimReward();
     }
-  }, [canClaim, claiming]);
+  }, [canClaim]);
 
   const claimReward = async () => {
-    if (claiming || challenge.rewardClaimed) {
-      console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] ❌ Cannot claim: claiming=${claiming}, rewardClaimed=${challenge.rewardClaimed}`);
+    if (claiming || challenge.rewardClaimed || hasClaimed) {
+      console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] ❌ Cannot claim: claiming=${claiming}, rewardClaimed=${challenge.rewardClaimed}, hasClaimed=${hasClaimed}`);
       return;
     }
 
     console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🚀 Claiming reward...`);
     setClaiming(true);
+    setHasClaimed(true); // Marquer comme réclamé immédiatement pour éviter les doublons
     try {
       const response = await fetch("/api/challenges/claim-reward", {
         method: "POST",
@@ -111,14 +118,18 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] ⚠️ Error response:`, error);
         if (error.alreadyClaimed) {
           console.log("Récompense déjà réclamée");
+          // Garder hasClaimed = true car la récompense a déjà été réclamée
         } else {
-          // Ne pas afficher l'erreur si la table n'existe pas encore
+          // Réinitialiser hasClaimed en cas d'erreur pour permettre une nouvelle tentative
+          setHasClaimed(false);
           console.log("Récompense non disponible pour le moment");
         }
       }
     } catch (error) {
       // Erreur silencieuse pour éviter de polluer la console
       console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🔴 Exception:`, error);
+      // Réinitialiser hasClaimed en cas d'exception pour permettre une nouvelle tentative
+      setHasClaimed(false);
     } finally {
       setClaiming(false);
     }
@@ -150,9 +161,11 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
               {/* Récompense */}
               <div className="mx-auto mb-6 inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-yellow-400/25 to-amber-500/20 px-6 py-4 shadow-lg ring-1 ring-yellow-400/40">
-                <span className="text-4xl">
-                  {challenge.rewardType === "points" ? "⭐" : "🏆"}
-                </span>
+                {challenge.rewardType === "points" ? (
+                  <span className="text-4xl">⭐</span>
+                ) : (
+                  <BadgeIcon size={40} />
+                )}
                 <div className="text-left">
                   <div className="text-sm font-medium text-yellow-200/80">
                     Récompense
@@ -166,7 +179,9 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
               </div>
 
               <p className="text-sm text-white/70">
-                Vos points ont été ajoutés à votre compte
+                {challenge.rewardType === "points"
+                  ? "Vos points ont été ajoutés à votre compte"
+                  : "Le badge a été ajouté à votre page badges"}
               </p>
             </div>
           </div>
@@ -174,7 +189,20 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
       )}
 
       {/* Carte du challenge */}
-      <div className="group relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.03] p-6 shadow-xl transition-all duration-300 hover:border-white/20 hover:shadow-2xl">
+      <div className={`group relative rounded-3xl border p-6 shadow-xl transition-all duration-300 overflow-hidden ${
+        isCompleted
+          ? "border-emerald-500/60 bg-gradient-to-br from-emerald-500/10 to-green-500/5 shadow-emerald-500/20"
+          : isFailed
+          ? "border-red-500/60 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
+          : "border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.03] hover:border-white/20 hover:shadow-2xl"
+      }`}>
+        {/* Effet brillant style top joueurs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
+          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
+          </div>
+        </div>
+        
         {/* En-tête */}
         <div className="mb-5 flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -190,9 +218,11 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
               Récompense
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-2xl">
-                {challenge.rewardType === "points" ? "⭐" : "🏆"}
-              </span>
+              {challenge.rewardType === "points" ? (
+                <span className="text-2xl">⭐</span>
+              ) : (
+                <BadgeIcon size={28} />
+              )}
               <span className="text-lg font-bold text-white">
                 {challenge.rewardType === "points"
                   ? `${challenge.rewardLabel} pts`
@@ -202,22 +232,11 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
           </div>
         </div>
 
-        {/* Période */}
-        <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-xl">📅</span>
-            <div>
-              <div className="font-medium text-white/60">Période</div>
-              <div className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Progression */}
-        <div className="rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4 shadow-inner">
+        {/* Objectif */}
+        <div className="mb-5 rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4 shadow-inner">
           <div className="mb-3 flex items-start justify-between">
             <div>
-              <div className="mb-1 text-sm font-medium text-blue-200/90">Progression</div>
+              <div className="mb-1 text-sm font-medium text-blue-200/90">Objectif</div>
               <div className="text-xs text-white/70">{challenge.objective}</div>
             </div>
             <div className="text-right">
@@ -248,6 +267,40 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
             </div>
           )}
         </div>
+
+        {/* Période */}
+        <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-xl">📅</span>
+            <div>
+              <div className="font-medium text-white/60">Période</div>
+              <div className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Message de challenge terminé */}
+        {isExpired && (
+          <div className={`mb-5 rounded-2xl border px-4 py-3 ${
+            isCompleted
+              ? "border-emerald-500/40 bg-emerald-500/10"
+              : "border-red-500/40 bg-red-500/10"
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{isCompleted ? "✅" : "❌"}</span>
+              <div>
+                <div className={`font-bold ${isCompleted ? "text-emerald-300" : "text-red-300"}`}>
+                  Challenge terminé
+                </div>
+                <div className={`text-sm ${isCompleted ? "text-emerald-200/80" : "text-red-200/80"}`}>
+                  {isCompleted 
+                    ? "Félicitations ! Vous avez réussi ce challenge !"
+                    : "Ce challenge n'a pas été complété à temps."}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

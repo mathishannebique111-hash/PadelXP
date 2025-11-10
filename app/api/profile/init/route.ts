@@ -55,24 +55,164 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (existing) {
-    if (!existing.display_name) {
-      const { error: updateError } = await serviceClient
-        .from("profiles")
-        .update({ display_name: fullName })
-        .eq("id", user.id);
-      if (updateError) {
-        console.warn("[api/profile/init] update display_name warning", updateError);
-      }
+  let clubIdForUser: string | null = null;
+  let clubSlugForUser: string | null = null;
+  let clubNameForUser: string | null = null;
+  let clubLogoForUser: string | null = null;
+
+  const { data: clubAdmin } = await serviceClient
+    .from("club_admins")
+    .select("club_id, activated_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (clubAdmin?.activated_at) {
+    clubIdForUser = clubAdmin.club_id;
+  } else if (clubAdmin?.club_id && !clubAdmin.activated_at) {
+    const { data: activationRow, error: activationError } = await serviceClient
+      .from("club_admins")
+      .update({ activated_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .eq("club_id", clubAdmin.club_id)
+      .select("club_id, activated_at")
+      .maybeSingle();
+
+    if (activationError) {
+      console.error("[api/profile/init] activation update error", activationError);
+      return NextResponse.json(
+        {
+          error:
+            "Impossible d'activer votre invitation administrateur. Utilisez le lien reçu par email pour définir votre mot de passe.",
+          redirect: "/clubs/signup",
+        },
+        { status: 409 }
+      );
     }
-    return NextResponse.json({ ok: true, profile: { ...existing, display_name: existing.display_name || fullName } });
+
+    if (activationRow?.club_id) {
+      clubIdForUser = activationRow.club_id;
+    }
   }
 
-  const insertPayload = {
+  if (clubIdForUser) {
+    const { data: clubRow } = await serviceClient
+      .from("clubs")
+      .select("slug, name, logo_url")
+      .eq("id", clubIdForUser)
+      .maybeSingle();
+    if (clubRow) {
+      clubSlugForUser = clubSlugForUser ?? (clubRow.slug ?? null);
+      clubNameForUser = clubRow.name ?? null;
+      clubLogoForUser = clubRow.logo_url ?? null;
+    }
+  }
+
+  if (existing) {
+    const updates: Record<string, any> = {};
+    if (!existing.display_name) {
+      updates.display_name = fullName;
+    }
+    if (clubIdForUser && !existing.club_id) {
+      updates.club_id = clubIdForUser;
+    }
+    if (clubSlugForUser && !existing.club_slug) {
+      updates.club_slug = clubSlugForUser;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      const { error: updateError, data: updatedRows } = await serviceClient
+        .from("profiles")
+        .update(updates)
+        .eq("id", user.id)
+        .select("id, club_id, club_slug, display_name")
+        .maybeSingle();
+
+      if (!updateError && updatedRows) {
+        const profilePayload = {
+          ...updatedRows,
+          display_name: updatedRows.display_name || fullName,
+        };
+
+        if (clubIdForUser) {
+          try {
+            const { data: existingUser } = await serviceClient.auth.admin.getUserById(user.id);
+            const mergedMetadata = {
+              ...(existingUser?.user?.user_metadata || {}),
+              club_id: clubIdForUser,
+              club_slug: clubSlugForUser ?? profilePayload.club_slug ?? null,
+              club_name:
+                clubNameForUser ??
+                (existingUser?.user?.user_metadata?.club_name as string | null) ??
+                null,
+              club_logo_url:
+                clubLogoForUser ??
+                (existingUser?.user?.user_metadata?.club_logo_url as string | null) ??
+                null,
+            };
+            await serviceClient.auth.admin.updateUserById(user.id, {
+              user_metadata: mergedMetadata,
+            });
+          } catch (metadataError) {
+            console.warn("[api/profile/init] metadata update warning (updated profile)", metadataError);
+          }
+        }
+
+        return NextResponse.json({
+          ok: true,
+          profile: profilePayload,
+        });
+      }
+      if (updateError) {
+        console.warn("[api/profile/init] update warning", updateError);
+      }
+    }
+
+    if (clubIdForUser) {
+      try {
+        const { data: existingUser } = await serviceClient.auth.admin.getUserById(user.id);
+        const mergedMetadata = {
+          ...(existingUser?.user?.user_metadata || {}),
+          club_id: clubIdForUser,
+          club_slug: clubSlugForUser ?? existing.club_slug ?? null,
+          club_name:
+            clubNameForUser ??
+            (existingUser?.user?.user_metadata?.club_name as string | null) ??
+            null,
+          club_logo_url:
+            clubLogoForUser ??
+            (existingUser?.user?.user_metadata?.club_logo_url as string | null) ??
+            null,
+        };
+        await serviceClient.auth.admin.updateUserById(user.id, {
+          user_metadata: mergedMetadata,
+        });
+      } catch (metadataError) {
+        console.warn("[api/profile/init] metadata update warning", metadataError);
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      profile: {
+        ...existing,
+        club_id: existing.club_id ?? clubIdForUser ?? null,
+        club_slug: existing.club_slug ?? clubSlugForUser ?? null,
+        display_name: existing.display_name || fullName,
+      },
+    });
+  }
+
+  const insertPayload: Record<string, any> = {
     id: user.id,
     email: user.email,
     display_name: fullName,
   };
+  if (clubIdForUser) {
+    insertPayload.club_id = clubIdForUser;
+  }
+  if (clubSlugForUser) {
+    insertPayload.club_slug = clubSlugForUser;
+  }
 
   const { data: inserted, error: insertError } = await serviceClient
     .from("profiles")
@@ -85,5 +225,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertError.message, code: insertError.code }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, profile: inserted });
+  if (clubIdForUser) {
+    try {
+      const { data: existingUser } = await serviceClient.auth.admin.getUserById(user.id);
+      const mergedMetadata = {
+        ...(existingUser?.user?.user_metadata || {}),
+        club_id: clubIdForUser,
+        club_slug: clubSlugForUser,
+        club_name:
+          clubNameForUser ??
+          (existingUser?.user?.user_metadata?.club_name as string | null) ??
+          null,
+        club_logo_url:
+          clubLogoForUser ??
+          (existingUser?.user?.user_metadata?.club_logo_url as string | null) ??
+          null,
+      };
+      await serviceClient.auth.admin.updateUserById(user.id, {
+        user_metadata: mergedMetadata,
+      });
+    } catch (metadataError) {
+      console.warn("[api/profile/init] metadata update warning (insert path)", metadataError);
+    }
+  }
+
+  const responsePayload: Record<string, any> = { ok: true, profile: inserted };
+  if (clubIdForUser) {
+    responsePayload.redirect = "/dashboard";
+  }
+  return NextResponse.json(responsePayload);
 }

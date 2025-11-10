@@ -212,63 +212,71 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   const computedBadges = getBadges(stats);
 
   return (
-    <div className="rounded-xl border p-6 bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-      {/* Notifier client pour les changements de niveau */}
-      <LevelUpNotifier tier={tier.label} />
-      {/* Notifier client pour célébrer les nouveaux badges */}
-      <BadgesUnlockNotifier obtained={computedBadges} />
-      {/* Badge niveau en haut et visible */}
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-base font-semibold text-gray-900">Vos statistiques</h3>
-        <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="md" />
-      </div>
-      
-      {/* Grid 2x3 compact pour les stats */}
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-lg p-3 bg-gray-50">
-          <div className="text-xs text-gray-600 mb-1">Points totaux</div>
-          <div className="text-2xl font-bold text-gray-900 tabular-nums">{points}</div>
-          {challengePoints > 0 && (
-            <div className="mt-1 text-[10px] text-amber-600 font-medium">
-              +{challengePoints} challenges 🏆
-            </div>
-          )}
+    <div className="rounded-2xl border p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]" style={{
+      background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
+      borderColor: "rgba(72,128,210,0.55)"
+    }}>
+      <div>
+        {/* Notifier client pour les changements de niveau */}
+        <LevelUpNotifier tier={tier.label} />
+        {/* Notifier client pour célébrer les nouveaux badges */}
+        <BadgesUnlockNotifier obtained={computedBadges} />
+        {/* Badge niveau en haut et visible */}
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">Vos statistiques</h3>
+          <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="md" />
         </div>
-        <div className="rounded-lg p-3 bg-gray-50">
-          <div className="text-xs text-gray-600 mb-1">Matchs</div>
-          <div className="text-2xl font-bold text-gray-900 tabular-nums">{matches}</div>
-        </div>
-        <div className="rounded-lg p-3 bg-gray-50">
-          <div className="text-xs text-gray-600 mb-1">Victoires</div>
-          <div className="text-2xl font-bold text-green-600 tabular-nums">{wins}</div>
-        </div>
-        <div className="rounded-lg p-3 bg-gray-50">
-          <div className="text-xs text-gray-600 mb-1">Défaites</div>
-          <div className="text-2xl font-bold text-red-600 tabular-nums">{losses}</div>
-        </div>
-        <div className="rounded-lg p-3 bg-gray-50">
-          <div className="text-xs text-gray-600 mb-1">Sets gagnés</div>
-          <div className="text-2xl font-bold text-green-600 tabular-nums">{setsWon}</div>
-        </div>
-        <div className="rounded-lg p-3 bg-gray-50">
-          <div className="text-xs text-gray-600 mb-1">Sets perdus</div>
-          <div className="text-2xl font-bold text-red-600 tabular-nums">{setsLost}</div>
-        </div>
-      </div>
-      
-      {/* Badges en bas */}
-      {computedBadges.length > 0 && (
-        <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-          <div className="mb-2 text-xs text-gray-600">Badges</div>
-          <div className="flex flex-wrap gap-2">
-            {computedBadges.map((b, idx) => (
-              <span key={idx} title={b.title} className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium text-gray-900" style={{ background: "rgba(199,255,0,0.2)", border: "1px solid rgba(199,255,0,0.5)" }}>
-                {b.icon} {b.title}
-              </span>
-            ))}
+        
+        {/* Grid 2x3 compact pour les stats */}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-lg border border-white/18 bg-black/25 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Points totaux</div>
+            <div className="text-2xl font-bold text-white tabular-nums">{points}</div>
+            {challengePoints > 0 && (
+              <div className="mt-1 text-[10px] text-amber-300 font-medium">
+                +{challengePoints} challenges 🏆
+              </div>
+            )}
+          </div>
+          <div className="rounded-lg border border-white/18 bg-black/25 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Matchs</div>
+            <div className="text-2xl font-bold text-white tabular-nums">{matches}</div>
+          </div>
+          <div className="rounded-lg border border-emerald-400/45 bg-emerald-500/15 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Victoires</div>
+            <div className="text-2xl font-bold text-emerald-50 tabular-nums">{wins}</div>
+          </div>
+          <div className="rounded-lg border border-rose-400/45 bg-rose-500/15 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Défaites</div>
+            <div className="text-2xl font-bold text-rose-100 tabular-nums">{losses}</div>
+          </div>
+          <div className="rounded-lg border border-emerald-400/45 bg-emerald-500/15 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Sets gagnés</div>
+            <div className="text-2xl font-bold text-emerald-50 tabular-nums">{setsWon}</div>
+          </div>
+          <div className="rounded-lg border border-rose-400/45 bg-rose-500/15 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Sets perdus</div>
+            <div className="text-2xl font-bold text-rose-100 tabular-nums">{setsLost}</div>
           </div>
         </div>
-      )}
+        
+        {/* Badges en bas */}
+        {computedBadges.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-white/20">
+            <div className="mb-2 text-xs uppercase tracking-[0.25em] text-white/60">Badges</div>
+            <div className="flex flex-wrap gap-2">
+              {computedBadges.map((b, idx) => (
+                <span key={idx} title={b.title} className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium text-white/90" style={{ 
+                  background: "rgba(199,255,0,0.2)",
+                  border: "1px solid rgba(199,255,0,0.5)"
+                }}>
+                  {b.icon} {b.title}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

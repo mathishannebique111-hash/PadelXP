@@ -1,6 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getUserClubInfo, getClubDashboardData } from "@/lib/utils/club-utils";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseAdmin =
+  SUPABASE_URL && SERVICE_ROLE_KEY
+    ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+    : null;
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
@@ -27,7 +38,7 @@ export default async function MembersPage() {
 
   const { clubId, clubSlug } = await getUserClubInfo();
 
-  if (!clubId || !clubSlug) {
+  if (!clubId) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-extrabold">Membres</h1>
@@ -40,12 +51,40 @@ export default async function MembersPage() {
 
   const { members } = await getClubDashboardData(clubId, clubSlug);
 
+  let invitedAdminIds = new Set<string>();
+
+  if (supabaseAdmin) {
+    const { data: adminRows } = await supabaseAdmin
+      .from("club_admins")
+      .select("user_id, role")
+      .eq("club_id", clubId);
+    invitedAdminIds = new Set(
+      (adminRows || [])
+        .filter((admin) => admin.role === "admin")
+        .map((admin) => admin.user_id)
+        .filter((id): id is string => typeof id === "string")
+    );
+  } else {
+    const { data: adminRows } = await supabase
+      .from("club_admins")
+      .select("user_id, role")
+      .eq("club_id", clubId);
+    invitedAdminIds = new Set(
+      (adminRows || [])
+        .filter((admin) => admin.role === "admin")
+        .map((admin) => admin.user_id)
+        .filter((id): id is string => typeof id === "string")
+    );
+  }
+
+  const filteredMembers = members.filter((member) => !invitedAdminIds.has(member.id));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-extrabold">Membres</h1>
         <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm text-white/70">
-          {members.length} joueur{members.length > 1 ? "s" : ""}
+          {filteredMembers.length} joueur{filteredMembers.length > 1 ? "s" : ""}
         </span>
       </div>
 
@@ -63,14 +102,14 @@ export default async function MembersPage() {
             </tr>
           </thead>
           <tbody>
-            {members.length === 0 && (
+            {filteredMembers.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-sm text-white/60">
                   Aucun joueur inscrit pour le moment.
                 </td>
               </tr>
             )}
-            {members.map((member) => {
+            {filteredMembers.map((member) => {
               const name =
                 member.display_name ||
                 `${member.first_name ?? ""} ${member.last_name ?? ""}`.trim() ||

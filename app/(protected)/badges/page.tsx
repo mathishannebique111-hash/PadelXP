@@ -116,16 +116,28 @@ export default async function BadgesPage() {
 
   if (!userClubId) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 text-white">
-        <div className="mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Badges & récompenses</h1>
-            <LogoutButton />
-          </div>
-          <NavigationBar currentPage="badges" />
+      <div className="relative min-h-screen overflow-hidden bg-black">
+        {/* Background avec overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
+        
+        {/* Pattern animé */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
-          <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d’invitation communiqué par votre club.</p>
+
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
+          <div className="mb-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Badges & récompenses</h1>
+              <LogoutButton />
+            </div>
+            <NavigationBar currentPage="badges" />
+          </div>
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+            <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d'invitation communiqué par votre club.</p>
+          </div>
         </div>
       </div>
     );
@@ -241,30 +253,60 @@ export default async function BadgesPage() {
 
   const obtainedCount = badgesWithStatus.filter((b) => b.obtained).length;
 
+  // Récupérer les badges de challenges personnalisés
+  const { data: challengeBadges } = await supabaseAdmin
+    .from("challenge_badges")
+    .select("id, badge_name, badge_emoji, earned_at")
+    .eq("user_id", user.id)
+    .order("earned_at", { ascending: false });
+
+  const challengeBadgesCount = challengeBadges?.length || 0;
+  const totalBadgesCount = obtainedCount + challengeBadgesCount;
+
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8">
-      {/* Pop-up de célébration pour les nouveaux badges */}
-      <BadgesUnlockNotifier obtained={obtainedBadges} />
-      <div className="mb-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            Badges
-            <BadgeIcon size={32} />
-          </h1>
-          <LogoutButton />
-        </div>
-        <NavigationBar currentPage="badges" />
+    <div className="relative min-h-screen overflow-hidden bg-black">
+      {/* Background avec overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
+      
+      {/* Pattern animé */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
+
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8">
+        {/* Pop-up de célébration pour les nouveaux badges */}
+        <BadgesUnlockNotifier obtained={obtainedBadges} />
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              Badges
+              <BadgeIcon size={32} />
+            </h1>
+            <LogoutButton />
+          </div>
+          <NavigationBar currentPage="badges" />
+        </div>
 
       {/* Statistiques */}
       <div className="mb-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-8 border-2 border-blue-400 shadow-xl">
         <div className="mb-4 text-center">
           <div className="mb-3 text-5xl font-bold text-white">
-            <span className="text-yellow-300">{obtainedCount}</span>
-            <span className="text-white/80">/{ALL_BADGES.length}</span>
+            <span className="text-yellow-300">{totalBadgesCount}</span>
+            <span className="text-white/80 text-3xl ml-2">Badge{totalBadgesCount > 1 ? "s" : ""} au total</span>
           </div>
-          <div className="text-2xl font-bold text-white mb-2">
-            Badge{obtainedCount > 1 ? "s" : ""} débloqué{obtainedCount > 1 ? "s" : ""}
+          <div className="flex justify-center gap-8 text-lg text-white/90">
+            <div>
+              <span className="font-bold text-yellow-300">{obtainedCount}</span>
+              <span className="ml-1">badge{obtainedCount > 1 ? "s" : ""} standard{obtainedCount > 1 ? "s" : ""}</span>
+            </div>
+            {challengeBadgesCount > 0 && (
+              <div>
+                <span className="font-bold text-yellow-300">{challengeBadgesCount}</span>
+                <span className="ml-1">badge{challengeBadgesCount > 1 ? "s" : ""} de challenge{challengeBadgesCount > 1 ? "s" : ""}</span>
+              </div>
+            )}
           </div>
         </div>
         {obtainedCount < ALL_BADGES.length && (
@@ -279,14 +321,55 @@ export default async function BadgesPage() {
         )}
       </div>
 
-      {/* Grille des badges */}
+      {/* Badges de challenges */}
+      {challengeBadges && challengeBadges.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+            <span>🏆</span>
+            <span>Badges de Challenges</span>
+          </h2>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+            {challengeBadges.map((badge) => (
+              <div
+                key={badge.id}
+                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-3 pt-5 pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[180px] items-center text-center"
+              >
+                <div className="mb-3 flex flex-col items-center gap-3 flex-1">
+                  <span className="text-4xl">
+                    {badge.badge_emoji}
+                  </span>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold leading-tight text-gray-900">
+                      {badge.badge_name}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                      Obtenu via un challenge
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-auto w-full rounded-lg bg-gradient-to-r from-yellow-100 to-amber-100 px-3 py-2 text-xs font-semibold text-yellow-800 tabular-nums">
+                  ✓ Débloqué le {new Date(badge.earned_at).toLocaleDateString('fr-FR')}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Grille des badges standards */}
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+          <span>🎯</span>
+          <span>Badges Standards</span>
+        </h2>
+      </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         {badgesWithStatus.map((badge, idx) => (
           <div
             key={idx}
-            className={`rounded-xl border px-3 pt-5 pb-3 transition-all hover:scale-[1.005] hover:shadow-md flex flex-col min-h-[140px] items-center text-center ${
+            className={`rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center ${
               badge.obtained
-                ? "border-blue-500 bg-white shadow-md"
+                ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
                 : "border-gray-200 bg-gray-50 opacity-75"
             }`}
           >
@@ -305,13 +388,16 @@ export default async function BadgesPage() {
                 <p className="mt-1 text-xs leading-relaxed text-gray-600">{badge.description}</p>
               </div>
             </div>
-            {badge.obtained && (
-              <div className="mt-auto w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
-                ✓ Débloqué
-              </div>
-            )}
+            <div className="mt-auto w-full h-[32px] flex items-center justify-center">
+              {badge.obtained && (
+                <div className="w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
+                  ✓ Débloqué
+                </div>
+              )}
+            </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

@@ -10,6 +10,78 @@ const supabaseAdmin = createServiceClient(
   { auth: { persistSession: false } }
 );
 
+const BUCKET_NAME = "club-challenges";
+
+// Liste d'emojis disponibles pour les badges de challenges
+const BADGE_EMOJIS = [
+  "🏅", "🎖️", "🥇", "🥈", "🥉", "🎯", "⭐", "🌟", "✨", "💫",
+  "🔥", "⚡", "💪", "🚀", "🎊", "🎉", "🎁", "🏆", "👑", "💎",
+  "🌈", "☀️", "🌙", "⚔️", "🛡️", "🎪", "🎨", "🎭", "🎬", "🎼"
+];
+
+// Fonction pour obtenir un emoji déterministe basé sur l'ID du challenge
+function getEmojiForChallenge(challengeId: string): string {
+  // Calculer un hash simple de l'ID
+  let hash = 0;
+  for (let i = 0; i < challengeId.length; i++) {
+    const char = challengeId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Utiliser le hash pour choisir un emoji
+  const index = Math.abs(hash) % BADGE_EMOJIS.length;
+  return BADGE_EMOJIS[index];
+}
+
+type ChallengeRecord = {
+  id: string;
+  club_id: string;
+  title: string;
+  start_date: string;
+  end_date: string;
+  objective: string;
+  reward_type: "points" | "badge";
+  reward_label: string;
+  created_at: string;
+};
+
+async function resolveClubId(userId: string) {
+  // Essayer via le profil (pour les joueurs)
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("club_id")
+    .eq("id", userId)
+    .maybeSingle();
+  
+  if (profile?.club_id) {
+    return profile.club_id;
+  }
+  
+  console.warn("[claim-reward] resolveClubId: aucun club trouvé pour userId", userId);
+  return null;
+}
+
+async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
+  const { data, error } = await supabaseAdmin.storage.from(BUCKET_NAME).download(`${clubId}.json`);
+  if (error || !data) {
+    if (error && !error.message?.toLowerCase().includes("not found")) {
+      console.warn("[claim-reward] load error", error);
+    }
+    return [];
+  }
+  try {
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      return parsed as ChallengeRecord[];
+    }
+  } catch (err) {
+    console.warn("[claim-reward] invalid JSON", err);
+  }
+  return [];
+}
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -57,7 +129,36 @@ export async function POST(req: Request) {
 
     console.log(`[claim-reward] User ${user.id} claiming reward for challenge ${challengeId}`);
 
-    // 1) Vérifier si la récompense a déjà été attribuée
+    // 1) Vérifier que le challenge existe et n'est pas expiré
+    const clubId = await resolveClubId(user.id);
+    if (!clubId) {
+      return NextResponse.json(
+        { error: "Profil joueur introuvable" },
+        { status: 404 }
+      );
+    }
+
+    const challenges = await loadChallenges(clubId);
+    const challenge = challenges.find(c => c.id === challengeId);
+    
+    if (!challenge) {
+      return NextResponse.json(
+        { error: "Challenge introuvable" },
+        { status: 404 }
+      );
+    }
+
+    const now = new Date();
+    const endDate = new Date(challenge.end_date);
+    if (now > endDate) {
+      console.log(`[claim-reward] ❌ Challenge expired (end: ${challenge.end_date})`);
+      return NextResponse.json(
+        { error: "Ce challenge est terminé et ne peut plus être réclamé" },
+        { status: 403 }
+      );
+    }
+
+    // 2) Vérifier si la récompense a déjà été attribuée
     const { data: existing, error: checkError } = await supabaseAdmin
       .from("challenge_rewards")
       .select("id")
@@ -81,7 +182,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2) Si la récompense est en points, ajouter les points au joueur
+    // 3) Si la récompense est en points, ajouter les points au joueur
     if (rewardType === "points") {
       const points = parseInt(rewardValue, 10);
       if (isNaN(points) || points <= 0) {
@@ -137,11 +238,35 @@ export async function POST(req: Request) {
       console.log(`[claim-reward] 🔍 Verification - Points in DB after update:`, verifyProfile?.points);
     }
 
-    // 3) Si la récompense est un badge, créer le badge
-    // TODO: Implémenter la création de badge personnalisé si nécessaire
-    // Pour l'instant, on enregistre juste la récompense
+    // 4) Si la récompense est un badge, créer le badge
+    if (rewardType === "badge") {
+      const badgeName = rewardValue;
+      const badgeEmoji = getEmojiForChallenge(challengeId);
+      
+      console.log(`[claim-reward] Creating challenge badge: ${badgeEmoji} ${badgeName}`);
+      
+      // Créer le badge dans la table challenge_badges
+      const { error: badgeError } = await supabaseAdmin
+        .from("challenge_badges")
+        .insert({
+          user_id: user.id,
+          challenge_id: challengeId,
+          badge_name: badgeName,
+          badge_emoji: badgeEmoji,
+        });
+      
+      if (badgeError) {
+        console.error("[claim-reward] ❌ Error creating badge:", badgeError);
+        return NextResponse.json(
+          { error: `Erreur lors de la création du badge: ${badgeError.message}. Avez-vous exécuté le script SQL pour créer la table challenge_badges ?` },
+          { status: 500 }
+        );
+      }
+      
+      console.log(`[claim-reward] ✅ Challenge badge created successfully: ${badgeEmoji} ${badgeName}`);
+    }
 
-    // 4) Enregistrer la récompense comme attribuée
+    // 5) Enregistrer la récompense comme attribuée
     const { error: insertError } = await supabaseAdmin
       .from("challenge_rewards")
       .insert({

@@ -99,10 +99,17 @@ function isWinObjective(objective: string) {
   return /(remporter|gagner|victoire|victoires|remporte|gagne|gagné|remporté|win|wins|won)/.test(lower);
 }
 
+function isDifferentPartnersObjective(objective: string) {
+  const lower = objective.toLowerCase();
+  return /(partenaire|partenaires|coéquipier|coéquipiers|joueur|joueurs).*(différent|différents|différente|différentes|divers|variés)/.test(lower) ||
+         /(différent|différents|différente|différentes|divers|variés).*(partenaire|partenaires|coéquipier|coéquipiers|joueur|joueurs)/.test(lower);
+}
+
 type MatchHistoryItem = {
   matchId: string;
   playedAt: string | null;
   isWinner: boolean;
+  partnerId?: string | null; // ID du partenaire (autre joueur de la même équipe)
 };
 
 async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
@@ -144,6 +151,24 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
 
   console.log(`[loadPlayerHistory] ✅ Found ${matches.length} matches for user ${userId}`);
 
+  // ÉTAPE 3: Récupérer tous les participants pour identifier les partenaires
+  const { data: allParticipants } = await supabaseAdmin
+    .from("match_participants")
+    .select("match_id, user_id, team, player_type")
+    .in("match_id", matchIds);
+
+  // Créer une map des partenaires par match
+  const partnerMap = new Map<string, string | null>();
+  if (allParticipants) {
+    allParticipants.forEach((p: any) => {
+      const userTeam = teamMap.get(p.match_id);
+      // Si c'est un joueur de la même équipe que l'utilisateur, mais pas l'utilisateur lui-même
+      if (p.user_id !== userId && p.team === userTeam && p.player_type === "user") {
+        partnerMap.set(p.match_id, p.user_id);
+      }
+    });
+  }
+
   return matches.map((match) => {
     const team = teamMap.get(match.id) || null;
     const teamNum = typeof team === "number" ? team : team ? Number(team) : null;
@@ -156,12 +181,14 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
       isWinner = teamNum === 1 ? match.score_team1 > match.score_team2 : match.score_team2 > match.score_team1;
     }
 
-    console.log(`[loadPlayerHistory] Match ${match.id.substring(0, 8)}: team=${teamNum}, isWinner=${isWinner}, playedAt=${match.played_at}`);
+    const partnerId = partnerMap.get(match.id) || null;
+    console.log(`[loadPlayerHistory] Match ${match.id.substring(0, 8)}: team=${teamNum}, isWinner=${isWinner}, partnerId=${partnerId?.substring(0, 8) || 'none'}, playedAt=${match.played_at}`);
 
     return {
       matchId: match.id,
       playedAt: match.played_at ?? null,
       isWinner,
+      partnerId,
     };
   });
 }
@@ -169,6 +196,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
 function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): { current: number; target: number } {
   const target = Math.max(1, extractTarget(record.objective));
   const metricIsWin = isWinObjective(record.objective);
+  const isDifferentPartners = isDifferentPartnersObjective(record.objective);
   
   // Convertir les dates en objets Date et normaliser au début/fin de journée en UTC
   const start = new Date(record.start_date);
@@ -184,6 +212,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     objective: record.objective,
     target,
     metricIsWin,
+    isDifferentPartners,
     period: { 
       start: start.toISOString(), 
       end: end.toISOString(),
@@ -204,15 +233,36 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
       return false;
     }
     const inPeriod = played >= start && played <= end;
-    console.log(`  ${inPeriod ? '✅' : '❌'} Match ${item.matchId.substring(0, 8)}: played=${played.toISOString()} (${played.toString()}), isWinner=${item.isWinner}, inPeriod=${inPeriod}`);
+    console.log(`  ${inPeriod ? '✅' : '❌'} Match ${item.matchId.substring(0, 8)}: played=${played.toISOString()} (${played.toString()}), isWinner=${item.isWinner}, partnerId=${item.partnerId?.substring(0, 8) || 'none'}, inPeriod=${inPeriod}`);
     return inPeriod;
   });
 
-  const current = metricIsWin
-    ? relevant.filter((item) => item.isWinner).length
-    : relevant.length;
+  let current = 0;
+  
+  if (isDifferentPartners) {
+    // Pour les challenges avec partenaires différents, compter uniquement les partenaires uniques
+    const uniquePartners = new Set<string>();
+    
+    relevant.forEach((item) => {
+      if (item.partnerId) {
+        // Si l'objectif mentionne "gagner/remporter", ne compter que les victoires
+        // Sinon (juste "jouer"), compter tous les matchs
+        if (!metricIsWin || item.isWinner) {
+          uniquePartners.add(item.partnerId);
+        }
+      }
+    });
+    
+    current = uniquePartners.size;
+    console.log(`[Challenge ${record.id}] Different partners found:`, Array.from(uniquePartners).map(id => id.substring(0, 8)));
+    console.log(`[Challenge ${record.id}] Counting ${metricIsWin ? 'wins only' : 'all matches'} with different partners`);
+  } else if (metricIsWin) {
+    current = relevant.filter((item) => item.isWinner).length;
+  } else {
+    current = relevant.length;
+  }
 
-  console.log(`[Challenge ${record.id}] Result: ${current}/${target} (${relevant.length} relevant matches, ${metricIsWin ? 'counting wins only' : 'counting all'})`);
+  console.log(`[Challenge ${record.id}] Result: ${current}/${target} (${relevant.length} relevant matches, ${isDifferentPartners ? 'counting unique partners' : metricIsWin ? 'counting wins only' : 'counting all'})`);
 
   return {
     current: Math.min(current, target),
@@ -286,7 +336,21 @@ export async function GET(request: Request) {
     console.warn("[api/player/challenges] ⚠️ Exception fetching rewards:", err);
   }
 
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 1 jour = 24h
+
   const challenges: ChallengeResponse[] = records
+    .filter((record) => {
+      // Filtrer les challenges expirés depuis plus d'1 jour
+      const endDate = new Date(record.end_date);
+      const isExpiredMoreThanOneDay = endDate < oneDayAgo;
+      
+      if (isExpiredMoreThanOneDay) {
+        console.log(`[Challenge ${record.id.substring(0, 8)}] Filtered out - expired more than 1 day ago (end: ${record.end_date})`);
+        return false;
+      }
+      return true;
+    })
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     .map((record) => {
       const progress = computeProgress(record, history);

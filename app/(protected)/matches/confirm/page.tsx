@@ -96,40 +96,52 @@ export default function MatchConfirmPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-16">
-      <div className="mb-4 flex justify-end">
-        <LogoutButton />
+    <div className="relative min-h-screen overflow-hidden bg-black">
+      {/* Background avec overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
+      
+      {/* Pattern animé */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
-      <div className="rounded-2xl bg-white p-8 shadow-lg">
-        <div className="mb-6 text-center">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">Confirmer le match</h1>
-          <p className="text-gray-600">Un joueur a enregistré un match avec vous. Veuillez confirmer le score.</p>
+
+      <div className="relative z-10 mx-auto w-full max-w-2xl px-4 py-16">
+        <div className="mb-4 flex justify-end">
+          <LogoutButton />
         </div>
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>
-        )}
-
-        <div className="mb-6 space-y-4">
-          <div className="rounded-lg bg-gray-50 p-4">
-            <p className="text-sm text-gray-600">Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.</p>
+        <div className="rounded-2xl bg-white p-8 shadow-lg">
+          <div className="mb-6 text-center">
+            <h1 className="mb-2 text-2xl font-bold text-gray-900">Confirmer le match</h1>
+            <p className="text-gray-600">Un joueur a enregistré un match avec vous. Veuillez confirmer le score.</p>
           </div>
-        </div>
 
-        <div className="flex gap-4">
-          <button
-            onClick={handleConfirm}
-            disabled={loading || confirmed}
-            className="flex-1 rounded-md bg-green-600 px-6 py-3 font-semibold text-white transition-all hover:bg-green-500 disabled:opacity-50"
-          >
-            {loading ? "Confirmation..." : confirmed ? "Confirmé ✓" : "Confirmer le match"}
-          </button>
-          <Link
-            href="/home"
-            className="flex-1 rounded-md border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-700 transition-all hover:bg-gray-50"
-          >
-            Plus tard
-          </Link>
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>
+          )}
+
+          <div className="mb-6 space-y-4">
+            <div className="rounded-lg bg-gray-50 p-4">
+              <p className="text-sm text-gray-600">Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.</p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={handleConfirm}
+              disabled={loading || confirmed}
+              className="flex-1 rounded-md bg-green-600 px-6 py-3 font-semibold text-white transition-all hover:bg-green-500 disabled:opacity-50"
+            >
+              {loading ? "Confirmation..." : confirmed ? "Confirmé ✓" : "Confirmer le match"}
+            </button>
+            <Link
+              href="/home"
+              className="flex-1 rounded-md border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-700 transition-all hover:bg-gray-50"
+            >
+              Plus tard
+            </Link>
+          </div>
         </div>
       </div>
     </div>

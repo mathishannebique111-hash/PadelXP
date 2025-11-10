@@ -15,6 +15,7 @@ export default function ClubsLoginPage() {
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const justCreated = searchParams?.get("created") === "1";
+  const errorParam = searchParams?.get("error");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -23,7 +24,15 @@ export default function ClubsLoginPage() {
       setSignupSuccess(true);
       sessionStorage.removeItem("club_signup_success");
     }
-  }, []);
+    
+    if (errorParam === "no_access") {
+      setError("Vous n'avez plus accès à ce compte club. Contactez le propriétaire si c'est une erreur.");
+    } else if (errorParam === "invite_incomplete") {
+      setError("Votre lien d'invitation est incomplet. Veuillez cliquer directement sur le lien reçu par email ou demander un nouvel email d'invitation.");
+    } else if (errorParam === "invite_invalid") {
+      setError("Ce lien d'invitation n'est plus valide ou a déjà été utilisé. Contactez le propriétaire du club pour en obtenir un nouveau.");
+    }
+  }, [errorParam]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +51,41 @@ export default function ClubsLoginPage() {
         return;
       }
 
-      if (data?.user) {
+      if (data?.session) {
+        const profileInit = await fetch("/api/profile/init", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!profileInit.ok) {
+          const payload = await profileInit.json().catch(() => ({}));
+          await supabase.auth.signOut();
+          setError(
+            payload?.error ||
+              "Impossible d'initialiser votre accès club. Veuillez contacter le propriétaire du compte."
+          );
+          setLoading(false);
+          return;
+        }
+
+        const payload = await profileInit.json();
+
+        if (payload?.redirect) {
+          router.replace(payload.redirect);
+          router.refresh();
+          return;
+        }
+
         const nextPath = searchParams?.get("next") || "/dashboard";
         router.push(nextPath);
         router.refresh();
+      } else {
+        setError("Session introuvable. Réessayez.");
+        setLoading(false);
       }
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue");

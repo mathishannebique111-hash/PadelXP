@@ -373,3 +373,53 @@ html {
     transform: scale(1) translateY(0);
   }
 }
+
+/* Animation brillante pour les cartes de challenges (style top joueurs) */
+@keyframes shine-challenge {
+  0% {
+    transform: translate(-150%, -150%);
+  }
+  100% {
+    transform: translate(150%, 150%);
+  }
+}
+
+.animate-shine-challenge {
+  animation: shine-challenge 3s infinite linear;
+}
+
+.challenge-shine-gradient {
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 45%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.1) 55%,
+    transparent 70%
+  );
+}
+
+/* Animation brillante au hover pour les badges débloqués (style challenges) */
+@keyframes shine-hover-once {
+  0% {
+    transform: translate(-150%, -150%);
+  }
+  100% {
+    transform: translate(150%, 150%);
+  }
+}
+
+.animate-shine-hover-once {
+  animation: shine-hover-once 1.5s linear forwards;
+}
+
+.badge-shine-hover {
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(59, 130, 246, 0.15) 45%,
+    rgba(59, 130, 246, 0.35) 50%,
+    rgba(59, 130, 246, 0.15) 55%,
+    transparent 70%
+  );
+}

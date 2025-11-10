@@ -196,7 +196,34 @@ export async function GET(request: Request) {
   }
 
   const records = await loadChallenges(clubId);
-  const challenges = records
+  
+  // Calculer la date d'il y a 1 jour
+  const oneDayAgo = new Date();
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+  
+  // Filtrer pour supprimer les challenges terminés depuis plus d'un jour
+  const filteredRecords = records.filter((record) => {
+    const endDate = new Date(record.end_date);
+    const status = computeStatus(record);
+    
+    // Garder les challenges actifs, à venir, et terminés depuis moins d'un jour
+    if (status === "completed") {
+      return endDate >= oneDayAgo;
+    }
+    return true;
+  });
+  
+  // Si des challenges ont été supprimés, sauvegarder la liste mise à jour
+  if (filteredRecords.length < records.length) {
+    try {
+      await saveChallenges(clubId, filteredRecords);
+      console.log(`[api/clubs/challenges] Supprimé ${records.length - filteredRecords.length} challenge(s) terminé(s) depuis plus d'un jour`);
+    } catch (error) {
+      console.error("[api/clubs/challenges] Erreur lors de la sauvegarde après nettoyage", error);
+    }
+  }
+  
+  const challenges = filteredRecords
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     .map((record) => ({
       id: record.id,

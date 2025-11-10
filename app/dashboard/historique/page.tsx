@@ -17,7 +17,7 @@ export default async function DashboardHistoriquePage() {
 
   const { clubId, clubSlug } = await getUserClubInfo();
 
-  if (!clubId || !clubSlug) {
+  if (!clubId) {
     return (
       <div className="space-y-6">
         <header className="flex items-center justify-between">

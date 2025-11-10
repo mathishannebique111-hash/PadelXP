@@ -52,15 +52,18 @@ export default function EmailLoginForm({
             "Content-Type": "application/json",
           },
         });
+        const payload = await profileInit.json().catch(() => null);
         if (!profileInit.ok) {
-          const json = await profileInit.json().catch(() => ({}));
           await supabase.auth.signOut();
-          setError(json?.error || "Aucun compte joueur trouvé pour cet email. Créez d’abord votre compte via l’inscription joueurs.");
+          if (payload?.redirect) {
+            router.replace(payload.redirect as string);
+            return;
+          }
+          setError(payload?.error || "Aucun compte joueur trouvé pour cet email. Créez d’abord votre compte via l’inscription joueurs.");
           setLoading(false);
           return;
         }
 
-        const payload = await profileInit.json();
         const profile = payload?.profile ?? null;
         if (!profile) {
           await supabase.auth.signOut();
@@ -69,9 +72,18 @@ export default function EmailLoginForm({
           return;
         }
 
-        let finalRedirect = customRedirect || redirectTo;
-        if (profile.club_slug) {
-          finalRedirect = `/club/${profile.club_slug}/profil`;
+        let finalRedirect =
+          payload?.redirect ||
+          customRedirect ||
+          redirectTo;
+
+        const wantsClubDashboard =
+          (payload?.redirect && payload.redirect.startsWith("/dashboard")) ||
+          (customRedirect && customRedirect.startsWith("/dashboard")) ||
+          redirectTo.startsWith("/dashboard");
+
+        if (!payload?.redirect && profile.club_slug && wantsClubDashboard) {
+          finalRedirect = "/dashboard";
         }
 
         router.replace(finalRedirect);

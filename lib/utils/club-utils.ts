@@ -181,6 +181,22 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
   }
 
   if (supabaseAdmin) {
+    // Vérifier si l'utilisateur est un administrateur de club via club_admins
+    if (!clubId) {
+      const { data: clubAdminData, error: clubAdminError } = await supabaseAdmin
+        .from("club_admins")
+        .select("club_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (clubAdminData?.club_id) {
+        clubId = clubAdminData.club_id;
+        console.log("[club-utils] Found club via club_admins", { userId: user.id, clubId });
+      } else if (clubAdminError) {
+        console.warn("[club-utils] getUserClubInfo: club_admins lookup failed", clubAdminError.message ?? clubAdminError);
+      }
+    }
+
     const { data: adminProfile, error: adminError } = await supabaseAdmin
       .from("profiles")
       .select("club_id, club_slug, clubs(name, logo_url)")

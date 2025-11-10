@@ -27,7 +27,7 @@ export default async function ClassementPage() {
 
   const { clubId, clubSlug } = await getUserClubInfo();
 
-  if (!clubId || !clubSlug) {
+  if (!clubId) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-extrabold">Classement</h1>

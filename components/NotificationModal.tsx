@@ -11,11 +11,11 @@ export default function NotificationModal({ type, onClose }: NotificationModalPr
   useEffect(() => {
     console.log(`[NotificationModal] 🎬 MODAL MONTÉ avec type: ${type}`);
     
-    // Fermer automatiquement après 8 secondes
+    // Fermer automatiquement après 3 secondes
     const timer = setTimeout(() => {
-      console.log(`[NotificationModal] ⏰ Fermeture automatique après 8 secondes`);
+      console.log(`[NotificationModal] ⏰ Fermeture automatique après 3 secondes`);
       onClose();
-    }, 8000);
+    }, 3000);
 
     return () => {
       console.log(`[NotificationModal] 🧹 Nettoyage du modal`);
