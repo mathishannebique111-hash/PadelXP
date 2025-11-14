@@ -19,9 +19,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Configuration serveur invalide" }, { status: 500 });
     }
 
-    const { email, token } = await request.json();
+    const { email, token: requestToken } = await request.json();
 
-    if ((!email || typeof email !== "string") && (!token || typeof token !== "string")) {
+    if ((!email || typeof email !== "string") && (!requestToken || typeof requestToken !== "string")) {
       return NextResponse.json({ error: "Email ou token requis" }, { status: 400 });
     }
 
@@ -29,9 +29,9 @@ export async function POST(request: Request) {
       typeof email === "string" ? email.trim().toLowerCase() : null;
     let userIdFromToken: string | null = null;
 
-    if (!normalizedEmail && token) {
+    if (!normalizedEmail && requestToken) {
       try {
-        const { data, error } = await supabaseAdmin.auth.getUser(token);
+        const { data, error } = await supabaseAdmin.auth.getUser(requestToken);
         if (!error && data?.user) {
           normalizedEmail = data.user.email?.toLowerCase() ?? null;
           userIdFromToken = data.user.id ?? null;
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
       hasOtp: !!linkData?.properties?.email_otp || !!linkData?.properties?.hashed_token,
     });
 
-    const token =
+    const otpToken =
       linkData?.properties?.email_otp ||
       linkData?.properties?.hashed_token ||
       linkData?.email_otp ||
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       linkData?.action_link ||
       null;
 
-    if (!token && !actionLink) {
+    if (!otpToken && !actionLink) {
       return NextResponse.json({ error: "Lien invalide" }, { status: 500 });
     }
 
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      token,
+      token: otpToken,
       actionLink,
       redirectTo,
       email: normalizedEmail,
