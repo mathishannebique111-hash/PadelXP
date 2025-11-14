@@ -1,64 +1,138 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-export const dynamic = 'force-dynamic'; // important pour le cron
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Important : forcer une route dynamique pour Vercel Cron
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  // 1) Si la requête vient du Cron Vercel, on accepte
-  const isVercelCron = req.headers.get('x-vercel-cron') === '1';
+  // 1) Autoriser les appels venant de Vercel Cron
+  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
 
-  // 2) Sinon, on autorise aussi une requête manuelle avec le CRON_SECRET
-  const authToken = req.headers.get('authorization')?.replace('Bearer ', '');
-
+  // 2) Autoriser aussi les appels manuels avec le CRON_SECRET
+  const authToken = req.headers.get("authorization")?.replace("Bearer ", "");
   const isManualAuthorized = authToken === process.env.CRON_SECRET;
 
   if (!isVercelCron && !isManualAuthorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // TODO: Implémenter la logique du cron ici
-  return NextResponse.json({ message: 'Cron executed' });
-}
+  // 3) Client Supabase (service role pour pouvoir mettre à jour les clubs)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
-export async function POST(request: Request) {
-  if (!resend) {
-    return NextResponse.json({ error: 'Resend API key not configured' }, { status: 500 });
+  const today = new Date();
+  const results = { j10: 0, j3: 0, j1: 0, expired: 0 };
+
+  // ---------- J-10 ----------
+  const in10Days = new Date(today);
+  in10Days.setDate(in10Days.getDate() + 10);
+
+  const { data: trials10 } = await supabase
+    .from("clubs")
+    .select("id, name, email, trial_end_at")
+    .eq("subscription_status", "trialing")
+    .gte("trial_end_at", today.toISOString())
+    .lte("trial_end_at", in10Days.toISOString());
+
+  for (const club of trials10 || []) {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/send-trial-reminder`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: club.email,
+          clubName: club.name,
+          daysLeft: 10,
+        }),
+      }
+    );
+    results.j10++;
   }
 
-  const { email, clubName, daysLeft } = await request.json();
+  // ---------- J-3 ----------
+  const in3Days = new Date(today);
+  in3Days.setDate(in3Days.getDate() + 3);
 
-  const { data, error } = await resend.emails.send({
-    from: 'PadelXP <noreply@votre-domaine.com>',
-    to: email,
-    subject: `Il reste ${daysLeft} jour${daysLeft > 1 ? 's' : ''} à votre essai PadelXP`,
-    html: `
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h1 style="color: #333;">Bonjour ${clubName}</h1>
-        <p style="font-size: 16px; color: #555;">
-          Votre essai gratuit se termine dans <strong style="color: #000;">${daysLeft} jour${daysLeft > 1 ? 's' : ''}</strong>.
-        </p>
-        <p style="font-size: 16px; color: #555;">
-          Pour continuer à profiter de PadelXP, activez votre abonnement dès maintenant.
-        </p>
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/billing"
-           style="display: inline-block; background-color: #0070f3; color: white; padding: 12px 24px;
-                  text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold;">
-          Activer mon abonnement
-        </a>
-        <p style="font-size: 14px; color: #888; margin-top: 30px;">
-          L'équipe PadelXP
-        </p>
-      </div>
-    `
+  const { data: trials3 } = await supabase
+    .from("clubs")
+    .select("id, name, email, trial_end_at")
+    .eq("subscription_status", "trialing")
+    .gte("trial_end_at", today.toISOString())
+    .lte("trial_end_at", in3Days.toISOString());
+
+  for (const club of trials3 || []) {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/send-trial-reminder`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: club.email,
+          clubName: club.name,
+          daysLeft: 3,
+        }),
+      }
+    );
+    results.j3++;
+  }
+
+  // ---------- J-1 ----------
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const { data: trials1 } = await supabase
+    .from("clubs")
+    .select("id, name, email, trial_end_at")
+    .eq("subscription_status", "trialing")
+    .gte("trial_end_at", today.toISOString())
+    .lte("trial_end_at", tomorrow.toISOString());
+
+  for (const club of trials1 || []) {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/send-trial-reminder`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: club.email,
+          clubName: club.name,
+          daysLeft: 1,
+        }),
+      }
+    );
+    results.j1++;
+  }
+
+  // ---------- Essais expirés : pause si pas de CB / auto-activation ----------
+  const { data: expiring } = await supabase
+    .from("clubs")
+    .select("id, has_payment_method, auto_activate_at_trial_end")
+    .eq("subscription_status", "trialing")
+    .lte("trial_end_at", today.toISOString());
+
+  for (const club of expiring || []) {
+    if (!club.has_payment_method || !club.auto_activate_at_trial_end) {
+      const grace = new Date(today);
+      grace.setDate(grace.getDate() + 7);
+
+      await supabase
+        .from("clubs")
+        .update({
+          subscription_status: "paused",
+          grace_until: grace.toISOString(),
+        })
+        .eq("id", club.id);
+
+      results.expired++;
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    date: today.toISOString(),
+    processed: results,
   });
-
-  if (error) {
-    console.error('Erreur envoi email:', error);
-    return NextResponse.json({ error }, { status: 400 });
-  }
-
-  return NextResponse.json({ success: true, data });
 }
