@@ -2,12 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
+  // 1) Si la requête vient de Vercel Cron, on la laisse passer
+  if (req.headers.get("x-vercel-cron") === "1") {
+    return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
 
-  // Laisser passer le cron et l'API d'email sans auth
+  // 2) Laisser passer le cron et l'API d'email aussi par sécurité
   if (
-    pathname.startsWith('/api/cron/trial-check') ||
-    pathname.startsWith('/api/send-trial-reminder')
+    pathname.startsWith("/api/cron/trial-check") ||
+    pathname.startsWith("/api/send-trial-reminder")
   ) {
     return NextResponse.next();
   }
@@ -23,10 +28,10 @@ export async function middleware(req: NextRequest) {
           return req.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
-          res.cookies.set({ name, value, ...options });
+          res.cookies.set(name, value, options);
         },
         remove(name: string, options: any) {
-          res.cookies.set({ name, value: "", ...options, expires: new Date(0) });
+          res.cookies.set(name, "", { ...options, expires: new Date(0) });
         },
       },
     }
