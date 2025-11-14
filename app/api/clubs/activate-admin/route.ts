@@ -32,7 +32,7 @@ export async function POST() {
 
     const { data: adminRow } = await supabaseAdmin
       .from("club_admins")
-      .select("id, activated_at, club_id, clubs!inner(slug, name, logo_url)")
+      .select("id, activated_at, club_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -66,15 +66,31 @@ export async function POST() {
       );
     }
 
+    let clubRecord: { slug: string | null; name: string | null; logo_url: string | null } | null = null;
+    if (adminRow.club_id) {
+      const { data: clubRow } = await supabaseAdmin
+        .from("clubs")
+        .select("slug, name, logo_url")
+        .eq("id", adminRow.club_id)
+        .maybeSingle();
+      if (clubRow) {
+        clubRecord = {
+          slug: (clubRow.slug as string | null) ?? null,
+          name: (clubRow.name as string | null) ?? null,
+          logo_url: (clubRow.logo_url as string | null) ?? null,
+        };
+      }
+    }
+
     if (adminRow.club_id) {
       try {
         await supabaseAdmin.auth.admin.updateUserById(user.id, {
           user_metadata: {
             ...(user.user_metadata || {}),
             club_id: adminRow.club_id,
-            club_slug: (adminRow as any).clubs?.slug ?? null,
-            club_name: (adminRow as any).clubs?.name ?? null,
-            club_logo_url: (adminRow as any).clubs?.logo_url ?? null,
+            club_slug: clubRecord?.slug ?? null,
+            club_name: clubRecord?.name ?? null,
+            club_logo_url: clubRecord?.logo_url ?? null,
           },
         });
       } catch (metadataError) {
@@ -86,9 +102,9 @@ export async function POST() {
       ok: true,
       club: {
         id: adminRow.club_id,
-        slug: (adminRow as any).clubs?.slug ?? null,
-        name: (adminRow as any).clubs?.name ?? null,
-        logo_url: (adminRow as any).clubs?.logo_url ?? null,
+        slug: clubRecord?.slug ?? null,
+        name: clubRecord?.name ?? null,
+        logo_url: clubRecord?.logo_url ?? null,
       },
     });
   } catch (error: any) {

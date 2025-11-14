@@ -51,33 +51,71 @@ export default async function MembersPage() {
 
   const { members } = await getClubDashboardData(clubId, clubSlug);
 
-  let invitedAdminIds = new Set<string>();
+  // Récupérer tous les administrateurs (admin et owner) qui n'ont pas joué de matchs
+  let allAdminIds = new Set<string>();
+  let adminIdsWithMatches = new Set<string>();
 
   if (supabaseAdmin) {
     const { data: adminRows } = await supabaseAdmin
       .from("club_admins")
-      .select("user_id, role")
+      .select("user_id")
       .eq("club_id", clubId);
-    invitedAdminIds = new Set(
+    
+    allAdminIds = new Set(
       (adminRows || [])
-        .filter((admin) => admin.role === "admin")
         .map((admin) => admin.user_id)
         .filter((id): id is string => typeof id === "string")
     );
+
+    // Vérifier quels admins ont participé à des matchs (donc sont vraiment des joueurs)
+    if (allAdminIds.size > 0) {
+      const memberIds = members.map((m) => m.id).filter(Boolean);
+      const { data: adminMatchParticipants } = await supabaseAdmin
+        .from("match_participants")
+        .select("user_id")
+        .in("user_id", Array.from(allAdminIds))
+        .eq("player_type", "user");
+      
+      adminIdsWithMatches = new Set(
+        (adminMatchParticipants || []).map((p) => p.user_id as string).filter(Boolean)
+      );
+    }
   } else {
     const { data: adminRows } = await supabase
       .from("club_admins")
-      .select("user_id, role")
+      .select("user_id")
       .eq("club_id", clubId);
-    invitedAdminIds = new Set(
+    
+    allAdminIds = new Set(
       (adminRows || [])
-        .filter((admin) => admin.role === "admin")
         .map((admin) => admin.user_id)
         .filter((id): id is string => typeof id === "string")
     );
+
+    // Vérifier quels admins ont participé à des matchs (donc sont vraiment des joueurs)
+    if (allAdminIds.size > 0) {
+      const memberIds = members.map((m) => m.id).filter(Boolean);
+      const { data: adminMatchParticipants } = await supabase
+        .from("match_participants")
+        .select("user_id")
+        .in("user_id", Array.from(allAdminIds))
+        .eq("player_type", "user");
+      
+      adminIdsWithMatches = new Set(
+        (adminMatchParticipants || []).map((p) => p.user_id as string).filter(Boolean)
+      );
+    }
   }
 
-  const filteredMembers = members.filter((member) => !invitedAdminIds.has(member.id));
+  // Filtrer : exclure les admins qui n'ont jamais joué de matchs (administrateurs uniquement)
+  const filteredMembers = members.filter((member) => {
+    if (allAdminIds.has(member.id)) {
+      // Si c'est un admin, ne l'inclure que s'il a joué au moins un match
+      return adminIdsWithMatches.has(member.id);
+    }
+    // Si ce n'est pas un admin, l'inclure (c'est un joueur normal)
+    return true;
+  });
 
   return (
     <div className="space-y-6">

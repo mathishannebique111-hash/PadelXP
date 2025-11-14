@@ -229,48 +229,56 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         
         {/* Grid 2x3 compact pour les stats */}
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-lg border border-white/18 bg-black/25 px-3 py-2">
-            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Points totaux</div>
-            <div className="text-2xl font-bold text-white tabular-nums">{points}</div>
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Points totaux</div>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{points}</div>
             {challengePoints > 0 && (
-              <div className="mt-1 text-[10px] text-amber-300 font-medium">
+              <div className="mt-1 text-[10px] text-amber-600 font-medium">
                 +{challengePoints} challenges 🏆
               </div>
             )}
           </div>
-          <div className="rounded-lg border border-white/18 bg-black/25 px-3 py-2">
-            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Matchs</div>
-            <div className="text-2xl font-bold text-white tabular-nums">{matches}</div>
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Matchs</div>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{matches}</div>
           </div>
-          <div className="rounded-lg border border-emerald-400/45 bg-emerald-500/15 px-3 py-2">
-            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Victoires</div>
-            <div className="text-2xl font-bold text-emerald-50 tabular-nums">{wins}</div>
+          <div className="rounded-lg border border-emerald-300/50 bg-emerald-100 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Victoires</div>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{wins}</div>
           </div>
-          <div className="rounded-lg border border-rose-400/45 bg-rose-500/15 px-3 py-2">
-            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Défaites</div>
-            <div className="text-2xl font-bold text-rose-100 tabular-nums">{losses}</div>
+          <div className="rounded-lg border border-rose-300/50 bg-rose-200 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Défaites</div>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{losses}</div>
           </div>
-          <div className="rounded-lg border border-emerald-400/45 bg-emerald-500/15 px-3 py-2">
-            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Sets gagnés</div>
-            <div className="text-2xl font-bold text-emerald-50 tabular-nums">{setsWon}</div>
+          <div className="rounded-lg border border-emerald-300/50 bg-emerald-100 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Sets gagnés</div>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{setsWon}</div>
           </div>
-          <div className="rounded-lg border border-rose-400/45 bg-rose-500/15 px-3 py-2">
-            <div className="text-xs uppercase tracking-[0.25em] text-white/60 mb-1">Sets perdus</div>
-            <div className="text-2xl font-bold text-rose-100 tabular-nums">{setsLost}</div>
+          <div className="rounded-lg border border-rose-300/50 bg-rose-200 px-3 py-2">
+            <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Sets perdus</div>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{setsLost}</div>
           </div>
         </div>
         
         {/* Badges en bas */}
         {computedBadges.length > 0 && (
           <div className="mt-4 pt-4 border-t border-white/20">
-            <div className="mb-2 text-xs uppercase tracking-[0.25em] text-white/60">Badges</div>
+            <div className="mb-2 text-xs uppercase tracking-[0.25em] text-white">Badges</div>
             <div className="flex flex-wrap gap-2">
               {computedBadges.map((b, idx) => (
-                <span key={idx} title={b.title} className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium text-white/90" style={{ 
-                  background: "rgba(199,255,0,0.2)",
-                  border: "1px solid rgba(199,255,0,0.5)"
-                }}>
-                  {b.icon} {b.title}
+                <span
+                  key={idx}
+                  title={b.title}
+                  className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-gray-900 bg-white relative overflow-hidden"
+                  style={{
+                    "--shimmer": "rgba(255, 255, 255, 0.5)",
+                    "--shimmer-duration": "3s",
+                  } as React.CSSProperties}
+                >
+                  <span className="shimmer-layer" />
+                  <span className="relative z-10">
+                    {b.icon} {b.title}
+                  </span>
                 </span>
               ))}
             </div>

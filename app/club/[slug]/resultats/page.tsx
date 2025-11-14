@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ClubHeader from "@/components/club/ClubHeader";
 
 type Match = {
   id: string;
@@ -22,6 +23,7 @@ export default function ClubResultatsPage() {
   const slug = params?.slug || "";
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clubData, setClubData] = useState<{ name: string; logo_url: string | null; description: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -29,14 +31,36 @@ export default function ClubResultatsPage() {
       try {
         const supabase = createClient();
         
-        // Récupérer le club_id
+        // Récupérer le club_id et les données du club
         let clubId: string | null = null;
         const { data: club } = await supabase
           .from("clubs")
-          .select("id")
+          .select("id, name, logo_url")
           .eq("slug", slug)
-          .single();
-        if (club) clubId = club.id;
+          .maybeSingle();
+        
+        if (club) {
+          clubId = club.id;
+          
+          // Récupérer la description depuis club_public_extras si disponible
+          const { data: extras } = await supabase
+            .from("club_public_extras")
+            .select("description")
+            .eq("club_id", club.id)
+            .maybeSingle();
+          
+          setClubData({
+            name: (club.name as string) || slug.toUpperCase(),
+            logo_url: club.logo_url as string | null,
+            description: extras?.description as string | null || null,
+          });
+        } else {
+          setClubData({
+            name: slug.toUpperCase(),
+            logo_url: null,
+            description: null,
+          });
+        }
 
         // Récupérer tous les matchs avec leurs participants
         const { data: allMatches, error: e1 } = await supabase
@@ -90,8 +114,16 @@ export default function ClubResultatsPage() {
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Résultats — {slug.toUpperCase()}</h1>
-        <p className="text-white/60 mb-6 text-sm">Historique des matchs joués par les membres de ce club uniquement.</p>
+        {clubData ? (
+          <ClubHeader 
+            name={clubData.name}
+            logoUrl={clubData.logo_url}
+            description={clubData.description}
+          />
+        ) : (
+          <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Résultats — {slug.toUpperCase()}</h1>
+        )}
+        <p className="text-white/60 mb-6 text-sm mt-4">Historique des matchs joués par les membres de ce club uniquement.</p>
 
         <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
           {loading ? (

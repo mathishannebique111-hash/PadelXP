@@ -103,7 +103,7 @@ export default function LeaderboardPreview() {
           className="text-center mt-12"
         >
           <Link
-            href="/login"
+            href="/player/login"
             className="inline-block px-8 py-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,102,255,0.5)] hover:shadow-[0_0_40px_rgba(0,102,255,0.7)] transition-all duration-300 hover:scale-105"
           >
             Commence à jouer →

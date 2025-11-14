@@ -131,7 +131,7 @@ export default function HeroSection() {
             </Link>
 
             <Link
-              href="/login"
+              href="/player/login"
               prefetch={false}
               className="px-6 py-4 text-white/80 hover:text-white transition-colors text-base"
             >

@@ -6,7 +6,18 @@ import Link from "next/link";
 export default async function LoginPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (user) redirect("/home");
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("club_slug")
+      .eq("id", user.id)
+      .maybeSingle();
+    
+    if (profile) {
+      // L'utilisateur a un profil joueur, le rediriger vers l'espace joueur
+      redirect(profile.club_slug ? `/club/${profile.club_slug}/profil` : "/home");
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white px-6">

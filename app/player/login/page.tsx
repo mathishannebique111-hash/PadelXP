@@ -12,7 +12,11 @@ export default async function PlayerLoginPage() {
       .select("club_slug")
       .eq("id", user.id)
       .maybeSingle();
-    redirect(profile?.club_slug ? `/club/${profile.club_slug}/profil` : "/home");
+    
+    if (profile) {
+      // L'utilisateur a un profil joueur, le rediriger vers l'espace joueur
+      redirect(profile.club_slug ? `/club/${profile.club_slug}/profil` : "/home");
+    }
   }
 
   return (

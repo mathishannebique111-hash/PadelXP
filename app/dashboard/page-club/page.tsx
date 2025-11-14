@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import ClubPublicFormClient from "@/components/club/ClubPublicFormClient";
-import ClubPublicPreview from "@/components/club/ClubPublicPreview";
+import ClubPublicPageWrapper from "@/components/club/ClubPublicPageWrapper";
 import { getClubPublicExtras } from "@/lib/utils/club-utils";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +49,30 @@ export default async function PageClubPage() {
     .filter(Boolean)
     .join(" · ") || null;
 
+  const initialPreviewData = clubRecord
+    ? {
+        name: clubRecord.name,
+        logoUrl: clubRecord.logo_url,
+        description: extras.description ?? null,
+        addressLine,
+        phone: clubRecord.phone ?? extras.phone ?? null,
+        website: clubRecord.website ?? extras.website ?? null,
+        numberOfCourts: clubRecord.number_of_courts ?? extras.number_of_courts ?? null,
+        courtType: clubRecord.court_type ?? extras.court_type ?? null,
+        openingHours: extras.opening_hours ?? null,
+      }
+    : {
+        name: "",
+        logoUrl: null,
+        description: null,
+        addressLine: null,
+        phone: null,
+        website: null,
+        numberOfCourts: null,
+        courtType: null,
+        openingHours: null,
+      };
+
   return (
     <div className="space-y-6">
       <div>
@@ -58,24 +81,7 @@ export default async function PageClubPage() {
           Complétez les informations ci-dessous pour enrichir la page consultée par vos joueurs et visiteurs.
         </p>
       </div>
-      {clubRecord ? (
-        <ClubPublicPreview
-          name={clubRecord.name}
-          logoUrl={clubRecord.logo_url}
-          description={extras.description ?? null}
-          addressLine={addressLine}
-          phone={clubRecord.phone ?? extras.phone ?? null}
-          website={clubRecord.website ?? extras.website ?? null}
-          numberOfCourts={clubRecord.number_of_courts ?? extras.number_of_courts ?? null}
-          courtType={clubRecord.court_type ?? extras.court_type ?? null}
-          openingHours={extras.opening_hours ?? null}
-        />
-      ) : (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
-          Complétez les informations ci-dessous pour générer un aperçu.
-        </div>
-      )}
-      <ClubPublicFormClient />
+      <ClubPublicPageWrapper initialData={initialPreviewData} clubId={clubId} />
     </div>
   );
 }

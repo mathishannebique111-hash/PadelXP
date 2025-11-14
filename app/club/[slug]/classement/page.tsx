@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ClubHeader from "@/components/club/ClubHeader";
 
 type Player = { 
   id: string; 
@@ -17,21 +18,45 @@ export default function ClubClassementPage() {
   const slug = params?.slug || "";
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clubData, setClubData] = useState<{ name: string; logo_url: string | null; description: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
         const supabase = createClient();
-        // Filtrage strict : uniquement les joueurs avec club_slug = slug OU club_id correspondant
-        // D'abord, récupérer le club_id si nécessaire
-        let clubId: string | null = null;
+        
+        // Récupérer les données du club
         const { data: club } = await supabase
           .from("clubs")
-          .select("id")
+          .select("id, name, logo_url")
           .eq("slug", slug)
-          .single();
-        if (club) clubId = club.id;
+          .maybeSingle();
+        
+        let clubId: string | null = null;
+        
+        if (club) {
+          clubId = club.id as string;
+          
+          // Récupérer la description depuis club_public_extras si disponible
+          const { data: extras } = await supabase
+            .from("club_public_extras")
+            .select("description")
+            .eq("club_id", club.id)
+            .maybeSingle();
+          
+          setClubData({
+            name: (club.name as string) || slug.toUpperCase(),
+            logo_url: club.logo_url as string | null,
+            description: extras?.description as string | null || null,
+          });
+        } else {
+          setClubData({
+            name: slug.toUpperCase(),
+            logo_url: null,
+            description: null,
+          });
+        }
 
         // Requête avec filtres multiples pour garantir l'isolation stricte
         // Ne garder QUE les joueurs avec club_slug exactement égal à slug OU club_id égal au club_id du club
@@ -77,8 +102,16 @@ export default function ClubClassementPage() {
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Classement — {slug.toUpperCase()}</h1>
-        <p className="text-white/60 mb-6 text-sm">Seuls les joueurs rattachés à ce club apparaissent ici.</p>
+        {clubData ? (
+          <ClubHeader 
+            name={clubData.name}
+            logoUrl={clubData.logo_url}
+            description={clubData.description}
+          />
+        ) : (
+          <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Classement — {slug.toUpperCase()}</h1>
+        )}
+        <p className="text-white/60 mb-6 text-sm mt-4">Seuls les joueurs rattachés à ce club apparaissent ici.</p>
 
         {/* Top 3 Podium */}
         {top3.length > 0 && (

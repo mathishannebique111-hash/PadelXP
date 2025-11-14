@@ -281,6 +281,20 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     }
   }
 
+  // Récupérer tous les administrateurs du club pour les exclure s'ils ne sont que des admins
+  const { data: clubAdmins, error: adminsError } = await supabaseAdmin
+    .from("club_admins")
+    .select("user_id")
+    .eq("club_id", clubId);
+
+  if (adminsError) {
+    console.warn("[getClubDashboardData] Failed to load club admins", adminsError);
+  }
+
+  const adminUserIds = new Set<string>(
+    (clubAdmins || []).map((admin) => admin.user_id as string).filter(Boolean)
+  );
+
   const { data: profiles, error: profilesError } = await supabaseAdmin
     .from("profiles")
     .select("id, display_name, first_name, last_name, email, created_at, club_id, club_slug")
@@ -296,7 +310,34 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     return { members: [], leaderboard: [] };
   }
 
-  const members = (profiles || []).map((p) => ({
+  // Vérifier quels admins ont participé à des matchs (donc sont vraiment des joueurs)
+  // Si un admin a participé à des matchs, il est aussi un joueur
+  const adminUserIdsArray = Array.from(adminUserIds);
+  let adminIdsWithMatches = new Set<string>();
+  
+  if (adminUserIdsArray.length > 0) {
+    const { data: adminMatchParticipants } = await supabaseAdmin
+      .from("match_participants")
+      .select("user_id")
+      .in("user_id", adminUserIdsArray)
+      .eq("player_type", "user");
+
+    adminIdsWithMatches = new Set<string>(
+      (adminMatchParticipants || []).map((p) => p.user_id as string).filter(Boolean)
+    );
+  }
+
+  // Filtrer : exclure les admins qui n'ont jamais joué de matchs (administrateurs uniquement)
+  const filteredProfiles = (profiles || []).filter((profile) => {
+    if (adminUserIds.has(profile.id)) {
+      // Si c'est un admin, ne l'inclure que s'il a joué au moins un match
+      return adminIdsWithMatches.has(profile.id);
+    }
+    // Si ce n'est pas un admin, l'inclure (c'est un joueur normal)
+    return true;
+  });
+
+  const members = filteredProfiles.map((p) => ({
     id: p.id,
     display_name: p.display_name ?? null,
     first_name: p.first_name ?? null,

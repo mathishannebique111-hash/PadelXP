@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ClubHeader from "@/components/club/ClubHeader";
 
 type Review = { id: string; user_id: string; rating: number; comment: string | null; created_at: string };
 
@@ -11,15 +12,43 @@ export default function ClubReviewsPage() {
   const slug = params?.slug || "";
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clubData, setClubData] = useState<{ name: string; logo_url: string | null; description: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
         const supabase = createClient();
-        // Récupérer club_id pour filtrer les avis
-        const { data: club } = await supabase.from("clubs").select("id").eq("slug", slug).single();
-        if (!club) { setReviews([]); setLoading(false); return; }
+        // Récupérer les données du club
+        const { data: club } = await supabase
+          .from("clubs")
+          .select("id, name, logo_url")
+          .eq("slug", slug)
+          .maybeSingle();
+        
+        if (!club) { 
+          setReviews([]); 
+          setClubData({
+            name: slug.toUpperCase(),
+            logo_url: null,
+            description: null,
+          });
+          setLoading(false); 
+          return; 
+        }
+        
+        // Récupérer la description depuis club_public_extras si disponible
+        const { data: extras } = await supabase
+          .from("club_public_extras")
+          .select("description")
+          .eq("club_id", club.id)
+          .maybeSingle();
+        
+        setClubData({
+          name: (club.name as string) || slug.toUpperCase(),
+          logo_url: club.logo_url as string | null,
+          description: extras?.description as string | null || null,
+        });
 
         const { data, error } = await supabase
           .from("reviews")
@@ -36,7 +65,15 @@ export default function ClubReviewsPage() {
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Avis — {slug.toUpperCase()}</h1>
+        {clubData ? (
+          <ClubHeader 
+            name={clubData.name}
+            logoUrl={clubData.logo_url}
+            description={clubData.description}
+          />
+        ) : (
+          <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Avis — {slug.toUpperCase()}</h1>
+        )}
         <div className="rounded-xl border border-white/10 bg-white/5 divide-y divide-white/10">
           {loading ? (
             <div className="px-4 py-6 text-white/60 text-sm">Chargement…</div>

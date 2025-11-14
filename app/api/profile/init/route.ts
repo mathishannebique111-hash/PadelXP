@@ -107,6 +107,33 @@ export async function POST(request: Request) {
     }
   }
 
+  if (clubIdForUser && (!clubNameForUser || !clubLogoForUser)) {
+    const { data: ownerRows } = await serviceClient
+      .from("club_admins")
+      .select("user_id")
+      .eq("club_id", clubIdForUser)
+      .eq("role", "owner");
+
+    const ownerId = ownerRows?.[0]?.user_id as string | undefined;
+    if (ownerId) {
+      try {
+        const { data: ownerUser } = await serviceClient.auth.admin.getUserById(ownerId);
+        const ownerMeta = (ownerUser?.user?.user_metadata || {}) as Record<string, any>;
+        if (!clubNameForUser && typeof ownerMeta.club_name === "string") {
+          clubNameForUser = ownerMeta.club_name;
+        }
+        if (!clubLogoForUser && typeof ownerMeta.club_logo_url === "string") {
+          clubLogoForUser = ownerMeta.club_logo_url;
+        }
+        if (!clubSlugForUser && typeof ownerMeta.club_slug === "string") {
+          clubSlugForUser = ownerMeta.club_slug;
+        }
+      } catch (ownerMetaError) {
+        console.warn("[api/profile/init] owner metadata lookup warning", ownerMetaError);
+      }
+    }
+  }
+
   if (existing) {
     const updates: Record<string, any> = {};
     if (!existing.display_name) {
@@ -202,56 +229,36 @@ export async function POST(request: Request) {
     });
   }
 
-  const insertPayload: Record<string, any> = {
-    id: user.id,
-    email: user.email,
-    display_name: fullName,
-  };
-  if (clubIdForUser) {
-    insertPayload.club_id = clubIdForUser;
-  }
-  if (clubSlugForUser) {
-    insertPayload.club_slug = clubSlugForUser;
-  }
-
-  const { data: inserted, error: insertError } = await serviceClient
-    .from("profiles")
-    .insert(insertPayload)
-    .select("id, club_id, club_slug, display_name")
-    .maybeSingle();
-
-  if (insertError) {
-    console.error("[api/profile/init] insert error", insertError);
-    return NextResponse.json({ error: insertError.message, code: insertError.code }, { status: 500 });
-  }
-
-  if (clubIdForUser) {
+  // Si l'utilisateur n'a pas de profil existant et est un admin de club qui essaie d'accéder au dashboard club
+  // On ne crée pas de profil joueur automatiquement, on le redirige vers le dashboard
+  if (clubAdmin && clubIdForUser) {
     try {
       const { data: existingUser } = await serviceClient.auth.admin.getUserById(user.id);
       const mergedMetadata = {
         ...(existingUser?.user?.user_metadata || {}),
         club_id: clubIdForUser,
         club_slug: clubSlugForUser,
-        club_name:
-          clubNameForUser ??
-          (existingUser?.user?.user_metadata?.club_name as string | null) ??
-          null,
-        club_logo_url:
-          clubLogoForUser ??
-          (existingUser?.user?.user_metadata?.club_logo_url as string | null) ??
-          null,
+        club_name: clubNameForUser ?? (existingUser?.user?.user_metadata?.club_name as string | null) ?? null,
+        club_logo_url: clubLogoForUser ?? (existingUser?.user?.user_metadata?.club_logo_url as string | null) ?? null,
       };
       await serviceClient.auth.admin.updateUserById(user.id, {
         user_metadata: mergedMetadata,
       });
     } catch (metadataError) {
-      console.warn("[api/profile/init] metadata update warning (insert path)", metadataError);
+      console.warn("[api/profile/init] metadata update warning (admin without profile)", metadataError);
     }
+    
+    return NextResponse.json({
+      ok: true,
+      redirect: "/dashboard",
+      profile: null, // Pas de profil joueur
+    });
   }
 
-  const responsePayload: Record<string, any> = { ok: true, profile: inserted };
-  if (clubIdForUser) {
-    responsePayload.redirect = "/dashboard";
-  }
-  return NextResponse.json(responsePayload);
+  // Si on arrive ici, l'utilisateur n'a pas de profil joueur
+  // Il doit créer son compte via l'inscription joueurs
+  return NextResponse.json(
+    { error: "Aucun compte joueur trouvé pour cet email. Créez d'abord votre compte via l'inscription joueurs." },
+    { status: 404 }
+  );
 }

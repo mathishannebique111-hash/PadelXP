@@ -176,6 +176,13 @@ export async function POST(req: Request) {
       }, { status: 409 });
     }
 
+    // Vérifier si le club existe déjà
+    const { data: existingClub } = await supabaseAdmin
+      .from("clubs")
+      .select("id, trial_start")
+      .eq("slug", slugCandidate)
+      .maybeSingle();
+
     const upsertData: Record<string, any> = {
       name,
       slug: slugCandidate,
@@ -189,6 +196,15 @@ export async function POST(req: Request) {
       number_of_courts,
       court_type,
     };
+
+    // Initialiser trial_start uniquement si c'est un nouveau club (pas d'existant ou trial_start non défini)
+    if (!existingClub || !existingClub.trial_start) {
+      upsertData.trial_start = new Date().toISOString();
+    }
+
+    if (logoUrl) {
+      upsertData.logo_url = logoUrl;
+    }
 
     const upsertQuery = supabaseAdmin
       .from("clubs")

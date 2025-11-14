@@ -119,10 +119,10 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
   }, [logoUrl, fallbackAccent, onAccentChange]);
 
   const gradientStyle = useMemo(() => ({
-    background: `linear-gradient(140deg, ${palette.base} 0%, ${mix(palette.base, 0.02)} 50%, ${mix(palette.base, 0.04)} 100%)`,
-    borderColor: "transparent",
-    boxShadow: "0 36px 92px rgba(6,18,48,0.65)",
-  }), [palette]);
+    background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
+    borderColor: "rgba(72,128,210,0.55)",
+    boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
+  }), []);
 
   const aboutCardStyle = useMemo(
     () => ({
@@ -141,11 +141,16 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
   return (
     <>
       <section
-        className="relative overflow-hidden rounded-[22px] p-4 text-white shadow-[0_24px_70px_rgba(4,16,46,0.45)]"
+        className="relative overflow-hidden rounded-2xl border p-4 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
         style={gradientStyle}
       >
-        <div className="absolute inset-0 rounded-[26px] border border-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" />
-        <span className="shimmer-layer" style={shimmerVars} />
+        <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" />
+        {/* Effet brillant style challenges */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
+          </div>
+        </div>
         <div className="relative z-10 flex flex-col gap-3 md:flex-row md:items-center">
           <div className="flex items-center gap-4">
             <div className="flex h-36 w-36 items-center justify-center overflow-hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
@@ -154,6 +159,22 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
                   src={logoUrl}
                   alt={`Logo ${name}`}
                   className="h-full w-full object-contain"
+                  onError={(e) => {
+                    console.error("[ClubHeader] Erreur lors du chargement du logo:", {
+                      logoUrl,
+                      name,
+                      error: e,
+                    });
+                    // Remplacer l'image par l'icône si le logo ne charge pas
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent && !parent.querySelector('.fallback-icon')) {
+                      const fallback = document.createElement('span');
+                      fallback.className = 'fallback-icon text-4xl';
+                      fallback.textContent = '🏟️';
+                      parent.appendChild(fallback);
+                    }
+                  }}
                 />
               ) : (
                 <span className="text-4xl">🏟️</span>

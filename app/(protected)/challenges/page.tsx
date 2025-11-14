@@ -77,7 +77,10 @@ export default async function PlayerChallengesPage() {
 
       <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-10 text-white">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Challenges</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            Challenges
+            <span className="text-3xl">🏆</span>
+          </h1>
           <LogoutButton />
         </div>
         <NavigationBar currentPage="challenges" />

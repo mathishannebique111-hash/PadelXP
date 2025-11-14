@@ -63,7 +63,7 @@ export default async function ClassementPage() {
         <div className="mb-8">
           <div className="mb-4 flex items-center justify-center gap-3">
             <span className="h-px w-10 bg-gray-300" />
-            <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
               Top joueurs du moment <span aria-hidden>✨</span>
             </span>
             <span className="h-px w-10 bg-gray-300" />
@@ -256,7 +256,7 @@ export default async function ClassementPage() {
           <div className="px-5 pt-5">
             <div className="mb-4 flex items-center justify-center gap-3">
               <span className="h-px w-10 bg-gray-300" />
-              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/70 px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
+              <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
                 Classement global <span aria-hidden>🏆</span>
               </span>
               <span className="h-px w-10 bg-gray-300" />

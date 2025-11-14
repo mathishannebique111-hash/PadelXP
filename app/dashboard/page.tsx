@@ -77,9 +77,33 @@ export default async function DashboardHome() {
 
   const { data: club } = await supabase
     .from("clubs")
-    .select("code_invitation, slug")
+    .select("code_invitation, slug, trial_start")
     .eq("id", clubId)
     .maybeSingle();
+
+  // Calculer le nombre de jours restants de l'essai
+  function calculateDaysRemaining(trialStart: string | null): number | null {
+    if (!trialStart) return null;
+    
+    const startDate = new Date(trialStart);
+    const now = new Date();
+    
+    // Définir l'heure à minuit pour compter les jours complets
+    const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Calculer les jours passés depuis l'inscription
+    const diffTime = nowMidnight.getTime() - startMidnight.getTime();
+    const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Calculer les jours restants : 30 jours d'essai - jours passés
+    const daysRemaining = 30 - daysPassed;
+    
+    return Math.max(0, daysRemaining);
+  }
+
+  const daysRemaining = calculateDaysRemaining(club?.trial_start ?? null);
+  const showTrialWarning = daysRemaining !== null && daysRemaining <= 10 && daysRemaining > 0;
 
   // Derniers matchs du club (5 derniers)
   let recentMatches: Array<{ id: string; created_at: string; score_team1: number | null; score_team2: number | null; team1_id: string; team2_id: string; winner_team_id: string | null }> = [];
@@ -170,6 +194,30 @@ export default async function DashboardHome() {
 
   return (
     <div className="space-y-8">
+      {/* Message d'alerte pour l'essai */}
+      {showTrialWarning && (
+        <div className="rounded-xl border border-orange-500/50 bg-orange-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">⚠️</div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-orange-300 mb-1">
+                Essai gratuit : {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''}
+              </h3>
+              <p className="text-sm text-orange-200/80">
+                Il ne reste que {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} avant la fin de votre essai gratuit. 
+                Vous pouvez activer votre abonnement dès maintenant pour qu'il démarre automatiquement à partir du mois prochain.
+              </p>
+              <a 
+                href="/dashboard/facturation" 
+                className="inline-block mt-3 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/50 text-orange-200 hover:bg-orange-500/30 transition-colors text-sm font-semibold"
+              >
+                Activer l'abonnement →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold">Tableau de bord</h1>

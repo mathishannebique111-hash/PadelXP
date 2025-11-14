@@ -59,15 +59,21 @@ export default function EmailLoginForm({
             router.replace(payload.redirect as string);
             return;
           }
-          setError(payload?.error || "Aucun compte joueur trouvé pour cet email. Créez d’abord votre compte via l’inscription joueurs.");
+          setError(payload?.error || "Aucun compte joueur trouvé pour cet email. Créez d'abord votre compte via l'inscription joueurs.");
           setLoading(false);
+          return;
+        }
+
+        // Si l'API retourne un redirect (cas admin de club), suivre la redirection
+        if (payload?.redirect && !payload?.profile) {
+          router.replace(payload.redirect);
           return;
         }
 
         const profile = payload?.profile ?? null;
         if (!profile) {
           await supabase.auth.signOut();
-          setError("Aucun compte joueur trouvé pour cet email. Créez d’abord votre compte via l’inscription joueurs.");
+          setError("Aucun compte joueur trouvé pour cet email. Créez d'abord votre compte via l'inscription joueurs.");
           setLoading(false);
           return;
         }

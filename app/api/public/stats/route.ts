@@ -23,18 +23,24 @@ export async function GET() {
   });
 
   try {
-    const [{ count: profileCount, error: profileError }, { count: guestCount, error: guestError }] =
-      await Promise.all([
-        supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
-        supabaseAdmin.from("guest_players").select("id", { count: "exact", head: true }),
-      ]);
+    // Compter les vrais joueurs inscrits (ceux avec un compte auth)
+    const { count: authUsersCount, error: authUsersError } = await supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .not("id", "is", null);
 
-    if (profileError) {
-      console.error("[public/stats] profile count error:", profileError);
+    if (authUsersError) {
+      console.error("[public/stats] auth users count error:", authUsersError);
     }
-    if (guestError) {
-      console.error("[public/stats] guest count error:", guestError);
+
+    // Vérifier combien de profils correspondent à des utilisateurs auth réels
+    const { data: authUsers, error: authCheckError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (authCheckError) {
+      console.error("[public/stats] auth check error:", authCheckError);
     }
+
+    const realPlayerCount = authUsers?.users?.length || 0;
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
@@ -72,7 +78,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        totalPlayers: (profileCount || 0) + (guestCount || 0),
+        totalPlayers: realPlayerCount,
         activePlayers: uniqueActivePlayers.size,
         totalMatches: matchesCount || 0,
       },

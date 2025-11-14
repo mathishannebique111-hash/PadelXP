@@ -77,7 +77,7 @@ export default function FinalCTA() {
             whileTap={{ scale: 0.95 }}
           >
             <Link
-              href="/login"
+              href="/player/signup"
               className="inline-block px-12 py-6 rounded-2xl bg-white text-black font-bold text-xl shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)] transition-all duration-300"
             >
               Créer mon compte →

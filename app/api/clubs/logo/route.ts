@@ -127,18 +127,45 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
     }
 
-    const { error: updateError } = await supabaseAdmin
+    // Mettre à jour la table clubs
+    const { data: updateData, error: updateError } = await supabaseAdmin
       .from("clubs")
       .update({ logo_url: logoUrl })
-      .eq("id", clubRecord.id);
+      .eq("id", clubRecord.id)
+      .select("logo_url")
+      .maybeSingle();
+    
+    console.log("[clubs/logo] Update clubs table result:", {
+      clubId: clubRecord.id,
+      logoUrl,
+      updateData,
+      error: updateError ? {
+        message: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint,
+      } : null,
+    });
+    
     if (updateError) {
       const message = updateError.message || "";
-      if (!/logo_url/.test(message)) {
+      const code = updateError.code || "";
+      
+      // Si la colonne n'existe pas (erreur 42703 ou message contenant "column")
+      if (code === "42703" || /column.*does not exist/i.test(message) || /logo_url/i.test(message)) {
+        console.error("[clubs/logo] ⚠️ Colonne logo_url n'existe pas dans clubs. Erreur:", {
+          message,
+          code,
+          details: updateError.details,
+          hint: updateError.hint,
+        });
+        console.warn("[clubs/logo] Le logo sera stocké uniquement dans les métadonnées utilisateur jusqu'à ce que la migration soit exécutée");
+      } else {
         console.error("[clubs/logo] update club error", updateError);
         return NextResponse.json({ error: "Mise à jour du club impossible" }, { status: 500 });
-      } else {
-        console.warn("[clubs/logo] Ignoring logo_url missing column error");
       }
+    } else if (updateData) {
+      console.log("[clubs/logo] ✅ Logo URL mis à jour dans clubs table:", updateData.logo_url);
     }
 
     const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {

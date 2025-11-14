@@ -1,11 +1,64 @@
-"use client";
-
-import { useParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import ClubHeader from "@/components/club/ClubHeader";
+import { getClubPublicExtras } from "@/lib/utils/club-utils";
 
-export default function ClubHomePage() {
-  const params = useParams<{ slug: string }>();
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
+  ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  : null;
+
+async function getClubData(slug: string) {
+  const supabase = createClient();
+  
+  // Essayer d'abord avec admin client
+  if (supabaseAdmin) {
+    const { data: club } = await supabaseAdmin
+      .from("clubs")
+      .select("id, name, logo_url")
+      .eq("slug", slug)
+      .maybeSingle();
+    
+    if (club) {
+      return {
+        id: club.id as string,
+        name: (club.name as string) || slug.toUpperCase(),
+        logo_url: club.logo_url as string | null,
+      };
+    }
+  }
+
+  // Fallback avec client standard
+  const { data: club } = await supabase
+    .from("clubs")
+    .select("id, name, logo_url")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (club) {
+    return {
+      id: club.id as string,
+      name: (club.name as string) || slug.toUpperCase(),
+      logo_url: club.logo_url as string | null,
+    };
+  }
+
+  return {
+    id: null,
+    name: slug.toUpperCase(),
+    logo_url: null,
+  };
+}
+
+export default async function ClubHomePage({ params }: { params: { slug: string } }) {
   const slug = params?.slug || "";
+  const clubData = await getClubData(slug);
+  const extras = clubData.id ? await getClubPublicExtras(clubData.id) : null;
 
   const sections = [
     {
@@ -27,8 +80,12 @@ export default function ClubHomePage() {
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-2">Club {slug.toUpperCase()}</h1>
-        <p className="text-white/60 mb-8 text-sm">Bienvenue dans l'espace de votre club</p>
+        <ClubHeader 
+          name={clubData.name}
+          logoUrl={clubData.logo_url}
+          description={extras?.description ?? null}
+        />
+        <p className="text-white/60 mb-8 text-sm mt-4">Bienvenue dans l'espace de votre club</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sections.map((section) => (
