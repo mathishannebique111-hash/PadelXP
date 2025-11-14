@@ -2,6 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Laisser passer le cron et l'API d'email sans auth
+  if (
+    pathname.startsWith('/api/cron/trial-check') ||
+    pathname.startsWith('/api/send-trial-reminder')
+  ) {
+    return NextResponse.next();
+  }
+
   const res = NextResponse.next();
 
   const supabase = createServerClient(
@@ -26,7 +36,6 @@ export async function middleware(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = req.nextUrl;
   const PUBLIC_PREFIXES = ["/api/auth/", "/api/leaderboard/", "/api/players/", "/api/clubs/", "/api/public/", "/api/challenges/", "/api/player/", "/_next/", "/images/", "/onboarding/", "/dashboard/", "/player/", "/club/"]; // toujours publics
   const PUBLIC_PATHS = new Set(["/", "/login", "/signup", "/clubs", "/clubs/login", "/clubs/signup", "/favicon.ico", "/onboarding", "/onboarding/club", "/dashboard", "/player/login", "/player/signup"]);
   // Les routes API protégées doivent gérer l'authentification elles-mêmes
