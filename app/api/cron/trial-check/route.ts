@@ -1,7 +1,27 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
+export const dynamic = 'force-dynamic'; // important pour le cron
+
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+export async function GET(req: NextRequest) {
+  // 1) Si la requête vient du Cron Vercel, on accepte
+  const isVercelCron = req.headers.get('x-vercel-cron') === '1';
+
+  // 2) Sinon, on autorise aussi une requête manuelle avec le CRON_SECRET
+  const authToken = req.headers.get('authorization')?.replace('Bearer ', '');
+
+  const isManualAuthorized = authToken === process.env.CRON_SECRET;
+
+  if (!isVercelCron && !isManualAuthorized) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // TODO: Implémenter la logique du cron ici
+  return NextResponse.json({ message: 'Cron executed' });
+}
 
 export async function POST(request: Request) {
   if (!resend) {
