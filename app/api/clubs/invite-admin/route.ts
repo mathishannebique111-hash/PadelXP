@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Configuration serveur incorrecte" }, { status: 500 });
     }
 
-    const supabase = createClient({ headers: Object.fromEntries(request.headers) });
+    const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -129,10 +129,9 @@ export async function POST(request: Request) {
       let linkError: any = null;
 
       // Essayer d'abord avec "recovery" pour permettre la définition/réinitialisation du mot de passe
-      const { data: recoveryLink, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
+      const recoveryParams: any = {
         type: "recovery",
         email: normalizedEmail,
-        user_id: existingUser?.id,
         options: {
           redirectTo: inviteLink,
           data: {
@@ -142,14 +141,17 @@ export async function POST(request: Request) {
             invited_by: user.email,
           },
         },
-      });
+      };
+      if (existingUser?.id) {
+        recoveryParams.user_id = existingUser.id;
+      }
+      const { data: recoveryLink, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink(recoveryParams);
 
       if (recoveryError) {
         // Si recovery échoue, essayer avec magiclink
-        const { data: magicLink, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
+        const magiclinkParams: any = {
           type: "magiclink",
           email: normalizedEmail,
-          user_id: existingUser?.id,
           options: {
             redirectTo: inviteLink,
             data: {
@@ -159,7 +161,11 @@ export async function POST(request: Request) {
               invited_by: user.email,
             },
           },
-        });
+        };
+        if (existingUser?.id) {
+          magiclinkParams.user_id = existingUser.id;
+        }
+        const { data: magicLink, error: magicError } = await supabaseAdmin.auth.admin.generateLink(magiclinkParams);
         linkData = magicLink;
         linkError = magicError;
       } else {

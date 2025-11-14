@@ -55,23 +55,24 @@ async function getClubData(slug: string) {
   };
 }
 
-export default async function ClubHomePage({ params }: { params: { slug: string } }) {
-  const slug = params?.slug || "";
-  const clubData = await getClubData(slug);
+export default async function ClubHomePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const slugValue = slug || "";
+  const clubData = await getClubData(slugValue);
   const extras = clubData.id ? await getClubPublicExtras(clubData.id) : null;
 
   const sections = [
     {
       title: "Classement",
       description: "Consultez le classement des membres de votre club",
-      href: `/club/${slug}/classement`,
+      href: `/club/${slugValue}/classement`,
       icon: "🏆",
       color: "from-yellow-500 to-orange-500"
     },
     {
       title: "Résultats",
       description: "Historique des matchs joués par les membres",
-      href: `/club/${slug}/resultats`,
+      href: `/club/${slugValue}/resultats`,
       icon: "📊",
       color: "from-blue-500 to-cyan-500"
     }

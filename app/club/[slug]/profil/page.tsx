@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HomePage from "@/app/(protected)/home/page";
 
-export default async function ClubProfilPage({ params }: { params: { slug: string } }) {
+export default async function ClubProfilPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -25,7 +26,7 @@ export default async function ClubProfilPage({ params }: { params: { slug: strin
   }
 
   // Si le slug ne correspond pas, rediriger vers le bon club ou la page home
-  if (userClubSlug && userClubSlug !== params.slug) {
+  if (userClubSlug && userClubSlug !== slug) {
     redirect(`/club/${userClubSlug}/profil`);
   }
 

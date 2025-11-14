@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 
-export default function MatchConfirmPage() {
+function MatchConfirmForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
@@ -145,6 +145,18 @@ export default function MatchConfirmPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MatchConfirmPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-white">Chargement...</div>
+      </div>
+    }>
+      <MatchConfirmForm />
+    </Suspense>
   );
 }
 

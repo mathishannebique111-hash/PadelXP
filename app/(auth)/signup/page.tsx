@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
 
-export default function SignupPage() {
+// Forcer le rendu dynamique pour éviter les erreurs de prerender avec useSearchParams
+export const dynamic = 'force-dynamic';
+
+function SignupForm() {
   const supabase = supabaseClient();
   const search = useSearchParams();
-  const emailFromQuery = useMemo(() => (search.get("email") || ""), [search]);
+  const emailFromQuery = useMemo(() => (search?.get("email") || ""), [search]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -90,5 +93,17 @@ export default function SignupPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-white">Chargement...</div>
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

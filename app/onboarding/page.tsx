@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+// Forcer le rendu dynamique pour éviter les erreurs de prerender avec useSearchParams
+export const dynamic = 'force-dynamic';
+
 type Step = 0|1|2|3|4|5|6|7|8|9;
 
-export default function OnboardingPage() {
+function OnboardingForm() {
   const search = useSearchParams();
   const initialStep = useMemo<Step>(() => {
     const s = Number(search.get("step"));
@@ -294,6 +297,18 @@ export default function OnboardingPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-white">Chargement...</div>
+      </div>
+    }>
+      <OnboardingForm />
+    </Suspense>
   );
 }
 
