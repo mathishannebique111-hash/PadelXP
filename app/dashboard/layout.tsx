@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import ClientLogout from "./ClientLogout";
+import MobileMenu from "./MobileMenu";
 import { redirect } from "next/navigation";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { Suspense } from "react";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -143,90 +145,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex">
-      <aside className="w-48 shrink-0 border-r border-white/10 bg-white/5 flex flex-col">
-        <nav className="p-4 space-y-4 text-sm flex-1">
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>🏠</span>
-              <span>Accueil</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/membres">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>👥</span>
-              <span>Membres</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/classement">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>🏆</span>
-              <span>Classement</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/historique">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>📊</span>
-              <span>Historique des matchs</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/page-club">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>🌐</span>
-              <span>Page publique du club</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/challenges">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>⚔️</span>
-              <span>Challenges</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/medias">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>📸</span>
-              <span>Médias</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/roles">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>👑</span>
-              <span>Rôles et accès</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/facturation">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>💳</span>
-              <span>Facturation & essai</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/import-export">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>📥</span>
-              <span>Import / Export</span>
-            </span>
-          </a>
-          <a className="block px-3 py-2.5 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300" href="/dashboard/aide">
-            <span className="flex items-center gap-2 font-semibold">
-              <span>❓</span>
-              <span>Aide & Support</span>
-            </span>
-          </a>
-          <div className="pt-2">
-            <ClientLogout />
-          </div>
-        </nav>
-      </aside>
-      <main className="flex-1 p-8">
-        <div className="mb-8 flex items-center gap-4">
+    <div className="min-h-screen bg-black text-white">
+      {/* Menu hamburger et volet latéral (visible sur tous les écrans) */}
+      <Suspense fallback={null}>
+        <MobileMenu />
+      </Suspense>
+
+      <main className="p-8">
+        {/* Logo et nom du club centré */}
+        <div className="flex items-center justify-center gap-3 mb-12" style={{ paddingTop: '0px', marginTop: '-16px' }}>
           {clubLogo ? (
             <img
               src={clubLogo}
               alt={clubName || "Logo du club"}
-              className="h-16 w-16 rounded-full object-cover"
+              className="h-16 w-16 rounded-full object-cover flex-shrink-0"
             />
           ) : null}
-          <h2 className="text-3xl font-bold text-white">{clubName || "Club"}</h2>
+          <h2 className="text-3xl font-bold text-white whitespace-nowrap">{clubName || "Club"}</h2>
         </div>
         {children}
       </main>
