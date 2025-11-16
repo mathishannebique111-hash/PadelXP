@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import BillingInfoSection from "@/components/billing/BillingInfoSection";
+import StripeCheckoutButton from "@/components/billing/StripeCheckoutButton";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
 import ParallaxHalos from "@/components/ParallaxHalos";
 import { redirect } from "next/navigation";
@@ -119,6 +120,11 @@ export default async function BillingPage() {
       year: "numeric",
     }).format(date);
   };
+
+  // Price IDs (Stripe) depuis variables d'environnement publiques
+  const PRICE_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "";
+  const PRICE_QUARTERLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_QUARTERLY || "";
+  const PRICE_ANNUAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || "";
 
   return (
     <div className="relative">
@@ -243,16 +249,18 @@ export default async function BillingPage() {
                 <div className="text-xs text-white/80 ml-1">Facturation mensuelle</div>
               </div>
             </div>
-            <button
-              disabled={currentPlan === "monthly"}
+            <StripeCheckoutButton
+              priceId={PRICE_MONTHLY}
+              mode="subscription"
+              disabled={currentPlan === "monthly" || !PRICE_MONTHLY}
               className={`w-full rounded-xl px-5 py-3 text-sm font-bold transition-all duration-300 mt-auto ${
-                currentPlan === "monthly"
+                currentPlan === "monthly" || !PRICE_MONTHLY
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
               }`}
             >
               {currentPlan === "monthly" ? "Plan actuel" : "Sélectionner ce plan"}
-            </button>
+            </StripeCheckoutButton>
           </div>
 
           {/* Trimestriel */}
@@ -295,16 +303,18 @@ export default async function BillingPage() {
                 <div className="text-xs text-white/80 ml-1">Facturation tous les 3 mois</div>
               </div>
             </div>
-            <button
-              disabled={currentPlan === "quarterly"}
+            <StripeCheckoutButton
+              priceId={PRICE_QUARTERLY}
+              mode="subscription"
+              disabled={currentPlan === "quarterly" || !PRICE_QUARTERLY}
               className={`w-full rounded-xl px-5 py-3 text-sm font-bold transition-all duration-300 mt-auto ${
-                currentPlan === "quarterly"
+                currentPlan === "quarterly" || !PRICE_QUARTERLY
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-2 border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_28px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-100"
               }`}
             >
               {currentPlan === "quarterly" ? "Plan actuel" : "Sélectionner ce plan"}
-            </button>
+            </StripeCheckoutButton>
           </div>
 
           {/* Annuel */}
@@ -350,16 +360,18 @@ export default async function BillingPage() {
                 <div className="text-xs text-white/80 ml-1">Facturation annuelle</div>
               </div>
             </div>
-            <button
-              disabled={currentPlan === "annual"}
+            <StripeCheckoutButton
+              priceId={PRICE_ANNUAL}
+              mode="subscription"
+              disabled={currentPlan === "annual" || !PRICE_ANNUAL}
               className={`w-full rounded-xl px-5 py-3 text-sm font-bold transition-all duration-300 mt-auto ${
-                currentPlan === "annual"
+                currentPlan === "annual" || !PRICE_ANNUAL
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
               }`}
             >
               {currentPlan === "annual" ? "Plan actuel" : "Sélectionner ce plan"}
-            </button>
+            </StripeCheckoutButton>
           </div>
         </div>
       </section>
