@@ -121,7 +121,7 @@ export default function ClubResultatsPage() {
             description={clubData.description}
           />
         ) : (
-          <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Résultats — {slug.toUpperCase()}</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Résultats — {slug.toUpperCase()}</h1>
         )}
         <p className="text-white/60 mb-6 text-sm mt-4">Historique des matchs joués par les membres de ce club uniquement.</p>
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getUserClubInfo, getClubDashboardData, getClubMatchHistory } from "@/lib/utils/club-utils";
 import RankBadge from "@/components/RankBadge";
 import TierBadge from "@/components/TierBadge";
+import PageTitle from "../PageTitle";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,7 +31,7 @@ export default async function ClassementPage() {
   if (!clubId) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-extrabold">Classement</h1>
+        <PageTitle title="Classement" />
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
           Aucun club n’est relié à ce compte. Ajoutez un club pour visualiser votre classement.
         </div>
@@ -48,13 +49,23 @@ export default async function ClassementPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-extrabold text-white">Classement</h1>
-        <div className="flex gap-2 text-sm text-white/70">
-          <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1">
-            {totalPlayers} joueur{totalPlayers > 1 ? "s" : ""}
+        <PageTitle title="Classement" />
+        <div className="flex gap-2 text-sm">
+          <span
+            className="group relative inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10"
+            style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
+            <span aria-hidden>👥</span>
+            <span className="relative">{totalPlayers} joueur{totalPlayers > 1 ? "s" : ""}</span>
           </span>
-          <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1">
-            {totalMatches} match{totalMatches > 1 ? "s" : ""} comptabilisé{totalMatches > 1 ? "s" : ""}
+          <span
+            className="group relative inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10"
+            style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
+            <span aria-hidden>📊</span>
+            <span className="relative">{totalMatches} match{totalMatches > 1 ? "s" : ""} comptabilisé{totalMatches > 1 ? "s" : ""}</span>
           </span>
         </div>
       </div>

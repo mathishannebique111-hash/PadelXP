@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import CookieConsent from "@/components/cookies/CookieConsent";
 
 export const metadata: Metadata = {
   title: "PadelLeague",
@@ -21,7 +22,10 @@ export default function RootLayout({
         {/* Preload hero racket image for better LCP */}
         <link rel="preload" as="image" href="/images/padel-racket.jpg" />
       </head>
-      <body className="bg-black text-white min-h-screen">{children}</body>
+      <body className="bg-black text-white min-h-screen">
+        {children}
+        <CookieConsent />
+      </body>
     </html>
   );
 }

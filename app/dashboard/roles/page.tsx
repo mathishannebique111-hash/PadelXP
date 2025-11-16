@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import InviteAdminForm from "./InviteAdminForm";
 import RemoveAdminButton from "./RemoveAdminButton";
+import PageTitle from "../PageTitle";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -89,17 +90,25 @@ export default async function RolesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-extrabold">Rôles et accès</h1>
+      <PageTitle title="Rôles et accès" />
       
       {/* Administrateurs actifs */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+      <div className="rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.28)]">
         <div className="flex items-center gap-2 mb-5">
           <span className="text-xl">👥</span>
           <h2 className="font-bold text-lg">Administrateurs</h2>
         </div>
         <div className="space-y-3">
           {activeAdmins.length > 0 ? (
-            activeAdmins.map((admin) => {
+            [...activeAdmins]
+              .sort((a, b) => {
+                if (a.role === "owner" && b.role !== "owner") return -1;
+                if (b.role === "owner" && a.role !== "owner") return 1;
+                const aTime = a.invited_at ? new Date(a.invited_at).getTime() : 0;
+                const bTime = b.invited_at ? new Date(b.invited_at).getTime() : 0;
+                return aTime - bTime;
+              })
+              .map((admin) => {
               const isCurrent = admin.user_id === user.id;
               return (
                 <div
@@ -176,7 +185,7 @@ export default async function RolesPage() {
       <InviteAdminForm />
 
       {/* Invitations en attente */}
-      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+      <div className="rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">⏳</span>
           <h2 className="font-semibold">Invitations en attente</h2>
@@ -186,7 +195,7 @@ export default async function RolesPage() {
             {pendingInvitations.map((invitation) => (
               <div
                 key={invitation.id}
-                className="flex items-center justify-between rounded-lg border border-amber-400/20 bg-amber-500/10 px-4 py-3"
+                className="flex items-center justify-between rounded-lg border border-white/15 bg-white/5 px-4 py-3"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
@@ -204,7 +213,7 @@ export default async function RolesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="rounded-lg bg-amber-500/20 border border-amber-400/30 px-3 py-1 text-xs font-medium text-amber-200">
+                  <div className="rounded-lg bg-white/10 border border-white/20 px-3 py-1 text-xs font-medium text-white/80">
                     En attente
                   </div>
                   {/* Bouton de suppression pour les invitations en attente */}
@@ -216,7 +225,7 @@ export default async function RolesPage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-lg border border-amber-400/10 bg-amber-500/5 px-4 py-6 text-center text-sm text-amber-200/80">
+          <div className="rounded-lg border border-white/15 bg-white/5 px-4 py-6 text-center text-sm text-white/70">
             Aucune invitation en attente.
           </div>
         )}

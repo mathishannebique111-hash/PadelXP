@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import ClubPublicPageWrapper from "@/components/club/ClubPublicPageWrapper";
 import { getClubPublicExtras } from "@/lib/utils/club-utils";
+import PageTitle from "../PageTitle";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -75,12 +76,7 @@ export default async function PageClubPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold">Page publique du club</h1>
-        <p className="text-sm text-white/60">
-          Complétez les informations ci-dessous pour enrichir la page consultée par vos joueurs et visiteurs.
-        </p>
-      </div>
+      <PageTitle title="Page publique du club" subtitle="Complétez les informations pour enrichir la page consultée par vos joueurs et visiteurs." />
       <ClubPublicPageWrapper initialData={initialPreviewData} clubId={clubId} />
     </div>
   );

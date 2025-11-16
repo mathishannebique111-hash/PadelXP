@@ -1,7 +1,9 @@
+import PageTitle from "../PageTitle";
+
 export default function HelpPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-extrabold">Aide & Support</h1>
+      <PageTitle title="Aide & Support" />
       <div className="rounded-xl border border-white/10 bg-white/5 p-4">
         <h2 className="font-semibold mb-2">Mini‑FAQ</h2>
         <ul className="list-disc pl-6 text-sm text-white/80 space-y-1">

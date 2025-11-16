@@ -3,6 +3,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { redirect } from "next/navigation";
 import InvitationCodeCard from "./InvitationCodeCard";
+import PageTitle from "./PageTitle";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -219,13 +220,26 @@ export default async function DashboardHome() {
       )}
 
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold">Tableau de bord</h1>
-          <p className="text-white/60 text-sm">Bienvenue dans votre espace club / complexe</p>
-        </div>
+        <PageTitle title="Tableau de bord" subtitle="Bienvenue dans votre espace club / complexe" />
         <div className="flex gap-2">
-          <a href="/dashboard/classement" className="px-4 py-2 rounded bg-white/10 border border-white/10">Voir le classement</a>
-          <a href="/dashboard/page-club" className="px-4 py-2 rounded bg-white/10 border border-white/10">Configurer la page club</a>
+          <a
+            href="/dashboard/classement"
+            className="group relative inline-flex items-center gap-2 rounded-xl px-5 py-2.5 font-semibold text-sm text-white overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/30"
+            style={{ background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)", boxShadow: "0 6px 18px rgba(0,102,255,0.28)" }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+            <span className="relative">🏆</span>
+            <span className="relative">Voir le classement</span>
+          </a>
+          <a
+            href="/dashboard/page-club"
+            className="group relative inline-flex items-center gap-2 rounded-xl px-5 py-2.5 font-semibold text-sm text-white overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-violet-500/30"
+            style={{ background: "linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)", boxShadow: "0 6px 18px rgba(124,58,237,0.28)" }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+            <span className="relative">⚙️</span>
+            <span className="relative">Configurer la page club</span>
+          </a>
         </div>
       </header>
 
@@ -236,7 +250,7 @@ export default async function DashboardHome() {
           slug={club?.slug ?? null}
         />
         {/* À venir */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+        <div className="rounded-xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
           <h2 className="font-semibold mb-4">Challenges en cours et à venir</h2>
           <div className="space-y-4">
             {upcomingChallenges.length === 0 ? (
@@ -247,15 +261,13 @@ export default async function DashboardHome() {
                 </div>
                 <a 
                   href="/dashboard/challenges" 
-                  className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white overflow-hidden transition-all hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25"
-                  style={{
-                    background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)",
-                    boxShadow: "0 4px 20px rgba(0, 102, 255, 0.3)"
-                  }}
+                  className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold text-sm text-white overflow-hidden transition-all hover:scale-105 hover:shadow-lg ring-1 ring-white/20 border border-white/10"
+                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)", boxShadow: "0 6px 22px rgba(0, 102, 255, 0.35)" }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
                   <span className="relative text-lg">➕</span>
                   <span className="relative">Créer un challenge</span>
+                  <span className="relative text-base ml-1">›</span>
                 </a>
               </div>
             ) : (
@@ -300,7 +312,7 @@ export default async function DashboardHome() {
       </section>
 
       {/* Activité récente */}
-      <section className="rounded-xl border border-white/10 bg-white/5 p-5">
+      <section className="rounded-xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
         <h2 className="font-semibold mb-4">Activité récente</h2>
         {recentMatches.length === 0 ? (
           <div className="text-sm text-white/60">Aucun match récent dans votre club.</div>

@@ -212,9 +212,8 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   const computedBadges = getBadges(stats);
 
   return (
-    <div className="rounded-2xl border p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]" style={{
-      background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
-      borderColor: "rgba(72,128,210,0.55)"
+    <div className="rounded-2xl border border-white/40 p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]" style={{
+      background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)"
     }}>
       <div>
         {/* Notifier client pour les changements de niveau */}

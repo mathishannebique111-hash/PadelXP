@@ -140,46 +140,112 @@ export function getCycleDays(cycle: PlanCycle): number {
  * Récupère l'abonnement d'un club
  */
 export async function getClubSubscription(clubId: string): Promise<Subscription | null> {
-  const supabase = createServiceClient();
+  try {
+    const supabase = createServiceClient();
 
-  const { data, error } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("club_id", clubId)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("club_id", clubId)
+      .maybeSingle();
 
-  if (error) {
-    console.error("[getClubSubscription] Error:", error);
+    if (error) {
+      // Log l'erreur complète, y compris les propriétés non-énumérables
+      const errorDetails: any = {
+        message: error?.message || 'No message',
+        details: error?.details || 'No details',
+        hint: error?.hint || 'No hint',
+        code: error?.code || 'No code',
+        clubId,
+      };
+      
+      // Essayer de stringify l'erreur complète pour voir toutes les propriétés
+      try {
+        errorDetails.fullError = JSON.stringify(error, Object.getOwnPropertyNames(error));
+      } catch (e) {
+        errorDetails.fullError = String(error);
+      }
+      
+      console.error("[getClubSubscription] Error details:", errorDetails);
+      
+      // Si c'est juste qu'aucun abonnement n'existe, ce n'est pas une vraie erreur
+      if (error?.code === 'PGRST116' || error?.message?.includes('No rows found') || error?.code === '42P01') {
+        // PGRST116 = No rows returned, 42P01 = relation does not exist (table doesn't exist)
+        if (error?.code === '42P01') {
+          console.error("[getClubSubscription] Table 'subscriptions' does not exist. Please run the migration SQL.");
+        }
+        return null;
+      }
+      
+      // Si la table n'existe pas (code 42P01)
+      if (error?.code === '42P01') {
+        console.error("[getClubSubscription] Table 'subscriptions' does not exist. Please run the migration SQL in Supabase.");
+      }
+      
+      return null;
+    }
+
+    return data as Subscription | null;
+  } catch (err) {
+    // Gérer les erreurs inattendues
+    console.error("[getClubSubscription] Unexpected error:", {
+      error: err instanceof Error ? err.message : String(err),
+      clubId,
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     return null;
   }
-
-  return data as Subscription | null;
 }
 
 /**
  * Initialise un abonnement pour un club (essai gratuit)
  */
 export async function initializeSubscription(clubId: string): Promise<Subscription | null> {
-  const supabase = createServiceClient();
+  try {
+    const supabase = createServiceClient();
 
-  // Vérifier si un abonnement existe déjà
-  const existing = await getClubSubscription(clubId);
-  if (existing) {
-    return existing;
-  }
+    // Vérifier si un abonnement existe déjà
+    const existing = await getClubSubscription(clubId);
+    if (existing) {
+      return existing;
+    }
 
-  // Appeler la fonction SQL pour initialiser
-  const { data, error } = await supabase.rpc("initialize_club_subscription", {
-    p_club_id: clubId,
-  });
+    // Appeler la fonction SQL pour initialiser
+    const { data, error } = await supabase.rpc("initialize_club_subscription", {
+      p_club_id: clubId,
+    });
 
-  if (error) {
-    console.error("[initializeSubscription] Error:", error);
+    if (error) {
+      // Logger l'erreur complète, y compris les propriétés non-énumérables
+      console.error("[initializeSubscription] Error details:", {
+        message: error?.message || 'No message',
+        details: error?.details || 'No details',
+        hint: error?.hint || 'No hint',
+        code: error?.code || 'No code',
+        error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+        clubId,
+      });
+      
+      // Si la fonction RPC n'existe pas, c'est probablement que la migration n'a pas été exécutée
+      if (error?.code === '42883' || error?.message?.includes('function') || error?.message?.includes('does not exist')) {
+        console.error("[initializeSubscription] Function 'initialize_club_subscription' may not exist. Please run the migration SQL.");
+      }
+      
+      return null;
+    }
+
+    // Récupérer l'abonnement créé
+    return await getClubSubscription(clubId);
+  } catch (err) {
+    // Gérer les erreurs inattendues
+    console.error("[initializeSubscription] Unexpected error:", {
+      error: err instanceof Error ? err.message : String(err),
+      clubId,
+      stack: err instanceof Error ? err.stack : undefined,
+      fullError: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+    });
     return null;
   }
-
-  // Récupérer l'abonnement créé
-  return await getClubSubscription(clubId);
 }
 
 /**

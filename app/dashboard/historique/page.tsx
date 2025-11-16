@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getUserClubInfo, getClubMatchHistory } from "@/lib/utils/club-utils";
+import PageTitle from "../PageTitle";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -41,11 +42,16 @@ export default async function DashboardHistoriquePage() {
     <div className="space-y-8">
       <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold">Historique des matchs <span aria-hidden>📊</span></h1>
+          <PageTitle title="Historique des matchs" />
           <p className="text-white/60 text-sm">Résultats enregistrés par les joueurs rattachés à votre club.</p>
         </div>
-        <span className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-1 text-sm text-white/70">
-          {totalMatches} match{totalMatches > 1 ? "s" : ""}
+        <span
+          className="group relative inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10"
+          style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
+          <span aria-hidden>📊</span>
+          <span className="relative">{totalMatches} match{totalMatches > 1 ? "s" : ""}</span>
         </span>
       </header>
 
@@ -95,10 +101,10 @@ export default async function DashboardHistoriquePage() {
                         {dateStr} à {timeStr}
                       </div>
                       {match.decided_by_tiebreak && (
-                        <div className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-white/10 ring-1 ring-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white/80">
                           <span>⚡</span>
-                          <span>Match décidé au tie-break</span>
-                        </div>
+                          <span>Tie-break</span>
+                        </span>
                       )}
                     </div>
                   </div>
@@ -125,8 +131,8 @@ export default async function DashboardHistoriquePage() {
                             {isWinner && " 🏆"}
                           </span>
                           {match.clubTeam === teamIndex + 1 && (
-                            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
-                              Club
+                            <span className="rounded-full border border-white/10 ring-1 ring-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/80">
+                              CLUB
                             </span>
                           )}
                         </div>
@@ -145,7 +151,7 @@ export default async function DashboardHistoriquePage() {
                                   </span>
                                 )}
                                 {isGuest && (
-                                  <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600">
+                                  <span className="rounded-full border border-white/10 ring-1 ring-white/15 bg-white/10 px-2 py-0.5 text-[10px] text-white/80">
                                     Invité
                                   </span>
                                 )}

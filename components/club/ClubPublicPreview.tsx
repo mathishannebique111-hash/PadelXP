@@ -33,7 +33,7 @@ export default function ClubPublicPreview({
 }: Props) {
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-white/15 bg-white/5 p-6 shadow-[0_18px_45px_rgba(12,60,148,0.25)]">
+      <div className="rounded-3xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-6 shadow-[0_18px_45px_rgba(12,60,148,0.25)]">
         <h2 className="text-xl font-semibold text-white">Aperçu</h2>
         <p className="text-sm text-white/60">
           Visualisez ce que vos joueurs verront dans l'espace club.

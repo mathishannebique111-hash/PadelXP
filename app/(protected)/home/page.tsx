@@ -120,15 +120,15 @@ export default async function HomePage() {
 
   if (!userClubId) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-black">
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
         {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
         
         {/* Pattern animé */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-10 text-white">
@@ -596,15 +596,15 @@ export default async function HomePage() {
   console.log("[Home] ================================");
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
       {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
       
       {/* Pattern animé */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-8 py-8">
@@ -630,7 +630,7 @@ export default async function HomePage() {
             <div className="mb-8">
               <div className="mb-4 flex items-center justify-center gap-3">
                 <span className="h-px w-10 bg-gray-300" />
-                <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/80 shadow-sm">
                   Top joueurs du moment <span aria-hidden>✨</span>
                 </span>
                 <span className="h-px w-10 bg-gray-300" />
@@ -638,7 +638,7 @@ export default async function HomePage() {
               <div className="hidden md:flex items-end justify-center gap-6 w-full mt-8">
                 <div className="flex-1 max-w-[240px]">
                   <div 
-                    className="podium-silver border-2 border-gray-300 rounded-2xl p-8 hover:border-gray-400 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
+                    className="podium-silver border-4 border-slate-400/80 rounded-2xl p-8 hover:border-slate-300/90 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
                     style={{
                       background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
@@ -660,7 +660,7 @@ export default async function HomePage() {
                 </div>
                 <div className="flex-1 max-w-[280px]">
                   <div 
-                    className="podium-gold border-2 border-yellow-400 rounded-2xl p-9 hover:border-yellow-500 transition-all shadow-xl transform hover:scale-[1.02] relative overflow-hidden"
+                    className="podium-gold border-4 border-yellow-500/80 rounded-2xl p-9 hover:border-yellow-400/90 transition-all shadow-xl transform hover:scale-[1.02] relative overflow-hidden"
                     style={{
                       background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)',
                       boxShadow: '0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6)'
@@ -685,7 +685,7 @@ export default async function HomePage() {
                 </div>
                 <div className="flex-1 max-w-[240px]">
                   <div 
-                    className="podium-bronze border-2 border-orange-300 rounded-2xl p-8 hover:border-orange-400 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
+                    className="podium-bronze border-4 border-orange-600/80 rounded-2xl p-8 hover:border-orange-500/90 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
                     style={{
                       background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)',
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
@@ -710,11 +710,11 @@ export default async function HomePage() {
                 {leaderboard.slice(0, 3).map(function(player, index) {
                   var icons = ['🥇', '🥈', '🥉'];
                   var borderColors = [
-                    'border-yellow-400',
-                    'border-gray-300',
-                    'border-orange-300'
+                    'border-yellow-500/80',
+                    'border-slate-400/80',
+                    'border-orange-600/80'
                   ];
-                  var borderWidth = 'border-2';
+                  var borderWidth = 'border-4';
                   var shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
                   var bgGradients = [
                     { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
@@ -746,13 +746,13 @@ export default async function HomePage() {
               <div className="px-5 pt-5">
                 <div className="mb-4 flex items-center justify-center gap-3">
                   <span className="h-px w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/80 shadow-sm">
                     Classement global <span aria-hidden>🏆</span>
                   </span>
                   <span className="h-px w-10 bg-gray-300" />
                 </div>
               </div>
-              <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
+              <div className="overflow-x-auto rounded-2xl border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
                     <tr>

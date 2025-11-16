@@ -109,7 +109,7 @@ export default function ClubClassementPage() {
             description={clubData.description}
           />
         ) : (
-          <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Classement — {slug.toUpperCase()}</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Classement — {slug.toUpperCase()}</h1>
         )}
         <p className="text-white/60 mb-6 text-sm mt-4">Seuls les joueurs rattachés à ce club apparaissent ici.</p>
 

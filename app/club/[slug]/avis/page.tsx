@@ -72,7 +72,7 @@ export default function ClubReviewsPage() {
             description={clubData.description}
           />
         ) : (
-          <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Avis — {slug.toUpperCase()}</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Avis — {slug.toUpperCase()}</h1>
         )}
         <div className="rounded-xl border border-white/10 bg-white/5 divide-y divide-white/10">
           {loading ? (

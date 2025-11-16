@@ -22,9 +22,21 @@ export default async function MatchHistoryPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10">
-        <h1 className="text-xl font-semibold text-white">Accès restreint</h1>
-        <Link href="/login" className="text-blue-400 underline">Se connecter</Link>
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
+        {/* Background avec overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+        
+        {/* Pattern animé */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        </div>
+
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-10 text-white">
+          <h1 className="text-xl font-semibold">Accès restreint</h1>
+          <Link href="/login" className="text-blue-400 underline">Se connecter</Link>
+        </div>
       </div>
     );
   }
@@ -65,16 +77,28 @@ export default async function MatchHistoryPage() {
 
   if (!userClubId) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-8 text-white">
-        <div className="mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-            <LogoutButton />
-          </div>
-          <NavigationBar currentPage="history" />
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
+        {/* Background avec overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+        
+        {/* Pattern animé */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
-          <p>Vous devez être rattaché à un club pour consulter l’historique des matchs. Contactez votre club / complexe pour obtenir le code d’invitation.</p>
+
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
+          <div className="mb-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <LogoutButton />
+            </div>
+            <NavigationBar currentPage="history" />
+          </div>
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+            <p>Vous devez être rattaché à un club pour consulter l'historique des matchs. Contactez votre club / complexe pour obtenir le code d'invitation.</p>
+          </div>
         </div>
       </div>
     );
@@ -95,18 +119,31 @@ export default async function MatchHistoryPage() {
 
   if (!userParticipations || userParticipations.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-8">
-        <div className="mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-          </div>
-          <NavigationBar currentPage="history" />
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
+        {/* Background avec overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+        
+        {/* Pattern animé */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
-        <div className="rounded-2xl bg-white p-8 text-center">
-          <p className="text-gray-600">Aucun match enregistré pour le moment.</p>
-          <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-            Enregistrer un match
-          </Link>
+
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
+          <div className="mb-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <LogoutButton />
+            </div>
+            <NavigationBar currentPage="history" />
+          </div>
+          <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
+            <p className="text-white/80">Aucun match enregistré pour le moment.</p>
+            <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+              Enregistrer un match
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -119,18 +156,31 @@ export default async function MatchHistoryPage() {
 
   if (matchIds.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-8">
-        <div className="mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-          </div>
-          <NavigationBar currentPage="history" />
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
+        {/* Background avec overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+        
+        {/* Pattern animé */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
-        <div className="rounded-2xl bg-white p-8 text-center">
-          <p className="text-gray-600">Aucun match enregistré pour le moment.</p>
-          <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-            Enregistrer un match
-          </Link>
+
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
+          <div className="mb-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <LogoutButton />
+            </div>
+            <NavigationBar currentPage="history" />
+          </div>
+          <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
+            <p className="text-white/80">Aucun match enregistré pour le moment.</p>
+            <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+              Enregistrer un match
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -163,18 +213,31 @@ export default async function MatchHistoryPage() {
 
   if (!transformedMatches || transformedMatches.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-4 py-8">
-        <div className="mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-          </div>
-          <NavigationBar currentPage="history" />
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
+        {/* Background avec overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+        
+        {/* Pattern animé */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
-        <div className="rounded-2xl bg-white p-8 text-center">
-          <p className="text-gray-600">Aucun match enregistré pour le moment.</p>
-          <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-            Enregistrer un match
-          </Link>
+
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
+          <div className="mb-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <LogoutButton />
+            </div>
+            <NavigationBar currentPage="history" />
+          </div>
+          <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
+            <p className="text-white/80">Aucun match enregistré pour le moment.</p>
+            <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+              Enregistrer un match
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -376,16 +439,16 @@ export default async function MatchHistoryPage() {
   });
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
       {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
       
-      {/* Pattern animé */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-      </div>
+        {/* Pattern animé */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        </div>
 
       <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8">
         <div className="mb-6">

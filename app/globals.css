@@ -465,3 +465,13 @@ html {
     transparent 70%
   );
 }
+
+/* ===== Dynamic drift used on club dashboard background ===== */
+@keyframes drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.03); }
+  100% { transform: translate3d(-1%, 2%, 0) scale(1); }
+}
+.animate-drift-slow { animation: drift 18s ease-in-out infinite alternate; }
+.animate-drift-medium { animation: drift 14s ease-in-out infinite alternate; }
+.animate-drift-fast { animation: drift 11s ease-in-out infinite alternate; }

@@ -242,24 +242,24 @@ export default function ClubPublicFormClient() {
   return (
     <div className="space-y-6">
       {error ? (
-        <div className="rounded-xl border border-rose-400/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+        <div className="rounded-xl border-2 border-rose-400/70 ring-1 ring-rose-200/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           {error}
         </div>
       ) : null}
       {success ? (
-        <div className="rounded-xl border border-emerald-400/60 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+        <div className="rounded-xl border-2 border-emerald-400/70 ring-1 ring-emerald-200/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
           {success}
         </div>
       ) : null}
 
       {loading ? (
-        <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70">
+        <div className="rounded-xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 px-4 py-6 text-center text-sm text-white/70">
           Chargement des informations…
         </div>
       ) : (
         <div className="grid gap-6">
           <div className="space-y-6">
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <section className="rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-6">
               <h2 className="text-lg font-semibold text-white">Informations principales</h2>
               <p className="text-sm text-white/60">Complétez autant que possible pour enrichir votre page publique.</p>
 
@@ -369,11 +369,11 @@ export default function ClubPublicFormClient() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <section className="rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-6">
               <h2 className="text-lg font-semibold text-white">Horaires d'ouverture</h2>
               <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {DAYS.map(({ key, label }) => (
-                  <div key={key} className="rounded-xl border border-white/12 bg-black/20 p-4 transition-all">
+                  <div key={key} className="rounded-xl border-2 border-white/20 bg-black/20 p-4 transition-all">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">{label}</p>
                       <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/40">

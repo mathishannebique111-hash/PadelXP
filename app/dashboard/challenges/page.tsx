@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import PageTitle from "../PageTitle";
 
 type RewardType = "points" | "badge";
 
@@ -147,10 +148,7 @@ export default function ChallengesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold">Challenges</h1>
-        <p className="text-sm text-white/60">Créez des défis motivants pour vos joueurs et suivez-les en un coup d'œil.</p>
-      </div>
+      <PageTitle title="Challenges" subtitle="Créez des défis motivants pour vos joueurs et suivez-les en un coup d'œil." />
 
       {error ? (
         <div className="rounded-2xl border border-rose-400/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">

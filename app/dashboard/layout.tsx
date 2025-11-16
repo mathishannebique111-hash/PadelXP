@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
+import ClubHeader from "./ClubHeader";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -145,23 +146,43 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#121212] to-[#1E1E1E] text-white">
       {/* Menu hamburger et volet latéral (visible sur tous les écrans) */}
       <Suspense fallback={null}>
         <MobileMenu />
       </Suspense>
 
+      {/* Subtle dynamic gradient overlay (accentuated but still light) */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        {/* Soft white glow */}
+        <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(255,255,255,0.12),transparent_70%)] blur-[70px] animate-pulse animate-drift-slow" />
+        {/* Deep blue glow */}
+        <div className="absolute -bottom-32 -right-28 h-[44rem] w-[44rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.18),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "0.8s" }} />
+        {/* Cyan hint to add depth */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(34,211,238,0.12),transparent_70%)] blur-[90px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
+        {/* Top-right corner accent */}
+        <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(168,85,247,0.22),transparent_70%)] blur-[70px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
+        <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(99,102,241,0.18),transparent_70%)] blur-[60px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
+      </div>
+
       <main className="p-8">
-        {/* Logo et nom du club centré */}
-        <div className="flex items-center justify-center gap-3 mb-12" style={{ paddingTop: '0px', marginTop: '-16px' }}>
-          {clubLogo ? (
-            <img
-              src={clubLogo}
-              alt={clubName || "Logo du club"}
-              className="h-16 w-16 rounded-full object-cover flex-shrink-0"
-            />
-          ) : null}
-          <h2 className="text-3xl font-bold text-white whitespace-nowrap">{clubName || "Club"}</h2>
+        {/* Logo + nom avec simple soulignement à la largeur du contenu */}
+        <div className="mb-12 flex justify-center" style={{ paddingTop: '0px', marginTop: '4px' }}>
+          <div className="inline-flex flex-col items-center">
+            <div className="inline-flex items-center gap-3">
+              {clubLogo ? (
+                <img
+                  src={clubLogo}
+                  alt={clubName || "Logo du club"}
+                  className="h-16 w-16 rounded-full object-cover flex-shrink-0"
+                />
+              ) : null}
+              <h2 className="text-3xl font-extrabold tracking-tight text-white whitespace-nowrap">{clubName || "Club"}</h2>
+            </div>
+            <div className="relative mt-3 h-[2px]" style={{ width: '112%' }}>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/0 via-white/40 to-white/0" />
+            </div>
+          </div>
         </div>
         {children}
       </main>

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getUserClubInfo, getClubDashboardData } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import PageTitle from "../PageTitle";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -41,7 +42,7 @@ export default async function MembersPage() {
   if (!clubId) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-extrabold">Membres</h1>
+        <PageTitle title="Membres" />
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
           Aucun club n’est relié à ce compte. Ajoutez un club pour visualiser vos membres.
         </div>
@@ -120,13 +121,20 @@ export default async function MembersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-extrabold">Membres</h1>
-        <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm text-white/70">
-          {filteredMembers.length} joueur{filteredMembers.length > 1 ? "s" : ""}
+        <PageTitle title="Membres" />
+        <span
+          className="group relative inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10"
+          style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
+          <span aria-hidden>👥</span>
+          <span className="relative">
+            {filteredMembers.length} joueur{filteredMembers.length > 1 ? "s" : ""}
+          </span>
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div className="overflow-hidden rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
         <table className="w-full">
           <thead>
             <tr className="bg-white/10 text-left text-xs uppercase tracking-wide text-white/60">

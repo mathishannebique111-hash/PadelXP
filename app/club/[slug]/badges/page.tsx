@@ -59,7 +59,7 @@ export default function ClubBadgesPage() {
           description: null,
         });
       }
-      
+
       if (profile.club_slug !== slug) {
         // tenter via club_id
         const { data: clubCheck } = await supabase.from("clubs").select("slug").eq("id", profile.club_id).maybeSingle();
@@ -82,7 +82,7 @@ export default function ClubBadgesPage() {
             description={clubData.description}
           />
         ) : (
-          <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Badges — {slug.toUpperCase()}</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Badges — {slug.toUpperCase()}</h1>
         )}
         {!clubOk && <p className="text-red-400 text-sm mb-4 mt-4">Vous n'êtes pas rattaché à ce club.</p>}
 

@@ -152,7 +152,7 @@ CREATE POLICY "Club admins can view their subscription"
   USING (
     EXISTS (
       SELECT 1 FROM public.club_admins
-      WHERE club_admins.club_id = subscriptions.club_id
+      WHERE club_admins.club_id::uuid = subscriptions.club_id
       AND club_admins.user_id = auth.uid()
     )
   );
@@ -161,7 +161,7 @@ CREATE POLICY "System can manage all subscriptions"
   ON public.subscriptions
   FOR ALL
   USING (true)
-  WITH CHECK (true)
+  WITH CHECK (true);
   -- Note: Cette policy est pour les fonctions service_role uniquement
 
 -- Policies pour subscription_notifications
@@ -171,7 +171,7 @@ CREATE POLICY "Club admins can view their notifications"
   USING (
     EXISTS (
       SELECT 1 FROM public.subscriptions
-      JOIN public.club_admins ON club_admins.club_id = subscriptions.club_id
+      JOIN public.club_admins ON club_admins.club_id::uuid = subscriptions.club_id
       WHERE subscriptions.id = subscription_notifications.subscription_id
       AND club_admins.user_id = auth.uid()
     )
@@ -184,7 +184,7 @@ CREATE POLICY "Club admins can view their events"
   USING (
     EXISTS (
       SELECT 1 FROM public.subscriptions
-      JOIN public.club_admins ON club_admins.club_id = subscriptions.club_id
+      JOIN public.club_admins ON club_admins.club_id::uuid = subscriptions.club_id
       WHERE subscriptions.id = subscription_events.subscription_id
       AND club_admins.user_id = auth.uid()
     )

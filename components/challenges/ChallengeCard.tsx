@@ -50,7 +50,7 @@ function statusClasses(status: PlayerChallenge["status"]) {
       return "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
     default:
-      return "bg-white/10 text-white/70 border border-white/15";
+      return "bg-white/20 text-white/80 border border-white/25";
   }
 }
 
@@ -189,12 +189,12 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
       )}
 
       {/* Carte du challenge */}
-      <div className={`group relative rounded-3xl border p-6 shadow-xl transition-all duration-300 overflow-hidden ${
+      <div className={`group relative rounded-3xl border-2 p-6 shadow-xl transition-all duration-300 overflow-hidden ${
         isCompleted
-          ? "border-emerald-500/60 bg-gradient-to-br from-emerald-500/10 to-green-500/5 shadow-emerald-500/20"
+          ? "border-emerald-500/80 bg-gradient-to-br from-emerald-500/10 to-green-500/5 shadow-emerald-500/20"
           : isFailed
-          ? "border-red-500/60 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
-          : "border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.03] hover:border-white/20 hover:shadow-2xl"
+          ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
+          : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-2xl"
       }`}>
         {/* Effet brillant style top joueurs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
@@ -233,22 +233,22 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         </div>
 
         {/* Objectif */}
-        <div className="mb-5 rounded-2xl border border-blue-400/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 p-4 shadow-inner">
+        <div className="mb-5 rounded-2xl border border-blue-400/40 bg-gradient-to-br from-blue-500/30 to-cyan-500/15 p-4 shadow-inner">
           <div className="mb-3 flex items-start justify-between">
             <div>
-              <div className="mb-1 text-sm font-medium text-blue-200/90">Objectif</div>
-              <div className="text-xs text-white/70">{challenge.objective}</div>
+              <div className="mb-1 text-sm font-medium text-blue-200">Objectif</div>
+              <div className="text-xs text-white/80">{challenge.objective}</div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-white">
                 {challenge.progress.current}/{challenge.progress.target}
               </div>
-              <div className="text-xs font-medium text-blue-300">{Math.round(percentage)}%</div>
+              <div className="text-xs font-medium text-blue-200">{Math.round(percentage)}%</div>
             </div>
           </div>
 
           {/* Barre de progression */}
-          <div className="relative h-3 overflow-hidden rounded-full bg-white/10">
+          <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
             <div
               className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
                 isCompleted
@@ -269,7 +269,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         </div>
 
         {/* Période */}
-        <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+        <div className="mb-5 rounded-2xl border border-white/20 bg-white/15 px-4 py-3">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-xl">📅</span>
             <div>

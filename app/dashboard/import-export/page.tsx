@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import PageTitle from "../PageTitle";
 
 type ImportMessage = { type: "success" | "error"; text: string };
 
@@ -341,8 +342,8 @@ export default function ImportExportPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-extrabold">Import / Export</h1>
+    <>
+      <PageTitle title="Import / Export" subtitle="Importez vos membres et exportez vos données en toute simplicité" />
       <div className="rounded-xl border border-white/10 bg-white/5 p-4">
         <h2 className="font-semibold mb-2">Import membres (CSV)</h2>
         <div className="flex gap-2">
@@ -479,7 +480,7 @@ export default function ImportExportPage() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
