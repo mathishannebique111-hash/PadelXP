@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import BillingInfoSection from "@/components/billing/BillingInfoSection";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
+import ParallaxHalos from "@/components/ParallaxHalos";
 import { redirect } from "next/navigation";
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
@@ -20,8 +21,16 @@ export default async function BillingPage() {
   const { clubId } = await getUserClubInfo();
 
   if (!clubId) {
-    return (
-      <div className="space-y-6">
+  return (
+    <div className="relative">
+      {/* Background accent layers */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        {/* Subtle white radial glow (stronger) */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_25%,rgba(255,255,255,0.14),transparent_65%)]" />
+        {/* Parallax halos */}
+        <ParallaxHalos />
+      </div>
+      <div className="relative z-10 space-y-6">
         <div>
           <h1 className="text-2xl font-extrabold text-white">Facturation & essai</h1>
           <p className="text-sm text-white/60 mt-1">Gérez votre abonnement et votre période d'essai</p>
@@ -29,6 +38,7 @@ export default async function BillingPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
           Aucun club n'est relié à ce compte.
         </div>
+      </div>
       </div>
     );
   }
@@ -111,35 +121,39 @@ export default async function BillingPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Sync Stripe → App au retour du portail */}
-      <SyncOnReturn />
-      <div>
+    <div className="relative">
+      {/* Background accent layers */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        {/* Subtle white radial glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
+        {/* Blue accents */}
+        <div className="absolute -top-24 -right-24 h-[420px] w-[420px] rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="absolute -bottom-28 -left-28 h-[360px] w-[360px] rounded-full bg-indigo-500/20 blur-3xl" />
+      </div>
+      <div className="relative z-10 space-y-6">
+        {/* Sync Stripe → App au retour du portail */}
+        <SyncOnReturn />
+        <div>
         <h1 className="text-2xl font-extrabold text-white">Facturation & essai</h1>
         <p className="text-sm text-white/60 mt-1">Gérez votre abonnement et votre période d'essai</p>
-      </div>
+        </div>
 
       {/* Bandeau Essai */}
-      <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-6">
+      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-xl font-extrabold text-white mb-1">Essai gratuit — 30 jours</h2>
-            {isTrialActive && daysRemaining !== null && (
-              <div className="flex items-center gap-3 mt-2">
-                <span className={`rounded-full border px-3 py-1 text-sm font-semibold ${
+            <h2 className="text-xl font-extrabold text-white mb-1">
+              Essai gratuit — 30 jours{" "}
+              {isTrialActive && daysRemaining !== null && (
+                <span className={`ml-2 align-middle rounded-full border px-3 py-1 text-sm font-semibold ${
                   showWarning
                     ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
                     : "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
                 }`}>
                   {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}
                 </span>
-                {trialEndDate && (
-                  <span className="text-sm text-white/70">
-                    Se termine le {formatDate(trialEndDate)}
-                  </span>
-                )}
-              </div>
-            )}
+              )}
+            </h2>
           </div>
           {isTrialActive && (
             <div className="text-5xl flex-shrink-0">🎁</div>
@@ -193,7 +207,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Cartes Offres */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-white mb-1">Choisissez l'offre qui vous convient</h2>
           <p className="text-sm text-white/60">Les réductions s'appliquent automatiquement.</p>
@@ -201,7 +215,7 @@ export default async function BillingPage() {
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Mensuel */}
-          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 ${
+          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
             currentPlan === "monthly"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
@@ -242,7 +256,7 @@ export default async function BillingPage() {
           </div>
 
           {/* Trimestriel */}
-          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 ${
+          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
             currentPlan === "quarterly"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-emerald-400/60 bg-gradient-to-br from-emerald-500/15 via-green-600/10 to-emerald-500/15 shadow-[0_12px_40px_rgba(16,185,129,0.3)]"
@@ -294,7 +308,7 @@ export default async function BillingPage() {
           </div>
 
           {/* Annuel */}
-          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 ${
+          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
             currentPlan === "annual"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]"
@@ -351,7 +365,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Bloc Statut d'Abonnement */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Statut de l'abonnement</h2>
 
         <div className="space-y-4">
@@ -399,25 +413,72 @@ export default async function BillingPage() {
             </div>
           </div>
 
-          {/* Renouvellement automatique */}
+          {/* Échéance / Expiration */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-white/60 mb-1">Renouvellement automatique</div>
-                <div className="text-sm text-white/80">
-                  {subscriptionStatus === "active"
-                    ? (autoRenewal
-                        ? "Activé — Votre abonnement sera reconduit automatiquement"
-                        : "Désactivé — Votre abonnement ne sera pas reconduit")
-                    : "Disponible lorsque l'abonnement est actif"}
-                </div>
+            <div className="text-xs text-white/60 mb-1">Votre abonnement expire dans</div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                {subscriptionStatus === "trial_active" && daysRemaining !== null ? (
+                  <div className="space-y-2">
+                    <div className="text-sm text-white">
+                      <span className="rounded-full border border-emerald-400/50 bg-emerald-500/20 text-emerald-300 px-2 py-0.5">
+                        {daysRemaining} jour{daysRemaining > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/60">
+                      Vous êtes en période d’essai. À l’issue de l’essai, l’accès sera interrompu sauf activation d’un abonnement.
+                    </p>
+                  </div>
+                ) : subscriptionStatus === "active" ? (
+                  (() => {
+                    const msPerDay = 1000 * 60 * 60 * 24;
+                    const toMidnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    const today = toMidnight(new Date());
+                    const target = cancelledUntil
+                      ? toMidnight(cancelledUntil)
+                      : nextBillingDate
+                      ? toMidnight(nextBillingDate)
+                      : null;
+                    const remaining =
+                      target ? Math.max(0, Math.ceil((target.getTime() - today.getTime()) / msPerDay)) : null;
+                    return (
+                      <div className="space-y-2">
+                        <div className="text-sm text-white">
+                          {remaining !== null ? (
+                            <span className={`rounded-full border px-2 py-0.5 ${
+                              cancelledUntil
+                                ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
+                                : "border-blue-400/50 bg-blue-500/20 text-blue-300"
+                            }`}>
+                              {remaining} jour{remaining > 1 ? "s" : ""}
+                            </span>
+                          ) : (
+                            <span className="text-white/60">—</span>
+                          )}
+                        </div>
+                        {cancelledUntil ? (
+                          <p className="text-xs text-white/60">
+                            L’abonnement a été annulé et restera actif jusqu’à la fin de la période en cours.
+                          </p>
+                        ) : nextBillingDate ? (
+                          <>
+                            <p className="text-xs text-white/80">
+                              Prochain prélèvement le {formatDate(nextBillingDate)}.
+                            </p>
+                            <p className="text-xs text-white/60">
+                              L’abonnement se renouvellera automatiquement.
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs text-white/60">Information d’échéance indisponible pour le moment.</p>
+                        )}
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm text-white/70">—</p>
+                )}
               </div>
-              {subscriptionStatus === "active" && (
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked={autoRenewal} />
-                  <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500/40 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                </label>
-              )}
             </div>
           </div>
 
@@ -462,7 +523,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Infos de Facturation */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Informations de facturation</h2>
 
         <div className="space-y-4">
@@ -479,7 +540,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Prochaine Échéance & Historique */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Historique des factures</h2>
 
         <div className="space-y-4">
@@ -508,7 +569,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Annulation & Renouvellement */}
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Annulation & Renouvellement</h2>
 
         <div className="space-y-4">
@@ -539,53 +600,51 @@ export default async function BillingPage() {
       </section>
 
       {/* Légal & Conformité */}
-      <section className="rounded-2xl border border-white/15 ring-1 ring-white/10 bg-gradient-to-br from-white/5 via-white/5 to-white/[0.04] p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center">
-              <span className="text-blue-300 text-lg">🛡️</span>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-white leading-tight">Légal & Conformité</h2>
-              <p className="text-xs text-white/50">Documents et options de conformité pour votre club</p>
-            </div>
-          </div>
+      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
+        <div className="mb-3">
+          <h2 className="text-lg font-semibold text-white leading-tight">Légal & Conformité</h2>
+          <p className="text-xs text-white/50">Documents et options de conformité pour votre club</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-2">
-          <a href="/legal" className="group inline-flex items-center justify-between rounded-lg px-3 py-2 text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-            <span className="text-white/80">Mentions légales (Clubs)</span>
-            <span className="text-white/30 group-hover:text-white/60 transition-colors">↗</span>
-          </a>
-          <a href="/cgv" className="group inline-flex items-center justify-between rounded-lg px-3 py-2 text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-            <span className="text-white/80">Conditions Générales de Vente (CGV)</span>
-            <span className="text-white/30 group-hover:text-white/60 transition-colors">↗</span>
-          </a>
-          <a href="/terms" className="group inline-flex items-center justify-between rounded-lg px-3 py-2 text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-            <span className="text-white/80">Conditions Générales d’Utilisation (CGU) — Clubs</span>
-            <span className="text-white/30 group-hover:text-white/60 transition-colors">↗</span>
-          </a>
-          <a href="/privacy" className="group inline-flex items-center justify-between rounded-lg px-3 py-2 text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-            <span className="text-white/80">Politique de confidentialité — Clubs</span>
-            <span className="text-white/30 group-hover:text-white/60 transition-colors">↗</span>
-          </a>
-          <a href="/cookies" className="group inline-flex items-center justify-between rounded-lg px-3 py-2 text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-            <span className="text-white/80">Politique Cookies — Clubs</span>
-            <span className="text-white/30 group-hover:text-white/60 transition-colors">↗</span>
-          </a>
-          <a
-            href="/api/rgpd/export-data"
-            className="group inline-flex items-center justify-between rounded-lg px-3 py-2 text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
-          >
-            <span className="text-white/80">Télécharger mes données (RGPD)</span>
-            <span className="text-white/30 group-hover:text-white/60 transition-colors">⬇</span>
-          </a>
-          <a href="#" className="group inline-flex items-center justify-between rounded-lg px-3 py-2 text-sm border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
-            <span className="text-white/80">DPA / RGPD</span>
-            <span className="text-white/30 group-hover:text-white/60 transition-colors">↗</span>
-          </a>
-        </div>
+        <ul className="space-y-2">
+          <li>
+            <a href="/legal" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              Mentions légales (Clubs)
+            </a>
+          </li>
+          <li>
+            <a href="/cgv" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              Conditions Générales de Vente (CGV)
+            </a>
+          </li>
+          <li>
+            <a href="/terms" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              Conditions Générales d’Utilisation (CGU) — Clubs
+            </a>
+          </li>
+          <li>
+            <a href="/privacy" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              Politique de confidentialité — Clubs
+            </a>
+          </li>
+          <li>
+            <a href="/cookies" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              Politique Cookies — Clubs
+            </a>
+          </li>
+          <li>
+            <a href="/api/rgpd/export-data" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              Télécharger mes données (RGPD)
+            </a>
+          </li>
+          <li>
+            <a href="#" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              DPA / RGPD
+            </a>
+          </li>
+        </ul>
       </section>
+      </div>
     </div>
   );
 }

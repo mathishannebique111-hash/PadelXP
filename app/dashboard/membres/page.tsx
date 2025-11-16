@@ -129,7 +129,7 @@ export default async function MembersPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
           <span aria-hidden>👥</span>
           <span className="relative">
-            {filteredMembers.length} joueur{filteredMembers.length > 1 ? "s" : ""}
+          {filteredMembers.length} joueur{filteredMembers.length > 1 ? "s" : ""}
           </span>
         </span>
       </div>

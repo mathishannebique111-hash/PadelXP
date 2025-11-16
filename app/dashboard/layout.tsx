@@ -6,6 +6,7 @@ import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import ClubHeader from "./ClubHeader";
+import ParallaxHalos from "@/components/ParallaxHalos";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -152,17 +153,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <MobileMenu />
       </Suspense>
 
-      {/* Subtle dynamic gradient overlay (accentuated but still light) */}
+      {/* Dynamic gradient overlay + parallax halos */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        {/* Soft white glow */}
-        <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(255,255,255,0.12),transparent_70%)] blur-[70px] animate-pulse animate-drift-slow" />
-        {/* Deep blue glow */}
-        <div className="absolute -bottom-32 -right-28 h-[44rem] w-[44rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.18),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "0.8s" }} />
+        {/* Stronger soft white glow */}
+        <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(255,255,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
+        {/* Stronger deep blue glow */}
+        <div className="absolute -bottom-32 -right-28 h-[44rem] w-[44rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.3),transparent_70%)] blur-[90px] animate-pulse animate-drift-medium" style={{ animationDelay: "0.8s" }} />
         {/* Cyan hint to add depth */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(34,211,238,0.12),transparent_70%)] blur-[90px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(34,211,238,0.18),transparent_70%)] blur-[100px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
         {/* Top-right corner accent */}
-        <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(168,85,247,0.22),transparent_70%)] blur-[70px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
-        <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(99,102,241,0.18),transparent_70%)] blur-[60px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
+        <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(168,85,247,0.28),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
+        <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(99,102,241,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
+        {/* Scroll-parallax halos */}
+        <ParallaxHalos />
       </div>
 
       <main className="p-8">
