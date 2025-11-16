@@ -7,6 +7,7 @@ import Top3Notification from "@/components/Top3Notification";
 import TierBadge from "@/components/TierBadge";
 import RankBadge from "@/components/RankBadge";
 import Link from "next/link";
+import { getUserClubInfo } from "@/lib/utils/club-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -108,14 +109,35 @@ export default async function HomePage() {
   // Récupérer le club_id de l'utilisateur pour filtrer les données
   const userClubId = profile?.club_id || null;
 
-  let clubName: string | null = null;
-  if (userClubId) {
+  // D'abord, utiliser la même source de vérité que la page club
+  const clubInfo = await getUserClubInfo();
+  let clubName: string | null = clubInfo.clubName ?? null;
+  let clubLogoUrl: string | null = clubInfo.clubLogoUrl ?? null;
+  const resolvedIdForFetch = clubInfo.clubId || userClubId;
+
+  if (!clubName || !clubLogoUrl) {
+    // Compléter avec une lecture directe de la table clubs si nécessaire
+    const lookupId = resolvedIdForFetch;
+    if (lookupId) {
     const { data: clubData } = await supabase
       .from("clubs")
-      .select("name")
-      .eq("id", userClubId)
+      .select("name, logo_url")
+        .eq("id", lookupId)
       .maybeSingle();
-    clubName = clubData?.name || null;
+      clubName = clubName ?? (clubData?.name || null);
+      clubLogoUrl = clubLogoUrl ?? ((clubData as any)?.logo_url || null);
+    }
+  }
+  // Si le logo est un chemin de stockage Supabase, le convertir en URL publique
+  if (clubLogoUrl && typeof clubLogoUrl === "string" && !clubLogoUrl.startsWith("http") && supabaseAdmin) {
+    try {
+      const { data } = supabaseAdmin.storage.from("club-logos").getPublicUrl(clubLogoUrl);
+      if (data?.publicUrl) {
+        clubLogoUrl = data.publicUrl;
+      }
+    } catch (e) {
+      console.warn("[Home] Unable to resolve club logo public URL", e);
+    }
   }
 
   if (!userClubId) {
@@ -612,8 +634,17 @@ export default async function HomePage() {
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <div>
-            <h1 className="text-3xl font-bold text-white">Bienvenue {profile.display_name} !</h1>
-              {clubName && <p className="text-white/60 text-sm">Club : {clubName}</p>}
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-white">Bienvenue {profile.display_name} !</h1>
+                {clubLogoUrl && (
+                  <img
+                    src={clubLogoUrl}
+                    alt={clubName || "Logo du club"}
+                    className="h-12 w-12 rounded-full object-cover border border-white/20 flex-shrink-0"
+                  />
+                )}
+              </div>
+              {clubName && <p className="text-white/60 text-sm mt-1">Club : {clubName}</p>}
             </div>
             <LogoutButton />
           </div>
