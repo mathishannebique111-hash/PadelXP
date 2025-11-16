@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import PadelRacketLogo from "../icons/PadelRacketLogo";
 
 export default function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -30,15 +29,10 @@ export default function HeroSection() {
       {/* Raquette retirée temporairement */}
 
       {/* Navbar transparente */}
-      <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-6">
+      <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-2 ring-white/20">
-              <PadelRacketLogo className="h-8 w-8" />
-            </div>
-            <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/80 tracking-wide">
-              PadelXP
-            </span>
+          <div className="flex items-center">
+            <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-24 w-24 md:h-28 md:w-28 object-contain" />
           </div>
           <div className="flex items-center gap-4">
             <Link
@@ -59,7 +53,6 @@ export default function HeroSection() {
               </span>
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
             </Link>
-            {/** Bouton "Commencer" supprimé selon demande */}
           </div>
         </div>
       </nav>

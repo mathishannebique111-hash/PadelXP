@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import PadelRacketLogo from "@/components/icons/PadelRacketLogo";
 
 export default function Footer() {
   return (
@@ -10,12 +9,9 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-2 ring-white/20">
-              <PadelRacketLogo className="h-8 w-8" />
+            <div className="flex items-center justify-center">
+              <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-32 w-32 md:h-40 md:w-40 object-contain" />
             </div>
-            <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/80 tracking-wide">
-              PadelXP
-            </span>
           </Link>
 
           {/* Links */}

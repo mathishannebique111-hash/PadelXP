@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import PadelRacketLogo from "@/components/icons/PadelRacketLogo";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function ClubsHeroSection() {
@@ -70,15 +69,10 @@ export default function ClubsHeroSection() {
       </div>
 
       {/* Navbar transparente */}
-      <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-6">
+      <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-2 ring-white/20">
-              <PadelRacketLogo className="h-8 w-8" />
-            </div>
-            <span className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/80 tracking-wide">
-              PadelXP
-            </span>
+          <Link href="/" className="flex items-center">
+            <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-24 w-24 md:h-28 md:w-28 object-contain" />
           </Link>
           <div className="flex items-center gap-4">
             <Link
