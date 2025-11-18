@@ -29,8 +29,40 @@ const supabaseAdmin = createAdminClient(
 export default async function HomePage() {
   const supabase = createClient();
   
-  // Vérifier d'abord la session utilisateur
-  const { data: { user } } = await supabase.auth.getUser();
+  // Vérifier d'abord la session pour éviter les déconnexions inattendues
+  // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  // Essayer d'obtenir l'utilisateur avec gestion d'erreur gracieuse
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+  // Si ni session ni utilisateur, rediriger vers login (le middleware devrait déjà l'avoir fait)
+  if (!user && !session) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10">
+        <h1 className="text-xl font-semibold">Session requise</h1>
+        <a className="text-blue-600 underline" href="/login">Se connecter</a>
+      </div>
+    );
+  }
+  
+  // Si une session existe mais getUser() échoue temporairement, afficher un message d'erreur temporaire
+  if (session && !user && userError) {
+    console.warn("[HomePage] Session exists but getUser() failed (temporary error?):", {
+      errorCode: userError?.code,
+      errorMessage: userError?.message,
+    });
+    // Afficher une page avec un message d'erreur temporaire plutôt que de rediriger
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-10">
+        <h1 className="text-xl font-semibold">Erreur temporaire</h1>
+        <p className="text-gray-600">Veuillez rafraîchir la page.</p>
+        <a className="text-blue-600 underline" href="/home">Rafraîchir</a>
+      </div>
+    );
+  }
+  
+  // Si pas d'utilisateur à ce stade, il y a un problème
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-10">

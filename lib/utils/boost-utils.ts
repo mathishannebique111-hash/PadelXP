@@ -14,6 +14,33 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   : null;
 
 /**
+ * Helper pour logger les erreurs Supabase de manière sécurisée
+ */
+function logSupabaseError(context: string, error: any) {
+  // Extraire les propriétés de l'erreur de manière sécurisée
+  const errorDetails: Record<string, any> = {};
+  if (error?.message) errorDetails.message = error.message;
+  if (error?.details) errorDetails.details = error.details;
+  if (error?.hint) errorDetails.hint = error.hint;
+  if (error?.code) errorDetails.code = error.code;
+  
+  // Si aucune propriété standard n'est trouvée, logger des informations de debug
+  if (Object.keys(errorDetails).length === 0) {
+    const allKeys = Object.keys(error || {});
+    const errorType = typeof error;
+    const errorString = String(error);
+    console.error(`[boost-utils] ${context} (empty error object):`, {
+      type: errorType,
+      keys: allKeys,
+      stringRepresentation: errorString !== "[object Object]" ? errorString : undefined,
+      rawError: error
+    });
+  } else {
+    console.error(`[boost-utils] ${context}:`, errorDetails);
+  }
+}
+
+/**
  * Constantes pour les boosts
  */
 export const BOOST_PERCENTAGE = 0.3; // +30% de points
@@ -36,13 +63,13 @@ export async function getPlayerBoostCreditsAvailable(userId: string): Promise<nu
       .is("consumed_at", null);
 
     if (error) {
-      console.error("[boost-utils] Error counting boost credits:", error);
+      logSupabaseError("Error counting boost credits", error);
       return 0;
     }
 
     return count || 0;
   } catch (error) {
-    console.error("[boost-utils] Exception counting boost credits:", error);
+    logSupabaseError("Exception counting boost credits", error);
     return 0;
   }
 }
@@ -68,13 +95,13 @@ export async function getPlayerBoostsUsedThisMonth(userId: string): Promise<numb
       .gte("applied_at", monthStartISO);
 
     if (error) {
-      console.error("[boost-utils] Error counting boosts used this month:", error);
+      logSupabaseError("Error counting boosts used this month", error);
       return 0;
     }
 
     return count || 0;
   } catch (error) {
-    console.error("[boost-utils] Exception counting boosts used this month:", error);
+    logSupabaseError("Exception counting boosts used this month", error);
     return 0;
   }
 }
@@ -160,7 +187,7 @@ export async function consumeBoostForMatch(
       .single();
 
     if (creditError || !availableCredit) {
-      console.error("[boost-utils] Error finding available credit:", creditError);
+      logSupabaseError("Error finding available credit", creditError);
       return {
         success: false,
         error: "Aucun boost disponible trouvé",
@@ -177,7 +204,7 @@ export async function consumeBoostForMatch(
       .eq("id", availableCredit.id);
 
     if (consumeError) {
-      console.error("[boost-utils] Error consuming credit:", consumeError);
+      logSupabaseError("Error consuming credit", consumeError);
       return {
         success: false,
         error: "Erreur lors de la consommation du boost",
@@ -199,7 +226,7 @@ export async function consumeBoostForMatch(
       .single();
 
     if (useError || !boostUse) {
-      console.error("[boost-utils] Error recording boost use:", useError);
+      logSupabaseError("Error recording boost use", useError);
       // Rollback : remettre le crédit comme disponible
       await supabaseAdmin
         .from("player_boost_credits")
@@ -217,7 +244,7 @@ export async function consumeBoostForMatch(
       pointsAfterBoost,
     };
   } catch (error) {
-    console.error("[boost-utils] Exception consuming boost:", error);
+    logSupabaseError("Exception consuming boost", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -268,7 +295,7 @@ export async function creditPlayerBoosts(
       .select("id");
 
     if (insertError || !insertedCredits || insertedCredits.length !== quantity) {
-      console.error("[boost-utils] Error crediting boosts:", insertError);
+      logSupabaseError("Error crediting boosts", insertError);
       return {
         success: false,
         credited: 0,
@@ -281,7 +308,7 @@ export async function creditPlayerBoosts(
       credited: insertedCredits.length,
     };
   } catch (error) {
-    console.error("[boost-utils] Exception crediting boosts:", error);
+    logSupabaseError("Exception crediting boosts", error);
     return {
       success: false,
       credited: 0,

@@ -201,7 +201,54 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       .order("created_at", { ascending: false });
     
     if (msStreakError) {
-      console.error("[PlayerSummary] Error fetching matches for streak:", msStreakError);
+      // Extraire les propriétés de l'erreur de manière sécurisée
+      const errorDetails: Record<string, any> = {};
+      if (msStreakError?.message) errorDetails.message = msStreakError.message;
+      if (msStreakError?.details) errorDetails.details = msStreakError.details;
+      if (msStreakError?.hint) errorDetails.hint = msStreakError.hint;
+      if (msStreakError?.code) errorDetails.code = msStreakError.code;
+      
+      // Toujours logger avec le contexte complet pour éviter les objets vides
+      const hasValidDetails = Object.keys(errorDetails).length > 0 && Object.values(errorDetails).some(v => v != null);
+      
+      if (hasValidDetails) {
+        // Filtrer les valeurs null/undefined avant de logger
+        const filteredDetails = Object.fromEntries(
+          Object.entries(errorDetails).filter(([_, v]) => v != null)
+        );
+        console.error("[PlayerSummary] Error fetching matches for streak:", filteredDetails);
+      } else {
+        // Si aucune propriété standard n'est trouvée, logger des informations de debug détaillées
+        const allKeys = msStreakError && typeof msStreakError === 'object' ? Object.keys(msStreakError) : [];
+        const errorType = typeof msStreakError;
+        const errorString = String(msStreakError);
+        const errorJson = JSON.stringify(msStreakError);
+        
+        // Construire un objet d'erreur enrichi avec toutes les informations disponibles
+        const enrichedError: Record<string, any> = {
+          errorType,
+          hasKeys: allKeys.length > 0,
+        };
+        
+        if (allKeys.length > 0) {
+          enrichedError.availableKeys = allKeys;
+        }
+        
+        if (errorString !== "[object Object]") {
+          enrichedError.stringRepresentation = errorString;
+        }
+        
+        if (errorJson && errorJson !== "{}") {
+          enrichedError.jsonRepresentation = errorJson;
+        }
+        
+        // Ajouter l'objet d'erreur brut seulement s'il a des clés
+        if (allKeys.length > 0) {
+          enrichedError.rawError = msStreakError;
+        }
+        
+        console.error("[PlayerSummary] Error fetching matches for streak (no standard properties):", enrichedError);
+      }
     }
     
     if (ms && ms.length > 0) {

@@ -93,7 +93,7 @@ export default async function RolesPage() {
       <PageTitle title="Rôles et accès" />
       
       {/* Administrateurs actifs */}
-      <div className="rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.28)]">
+      <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
         <div className="flex items-center gap-2 mb-5">
           <span className="text-xl">👥</span>
           <h2 className="font-bold text-lg">Administrateurs</h2>
@@ -185,7 +185,7 @@ export default async function RolesPage() {
       <InviteAdminForm />
 
       {/* Invitations en attente */}
-      <div className="rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5">
+      <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <span className="text-lg sm:text-xl">⏳</span>
           <h2 className="font-semibold text-sm sm:text-base">Invitations en attente</h2>

@@ -20,8 +20,38 @@ const supabaseAdmin =
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Vérifier d'abord la session pour éviter les déconnexions inattendues
+  // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  // Essayer d'obtenir l'utilisateur avec gestion d'erreur gracieuse
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
+  // Si ni session ni utilisateur, rediriger vers login
+  if (!user && !session) {
+    redirect("/clubs/login?next=/dashboard");
+  }
+  
+  // Si une session existe mais getUser() échoue temporairement, afficher un message d'erreur temporaire
+  if (session && !user && userError) {
+    console.warn("[DashboardLayout] Session exists but getUser() failed (temporary error?):", {
+      errorCode: userError?.code,
+      errorMessage: userError?.message,
+    });
+    // Afficher une page avec un message d'erreur temporaire plutôt que de rediriger
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="mx-auto w-full max-w-3xl px-4 py-10 text-center">
+          <h1 className="mb-2 text-xl font-semibold text-white">Erreur temporaire</h1>
+          <p className="mb-4 text-gray-400">Veuillez rafraîchir la page.</p>
+          <a className="text-blue-400 underline hover:text-blue-300" href="/dashboard">Rafraîchir</a>
+        </div>
+      </div>
+    );
+  }
+  
+  // Si pas d'utilisateur à ce stade, il y a un problème
   if (!user) {
     redirect("/clubs/login?next=/dashboard");
   }
@@ -155,20 +185,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {/* Dynamic gradient overlay + parallax halos */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        {/* Stronger soft white glow */}
-        <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(255,255,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
-        {/* Stronger deep blue glow */}
-        <div className="absolute -bottom-32 -right-28 h-[44rem] w-[44rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.3),transparent_70%)] blur-[90px] animate-pulse animate-drift-medium" style={{ animationDelay: "0.8s" }} />
-        {/* Cyan hint to add depth */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(34,211,238,0.18),transparent_70%)] blur-[100px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
-        {/* Top-right corner accent */}
-        <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(168,85,247,0.28),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
-        <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(99,102,241,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
+        {/* Stronger soft white glow - changed to blue */}
+        <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
+        {/* Stronger deep blue glow - changed to lime/yellow */}
+        <div className="absolute -bottom-32 -right-28 h-[44rem] w-[44rem] bg-[radial-gradient(closest-side,rgba(191,255,0,0.3),transparent_70%)] blur-[90px] animate-pulse animate-drift-medium" style={{ animationDelay: "0.8s" }} />
+        {/* Cyan hint to add depth - changed to blue */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.18),transparent_70%)] blur-[100px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
+        {/* Top-right corner accent - changed to lime/yellow */}
+        <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(191,255,0,0.28),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
+        <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
         {/* Scroll-parallax halos */}
         <ParallaxHalos />
       </div>
 
-      <main className="p-4 sm:p-6 md:p-8 pt-20 sm:pt-8">
+      <main className="p-4 sm:p-6 md:p-8 pt-20 sm:pt-8 md:pl-[18rem] md:pr-8">
         {/* Logo + nom avec simple soulignement à la largeur du contenu */}
         <div className="mb-6 sm:mb-8 md:mb-12 flex justify-center" style={{ paddingTop: '0px', marginTop: '4px' }}>
           <div className="inline-flex flex-col items-center">

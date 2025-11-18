@@ -36,15 +36,22 @@ export default function PlayerSidebar() {
     };
   }, [isOpen]);
 
+  // Helper function to get icon path with proper encoding
+  const getIconPath = (filename: string, version: number = 6) => {
+    // Encode spaces for Next.js Image component
+    const encoded = filename.replace(/\s/g, '%20');
+    return `/images/${encoded}?v=${version}`;
+  };
+
   const menuItems: MenuItem[] = [
-    { href: '/home', label: 'Profil', icon: '/images/Profil.png', navKey: 'home' },
-    { href: '/match/new', label: 'Enregistrer un match', icon: '/images/Enregistrer un match.png', navKey: 'match' },
-    { href: '/matches/history', label: 'Historique des matchs', icon: '/images/Historique des matchs.png', navKey: 'history' },
-    { href: '/badges', label: 'Badges', icon: '/images/Badges.png', navKey: 'badges' },
-    { href: '/club', label: 'Club', icon: '/images/Club.png', navKey: 'club' },
-    { href: '/challenges', label: 'Challenges', icon: '/images/Challenges.png', navKey: 'challenges' },
-    { href: '/reviews', label: 'Avis', icon: '/images/Avis.png', navKey: 'reviews' },
-    { href: '/boost', label: 'Boost', icon: '/images/Boost.png', navKey: 'boost' },
+    { href: '/home', label: 'Profil', icon: getIconPath('Profil.png'), navKey: 'home' },
+    { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
+    { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs.png'), navKey: 'history' },
+    { href: '/badges', label: 'Badges', icon: getIconPath('Badges.png', 7), navKey: 'badges' },
+    { href: '/club', label: 'Club', icon: getIconPath('Club.png', 8), navKey: 'club' },
+    { href: '/challenges', label: 'Challenges', icon: getIconPath('Challenges.png'), navKey: 'challenges' },
+    { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png'), navKey: 'reviews' },
+    { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
   ];
 
   // Déterminer la page active
@@ -111,6 +118,10 @@ export default function PlayerSidebar() {
         <nav className="p-4 pt-20 space-y-2 text-sm flex-1 h-full overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = currentPage === item.navKey;
+            const isMatchIcon = item.navKey === 'match';
+            // Images avec des problèmes d'affichage ou qui nécessitent un traitement spécial
+            const problematicIcons = ['challenges', 'badges', 'match', 'club'];
+            const isProblematic = problematicIcons.includes(item.navKey);
             return (
               <Link
                 key={item.href}
@@ -120,14 +131,38 @@ export default function PlayerSidebar() {
                   isActive ? 'from-blue-500/20 to-indigo-600/20 border-blue-400/40 shadow-[0_6px_24px_rgba(37,99,235,0.35)]' : ''
                 }`}
               >
-                <Image 
-                  src={item.icon} 
-                  alt={item.label} 
-                  width={20} 
-                  height={20} 
-                  className="w-5 h-5 object-contain flex-shrink-0" 
-                  style={{ filter: 'brightness(0) invert(1)' }}
-                />
+                <div
+                  className="w-5 h-5 flex-shrink-0 flex items-center justify-center"
+                  style={{
+                    transform: isMatchIcon ? 'rotate(90deg)' : 'none',
+                    transition: 'transform 0.2s ease-in-out'
+                  }}
+                >
+                  <Image 
+                    key={`${item.navKey}-${item.icon}`}
+                    src={item.icon} 
+                    alt={item.label} 
+                    width={20} 
+                    height={20} 
+                    className="w-5 h-5 object-contain" 
+                    unoptimized
+                    style={{ 
+                      // Simplifier les filtres pour les images problématiques
+                      filter: isProblematic 
+                        ? 'brightness(0) invert(1)' 
+                        : 'brightness(0) invert(1) grayscale(100%) contrast(1.1) saturate(0%)',
+                      opacity: 1,
+                      imageRendering: 'crisp-edges'
+                    }}
+                    onError={(e) => {
+                      console.error(`Failed to load icon for ${item.label}:`, item.icon);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                    onLoad={() => {
+                      console.log(`Successfully loaded icon for ${item.label}:`, item.icon);
+                    }}
+                  />
+                </div>
                 <span className="font-semibold text-sm">{item.label}</span>
               </Link>
             );

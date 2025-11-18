@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
     const supabase = createClient();
     await supabase.auth.signOut();
-    return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"));
+    
+    // Supprimer le cookie last_activity lors de la déconnexion
+    // Retourner un JSON pour que le client gère la redirection
+    const response = NextResponse.json({ success: true });
+    response.cookies.set("last_activity", "", { expires: new Date(0), path: "/" });
+    
+    return response;
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "signout_failed" }, { status: 500 });
   }

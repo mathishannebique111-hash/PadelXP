@@ -14,6 +14,36 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   : null;
 
 /**
+ * Helper pour logger les erreurs Supabase de manière sécurisée
+ */
+function logSupabaseError(context: string, error: any) {
+  // Extraire les propriétés de l'erreur de manière sécurisée
+  const errorDetails: Record<string, any> = {};
+  if (error?.message) errorDetails.message = error.message;
+  if (error?.details) errorDetails.details = error.details;
+  if (error?.hint) errorDetails.hint = error.hint;
+  if (error?.code) errorDetails.code = error.code;
+  
+  // Si aucune propriété standard n'est trouvée, logger des informations de debug
+  if (Object.keys(errorDetails).length === 0) {
+    const allKeys = error && typeof error === 'object' ? Object.keys(error) : [];
+    const errorType = typeof error;
+    const errorString = String(error);
+    const errorJson = JSON.stringify(error);
+    
+    console.error(`[boost-points-utils] ${context} (no standard properties):`, {
+      type: errorType,
+      keys: allKeys,
+      stringRepresentation: errorString !== "[object Object]" ? errorString : undefined,
+      jsonRepresentation: errorJson !== "{}" ? errorJson : undefined,
+      rawError: allKeys.length > 0 ? error : undefined
+    });
+  } else {
+    console.error(`[boost-points-utils] ${context}:`, errorDetails);
+  }
+}
+
+/**
  * Récupère les points boostés pour chaque match d'un joueur
  * Retourne un Map<match_id, points_after_boost>
  */
@@ -36,13 +66,7 @@ export async function getBoostedPointsForMatches(
       .in("match_id", matchIds);
 
     if (error) {
-      console.error("[boost-points-utils] Error fetching boost uses:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-        error: error
-      });
+      logSupabaseError("Error fetching boost uses", error);
       return boostedPointsMap;
     }
 
@@ -153,13 +177,7 @@ export async function calculatePointsForMultiplePlayers(
       .in("match_id", Array.from(allMatchIds));
 
     if (error) {
-      console.error("[boost-points-utils] Error fetching boost uses:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-        error: error
-      });
+      logSupabaseError("Error fetching boost uses for multiple players", error);
       // Fallback : calculer sans boost
       playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
         const basePoints = wins * 10 + losses * 3;

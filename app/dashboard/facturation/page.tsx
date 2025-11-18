@@ -4,6 +4,7 @@ import BillingInfoSection from "@/components/billing/BillingInfoSection";
 import StripeCheckoutButton from "@/components/billing/StripeCheckoutButton";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
 import ParallaxHalos from "@/components/ParallaxHalos";
+import PageTitle from "../PageTitle";
 import { redirect } from "next/navigation";
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
@@ -139,13 +140,10 @@ export default async function BillingPage() {
       <div className="relative z-10 space-y-4 sm:space-y-5 md:space-y-6">
         {/* Sync Stripe → App au retour du portail */}
         <SyncOnReturn />
-        <div>
-        <h1 className="text-xl sm:text-2xl font-extrabold text-white">Facturation & essai</h1>
-        <p className="text-xs sm:text-sm text-white/60 mt-1">Gérez votre abonnement et votre période d'essai</p>
-        </div>
+        <PageTitle title="Facturation & essai" subtitle="Gérez votre abonnement et votre période d'essai" />
 
       {/* Bandeau Essai */}
-      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-4 sm:p-5 md:p-6">
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-4 sm:p-5 md:p-6">
         <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white mb-1">
@@ -213,7 +211,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Cartes Offres */}
-      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <div className="mb-4 sm:mb-5 md:mb-6">
           <h2 className="text-base sm:text-lg font-semibold text-white mb-1">Choisissez l'offre qui vous convient</h2>
           <p className="text-xs sm:text-sm text-white/60">Les réductions s'appliquent automatiquement.</p>
@@ -377,7 +375,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Bloc Statut d'Abonnement */}
-      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Statut de l'abonnement</h2>
 
         <div className="space-y-4">
@@ -535,7 +533,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Infos de Facturation */}
-      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Informations de facturation</h2>
 
         <div className="space-y-4">
@@ -552,7 +550,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Prochaine Échéance & Historique */}
-      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Historique des factures</h2>
 
         <div className="space-y-4">
@@ -581,7 +579,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Annulation & Renouvellement */}
-      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Annulation & Renouvellement</h2>
 
         <div className="space-y-4">
@@ -612,7 +610,7 @@ export default async function BillingPage() {
       </section>
 
       {/* Légal & Conformité */}
-      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <div className="mb-2 sm:mb-3">
           <h2 className="text-base sm:text-lg font-semibold text-white leading-tight">Légal & Conformité</h2>
           <p className="text-[10px] sm:text-xs text-white/50">Documents et options de conformité pour votre club</p>

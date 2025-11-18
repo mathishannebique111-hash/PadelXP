@@ -42,12 +42,12 @@ export default function MobileMenu() {
 
   return (
     <>
-      {/* Bouton hamburger */}
+      {/* Bouton hamburger - visible uniquement sur mobile */}
       <button
         onClick={() => {
           setIsOpen(prev => !prev);
         }}
-        className="fixed top-[22px] left-4 z-[100] flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 border border-white/10 hover:bg-white/20 hover:border-white/20 transition-all duration-300 cursor-pointer"
+        className="md:hidden fixed top-[22px] left-4 z-[100] flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 border border-white/10 hover:bg-white/20 hover:border-white/20 transition-all duration-300 cursor-pointer"
         aria-label="Menu"
         type="button"
       >
@@ -70,23 +70,24 @@ export default function MobileMenu() {
         </div>
       </button>
 
-      {/* Overlay sombre */}
+      {/* Overlay sombre - visible uniquement sur mobile quand le menu est ouvert */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-[90] transition-opacity duration-300"
+          className="md:hidden fixed inset-0 bg-black/60 z-[90] transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Menu latéral */}
       <aside
-        className={`fixed top-0 left-0 h-full w-72 bg-black/95 border-r border-white/10 z-[95] transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 left-0 h-full w-72 md:w-64 bg-black/95 border-r border-white/10 z-[95] transition-transform duration-300 ease-in-out ${
+          // Sur mobile : menu caché par défaut, s'ouvre avec le bouton
+          // Sur desktop : toujours visible (pas de transform)
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
         onClick={(e) => e.stopPropagation()}
-        style={{ transform: isOpen ? 'translateX(0)' : 'translateX(-100%)' }}
       >
-        <nav className="p-4 pt-20 space-y-4 text-sm flex-1 h-full overflow-y-auto">
+        <nav className="p-4 pt-20 md:pt-6 space-y-4 text-sm flex-1 h-full overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             return (

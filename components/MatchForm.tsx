@@ -52,6 +52,7 @@ export default function MatchForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showMatchLimitInfo, setShowMatchLimitInfo] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
   
@@ -70,6 +71,22 @@ export default function MatchForm({
   const setTeam2Refs = useRef<Array<HTMLInputElement | null>>([]);
   const tieBreakTeam1Ref = useRef<HTMLInputElement | null>(null);
   const tieBreakTeam2Ref = useRef<HTMLInputElement | null>(null);
+
+  // Vérifier si l'utilisateur a déjà cliqué sur "Compris" pour le cadre d'information
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
+      setShowMatchLimitInfo(!hasClickedUnderstood);
+    }
+  }, []);
+  
+  const handleUnderstoodClick = () => {
+    // Sauvegarder dans localStorage que l'utilisateur a compris
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('matchLimitInfoUnderstood', 'true');
+      setShowMatchLimitInfo(false);
+    }
+  };
 
   // Charger les stats de boost au montage
   useEffect(() => {
@@ -733,63 +750,30 @@ export default function MatchForm({
         </div>
       )}
 
-      {/* Option boost */}
-      {!loadingBoostStats && boostStats && (
-        <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 backdrop-blur-sm">
+      {/* Message d'information sur la limite de 2 matchs par jour */}
+      {showMatchLimitInfo && (
+        <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-sm">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 text-2xl">⚡</div>
+            <div className="flex-shrink-0 text-2xl">ℹ️</div>
             <div className="flex-1">
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={useBoost}
-                  onChange={(e) => setUseBoost(e.target.checked)}
-                  disabled={!boostStats.canUse}
-                  className="h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <span className="text-sm font-semibold text-white">
-                  Appliquer un boost (+30% de points si tu gagnes)
-                </span>
-              </label>
-              {boostStats.canUse && (
-                <p className="mt-2 text-xs text-white/70">
-                  Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
-                  {boostStats.usedThisMonth > 0 && (
-                    <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
-                  )}
-                </p>
-              )}
-              {!boostStats.canUse && (
-                <p className="mt-2 text-xs text-white/70">
-                  {boostStats.creditsAvailable === 0 
-                    ? "Tu n'as plus de boosts disponibles. " 
-                    : `Tu as déjà utilisé ${boostStats.usedThisMonth} boost${boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci (limite de 10). `}
-                  <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
-                    Achète-en de nouveaux
-                  </a>
-                </p>
-              )}
+              <p className="text-sm text-white/90">
+                Pour <strong className="font-semibold text-amber-300">garder un classement fiable et équitable</strong>, vous pouvez enregistrer jusqu'à <strong className="font-semibold text-amber-300">2 matchs par jour</strong> qui comptent pour vos points. 
+                Cette limite permet d'éviter que des joueurs n'enregistrent un nombre excessif de matchs en une seule journée, ce qui pourrait fausser le classement et rendre la compétition moins équitable pour tous.
+              </p>
+              <p className="mt-2 text-sm text-white/80">
+                Si vous enregistrez un 3<sup>ème</sup> match ou plus dans la même journée, celui-ci sera enregistré dans l'historique mais <strong className="font-semibold text-amber-300">aucun point ne sera ajouté à votre classement</strong>. 
+                Les autres joueurs qui n'ont pas atteint la limite de 2 matchs recevront leurs points normalement.
+              </p>
+              <button
+                onClick={handleUnderstoodClick}
+                className="mt-4 rounded-lg bg-amber-500/20 border border-amber-500/40 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-amber-500/30 hover:border-amber-500/60"
+              >
+                Compris
+              </button>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Message d'information sur la limite de 2 matchs par jour */}
-      <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-sm">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 text-2xl">ℹ️</div>
-          <div className="flex-1">
-            <p className="text-sm text-white/90">
-              Pour <strong className="font-semibold text-amber-300">garder un classement fiable et équitable</strong>, vous pouvez enregistrer jusqu'à <strong className="font-semibold text-amber-300">2 matchs par jour</strong> qui comptent pour vos points. 
-              Cette limite permet d'éviter que des joueurs n'enregistrent un nombre excessif de matchs en une seule journée, ce qui pourrait fausser le classement et rendre la compétition moins équitable pour tous.
-            </p>
-            <p className="mt-2 text-sm text-white/80">
-              Si vous enregistrez un 3<sup>ème</sup> match ou plus dans la même journée, celui-ci sera enregistré dans l'historique mais <strong className="font-semibold text-amber-300">aucun point ne sera ajouté à votre classement</strong>. 
-              Les autres joueurs qui n'ont pas atteint la limite de 2 matchs recevront leurs points normalement.
-            </p>
-          </div>
-        </div>
-      </div>
       
       <form onSubmit={onSubmit} className="space-y-6">
       <div>
@@ -1040,6 +1024,47 @@ export default function MatchForm({
           </div>
         )}
       </div>
+
+      {/* Option boost - placé juste avant le bouton Enregistrer */}
+      {!loadingBoostStats && boostStats && (
+        <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 backdrop-blur-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 text-2xl">⚡</div>
+            <div className="flex-1">
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={useBoost}
+                  onChange={(e) => setUseBoost(e.target.checked)}
+                  disabled={!boostStats.canUse}
+                  className="h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <span className="text-sm font-semibold text-white">
+                  Appliquer un boost (+30% de points si tu gagnes)
+                </span>
+              </label>
+              {boostStats.canUse && (
+                <p className="mt-2 text-xs text-white/70">
+                  Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
+                  {boostStats.usedThisMonth > 0 && (
+                    <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
+                  )}
+                </p>
+              )}
+              {!boostStats.canUse && (
+                <p className="mt-2 text-xs text-white/70">
+                  {boostStats.creditsAvailable === 0 
+                    ? "Tu n'as plus de boosts disponibles. " 
+                    : `Tu as déjà utilisé ${boostStats.usedThisMonth} boost${boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci (limite de 10). `}
+                  <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
+                    Achète-en de nouveaux
+                  </a>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <button disabled={loading} className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg disabled:opacity-50">Enregistrer</button>
     </form>

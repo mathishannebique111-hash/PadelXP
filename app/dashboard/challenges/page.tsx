@@ -156,7 +156,7 @@ export default function ChallengesPage() {
         </div>
       ) : null}
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
         <h2 className="text-lg font-semibold text-white">Créer un challenge</h2>
         <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
@@ -265,7 +265,7 @@ export default function ChallengesPage() {
         </form>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Challenges créés</h2>
           <span className="text-sm text-white/60">{challenges.length} challenge(s)</span>

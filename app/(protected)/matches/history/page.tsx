@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
+import PageTitle from "@/components/PageTitle";
 export const dynamic = "force-dynamic";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
@@ -88,11 +89,9 @@ export default async function MatchHistoryPage() {
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-              <LogoutButton />
-            </div>
+          <div className="mb-6 flex items-center justify-between">
+            <PageTitle title="Historique des matchs" />
+            <LogoutButton />
           </div>
           <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour consulter l'historique des matchs. Contactez votre club / complexe pour obtenir le code d'invitation.</p>
@@ -129,11 +128,9 @@ export default async function MatchHistoryPage() {
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-              <LogoutButton />
-            </div>
+          <div className="mb-6 flex items-center justify-between">
+            <PageTitle title="Historique des matchs" />
+            <LogoutButton />
           </div>
           <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
             <p className="text-white/80">Aucun match enregistré pour le moment.</p>
@@ -165,11 +162,9 @@ export default async function MatchHistoryPage() {
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-              <LogoutButton />
-            </div>
+          <div className="mb-6 flex items-center justify-between">
+            <PageTitle title="Historique des matchs" />
+            <LogoutButton />
           </div>
           <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
             <p className="text-white/80">Aucun match enregistré pour le moment.</p>
@@ -221,11 +216,9 @@ export default async function MatchHistoryPage() {
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-              <LogoutButton />
-            </div>
+          <div className="mb-6 flex items-center justify-between">
+            <PageTitle title="Historique des matchs" />
+            <LogoutButton />
           </div>
           <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
             <p className="text-white/80">Aucun match enregistré pour le moment.</p>
@@ -446,11 +439,9 @@ export default async function MatchHistoryPage() {
         </div>
 
       <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8">
-        <div className="mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
-            <LogoutButton />
-          </div>
+        <div className="mb-6 flex items-center justify-between">
+          <PageTitle title="Historique des matchs" />
+          <LogoutButton />
         </div>
 
       {/* Stats globales */}

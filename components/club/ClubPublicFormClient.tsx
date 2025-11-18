@@ -259,7 +259,7 @@ export default function ClubPublicFormClient() {
       ) : (
         <div className="grid gap-6">
           <div className="space-y-6">
-            <section className="rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-6">
+            <section className="rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
               <h2 className="text-lg font-semibold text-white">Informations principales</h2>
               <p className="text-sm text-white/60">Complétez autant que possible pour enrichir votre page publique.</p>
 
@@ -369,7 +369,7 @@ export default function ClubPublicFormClient() {
               </div>
             </section>
 
-            <section className="rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-6">
+            <section className="rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
               <h2 className="text-lg font-semibold text-white">Horaires d'ouverture</h2>
               <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {DAYS.map(({ key, label }) => (

@@ -101,7 +101,7 @@ export async function POST(request: Request) {
                   <tr>
                     <td align="left" style="font-size:11px; color:#9ca3af; padding-bottom:6px; word-wrap:break-word; word-break:break-word;">
                       À bientôt sur les terrains,<br/>
-                      L'équipe PadelXP
+          L'équipe PadelXP
                     </td>
                   </tr>
                   <tr>
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
         </td>
       </tr>
     </table>
-  </div>
+      </div>
   <!--<![endif]-->
   <!--[if mso]>
         </table>
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
   <![endif]-->
   </body>
   </html>
-`
+    `
   });
 
   if (error) {

@@ -134,7 +134,7 @@ export default async function MembersPage() {
         </span>
       </div>
 
-      <div className="overflow-x-auto overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 shadow-[0_10px_28px_rgba(0,0,0,0.32)] scrollbar-hide">
+      <div className="overflow-x-auto overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 scrollbar-hide">
         <table className="w-full min-w-[600px]">
           <thead>
             <tr className="bg-white/10 text-left text-[10px] sm:text-xs uppercase tracking-wide text-white/60">

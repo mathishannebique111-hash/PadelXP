@@ -32,10 +32,8 @@ export async function middleware(req: NextRequest) {
     "/api/player/", 
     "/_next/", 
     "/images/", 
-    "/onboarding/", 
-    "/dashboard/", 
-    "/player/", 
-    "/club/"
+    "/onboarding/"
+    // Note: /dashboard/ et /player/ ne sont PAS publics - ces routes nécessitent une authentification
   ]; // toujours publics
   
   const PUBLIC_PATHS = new Set([
@@ -92,22 +90,130 @@ export async function middleware(req: NextRequest) {
     }
   );
 
+  // Vérifier d'abord la session pour éviter les déconnexions inattendues
+  // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  // Vérifier l'inactivité : déconnecter après 29 minutes d'inactivité
+  if (session) {
+    const now = Date.now();
+    const lastActivityCookie = req.cookies.get("last_activity")?.value;
+    
+    // Si le cookie existe, vérifier l'inactivité
+    if (lastActivityCookie) {
+      const lastActivity = parseInt(lastActivityCookie, 10);
+      if (!isNaN(lastActivity)) {
+        const inactiveMinutes = (now - lastActivity) / (1000 * 60); // minutes
+        
+        // Si plus de 29 minutes d'inactivité, déconnecter
+        if (inactiveMinutes > 29) {
+          await supabase.auth.signOut();
+          res.cookies.set("last_activity", "", { expires: new Date(0) });
+          if (isProtected && !isApiRoute) {
+            const url = req.nextUrl.clone();
+            url.pathname = "/login";
+            return NextResponse.redirect(url);
+          }
+          if (isProtected && isApiRoute && !isApiRouteThatHandlesAuth) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+          }
+          return res;
+        }
+      }
+    }
+    
+    // Mettre à jour la dernière activité pour les routes protégées
+    // (créer ou mettre à jour le cookie même s'il n'existe pas encore)
+    if (isProtected) {
+      res.cookies.set("last_activity", now.toString(), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 30 * 60, // 30 minutes (légèrement plus que le timeout pour éviter les problèmes de timing)
+        path: "/",
+      });
+    }
+  }
+
+  // Si une session existe, vérifier son expiration (Supabase: 1 heure par défaut)
+  if (session?.expires_at) {
+    const now = Math.floor(Date.now() / 1000); // timestamp en secondes
+    const expiresAt = session.expires_at;
+    
+    // Vérifier l'expiration de la session
+    // On accepte la session si elle expire dans plus de 1 minute
+    const expiresIn = expiresAt - now;
+    
+    // Si la session expire dans moins de 1 minute, considérer comme expirée
+    if (expiresIn < 60) {
+      // Session expirée, déconnecter
+      await supabase.auth.signOut();
+      res.cookies.set("last_activity", "", { expires: new Date(0) });
+      if (isProtected && !isApiRoute) {
+        const url = req.nextUrl.clone();
+        url.pathname = "/login";
+        return NextResponse.redirect(url);
+      }
+      if (isProtected && isApiRoute && !isApiRouteThatHandlesAuth) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      return res;
+    }
+  }
+
+  // Essayer d'obtenir l'utilisateur avec gestion d'erreur gracieuse
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  // Pour les routes API protégées, retourner 401 au lieu de rediriger
-  // MAIS laisser les routes API qui gèrent leur propre auth passer
-  if (!user && isProtected && isApiRoute && !isApiRouteThatHandlesAuth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Si getUser() échoue mais qu'une session existe, c'est probablement une erreur temporaire
+  // On permet la navigation pour éviter les déconnexions inattendues
+  if (!user && !session && isProtected) {
+    // Pas de session ni d'utilisateur : déconnecté
+    if (isApiRoute && !isApiRouteThatHandlesAuth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isApiRoute) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
   }
 
-  if (!user && isProtected && !isApiRoute) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  // Si une session existe mais getUser() échoue temporairement, on ne bloque pas la requête
+  // Cela permet d'éviter les déconnexions inattendues dues à des problèmes réseau temporaires
+  if (session && !user && userError) {
+    // Erreur temporaire probable : loguer mais ne pas déconnecter
+    console.warn("[Middleware] Session exists but getUser() failed (temporary error?):", {
+      errorCode: userError?.code,
+      errorMessage: userError?.message,
+      path: normalizedPathname,
+    });
+    // Laisser passer la requête si une session existe et mettre à jour last_activity
+    // pour éviter que l'inactivité soit comptée pendant une erreur temporaire
+    if (isProtected) {
+      const now = Date.now();
+      res.cookies.set("last_activity", now.toString(), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 30 * 60,
+        path: "/",
+      });
+    }
+    return res;
+  }
+  
+  // Si aucune session n'existe, supprimer le cookie last_activity s'il existe
+  if (!session && req.cookies.get("last_activity")) {
+    res.cookies.set("last_activity", "", { expires: new Date(0), path: "/" });
   }
 
+  // Si l'utilisateur est connecté et tente d'accéder à login/signup, rediriger
   if (user && (normalizedPathname === "/signup" || normalizedPathname === "/login")) {
     const url = req.nextUrl.clone();
     // Utilisateur déjà connecté: on le redirige vers la page protégée principale

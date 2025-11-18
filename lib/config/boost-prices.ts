@@ -25,6 +25,64 @@ export const BOOST_PRICE_IDS = {
 };
 
 /**
+ * Prix affichés des boosts (en euros)
+ * Peuvent être définis dans .env.local :
+ * - NEXT_PUBLIC_BOOST_PRICE_1 : Prix pour 1 boost
+ * - NEXT_PUBLIC_BOOST_PRICE_5 : Prix pour 5 boosts
+ * - NEXT_PUBLIC_BOOST_PRICE_10 : Prix pour 10 boosts
+ */
+export const BOOST_PRICES = {
+  get x1(): number {
+    try {
+      const price = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BOOST_PRICE_1;
+      if (price) {
+        const parsed = parseFloat(price);
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed;
+        }
+        console.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_1 value:', price);
+      }
+      return 0.79;
+    } catch (error) {
+      console.error('[BOOST_PRICES] Error parsing x1 price:', error);
+      return 0.79;
+    }
+  },
+  get x5(): number {
+    try {
+      const price = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BOOST_PRICE_5;
+      if (price) {
+        const parsed = parseFloat(price);
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed;
+        }
+        console.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_5 value:', price);
+      }
+      return 3.95;
+    } catch (error) {
+      console.error('[BOOST_PRICES] Error parsing x5 price:', error);
+      return 3.95;
+    }
+  },
+  get x10(): number {
+    try {
+      const price = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BOOST_PRICE_10;
+      if (price) {
+        const parsed = parseFloat(price);
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed;
+        }
+        console.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_10 value:', price);
+      }
+      return 7.10;
+    } catch (error) {
+      console.error('[BOOST_PRICES] Error parsing x10 price:', error);
+      return 7.10;
+    }
+  },
+};
+
+/**
  * Vérifie que tous les Price IDs sont configurés
  */
 export function validateBoostPriceIds(): { valid: boolean; missing: string[] } {
