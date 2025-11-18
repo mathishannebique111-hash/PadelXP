@@ -91,10 +91,10 @@ export default async function BoostPage() {
 
         {/* Purchase Section */}
         <div className="mb-6 rounded-2xl border border-white bg-white/5 p-6 backdrop-blur-sm">
-        <div className="mb-4">
+        <div className="mb-8 sm:mb-10">
           <h3 className="mb-2 text-xl font-semibold text-white">Achète des boosts</h3>
           <p className="text-sm text-white/70 font-normal">
-            Les boosts sont utilisables immédiatement après l'achat. Ils n'expirent pas et peuvent être utilisés à tout moment.
+            Donne un coup d'accélérateur à ton classement !
           </p>
         </div>
         {!hasPriceIds && (
@@ -112,25 +112,29 @@ export default async function BoostPage() {
             </p>
           </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6 items-center justify-center">
+          {/* Pack 1 boost - gauche */}
           <BoostPurchaseButton 
             quantity={1} 
             priceId={BOOST_PRICE_IDS.x1}
             price={BOOST_PRICES.x1}
-            buttonColor="orange"
           />
-          <BoostPurchaseButton 
-            quantity={5} 
-            priceId={BOOST_PRICE_IDS.x5}
-            price={BOOST_PRICES.x5}
-            buttonColor="orange-red"
-          />
+          
+          {/* Pack 10 boosts - centre (MIS EN AVANT) */}
           <BoostPurchaseButton 
             quantity={10} 
             priceId={BOOST_PRICE_IDS.x10}
             price={BOOST_PRICES.x10}
-            buttonColor="red"
+            isFeatured={true}
             offerText="1 offert !"
+            oldPrice={7.89}
+          />
+          
+          {/* Pack 5 boosts - droite */}
+          <BoostPurchaseButton 
+            quantity={5} 
+            priceId={BOOST_PRICE_IDS.x5}
+            price={BOOST_PRICES.x5}
           />
         </div>
       </div>
@@ -183,6 +187,17 @@ export default async function BoostPage() {
             </div>
           </li>
         </ul>
+        </div>
+
+        {/* Section garantie et réassurance */}
+        <div className="mt-8 sm:mt-10 text-center">
+          <div className="flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm text-white/60">
+            <span>✅ Paiement sécurisé par Stripe</span>
+            <span>·</span>
+            <span>Disponible immédiatement</span>
+            <span>·</span>
+            <span>Aucun abonnement</span>
+          </div>
         </div>
       </div>
     </div>

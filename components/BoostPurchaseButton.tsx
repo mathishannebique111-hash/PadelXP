@@ -5,16 +5,24 @@ import { useState, useMemo } from "react";
 interface BoostPurchaseButtonProps {
   quantity: number;
   priceId: string;
-  price?: number | string; // Prix en euros pour l'affichage (optionnel, peut être number ou string)
-  buttonColor?: "orange" | "red" | "orange-red"; // Couleur du bouton
-  offerText?: string; // Texte pour indiquer l'offre (ex: "1 offert")
+  price?: number | string;
+  isFeatured?: boolean; // Pack 10 boosts mis en avant
+  offerText?: string; // "1 offert !"
+  oldPrice?: number; // Prix barré (pack 10)
 }
 
-export default function BoostPurchaseButton({ quantity, priceId, price, buttonColor = "orange", offerText }: BoostPurchaseButtonProps) {
+export default function BoostPurchaseButton({ 
+  quantity, 
+  priceId, 
+  price, 
+  isFeatured = false,
+  offerText,
+  oldPrice
+}: BoostPurchaseButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Normaliser le prix pour gérer les cas string et number
+  // Normaliser le prix
   const normalizedPrice = useMemo(() => {
     if (price === undefined || price === null) {
       console.warn('[BoostPurchaseButton] Price is undefined or null for quantity:', quantity);
@@ -35,86 +43,31 @@ export default function BoostPurchaseButton({ quantity, priceId, price, buttonCo
       }
       return parsed;
     }
-    console.warn('[BoostPurchaseButton] Price has unexpected type:', typeof price, 'value:', price, 'for quantity:', quantity);
     return null;
   }, [price, quantity]);
 
-  // Définir les couleurs en fonction du type de bouton
-  const getButtonColors = () => {
-    switch (buttonColor) {
-      case "orange":
-        return {
-          bg: "bg-orange-500",
-          hover: "hover:bg-orange-600",
-          border: "border-orange-500",
-          hoverBorder: "hover:border-orange-600",
-          text: "text-white",
-          shadow: "shadow-[0_8px_20px_rgba(249,115,22,0.4)]",
-          hoverShadow: "hover:shadow-[0_12px_30px_rgba(249,115,22,0.5)]"
-        };
-      case "red":
-        return {
-          bg: "bg-red-600",
-          hover: "hover:bg-red-700",
-          border: "border-red-600",
-          hoverBorder: "hover:border-red-700",
-          text: "text-white",
-          shadow: "shadow-[0_8px_20px_rgba(220,38,38,0.4)]",
-          hoverShadow: "hover:shadow-[0_12px_30px_rgba(220,38,38,0.5)]"
-        };
-      case "orange-red":
-        return {
-          bg: "bg-orange-600",
-          hover: "hover:bg-orange-700",
-          border: "border-orange-600",
-          hoverBorder: "hover:border-orange-700",
-          text: "text-white",
-          shadow: "shadow-[0_8px_20px_rgba(234,88,12,0.4)]",
-          hoverShadow: "hover:shadow-[0_12px_30px_rgba(234,88,12,0.5)]"
-        };
-      default:
-        return {
-          bg: "bg-orange-500",
-          hover: "hover:bg-orange-600",
-          border: "border-orange-500",
-          hoverBorder: "hover:border-orange-600",
-          text: "text-white",
-          shadow: "shadow-[0_8px_20px_rgba(249,115,22,0.4)]",
-          hoverShadow: "hover:shadow-[0_12px_30px_rgba(249,115,22,0.5)]"
-        };
-    }
+  // Icônes selon le pack
+  const getIcon = () => {
+    if (quantity === 1) return "⚡";
+    if (quantity === 5) return "🔥";
+    if (quantity === 10) return "🚀";
+    return "⚡";
   };
 
-  const colors = getButtonColors();
-
-  // Vérifier que le priceId est défini avant d'autoriser l'achat
-  if (!priceId || priceId.trim() === '') {
-    return (
-      <div className="flex-1 w-full">
-        <div className="rounded-2xl border border-white/20 bg-white/5 p-1 backdrop-blur-sm h-full">
-          <button
-            disabled
-            className={`w-full rounded-xl border-2 ${colors.border} ${colors.bg} px-6 py-5 font-bold ${colors.text} cursor-not-allowed opacity-50 backdrop-blur-sm relative overflow-hidden h-full flex flex-col items-center justify-center`}
-          >
-            <div className="relative z-10 w-full flex flex-col items-center justify-center">
-              <div className="text-2xl mb-2 font-extrabold tracking-tight text-center">{quantity} boost{quantity > 1 ? 's' : ''}</div>
-              {offerText && (
-                <div className="text-xs mb-2 font-bold px-2 py-1 rounded-full bg-white/20 inline-block">{offerText}</div>
-              )}
-              <div className="text-sm opacity-90 font-normal text-center">Non disponible</div>
-            </div>
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-white/60 font-normal text-center">Price ID non configuré</p>
-      </div>
-    );
-  }
+  // Couleurs de fond selon le pack
+  const getBackgroundGradient = () => {
+    if (isFeatured) {
+      // Pack 10 - rouge saturé avec glow
+      return "bg-gradient-to-br from-[#FF4444] via-[#FF5555] to-[#FF3333]";
+    }
+    // Pack 1 et 5 - gradient orange
+    return "bg-gradient-to-br from-orange-500 to-orange-600";
+  };
 
   const handlePurchase = async () => {
     setLoading(true);
     setError(null);
 
-    // Vérification supplémentaire avant l'envoi
     if (!priceId || priceId.trim() === '') {
       setError("Price ID non configuré");
       setLoading(false);
@@ -127,8 +80,8 @@ export default function BoostPurchaseButton({ quantity, priceId, price, buttonCo
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ 
-          priceId, // Envoyer le priceId directement
-          quantity // Quantité = 1 pour les produits fixes Stripe
+          priceId,
+          quantity
         }),
       });
 
@@ -150,43 +103,103 @@ export default function BoostPurchaseButton({ quantity, priceId, price, buttonCo
     }
   };
 
-  // Afficher le prix si fourni, sinon ne rien afficher
-  // Utiliser le prix normalisé
   const priceDisplay = normalizedPrice && normalizedPrice > 0 
     ? `${normalizedPrice.toFixed(2)}€` 
     : null;
 
+  const oldPriceDisplay = oldPrice && oldPrice > 0 
+    ? `${oldPrice.toFixed(2)}€` 
+    : null;
+
+  // Classes pour la carte selon si elle est mise en avant
+  const cardBaseClasses = "relative rounded-xl p-6 sm:p-8 transition-all duration-300 cursor-pointer";
+  
+  const cardClasses = isFeatured
+    ? `${cardBaseClasses} z-10 scale-105 shadow-2xl border-2 border-white/30 shadow-[0_0_40px_rgba(255,68,68,0.3)] active:scale-95 active:shadow-lg active:opacity-90 active:duration-150`
+    : `${cardBaseClasses} shadow-xl border border-white/20 active:scale-95 active:shadow-lg active:opacity-90 active:duration-150`;
+
+  // Vérifier que le priceId est défini
+  if (!priceId || priceId.trim() === '') {
+    return (
+      <div className="flex-1 w-full flex items-center justify-center">
+        <div className={`w-full ${getBackgroundGradient()} ${cardClasses} opacity-50`}>
+          <div className="w-full flex flex-col items-center justify-center">
+            <div className="text-4xl sm:text-5xl mb-3">{getIcon()}</div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              {quantity} boost{quantity > 1 ? 's' : ''}
+            </h3>
+            <div className="text-sm text-white/70">Non disponible</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 w-full">
-      <div className="rounded-2xl border border-white/20 bg-white/5 p-1 backdrop-blur-sm h-full">
+    <div className="flex-1 w-full flex items-center justify-center">
+      <div className={`w-full ${getBackgroundGradient()} ${cardClasses}`}>
+        {/* Badge "Meilleur prix" uniquement pour le pack 10 */}
+        {isFeatured && (
+          <div className="absolute top-0 right-0 sm:top-[-12px] sm:right-4 bg-gradient-to-r from-[#BFFF00] to-[#9FDF00] px-4 py-1.5 rounded-full text-sm font-bold text-gray-900 shadow-[0_2px_8px_rgba(255,255,255,0.3)]">
+            🔥 Meilleur prix
+          </div>
+        )}
+
         <button
           onClick={handlePurchase}
-          disabled={loading}
-          className={`w-full rounded-xl border-2 ${colors.border} ${colors.bg} px-6 py-5 font-bold ${colors.text} transition-all duration-300 transform ${colors.hover} ${colors.hoverBorder} ${colors.shadow || ''} ${colors.hoverShadow || ''} hover:scale-[1.02] active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100 backdrop-blur-sm relative overflow-hidden group h-full flex flex-col items-center justify-center`}
+          disabled={loading || !priceId || priceId.trim() === ''}
+          className="w-full flex flex-col items-center justify-center"
         >
-          {/* Effet de brillance au hover */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 bg-gradient-to-r from-transparent via-white to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-          <div className="relative z-10 w-full flex flex-col items-center justify-center">
-            {loading ? (
-              <span className="text-base font-semibold">Chargement...</span>
-            ) : (
-              <>
-                <div className="text-2xl mb-2 font-extrabold tracking-tight text-center">{quantity} boost{quantity > 1 ? 's' : ''}</div>
-                {offerText && (
-                  <div className="text-xs mb-2 font-bold px-2 py-1 rounded-full bg-white/20 inline-block">{offerText}</div>
-                )}
-                {priceDisplay && (
-                  <div className="text-lg font-bold opacity-95 text-center">{priceDisplay}</div>
-                )}
-              </>
-            )}
+          {/* Icône */}
+          <div className="text-4xl sm:text-5xl mb-3">
+            {getIcon()}
+          </div>
+
+          {/* Titre */}
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            {quantity} boost{quantity > 1 ? 's' : ''}
+          </h3>
+
+          {/* Badge "1 offert !" uniquement pour le pack 10 */}
+          {offerText && (
+            <div className="mx-auto mb-3 px-3 py-1 rounded-full bg-gradient-to-r from-[#BFFF00] to-[#9FDF00] text-sm font-bold text-gray-900 animate-pulse" style={{ animationDuration: '3s' }}>
+              {offerText}
+            </div>
+          )}
+
+          {/* Prix barré (uniquement pack 10) */}
+          {oldPriceDisplay && (
+            <div className="text-xl text-white/70 line-through mb-1">
+              {oldPriceDisplay}
+            </div>
+          )}
+
+          {/* Prix final */}
+          {priceDisplay && (
+            <div className="text-4xl sm:text-5xl font-extrabold text-white mb-2">
+              {priceDisplay}
+            </div>
+          )}
+
+          {/* Économie affichée (uniquement pack 10) */}
+          {isFeatured && (
+            <div className="text-sm text-white/90 mb-4">
+              💰 Économisez 0,79 € !
+            </div>
+          )}
+
+          {/* Bouton CTA */}
+          <div className="w-full mt-2">
+            <div className={`w-full py-3 px-6 rounded-lg ${loading ? 'bg-white/70' : 'bg-white/95'} text-gray-900 font-semibold text-sm sm:text-base shadow-lg transition-all duration-150 active:bg-white/80 active:shadow-sm active:scale-95 text-center`}>
+              {loading ? "Chargement..." : "Acheter"}
+            </div>
           </div>
         </button>
+
+        {error && (
+          <p className="mt-2 text-xs text-white/90 text-center">{error}</p>
+        )}
       </div>
-      {error && (
-        <p className="mt-2 text-xs text-white/70 font-normal">{error}</p>
-      )}
     </div>
   );
 }
-
