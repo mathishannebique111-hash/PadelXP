@@ -293,7 +293,7 @@ export default async function PlayerClubPage() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-10 text-white">
+        <div className="relative z-10 mx-auto w-full max-w-5xl px-6 pt-20 md:pt-10 pb-10 text-white">
           <div className="mb-6">
             <PageTitle title="Mon club" />
           </div>
@@ -703,7 +703,7 @@ export default async function PlayerClubPage() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-10 text-white">
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-6 pt-20 md:pt-10 pb-10 text-white">
         <div className="mb-6">
           <PageTitle title="Mon club" />
         </div>

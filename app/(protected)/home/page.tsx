@@ -788,6 +788,14 @@ export default async function HomePage() {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 pt-20 sm:pt-4 sm:py-4 md:py-6 md:py-8 pb-4 sm:pb-6 md:pb-8">
+        {/* Logo du site en haut au centre - visible uniquement sur mobile */}
+        <div className="md:hidden flex justify-center mb-4 sm:mb-6">
+          <img 
+            src="/images/Logo sans fond.png" 
+            alt="PadelXP" 
+            className="h-12 w-12 sm:h-16 sm:w-16 object-contain"
+          />
+        </div>
         <Top3Notification currentUserId={profile.id} />
         <div className="mb-4 sm:mb-6">
           <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">

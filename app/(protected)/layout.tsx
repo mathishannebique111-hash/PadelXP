@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import PlayerSidebar from '@/components/PlayerSidebar';
 import PlayerClubLogo from '@/components/PlayerClubLogo';
+import SiteLogoMobile from '@/components/SiteLogoMobile';
 
 export default function PlayerAccountLayout({
   children,
@@ -17,6 +18,7 @@ export default function PlayerAccountLayout({
       <Suspense fallback={null}>
         <PlayerClubLogo />
       </Suspense>
+      <SiteLogoMobile />
       {children}
     </>
   );

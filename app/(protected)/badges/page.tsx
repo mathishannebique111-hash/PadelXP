@@ -126,7 +126,7 @@ export default async function BadgesPage() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 md:pt-8 pb-8 text-white">
           <div className="mb-6">
             <PageTitle title="Badges & récompenses" />
           </div>
@@ -270,7 +270,7 @@ export default async function BadgesPage() {
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-20 md:pt-8 pb-8">
         {/* Pop-up de célébration pour les nouveaux badges */}
         <BadgesUnlockNotifier obtained={obtainedBadges} />
         <div className="mb-6">

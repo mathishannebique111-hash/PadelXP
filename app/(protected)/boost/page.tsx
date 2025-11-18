@@ -66,7 +66,7 @@ export default async function BoostPage() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-20 sm:pt-10 pb-10 text-white">
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-20 md:pt-10 pb-10 text-white">
         <div className="mb-6">
           <PageTitle title="Boosts de Points" />
         </div>

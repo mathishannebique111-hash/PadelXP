@@ -76,7 +76,7 @@ export default async function ReviewsPage() {
             <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
           </div>
 
-          <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
+          <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 md:pt-8 pb-8 text-white">
             <div className="mb-6">
               <PageTitle title="Avis membres" />
             </div>
@@ -111,7 +111,7 @@ export default async function ReviewsPage() {
             <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
           </div>
 
-          <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
+          <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 md:pt-8 pb-8 text-white">
             <div className="mb-6">
               <PageTitle title="Avis membres" />
             </div>
@@ -212,7 +212,7 @@ export default async function ReviewsPage() {
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-20 md:pt-8 pb-8">
         {/* HEADER */}
         <div className="mb-6">
           <PageTitle title="Avis et Notes" />
