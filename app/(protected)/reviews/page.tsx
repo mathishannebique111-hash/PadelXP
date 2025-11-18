@@ -85,7 +85,7 @@ export default async function ReviewsPage() {
               </div>
               <NavigationBar currentPage="reviews" />
             </div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
               <p>Vous devez être rattaché à un club pour consulter ou publier des avis. Merci de contacter votre club pour obtenir un code d'invitation.</p>
             </div>
           </div>
@@ -225,16 +225,13 @@ export default async function ReviewsPage() {
         {/* HEADER */}
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              Avis et Notes
-              <span className="text-3xl">⭐</span>
-            </h1>
+              <h1 className="text-3xl font-bold text-white">Avis et Notes</h1>
             <LogoutButton />
           </div>
           <NavigationBar currentPage="reviews" />
           <div className="mt-3 rounded-2xl bg-gradient-to-r from-teal-500 via-sky-600 to-blue-700 p-6 text-white shadow-xl">
-            <h2 className="text-2xl font-extrabold tracking-tight">Partagez votre expérience !</h2>
-            <p className="mt-1 text-white/90">Votre avis inspire la communauté 🎾</p>
+            <h2 className="text-2xl font-semibold tracking-tight">Partagez votre expérience !</h2>
+            <p className="mt-1 text-sm text-white/70">Votre avis inspire la communauté</p>
           </div>
         </div>
 
@@ -247,7 +244,7 @@ export default async function ReviewsPage() {
       {/* FORMULAIRE */}
       <div className="mb-10 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-bold text-gray-900">Donner votre avis</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Donner votre avis</h2>
           {!hasUserReview && (
             <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-extrabold text-white shadow" style={{background:'linear-gradient(135deg,#22c55e,#a3e635)'}}>
               ✨ +10 points

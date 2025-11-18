@@ -53,7 +53,16 @@ function OnboardingForm() {
               <input placeholder="Mot de passe" type="password" className="px-4 py-3 rounded-lg bg-white/5 border border-white/10" />
               <label className="flex items-start gap-3 text-sm text-white/80">
                 <input type="checkbox" className="mt-1" />
-                <span>J’accepte les Conditions d’utilisation et la Politique de confidentialité</span>
+                <span>
+                  J'accepte les{" "}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">
+                    Conditions d'utilisation
+                  </a>{" "}
+                  et la{" "}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white">
+                    Politique de confidentialité
+                  </a>
+                </span>
               </label>
             </div>
             <div className="flex gap-3">

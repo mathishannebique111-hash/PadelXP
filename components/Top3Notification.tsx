@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import NotificationModal from "./NotificationModal";
+import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
+import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 
 interface Top3NotificationProps {
   currentUserId: string;
@@ -34,10 +36,31 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
   console.log("🔵 [Top3Notification] 📊 État notification initial:", notification);
 
   // Fonction pour récupérer le classement actuel (FILTRÉ PAR CLUB)
+  // Utilise l'API qui calcule déjà les points avec boosts
   const fetchLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
-    const supabase = supabaseRef.current;
     try {
-      console.log("📥 [Top3Notification] Début fetchLeaderboard...");
+      console.log("📥 [Top3Notification] Début fetchLeaderboard via API...");
+      
+      // Utiliser l'API leaderboard qui calcule déjà les points avec boosts
+      const res = await fetch('/api/leaderboard');
+      if (res.ok) {
+        const data = await res.json();
+        const leaderboard = (data.leaderboard || []).map((entry: any) => ({
+          user_id: entry.user_id,
+          player_name: entry.player_name || entry.name,
+          points: entry.points,
+          wins: entry.wins,
+          losses: entry.losses,
+          matches: entry.matches,
+        }));
+        console.log("📥 [Top3Notification] Leaderboard récupéré via API:", leaderboard.length, "joueurs");
+        return leaderboard;
+      }
+      
+      console.warn('[Top3Notification] API leaderboard failed, using fallback');
+      const supabase = supabaseRef.current;
+      
+      try {
       
       const { data: participantsData, error: participantsError } = await supabase
         .from("match_participants")
@@ -61,7 +84,7 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
       
       const { data: matchesData, error: matchesError } = await supabase
         .from("matches")
-        .select("id, winner_team_id, team1_id, team2_id")
+        .select("id, winner_team_id, team1_id, team2_id, played_at")
         .in("id", uniqueMatchIds);
 
       if (matchesError) {
@@ -71,20 +94,38 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
 
       console.log("📥 [Top3Notification] Matchs récupérés:", matchesData?.length || 0);
 
-      const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string }>();
+      const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string; played_at: string }>();
       (matchesData || []).forEach((m: any) => {
         if (m.winner_team_id && m.team1_id && m.team2_id) {
           matchesMap.set(m.id, {
             winner_team_id: m.winner_team_id,
             team1_id: m.team1_id,
             team2_id: m.team2_id,
+            played_at: m.played_at || new Date().toISOString(),
           });
         }
       });
 
+      // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour
+      const validMatchIdsForPoints = filterMatchesByDailyLimit(
+        participantsData.filter(p => p.user_id).map(p => ({ 
+          match_id: p.match_id, 
+          user_id: p.user_id 
+        })),
+        Array.from(matchesMap.entries()).map(([id, match]) => ({ 
+          id, 
+          played_at: match.played_at 
+        })),
+        MAX_MATCHES_PER_DAY
+      );
+
       const byPlayer: Record<string, { wins: number; losses: number; matches: number }> = {};
 
       participantsData.forEach((p: any) => {
+        // Ignorer les matchs qui dépassent la limite quotidienne
+        if (!validMatchIdsForPoints.has(p.match_id)) {
+          return;
+        }
         const match = matchesMap.get(p.match_id);
         if (!match) return;
 
@@ -146,10 +187,14 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
 
       const sorted = leaderboard.sort((a, b) => b.points - a.points || b.wins - a.wins || a.matches - b.matches);
       
-      console.log("📥 [Top3Notification] Leaderboard complet calculé:", sorted.length, "joueurs");
+      console.log("📥 [Top3Notification] Leaderboard complet calculé (fallback):", sorted.length, "joueurs");
       console.log("📥 [Top3Notification] Top 3:", sorted.slice(0, 3).map(p => ({ name: p.player_name, points: p.points, id: p.user_id })));
       
       return sorted;
+      } catch (fallbackError) {
+        console.error("❌ [Top3Notification] Fallback method also failed:", fallbackError);
+        return [];
+      }
     } catch (error) {
       console.error("❌ [Top3Notification] Error fetching leaderboard:", error);
       return [];

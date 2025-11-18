@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { getClubLogoPublicUrl } from "./club-logo-utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -235,11 +236,15 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
     }
   }
 
+  // Convertir le logo en URL publique (gère tous les cas: URL déjà publique ou chemin de stockage)
+  const finalClubLogoUrl = getClubLogoPublicUrl(clubLogoUrl);
+
   console.log("[club-utils] getUserClubInfo", {
     userId: user.id,
     clubId,
     clubSlug,
     clubName,
+    logoUrlConverted: finalClubLogoUrl !== clubLogoUrl,
   });
 
   return {
@@ -247,7 +252,7 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
     clubSlug: clubSlug ?? null,
     userId: user.id,
     clubName: clubName ?? null,
-    clubLogoUrl: clubLogoUrl ?? null,
+    clubLogoUrl: finalClubLogoUrl,
   };
 }
 

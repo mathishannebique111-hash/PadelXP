@@ -76,12 +76,12 @@ export default async function NewMatchPage() {
         <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-2xl font-bold">Enregistrer un match 🎾</h1>
+              <h1 className="text-3xl font-bold text-white">Enregistrer un match</h1>
               <LogoutButton />
             </div>
             <NavigationBar currentPage="match" />
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour enregistrer un match. Demandez à votre club / complexe de vous inviter ou utilisez le code d'invitation depuis l'espace joueur.</p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default async function NewMatchPage() {
       <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8">
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Enregistrer un match 🎾</h1>
+            <h1 className="text-3xl font-bold text-white">Enregistrer un match</h1>
             <LogoutButton />
           </div>
           <NavigationBar currentPage="match" />

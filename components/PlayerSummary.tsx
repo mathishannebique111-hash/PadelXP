@@ -4,6 +4,9 @@ import { getBadges, type PlayerStats } from "@/lib/badges";
 import BadgesUnlockNotifier from "./BadgesUnlockNotifier";
 import LevelUpNotifier from "./LevelUpNotifier";
 import TierBadge from "./TierBadge";
+import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
+import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
+import { calculatePointsWithBoosts } from "@/lib/utils/boost-points-utils";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
 const supabaseAdmin = createAdminClient(
@@ -51,6 +54,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   let setsLost = 0;
   let matches = 0;
   
+  // Initialiser filteredMp et winMatches pour qu'ils soient toujours définis
+  let filteredMp: any[] = [];
+  let winMatches = new Set<string>();
+  
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
     console.log("[PlayerSummary] Fetching matches for player:", profileId, "Match IDs:", matchIds.length);
@@ -86,12 +93,19 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     
     const { data: ms, error: msError } = await supabase
       .from("matches")
-      .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2")
+      .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, played_at")
       .in("id", validMatchIds);
     
     if (msError) {
       console.error("[PlayerSummary] Error fetching matches:", msError);
     }
+    
+    // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour
+    const validMatchIdsForPoints = filterMatchesByDailyLimit(
+      mp.map((p: any) => ({ match_id: p.match_id, user_id: profileId })),
+      (ms || []).map((m: any) => ({ id: m.id, played_at: m.played_at })),
+      MAX_MATCHES_PER_DAY
+    );
     
     const byId: Record<string, { winner_team: number; score_team1: number; score_team2: number }> = {};
     (ms || []).forEach((m: any) => {
@@ -108,11 +122,16 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       };
     });
     
-    // Filtrer mp pour ne garder que les matchs valides
-    const filteredMp = playerClubId 
-      ? mp.filter((p: any) => validMatchIds.includes(p.match_id))
-      : mp;
+    // Filtrer mp pour ne garder que les matchs valides (même club) ET qui respectent la limite quotidienne
+    filteredMp = mp.filter((p: any) => {
+      const isValidForClub = !playerClubId || validMatchIds.includes(p.match_id);
+      const isValidForDailyLimit = validMatchIdsForPoints.has(p.match_id);
+      return isValidForClub && isValidForDailyLimit;
+    });
     
+    // Collecter les matchs gagnés pour le calcul de boosts
+    winMatches = new Set<string>();
+
     filteredMp.forEach((p: any) => {
       const match = byId[p.match_id];
       if (!match) return;
@@ -120,8 +139,12 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       matches += 1;
       
       const won = match.winner_team === p.team;
-      if (won) wins += 1;
-      else losses += 1;
+      if (won) {
+        wins += 1;
+        winMatches.add(p.match_id);
+      } else {
+        losses += 1;
+      }
       
       if (p.team === 1) {
         setsWon += match.score_team1 || 0;
@@ -146,9 +169,16 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     }
   }
 
-  // Points: 10 par victoire, 3 par défaite + bonus premier avis + points de challenges
-  const matchPoints = wins * 10 + losses * 3 + reviewsBonus;
-  const points = matchPoints + challengePoints;
+  // Calculer les points avec boosts
+  const points = await calculatePointsWithBoosts(
+    wins,
+    losses,
+    filteredMp.map((p: any) => p.match_id),
+    winMatches,
+    profileId,
+    reviewsBonus,
+    challengePoints
+  );
 
   function tierForPoints(p: number) {
     if (p >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white" };
@@ -241,19 +271,19 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
             <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Matchs</div>
             <div className="text-2xl font-bold text-gray-900 tabular-nums">{matches}</div>
           </div>
-          <div className="rounded-lg border border-emerald-300/50 bg-emerald-100 px-3 py-2">
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
             <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Victoires</div>
             <div className="text-2xl font-bold text-gray-900 tabular-nums">{wins}</div>
           </div>
-          <div className="rounded-lg border border-rose-300/50 bg-rose-200 px-3 py-2">
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
             <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Défaites</div>
             <div className="text-2xl font-bold text-gray-900 tabular-nums">{losses}</div>
           </div>
-          <div className="rounded-lg border border-emerald-300/50 bg-emerald-100 px-3 py-2">
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
             <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Sets gagnés</div>
             <div className="text-2xl font-bold text-gray-900 tabular-nums">{setsWon}</div>
           </div>
-          <div className="rounded-lg border border-rose-300/50 bg-rose-200 px-3 py-2">
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
             <div className="text-xs uppercase tracking-[0.25em] text-gray-600 mb-1">Sets perdus</div>
             <div className="text-2xl font-bold text-gray-900 tabular-nums">{setsLost}</div>
           </div>

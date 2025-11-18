@@ -296,13 +296,10 @@ export default async function PlayerClubPage() {
 
         <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-10 text-white">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              Mon club
-              <span className="text-3xl">🏢</span>
-            </h1>
+            <h1 className="text-3xl font-bold text-white">Mon club</h1>
           </div>
           <NavigationBar currentPage="club" />
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/70">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
             Vous n'êtes rattaché à aucun club pour le moment.
           </div>
         </div>
@@ -710,10 +707,7 @@ export default async function PlayerClubPage() {
 
       <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-10 text-white">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            Mon club
-              <span className="text-3xl">🏢</span>
-          </h1>
+          <h1 className="text-3xl font-bold text-white">Mon club</h1>
           <LogoutButton />
         </div>
         <NavigationBar currentPage="club" />

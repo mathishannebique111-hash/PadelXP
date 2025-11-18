@@ -68,10 +68,52 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log('[webhook] checkout.session.completed:', session.id);
+        console.log('[webhook] checkout.session.completed:', session.id, {
+          mode: session.mode,
+          metadata: session.metadata,
+        });
         
-        // Le traitement est déjà fait dans verify-session
-        // On peut juste logger ici
+        // Si c'est un achat de boost pour un joueur
+        if (session.mode === 'payment' && session.metadata?.type === 'player_boost') {
+          const userId = session.metadata.user_id;
+          // La quantité dans les métadonnées correspond au nombre de boosts à créditer (1, 5 ou 10)
+          const quantity = parseInt(session.metadata.quantity || '1', 10);
+          const paymentIntentId = session.payment_intent as string | null;
+          const priceId = session.metadata.price_id; // Price ID utilisé (pour référence)
+
+          if (!userId) {
+            console.error('[webhook] Missing user_id in metadata for boost purchase');
+            break;
+          }
+
+          if (!supabaseAdmin) {
+            console.error('[webhook] Supabase admin client not available');
+            break;
+          }
+
+          // Créditer les boosts au joueur (quantité réelle : 1, 5 ou 10 selon le produit acheté)
+          const { creditPlayerBoosts } = await import('@/lib/utils/boost-utils');
+          const result = await creditPlayerBoosts(
+            userId,
+            quantity, // Quantité réelle de boosts à créditer
+            paymentIntentId || undefined,
+            session.id
+          );
+
+          if (result.success) {
+            console.log('[webhook] Boost credits added successfully:', {
+              userId,
+              quantity: result.credited,
+              priceId: priceId || 'unknown',
+              sessionId: session.id,
+            });
+          } else {
+            console.error('[webhook] Failed to credit boosts:', result.error);
+          }
+        } else {
+          // Le traitement pour les autres types de checkout est déjà fait ailleurs
+          console.log('[webhook] Other checkout.session.completed event (not boost)');
+        }
         break;
       }
 

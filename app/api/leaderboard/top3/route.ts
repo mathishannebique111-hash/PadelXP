@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
+import { filterMatchesByDailyLimit } from '@/lib/utils/match-limit-utils';
+import { MAX_MATCHES_PER_DAY } from '@/lib/match-constants';
+import { calculatePointsForMultiplePlayers } from '@/lib/utils/boost-points-utils';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -64,7 +67,7 @@ export async function GET() {
     
     const { data: matchesData, error: matchesError } = await supabaseAdmin
       .from("matches")
-      .select("id, winner_team_id, team1_id, team2_id")
+      .select("id, winner_team_id, team1_id, team2_id, played_at")
       .in("id", uniqueMatchIds);
 
     if (matchesError) {
@@ -114,14 +117,34 @@ export async function GET() {
       });
     }
 
-    // Étape 4: Calculer les stats par joueur
+    // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour
+    const validMatchIdsForPoints = filterMatchesByDailyLimit(
+      filteredParticipants.filter(p => p.user_id).map(p => ({ 
+        match_id: p.match_id, 
+        user_id: p.user_id 
+      })),
+      (matchesData || []).map((m: any) => ({ 
+        id: m.id, 
+        played_at: m.played_at || new Date().toISOString() 
+      })),
+      MAX_MATCHES_PER_DAY
+    );
+
+    // Étape 4: Calculer les stats par joueur (uniquement pour les matchs valides)
     const byPlayer: Record<string, { 
       wins: number; 
       losses: number; 
       matches: number;
     }> = {};
+    
+    // Collecter les matchs gagnés par joueur pour le calcul de boosts
+    const winMatchesByPlayer = new Map<string, Set<string>>();
 
     filteredParticipants.forEach((p: any) => {
+      // Ignorer les matchs qui dépassent la limite quotidienne
+      if (!validMatchIdsForPoints.has(p.match_id)) {
+        return;
+      }
       const match = matchesMap.get(p.match_id);
       if (!match) return; // Ignorer les matchs non terminés
 
@@ -130,6 +153,7 @@ export async function GET() {
 
       if (!byPlayer[playerId]) {
         byPlayer[playerId] = { wins: 0, losses: 0, matches: 0 };
+        winMatchesByPlayer.set(playerId, new Set());
       }
 
       byPlayer[playerId].matches += 1;
@@ -140,6 +164,11 @@ export async function GET() {
       
       if (win) {
         byPlayer[playerId].wins += 1;
+        // Ajouter le match à la liste des matchs gagnés
+        const winMatches = winMatchesByPlayer.get(playerId);
+        if (winMatches) {
+          winMatches.add(p.match_id);
+        }
       } else {
         byPlayer[playerId].losses += 1;
       }
@@ -177,17 +206,31 @@ export async function GET() {
 
     const hasReview = new Set((reviewers || []).map((r: any) => r.user_id));
 
-    // Étape 7: Calculer les points et créer le leaderboard
+    // Étape 7: Calculer les points avec boosts
+    const playersForBoostCalculation = playerUserIds.map((userId) => {
+      const stats = byPlayer[userId];
+      return {
+        userId,
+        wins: stats.wins,
+        losses: stats.losses,
+        winMatches: winMatchesByPlayer.get(userId) || new Set<string>(),
+        bonus: hasReview.has(userId) ? 10 : 0,
+        challengePoints: 0, // Pas de challenge points dans le top3 API
+      };
+    });
+
+    const pointsWithBoosts = await calculatePointsForMultiplePlayers(playersForBoostCalculation);
+
+    // Créer le leaderboard avec les points calculés
     const leaderboard = playerUserIds.map((userId) => {
       const stats = byPlayer[userId];
-      const bonus = hasReview.has(userId) ? 10 : 0;
-      const points = stats.wins * 10 + stats.losses * 3 + bonus;
+      const points = pointsWithBoosts.get(userId) || (stats.wins * 10 + stats.losses * 3 + (hasReview.has(userId) ? 10 : 0));
       const name = profilesMap.get(userId) || "Joueur";
       
-          // Calculer le tier
-          let tier = "Bronze";
-          if (points >= 500) tier = "Champion";
-          else if (points >= 300) tier = "Diamant";
+      // Calculer le tier
+      let tier = "Bronze";
+      if (points >= 500) tier = "Champion";
+      else if (points >= 300) tier = "Diamant";
       else if (points >= 200) tier = "Or";
       else if (points >= 100) tier = "Argent";
 

@@ -42,15 +42,9 @@ export default function LogoutButton({ variant = "dark" }: { variant?: "dark" | 
       style={{ letterSpacing: "0.01em" }}
     >
       {loading ? (
-        <>
-          <span className="animate-spin">⏳</span>
-          <span>Déconnexion...</span>
-        </>
+        <span>Déconnexion...</span>
       ) : (
-        <>
-          <span>🚪</span>
-          <span>Se déconnecter</span>
-        </>
+        <span>Se déconnecter</span>
       )}
     </button>
   );

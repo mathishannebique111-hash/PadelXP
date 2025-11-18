@@ -130,12 +130,12 @@ export default async function BadgesPage() {
         <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Badges & récompenses</h1>
+              <h1 className="text-3xl font-bold text-white">Badges & récompenses</h1>
               <LogoutButton />
             </div>
             <NavigationBar currentPage="badges" />
           </div>
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d'invitation communiqué par votre club.</p>
           </div>
         </div>
@@ -280,10 +280,7 @@ export default async function BadgesPage() {
         <BadgesUnlockNotifier obtained={obtainedBadges} />
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              Badges
-              <BadgeIcon size={32} />
-            </h1>
+            <h1 className="text-3xl font-bold text-white">Badges</h1>
             <LogoutButton />
           </div>
           <NavigationBar currentPage="badges" />
@@ -292,18 +289,18 @@ export default async function BadgesPage() {
       {/* Statistiques */}
       <div className="mb-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-8 border-2 border-blue-400 shadow-xl">
         <div className="mb-4 text-center">
-          <div className="mb-3 text-5xl font-bold text-white">
-            <span className="text-yellow-300">{totalBadgesCount}</span>
-            <span className="text-white/80 text-3xl ml-2">Badge{totalBadgesCount > 1 ? "s" : ""} au total</span>
+          <div className="mb-3 text-3xl font-bold text-white">
+            <span className="text-yellow-300 tabular-nums">{totalBadgesCount}</span>
+            <span className="text-white/80 text-2xl ml-2 font-semibold">Badge{totalBadgesCount > 1 ? "s" : ""} au total</span>
           </div>
-          <div className="flex justify-center gap-8 text-lg text-white/90">
+          <div className="flex justify-center gap-8 text-sm text-white/70 font-normal">
             <div>
-              <span className="font-bold text-yellow-300">{obtainedCount}</span>
+              <span className="font-bold text-yellow-300 tabular-nums">{obtainedCount}</span>
               <span className="ml-1">badge{obtainedCount > 1 ? "s" : ""} standard{obtainedCount > 1 ? "s" : ""}</span>
             </div>
             {challengeBadgesCount > 0 && (
               <div>
-                <span className="font-bold text-yellow-300">{challengeBadgesCount}</span>
+                <span className="font-bold text-yellow-300 tabular-nums">{challengeBadgesCount}</span>
                 <span className="ml-1">badge{challengeBadgesCount > 1 ? "s" : ""} de challenge{challengeBadgesCount > 1 ? "s" : ""}</span>
               </div>
             )}
@@ -312,8 +309,8 @@ export default async function BadgesPage() {
         {obtainedCount < ALL_BADGES.length && (
           <div className="text-center">
             <Link href="/match/new" className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-6 py-3 border-2 border-white/30 hover:bg-white/25 hover:translate-y-[-1px] transition-all cursor-pointer">
-              <span className="text-2xl">🎾</span>
-              <span className="text-lg font-bold text-white">
+              <span className="text-base">🎾</span>
+              <span className="text-sm font-semibold text-white">
                 Jouez des matchs pour débloquer de nouveaux badges !
               </span>
             </Link>
@@ -324,7 +321,7 @@ export default async function BadgesPage() {
       {/* Badges de challenges */}
       {challengeBadges && challengeBadges.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-2xl font-semibold text-white mb-4">
             <span>🏆</span>
             <span>Badges de Challenges</span>
           </h2>
@@ -335,14 +332,14 @@ export default async function BadgesPage() {
                 className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-3 pt-5 pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[180px] items-center text-center"
               >
                 <div className="mb-3 flex flex-col items-center gap-3 flex-1">
-                  <span className="text-4xl">
+                  <span className="text-3xl">
                     {badge.badge_emoji}
                   </span>
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold leading-tight text-gray-900">
                       {badge.badge_name}
                     </h3>
-                    <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                    <p className="mt-1 text-xs leading-relaxed text-gray-600 font-normal">
                       Obtenu via un challenge
                     </p>
                   </div>
@@ -358,7 +355,7 @@ export default async function BadgesPage() {
 
       {/* Grille des badges standards */}
       <div className="mb-4">
-        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+        <h2 className="text-2xl font-semibold text-white mb-4">
           <span>🎯</span>
           <span>Badges Standards</span>
         </h2>

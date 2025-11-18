@@ -8,6 +8,10 @@ import TierBadge from "@/components/TierBadge";
 import RankBadge from "@/components/RankBadge";
 import Link from "next/link";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
+import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
+import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
+import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
+import { calculatePointsForMultiplePlayers } from "@/lib/utils/boost-points-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -108,37 +112,98 @@ export default async function HomePage() {
 
   // Récupérer le club_id de l'utilisateur pour filtrer les données
   const userClubId = profile?.club_id || null;
+  
+  console.log("[Home] Récupération du logo du club - userClubId:", userClubId, "profile club_id:", profile?.club_id);
 
-  // D'abord, utiliser la même source de vérité que la page club
-  const clubInfo = await getUserClubInfo();
-  let clubName: string | null = clubInfo.clubName ?? null;
-  let clubLogoUrl: string | null = clubInfo.clubLogoUrl ?? null;
-  const resolvedIdForFetch = clubInfo.clubId || userClubId;
-
-  if (!clubName || !clubLogoUrl) {
-    // Compléter avec une lecture directe de la table clubs si nécessaire
-    const lookupId = resolvedIdForFetch;
-    if (lookupId) {
-    const { data: clubData } = await supabase
-      .from("clubs")
-      .select("name, logo_url")
-        .eq("id", lookupId)
-      .maybeSingle();
-      clubName = clubName ?? (clubData?.name || null);
-      clubLogoUrl = clubLogoUrl ?? ((clubData as any)?.logo_url || null);
-    }
-  }
-  // Si le logo est un chemin de stockage Supabase, le convertir en URL publique
-  if (clubLogoUrl && typeof clubLogoUrl === "string" && !clubLogoUrl.startsWith("http") && supabaseAdmin) {
-    try {
-      const { data } = supabaseAdmin.storage.from("club-logos").getPublicUrl(clubLogoUrl);
-      if (data?.publicUrl) {
-        clubLogoUrl = data.publicUrl;
+  // Récupérer directement depuis la table clubs avec la même logique que la page club
+  // (app/club/[slug]/page.tsx) pour garantir que le logo est toujours récupéré
+  let clubName: string | null = null;
+  let clubLogoUrl: string | null = null;
+  
+  if (userClubId) {
+    console.log("[Home] Tentative de récupération du logo avec club_id:", userClubId);
+    
+    // Essayer d'abord avec admin client (même logique que la page club)
+    if (supabaseAdmin) {
+      console.log("[Home] Utilisation du client admin pour récupérer le logo");
+      const { data: clubData, error: clubError } = await supabaseAdmin
+        .from("clubs")
+        .select("id, name, logo_url")
+        .eq("id", userClubId)
+        .maybeSingle();
+      
+      if (clubError) {
+        console.error("[Home] Erreur lors de la récupération du logo (admin):", clubError);
       }
-    } catch (e) {
-      console.warn("[Home] Unable to resolve club logo public URL", e);
+      
+      if (clubData) {
+        clubName = (clubData.name as string | null) ?? null;
+        // Récupérer le logo_url brut (comme dans la page club)
+        const rawLogoUrl = clubData.logo_url as string | null;
+        console.log("[Home] Logo brut récupéré depuis clubs (admin):", { 
+          clubId: userClubId, 
+          rawLogoUrl, 
+          clubName 
+        });
+        
+        // Convertir le logo_url brut en URL publique
+        clubLogoUrl = getClubLogoPublicUrl(rawLogoUrl);
+        console.log("[Home] Logo converti en URL publique (admin):", clubLogoUrl);
+      } else {
+        console.log("[Home] Aucune donnée retournée par la requête admin pour club_id:", userClubId);
+      }
     }
+    
+    // Fallback avec client standard si admin n'a pas fonctionné
+    if (!clubName || !clubLogoUrl) {
+      console.log("[Home] Tentative de récupération avec client standard (fallback)");
+      const { data: clubData, error: clubError } = await supabase
+        .from("clubs")
+        .select("id, name, logo_url")
+        .eq("id", userClubId)
+        .maybeSingle();
+      
+      if (clubError) {
+        console.error("[Home] Erreur lors de la récupération du logo (standard):", clubError);
+      }
+      
+      if (clubData) {
+        clubName = clubName ?? (clubData.name as string | null) ?? null;
+        const rawLogoUrl = clubData.logo_url as string | null;
+        console.log("[Home] Logo brut récupéré depuis clubs (standard):", { 
+          clubId: userClubId, 
+          rawLogoUrl, 
+          clubName 
+        });
+        clubLogoUrl = clubLogoUrl ?? getClubLogoPublicUrl(rawLogoUrl);
+        console.log("[Home] Logo converti en URL publique (standard):", clubLogoUrl);
+      } else {
+        console.log("[Home] Aucune donnée retournée par la requête standard pour club_id:", userClubId);
+      }
+    }
+  } else {
+    console.log("[Home] Pas de userClubId, impossible de récupérer le logo");
   }
+  
+  // Fallback avec getUserClubInfo si on n'a toujours pas de logo
+  if (!clubName || !clubLogoUrl) {
+    console.log("[Home] Fallback vers getUserClubInfo car logo non récupéré");
+    const clubInfo = await getUserClubInfo();
+    clubName = clubName ?? clubInfo.clubName ?? null;
+    clubLogoUrl = clubLogoUrl ?? clubInfo.clubLogoUrl ?? null;
+    console.log("[Home] Fallback avec getUserClubInfo:", { 
+      clubName: clubInfo.clubName, 
+      clubLogoUrl: clubInfo.clubLogoUrl,
+      finalClubName: clubName,
+      finalClubLogoUrl: clubLogoUrl
+    });
+  }
+  
+  console.log("[Home] Résultat final de la récupération du logo:", {
+    clubName,
+    clubLogoUrl,
+    userClubId
+  });
 
   if (!userClubId) {
     return (
@@ -156,12 +221,12 @@ export default async function HomePage() {
         <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-10 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Bienvenue !</h1>
+              <h1 className="text-3xl font-bold text-white">Bienvenue !</h1>
               <LogoutButton />
             </div>
             <NavigationBar currentPage="home" />
           </div>
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour accéder à votre espace joueur. Vérifiez que vous avez saisi le bon code d'invitation ou contactez votre club.</p>
           </div>
         </div>
@@ -198,12 +263,12 @@ export default async function HomePage() {
   console.log("[Home] Unique matches found:", uniqueMatchIds.length);
   
   // Récupérer les données des matchs
-  const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string; created_at: string }>();
+  const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string; created_at: string; played_at: string }>();
   
   if (uniqueMatchIds.length > 0) {
     const { data: matchesData, error: matchesError } = await supabase
       .from("matches")
-      .select("id, winner_team_id, team1_id, team2_id, created_at")
+      .select("id, winner_team_id, team1_id, team2_id, created_at, played_at")
       .in("id", uniqueMatchIds);
     
     if (matchesError) {
@@ -220,11 +285,27 @@ export default async function HomePage() {
           team1_id: m.team1_id,
           team2_id: m.team2_id,
           created_at: m.created_at,
+          played_at: m.played_at || m.created_at, // Fallback sur created_at si played_at n'existe pas
         });
       });
       console.log("[Home] Matches loaded:", matchesData.length);
     }
   }
+  
+  // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour pour chaque joueur
+  const validMatchIdsForPoints = filterMatchesByDailyLimit(
+    allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => ({ 
+      match_id: p.match_id, 
+      user_id: p.user_id 
+    })),
+    Array.from(matchesMap.entries()).map(([id, match]) => ({ 
+      id, 
+      played_at: match.played_at || match.created_at 
+    })),
+    MAX_MATCHES_PER_DAY
+  );
+  
+  console.log("[Home] Valid matches for points (after daily limit):", validMatchIdsForPoints.size);
   
   // Récupérer les profils
   const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
@@ -338,10 +419,19 @@ export default async function HomePage() {
   console.log("[Home] Valid matches (all users in same club):", validMatchIds.size);
   console.log("[Home] Total matches before filtering:", Object.keys(participantsByMatch).length);
   
-  // Filtrer les participants pour ne garder que ceux des matchs valides
-  const finalFilteredParticipants = filteredParticipants.filter((p: any) => validMatchIds.has(p.match_id));
+  // Filtrer les participants pour ne garder que ceux des matchs valides (même club) ET qui respectent la limite quotidienne
+  const finalFilteredParticipants = filteredParticipants.filter((p: any) => {
+    const isValidForClub = validMatchIds.has(p.match_id);
+    // Pour les users, vérifier aussi la limite quotidienne. Les guests ne sont pas limités.
+    if (p.player_type === "user" && p.user_id) {
+      const isValidForDailyLimit = validMatchIdsForPoints.has(p.match_id);
+      return isValidForClub && isValidForDailyLimit;
+    }
+    // Pour les guests, on ne vérifie que le club
+    return isValidForClub;
+  });
   
-  console.log("[Home] Participants after match filtering:", finalFilteredParticipants.length);
+  console.log("[Home] Participants after match filtering (club + daily limit):", finalFilteredParticipants.length);
   
   // Enrichir les participants filtrés avec les données des matchs
   const agg = finalFilteredParticipants.map((p: any) => ({
@@ -363,6 +453,9 @@ export default async function HomePage() {
   let validMatches = 0;
   let skippedMatches = 0;
   
+  // Créer des Maps pour tracker les matchs gagnés par joueur (nécessaire pour le calcul de boosts)
+  const winMatchesByPlayer = new Map<string, Set<string>>();
+
   agg.forEach((row: any) => {
     // Vérifier que le match existe et a un winner_team_id (match terminé)
     if (!row.matches) {
@@ -407,9 +500,24 @@ export default async function HomePage() {
         isGuest,
         playerId
       };
+      // Initialiser le Set pour les matchs gagnés
+      if (!isGuest) {
+        winMatchesByPlayer.set(playerId, new Set());
+      }
     }
     byPlayer[playerId].matches += 1;
-    if (win) byPlayer[playerId].wins += 1; else byPlayer[playerId].losses += 1;
+    if (win) {
+      byPlayer[playerId].wins += 1;
+      // Ajouter le match à la liste des matchs gagnés (seulement pour les users, pas les guests)
+      if (!isGuest && row.match_id) {
+        const winMatches = winMatchesByPlayer.get(playerId);
+        if (winMatches) {
+          winMatches.add(row.match_id);
+        }
+      }
+    } else {
+      byPlayer[playerId].losses += 1;
+    }
   });
   
   console.log("[Home] Valid matches processed:", validMatches);
@@ -527,6 +635,28 @@ export default async function HomePage() {
     last_name: p.name.split(new RegExp("\\s+")).slice(1).join(" ") || "",
   }));
 
+  // Préparer les données pour le calcul de points avec boosts
+  const playersForBoostCalculation = Object.entries(byPlayer)
+    .filter(([playerId, s]) => {
+      // Exclure les guests et ne garder que les users du même club
+      if (playerId.startsWith("guest_")) return false;
+      if (userClubId) {
+        return validUserIds.has(playerId);
+      }
+      return true;
+    })
+    .map(([playerId, s]) => ({
+      userId: playerId,
+      wins: s.wins,
+      losses: s.losses,
+      winMatches: winMatchesByPlayer.get(playerId) || new Set<string>(),
+      bonus: bonusMap.get(playerId) || 0,
+      challengePoints: challengePointsMap.get(playerId) || 0,
+    }));
+
+  // Calculer les points avec boosts en une seule requête optimisée
+  const pointsWithBoosts = await calculatePointsForMultiplePlayers(playersForBoostCalculation);
+  
   // Construire le leaderboard (uniquement les joueurs du même club)
   const leaderboard = Object.entries(byPlayer)
     .filter(([playerId, s]) => {
@@ -545,9 +675,8 @@ export default async function HomePage() {
         allPlayers
       );
       
-      const bonus = bonusMap.get(playerId) || 0;
-      const challengePoints = challengePointsMap.get(playerId) || 0;
-      const totalPoints = s.wins * 10 + s.losses * 3 + bonus + challengePoints;
+      // Récupérer les points avec boosts calculés
+      const totalPoints = pointsWithBoosts.get(playerId) || (s.wins * 10 + s.losses * 3 + (bonusMap.get(playerId) || 0) + (challengePointsMap.get(playerId) || 0));
       
       return {
         rank: 0,
@@ -644,7 +773,7 @@ export default async function HomePage() {
                   />
                 )}
               </div>
-              {clubName && <p className="text-white/60 text-sm mt-1">Club : {clubName}</p>}
+              {clubName && <p className="text-white/70 text-sm mt-1 font-normal">Club : {clubName}</p>}
             </div>
             <LogoutButton />
           </div>
@@ -661,9 +790,9 @@ export default async function HomePage() {
             <div className="mb-8">
               <div className="mb-4 flex items-center justify-center gap-3">
                 <span className="h-px w-10 bg-gray-300" />
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/80 shadow-sm">
-                  Top joueurs du moment <span aria-hidden>✨</span>
-                </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/70 shadow-sm">
+                    Top joueurs du moment
+                  </span>
                 <span className="h-px w-10 bg-gray-300" />
               </div>
               <div className="hidden md:flex items-end justify-center gap-6 w-full mt-8">
@@ -677,13 +806,13 @@ export default async function HomePage() {
                   >
                     <div className="absolute top-2 right-2 text-5xl z-20 opacity-90 drop-shadow-md">🥈</div>
                     <div className="text-center relative z-10 pt-5">
-                      <h3 className="text-2xl font-extrabold mb-8 text-gray-900 tracking-tight">
+                      <h3 className="text-xl font-semibold mb-8 text-gray-900 tracking-tight">
                         {leaderboard[1].player_name}
                       </h3>
                       <div className="flex items-center justify-center mt-4">
                         <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-zinc-500 ring-2 ring-zinc-300 shadow-lg shadow-zinc-300/70">
-                          <span className="text-2xl font-extrabold text-gray-900 tabular-nums">{leaderboard[1].points.toLocaleString()}</span>
-                          <span className="text-xs font-semibold text-gray-800 uppercase tracking-wider">points</span>
+                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[1].points.toLocaleString()}</span>
+                          <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
                         </div>
                       </div>
                     </div>
@@ -702,13 +831,13 @@ export default async function HomePage() {
                       <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold shadow-sm border border-yellow-300">Meilleur joueur</span>
                     </div>
                     <div className="text-center relative z-10 pt-6">
-                      <h3 className="text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow-sm">
+                      <h3 className="text-xl font-semibold mb-8 text-gray-900 tracking-tight drop-shadow-sm">
                         {leaderboard[0].player_name}
                       </h3>
                       <div className="flex items-center justify-center mt-4">
                         <div className="inline-flex items-center gap-3 rounded-full px-6 py-2.5 bg-white/95 backdrop-blur border-2 border-yellow-500 ring-2 ring-yellow-300 shadow-xl shadow-yellow-300/70">
-                          <span className="text-3xl font-extrabold text-gray-900 tabular-nums">{leaderboard[0].points.toLocaleString()}</span>
-                          <span className="text-xs font-semibold text-gray-900 uppercase tracking-wider">points</span>
+                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[0].points.toLocaleString()}</span>
+                          <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
                         </div>
                       </div>
                     </div>
@@ -724,13 +853,13 @@ export default async function HomePage() {
                   >
                     <div className="absolute top-2 right-2 text-5xl z-20 opacity-90 drop-shadow-md">🥉</div>
                     <div className="text-center relative z-10 pt-5">
-                      <h3 className="text-lg font-extrabold mb-8 text-gray-900 tracking-tight">
+                      <h3 className="text-xl font-semibold mb-8 text-gray-900 tracking-tight">
                         {(() => { var parts = (leaderboard[2].player_name || '').split(' '); var f = parts[0] || ''; var l = parts.slice(1).join(' '); return (<span><span className="text-xl">{f}</span>{l ? ' ' + l : ''}</span>); })()}
                       </h3>
                       <div className="flex items-center justify-center mt-4">
                         <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-orange-500 ring-2 ring-orange-300 shadow-lg shadow-orange-300/70">
-                          <span className="text-2xl font-extrabold text-gray-900 tabular-nums">{leaderboard[2].points.toLocaleString()}</span>
-                          <span className="text-xs font-semibold text-gray-800 uppercase tracking-wider">points</span>
+                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[2].points.toLocaleString()}</span>
+                          <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
                         </div>
                       </div>
                     </div>
@@ -756,13 +885,13 @@ export default async function HomePage() {
                     <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl p-5 shadow-2xl relative overflow-hidden')} style={bgGradients[index]}>
                       <div className={"absolute top-2 right-2 z-20 opacity-90 drop-shadow-md text-5xl"}>{icons[index]}</div>
                       <div className="relative z-10 pt-4">
-                        <h3 className={"font-extrabold mb-6 text-center text-gray-900 " + (index === 0 ? 'text-2xl' : index === 1 ? 'text-xl' : 'text-lg')}>
+                        <h3 className={"font-semibold mb-6 text-center text-gray-900 " + (index === 0 ? 'text-xl' : index === 1 ? 'text-xl' : 'text-xl')}>
                           {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-xl">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}
                         </h3>
                         <div className="flex items-center justify-center mt-2">
                           <div className={"inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-white/95 backdrop-blur border-2 shadow-lg " + (index === 0 ? 'border-yellow-500 ring-2 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-2 ring-zinc-300' : 'border-orange-500 ring-2 ring-orange-300')}>
-                            <span className="text-lg font-extrabold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
-                            <span className="text-xs font-semibold text-gray-900 uppercase tracking-wider">points</span>
+                            <span className="text-2xl font-bold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
+                            <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
                           </div>
                         </div>
                       </div>
@@ -777,8 +906,8 @@ export default async function HomePage() {
               <div className="px-5 pt-5">
                 <div className="mb-4 flex items-center justify-center gap-3">
                   <span className="h-px w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/80 shadow-sm">
-                    Classement global <span aria-hidden>🏆</span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/70 shadow-sm">
+                    Classement global
                   </span>
                   <span className="h-px w-10 bg-gray-300" />
                 </div>
@@ -787,14 +916,14 @@ export default async function HomePage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Joueur</th>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Niveau</th>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Points</th>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Winrate</th>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0">V</th>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0">D</th>
-                      <th className="px-4 py-4 text-center text-sm font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">MJ</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Joueur</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Niveau</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Points</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Winrate</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0">V</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0">D</th>
+                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">MJ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">

@@ -52,12 +52,54 @@ export default function MatchForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  
+  // Boost state
+  const [useBoost, setUseBoost] = useState(false);
+  const [boostStats, setBoostStats] = useState<{
+    creditsAvailable: number;
+    usedThisMonth: number;
+    remainingThisMonth: number;
+    canUse: boolean;
+  } | null>(null);
+  const [loadingBoostStats, setLoadingBoostStats] = useState(true);
 
   // Refs pour l'auto-focus des champs de score
   const setTeam1Refs = useRef<Array<HTMLInputElement | null>>([]);
   const setTeam2Refs = useRef<Array<HTMLInputElement | null>>([]);
   const tieBreakTeam1Ref = useRef<HTMLInputElement | null>(null);
   const tieBreakTeam2Ref = useRef<HTMLInputElement | null>(null);
+
+  // Charger les stats de boost au montage
+  useEffect(() => {
+    async function loadBoostStats() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setBoostStats(null);
+          setLoadingBoostStats(false);
+          return;
+        }
+
+        const res = await fetch('/api/player/boost/stats');
+        if (res.ok) {
+          const data = await res.json();
+          setBoostStats(data);
+        } else {
+          console.error('Failed to load boost stats');
+          setBoostStats(null);
+        }
+      } catch (error) {
+        console.error('Error loading boost stats:', error);
+        setBoostStats(null);
+      } finally {
+        setLoadingBoostStats(false);
+      }
+    }
+
+    loadBoostStats();
+  }, [supabase]);
 
   const addSet = () => {
     const nextSetNumber = sets.length + 1;
@@ -529,6 +571,7 @@ export default function MatchForm({
         winner,
         sets,
         tieBreak: hasTieBreak && tieBreak.team1Score && tieBreak.team2Score ? tieBreak : undefined,
+        useBoost: useBoost && boostStats?.canUse, // Seulement si le joueur peut utiliser un boost
       };
       
       console.log("📤 Données envoyées à l'API:", JSON.stringify(payload, null, 2));
@@ -561,32 +604,71 @@ export default function MatchForm({
       if (res.ok) {
         const data = await res.json();
         console.log("✅ Match submitted successfully:", data);
-        setShowSuccess(true);
-        setLoading(false);
         
-        // Afficher le message de succès puis rediriger vers l'historique après 2 secondes
-        setTimeout(() => {
-          console.log("🔄 Redirecting to match history...");
-          window.location.href = "/matches/history";
-        }, 2000);
+        // Gérer les messages de boost
+        if (data.boostApplied) {
+          console.log("⚡ Boost applied:", data.boostPointsInfo);
+          // Le message de succès inclura les infos du boost
+        } else if (data.boostError) {
+          console.warn("⚠️ Boost error:", data.boostError);
+          // Afficher l'erreur de boost mais ne pas bloquer le match
+        }
+
+        // Afficher un avertissement si des joueurs ont atteint la limite
+        if (data.warning) {
+          console.warn("⚠️ Warning:", data.warning);
+          setWarningMessage(data.warning);
+          // Pas de redirection automatique, le joueur doit cliquer sur "Compris"
+        } else {
+          // Créer le message de succès avec les infos du boost si appliqué
+          let successMessage = "Match enregistré avec succès !";
+          if (data.boostApplied && data.boostPointsInfo) {
+            successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
+          }
+          
+          setShowSuccess(true);
+          setLoading(false);
+          // Redirection automatique seulement si pas d'avertissement
+          setTimeout(() => {
+            console.log("🔄 Redirecting to match history...");
+            window.location.href = "/matches/history";
+          }, 2000);
+        }
+        
+        setLoading(false);
       } else {
-        let errorMessage = "Erreur lors de l'enregistrement";
+        let errorMsg = "Erreur lors de l'enregistrement";
         try {
           const errorData = await res.json();
           console.log("🔍 Error data complet:", JSON.stringify(errorData, null, 2));
           console.error("❌ Match submission failed:", res.status, errorData);
-          errorMessage = errorData?.error || errorData?.message || `Erreur ${res.status}: ${res.statusText}`;
+          errorMsg = errorData?.error || errorData?.message || `Erreur ${res.status}: ${res.statusText}`;
         } catch (parseError) {
           console.error("❌ Failed to parse error response:", parseError);
-          errorMessage = `Erreur ${res.status}: ${res.statusText || "Erreur serveur"}`;
+          errorMsg = `Erreur ${res.status}: ${res.statusText || "Erreur serveur"}`;
         }
-        setErrors({ partnerName: errorMessage });
+        
+        // Afficher une notification d'erreur visible
+        setErrorMessage(errorMsg);
+        setErrors({ partnerName: errorMsg });
         setLoading(false);
+        
+        // Fermer automatiquement la notification après 5 secondes
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 5000);
       }
     } catch (error) {
       console.error("❌ Error submitting match:", error);
-      setErrors({ partnerName: "Erreur lors de l'enregistrement" });
+      const errorMsg = "Erreur lors de l'enregistrement";
+      setErrorMessage(errorMsg);
+      setErrors({ partnerName: errorMsg });
       setLoading(false);
+      
+      // Fermer automatiquement la notification après 5 secondes
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 5000);
     }
   };
 
@@ -605,6 +687,110 @@ export default function MatchForm({
           </div>
         </div>
       )}
+      
+      {/* Notification d'avertissement */}
+      {warningMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style={{ animation: "fadeIn 0.3s ease-in" }}>
+          <div className="relative mx-4 max-w-md rounded-2xl bg-amber-500 p-8 shadow-2xl" style={{ animation: "zoomIn 0.3s ease-out" }}>
+            <div className="text-center">
+              <div className="mb-4 text-6xl">⚠️</div>
+              <h2 className="mb-3 text-2xl font-bold text-white">Attention</h2>
+              <p className="mb-6 text-base text-white/90">{warningMessage}</p>
+              <button
+                onClick={() => {
+                  setWarningMessage(null);
+                  // Rediriger vers l'historique après avoir cliqué sur "Compris"
+                  setTimeout(() => {
+                    console.log("🔄 Redirecting to match history...");
+                    window.location.href = "/matches/history";
+                  }, 300);
+                }}
+                className="rounded-xl bg-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/30 backdrop-blur-sm"
+              >
+                Compris
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Notification d'erreur */}
+      {errorMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style={{ animation: "fadeIn 0.3s ease-in" }}>
+          <div className="relative mx-4 max-w-md rounded-2xl bg-red-600 p-8 shadow-2xl" style={{ animation: "zoomIn 0.3s ease-out" }}>
+            <div className="text-center">
+              <div className="mb-4 text-6xl">⚠️</div>
+              <h2 className="mb-3 text-2xl font-bold text-white">Erreur</h2>
+              <p className="mb-6 text-base text-white/90">{errorMessage}</p>
+              <button
+                onClick={() => setErrorMessage(null)}
+                className="rounded-xl bg-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/30 backdrop-blur-sm"
+              >
+                Compris
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Option boost */}
+      {!loadingBoostStats && boostStats && (
+        <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 backdrop-blur-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 text-2xl">⚡</div>
+            <div className="flex-1">
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={useBoost}
+                  onChange={(e) => setUseBoost(e.target.checked)}
+                  disabled={!boostStats.canUse}
+                  className="h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <span className="text-sm font-semibold text-white">
+                  Appliquer un boost (+30% de points si tu gagnes)
+                </span>
+              </label>
+              {boostStats.canUse && (
+                <p className="mt-2 text-xs text-white/70">
+                  Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
+                  {boostStats.usedThisMonth > 0 && (
+                    <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
+                  )}
+                </p>
+              )}
+              {!boostStats.canUse && (
+                <p className="mt-2 text-xs text-white/70">
+                  {boostStats.creditsAvailable === 0 
+                    ? "Tu n'as plus de boosts disponibles. " 
+                    : `Tu as déjà utilisé ${boostStats.usedThisMonth} boost${boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci (limite de 10). `}
+                  <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
+                    Achète-en de nouveaux
+                  </a>
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Message d'information sur la limite de 2 matchs par jour */}
+      <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 text-2xl">ℹ️</div>
+          <div className="flex-1">
+            <p className="text-sm text-white/90">
+              Pour <strong className="font-semibold text-amber-300">garder un classement fiable et équitable</strong>, vous pouvez enregistrer jusqu'à <strong className="font-semibold text-amber-300">2 matchs par jour</strong> qui comptent pour vos points. 
+              Cette limite permet d'éviter que des joueurs n'enregistrent un nombre excessif de matchs en une seule journée, ce qui pourrait fausser le classement et rendre la compétition moins équitable pour tous.
+            </p>
+            <p className="mt-2 text-sm text-white/80">
+              Si vous enregistrez un 3<sup>ème</sup> match ou plus dans la même journée, celui-ci sera enregistré dans l'historique mais <strong className="font-semibold text-amber-300">aucun point ne sera ajouté à votre classement</strong>. 
+              Les autres joueurs qui n'ont pas atteint la limite de 2 matchs recevront leurs points normalement.
+            </p>
+          </div>
+        </div>
+      </div>
+      
       <form onSubmit={onSubmit} className="space-y-6">
       <div>
         <div className="mb-3 text-base font-semibold text-white">Équipe 1</div>

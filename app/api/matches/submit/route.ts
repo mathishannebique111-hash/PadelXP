@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { createHash } from "crypto";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
+import { consumeBoostForMatch, canPlayerUseBoost } from "@/lib/utils/boost-utils";
 
 const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -30,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
     }
     
-  const { players, winner, sets, tieBreak } = body as {
+  const { players, winner, sets, tieBreak, useBoost } = body as {
     players: Array<{
       player_type: "user" | "guest";
       user_id: string;
@@ -46,6 +48,7 @@ export async function POST(req: Request) {
       team1Score: string;
       team2Score: string;
     };
+    useBoost?: boolean; // Optionnel : true si le joueur veut utiliser un boost
   };
   
   const cookieStore = await cookies();
@@ -213,6 +216,72 @@ export async function POST(req: Request) {
   // Déterminer si le match a été décidé au tie-break
   const decided_by_tiebreak = !!(tieBreak && tieBreak.team1Score && tieBreak.team2Score && parseInt(tieBreak.team1Score) !== parseInt(tieBreak.team2Score));
 
+  // Vérifier la limite de 3 matchs par jour et par joueur
+  // Ne pas bloquer l'enregistrement, mais identifier les joueurs qui ont atteint la limite
+  const playersOverLimit: string[] = [];
+  
+  if (userPlayers.length > 0) {
+    console.log("🔍 Vérification de la limite de matchs par jour pour les joueurs:", userPlayers);
+    
+    // Obtenir la date d'aujourd'hui en UTC (format ISO pour Supabase)
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const todayStart = today.toISOString();
+    today.setUTCHours(23, 59, 59, 999);
+    const todayEnd = today.toISOString();
+
+    console.log("📅 Date du jour (UTC):", { todayStart, todayEnd });
+
+    // Pour chaque joueur user, compter les matchs d'aujourd'hui
+    for (const playerUserId of userPlayers) {
+      // Étape 1: Récupérer tous les match_ids du joueur depuis match_participants
+      const { data: participants, error: participantsError } = await supabaseAdmin
+        .from("match_participants")
+        .select("match_id")
+        .eq("user_id", playerUserId)
+        .eq("player_type", "user");
+
+      if (participantsError) {
+        console.error("❌ Error fetching participants for player:", playerUserId, participantsError);
+        // En cas d'erreur, on continue (ne pas bloquer l'insertion)
+        continue;
+      }
+
+      if (!participants || participants.length === 0) {
+        console.log(`📊 Joueur ${playerUserId}: 0 match aujourd'hui (aucun participant trouvé)`);
+        continue;
+      }
+
+      const matchIds = participants.map((p: any) => p.match_id);
+
+      // Étape 2: Récupérer les matchs correspondants et filtrer par date d'aujourd'hui
+      const { data: todayMatches, error: matchesError } = await supabaseAdmin
+        .from("matches")
+        .select("id")
+        .in("id", matchIds)
+        .gte("played_at", todayStart)
+        .lte("played_at", todayEnd);
+
+      if (matchesError) {
+        console.error("❌ Error counting today's matches for player:", playerUserId, matchesError);
+        // En cas d'erreur, on continue (ne pas bloquer l'insertion)
+        continue;
+      }
+
+      const matchCount = todayMatches?.length || 0;
+      console.log(`📊 Joueur ${playerUserId}: ${matchCount} match(s) aujourd'hui`);
+
+      if (matchCount >= MAX_MATCHES_PER_DAY) {
+        console.warn(`⚠️ Joueur ${playerUserId} a déjà ${matchCount} match(s) aujourd'hui (limite: ${MAX_MATCHES_PER_DAY}) - aucun point ne sera ajouté`);
+        playersOverLimit.push(playerUserId);
+      }
+    }
+    
+    if (playersOverLimit.length === 0) {
+      console.log("✅ Limite de matchs par jour respectée pour tous les joueurs");
+    }
+  }
+
   // Préparer les données d'insertion selon le schéma Supabase
   // NOTE: La colonne 'score' n'existe pas dans Supabase, on utilise uniquement les colonnes requises
   const matchData = { 
@@ -275,6 +344,68 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: e2.message }, { status: 400 });
   }
 
+  // Gérer l'application d'un boost si demandé
+  let boostApplied = false;
+  let boostError: string | null = null;
+  let boostPointsInfo: { before: number; after: number } | null = null;
+
+  if (useBoost === true) {
+    console.log("⚡ Boost requested by user:", user.id);
+    
+    // Vérifier que le joueur connecté a gagné le match
+    const winner_team = Number(winner) === 1 ? team1_id : team2_id;
+    const currentUserParticipant = participants.find(p => p.user_id === user.id);
+    
+    if (currentUserParticipant) {
+      const currentUserTeam = currentUserParticipant.team;
+      const isWinner = (currentUserTeam === 1 && winner_team === team1_id) || 
+                       (currentUserTeam === 2 && winner_team === team2_id);
+      
+      if (isWinner) {
+        // Le joueur a gagné, vérifier s'il peut utiliser un boost
+        const canUse = await canPlayerUseBoost(user.id);
+        
+        if (canUse.canUse) {
+          // Points normaux pour une victoire : +10
+          const pointsBeforeBoost = 10;
+          
+          // Consommer le boost
+          const boostResult = await consumeBoostForMatch(
+            user.id,
+            match.id,
+            pointsBeforeBoost
+          );
+          
+          if (boostResult.success && boostResult.pointsAfterBoost) {
+            boostApplied = true;
+            boostPointsInfo = {
+              before: pointsBeforeBoost,
+              after: boostResult.pointsAfterBoost,
+            };
+            console.log("✅ Boost applied successfully:", {
+              userId: user.id,
+              matchId: match.id,
+              pointsBefore: pointsBeforeBoost,
+              pointsAfter: boostResult.pointsAfterBoost,
+            });
+          } else {
+            boostError = boostResult.error || "Erreur lors de l'application du boost";
+            console.error("❌ Boost application failed:", boostError);
+          }
+        } else {
+          boostError = canUse.reason || "Impossible d'utiliser un boost";
+          console.warn("⚠️ Boost cannot be used:", boostError);
+        }
+      } else {
+        boostError = "Le boost ne peut être utilisé que si tu gagnes le match";
+        console.warn("⚠️ Boost requested but player lost:", user.id);
+      }
+    } else {
+      boostError = "Joueur non trouvé parmi les participants";
+      console.error("❌ Boost requested but player not found in participants");
+    }
+  }
+
   try {
     console.log("🔄 Revalidating paths after match submission...");
     revalidatePath("/dashboard");
@@ -288,10 +419,43 @@ export async function POST(req: Request) {
   }
 
   console.log("✅ Match submission completed successfully");
+  
+  // Préparer la réponse avec avertissement si nécessaire
+  let responseMessage = "Match enregistré avec succès.";
+  let warning: string | null = null;
+  
+  if (playersOverLimit.length > 0) {
+    // Récupérer les noms des joueurs qui ont atteint la limite
+    const { data: overLimitProfiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", playersOverLimit);
+    
+    const overLimitNames = (overLimitProfiles || [])
+      .map((p: any) => p.display_name || "Ce joueur")
+      .join(", ");
+    
+    if (playersOverLimit.length === userPlayers.length) {
+      // Tous les joueurs ont atteint la limite
+      warning = `Attention : Tu as déjà enregistré 2 matchs aujourd'hui. Ce match a été enregistré mais aucun point ne sera ajouté à ton classement.`;
+    } else if (playersOverLimit.length === 1 && playersOverLimit[0] === user.id) {
+      // Seulement le joueur connecté a atteint la limite
+      warning = `Attention : Tu as déjà enregistré 2 matchs aujourd'hui. Ce match a été enregistré mais aucun point ne sera ajouté à ton classement. Les autres joueurs recevront leurs points normalement.`;
+    } else {
+      // Plusieurs joueurs ont atteint la limite
+      warning = `Attention : ${overLimitNames} ${playersOverLimit.length === 1 ? 'a déjà' : 'ont déjà'} enregistré 2 matchs aujourd'hui. Ce match a été enregistré mais aucun point ne sera ajouté ${playersOverLimit.length === 1 ? 'à son' : 'à leur'} classement. ${playersOverLimit.length < userPlayers.length ? 'Les autres joueurs recevront leurs points normalement.' : ''}`;
+    }
+  }
+  
   return NextResponse.json({ 
     success: true, 
-    message: "Match enregistré avec succès.",
-    matchId: match.id 
+    message: responseMessage,
+    warning: warning,
+    playersOverLimit: playersOverLimit.length > 0 ? playersOverLimit : undefined,
+    matchId: match.id,
+    boostApplied: boostApplied,
+    boostError: boostError || undefined,
+    boostPointsInfo: boostPointsInfo || undefined,
   });
   } catch (error) {
     console.error("❌ Unexpected error in match submission:", error);

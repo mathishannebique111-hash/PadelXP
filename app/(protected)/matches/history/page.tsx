@@ -91,12 +91,12 @@ export default async function MatchHistoryPage() {
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
             <NavigationBar currentPage="history" />
           </div>
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour consulter l'historique des matchs. Contactez votre club / complexe pour obtenir le code d'invitation.</p>
           </div>
         </div>
@@ -133,7 +133,7 @@ export default async function MatchHistoryPage() {
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
             <NavigationBar currentPage="history" />
@@ -170,7 +170,7 @@ export default async function MatchHistoryPage() {
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
             <NavigationBar currentPage="history" />
@@ -227,7 +227,7 @@ export default async function MatchHistoryPage() {
         <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Historique des matchs</h1>
+              <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
             <NavigationBar currentPage="history" />
@@ -453,7 +453,7 @@ export default async function MatchHistoryPage() {
       <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8">
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white">Historique des matchs <span className="ml-2">📊</span></h1>
+            <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
             <LogoutButton />
           </div>
           <NavigationBar currentPage="history" />
@@ -462,16 +462,16 @@ export default async function MatchHistoryPage() {
       {/* Stats globales */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl bg-white p-4">
-          <div className="text-sm text-gray-600">Total Matchs</div>
-          <div className="text-2xl font-bold text-gray-900">{finalMatches.length}</div>
+          <div className="text-xs text-gray-600 font-normal">Total Matchs</div>
+          <div className="text-2xl font-bold text-gray-900 tabular-nums">{finalMatches.length}</div>
         </div>
         <div className="rounded-xl bg-white p-4">
-          <div className="text-sm text-gray-600">Victoires</div>
-          <div className="text-2xl font-bold text-green-600">{totalWins}</div>
+          <div className="text-xs text-gray-600 font-normal">Victoires</div>
+          <div className="text-2xl font-bold text-gray-900 tabular-nums">{totalWins}</div>
         </div>
         <div className="rounded-xl bg-white p-4">
-          <div className="text-sm text-gray-600">Défaites</div>
-          <div className="text-2xl font-bold text-red-600">{totalLosses}</div>
+          <div className="text-xs text-gray-600 font-normal">Défaites</div>
+          <div className="text-2xl font-bold text-gray-900 tabular-nums">{totalLosses}</div>
         </div>
       </div>
 
@@ -502,10 +502,10 @@ export default async function MatchHistoryPage() {
                     {won ? "🏆" : "❌"}
                   </span>
                   <div>
-                    <div className="font-semibold text-gray-900">
+                    <div className="text-sm font-semibold text-gray-900">
                       {won ? "Victoire" : "Défaite"}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-xs text-gray-600 font-normal">
                       {dateStr} à {timeStr}
                     </div>
                     {match.decided_by_tiebreak && (
@@ -521,7 +521,7 @@ export default async function MatchHistoryPage() {
                   </div>
                 </div>
                 {match.score && (
-                  <div className="rounded-lg bg-white px-4 py-2 text-lg font-bold text-gray-900">
+                  <div className="rounded-lg bg-white px-4 py-2 text-base font-bold text-gray-900 tabular-nums">
                     {match.score}
                   </div>
                 )}
@@ -530,7 +530,7 @@ export default async function MatchHistoryPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Équipe 1 */}
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-600">Équipe 1 {match.winner_team === 1 && "🏆"}</div>
+                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600">Équipe 1 {match.winner_team === 1 && "🏆"}</div>
                   <div className="divide-y divide-gray-100">
                     {team1.map((p: any) => {
                       const isGuest = p.player_type === "guest";
@@ -543,13 +543,13 @@ export default async function MatchHistoryPage() {
                         <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1.5">
                           {isCurrentUser ? (
                             <>
-                              <span className="text-[15px] font-semibold text-gray-900 tracking-tight">{displayName}</span>
-                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">VOUS</span>
+                              <span className="text-sm font-semibold text-gray-900 tracking-tight">{displayName}</span>
+                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-xs font-bold text-white shadow-sm">VOUS</span>
                             </>
                           ) : (
                             <>
-                              <span className="text-[15px] font-medium text-gray-900 tracking-tight">{displayName}</span>
-                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600">Invité</span>}
+                              <span className="text-sm font-normal text-gray-900 tracking-tight">{displayName}</span>
+                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-xs font-normal text-gray-600">Invité</span>}
                             </>
                           )}
                         </div>
@@ -560,7 +560,7 @@ export default async function MatchHistoryPage() {
 
                 {/* Équipe 2 */}
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-600">Équipe 2 {match.winner_team === 2 && "🏆"}</div>
+                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600">Équipe 2 {match.winner_team === 2 && "🏆"}</div>
                   <div className="divide-y divide-gray-100">
                     {team2.map((p: any) => {
                       const isGuest = p.player_type === "guest";
@@ -573,13 +573,13 @@ export default async function MatchHistoryPage() {
                         <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1.5">
                           {isCurrentUser ? (
                             <>
-                              <span className="text-[15px] font-semibold text-gray-900 tracking-tight">{displayName}</span>
-                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">VOUS</span>
+                              <span className="text-sm font-semibold text-gray-900 tracking-tight">{displayName}</span>
+                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-xs font-bold text-white shadow-sm">VOUS</span>
                             </>
                           ) : (
                             <>
-                              <span className="text-[15px] font-medium text-gray-900 tracking-tight">{displayName}</span>
-                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-[10px] text-gray-600">Invité</span>}
+                              <span className="text-sm font-normal text-gray-900 tracking-tight">{displayName}</span>
+                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-xs font-normal text-gray-600">Invité</span>}
                             </>
                           )}
                         </div>
