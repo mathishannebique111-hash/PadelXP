@@ -33,7 +33,7 @@ const config: Config = {
         },
       },
       animation: {
-        fadeInUp: "fadeInUp 350ms ease-out forwards",
+        fadeInUp: "fadeInUp 700ms ease-out forwards",
       },
     },
   },

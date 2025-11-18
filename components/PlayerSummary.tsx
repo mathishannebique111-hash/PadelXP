@@ -520,28 +520,28 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           
           {/* Sets gagnés - Stat secondaire */}
           <div 
-            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
+            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '200ms', borderLeftWidth: '3px', borderLeftColor: '#10B981' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1 sm:mb-1.5 font-medium">Sets gagnés</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Sets gagnés</div>
             <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsWon}</div>
           </div>
           
           {/* Sets perdus - Stat secondaire */}
           <div 
-            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
+            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '250ms', borderLeftWidth: '3px', borderLeftColor: '#EF4444' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1 sm:mb-1.5 font-medium">Sets perdus</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Sets perdus</div>
             <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsLost}</div>
           </div>
           
           {/* Winrate - Stat secondaire avec dégradé */}
           <div 
-            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
+            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '300ms', borderLeftWidth: '3px', borderLeftColor: '#BFFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1 sm:mb-1.5 font-medium">Winrate</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Winrate</div>
             <div 
               className="text-xl sm:text-2xl md:text-3xl font-bold tabular-nums"
               style={{ 
@@ -564,10 +564,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           
           {/* Badges - Stat secondaire */}
           <div 
-            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
+            className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '350ms', borderLeftWidth: '3px', borderLeftColor: '#D1D5DB' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1 sm:mb-1.5 font-medium">Badges</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Badges</div>
             <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{badgesObtained} / {totalBadges}</div>
           </div>
         </div>

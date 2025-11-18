@@ -849,9 +849,9 @@ export default async function HomePage() {
       <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-12">
         <div className="lg:col-span-4 space-y-4 sm:space-y-6">
           <PlayerSummary profileId={profile.id} />
-          <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}>Enregistrer un match</a>
+          <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
         </div>
-        <div className="lg:col-span-8 lg:mt-0 space-y-4 sm:space-y-6">
+        <div className="lg:col-span-8 lg:mt-0 mt-4 sm:mt-0 space-y-4 sm:space-y-6">
           {leaderboard.length >= 3 && (
             <div className="mb-6 sm:mb-8">
               <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
