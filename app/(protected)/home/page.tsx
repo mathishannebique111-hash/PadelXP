@@ -758,44 +758,46 @@ export default async function HomePage() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-8 py-8">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8">
         <Top3Notification currentUserId={profile.id} />
-        <div className="mb-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold text-white">Bienvenue {profile.display_name} !</h1>
+        <div className="mb-4 sm:mb-6">
+          <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">Bienvenue {profile.display_name} !</h1>
                 {clubLogoUrl && (
                   <img
                     src={clubLogoUrl}
                     alt={clubName || "Logo du club"}
-                    className="h-12 w-12 rounded-full object-cover border border-white/20 flex-shrink-0"
+                    className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full object-cover border border-white/20 flex-shrink-0"
                   />
                 )}
               </div>
-              {clubName && <p className="text-white/70 text-sm mt-1 font-normal">Club : {clubName}</p>}
+              {clubName && <p className="text-white/70 text-xs sm:text-sm mt-1 font-normal truncate">Club : {clubName}</p>}
             </div>
-            <LogoutButton />
+            <div className="flex-shrink-0">
+              <LogoutButton />
+            </div>
           </div>
           <NavigationBar currentPage="home" />
         </div>
       
-      <div className="grid gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-4 space-y-6">
+      <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-4 space-y-4 sm:space-y-6">
           <PlayerSummary profileId={profile.id} />
-          <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}>Enregistrer un match</a>
+          <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}>Enregistrer un match</a>
         </div>
-        <div className="lg:col-span-8 lg:mt-0 space-y-6">
+        <div className="lg:col-span-8 lg:mt-0 space-y-4 sm:space-y-6">
           {leaderboard.length >= 3 && (
-            <div className="mb-8">
-              <div className="mb-4 flex items-center justify-center gap-3">
-                <span className="h-px w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/70 shadow-sm">
+            <div className="mb-6 sm:mb-8">
+              <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white/70 shadow-sm">
                     Top joueurs du moment
                   </span>
-                <span className="h-px w-10 bg-gray-300" />
+                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
               </div>
-              <div className="hidden md:flex items-end justify-center gap-6 w-full mt-8">
+              <div className="hidden md:flex items-end justify-center gap-4 md:gap-6 w-full mt-6 md:mt-8">
                 <div className="flex-1 max-w-[240px]">
                   <div 
                     className="podium-silver border-4 border-slate-400/80 rounded-2xl p-8 hover:border-slate-300/90 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
@@ -866,7 +868,7 @@ export default async function HomePage() {
                   </div>
                 </div>
               </div>
-              <div className="md:hidden space-y-4 mt-8">
+              <div className="md:hidden space-y-3 sm:space-y-4 mt-4 sm:mt-6">
                 {leaderboard.slice(0, 3).map(function(player, index) {
                   var icons = ['🥇', '🥈', '🥉'];
                   var borderColors = [
@@ -903,27 +905,27 @@ export default async function HomePage() {
           )}
           {leaderboard.length > 0 ? (
             <div className="overflow-hidden">
-              <div className="px-5 pt-5">
-                <div className="mb-4 flex items-center justify-center gap-3">
-                  <span className="h-px w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-white/70 shadow-sm">
+              <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5">
+                <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+                  <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white/70 shadow-sm">
                     Classement global
                   </span>
-                  <span className="h-px w-10 bg-gray-300" />
+                  <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
                 </div>
               </div>
-              <div className="overflow-x-auto rounded-2xl border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl">
+              <div className="overflow-x-auto rounded-xl sm:rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Joueur</th>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Niveau</th>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Points</th>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Winrate</th>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0">V</th>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0">D</th>
-                      <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">MJ</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Joueur</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">Niveau</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Points</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden md:table-cell">Winrate</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0">V</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0">D</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">MJ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">
@@ -949,20 +951,20 @@ export default async function HomePage() {
                       var rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
                       return (
                         <tr key={player.user_id} className={rowClass}>
-                          <td className="px-4 py-3 text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
                             <RankBadge rank={player.rank} size="md" />
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                            <span><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? ' (vous)' : ''}</span>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
+                            <span className="truncate block max-w-[120px] sm:max-w-none"><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}</span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-center border-l border-gray-200 first:border-l-0">
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
                             <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
                           </td>
-                          <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
-                          <td className="px-4 py-3 text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: winRate > 60 ? '#10B981' : winRate >= 40 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
-                          <td className="px-4 py-3 text-sm text-center tabular-nums text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.wins}</td>
-                          <td className="px-4 py-3 text-sm text-center tabular-nums text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.losses}</td>
-                          <td className="px-4 py-3 text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold">{player.matches}</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate > 60 ? '#10B981' : winRate >= 40 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.wins}</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.losses}</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell">{player.matches}</td>
                         </tr>
                       );
                     })}

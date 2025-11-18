@@ -4,46 +4,47 @@ import Image from "next/image";
 type NavKey = "home" | "match" | "history" | "badges" | "club" | "challenges" | "reviews" | "boost";
 
 export default function NavigationBar({ currentPage }: { currentPage?: NavKey }) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all backdrop-blur border whitespace-nowrap";
+  // Styles de base responsive : plus petits sur mobile, normaux sur desktop
+  const base = "inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold transition-all backdrop-blur border whitespace-nowrap";
   const inactive = "bg-white/10 text-white/90 hover:bg-white/20 border-white/10 hover:border-white/20 hover:translate-y-[-1px]";
   const active = "bg-blue-600 text-white border-blue-500 shadow-[0_6px_24px_rgba(37,99,235,0.35)]";
-  const label = "tracking-wide";
-  const iconClass = "w-4 h-4 object-contain flex-shrink-0";
+  const label = "tracking-wide hidden sm:inline"; // Cache le texte sur mobile très petit, visible sur sm+
+  const iconClass = "w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0";
   
   return (
-    <div className="mb-6 flex items-center justify-between gap-4 border-b pb-4 overflow-x-auto" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-      <div className="flex items-center gap-3 min-w-max">
+    <div className="mb-4 sm:mb-6 flex items-center justify-between gap-2 sm:gap-4 border-b pb-3 sm:pb-4 overflow-x-auto scrollbar-hide" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-max -mr-4 sm:mr-0">
         <Link href="/home" className={`${base} ${currentPage === "home" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Profil</span>
           <Image src="/images/Profil.png" alt="Profil" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Profil</span>
         </Link>
         <Link href="/match/new" className={`${base} ${currentPage === "match" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Enregistrer un match</span>
           <Image src="/images/Enregistrer un match.png" alt="Enregistrer un match" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Enregistrer un match</span>
         </Link>
         <Link href="/matches/history" className={`${base} ${currentPage === "history" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Historique des matchs</span>
           <Image src="/images/Historique des matchs.png" alt="Historique des matchs" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Historique des matchs</span>
         </Link>
         <Link href="/badges" className={`${base} ${currentPage === "badges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Badges</span>
           <Image src="/images/Badges.png" alt="Badges" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Badges</span>
         </Link>
         <Link href="/club" className={`${base} ${currentPage === "club" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Club</span>
           <Image src="/images/Club.png" alt="Club" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Club</span>
         </Link>
         <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Challenges</span>
           <Image src="/images/Challenges.png" alt="Challenges" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Challenges</span>
         </Link>
         <Link href="/reviews" className={`${base} ${currentPage === "reviews" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Avis</span>
           <Image src="/images/Avis.png" alt="Avis" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Avis</span>
         </Link>
         <Link href="/boost" className={`${base} ${currentPage === "boost" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Boost</span>
           <Image src="/images/Boost.png" alt="Boost" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <span className={label}>Boost</span>
         </Link>
       </div>
     </div>

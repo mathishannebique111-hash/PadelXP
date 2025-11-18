@@ -475,3 +475,12 @@ html {
 .animate-drift-slow { animation: drift 18s ease-in-out infinite alternate; }
 .animate-drift-medium { animation: drift 14s ease-in-out infinite alternate; }
 .animate-drift-fast { animation: drift 11s ease-in-out infinite alternate; }
+
+/* ===== Scrollbar hide utility for mobile navigation ===== */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
