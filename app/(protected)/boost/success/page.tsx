@@ -59,6 +59,7 @@ export default async function BoostSuccessPage({
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
