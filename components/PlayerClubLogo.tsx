@@ -128,12 +128,14 @@ export default async function PlayerClubLogo() {
   }
 
   return (
-    <div className="fixed top-0 right-0 z-[100] p-2 md:p-4">
-      <img
-        src={publicLogoUrl}
-        alt="Logo du club"
-        className="h-12 w-12 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-full object-cover"
-      />
+    <div className="fixed top-0 right-0 z-[101] p-2 md:p-4 pointer-events-none">
+      <div className="pointer-events-auto">
+        <img
+          src={publicLogoUrl}
+          alt="Logo du club"
+          className="h-12 w-12 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-full object-cover"
+        />
+      </div>
     </div>
   );
 }

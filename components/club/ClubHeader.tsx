@@ -120,7 +120,6 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
 
   const gradientStyle = useMemo(() => ({
     background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
-    borderColor: "rgba(72,128,210,0.55)",
     boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
   }), []);
 
@@ -141,7 +140,7 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
   return (
     <>
       <section
-        className="relative overflow-hidden rounded-2xl border p-4 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+        className="relative overflow-hidden rounded-2xl border border-white p-4 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
         style={gradientStyle}
       >
         <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" />

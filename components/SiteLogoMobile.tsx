@@ -4,7 +4,7 @@ export default function SiteLogoMobile() {
       <img 
         src="/images/Logo sans fond.png" 
         alt="PadelXP" 
-        className="h-12 w-12 object-contain"
+        className="h-16 w-16 sm:h-20 sm:w-20 object-contain"
       />
     </div>
   );

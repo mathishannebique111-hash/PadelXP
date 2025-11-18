@@ -48,7 +48,7 @@ export default function PlayerSidebar() {
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
     { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs.png'), navKey: 'history' },
     { href: '/badges', label: 'Badges', icon: getIconPath('Badges.png', 7), navKey: 'badges' },
-    { href: '/club', label: 'Club', icon: getIconPath('Club.png', 8), navKey: 'club' },
+    { href: '/club', label: 'Mon club', icon: getIconPath('Club.png', 8), navKey: 'club' },
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Challenges.png'), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png'), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },

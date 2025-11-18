@@ -6,6 +6,7 @@ import Top3Notification from "@/components/Top3Notification";
 import TierBadge from "@/components/TierBadge";
 import RankBadge from "@/components/RankBadge";
 import Link from "next/link";
+import PageTitle from "@/components/PageTitle";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
@@ -788,31 +789,9 @@ export default async function HomePage() {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 pt-20 sm:pt-4 sm:py-4 md:py-6 md:py-8 pb-4 sm:pb-6 md:pb-8">
-        {/* Logo du site en haut au centre - visible uniquement sur mobile */}
-        <div className="md:hidden flex justify-center mb-4 sm:mb-6">
-          <img 
-            src="/images/Logo sans fond.png" 
-            alt="PadelXP" 
-            className="h-12 w-12 sm:h-16 sm:w-16 object-contain"
-          />
-        </div>
         <Top3Notification currentUserId={profile.id} />
         <div className="mb-4 sm:mb-6">
-          <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white truncate">Bienvenue {profile.display_name} !</h1>
-                {clubLogoUrl && (
-                  <img
-                    src={clubLogoUrl}
-                    alt={clubName || "Logo du club"}
-                    className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full object-cover border border-white/20 flex-shrink-0"
-                  />
-                )}
-              </div>
-              {clubName && <p className="text-white/70 text-xs sm:text-sm mt-1 font-normal truncate">Club : {clubName}</p>}
-            </div>
-          </div>
+          <PageTitle title={`Bienvenue ${profile.display_name} !`} subtitle={clubName ? `Club : ${clubName}` : undefined} />
         </div>
       
       <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-12">
