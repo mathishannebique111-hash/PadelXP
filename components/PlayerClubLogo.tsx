@@ -129,22 +129,35 @@ export default async function PlayerClubLogo() {
 
   return (
     <div 
-      className="fixed top-0 right-0 z-[200] p-2 md:p-4 pointer-events-none" 
+      className="fixed top-4 right-4 md:top-0 md:right-0 z-[200] p-0 md:p-4 pointer-events-none" 
       style={{ 
         position: 'fixed',
-        top: '0',
-        right: '0',
+        top: '1rem',
+        right: '1rem',
+        zIndex: 200,
         willChange: 'auto',
         transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden'
-      }}
+        backfaceVisibility: 'hidden',
+        WebkitTransform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        pointerEvents: 'none',
+        isolation: 'isolate',
+      } as React.CSSProperties}
     >
-      <div className="pointer-events-auto">
+      <div 
+        className="pointer-events-auto flex items-center justify-center"
+        style={{ pointerEvents: 'auto' }}
+      >
         <img
           src={publicLogoUrl}
           alt="Logo du club"
           className="h-12 w-12 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-full object-cover"
-          style={{ display: 'block' }}
+          style={{ 
+            display: 'block',
+            willChange: 'auto',
+            transform: 'translateZ(0)',
+            WebkitTransform: 'translateZ(0)',
+          }}
         />
       </div>
     </div>
