@@ -119,11 +119,11 @@ export default async function MembersPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <PageTitle title="Membres" />
         <span
-          className="group relative inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10"
+          className="group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10 self-start sm:self-auto"
           style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
@@ -134,23 +134,23 @@ export default async function MembersPage() {
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
-        <table className="w-full">
+      <div className="overflow-x-auto overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 shadow-[0_10px_28px_rgba(0,0,0,0.32)] scrollbar-hide">
+        <table className="w-full min-w-[600px]">
           <thead>
-            <tr className="bg-white/10 text-left text-xs uppercase tracking-wide text-white/60">
-              <th className="px-4 py-3">Joueur</th>
-              <th className="px-4 py-3 hidden md:table-cell">Email</th>
-              <th className="px-2 py-3 text-center">Matchs</th>
-              <th className="px-2 py-3 text-center hidden sm:table-cell">V</th>
-              <th className="px-2 py-3 text-center hidden sm:table-cell">D</th>
-              <th className="px-2 py-3 text-center">Points</th>
-              <th className="px-4 py-3 text-right hidden md:table-cell">Dernier match</th>
+            <tr className="bg-white/10 text-left text-[10px] sm:text-xs uppercase tracking-wide text-white/60">
+              <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">Joueur</th>
+              <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell">Email</th>
+              <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Matchs</th>
+              <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell">V</th>
+              <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell">D</th>
+              <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Points</th>
+              <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
             </tr>
           </thead>
           <tbody>
             {filteredMembers.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-sm text-white/60">
+                <td colSpan={7} className="px-3 sm:px-4 py-4 sm:py-6 text-center text-xs sm:text-sm text-white/60">
                   Aucun joueur inscrit pour le moment.
                 </td>
               </tr>
@@ -161,27 +161,27 @@ export default async function MembersPage() {
                 `${member.first_name ?? ""} ${member.last_name ?? ""}`.trim() ||
                 "Joueur";
               return (
-                <tr key={member.id} className="border-t border-white/10 text-sm text-white/80">
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-white">{name}</span>
-                      <span className="text-xs text-white/50">
+                <tr key={member.id} className="border-t border-white/10 text-xs sm:text-sm text-white/80">
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-semibold text-white truncate">{name}</span>
+                      <span className="text-[10px] sm:text-xs text-white/50">
                         Inscrit le {formatDate(member.created_at)}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell">{member.email || "—"}</td>
-                  <td className="px-2 py-3 text-center font-semibold tabular-nums">{member.matches}</td>
-                  <td className="px-2 py-3 text-center hidden sm:table-cell text-emerald-300 tabular-nums">
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell truncate max-w-[200px]">{member.email || "—"}</td>
+                  <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold tabular-nums">{member.matches}</td>
+                  <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell text-emerald-300 tabular-nums">
                     {member.wins}
                   </td>
-                  <td className="px-2 py-3 text-center hidden sm:table-cell text-red-300 tabular-nums">
+                  <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell text-red-300 tabular-nums">
                     {member.losses}
                   </td>
-                  <td className="px-2 py-3 text-center font-semibold text-[#BFFF00] tabular-nums">
+                  <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold text-[#BFFF00] tabular-nums">
                     {member.points}
                   </td>
-                  <td className="px-4 py-3 text-right hidden md:table-cell">
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
                     {formatDate(member.last_match_at)}
                   </td>
                 </tr>

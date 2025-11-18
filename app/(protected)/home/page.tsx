@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import PlayerSummary from "@/components/PlayerSummary";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 import Top3Notification from "@/components/Top3Notification";
 import TierBadge from "@/components/TierBadge";
@@ -218,13 +217,11 @@ export default async function HomePage() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-10 text-white">
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 sm:pt-10 pb-10 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
               <h1 className="text-3xl font-bold text-white">Bienvenue !</h1>
-              <LogoutButton />
             </div>
-            <NavigationBar currentPage="home" />
           </div>
           <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour accéder à votre espace joueur. Vérifiez que vous avez saisi le bon code d'invitation ou contactez votre club.</p>
@@ -758,7 +755,7 @@ export default async function HomePage() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 pt-20 sm:pt-4 sm:py-4 md:py-6 md:py-8 pb-4 sm:pb-6 md:pb-8">
         <Top3Notification currentUserId={profile.id} />
         <div className="mb-4 sm:mb-6">
           <div className="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -775,11 +772,7 @@ export default async function HomePage() {
               </div>
               {clubName && <p className="text-white/70 text-xs sm:text-sm mt-1 font-normal truncate">Club : {clubName}</p>}
             </div>
-            <div className="flex-shrink-0">
-              <LogoutButton />
-            </div>
           </div>
-          <NavigationBar currentPage="home" />
         </div>
       
       <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-12">
@@ -792,7 +785,7 @@ export default async function HomePage() {
             <div className="mb-6 sm:mb-8">
               <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
                 <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white/70 shadow-sm">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
                     Top joueurs du moment
                   </span>
                 <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
@@ -908,7 +901,7 @@ export default async function HomePage() {
               <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5">
                 <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
                   <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white/70 shadow-sm">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
                     Classement global
                   </span>
                   <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />

@@ -194,23 +194,23 @@ export default async function DashboardHome() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
       {/* Message d'alerte pour l'essai */}
       {showTrialWarning && (
-        <div className="rounded-xl border border-orange-500/50 bg-orange-500/10 p-4">
-          <div className="flex items-start gap-3">
-            <div className="text-2xl">⚠️</div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-orange-300 mb-1">
+        <div className="rounded-lg sm:rounded-xl border border-orange-500/50 bg-orange-500/10 p-3 sm:p-4">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="text-xl sm:text-2xl flex-shrink-0">⚠️</div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-orange-300 mb-1 text-sm sm:text-base">
                 Essai gratuit : {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''}
               </h3>
-              <p className="text-sm text-orange-200/80">
+              <p className="text-xs sm:text-sm text-orange-200/80">
                 Il ne reste que {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} avant la fin de votre essai gratuit. 
                 Vous pouvez activer votre abonnement dès maintenant pour qu'il démarre automatiquement à partir du mois prochain.
               </p>
               <a 
                 href="/dashboard/facturation" 
-                className="inline-block mt-3 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/50 text-orange-200 hover:bg-orange-500/30 transition-colors text-sm font-semibold"
+                className="inline-block mt-2 sm:mt-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-orange-500/20 border border-orange-500/50 text-orange-200 hover:bg-orange-500/30 transition-colors text-xs sm:text-sm font-semibold"
               >
                 Activer l'abonnement →
               </a>
@@ -219,12 +219,12 @@ export default async function DashboardHome() {
         </div>
       )}
 
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <PageTitle title="Tableau de bord" subtitle="Bienvenue dans votre espace club / complexe" />
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <a
             href="/dashboard/classement"
-            className="group relative inline-flex items-center gap-2 rounded-xl px-5 py-2.5 font-semibold text-sm text-white overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/30"
+            className="group relative inline-flex items-center justify-center gap-2 rounded-lg sm:rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 font-semibold text-xs sm:text-sm text-white overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/30"
             style={{ background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)", boxShadow: "0 6px 18px rgba(0,102,255,0.28)" }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
@@ -233,45 +233,46 @@ export default async function DashboardHome() {
           </a>
           <a
             href="/dashboard/page-club"
-            className="group relative inline-flex items-center gap-2 rounded-xl px-5 py-2.5 font-semibold text-sm text-white overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-violet-500/30"
+            className="group relative inline-flex items-center justify-center gap-2 rounded-lg sm:rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 font-semibold text-xs sm:text-sm text-white overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-violet-500/30"
             style={{ background: "linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)", boxShadow: "0 6px 18px rgba(124,58,237,0.28)" }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
             <span className="relative">⚙️</span>
-            <span className="relative">Configurer la page club</span>
+            <span className="relative hidden sm:inline">Configurer la page club</span>
+            <span className="relative sm:hidden">Page club</span>
           </a>
         </div>
       </header>
 
       {/* Code d'invitation */}
-      <section className="grid md:grid-cols-2 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
         <InvitationCodeCard
           code={club?.code_invitation ?? null}
           slug={club?.slug ?? null}
         />
         {/* À venir */}
-        <div className="rounded-xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
-          <h2 className="font-semibold mb-4">Challenges en cours et à venir</h2>
-          <div className="space-y-4">
+        <div className="rounded-lg sm:rounded-xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
+          <h2 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Challenges en cours et à venir</h2>
+          <div className="space-y-3 sm:space-y-4">
             {upcomingChallenges.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="mb-6 text-center">
-                  <div className="text-4xl mb-3 opacity-50">🎯</div>
-                  <p className="text-sm text-white/60">Aucun challenge à venir</p>
+              <div className="flex flex-col items-center justify-center py-6 sm:py-8">
+                <div className="mb-4 sm:mb-6 text-center">
+                  <div className="text-3xl sm:text-4xl mb-2 sm:mb-3 opacity-50">🎯</div>
+                  <p className="text-xs sm:text-sm text-white/60">Aucun challenge à venir</p>
                 </div>
                 <a 
                   href="/dashboard/challenges" 
-                  className="group relative inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold text-sm text-white overflow-hidden transition-all hover:scale-105 hover:shadow-lg ring-1 ring-white/20 border border-white/10"
+                  className="group relative inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-xs sm:text-sm text-white overflow-hidden transition-all hover:scale-105 hover:shadow-lg ring-1 ring-white/20 border border-white/10"
                   style={{ background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)", boxShadow: "0 6px 22px rgba(0, 102, 255, 0.35)" }}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                  <span className="relative text-lg">➕</span>
+                  <span className="relative text-base sm:text-lg">➕</span>
                   <span className="relative">Créer un challenge</span>
-                  <span className="relative text-base ml-1">›</span>
+                  <span className="relative text-sm sm:text-base ml-1">›</span>
                 </a>
               </div>
             ) : (
-              <ul className="text-sm space-y-2">
+              <ul className="text-xs sm:text-sm space-y-2">
                 {upcomingChallenges.map((c) => {
                   const startDate = new Date(c.start_date);
                   const endDate = new Date(c.end_date);
@@ -279,27 +280,27 @@ export default async function DashboardHome() {
                   const isFuture = c.status === "upcoming";
                   
                   return (
-                    <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2">
-                      <div className="flex items-start justify-between gap-2">
+                    <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2">
+                      <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-white truncate">{c.title}</span>
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                            <span className="font-medium text-white truncate text-xs sm:text-sm">{c.title}</span>
                             {isActive && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30">
+                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
                                 En cours
                               </span>
                             )}
                             {isFuture && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
                                 À venir
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-white/50 truncate">{c.objective}</div>
+                          <div className="text-[10px] sm:text-xs text-white/50 truncate">{c.objective}</div>
                         </div>
-                        <div className="flex flex-col items-end text-xs text-white/60 whitespace-nowrap">
+                        <div className="flex flex-col items-end text-[10px] sm:text-xs text-white/60 whitespace-nowrap flex-shrink-0">
                           <span>{startDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
-                          <span className="text-[10px]">→ {endDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
+                          <span className="text-[9px] sm:text-[10px]">→ {endDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
                         </div>
                       </div>
                     </li>
@@ -312,23 +313,23 @@ export default async function DashboardHome() {
       </section>
 
       {/* Activité récente */}
-      <section className="rounded-xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
-        <h2 className="font-semibold mb-4">Activité récente</h2>
+      <section className="rounded-lg sm:rounded-xl border-2 border-white/25 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 shadow-[0_10px_28px_rgba(0,0,0,0.32)]">
+        <h2 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Activité récente</h2>
         {recentMatches.length === 0 ? (
-          <div className="text-sm text-white/60">Aucun match récent dans votre club.</div>
+          <div className="text-xs sm:text-sm text-white/60">Aucun match récent dans votre club.</div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {recentMatches.map((m) => {
               const score = `${m.score_team1 ?? 0}-${m.score_team2 ?? 0}`;
               const date = new Date(m.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
               const winner = m.winner_team_id ? (m.winner_team_id === m.team1_id ? "Équipe 1" : "Équipe 2") : "—";
               return (
-                <div key={m.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
-                  <div className="flex items-center justify-between text-xs text-white/60">
-                    <span>{date}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/10">{winner}</span>
+                <div key={m.id} className="rounded-lg border border-white/10 bg-white/5 p-2.5 sm:p-3">
+                  <div className="flex items-center justify-between text-[10px] sm:text-xs text-white/60 gap-2">
+                    <span className="truncate">{date}</span>
+                    <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[9px] sm:text-xs flex-shrink-0">{winner}</span>
                   </div>
-                  <div className="mt-2 text-lg font-bold">Score: {score}</div>
+                  <div className="mt-1.5 sm:mt-2 text-base sm:text-lg font-bold">Score: {score}</div>
                 </div>
               );
             })}

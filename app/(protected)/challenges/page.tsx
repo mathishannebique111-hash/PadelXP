@@ -1,6 +1,5 @@
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 import ChallengesList from "@/components/challenges/ChallengesList";
 
@@ -80,7 +79,6 @@ export default async function PlayerChallengesPage() {
           <h1 className="text-3xl font-bold text-white">Challenges</h1>
           <LogoutButton />
         </div>
-        <NavigationBar currentPage="challenges" />
 
         <ChallengesList challenges={challenges} />
       </div>

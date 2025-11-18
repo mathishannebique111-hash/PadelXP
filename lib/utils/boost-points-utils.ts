@@ -36,7 +36,13 @@ export async function getBoostedPointsForMatches(
       .in("match_id", matchIds);
 
     if (error) {
-      console.error("[boost-points-utils] Error fetching boost uses:", error);
+      console.error("[boost-points-utils] Error fetching boost uses:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        error: error
+      });
       return boostedPointsMap;
     }
 
@@ -130,6 +136,15 @@ export async function calculatePointsForMultiplePlayers(
       winMatches.forEach(matchId => allMatchIds.add(matchId));
     });
 
+    // Si aucun match ID ou user ID, calculer sans boost
+    if (allMatchIds.size === 0 || userIds.length === 0) {
+      playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
+        const basePoints = wins * 10 + losses * 3;
+        results.set(userId, basePoints + bonus + challengePoints);
+      });
+      return results;
+    }
+
     // Récupérer toutes les utilisations de boost en une seule requête
     const { data: allBoostUses, error } = await supabaseAdmin
       .from("player_boost_uses")
@@ -138,7 +153,13 @@ export async function calculatePointsForMultiplePlayers(
       .in("match_id", Array.from(allMatchIds));
 
     if (error) {
-      console.error("[boost-points-utils] Error fetching boost uses:", error);
+      console.error("[boost-points-utils] Error fetching boost uses:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        error: error
+      });
       // Fallback : calculer sans boost
       playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
         const basePoints = wins * 10 + losses * 3;

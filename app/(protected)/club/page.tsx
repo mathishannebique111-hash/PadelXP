@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 import ClubProfileClient from "@/components/club/ClubProfileClient";
 import { createClient } from "@/lib/supabase/server";
@@ -298,7 +297,6 @@ export default async function PlayerClubPage() {
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-white">Mon club</h1>
           </div>
-          <NavigationBar currentPage="club" />
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
             Vous n'êtes rattaché à aucun club pour le moment.
           </div>
@@ -710,7 +708,6 @@ export default async function PlayerClubPage() {
           <h1 className="text-3xl font-bold text-white">Mon club</h1>
           <LogoutButton />
         </div>
-        <NavigationBar currentPage="club" />
 
         <ClubProfileClient
           name={name}

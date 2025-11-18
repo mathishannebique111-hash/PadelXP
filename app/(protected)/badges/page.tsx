@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
 import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
@@ -133,7 +132,6 @@ export default async function BadgesPage() {
               <h1 className="text-3xl font-bold text-white">Badges & récompenses</h1>
               <LogoutButton />
             </div>
-            <NavigationBar currentPage="badges" />
           </div>
           <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d'invitation communiqué par votre club.</p>
@@ -283,7 +281,6 @@ export default async function BadgesPage() {
             <h1 className="text-3xl font-bold text-white">Badges</h1>
             <LogoutButton />
           </div>
-          <NavigationBar currentPage="badges" />
         </div>
 
       {/* Statistiques */}

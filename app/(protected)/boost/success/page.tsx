@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import NavigationBar from "@/components/NavigationBar";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -26,7 +25,6 @@ export default async function BoostSuccessPage({
         <h1 className="text-3xl font-bold text-white">⚡ Paiement réussi !</h1>
       </div>
 
-      <NavigationBar />
 
       <div className="mt-8 rounded-2xl border border-green-500/40 bg-gradient-to-br from-green-600/20 to-emerald-600/20 p-8 text-center backdrop-blur-sm shadow-2xl">
         <div className="mb-4 text-7xl">✅</div>

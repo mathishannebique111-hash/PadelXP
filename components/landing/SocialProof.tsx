@@ -35,7 +35,7 @@ function Counter({ end, duration = 2, suffix = "", prefix = "" }: CounterProps) 
 
   return (
     <div ref={ref} className="text-center">
-      <div className="text-5xl md:text-6xl font-extrabold text-[#BFFF00] mb-2 tabular-nums">
+      <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#BFFF00] mb-1 sm:mb-2 tabular-nums">
         {prefix}{count.toLocaleString()}{suffix}
       </div>
     </div>
@@ -70,10 +70,10 @@ export default function SocialProof() {
   }, []);
 
   return (
-    <section className="relative py-16 bg-gradient-to-b from-black via-[#0a0a1a] to-black">
-      <div className="max-w-7xl mx-auto px-8">
+    <section className="relative py-12 sm:py-16 bg-gradient-to-b from-black via-[#0a0a1a] to-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-10 md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -82,7 +82,7 @@ export default function SocialProof() {
             className="text-center"
           >
             <Counter end={stats.totalPlayers} suffix="+" />
-            <div className="text-sm text-white/60 mt-2">Joueurs inscrits</div>
+            <div className="text-xs sm:text-sm text-white/60 mt-1 sm:mt-2">Joueurs inscrits</div>
           </motion.div>
 
           <motion.div
@@ -93,7 +93,7 @@ export default function SocialProof() {
             className="text-center"
           >
             <Counter end={stats.totalMatches} />
-            <div className="text-sm text-white/60 mt-2">Matchs joués ce mois</div>
+            <div className="text-xs sm:text-sm text-white/60 mt-1 sm:mt-2">Matchs joués ce mois</div>
           </motion.div>
         </div>
 
@@ -103,9 +103,9 @@ export default function SocialProof() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="flex items-center justify-center gap-4"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
         >
-          <div className="flex -space-x-3">
+          <div className="flex -space-x-2 sm:-space-x-3">
             {[...Array(Math.min(6, stats.activePlayers))].map((_, idx) => (
               <motion.div
                 key={idx}
@@ -113,7 +113,7 @@ export default function SocialProof() {
                 whileInView={{ scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: idx * 0.1 }}
-                className="w-12 h-12 rounded-full border-2 border-[#0066FF] bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center text-xl shadow-lg"
+                className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-2 border-[#0066FF] bg-gradient-to-br from-[#0066FF] to-[#0052CC] flex items-center justify-center text-sm sm:text-base md:text-xl shadow-lg"
                 animate={{
                   y: [0, -5, 0],
                 }}
@@ -127,7 +127,7 @@ export default function SocialProof() {
               </motion.div>
             ))}
           </div>
-          <p className="text-white/70 text-sm md:text-base ml-4">
+          <p className="text-white/70 text-xs sm:text-sm md:text-base text-center sm:text-left sm:ml-4">
             <span className="text-[#BFFF00] font-semibold">{stats.activePlayers}</span>{" "}
             {(stats.activePlayers === 0 || stats.activePlayers === 1) && (
               <>joueur connecté en ce moment</>

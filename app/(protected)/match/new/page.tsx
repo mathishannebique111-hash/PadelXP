@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import MatchForm from "@/components/MatchForm";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
@@ -73,13 +72,11 @@ export default async function NewMatchPage() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
+        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 sm:pt-8 pb-8 text-white">
           <div className="mb-6">
             <div className="mb-4 flex items-center justify-between">
               <h1 className="text-3xl font-bold text-white">Enregistrer un match</h1>
-              <LogoutButton />
             </div>
-            <NavigationBar currentPage="match" />
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour enregistrer un match. Demandez à votre club / complexe de vous inviter ou utilisez le code d'invitation depuis l'espace joueur.</p>
@@ -107,7 +104,6 @@ export default async function NewMatchPage() {
             <h1 className="text-3xl font-bold text-white">Enregistrer un match</h1>
             <LogoutButton />
           </div>
-          <NavigationBar currentPage="match" />
         </div>
         <MatchForm selfId={user.id} />
       </div>

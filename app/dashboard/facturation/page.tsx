@@ -136,22 +136,22 @@ export default async function BillingPage() {
         <div className="absolute -top-24 -right-24 h-[420px] w-[420px] rounded-full bg-blue-500/20 blur-3xl" />
         <div className="absolute -bottom-28 -left-28 h-[360px] w-[360px] rounded-full bg-indigo-500/20 blur-3xl" />
       </div>
-      <div className="relative z-10 space-y-6">
+      <div className="relative z-10 space-y-4 sm:space-y-5 md:space-y-6">
         {/* Sync Stripe → App au retour du portail */}
         <SyncOnReturn />
         <div>
-        <h1 className="text-2xl font-extrabold text-white">Facturation & essai</h1>
-        <p className="text-sm text-white/60 mt-1">Gérez votre abonnement et votre période d'essai</p>
+        <h1 className="text-xl sm:text-2xl font-extrabold text-white">Facturation & essai</h1>
+        <p className="text-xs sm:text-sm text-white/60 mt-1">Gérez votre abonnement et votre période d'essai</p>
         </div>
 
       {/* Bandeau Essai */}
-      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-6">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-xl font-extrabold text-white mb-1">
-              Essai gratuit — 30 jours{" "}
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-4 sm:p-5 md:p-6">
+        <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white mb-1">
+              <span className="block sm:inline">Essai gratuit — 30 jours</span>{" "}
               {isTrialActive && daysRemaining !== null && (
-                <span className={`ml-2 align-middle rounded-full border px-3 py-1 text-sm font-semibold ${
+                <span className={`ml-0 sm:ml-2 mt-1 sm:mt-0 inline-block align-middle rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold ${
                   showWarning
                     ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
                     : "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
@@ -162,21 +162,21 @@ export default async function BillingPage() {
             </h2>
           </div>
           {isTrialActive && (
-            <div className="text-5xl flex-shrink-0">🎁</div>
+            <div className="text-3xl sm:text-4xl md:text-5xl flex-shrink-0">🎁</div>
           )}
         </div>
 
         {isTrialActive && (
-          <div className="space-y-3">
-            <p className="text-sm text-white/80">
+          <div className="space-y-2 sm:space-y-3">
+            <p className="text-xs sm:text-sm text-white/80">
               {showWarning
                 ? `Votre essai se termine dans ${daysRemaining} jour${daysRemaining > 1 ? "s" : ""}. Choisissez une offre pour continuer à utiliser la plateforme après le ${formatDate(trialEndDate)}.`
                 : `Votre essai gratuit se termine le ${formatDate(trialEndDate)}. Vous pouvez activer votre abonnement maintenant ou choisir une offre ci-dessous.`}
             </p>
             {showWarning && (
-              <div className="rounded-lg border border-orange-400/40 bg-orange-500/10 p-3">
-                <p className="text-xs text-orange-200 flex items-center gap-2">
-                  <span>⚠️</span>
+              <div className="rounded-lg border border-orange-400/40 bg-orange-500/10 p-2.5 sm:p-3">
+                <p className="text-xs text-orange-200 flex items-start gap-2">
+                  <span className="flex-shrink-0">⚠️</span>
                   <span>Votre essai se termine bientôt. Sélectionnez une offre pour continuer sans interruption.</span>
                 </p>
               </div>
@@ -185,14 +185,14 @@ export default async function BillingPage() {
         )}
 
         {isTrialExpired && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <div className="text-4xl flex-shrink-0">⏰</div>
-              <div className="flex-1">
-                <p className="text-sm text-rose-200/90 mb-3">
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="text-3xl sm:text-4xl flex-shrink-0">⏰</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-rose-200/90 mb-2 sm:mb-3">
                   Votre période d'essai est terminée. Sélectionnez une offre ci-dessous pour continuer à utiliser la plateforme.
                 </p>
-                <button className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-green-600 border border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-100 transition-all duration-300">
+                <button className="inline-flex items-center gap-2 rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-green-600 border border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-100 transition-all duration-300">
                   <span>📋 Choisir une offre pour continuer</span>
                 </button>
               </div>
@@ -201,10 +201,10 @@ export default async function BillingPage() {
         )}
 
         {!isTrialActive && !isTrialExpired && (
-          <div className="flex items-center gap-4">
-            <div className="text-4xl flex-shrink-0">💳</div>
-            <div className="flex-1">
-              <p className="text-sm text-white/80">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="text-3xl sm:text-4xl flex-shrink-0">💳</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm text-white/80">
                 Profitez de 30 jours d'essai gratuit pour découvrir toutes les fonctionnalités.
               </p>
             </div>
@@ -213,47 +213,47 @@ export default async function BillingPage() {
       </section>
 
       {/* Cartes Offres */}
-      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-white mb-1">Choisissez l'offre qui vous convient</h2>
-          <p className="text-sm text-white/60">Les réductions s'appliquent automatiquement.</p>
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+        <div className="mb-4 sm:mb-5 md:mb-6">
+          <h2 className="text-base sm:text-lg font-semibold text-white mb-1">Choisissez l'offre qui vous convient</h2>
+          <p className="text-xs sm:text-sm text-white/60">Les réductions s'appliquent automatiquement.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           {/* Mensuel */}
-          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
+          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-4 sm:p-5 md:p-6 transition-all duration-300 hover:scale-105 ${
             currentPlan === "monthly"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
           }`}>
             {currentPlan === "monthly" && (
-              <div className="absolute -top-3 right-4">
-                <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-3 py-1 text-xs font-bold text-white shadow-lg">
+              <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   ✓ Plan actuel
                 </span>
               </div>
             )}
-            <div className="mb-4">
-              <h3 className="text-xl font-extrabold text-white mb-1">Mensuel</h3>
-              <div className="text-xs text-white/60">Tarif de référence</div>
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-white mb-0.5 sm:mb-1">Mensuel</h3>
+              <div className="text-[10px] sm:text-xs text-white/60">Tarif de référence</div>
             </div>
-            <div className="mb-5">
+            <div className="mb-4 sm:mb-5">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-white">{MONTHLY_PRICE}€</span>
-                <span className="text-sm font-normal text-white/70">/mois</span>
+                <span className="text-3xl sm:text-4xl font-extrabold text-white">{MONTHLY_PRICE}€</span>
+                <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
               </div>
             </div>
-            <div className="mb-5 space-y-2">
+            <div className="mb-4 sm:mb-5 space-y-1.5 sm:space-y-2">
               <div className="flex items-center">
-                <div className="text-xs text-white/60">Cycle :</div>
-                <div className="text-xs text-white/80 ml-1">Facturation mensuelle</div>
+                <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
+                <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation mensuelle</div>
               </div>
             </div>
             <StripeCheckoutButton
               priceId={PRICE_MONTHLY}
               mode="subscription"
               disabled={currentPlan === "monthly" || !PRICE_MONTHLY}
-              className={`w-full rounded-xl px-5 py-3 text-sm font-bold transition-all duration-300 mt-auto ${
+              className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${
                 currentPlan === "monthly" || !PRICE_MONTHLY
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
@@ -264,50 +264,50 @@ export default async function BillingPage() {
           </div>
 
           {/* Trimestriel */}
-          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
+          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-4 sm:p-5 md:p-6 transition-all duration-300 hover:scale-105 ${
             currentPlan === "quarterly"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-emerald-400/60 bg-gradient-to-br from-emerald-500/15 via-green-600/10 to-emerald-500/15 shadow-[0_12px_40px_rgba(16,185,129,0.3)]"
           }`}>
             {currentPlan === "quarterly" && (
-              <div className="absolute -top-3 right-4">
-                <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-3 py-1 text-xs font-bold text-white shadow-lg">
+              <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   ✓ Plan actuel
                 </span>
               </div>
             )}
             {currentPlan !== "quarterly" && (
-              <div className="absolute -top-3 right-4">
-                <span className="rounded-full border-2 border-emerald-400/80 bg-gradient-to-r from-emerald-500 to-green-600 px-3 py-1 text-xs font-bold text-white shadow-lg">
+              <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                <span className="rounded-full border-2 border-emerald-400/80 bg-gradient-to-r from-emerald-500 to-green-600 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   -10%
                 </span>
               </div>
             )}
-            <div className="mb-4">
-              <h3 className="text-xl font-extrabold text-white mb-1">Trimestriel</h3>
-              <div className="text-xs text-emerald-300 font-semibold">Économisez 10%</div>
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-white mb-0.5 sm:mb-1">Trimestriel</h3>
+              <div className="text-[10px] sm:text-xs text-emerald-300 font-semibold">Économisez 10%</div>
             </div>
-            <div className="mb-5">
+            <div className="mb-4 sm:mb-5">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-white">{Math.round(quarterlyMonthlyPrice)}€</span>
-                <span className="text-sm font-normal text-white/70">/mois</span>
+                <span className="text-3xl sm:text-4xl font-extrabold text-white">{Math.round(quarterlyMonthlyPrice)}€</span>
+                <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
               </div>
-              <div className="text-xs text-white/60 mt-1">
+              <div className="text-[10px] sm:text-xs text-white/60 mt-0.5 sm:mt-1">
                 {Math.round(quarterlyTotalPrice)}€ tous les 3 mois
               </div>
             </div>
-            <div className="mb-5 space-y-2">
-              <div className="text-xs font-semibold text-emerald-300 bg-emerald-500/20 px-2 py-1 rounded w-fit -ml-1">Réduction de 10% par rapport au mensuel</div>
+            <div className="mb-4 sm:mb-5 space-y-1.5 sm:space-y-2">
+              <div className="text-[10px] sm:text-xs font-semibold text-emerald-300 bg-emerald-500/20 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded w-fit -ml-1">Réduction de 10% par rapport au mensuel</div>
               <div className="flex items-center">
-                <div className="text-xs text-white/60">Cycle :</div>
-                <div className="text-xs text-white/80 ml-1">Facturation tous les 3 mois</div>
+                <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
+                <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation tous les 3 mois</div>
               </div>
             </div>
             <StripeCheckoutButton
               priceId={PRICE_QUARTERLY}
               mode="subscription"
               disabled={currentPlan === "quarterly" || !PRICE_QUARTERLY}
-              className={`w-full rounded-xl px-5 py-3 text-sm font-bold transition-all duration-300 mt-auto ${
+              className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${
                 currentPlan === "quarterly" || !PRICE_QUARTERLY
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-2 border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_28px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-100"
@@ -318,53 +318,53 @@ export default async function BillingPage() {
           </div>
 
           {/* Annuel */}
-          <div className={`group relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
+          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-4 sm:p-5 md:p-6 transition-all duration-300 hover:scale-105 ${
             currentPlan === "annual"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]"
           }`}>
             {currentPlan === "annual" && (
-              <div className="absolute -top-3 right-4">
-                <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-3 py-1 text-xs font-bold text-white shadow-lg">
+              <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   ✓ Plan actuel
                 </span>
               </div>
             )}
             {currentPlan !== "annual" && (
-              <div className="absolute -top-3 right-4">
-                <span className="rounded-full border-2 border-yellow-400/80 bg-gradient-to-r from-yellow-500 to-amber-600 px-3 py-1 text-xs font-bold text-white shadow-lg">
+              <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                <span className="rounded-full border-2 border-yellow-400/80 bg-gradient-to-r from-yellow-500 to-amber-600 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   MEILLEUR
                 </span>
               </div>
             )}
-            <div className="mb-4">
-              <h3 className="text-xl font-extrabold text-white mb-1">Annuel</h3>
-              <div className="text-xs text-yellow-300 font-semibold">Économisez 17%</div>
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-white mb-0.5 sm:mb-1">Annuel</h3>
+              <div className="text-[10px] sm:text-xs text-yellow-300 font-semibold">Économisez 17%</div>
             </div>
-            <div className="mb-5">
+            <div className="mb-4 sm:mb-5">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-white">{Math.round(annualMonthlyPrice)}€</span>
-                <span className="text-sm font-normal text-white/70">/mois</span>
+                <span className="text-3xl sm:text-4xl font-extrabold text-white">{Math.round(annualMonthlyPrice)}€</span>
+                <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
               </div>
-              <div className="text-xs text-white/60 mt-1">
+              <div className="text-[10px] sm:text-xs text-white/60 mt-0.5 sm:mt-1">
                 {Math.round(annualTotalPrice)}€ par an
               </div>
             </div>
-            <div className="mb-5 space-y-2">
-              <div className="flex items-baseline gap-2 flex-wrap -ml-1">
-                <span className="text-xs font-semibold text-yellow-300 bg-yellow-500/20 px-2 py-0.5 rounded">Réduction de 17% par rapport au mensuel</span>
-                <span className="text-xs text-white/60 ml-1">(≈ 2 mois offerts)</span>
+            <div className="mb-4 sm:mb-5 space-y-1.5 sm:space-y-2">
+              <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap -ml-1">
+                <span className="text-[10px] sm:text-xs font-semibold text-yellow-300 bg-yellow-500/20 px-1.5 sm:px-2 py-0.5 rounded">Réduction de 17% par rapport au mensuel</span>
+                <span className="text-[10px] sm:text-xs text-white/60 ml-1">(≈ 2 mois offerts)</span>
               </div>
               <div className="flex items-center">
-                <div className="text-xs text-white/60">Cycle :</div>
-                <div className="text-xs text-white/80 ml-1">Facturation annuelle</div>
+                <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
+                <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation annuelle</div>
               </div>
             </div>
             <StripeCheckoutButton
               priceId={PRICE_ANNUAL}
               mode="subscription"
               disabled={currentPlan === "annual" || !PRICE_ANNUAL}
-              className={`w-full rounded-xl px-5 py-3 text-sm font-bold transition-all duration-300 mt-auto ${
+              className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${
                 currentPlan === "annual" || !PRICE_ANNUAL
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
@@ -377,8 +377,8 @@ export default async function BillingPage() {
       </section>
 
       {/* Bloc Statut d'Abonnement */}
-      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Statut de l'abonnement</h2>
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+        <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Statut de l'abonnement</h2>
 
         <div className="space-y-4">
           {/* Statut */}
@@ -535,8 +535,8 @@ export default async function BillingPage() {
       </section>
 
       {/* Infos de Facturation */}
-      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Informations de facturation</h2>
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+        <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Informations de facturation</h2>
 
         <div className="space-y-4">
           <BillingInfoSection
@@ -552,8 +552,8 @@ export default async function BillingPage() {
       </section>
 
       {/* Prochaine Échéance & Historique */}
-      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Historique des factures</h2>
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+        <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Historique des factures</h2>
 
         <div className="space-y-4">
           {/* Prochaine échéance */}
@@ -581,8 +581,8 @@ export default async function BillingPage() {
       </section>
 
       {/* Annulation & Renouvellement */}
-      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Annulation & Renouvellement</h2>
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+        <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Annulation & Renouvellement</h2>
 
         <div className="space-y-4">
       <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -612,10 +612,10 @@ export default async function BillingPage() {
       </section>
 
       {/* Légal & Conformité */}
-      <section className="rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-6">
-        <div className="mb-3">
-          <h2 className="text-lg font-semibold text-white leading-tight">Légal & Conformité</h2>
-          <p className="text-xs text-white/50">Documents et options de conformité pour votre club</p>
+      <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+        <div className="mb-2 sm:mb-3">
+          <h2 className="text-base sm:text-lg font-semibold text-white leading-tight">Légal & Conformité</h2>
+          <p className="text-[10px] sm:text-xs text-white/50">Documents et options de conformité pour votre club</p>
         </div>
 
         <ul className="space-y-2">

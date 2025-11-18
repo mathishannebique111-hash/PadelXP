@@ -23,7 +23,7 @@ export default function LeaderboardPreview() {
   }, [mounted]);
 
   return (
-    <section className="relative py-24 bg-gradient-to-b from-black via-[#0a0a1a] to-black overflow-hidden">
+    <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-b from-black via-[#0a0a1a] to-black overflow-hidden">
       {/* Particules dorées animées */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {mounted && particles.map((p, i) => (
@@ -37,17 +37,17 @@ export default function LeaderboardPreview() {
         ))}
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-3 sm:mb-4 px-2">
             Grimpe dans le{" "}
-            <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] bg-clip-text text-transparent block sm:inline">
               classement
             </span>
             <br />
@@ -72,24 +72,24 @@ export default function LeaderboardPreview() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="max-w-2xl mx-auto"
+          className="max-w-2xl mx-auto px-2"
         >
-          <div className="bg-black/50 border-2 border-[#0066FF]/50 rounded-xl p-6 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="text-2xl font-bold text-[#0066FF]">#4</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-semibold">TOI BIENTÔT ICI ?</span>
+          <div className="bg-black/50 border-2 border-[#0066FF]/50 rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 backdrop-blur-sm">
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0 flex-1">
+                <div className="text-xl sm:text-2xl font-bold text-[#0066FF] flex-shrink-0">#4</div>
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                  <span className="text-white font-semibold text-sm sm:text-base truncate">TOI BIENTÔT ICI ?</span>
                   <motion.span
                     animate={{ opacity: [1, 0.3, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
-                    className="text-[#BFFF00]"
+                    className="text-[#BFFF00] text-xs sm:text-sm flex-shrink-0"
                   >
                     ● ● ●
                   </motion.span>
                 </div>
               </div>
-              <div className="text-white/40 font-mono">-- pts</div>
+              <div className="text-white/40 font-mono text-xs sm:text-sm flex-shrink-0">-- pts</div>
             </div>
           </div>
         </motion.div>
@@ -100,11 +100,11 @@ export default function LeaderboardPreview() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="text-center mt-12"
+          className="text-center mt-8 sm:mt-10 md:mt-12 px-4"
         >
           <Link
             href="/player/login"
-            className="inline-block px-8 py-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,102,255,0.5)] hover:shadow-[0_0_40px_rgba(0,102,255,0.7)] transition-all duration-300 hover:scale-105"
+            className="inline-block w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-bold text-base sm:text-lg shadow-[0_0_30px_rgba(0,102,255,0.5)] hover:shadow-[0_0_40px_rgba(0,102,255,0.7)] transition-all duration-300 hover:scale-105"
           >
             Commence à jouer →
           </Link>

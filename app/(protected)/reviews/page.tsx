@@ -3,7 +3,6 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import ReviewForm from "@/components/ReviewForm";
 import ReviewsList from "@/components/ReviewsList";
 import ReviewsStats from "@/components/ReviewsStats";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 import Link from "next/link";
 export const dynamic = "force-dynamic";
@@ -83,7 +82,6 @@ export default async function ReviewsPage() {
                 <h1 className="text-3xl font-bold">Avis membres</h1>
                 <LogoutButton />
               </div>
-              <NavigationBar currentPage="reviews" />
             </div>
             <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
               <p>Vous devez être rattaché à un club pour consulter ou publier des avis. Merci de contacter votre club pour obtenir un code d'invitation.</p>
@@ -122,7 +120,6 @@ export default async function ReviewsPage() {
                 <h1 className="text-3xl font-bold">Avis membres</h1>
                 <LogoutButton />
               </div>
-              <NavigationBar currentPage="reviews" />
             </div>
             <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
               <p>Aucun membre pour le moment dans votre club.</p>
@@ -228,7 +225,6 @@ export default async function ReviewsPage() {
               <h1 className="text-3xl font-bold text-white">Avis et Notes</h1>
             <LogoutButton />
           </div>
-          <NavigationBar currentPage="reviews" />
           <div className="mt-3 rounded-2xl bg-gradient-to-r from-teal-500 via-sky-600 to-blue-700 p-6 text-white shadow-xl">
             <h2 className="text-2xl font-semibold tracking-tight">Partagez votre expérience !</h2>
             <p className="mt-1 text-sm text-white/70">Votre avis inspire la communauté</p>

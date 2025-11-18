@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 import { getPlayerBoostStats } from "@/lib/utils/boost-utils";
 import BoostPurchaseButton from "@/components/BoostPurchaseButton";
@@ -48,7 +47,6 @@ export default async function BoostPage() {
         <LogoutButton />
       </div>
 
-      <NavigationBar currentPage="boost" />
 
       {/* Hero Section */}
       <div className="mb-6 rounded-2xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 text-center backdrop-blur-sm">

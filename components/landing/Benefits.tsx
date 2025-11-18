@@ -15,24 +15,24 @@ const benefits = [
 
 export default function Benefits() {
   return (
-    <section className="relative py-24 bg-gradient-to-b from-black via-[#0a0a1a] to-black">
-      <div className="max-w-4xl mx-auto px-8">
+    <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-b from-black via-[#0a0a1a] to-black">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-3 sm:mb-4 px-2">
             Ce que tu{" "}
-            <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent block sm:inline">
               obtiens
             </span>
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
           {benefits.map((benefit, idx) => (
             <BenefitItem key={idx} benefit={benefit} index={idx} />
           ))}
@@ -52,7 +52,7 @@ function BenefitItem({ benefit, index }: { benefit: string; index: number }) {
       initial={{ opacity: 0, x: -20 }}
       animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
-      className="flex items-start gap-4 p-6 bg-black/50 border border-white/10 rounded-xl hover:border-[#BFFF00]/50 transition-all"
+      className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 md:p-6 bg-black/50 border border-white/10 rounded-lg sm:rounded-xl hover:border-[#BFFF00]/50 transition-all"
     >
       <motion.div
         initial={{ scale: 0 }}
@@ -61,8 +61,9 @@ function BenefitItem({ benefit, index }: { benefit: string; index: number }) {
         className="flex-shrink-0"
       >
         <motion.svg
-          width="24"
-          height="24"
+          width="20"
+          height="20"
+          className="sm:w-6 sm:h-6"
           viewBox="0 0 24 24"
           fill="none"
           className="text-[#BFFF00]"
@@ -93,7 +94,7 @@ function BenefitItem({ benefit, index }: { benefit: string; index: number }) {
           />
         </motion.svg>
       </motion.div>
-      <p className="text-white text-lg">{benefit}</p>
+      <p className="text-white text-sm sm:text-base md:text-lg">{benefit}</p>
     </motion.div>
   );
 }

@@ -29,58 +29,63 @@ export default function HeroSection() {
       {/* Raquette retirée temporairement */}
 
       {/* Navbar transparente */}
-      <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center">
-            <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-24 w-24 md:h-28 md:w-28 object-contain" />
+      <nav className="absolute top-0 left-0 right-0 z-50 px-4 sm:px-6 md:px-8 py-2 sm:py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center flex-shrink-0">
+            <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28 object-contain" />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             <Link
               href="/player/signup"
-              className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-semibold text-sm shadow-[0_0_20px_rgba(0,102,255,0.4)] hover:shadow-[0_0_30px_rgba(0,102,255,0.6)] transition-all"
+              className="group relative px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-semibold text-xs sm:text-sm shadow-[0_0_20px_rgba(0,102,255,0.4)] hover:shadow-[0_0_30px_rgba(0,102,255,0.6)] transition-all"
             >
-              <span className="flex items-center gap-2">
-                Pour les joueurs
+              <span className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+                <span className="hidden sm:inline">Pour les joueurs</span>
+                <span className="sm:hidden">Joueurs</span>
               </span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
+              <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
             </Link>
             <Link
               href="/clubs"
-              className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-semibold text-sm shadow-[0_0_20px_rgba(0,102,255,0.4)] hover:shadow-[0_0_30px_rgba(0,102,255,0.6)] transition-all"
+              className="group relative px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-semibold text-xs sm:text-sm shadow-[0_0_20px_rgba(0,102,255,0.4)] hover:shadow-[0_0_30px_rgba(0,102,255,0.6)] transition-all"
             >
-              <span className="flex items-center gap-2">
-                Pour les Clubs / Complexes
+              <span className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+                <span className="hidden md:inline">Pour les Clubs / Complexes</span>
+                <span className="md:hidden">Clubs</span>
               </span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
+              <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Contenu principal */}
-      <div className="relative z-10 max-w-7xl mx-auto px-8 text-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 30 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-8"
+          className="space-y-4 sm:space-y-6 md:space-y-8"
         >
-          {/* Emoji/Trophy */}
+          {/* Image Raquette */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: isVisible ? 1 : 0 }}
             transition={{ duration: 0.6, delay: 0.2, type: "spring" }}
-            className="text-8xl mb-4"
+            className="mb-2 sm:mb-3 md:mb-4 flex items-center justify-center"
           >
-            🎾
+            <img 
+              src="/images/Raquette.png" 
+              alt="Raquette de padel" 
+              className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28 xl:h-32 xl:w-32 object-contain"
+            />
           </motion.div>
 
           {/* Titre principal */}
-          <div className="space-y-4">
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold text-white leading-tight relative">
-              Ta prochaine victoire
-              <br />
-              <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient">
+          <div className="space-y-2 sm:space-y-3 md:space-y-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold text-white leading-tight relative px-2">
+              <span className="block">Ta prochaine victoire</span>
+              <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block">
                 commence ici
               </span>
             </h1>
@@ -91,10 +96,10 @@ export default function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: isVisible ? 1 : 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed px-4"
           >
             <span className="font-semibold text-white">Deviens un joueur de padel d'élite.</span>
-            <br />
+            <br className="hidden sm:block" />
             <span className="text-[#BFFF00] font-bold">Tracke. Progresse. Domine.</span>
           </motion.p>
 
@@ -103,14 +108,14 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2 sm:pt-3 md:pt-4 px-4"
           >
             <Link
               href="/player/signup"
               prefetch={false}
-              className="group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,102,255,0.5)] hover:shadow-[0_0_40px_rgba(0,102,255,0.7)] transition-all duration-300 hover:scale-105"
+              className="group relative w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-bold text-base sm:text-lg shadow-[0_0_30px_rgba(0,102,255,0.5)] hover:shadow-[0_0_40px_rgba(0,102,255,0.7)] transition-all duration-300 hover:scale-105"
             >
-              <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center gap-2">
                 Commencer maintenant
                 <motion.span
                   className="inline-block"
@@ -126,44 +131,44 @@ export default function HeroSection() {
             <Link
               href="/player/login"
               prefetch={false}
-              className="px-6 py-4 text-white/80 hover:text-white transition-colors text-base"
+              className="px-4 sm:px-6 py-3 sm:py-4 text-white/80 hover:text-white transition-colors text-sm sm:text-base whitespace-nowrap"
             >
               Déjà membre ? Se connecter
             </Link>
           </motion.div>
 
+          {/* Flèche de scroll dynamique */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? [0, 8, 0] : -10 }}
+            transition={{ duration: 1.5, delay: 0.8, repeat: Infinity, ease: "easeInOut" }}
+            className="mt-6 sm:mt-8 md:mt-10 cursor-pointer group"
+            onClick={() => {
+              window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+            }}
+          >
+            <div className="flex flex-col items-center gap-1 sm:gap-2 text-white/80 hover:text-white transition-colors">
+              <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">Découvrir</span>
+              <motion.svg
+                width="24"
+                height="24"
+                className="sm:w-7 sm:h-7 drop-shadow-lg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                animate={{ y: [0, 6, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </motion.svg>
+            </div>
+          </motion.div>
+
         </motion.div>
       </div>
-
-      {/* Flèche de scroll dynamique */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? [0, 8, 0] : -10 }}
-        transition={{ duration: 1.5, delay: 1, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 cursor-pointer group"
-        onClick={() => {
-          window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
-        }}
-      >
-        <div className="flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors">
-          <span className="text-sm font-semibold uppercase tracking-wider">Découvrir</span>
-          <motion.svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="drop-shadow-lg"
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </motion.svg>
-        </div>
-      </motion.div>
 
       <style jsx>{`
         @keyframes gradient {

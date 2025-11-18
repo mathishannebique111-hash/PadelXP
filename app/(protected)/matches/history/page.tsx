@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import NavigationBar from "@/components/NavigationBar";
 import LogoutButton from "@/components/LogoutButton";
 export const dynamic = "force-dynamic";
 
@@ -94,7 +93,6 @@ export default async function MatchHistoryPage() {
               <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
-            <NavigationBar currentPage="history" />
           </div>
           <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour consulter l'historique des matchs. Contactez votre club / complexe pour obtenir le code d'invitation.</p>
@@ -136,7 +134,6 @@ export default async function MatchHistoryPage() {
               <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
-            <NavigationBar currentPage="history" />
           </div>
           <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
             <p className="text-white/80">Aucun match enregistré pour le moment.</p>
@@ -173,7 +170,6 @@ export default async function MatchHistoryPage() {
               <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
-            <NavigationBar currentPage="history" />
           </div>
           <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
             <p className="text-white/80">Aucun match enregistré pour le moment.</p>
@@ -230,7 +226,6 @@ export default async function MatchHistoryPage() {
               <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
               <LogoutButton />
             </div>
-            <NavigationBar currentPage="history" />
           </div>
           <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
             <p className="text-white/80">Aucun match enregistré pour le moment.</p>
@@ -456,7 +451,6 @@ export default async function MatchHistoryPage() {
             <h1 className="text-3xl font-bold text-white">Historique des matchs</h1>
             <LogoutButton />
           </div>
-          <NavigationBar currentPage="history" />
         </div>
 
       {/* Stats globales */}

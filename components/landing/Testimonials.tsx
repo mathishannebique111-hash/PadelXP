@@ -77,37 +77,37 @@ export default function Testimonials() {
   }, [fetchReviews]);
 
   return (
-    <section className="relative py-24 bg-black">
-      <div className="max-w-7xl mx-auto px-8">
+    <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 bg-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-3 sm:mb-4 px-2">
             La voix de la{" "}
-            <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent block sm:inline">
               communauté
             </span>
           </h2>
           {averageRating > 0 && (
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <div className="text-2xl font-bold text-white">{averageRating.toFixed(1)}</div>
+            <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center justify-center gap-2">
+              <div className="text-xl sm:text-2xl font-bold text-white">{averageRating.toFixed(1)}</div>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <span
                     key={n}
                     className={`${
                       n <= Math.round(averageRating) ? "text-[#FFD700]" : "text-gray-600"
-                    } text-xl`}
+                    } text-lg sm:text-xl`}
                   >
                     ★
                   </span>
                 ))}
               </div>
-              <div className="text-white/60 text-lg ml-2">
+              <div className="text-white/60 text-sm sm:text-base md:text-lg sm:ml-2">
                 ({reviews.length} avis)
               </div>
             </div>
@@ -115,11 +115,11 @@ export default function Testimonials() {
         </motion.div>
 
         {loading ? (
-          <div className="text-center py-16">
-            <p className="text-white/60 text-lg">Chargement des avis...</p>
+          <div className="text-center py-12 sm:py-16">
+            <p className="text-white/60 text-sm sm:text-base md:text-lg">Chargement des avis...</p>
           </div>
         ) : reviews.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             {reviews.map((review, idx) => (
               <motion.div
                 key={review.id}
@@ -127,18 +127,18 @@ export default function Testimonials() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: idx * 0.1 }}
-                className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border border-gray-700 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+                <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-base sm:text-lg flex-shrink-0">
                       {(review.profiles?.display_name || "Joueur").slice(0, 1).toUpperCase()}
                     </div>
-                    <div>
-                      <div className="font-semibold text-white">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-white text-sm sm:text-base truncate">
                         {review.profiles?.display_name || "Joueur"}
                       </div>
-                      <div className="text-sm text-gray-400">
+                      <div className="text-xs sm:text-sm text-gray-400">
                         {new Date(review.created_at).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "long",
@@ -147,13 +147,13 @@ export default function Testimonials() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5 sm:gap-1 flex-shrink-0">
                     {[1, 2, 3, 4, 5].map((n) => (
                       <span
                         key={n}
                         className={`${
                           n <= review.rating ? "text-[#FFD700]" : "text-gray-600"
-                        } text-lg`}
+                        } text-sm sm:text-base md:text-lg`}
                       >
                         ★
                       </span>
@@ -161,14 +161,14 @@ export default function Testimonials() {
                   </div>
                 </div>
                 {review.comment && (
-                  <p className="text-gray-300 leading-relaxed">{review.comment}</p>
+                  <p className="text-gray-300 leading-relaxed text-xs sm:text-sm md:text-base">{review.comment}</p>
                 )}
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <p className="text-white/60 text-lg">
+          <div className="text-center py-12 sm:py-16">
+            <p className="text-white/60 text-sm sm:text-base md:text-lg">
               Les témoignages arrivent bientôt...
             </p>
           </div>

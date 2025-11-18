@@ -168,21 +168,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <ParallaxHalos />
       </div>
 
-      <main className="p-8">
+      <main className="p-4 sm:p-6 md:p-8 pt-20 sm:pt-8">
         {/* Logo + nom avec simple soulignement à la largeur du contenu */}
-        <div className="mb-12 flex justify-center" style={{ paddingTop: '0px', marginTop: '4px' }}>
+        <div className="mb-6 sm:mb-8 md:mb-12 flex justify-center" style={{ paddingTop: '0px', marginTop: '4px' }}>
           <div className="inline-flex flex-col items-center">
-            <div className="inline-flex items-center gap-3">
+            <div className="inline-flex items-center gap-2 sm:gap-3">
               {clubLogo ? (
                 <img
                   src={clubLogo}
                   alt={clubName || "Logo du club"}
-                  className="h-16 w-16 rounded-full object-cover flex-shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-full object-cover flex-shrink-0"
                 />
               ) : null}
-              <h2 className="text-3xl font-extrabold tracking-tight text-white whitespace-nowrap">{clubName || "Club"}</h2>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white whitespace-nowrap">{clubName || "Club"}</h2>
             </div>
-            <div className="relative mt-3 h-[2px]" style={{ width: '112%' }}>
+            <div className="relative mt-2 sm:mt-3 h-[2px]" style={{ width: '112%' }}>
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/0 via-white/40 to-white/0" />
             </div>
           </div>
