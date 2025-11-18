@@ -52,9 +52,31 @@ export async function GET(req: Request) {
       }
     );
 
+    // Vérifier d'abord la session pour éviter les déconnexions inattendues
+    // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // Essayer d'obtenir l'utilisateur avec gestion d'erreur gracieuse
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !user) {
+    // Si ni session ni utilisateur, retourner un tableau vide (401)
+    if (!user && !session) {
+      return NextResponse.json({ players: [] }, { status: 401 });
+    }
+    
+    // Si une session existe mais getUser() échoue temporairement, logger un avertissement
+    // et retourner un tableau vide plutôt qu'un 401 pour éviter de casser l'UI
+    if (session && !user && authError) {
+      console.warn("[Search API] Session exists but getUser() failed (temporary error?):", {
+        errorCode: authError?.code,
+        errorMessage: authError?.message,
+      });
+      // Retourner un tableau vide sans erreur 401 pour ne pas bloquer l'UI
+      return NextResponse.json({ players: [] });
+    }
+    
+    // Si pas d'utilisateur à ce stade, retourner un tableau vide
+    if (!user) {
       return NextResponse.json({ players: [] }, { status: 401 });
     }
 

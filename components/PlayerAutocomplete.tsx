@@ -140,28 +140,30 @@ export default function PlayerAutocomplete({
         
         // Construire un message d'erreur détaillé
         const errorMessage = errorData?.message || errorData?.error || errorText || `Erreur ${response.status}`;
-        console.error('Search API error:', response.status, {
-          status: response.status,
-          message: errorMessage,
-          details: errorData?.details,
-          error: errorData
-        });
         
-        // Si c'est une erreur 401, ne pas afficher "Unauthorized" - juste logger et continuer
+        // Si c'est une erreur 401, ne pas logger comme erreur - juste logger un avertissement et continuer
+        // (peut être dû à une erreur temporaire d'authentification qui se résout automatiquement)
         if (response.status === 401) {
-          console.warn('Unauthorized access to search API - this should not happen with public API');
+          console.warn('[PlayerAutocomplete] Unauthorized access to search API - returning empty results (may be temporary)');
           setSearchResults([]);
           return;
         }
         
-        // Pour les autres erreurs (500, etc.), logger avec tous les détails
+        // Pour les erreurs serveur (500+), logger avec tous les détails
         if (response.status >= 500) {
-          console.error('Server error in search API:', {
+          console.error('[PlayerAutocomplete] Server error in search API:', {
             status: response.status,
             message: errorMessage,
             details: errorData?.details,
             name: errorData?.name,
             stack: errorData?.stack
+          });
+        } else {
+          // Pour les autres erreurs client (400-499), logger un avertissement
+          console.warn('[PlayerAutocomplete] Client error in search API:', {
+            status: response.status,
+            message: errorMessage,
+            details: errorData?.details
           });
         }
         

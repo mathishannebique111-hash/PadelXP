@@ -81,20 +81,27 @@ export default async function BadgesPage() {
     );
   }
   
-  // Récupérer le club_id de l'utilisateur
+  // Récupérer le club_id et les points de challenges de l'utilisateur
   const { data: userProfile } = await supabase
     .from("profiles")
-    .select("club_id")
+    .select("club_id, points")
     .eq("id", user.id)
     .maybeSingle();
   
   let userClubId = userProfile?.club_id || null;
+  
+  // S'assurer que challengePoints est un nombre (peut être string, null, undefined dans la DB)
+  const challengePoints = typeof userProfile?.points === 'number' 
+    ? userProfile.points 
+    : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
 
+  let finalChallengePoints = challengePoints;
+  
   if (!userClubId) {
     try {
       const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
         .from("profiles")
-        .select("club_id")
+        .select("club_id, points")
         .eq("id", user.id)
         .maybeSingle();
       if (adminProfileError) {
@@ -107,6 +114,13 @@ export default async function BadgesPage() {
       }
       if (adminProfile?.club_id) {
         userClubId = adminProfile.club_id;
+      }
+      
+      // Mettre à jour les points de challenges depuis adminProfile si disponible
+      if (adminProfile?.points !== undefined) {
+        finalChallengePoints = typeof adminProfile.points === 'number' 
+          ? adminProfile.points 
+          : (typeof adminProfile.points === 'string' ? parseInt(adminProfile.points, 10) || 0 : 0);
       }
     } catch (e) {
       console.error("[Badges] Unexpected error when fetching profile via admin client", e);

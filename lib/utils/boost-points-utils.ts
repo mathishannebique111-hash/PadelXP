@@ -102,8 +102,14 @@ export async function calculatePointsWithBoosts(
   bonus: number = 0,
   challengePoints: number = 0
 ): Promise<number> {
+  // S'assurer que tous les paramètres sont des nombres
+  const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
+  const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+  const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
+  const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
+  
   // Points de base : victoires * 10 + défaites * 3
-  let basePoints = wins * 10 + losses * 3;
+  let basePoints = winsNum * 10 + lossesNum * 3;
 
   // Récupérer les points boostés pour les matchs gagnés
   const boostedPointsMap = await getBoostedPointsForMatches(
@@ -117,12 +123,14 @@ export async function calculatePointsWithBoosts(
     // Points normaux pour une victoire : 10
     // Points avec boost : points_after_boost (généralement 13)
     // Bonus = points_after_boost - 10
-    const matchBoostBonus = pointsAfterBoost - 10;
+    const matchBoostBonus = typeof pointsAfterBoost === 'number' ? (pointsAfterBoost - 10) : 0;
     boostBonus += matchBoostBonus;
   });
 
   // Points totaux = points de base + bonus de boosts + bonus + challengePoints
-  return basePoints + boostBonus + bonus + challengePoints;
+  const totalPoints = basePoints + boostBonus + bonusNum + challengePointsNum;
+  console.log(`[boost-points-utils] calculatePointsWithBoosts for ${userId.substring(0, 8)}: basePoints=${basePoints}, boostBonus=${boostBonus}, bonus=${bonusNum}, challengePoints=${challengePointsNum}, total=${totalPoints}`);
+  return totalPoints;
 }
 
 /**
@@ -145,8 +153,14 @@ export async function calculatePointsForMultiplePlayers(
   if (!supabaseAdmin || playersData.length === 0) {
     // Calculer les points sans boost si pas d'admin client
     playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
-      const basePoints = wins * 10 + losses * 3;
-      results.set(userId, basePoints + bonus + challengePoints);
+      // S'assurer que tous les paramètres sont des nombres
+      const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
+      const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+      const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
+      const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
+      
+      const basePoints = winsNum * 10 + lossesNum * 3;
+      results.set(userId, basePoints + bonusNum + challengePointsNum);
     });
     return results;
   }
@@ -163,8 +177,14 @@ export async function calculatePointsForMultiplePlayers(
     // Si aucun match ID ou user ID, calculer sans boost
     if (allMatchIds.size === 0 || userIds.length === 0) {
       playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
-        const basePoints = wins * 10 + losses * 3;
-        results.set(userId, basePoints + bonus + challengePoints);
+        // S'assurer que tous les paramètres sont des nombres
+        const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
+        const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+        const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
+        const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
+        
+        const basePoints = winsNum * 10 + lossesNum * 3;
+        results.set(userId, basePoints + bonusNum + challengePointsNum);
       });
       return results;
     }
@@ -180,8 +200,14 @@ export async function calculatePointsForMultiplePlayers(
       logSupabaseError("Error fetching boost uses for multiple players", error);
       // Fallback : calculer sans boost
       playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
-        const basePoints = wins * 10 + losses * 3;
-        results.set(userId, basePoints + bonus + challengePoints);
+        // S'assurer que tous les paramètres sont des nombres
+        const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
+        const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+        const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
+        const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
+        
+        const basePoints = winsNum * 10 + lossesNum * 3;
+        results.set(userId, basePoints + bonusNum + challengePointsNum);
       });
       return results;
     }
@@ -199,7 +225,13 @@ export async function calculatePointsForMultiplePlayers(
 
     // Calculer les points pour chaque joueur
     playersData.forEach(({ userId, wins, losses, winMatches, bonus, challengePoints }) => {
-      const basePoints = wins * 10 + losses * 3;
+      // S'assurer que tous les paramètres sont des nombres
+      const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
+      const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+      const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
+      const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
+      
+      const basePoints = winsNum * 10 + lossesNum * 3;
       
       // Calculer le bonus des boosts pour ce joueur
       let boostBonus = 0;
@@ -207,7 +239,7 @@ export async function calculatePointsForMultiplePlayers(
       if (userBoosts) {
         winMatches.forEach(matchId => {
           const pointsAfterBoost = userBoosts.get(matchId);
-          if (pointsAfterBoost) {
+          if (pointsAfterBoost && typeof pointsAfterBoost === 'number') {
             // Points normaux pour une victoire : 10
             // Bonus = points_after_boost - 10
             boostBonus += pointsAfterBoost - 10;
@@ -215,15 +247,21 @@ export async function calculatePointsForMultiplePlayers(
         });
       }
 
-      const totalPoints = basePoints + boostBonus + bonus + challengePoints;
+      const totalPoints = basePoints + boostBonus + bonusNum + challengePointsNum;
       results.set(userId, totalPoints);
     });
   } catch (error) {
     console.error("[boost-points-utils] Exception calculating points:", error);
     // Fallback : calculer sans boost
     playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
-      const basePoints = wins * 10 + losses * 3;
-      results.set(userId, basePoints + bonus + challengePoints);
+      // S'assurer que tous les paramètres sont des nombres
+      const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
+      const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+      const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
+      const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
+      
+      const basePoints = winsNum * 10 + lossesNum * 3;
+      results.set(userId, basePoints + bonusNum + challengePointsNum);
     });
   }
 

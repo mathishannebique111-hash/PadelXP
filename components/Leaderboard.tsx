@@ -372,8 +372,8 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                       <td className={`px-4 py-4 text-center border-r border-gray-100 ${rateClass}`}>
                         <span className="text-base font-semibold tabular-nums" style={{ color: rateColor }}>{winrate}%</span>
                       </td>
-                      <td className="px-4 py-4 text-center text-base font-semibold text-gray-700 border-r border-gray-100 tabular-nums">{r.wins}</td>
-                      <td className="px-4 py-4 text-center text-base font-semibold text-gray-700 border-r border-gray-100 tabular-nums">{r.losses}</td>
+                      <td className="px-4 py-4 text-center text-base font-semibold border-r border-gray-100 tabular-nums" style={{ color: "#10B981" }}>{r.wins}</td>
+                      <td className="px-4 py-4 text-center text-base font-semibold border-r border-gray-100 tabular-nums" style={{ color: "#EF4444" }}>{r.losses}</td>
                       <td className="px-4 py-4 text-center text-base font-semibold text-gray-700 tabular-nums">{r.matches}</td>
                     </tr>
                   );

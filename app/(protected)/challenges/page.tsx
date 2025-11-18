@@ -2,6 +2,8 @@ import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import ChallengesList from "@/components/challenges/ChallengesList";
 import PageTitle from "@/components/PageTitle";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 interface PlayerChallenge {
   id: string;
@@ -21,6 +23,18 @@ interface PlayerChallenge {
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+// Créer un client admin pour bypass RLS dans les requêtes critiques
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 
 export default async function PlayerChallengesPage() {
   const requestHeaders = headers();
@@ -62,6 +76,53 @@ export default async function PlayerChallengesPage() {
     console.error("[PlayerChallengesPage] parse error", error);
   }
 
+  // Récupérer les points et badges de challenges
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  let challengePoints = 0;
+  let challengeBadgesCount = 0;
+  
+  if (user) {
+    // Récupérer les points de challenges depuis le profil
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("points")
+      .eq("id", user.id)
+      .maybeSingle();
+    
+    challengePoints = typeof userProfile?.points === 'number' 
+      ? userProfile.points 
+      : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
+    
+    // Si pas trouvé, essayer avec admin client
+    if (!userProfile) {
+      try {
+        const { data: adminProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("points")
+          .eq("id", user.id)
+          .maybeSingle();
+        
+        if (adminProfile?.points !== undefined) {
+          challengePoints = typeof adminProfile.points === 'number' 
+            ? adminProfile.points 
+            : (typeof adminProfile.points === 'string' ? parseInt(adminProfile.points, 10) || 0 : 0);
+        }
+      } catch (e) {
+        console.error("[PlayerChallengesPage] Error fetching profile via admin client", e);
+      }
+    }
+    
+    // Récupérer les badges de challenges
+    const { data: challengeBadges } = await supabaseAdmin
+      .from("challenge_badges")
+      .select("id")
+      .eq("user_id", user.id);
+    
+    challengeBadgesCount = challengeBadges?.length || 0;
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
       {/* Background avec overlay */}
@@ -78,6 +139,19 @@ export default async function PlayerChallengesPage() {
         <div className="mb-6">
           <PageTitle title="Challenges" />
         </div>
+
+        {(challengePoints > 0 || challengeBadgesCount > 0) && (
+          <div className="mb-6 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-2 border border-white/20">
+              <span className="text-sm font-semibold text-white">
+                <span className="text-yellow-300 tabular-nums">{challengePoints}</span>
+                <span className="ml-1">point{challengePoints > 1 ? "s" : ""} et </span>
+                <span className="text-yellow-300 tabular-nums">{challengeBadgesCount}</span>
+                <span className="ml-1">badge{challengeBadgesCount > 1 ? "s" : ""} débloqué{challengeBadgesCount > 1 ? "s" : ""} avec les challenges</span>
+              </span>
+            </div>
+          </div>
+        )}
 
         <ChallengesList challenges={challenges} />
       </div>

@@ -128,7 +128,7 @@ export default async function PlayerClubLogo() {
   }
 
   return (
-    <div className="fixed top-0 right-0 z-[101] p-2 md:p-4 pointer-events-none">
+    <div className="fixed top-0 right-0 z-[200] p-2 md:p-4 pointer-events-none" style={{ position: 'fixed' }}>
       <div className="pointer-events-auto">
         <img
           src={publicLogoUrl}

@@ -448,6 +448,7 @@ export default async function HomePage() {
   
   console.log("[Home] Valid matches (all users in same club):", validMatchIds.size);
   console.log("[Home] Total matches before filtering:", Object.keys(participantsByMatch).length);
+  console.log("[Home] Valid match IDs after club filtering:", Array.from(validMatchIds));
   
   // Filtrer les participants pour ne garder que ceux des matchs valides (même club) ET qui respectent la limite quotidienne
   const finalFilteredParticipants = filteredParticipants.filter((p: any) => {
@@ -455,13 +456,27 @@ export default async function HomePage() {
     // Pour les users, vérifier aussi la limite quotidienne. Les guests ne sont pas limités.
     if (p.player_type === "user" && p.user_id) {
       const isValidForDailyLimit = validMatchIdsForPoints.has(p.match_id);
-      return isValidForClub && isValidForDailyLimit;
+      const shouldInclude = isValidForClub && isValidForDailyLimit;
+      
+      if (!shouldInclude && user?.id === p.user_id) {
+        console.log(`[Home] Excluding match ${p.match_id} for current user ${p.user_id.substring(0, 8)}: club=${isValidForClub}, dailyLimit=${isValidForDailyLimit}`);
+      }
+      
+      return shouldInclude;
     }
     // Pour les guests, on ne vérifie que le club
     return isValidForClub;
   });
   
   console.log("[Home] Participants after match filtering (club + daily limit):", finalFilteredParticipants.length);
+  
+  // Log des matchs filtrés pour l'utilisateur connecté
+  if (user?.id) {
+    const currentUserMatches = finalFilteredParticipants
+      .filter((p: any) => p.user_id === user.id)
+      .map((p: any) => p.match_id);
+    console.log(`[Home] Current user ${user.id.substring(0, 8)} filtered matches:`, currentUserMatches.length, currentUserMatches);
+  }
   
   // Enrichir les participants filtrés avec les données des matchs
   const agg = finalFilteredParticipants.map((p: any) => ({
@@ -650,9 +665,15 @@ export default async function HomePage() {
         .in("id", userIdsForChallenges);
       
       (profiles || []).forEach((p: any) => {
-        if (p.points && p.points > 0) {
-          challengePointsMap.set(p.id, p.points);
-          console.log(`[Home] Player ${p.id.substring(0, 8)} has ${p.points} challenge points`);
+        // Convertir les points en nombre (peut être string, null, undefined dans la DB)
+        const challengePoints = typeof p.points === 'number' 
+          ? p.points 
+          : (typeof p.points === 'string' ? parseInt(p.points, 10) || 0 : 0);
+        
+        // Ajouter les points même s'ils sont à 0 pour garantir l'addition correcte
+        challengePointsMap.set(p.id, challengePoints);
+        if (challengePoints > 0) {
+          console.log(`[Home] Player ${p.id.substring(0, 8)} has ${challengePoints} challenge points`);
         }
       });
     }
@@ -675,17 +696,37 @@ export default async function HomePage() {
       }
       return true;
     })
-    .map(([playerId, s]) => ({
-      userId: playerId,
-      wins: s.wins,
-      losses: s.losses,
-      winMatches: winMatchesByPlayer.get(playerId) || new Set<string>(),
-      bonus: bonusMap.get(playerId) || 0,
-      challengePoints: challengePointsMap.get(playerId) || 0,
-    }));
+    .map(([playerId, s]) => {
+      const winMatches = winMatchesByPlayer.get(playerId) || new Set<string>();
+      const bonus = bonusMap.get(playerId) || 0;
+      const challengePoints = challengePointsMap.get(playerId) || 0;
+      
+      console.log(`[Home] Player ${playerId.substring(0, 8)} boost calculation:`, {
+        wins: s.wins,
+        losses: s.losses,
+        winMatchesCount: winMatches.size,
+        winMatches: Array.from(winMatches),
+        bonus,
+        challengePoints
+      });
+      
+      return {
+        userId: playerId,
+        wins: s.wins,
+        losses: s.losses,
+        winMatches,
+        bonus,
+        challengePoints,
+      };
+    });
 
   // Calculer les points avec boosts en une seule requête optimisée
   const pointsWithBoosts = await calculatePointsForMultiplePlayers(playersForBoostCalculation);
+  
+  console.log("[Home] Points with boosts calculated:", Array.from(pointsWithBoosts.entries()).map(([id, pts]) => ({
+    id: id.substring(0, 8),
+    points: pts
+  })));
   
   // Construire le leaderboard (uniquement les joueurs du même club)
   const leaderboard = Object.entries(byPlayer)
@@ -706,7 +747,18 @@ export default async function HomePage() {
       );
       
       // Récupérer les points avec boosts calculés
-      const totalPoints = pointsWithBoosts.get(playerId) || (s.wins * 10 + s.losses * 3 + (bonusMap.get(playerId) || 0) + (challengePointsMap.get(playerId) || 0));
+      const pointsFromBoosts = pointsWithBoosts.get(playerId);
+      let totalPoints: number;
+      if (pointsFromBoosts !== undefined) {
+        totalPoints = typeof pointsFromBoosts === 'number' ? pointsFromBoosts : (typeof pointsFromBoosts === 'string' ? parseInt(String(pointsFromBoosts), 10) || 0 : 0);
+      } else {
+        // Fallback : calcul manuel
+        const winsNum = typeof s.wins === 'number' ? s.wins : (typeof s.wins === 'string' ? parseInt(String(s.wins), 10) || 0 : 0);
+        const lossesNum = typeof s.losses === 'number' ? s.losses : (typeof s.losses === 'string' ? parseInt(String(s.losses), 10) || 0 : 0);
+        const bonusNum = typeof (bonusMap.get(playerId) || 0) === 'number' ? (bonusMap.get(playerId) || 0) : (typeof (bonusMap.get(playerId) || 0) === 'string' ? parseInt(String(bonusMap.get(playerId) || 0), 10) || 0 : 0);
+        const challengePointsNum = typeof (challengePointsMap.get(playerId) || 0) === 'number' ? (challengePointsMap.get(playerId) || 0) : (typeof (challengePointsMap.get(playerId) || 0) === 'string' ? parseInt(String(challengePointsMap.get(playerId) || 0), 10) || 0 : 0);
+        totalPoints = winsNum * 10 + lossesNum * 3 + bonusNum + challengePointsNum;
+      }
       
       return {
         rank: 0,
@@ -935,8 +987,8 @@ export default async function HomePage() {
                       <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">Niveau</th>
                       <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Points</th>
                       <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden md:table-cell">Winrate</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0">V</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0">D</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
                       <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">MJ</th>
                     </tr>
                   </thead>
@@ -974,8 +1026,8 @@ export default async function HomePage() {
                           </td>
                           <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
                           <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate > 60 ? '#10B981' : winRate >= 40 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-green-700 bg-green-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.wins}</td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-red-700 bg-red-50 border-l border-gray-200 first:border-l-0 font-semibold">{player.losses}</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>{player.wins}</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>{player.losses}</td>
                           <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell">{player.matches}</td>
                         </tr>
                       );
