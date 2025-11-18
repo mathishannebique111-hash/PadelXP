@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
 import PageTitle from "@/components/PageTitle";
 import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
 import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
@@ -128,9 +127,8 @@ export default async function BadgesPage() {
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 text-white">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6">
             <PageTitle title="Badges & récompenses" />
-            <LogoutButton />
           </div>
           <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d'invitation communiqué par votre club.</p>
@@ -266,18 +264,17 @@ export default async function BadgesPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
       
-      {/* Pattern animé */}
+      {/* Pattern animé - halos de la landing page */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-4 py-8">
         {/* Pop-up de célébration pour les nouveaux badges */}
         <BadgesUnlockNotifier obtained={obtainedBadges} />
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6">
           <PageTitle title="Badges" />
-          <LogoutButton />
         </div>
 
       {/* Statistiques */}

@@ -20,10 +20,21 @@ export default async function BoostSuccessPage({
   // On peut juste afficher un message de succès
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white">⚡ Paiement réussi !</h1>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
+      {/* Background avec overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+      
+      {/* Pattern animé - halos de la landing page */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
+
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-white">⚡ Paiement réussi !</h1>
+        </div>
 
 
       <div className="mt-8 rounded-2xl border border-green-500/40 bg-gradient-to-br from-green-600/20 to-emerald-600/20 p-8 text-center backdrop-blur-sm shadow-2xl">

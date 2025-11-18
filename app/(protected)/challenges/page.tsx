@@ -1,6 +1,5 @@
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import LogoutButton from "@/components/LogoutButton";
 import ChallengesList from "@/components/challenges/ChallengesList";
 import PageTitle from "@/components/PageTitle";
 
@@ -69,16 +68,15 @@ export default async function PlayerChallengesPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
       
-      {/* Pattern animé */}
+      {/* Pattern animé - halos de la landing page */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-5xl px-6 py-10 text-white">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6">
           <PageTitle title="Challenges" />
-          <LogoutButton />
         </div>
 
         <ChallengesList challenges={challenges} />

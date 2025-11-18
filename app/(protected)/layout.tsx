@@ -2,6 +2,7 @@
 // Ce fichier assure une typographie cohérente sur toutes les pages
 import { Suspense } from 'react';
 import PlayerSidebar from '@/components/PlayerSidebar';
+import PlayerClubLogo from '@/components/PlayerClubLogo';
 
 export default function PlayerAccountLayout({
   children,
@@ -12,6 +13,9 @@ export default function PlayerAccountLayout({
     <>
       <Suspense fallback={null}>
         <PlayerSidebar />
+      </Suspense>
+      <Suspense fallback={null}>
+        <PlayerClubLogo />
       </Suspense>
       {children}
     </>

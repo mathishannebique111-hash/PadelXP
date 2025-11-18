@@ -289,7 +289,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   const computedBadges = getBadges(stats);
 
   return (
-    <div className="rounded-xl sm:rounded-2xl border border-white/40 p-4 sm:p-5 md:p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]" style={{
+    <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border-2 border-white/80 p-6 sm:p-8 md:p-10 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]" style={{
       background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)"
     }}>
       <div>
@@ -298,48 +298,48 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         {/* Notifier client pour célébrer les nouveaux badges */}
         <BadgesUnlockNotifier obtained={computedBadges} />
         {/* Badge niveau en haut et visible */}
-        <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
+        <div className="mb-4 sm:mb-5 flex items-center justify-between gap-2">
           <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/90 truncate">Vos statistiques</h3>
           <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="md" />
         </div>
         
         {/* Grid 2x3 compact pour les stats */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-          <div className="rounded-lg border border-gray-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2">
-            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-0.5 sm:mb-1">Points totaux</div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{points}</div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 text-xs sm:text-sm">
+          <div className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3">
+            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-1 sm:mb-1.5">Points totaux</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{points}</div>
             {challengePoints > 0 && (
-              <div className="mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] text-amber-600 font-medium">
+              <div className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] text-amber-600 font-medium">
                 +{challengePoints} challenges 🏆
               </div>
             )}
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2">
-            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-0.5 sm:mb-1">Matchs</div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{matches}</div>
+          <div className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3">
+            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-1 sm:mb-1.5">Matchs</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{matches}</div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2">
-            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-0.5 sm:mb-1">Victoires</div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{wins}</div>
+          <div className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3">
+            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-1 sm:mb-1.5">Victoires</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{wins}</div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2">
-            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-0.5 sm:mb-1">Défaites</div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{losses}</div>
+          <div className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3">
+            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-1 sm:mb-1.5">Défaites</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{losses}</div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2">
-            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-0.5 sm:mb-1">Sets gagnés</div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{setsWon}</div>
+          <div className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3">
+            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-1 sm:mb-1.5">Sets gagnés</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsWon}</div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2">
-            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-0.5 sm:mb-1">Sets perdus</div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900 tabular-nums">{setsLost}</div>
+          <div className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3">
+            <div className="text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.25em] text-gray-600 mb-1 sm:mb-1.5">Sets perdus</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsLost}</div>
           </div>
         </div>
         
         {/* Badges en bas */}
         {computedBadges.length > 0 && (
-          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/20">
-            <div className="mb-1.5 sm:mb-2 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.25em] text-white">Badges</div>
+          <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-white/20">
+            <div className="mb-2 sm:mb-2.5 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.25em] text-white">Badges</div>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {computedBadges.map((b, idx) => (
                 <span

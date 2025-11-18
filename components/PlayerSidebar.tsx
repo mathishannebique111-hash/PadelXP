@@ -71,7 +71,7 @@ export default function PlayerSidebar() {
 
   return (
     <>
-      {/* Bouton hamburger */}
+      {/* Bouton hamburger - visible sur tous les formats */}
       <button
         onClick={() => {
           setIsOpen(prev => !prev);
@@ -99,7 +99,7 @@ export default function PlayerSidebar() {
         </div>
       </button>
 
-      {/* Overlay sombre */}
+      {/* Overlay sombre - visible quand le menu est ouvert */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-[90] transition-opacity duration-300"
@@ -107,13 +107,12 @@ export default function PlayerSidebar() {
         />
       )}
 
-      {/* Menu latéral */}
+      {/* Menu latéral - toujours caché par défaut, s'ouvre avec le bouton */}
       <aside
         className={`fixed top-0 left-0 h-full w-72 bg-black/95 border-r border-white/10 z-[95] transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         onClick={(e) => e.stopPropagation()}
-        style={{ transform: isOpen ? 'translateX(0)' : 'translateX(-100%)' }}
       >
         <nav className="p-4 pt-20 space-y-2 text-sm flex-1 h-full overflow-y-auto">
           {menuItems.map((item) => {

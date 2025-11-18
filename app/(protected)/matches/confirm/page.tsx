@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
 
 function MatchConfirmForm() {
   const searchParams = useSearchParams();
@@ -47,9 +46,6 @@ function MatchConfirmForm() {
   if (status === "already-confirmed") {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-16">
-        <div className="mb-4 flex justify-end">
-          <LogoutButton />
-        </div>
         <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
           <div className="mb-4 text-6xl">✅</div>
           <h1 className="mb-4 text-2xl font-bold text-gray-900">Match déjà confirmé</h1>
@@ -65,9 +61,6 @@ function MatchConfirmForm() {
   if (status === "success") {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-16">
-        <div className="mb-4 flex justify-end">
-          <LogoutButton />
-        </div>
         <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
           <div className="mb-4 text-6xl" style={{ animation: "bounce 1s ease-in-out infinite" }}>🎾</div>
           <h1 className="mb-4 text-2xl font-bold text-gray-900">Match confirmé !</h1>
@@ -81,9 +74,6 @@ function MatchConfirmForm() {
   if (!token) {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-16">
-        <div className="mb-4 flex justify-end">
-          <LogoutButton />
-        </div>
         <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
           <h1 className="mb-4 text-2xl font-bold text-gray-900">Token manquant</h1>
           <p className="mb-6 text-gray-600">Le lien de confirmation est invalide.</p>
@@ -101,16 +91,13 @@ function MatchConfirmForm() {
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
       
-      {/* Pattern animé */}
+      {/* Pattern animé - halos de la landing page */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-2xl px-4 py-16">
-        <div className="mb-4 flex justify-end">
-          <LogoutButton />
-        </div>
         <div className="rounded-2xl bg-white p-8 shadow-lg">
           <div className="mb-6 text-center">
             <h1 className="mb-2 text-2xl font-bold text-gray-900">Confirmer le match</h1>
