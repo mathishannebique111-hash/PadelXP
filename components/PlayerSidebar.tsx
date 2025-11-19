@@ -38,7 +38,7 @@ export default function PlayerSidebar() {
 
   // Helper function to get icon path with proper encoding
   const getIconPath = (filename: string, version: number = 6) => {
-    // Encode spaces for Next.js Image component
+    // Encode only spaces for Next.js Image component (keep other characters as-is)
     const encoded = filename.replace(/\s/g, '%20');
     return `/images/${encoded}?v=${version}`;
   };
@@ -46,11 +46,11 @@ export default function PlayerSidebar() {
   const menuItems: MenuItem[] = [
     { href: '/home', label: 'Profil', icon: getIconPath('Profil.png'), navKey: 'home' },
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
-    { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs.png'), navKey: 'history' },
-    { href: '/badges', label: 'Badges', icon: getIconPath('Badges.png', 7), navKey: 'badges' },
-    { href: '/club', label: 'Mon club', icon: getIconPath('Club.png', 8), navKey: 'club' },
-    { href: '/challenges', label: 'Challenges', icon: getIconPath('Challenges.png'), navKey: 'challenges' },
-    { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png'), navKey: 'reviews' },
+    { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 10), navKey: 'history' },
+    { href: '/badges', label: 'Badges', icon: getIconPath('Badges.png', 11), navKey: 'badges' },
+    { href: '/club', label: 'Mon club', icon: getIconPath('Mon club.png', 10), navKey: 'club' },
+    { href: '/challenges', label: 'Challenges', icon: getIconPath('Challenges joueur.png', 9), navKey: 'challenges' },
+    { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
   ];
 
@@ -118,9 +118,6 @@ export default function PlayerSidebar() {
           {menuItems.map((item) => {
             const isActive = currentPage === item.navKey;
             const isMatchIcon = item.navKey === 'match';
-            // Images avec des problèmes d'affichage ou qui nécessitent un traitement spécial
-            const problematicIcons = ['challenges', 'badges', 'match', 'club'];
-            const isProblematic = problematicIcons.includes(item.navKey);
             return (
               <Link
                 key={item.href}
@@ -137,19 +134,15 @@ export default function PlayerSidebar() {
                     transition: 'transform 0.2s ease-in-out'
                   }}
                 >
-                  <Image 
+                  <Image
                     key={`${item.navKey}-${item.icon}`}
-                    src={item.icon} 
-                    alt={item.label} 
-                    width={20} 
-                    height={20} 
-                    className="w-5 h-5 object-contain" 
+                    src={item.icon}
+                    alt={item.label}
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 object-contain"
                     unoptimized
-                    style={{ 
-                      // Simplifier les filtres pour les images problématiques
-                      filter: isProblematic 
-                        ? 'brightness(0) invert(1)' 
-                        : 'brightness(0) invert(1) grayscale(100%) contrast(1.1) saturate(0%)',
+                    style={{
                       opacity: 1,
                       imageRendering: 'crisp-edges'
                     }}

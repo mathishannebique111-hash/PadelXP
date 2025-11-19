@@ -15,35 +15,42 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
     <div className="mb-4 sm:mb-6 flex items-center justify-between gap-2 sm:gap-4 border-b pb-3 sm:pb-4 overflow-x-auto scrollbar-hide" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-max -mr-4 sm:mr-0">
         <Link href="/home" className={`${base} ${currentPage === "home" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Profil.png" alt="Profil" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image src="/images/Profil.png" alt="Profil" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Profil</span>
         </Link>
         <Link href="/match/new" className={`${base} ${currentPage === "match" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Enregistrer un match.png" alt="Enregistrer un match" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image src="/images/Enregistrer%20un%20match.png" alt="Enregistrer un match" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Enregistrer un match</span>
         </Link>
         <Link href="/matches/history" className={`${base} ${currentPage === "history" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Historique des matchs.png" alt="Historique des matchs" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image src="/images/Historique%20des%20matchs%20joueur.png?v=10" alt="Historique des matchs" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Historique des matchs</span>
         </Link>
         <Link href="/badges" className={`${base} ${currentPage === "badges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Badges.png" alt="Badges" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image src="/images/Badges.png?v=11" alt="Badges" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Badges</span>
         </Link>
         <Link href="/club" className={`${base} ${currentPage === "club" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Club.png" alt="Club" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image src="/images/Mon%20club.png?v=10" alt="Mon club" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Club</span>
         </Link>
         <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Challenges.png" alt="Challenges" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image src="/images/Challenges%20joueur.png?v=9" alt="Challenges" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Challenges</span>
         </Link>
         <Link href="/reviews" className={`${base} ${currentPage === "reviews" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Avis.png" alt="Avis" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image 
+            src="/images/Avis.png?v=9" 
+            alt="Avis" 
+            width={16} 
+            height={16} 
+            className={iconClass} 
+            unoptimized 
+          />
           <span className={label}>Avis</span>
         </Link>
         <Link href="/boost" className={`${base} ${currentPage === "boost" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Boost.png" alt="Boost" width={16} height={16} className={iconClass} style={{ filter: 'brightness(0) invert(1)' }} />
+          <Image src="/images/Boost.png" alt="Boost" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Boost</span>
         </Link>
       </div>

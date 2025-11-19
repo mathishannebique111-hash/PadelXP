@@ -184,7 +184,7 @@ export default async function BoostPage() {
             <div>
               <strong className="text-sm font-semibold text-white">Gagne +30% de points si tu gagnes</strong>
               <p className="mt-1 text-xs text-white/60 font-normal">
-                Si tu gagnes le match, tu reçois 13 points au lieu de 10 (+30%). Le boost n'est consommé que si tu gagnes.
+                Si tu gagnes le match, tu reçois 13 points au lieu de 10 (+30%).
               </p>
             </div>
           </li>

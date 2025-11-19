@@ -148,64 +148,21 @@ export default async function PlayerClubLogo() {
   }
 
   return (
-    <>
-      {/* Mobile: logo absolu dans le flux de la page */}
-      <div 
-        className="absolute top-6 right-4 md:hidden z-[200] pointer-events-none" 
-        style={{ 
-          position: 'absolute',
-        } as React.CSSProperties}
-      >
-        <div 
-          className="pointer-events-auto flex items-center justify-center"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <img
-            src={publicLogoUrl}
-            alt="Logo du club"
-            className="h-12 w-12 rounded-full object-cover"
-            style={{ 
-              display: 'block',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Desktop: logo fixe */}
-      <div 
-        className="hidden md:fixed md:top-0 md:right-0 md:z-[200] md:p-4 md:pointer-events-none" 
-        style={{ 
-          position: 'fixed',
-          top: '0',
-          right: '0',
-          zIndex: 200,
-          willChange: 'auto',
-          transform: 'translateZ(0)',
-          backfaceVisibility: 'hidden',
-          WebkitTransform: 'translateZ(0)',
-          WebkitBackfaceVisibility: 'hidden',
-          pointerEvents: 'none',
-          isolation: 'isolate',
-        } as React.CSSProperties}
-      >
-        <div 
-          className="pointer-events-auto flex items-center justify-center"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <img
-            src={publicLogoUrl}
-            alt="Logo du club"
-            className="h-20 w-20 lg:h-24 lg:w-24 rounded-full object-cover"
-            style={{ 
-              display: 'block',
-              willChange: 'auto',
-              transform: 'translateZ(0)',
-              WebkitTransform: 'translateZ(0)',
-            }}
-          />
-        </div>
-      </div>
-    </>
+    <div 
+      className="absolute top-4 right-4 z-[100]"
+      style={{
+        position: 'absolute',
+        top: '1rem',
+        right: '1rem',
+        zIndex: 100,
+      } as React.CSSProperties}
+    >
+      <img
+        src={publicLogoUrl}
+        alt="Logo du club"
+        className="h-12 w-12 sm:h-14 sm:w-14 lg:h-20 lg:w-20 rounded-full object-cover"
+      />
+    </div>
   );
 }
 
