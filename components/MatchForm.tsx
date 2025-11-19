@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
+import BadgeIconDisplay from "./BadgeIconDisplay";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -696,7 +697,9 @@ export default function MatchForm({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style={{ animation: "fadeIn 0.3s ease-in" }}>
           <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl" style={{ animation: "zoomIn 0.3s ease-out" }}>
             <div className="text-center">
-              <div className="mb-4 text-6xl" style={{ animation: "bounce 1s ease-in-out infinite" }}>🎾</div>
+              <div className="mb-4 flex items-center justify-center" style={{ animation: "bounce 1s ease-in-out infinite" }}>
+                <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
+              </div>
               <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistré avec succès !</h2>
               <p className="text-sm text-gray-500">Le classement a été mis à jour automatiquement.</p>
               <div className="mt-4 text-xs text-gray-400">Redirection vers l'historique...</div>
@@ -841,7 +844,7 @@ export default function MatchForm({
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
               }`}
             >
-              🏆 Équipe 1
+              <span className="flex items-center gap-1"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 1</span>
             </button>
             <button
               type="button"
@@ -852,7 +855,7 @@ export default function MatchForm({
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
               }`}
             >
-              🏆 Équipe 2
+              <span className="flex items-center gap-1"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 2</span>
             </button>
           </div>
           {errors.winner && (

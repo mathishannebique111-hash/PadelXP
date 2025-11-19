@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import BadgeIconDisplay from "./BadgeIconDisplay";
 
 type Badge = {
   icon: string;
@@ -54,7 +55,7 @@ export default function BadgesUnlockNotifier({ obtained }: Props) {
         <div className="mb-3 text-center text-5xl">🎉</div>
         <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Badge débloqué !</h3>
         <div className="mx-auto mt-3 flex w-full max-w-sm items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
-          <div className="text-2xl">{first.icon}</div>
+          <BadgeIconDisplay icon={first.icon} size={32} />
           <div>
             <div className="text-sm font-bold text-gray-900">{first.title}</div>
             {first.description && <div className="text-xs text-gray-700">{first.description}</div>}

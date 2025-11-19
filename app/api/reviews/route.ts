@@ -186,13 +186,11 @@ export async function POST(req: Request) {
       profiles: profile.display_name ? { display_name: profile.display_name } : null,
     };
 
-    const isFirstReviewEver = (totalReviewsInClub || 0) === 0;
     const isFirstReviewForUser = (userReviewsCount || 0) === 0;
 
     return NextResponse.json({
       review: enrichedReview,
       updated: false,
-      isFirstReviewEver,
       isFirstReviewForUser,
     });
   } catch (error) {

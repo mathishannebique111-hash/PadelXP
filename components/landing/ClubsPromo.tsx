@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export default function ClubsPromo() {
   return (
@@ -62,7 +63,9 @@ export default function ClubsPromo() {
                   <div className="text-white font-semibold text-sm">Classement automatique</div>
                 </div>
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 border border-gray-700">
-                  <div className="text-2xl mb-2">🎯</div>
+                  <div className="mb-2 flex items-center justify-center">
+                    <BadgeIconDisplay icon="🎯" size={32} className="flex-shrink-0" />
+                  </div>
                   <div className="text-white font-semibold text-sm">Défis mensuels en 3 clics</div>
                 </div>
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 border border-gray-700">

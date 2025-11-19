@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export default function ClubsHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -223,7 +224,7 @@ export default function ClubsHeroSection() {
                     🏆 Marc L. a remporté son match contre Sophie D. (6-4, 7-5) et prend la 1ère place ! 🥇
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-xs text-white/60">
-                    <span>💬 3</span>
+                    <span className="flex items-center gap-1"><BadgeIconDisplay icon="💬" size={14} className="flex-shrink-0" /> 3</span>
                     <span>❤️ 12</span>
                   </div>
                 </div>
@@ -233,7 +234,7 @@ export default function ClubsHeroSection() {
                     🔥 Thomas R. a débloqué le badge "Hot Streak" ! 5 victoires consécutives 💪
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-xs text-white/60">
-                    <span>💬 5</span>
+                    <span className="flex items-center gap-1"><BadgeIconDisplay icon="💬" size={14} className="flex-shrink-0" /> 5</span>
                     <span>❤️ 18</span>
                   </div>
                 </div>

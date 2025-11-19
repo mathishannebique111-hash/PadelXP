@@ -4,6 +4,7 @@ import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { redirect } from "next/navigation";
 import InvitationCodeCard from "./InvitationCodeCard";
 import PageTitle from "./PageTitle";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -236,7 +237,9 @@ export default async function DashboardHome() {
             {upcomingChallenges.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6 sm:py-8">
                 <div className="mb-4 sm:mb-6 text-center">
-                  <div className="text-3xl sm:text-4xl mb-2 sm:mb-3 opacity-50">🎯</div>
+                  <div className="mb-2 sm:mb-3 flex items-center justify-center opacity-50">
+                    <BadgeIconDisplay icon="🎯" size={32} className="flex-shrink-0" />
+                  </div>
                   <p className="text-xs sm:text-sm text-white/60">Aucun challenge à venir</p>
                 </div>
                 <a 

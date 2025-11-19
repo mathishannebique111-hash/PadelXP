@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import PageTitle from "@/components/PageTitle";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 export const dynamic = "force-dynamic";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
@@ -427,11 +428,11 @@ export default async function MatchHistoryPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
       
-      {/* Pattern animé - halos de la landing page */}
-      <div className="absolute inset-0 opacity-20">
+        {/* Pattern animé - halos de la landing page */}
+        <div className="absolute inset-0 opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-      </div>
+        </div>
 
       <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-8 pb-8">
         <div className="mb-6">
@@ -477,8 +478,8 @@ export default async function MatchHistoryPage() {
             >
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className={`text-2xl ${won ? "text-green-600" : "text-red-600"}`}>
-                    {won ? "🏆" : "❌"}
+                  <span className={`text-2xl ${won ? "text-green-600" : "text-red-600"} flex items-center`}>
+                    {won ? <BadgeIconDisplay icon="🏆" size={32} className="flex-shrink-0" /> : "❌"}
                   </span>
                   <div>
                     <div className="text-sm font-semibold text-gray-900">
@@ -509,7 +510,7 @@ export default async function MatchHistoryPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Équipe 1 */}
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600">Équipe 1 {match.winner_team === 1 && "🏆"}</div>
+                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600 flex items-center gap-1">Équipe 1 {match.winner_team === 1 && <BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" />}</div>
                   <div className="divide-y divide-gray-100">
                     {team1.map((p: any) => {
                       const isGuest = p.player_type === "guest";
@@ -539,7 +540,7 @@ export default async function MatchHistoryPage() {
 
                 {/* Équipe 2 */}
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600">Équipe 2 {match.winner_team === 2 && "🏆"}</div>
+                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600 flex items-center gap-1">Équipe 2 {match.winner_team === 2 && <BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" />}</div>
                   <div className="divide-y divide-gray-100">
                     {team2.map((p: any) => {
                       const isGuest = p.player_type === "guest";

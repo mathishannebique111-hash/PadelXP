@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BadgeIcon from "../icons/BadgeIcon";
+import BadgeIconDisplay from "../BadgeIconDisplay";
 
 type NavKey = "home" | "match" | "history" | "badges" | "club" | "challenges" | "reviews";
 
@@ -18,7 +19,7 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
         </Link>
         <Link href="/match/new" className={`${base} ${currentPage === "match" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <span className={label}>Enregistrer un match</span>
-          <span className={icon}>🎾</span>
+          <BadgeIconDisplay icon="🎾" size={18} className={icon} />
         </Link>
         <Link href="/matches/history" className={`${base} ${currentPage === "history" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <span className={label}>Historique des matchs</span>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import PageTitle from "../PageTitle";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 type RewardType = "points" | "badge";
 
@@ -320,7 +321,10 @@ export default function ChallengesPage() {
 
                     {/* Objectif avec effet glassmorphism */}
                     <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-blue-500/25 via-blue-600/20 to-indigo-600/25 px-5 py-4 shadow-[0_0_30px_rgba(37,99,235,0.2)] backdrop-blur-md">
-                      <p className="text-xs font-bold uppercase tracking-widest text-blue-300">🎯 Objectif</p>
+                      <p className="text-xs font-bold uppercase tracking-widest text-blue-300 flex items-center gap-1">
+                        <BadgeIconDisplay icon="🎯" size={14} className="flex-shrink-0" />
+                        <span>Objectif</span>
+                      </p>
                       <p className="mt-2 text-base font-semibold leading-relaxed text-white">{challenge.objective}</p>
                     </div>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import Image from "next/image";
 
 interface ReviewFormProps {
   onSubmit?: () => void;
@@ -21,7 +22,7 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
-  const [badgeInfo, setBadgeInfo] = useState<{ isFirstReviewEver: boolean; isFirstReviewForUser: boolean } | null>(null);
+  const [badgeInfo, setBadgeInfo] = useState<{ isFirstReviewForUser: boolean } | null>(null);
   const [submittedReview, setSubmittedReview] = useState<{
     rating: number;
     comment: string | null;
@@ -58,7 +59,6 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
 
       setSuccess(true);
       setBadgeInfo({
-        isFirstReviewEver: data.isFirstReviewEver || false,
         isFirstReviewForUser: data.isFirstReviewForUser || false
       });
       
@@ -117,10 +117,10 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
     return (
       <div className="space-y-5">
         {/* Avis soumis en lecture seule */}
-        <div className="rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 p-6">
+        <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200/60 p-5 sm:p-6 shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-900">Votre avis</h3>
-            <span className="text-xs text-gray-500">
+            <h3 className="text-lg font-bold text-slate-900">Votre avis</h3>
+            <span className="text-xs text-slate-500">
               {new Date(submittedReview.created_at).toLocaleDateString('fr-FR', { 
                 day: 'numeric', 
                 month: 'long', 
@@ -130,14 +130,14 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
           </div>
           
           <div className="mb-4">
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-1.5 mb-3">
               {[1, 2, 3, 4, 5].map((star) => (
                 <span
                   key={star}
-                  className={`text-2xl ${
+                  className={`text-xl sm:text-2xl ${
                     star <= submittedReview.rating 
                       ? "text-[#FFD700] drop-shadow-[0_0_4px_rgba(255,215,0,0.6)]" 
-                      : "text-gray-300"
+                      : "text-slate-300"
                   }`}
                 >
                   ★
@@ -145,7 +145,7 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
               ))}
             </div>
             {submittedReview.comment && (
-              <p className="text-gray-700 text-sm leading-relaxed">{submittedReview.comment}</p>
+              <p className="text-slate-700 text-sm leading-relaxed">{submittedReview.comment}</p>
             )}
           </div>
         </div>
@@ -157,7 +157,8 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
             setShowNewReviewForm(true);
             setSuccess(false);
           }}
-          className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 text-white font-semibold shadow-[0_0_20px_rgba(56,189,248,0.35)] hover:shadow-[0_0_30px_rgba(56,189,248,0.55)] transition-all"
+          className="w-full px-6 py-3.5 rounded-xl text-white font-semibold transition-all active:scale-[0.98] hover:scale-105"
+          style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}
         >
           Laisser un nouvel avis
         </button>
@@ -166,52 +167,75 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
       <div>
-        <label className="block text-sm font-medium text-white mb-2">Note</label>
-        <div className="flex gap-3">
+        <label className="block text-sm font-medium text-slate-700 mb-3">Note</label>
+        <div className="flex gap-2 sm:gap-3">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
               type="button"
               aria-label={`Donner ${star} étoile${star>1?"s":""}`}
               onClick={() => setRating(star)}
-              className={`text-[40px] leading-none transition-transform duration-150 ${
-                star <= rating ? "text-[#FFD700] drop-shadow-[0_0_6px_rgba(255,215,0,0.6)]" : "text-white/25"
-              } hover:scale-110 active:scale-95`}
+              className={`text-[36px] sm:text-[40px] leading-none transition-all duration-150 ${
+                star <= rating 
+                  ? "text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.7)] scale-105" 
+                  : "text-slate-300"
+              } hover:scale-110 hover:text-[#FFD700] hover:drop-shadow-[0_0_10px_rgba(255,215,0,0.8)] active:scale-95`}
             >
-              ⭐
+              ★
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <label htmlFor="comment" className="block text-sm font-medium text-white mb-2">
+        <label htmlFor="comment" className="block text-sm font-medium text-slate-700 mb-2">
           Commentaire (optionnel)
         </label>
         <div className="relative">
           <textarea
-          id="comment"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          maxLength={500}
-          rows={5}
-          className="w-full px-4 py-3 rounded-xl bg-black text-white border border-white/20 placeholder-white focus:outline-none focus:ring-2 focus:ring-[#00A2FF] focus:border-transparent"
-          placeholder="Comment trouvez-vous PadelLeague ? Dites-nous tout... 💬⚡"
-        />
-          <div className="absolute bottom-2 right-3 text-xs text-white/70">{comment.length}/500</div>
+            id="comment"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            maxLength={500}
+            rows={5}
+            className="w-full px-4 py-3 rounded-xl bg-slate-800/90 text-white border border-slate-600/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-[#0066FF] transition-all resize-none"
+          />
+          {!comment && (
+            <div className="absolute top-3 left-4 pointer-events-none flex items-center gap-1.5 text-slate-400 text-sm">
+              <span>Comment trouvez-vous PadelXP ? Dites-nous tout...</span>
+              <Image 
+                src="/images/Commentaire page avis.png" 
+                alt="Commentaire" 
+                width={16} 
+                height={16} 
+                className="flex-shrink-0"
+                style={{ filter: 'brightness(0) saturate(100%) invert(1)', mixBlendMode: 'screen' }}
+                unoptimized
+              />
+              <Image 
+                src="/images/Éclair page avis.png" 
+                alt="Éclair" 
+                width={16} 
+                height={16} 
+                className="flex-shrink-0"
+                unoptimized
+              />
+            </div>
+          )}
+          <div className="absolute bottom-2.5 right-3 text-xs text-slate-400 tabular-nums">{comment.length}/500</div>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="p-3 rounded-lg bg-green-500/20 border border-green-500/50 text-green-200 text-sm">
+        <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
           Merci pour votre avis !
         </div>
       )}
@@ -219,7 +243,8 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
       <button
         type="submit"
         disabled={loading}
-        className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-teal-400 via-blue-500 to-indigo-600 text-white font-semibold shadow-[0_0_20px_rgba(56,189,248,0.35)] hover:shadow-[0_0_30px_rgba(56,189,248,0.55)] transition-all disabled:opacity-50 disabled:cursor-not-allowed animate-[pulse_2.2s_ease-in-out_infinite]"
+        className="w-full px-6 py-3.5 rounded-xl text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] text-base hover:scale-105"
+        style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}
       >
         {loading ? "Envoi..." : "Envoyer l'avis"}
       </button>
@@ -246,24 +271,20 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
                 Votre avis a été enregistré et sera visible par toute la communauté.
               </p>
               
-              {badgeInfo && (badgeInfo.isFirstReviewEver || badgeInfo.isFirstReviewForUser) && (
+              {badgeInfo && badgeInfo.isFirstReviewForUser && (
                 <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-4 mb-4">
-                  <div className="text-4xl mb-2">
-                    {badgeInfo.isFirstReviewEver ? "🛡️" : "💬"}
+                  <div className="mb-2 flex items-center justify-center">
+                    <BadgeIconDisplay icon="💬" size={40} className="flex-shrink-0" />
                   </div>
                   <div className="font-bold text-gray-900 mb-1">
-                    {badgeInfo.isFirstReviewEver ? "Badge Pionier débloqué !" : "Badge Contributeur débloqué !"}
+                    Badge Contributeur débloqué !
                   </div>
                   <div className="text-sm text-gray-700">
-                    {badgeInfo.isFirstReviewEver 
-                      ? "Vous êtes le premier à avoir laissé un avis sur PadelLeague !" 
-                      : "Vous avez laissé votre premier avis !"}
+                    Vous avez laissé votre premier avis !
                   </div>
-                  {badgeInfo.isFirstReviewForUser && (
-                    <div className="mt-2 text-sm font-semibold text-emerald-700">
-                      ✅ Bonus: vous gagnez 10 points.
-                    </div>
-                  )}
+                  <div className="mt-2 text-sm font-semibold text-emerald-700">
+                    ✅ Bonus: vous gagnez 10 points.
+                  </div>
                 </div>
               )}
               

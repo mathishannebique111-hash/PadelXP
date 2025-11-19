@@ -4,6 +4,7 @@ import { getBadges, ALL_BADGES, type PlayerStats } from "@/lib/badges";
 import BadgesUnlockNotifier from "./BadgesUnlockNotifier";
 import LevelUpNotifier from "./LevelUpNotifier";
 import TierBadge from "./TierBadge";
+import BadgeIconDisplay from "./BadgeIconDisplay";
 import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { calculatePointsWithBoosts } from "@/lib/utils/boost-points-utils";
@@ -427,16 +428,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   // Calcul des badges dynamiques basés sur les stats (EXACTEMENT comme la page badges)
   const statsForBadges: PlayerStats = { wins: badgeWins, losses: badgeLosses, matches: badgeMatches, points: badgePoints, streak: badgeStreak };
   const computedBadges = getBadges(statsForBadges);
-  const obtainedBadgeIcons = new Set(computedBadges.map(b => b.icon));
+  // Utiliser icon + title comme clé unique car plusieurs badges peuvent avoir la même icône
+  const obtainedBadgeKeys = new Set(computedBadges.map(b => `${b.icon}|${b.title}`));
   
-  // Badges liés aux avis: Pionier (premier avis) & Contributeur (premier avis du joueur)
-  const { data: allReviews } = await supabase
-    .from("reviews")
-    .select("id, user_id, created_at")
-    .order("created_at", { ascending: true });
-  
-  const firstReview = (allReviews && allReviews.length > 0) ? allReviews[0] : null;
-  
+  // Badges liés aux avis: Contributeur (premier avis du joueur)
   // Un joueur peut avoir plusieurs avis; utiliser un COUNT fiable plutôt que maybeSingle()
   const { count: myReviewsCount } = await supabase
     .from("reviews")
@@ -445,13 +440,12 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
   // Ajouter les badges d'avis au Set (évite les doublons)
   const extraObtained = new Set<string>();
-  if (firstReview && firstReview.user_id === profileId) extraObtained.add("🛡️"); // Pionier
-  if ((myReviewsCount || 0) > 0) extraObtained.add("💬"); // Contributeur: au moins 1 avis
+  if ((myReviewsCount || 0) > 0) extraObtained.add("💬|Contributeur"); // Contributeur: au moins 1 avis
 
   // Créer la liste avec le statut de chaque badge (même logique que la page badges)
   const badgesWithStatus = ALL_BADGES.map((badge) => ({
     ...badge,
-    obtained: obtainedBadgeIcons.has(badge.icon) || extraObtained.has(badge.icon),
+    obtained: obtainedBadgeKeys.has(`${badge.icon}|${badge.title}`) || extraObtained.has(`${badge.icon}|${badge.title}`),
   }));
 
   // Calcul du winrate (utiliser les stats avec limite quotidienne pour l'affichage)
@@ -589,7 +583,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
                 >
                   <span className="shimmer-layer" />
                   <span className="relative z-10 flex items-center gap-1">
-                    <span className="text-sm sm:text-base">{b.icon}</span>
+                    <BadgeIconDisplay icon={b.icon} size={16} className="flex-shrink-0" />
                     <span>{b.title}</span>
                   </span>
                 </span>

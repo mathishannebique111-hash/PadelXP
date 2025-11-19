@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface Review {
   id: string;
@@ -98,8 +99,8 @@ export default function ReviewsList({
   return (
     <>
       {/* LISTE DES AVIS */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold text-white mb-4">
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-semibold text-white mb-5 sm:mb-6 tracking-tight">
           Avis de la communauté ({reviews?.length || 0})
         </h2>
         {(reviews && reviews.length > 0) ? (
@@ -107,37 +108,47 @@ export default function ReviewsList({
             {topToShow.map((review: Review, idx: number) => (
               <div
                 key={review.id}
-                className="rounded-xl bg-white p-6 border border-gray-200 shadow-sm opacity-0 animate-fade-in"
+                className="rounded-xl sm:rounded-2xl bg-white p-5 sm:p-6 border border-white/10 shadow-[0_20px_50px_rgba(4,16,46,0.25)] opacity-0 animate-fade-in"
                 style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards' }}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold">
-                      {(review.profiles?.display_name || 'Joueur').slice(0,1)}
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#003D99] text-white flex items-center justify-center font-bold text-sm">
+                      {(review.profiles?.display_name || 'Joueur').slice(0,1).toUpperCase()}
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">{review.profiles?.display_name || 'Joueur'}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="font-semibold text-slate-900">{review.profiles?.display_name || 'Joueur'}</div>
+                      <div className="text-xs sm:text-sm text-slate-500">
                         {new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5">
                     {[1,2,3,4,5].map(n => (
-                      <span key={n} className={`${n <= review.rating ? 'text-[#FFD700]' : 'text-gray-300'} text-xl`}>★</span>
+                      <span key={n} className={`${n <= review.rating ? 'text-[#FFD700] drop-shadow-[0_0_3px_rgba(255,215,0,0.5)]' : 'text-slate-300'} text-lg sm:text-xl`}>★</span>
                     ))}
                   </div>
                 </div>
                 {review.comment && (
-                  <p className="text-gray-700">{review.comment}</p>
+                  <p className="text-slate-700 text-sm sm:text-base leading-relaxed">{review.comment}</p>
                 )}
               </div>
             ))}
           </>
         ) : (
-          <div className="rounded-2xl bg-white p-10 text-center border border-gray-200">
-            <div className="text-2xl font-extrabold text-gray-900 mb-4">Soyez le premier à partager votre passion !</div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700">🏅 Badge "Pionier" offert au premier avis</div>
+          <div className="rounded-xl sm:rounded-2xl bg-white p-8 sm:p-10 text-center border border-white/10 shadow-[0_20px_50px_rgba(4,16,46,0.25)]">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-5">Soyez le premier à partager votre passion !</div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-xs sm:text-sm font-semibold text-amber-700 shadow-sm">
+              <Image 
+                src="/images/Badge.png" 
+                alt="Badges" 
+                width={16} 
+                height={16} 
+                className="flex-shrink-0"
+                unoptimized
+              />
+              Badge "Contributeur" offert au premier avis
+            </div>
           </div>
         )}
       </div>

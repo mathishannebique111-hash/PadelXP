@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 function MatchConfirmForm() {
   const searchParams = useSearchParams();
@@ -62,7 +63,9 @@ function MatchConfirmForm() {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-16">
         <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
-          <div className="mb-4 text-6xl" style={{ animation: "bounce 1s ease-in-out infinite" }}>🎾</div>
+          <div className="mb-4 flex items-center justify-center" style={{ animation: "bounce 1s ease-in-out infinite" }}>
+            <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
+          </div>
           <h1 className="mb-4 text-2xl font-bold text-gray-900">Match confirmé !</h1>
           <p className="mb-6 text-gray-600">Votre confirmation a été enregistrée. Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.</p>
           <p className="mb-6 text-sm text-gray-500">Redirection en cours...</p>

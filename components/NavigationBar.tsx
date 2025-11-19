@@ -19,23 +19,30 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
           <span className={label}>Profil</span>
         </Link>
         <Link href="/match/new" className={`${base} ${currentPage === "match" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Enregistrer%20un%20match.png" alt="Enregistrer un match" width={16} height={16} className={iconClass} unoptimized />
+          <Image 
+            src="/images/Enregistrer%20un%20match.png" 
+            alt="Enregistrer un match" 
+            width={16} 
+            height={16} 
+            className={iconClass} 
+            unoptimized 
+          />
           <span className={label}>Enregistrer un match</span>
         </Link>
         <Link href="/matches/history" className={`${base} ${currentPage === "history" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Historique%20des%20matchs%20joueur.png?v=10" alt="Historique des matchs" width={16} height={16} className={iconClass} unoptimized />
+          <Image src="/images/Historique%20des%20matchs%20joueur.png?v=12" alt="Historique des matchs" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Historique des matchs</span>
         </Link>
         <Link href="/badges" className={`${base} ${currentPage === "badges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Badges.png?v=11" alt="Badges" width={16} height={16} className={iconClass} unoptimized />
+          <Image src="/images/Badge.png?v=11" alt="Badges" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Badges</span>
         </Link>
         <Link href="/club" className={`${base} ${currentPage === "club" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Mon%20club.png?v=10" alt="Mon club" width={16} height={16} className={iconClass} unoptimized />
+          <Image src="/images/Mon%20club.png?v=10" alt="Mon club" width={14} height={14} className="w-3.5 h-3.5 sm:w-[14px] sm:h-[14px] object-contain flex-shrink-0" unoptimized />
           <span className={label}>Club</span>
         </Link>
         <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Challenges%20joueur.png?v=9" alt="Challenges" width={16} height={16} className={iconClass} unoptimized />
+          <Image src="/images/Objectif%20page%20avis.png?v=9" alt="Challenges" width={16} height={16} className={iconClass} unoptimized />
           <span className={label}>Challenges</span>
         </Link>
         <Link href="/reviews" className={`${base} ${currentPage === "reviews" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>

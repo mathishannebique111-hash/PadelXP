@@ -15,10 +15,10 @@ export default function PlayerAccountLayout({
         <PlayerSidebar />
       </Suspense>
       <div className="relative">
-        <Suspense fallback={null}>
-          <PlayerClubLogo />
-        </Suspense>
-        {children}
+      <Suspense fallback={null}>
+        <PlayerClubLogo />
+      </Suspense>
+      {children}
       </div>
     </>
   );

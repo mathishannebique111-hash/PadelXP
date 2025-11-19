@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export default function Pricing() {
   const features = [
@@ -63,7 +64,7 @@ export default function Pricing() {
                 const text = feature.replace(/^[^\s]+\s+/, "");
                 return (
                   <div key={idx} className="flex items-center gap-3">
-                    <span className="text-xl flex-shrink-0">{emoji}</span>
+                    <BadgeIconDisplay icon={emoji} size={20} className="flex-shrink-0" />
                     <span className="text-white/80 text-sm">{text}</span>
                   </div>
                 );
@@ -84,7 +85,8 @@ export default function Pricing() {
               className="block w-full group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105 text-center"
             >
               <span className="flex items-center justify-center gap-2">
-                🎯 Essai gratuit 30 jours - Sans CB
+                <BadgeIconDisplay icon="🎯" size={20} className="flex-shrink-0" />
+                <span>Essai gratuit 30 jours - Sans CB</span>
                 <motion.span
                   className="inline-block"
                   animate={{ x: [0, 5, 0] }}

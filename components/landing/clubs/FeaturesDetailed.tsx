@@ -5,6 +5,7 @@ import { useState } from "react";
 import RankBadge from "@/components/RankBadge";
 import TierBadge from "@/components/TierBadge";
 import { ALL_BADGES } from "@/lib/badges";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export default function FeaturesDetailed() {
   const [activeTab, setActiveTab] = useState("ranking");
@@ -411,7 +412,7 @@ function GamificationFeature() {
                 <div className="text-xs text-white/60 mb-2">{post.time}</div>
                 <div className="text-sm text-white mb-2">{post.content}</div>
                 <div className="flex items-center gap-4 text-xs text-white/60">
-                  <span>💬 {post.comments}</span>
+                  <span className="flex items-center gap-1"><BadgeIconDisplay icon="💬" size={14} className="flex-shrink-0" /> {post.comments}</span>
                   <span>❤️ {post.likes}</span>
                 </div>
               </div>
@@ -421,7 +422,10 @@ function GamificationFeature() {
       </div>
 
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4">🎯 CHALLENGE NOVEMBRE : "Warriors"</h3>
+        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <BadgeIconDisplay icon="🎯" size={24} className="flex-shrink-0" />
+          <span>CHALLENGE NOVEMBRE : "Warriors"</span>
+        </h3>
         <div className="space-y-4">
           <div className="text-white/70">
             Objectif : Jouer minimum 10 matchs en novembre
@@ -488,7 +492,10 @@ function PublicPageFeature() {
         <div className="space-y-3 text-sm text-white/70">
           <div>📍 12 Avenue de Toulouse, 31000 Toulouse</div>
           <div>⏰ Ouvert 7j/7 • 8h-23h</div>
-          <div>🎾 4 terrains couverts • Climatisation</div>
+          <div className="flex items-center gap-1">
+            <BadgeIconDisplay icon="🎾" size={16} className="flex-shrink-0" />
+            <span>4 terrains couverts • Climatisation</span>
+          </div>
           <div>👥 156 membres actifs</div>
           <div>📞 05 XX XX XX XX</div>
           <div>🌐 www.clubpadeltoulouse.fr</div>

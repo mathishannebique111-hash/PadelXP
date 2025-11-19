@@ -5,6 +5,7 @@ import ReviewsList from "@/components/ReviewsList";
 import ReviewsStats from "@/components/ReviewsStats";
 import PageTitle from "@/components/PageTitle";
 import Link from "next/link";
+import Image from "next/image";
 export const dynamic = "force-dynamic";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
@@ -217,34 +218,33 @@ export default async function ReviewsPage() {
         <div className="mb-6">
           <PageTitle title="Avis et Notes" />
         </div>
-        <div className="mt-3 mb-6 rounded-2xl bg-gradient-to-r from-teal-500 via-sky-600 to-blue-700 p-6 text-white shadow-xl">
-          <h2 className="text-2xl font-semibold tracking-tight">Partagez votre expérience !</h2>
-          <p className="mt-1 text-sm text-white/70">Votre avis inspire la communauté</p>
+
+      {/* FORMULAIRE */}
+      <div className="mb-10 rounded-2xl bg-white p-6 sm:p-8 shadow-[0_40px_90px_rgba(4,16,46,0.5)] border-2 border-white/30 relative scale-[1.01] z-10">
+        <div className="mb-5">
+          <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Donner votre avis</h2>
         </div>
+        {!hasUserReview && (
+          <div className="mb-5 rounded-xl border border-[#10B981]/20 bg-[#ECFDF5] px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-[#10B981] font-medium flex items-center gap-2">
+            <Image 
+              src="/images/Cadeau page avis.gif" 
+              alt="Cadeau" 
+              width={20} 
+              height={20} 
+              className="flex-shrink-0 mix-blend-multiply"
+              unoptimized
+            />
+            <span><span className="font-semibold">10 points</span> offerts pour votre premier avis</span>
+          </div>
+        )}
+        <ReviewForm />
+      </div>
 
       {/* Stats et Progression */}
       <ReviewsStats 
         initialReviews={enrichedReviews || []} 
         initialAverageRating={averageRating}
       />
-
-      {/* FORMULAIRE */}
-      <div className="mb-10 rounded-2xl border border-gray-200 bg-white p-6 shadow-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-semibold text-gray-900">Donner votre avis</h2>
-          {!hasUserReview && (
-            <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-extrabold text-white shadow" style={{background:'linear-gradient(135deg,#22c55e,#a3e635)'}}>
-              ✨ +10 points
-            </span>
-          )}
-        </div>
-        {!hasUserReview && (
-          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 px-4 py-3 font-semibold flex items-center gap-2">
-            🎁 Récompense immédiate : Gagnez <span className="text-emerald-700">10 points</span> en laissant votre avis maintenant !
-          </div>
-        )}
-        <ReviewForm />
-      </div>
 
       {/* Liste des avis */}
       <ReviewsList 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 
 interface BoostPurchaseButtonProps {
   quantity: number;
@@ -49,9 +50,14 @@ export default function BoostPurchaseButton({
   // Icônes selon le pack
   const getIcon = () => {
     if (quantity === 1) return "⚡";
-    if (quantity === 5) return "🔥";
+    if (quantity === 5) return "/images/Flamme page badges.png";
     if (quantity === 10) return "🚀";
     return "⚡";
+  };
+  
+  const getIconType = () => {
+    if (quantity === 5) return "image";
+    return "emoji";
   };
 
   // Couleurs de fond selon le pack
@@ -157,8 +163,9 @@ export default function BoostPurchaseButton({
       <div className={`w-full ${getBackgroundGradient()} ${cardClasses}`}>
         {/* Badge "Meilleur prix" uniquement pour le pack 10 */}
         {isFeatured && (
-          <div className="absolute top-0 right-0 sm:top-[-10px] sm:right-3 bg-gradient-to-r from-[#BFFF00] to-[#9FDF00] px-3 py-1 rounded-full text-xs sm:text-sm font-bold text-gray-900 shadow-[0_2px_8px_rgba(255,255,255,0.3)] z-20">
-            🔥 Meilleur prix
+          <div className="absolute top-0 right-0 sm:top-[-10px] sm:right-3 bg-gradient-to-r from-[#BFFF00] to-[#9FDF00] px-3 py-1 rounded-full text-xs sm:text-sm font-bold text-gray-900 shadow-[0_2px_8px_rgba(255,255,255,0.3)] z-20 flex items-center gap-1">
+            <Image src="/images/Flamme page badges.png" alt="Flamme" width={14} height={14} className="flex-shrink-0" unoptimized />
+            <span>Meilleur prix</span>
           </div>
         )}
 
@@ -175,8 +182,12 @@ export default function BoostPurchaseButton({
           {/* Zone icône + titre + badges avec hauteur minimale fixe (réduite) */}
           <div className="min-h-[100px] sm:min-h-[110px] flex flex-col items-center justify-start">
             {/* Icône */}
-            <div className={`text-3xl sm:text-4xl mb-2 flex-shrink-0 ${getIconColor()}`}>
-              {getIcon()}
+            <div className={`mb-2 flex-shrink-0 ${getIconType() === 'image' ? '' : `${getIconColor()} text-3xl sm:text-4xl`}`}>
+              {getIconType() === 'image' ? (
+                <Image src={getIcon() as string} alt="Boost" width={32} height={32} className="w-8 h-8 sm:w-10 sm:h-10" unoptimized />
+              ) : (
+                getIcon()
+              )}
             </div>
 
             {/* Titre */}

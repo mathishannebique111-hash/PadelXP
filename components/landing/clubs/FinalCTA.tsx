@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export default function FinalCTA() {
   return (
@@ -47,7 +48,8 @@ export default function FinalCTA() {
               className="block w-full group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105"
             >
               <span className="flex items-center justify-center gap-2">
-                🎯 Démarrer l'essai gratuit maintenant
+                <BadgeIconDisplay icon="🎯" size={20} className="flex-shrink-0" />
+                <span>Démarrer l'essai gratuit maintenant</span>
                 <motion.span
                   className="inline-block"
                   animate={{ x: [0, 5, 0] }}
@@ -68,8 +70,9 @@ export default function FinalCTA() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-white/60 text-sm">
-              💬 Questions ? pro@padelapp.fr • 06 XX XX XX XX
+            <p className="text-white/60 text-sm flex items-center gap-2">
+              <BadgeIconDisplay icon="💬" size={16} className="flex-shrink-0" />
+              <span>Questions ? pro@padelapp.fr • 06 XX XX XX XX</span>
             </p>
           </div>
         </motion.div>

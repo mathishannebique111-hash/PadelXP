@@ -17,11 +17,11 @@ export type PlayerStats = {
 export const ALL_BADGES: Badge[] = [
   { icon: "🏆", title: "Première victoire", description: "Obtenez votre première victoire" },
   { icon: "🔥", title: "Série de 3", description: "Gagnez 3 matchs consécutifs" },
-  { icon: "🔥🔥", title: "Série de 5", description: "Gagnez 5 matchs consécutifs" },
-  { icon: "🔥🔥🔥", title: "Série de 7", description: "Gagnez 7 matchs consécutifs" },
-  { icon: "⚡⚡⚡", title: "Série de 10", description: "Gagnez 10 matchs consécutifs" },
-  { icon: "🌪️", title: "Tornade", description: "Gagnez 15 matchs consécutifs" },
-  { icon: "👑", title: "Invincible", description: "Gagnez 20 matchs consécutifs" },
+  { icon: "🔥", title: "Série de 5", description: "Gagnez 5 matchs consécutifs" },
+  { icon: "🔥", title: "Série de 7", description: "Gagnez 7 matchs consécutifs" },
+  { icon: "🔥", title: "Série de 10", description: "Gagnez 10 matchs consécutifs" },
+  { icon: "🔥", title: "série de 15", description: "Gagnez 15 matchs consécutifs" },
+  { icon: "🔥", title: "série de 20", description: "Gagnez 20 matchs consécutifs" },
   { icon: "🎖️", title: "Marathonien", description: "Jouez 50 matchs" },
   { icon: "🏅", title: "Centurion", description: "Jouez 100 matchs" },
   { icon: "💯", title: "Top Scorer", description: "Obtenez 100+ points" },
@@ -31,7 +31,6 @@ export const ALL_BADGES: Badge[] = [
   { icon: "🏆🏆🏆", title: "Légende", description: "Gagnez 200 matchs au total" },
   { icon: "🎾", title: "Amour du padel", description: "Jouez 200 matchs au total" },
   // Badges liés aux avis
-  { icon: "🛡️", title: "Pionier", description: "Premier avis publié sur PadelLeague" },
   { icon: "💬", title: "Contributeur", description: "Laissez votre premier avis" },
 ];
 

@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import Image from "next/image";
 import PageTitle from "@/components/PageTitle";
 import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
 import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
 import BadgeIcon from "@/components/icons/BadgeIcon";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export const dynamic = "force-dynamic";
 
@@ -225,16 +227,10 @@ export default async function BadgesPage() {
   // Obtenir les badges débloqués (basés sur les stats)
   const stats: PlayerStats = { wins, losses, matches, points, streak };
   const obtainedBadges = getBadges(stats);
-  const obtainedBadgeIcons = new Set(obtainedBadges.map(b => b.icon));
+  // Utiliser icon + title comme clé unique car plusieurs badges peuvent avoir la même icône
+  const obtainedBadgeKeys = new Set(obtainedBadges.map(b => `${b.icon}|${b.title}`));
 
-  // Badges liés aux avis: Pionier (premier avis) & Contributeur (premier avis du joueur)
-  const { data: allReviews } = await supabase
-    .from("reviews")
-    .select("id, user_id, created_at")
-    .order("created_at", { ascending: true });
-  
-  const firstReview = (allReviews && allReviews.length > 0) ? allReviews[0] : null;
-  
+  // Badges liés aux avis: Contributeur (premier avis du joueur)
   // Un joueur peut avoir plusieurs avis; utiliser un COUNT fiable plutôt que maybeSingle()
   const { count: myReviewsCount } = await supabase
     .from("reviews")
@@ -242,13 +238,12 @@ export default async function BadgesPage() {
     .eq("user_id", user.id);
 
   const extraObtained = new Set<string>();
-  if (firstReview && firstReview.user_id === user.id) extraObtained.add("🛡️"); // Pionier
-  if ((myReviewsCount || 0) > 0) extraObtained.add("💬"); // Contributeur: au moins 1 avis
+  if ((myReviewsCount || 0) > 0) extraObtained.add("💬|Contributeur"); // Contributeur: au moins 1 avis
 
   // Créer la liste avec le statut de chaque badge
   let badgesWithStatus = ALL_BADGES.map((badge) => ({
     ...badge,
-    obtained: obtainedBadgeIcons.has(badge.icon) || extraObtained.has(badge.icon),
+    obtained: obtainedBadgeKeys.has(`${badge.icon}|${badge.title}`) || extraObtained.has(`${badge.icon}|${badge.title}`),
   }));
   // Mettre le badge Contributeur en premier pour qu'il apparaisse sur la première ligne
   badgesWithStatus = badgesWithStatus.sort((a, b) => {
@@ -314,7 +309,7 @@ export default async function BadgesPage() {
         {obtainedCount < ALL_BADGES.length && (
           <div className="text-center">
             <Link href="/match/new" className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-6 py-3 border-2 border-white/30 hover:bg-white/25 hover:translate-y-[-1px] transition-all cursor-pointer">
-              <span className="text-base">🎾</span>
+              <BadgeIconDisplay icon="🎾" size={20} className="flex-shrink-0" />
               <span className="text-sm font-semibold text-white">
                 Jouez des matchs pour débloquer de nouveaux badges !
               </span>
@@ -326,8 +321,8 @@ export default async function BadgesPage() {
       {/* Badges de challenges */}
       {challengeBadges && challengeBadges.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-4">
-            <span>🏆</span>
+          <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+            <Image src="/images/Trophée page badges.png" alt="Trophée" width={24} height={24} className="flex-shrink-0" unoptimized />
             <span>Badges de Challenges</span>
           </h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -360,8 +355,8 @@ export default async function BadgesPage() {
 
       {/* Grille des badges standards */}
       <div className="mb-4">
-        <h2 className="text-2xl font-semibold text-white mb-4">
-          <span>🎯</span>
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <BadgeIconDisplay icon="🎯" size={24} className="flex-shrink-0" />
           <span>Badges Standards</span>
         </h2>
       </div>
@@ -375,26 +370,34 @@ export default async function BadgesPage() {
                 : "border-gray-200 bg-gray-50 opacity-75"
             }`}
           >
-            <div className="mb-3 flex flex-col items-center gap-3 flex-1">
-              <span
-                className={`text-4xl transition-all ${
+            {/* Icône - hauteur fixe */}
+            <div className="flex-shrink-0 mb-3 h-[48px] flex items-center justify-center">
+              <BadgeIconDisplay
+                icon={badge.icon}
+                title={badge.title}
+                className={`transition-all ${
                   badge.obtained ? "" : "grayscale opacity-50"
                 }`}
-              >
-                {badge.icon}
-              </span>
-              <div className="flex-1">
-                <h3 className={`text-sm font-semibold leading-tight ${badge.obtained ? "text-gray-900" : "text-gray-500"}`}>
-                  {badge.title}
-                </h3>
-                <p className="mt-1 text-xs leading-relaxed text-gray-600">{badge.description}</p>
-              </div>
+                size={48}
+              />
             </div>
-            <div className="mt-auto w-full h-[32px] flex items-center justify-center">
-              {badge.obtained && (
+            
+            {/* Zone texte - hauteur limitée pour éviter l'empiètement */}
+            <div className="flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-2 px-1">
+              <h3 className={`text-sm font-semibold leading-tight mb-1 text-center ${badge.obtained ? "text-gray-900" : "text-gray-500"}`}>
+                {badge.title}
+              </h3>
+              <p className="text-xs leading-relaxed text-gray-600 text-center line-clamp-2">{badge.description}</p>
+            </div>
+            
+            {/* Zone statut - hauteur fixe en bas, toujours présente pour alignement */}
+            <div className="flex-shrink-0 w-full h-[32px] flex items-center justify-center mt-auto">
+              {badge.obtained ? (
                 <div className="w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
                   ✓ Débloqué
                 </div>
+              ) : (
+                <div className="w-full h-[32px]" />
               )}
             </div>
           </div>

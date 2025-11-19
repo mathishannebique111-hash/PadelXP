@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import type { AccentPalette } from "./ClubHeader";
 
 type OpeningHoursValue = {
@@ -112,7 +113,20 @@ export default function ClubDetailsClient({
           <div className="mt-5 space-y-4 text-sm">
             {addressLine ? (
               <div className="flex flex-col items-center gap-1 text-center">
-                <span className="text-lg">📍</span>
+                <div 
+                  className="inline-flex items-center justify-center bg-white rounded-full"
+                  style={{ mixBlendMode: 'screen' }}
+                >
+                  <Image 
+                    src="/images/Gps page mon club.gif" 
+                    alt="GPS" 
+                    width={20} 
+                    height={20} 
+                    className="flex-shrink-0"
+                    style={{ mixBlendMode: 'multiply' }}
+                    unoptimized
+                  />
+                </div>
                 <span className="font-medium leading-5 text-white/90">{addressLine}</span>
               </div>
             ) : (
@@ -122,7 +136,14 @@ export default function ClubDetailsClient({
             )}
             {phone ? (
               <div className="flex flex-col items-center gap-1 text-center">
-                <span className="text-lg">📞</span>
+                <Image 
+                  src="/images/Téléphone page mon club.png" 
+                  alt="Téléphone" 
+                  width={20} 
+                  height={20} 
+                  className="flex-shrink-0"
+                  unoptimized
+                />
                 <span className="font-medium tracking-wide text-white/90">{phone}</span>
               </div>
             ) : (
@@ -146,7 +167,7 @@ export default function ClubDetailsClient({
             ) : (
               infrastructure.map((item) => (
                 <div key={item.label} className="flex items-center justify-between rounded-lg border border-white/18 bg-black/25 px-3 py-2 text-white/85">
-                  <span className="uppercase tracking-[0.25em] text-white/60">{item.label}</span>
+                  <span className="uppercase tracking-[0.25em] text-white">{item.label}</span>
                   <span className="font-semibold">{item.value}</span>
                 </div>
               ))

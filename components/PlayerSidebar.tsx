@@ -46,10 +46,10 @@ export default function PlayerSidebar() {
   const menuItems: MenuItem[] = [
     { href: '/home', label: 'Profil', icon: getIconPath('Profil.png'), navKey: 'home' },
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
-    { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 10), navKey: 'history' },
-    { href: '/badges', label: 'Badges', icon: getIconPath('Badges.png', 11), navKey: 'badges' },
+    { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 12), navKey: 'history' },
+    { href: '/badges', label: 'Badges', icon: getIconPath('Badge.png', 11), navKey: 'badges' },
     { href: '/club', label: 'Mon club', icon: getIconPath('Mon club.png', 10), navKey: 'club' },
-    { href: '/challenges', label: 'Challenges', icon: getIconPath('Challenges joueur.png', 9), navKey: 'challenges' },
+    { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
   ];
@@ -117,7 +117,6 @@ export default function PlayerSidebar() {
         <nav className="p-4 pt-20 space-y-2 text-sm flex-1 h-full overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = currentPage === item.navKey;
-            const isMatchIcon = item.navKey === 'match';
             return (
               <Link
                 key={item.href}
@@ -128,19 +127,15 @@ export default function PlayerSidebar() {
                 }`}
               >
                 <div
-                  className="w-5 h-5 flex-shrink-0 flex items-center justify-center"
-                  style={{
-                    transform: isMatchIcon ? 'rotate(90deg)' : 'none',
-                    transition: 'transform 0.2s ease-in-out'
-                  }}
+                  className={`flex-shrink-0 flex items-center justify-center ${item.navKey === 'club' ? 'w-[18px] h-[18px]' : 'w-5 h-5'}`}
                 >
                   <Image
                     key={`${item.navKey}-${item.icon}`}
                     src={item.icon}
                     alt={item.label}
-                    width={20}
-                    height={20}
-                    className="w-5 h-5 object-contain"
+                    width={item.navKey === 'club' ? 18 : 20}
+                    height={item.navKey === 'club' ? 18 : 20}
+                    className={`object-contain ${item.navKey === 'club' ? 'w-[18px] h-[18px]' : 'w-5 h-5'}`}
                     unoptimized
                     style={{
                       opacity: 1,

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export default function SocialProof() {
   const testimonials = [
@@ -43,8 +44,9 @@ export default function SocialProof() {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
-            💬 CE QU'ILS DISENT DE{" "}
+          <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4 flex items-center gap-2">
+            <BadgeIconDisplay icon="💬" size={48} className="flex-shrink-0" />
+            <span>CE QU'ILS DISENT DE</span>
             <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent">
               PADEL PRO
             </span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
 export default function ProblemSolution() {
   return (
@@ -110,7 +111,9 @@ export default function ProblemSolution() {
               transition={{ duration: 0.6, delay: idx * 0.1 }}
               className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 border-2 border-[#0066FF]/30 hover:border-[#0066FF]/60 transition-all hover:shadow-[0_0_30px_rgba(0,102,255,0.3)]"
             >
-              <div className="text-5xl mb-4 text-center">{solution.emoji}</div>
+              <div className="mb-4 flex items-center justify-center">
+                <BadgeIconDisplay icon={solution.emoji} size={48} className="flex-shrink-0" />
+              </div>
               <h3 className="text-xl font-bold text-white mb-6 text-center">{solution.title}</h3>
               <ul className="space-y-3">
                 {solution.items.map((item, i) => (
