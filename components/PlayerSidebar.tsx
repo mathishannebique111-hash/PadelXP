@@ -129,15 +129,15 @@ export default function PlayerSidebar() {
                 <div
                   className={`flex-shrink-0 flex items-center justify-center ${item.navKey === 'club' ? 'w-[18px] h-[18px]' : 'w-5 h-5'}`}
                 >
-                  <Image
+                  <Image 
                     key={`${item.navKey}-${item.icon}`}
-                    src={item.icon}
-                    alt={item.label}
+                    src={item.icon} 
+                    alt={item.label} 
                     width={item.navKey === 'club' ? 18 : 20}
                     height={item.navKey === 'club' ? 18 : 20}
                     className={`object-contain ${item.navKey === 'club' ? 'w-[18px] h-[18px]' : 'w-5 h-5'}`}
                     unoptimized
-                    style={{
+                    style={{ 
                       opacity: 1,
                       imageRendering: 'crisp-edges'
                     }}

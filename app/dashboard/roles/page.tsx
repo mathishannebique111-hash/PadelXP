@@ -25,7 +25,7 @@ type Admin = {
 };
 
 export default async function RolesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

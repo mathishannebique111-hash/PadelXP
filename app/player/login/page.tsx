@@ -4,7 +4,7 @@ import EmailLoginForm from "@/components/auth/EmailLoginForm";
 import Link from "next/link";
 
 export default async function PlayerLoginPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     const { data: profile } = await supabase

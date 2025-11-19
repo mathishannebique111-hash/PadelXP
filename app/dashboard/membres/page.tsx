@@ -28,7 +28,7 @@ function formatDate(value: string | null): string {
 }
 
 export default async function MembersPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

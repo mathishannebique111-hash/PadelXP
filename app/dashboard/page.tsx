@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import InvitationCodeCard from "./InvitationCodeCard";
 import PageTitle from "./PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import Image from "next/image";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -61,7 +62,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
 }
 
 export default async function DashboardHome() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -310,7 +311,16 @@ export default async function DashboardHome() {
           // Essai actif
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-start gap-3 sm:gap-4">
-              <div className="text-2xl sm:text-3xl flex-shrink-0">🎁</div>
+              <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+                <Image
+                  src="/images/Cadeau page avis.gif"
+                  alt="Cadeau"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-contain"
+                  unoptimized
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 sm:gap-3 mb-2">
                   <span className="font-semibold text-base sm:text-lg text-white">Essai gratuit — 30 jours</span>

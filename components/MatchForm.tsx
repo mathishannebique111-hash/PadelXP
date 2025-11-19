@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import PlayerAutocomplete from "./PlayerAutocomplete";
+import Image from "next/image";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 
@@ -221,12 +221,14 @@ export default function MatchForm({
     }
   };
 
-  // Fonction pour trouver ou créer un joueur en utilisant find_or_create_player
-  const findOrCreatePlayer = async (name: string): Promise<PlayerSearchResult | null> => {
-    if (!name.trim()) return null;
+  // Fonction pour valider exactement un nom de joueur (sans création automatique)
+  const validateExactPlayer = async (name: string): Promise<{ valid: boolean; player?: PlayerSearchResult | null; error?: string }> => {
+    if (!name.trim()) {
+      return { valid: false, error: "Le nom du joueur est requis" };
+    }
     
     try {
-      const response = await fetch("/api/players/find-or-create", {
+      const response = await fetch("/api/players/validate-exact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -235,161 +237,148 @@ export default function MatchForm({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
-        console.error("Find or create API error:", response.status, response.statusText, errorData);
+        console.error("Validate exact API error:", response.status, response.statusText, errorData);
         
-        // Ne jamais afficher "Unauthorized" dans l'UI - toujours retourner null silencieusement
-        // Les erreurs 401 ne devraient pas arriver car l'API est publique
         if (response.status === 401) {
-          console.warn('Unauthorized access to find-or-create API - this should not happen with public API');
+          return { valid: false, error: "Erreur d'authentification. Veuillez vous reconnecter." };
         }
         
-        // Retourner null pour toutes les erreurs - ne pas propager le message d'erreur
-        return null;
+        const errorMessage = errorData.error || 'Erreur lors de la validation du joueur';
+        return { valid: false, error: errorMessage };
       }
 
-      const { player } = await response.json();
+      const data = await response.json();
       
-      if (!player) {
-        console.log(`No player found or created for "${name}"`);
-        return null;
+      if (!data.valid || !data.player) {
+        const errorMessage = data.error || `Aucun joueur trouvé avec le nom exact "${name.trim()}". Vérifiez l'orthographe (lettres, espaces, accents).`;
+        return { valid: false, error: errorMessage };
       }
 
-      // La fonction retourne: id, display_name, email, was_created
+      const player = data.player;
+      
       // Parser le display_name pour extraire first_name et last_name
       const nameParts = player.display_name.trim().split(/\s+/);
       const first_name = nameParts[0] || "";
       const last_name = nameParts.slice(1).join(" ") || "";
 
-      console.log(`Player found/created for "${name}":`, {
+      console.log(`Player validated for "${name}":`, {
         id: player.id,
         display_name: player.display_name,
-        was_created: player.was_created,
+        type: player.type,
       });
 
-      // Déterminer le type : si was_created est true, c'est probablement un guest
-      // Sinon, vérifier si c'est un user (présence d'email) ou un guest
-      const type: "user" | "guest" = player.email ? "user" : "guest";
+      const type: "user" | "guest" = (player.type || (player.email ? "user" : "guest")) as "user" | "guest";
 
       return {
-        id: player.id,
-        first_name,
-        last_name,
-        type,
-        display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
+        valid: true,
+        player: {
+          id: player.id,
+          first_name,
+          last_name,
+          type,
+          display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
+        },
       };
     } catch (error) {
-      console.error("Error finding or creating player:", error instanceof Error ? error.message : String(error));
-      return null;
+      console.error("Error validating exact player:", error instanceof Error ? error.message : String(error));
+      return { 
+        valid: false, 
+        error: `Erreur lors de la validation du joueur "${name.trim()}". Veuillez réessayer.` 
+      };
     }
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("🚀 Form submission started");
+    const newErrors: Record<string, string> = {};
     setErrors({});
     setLoading(true);
 
     try {
       console.log("📋 Current state:", { partnerName, opp1Name, opp2Name, selectedPlayers });
       
-      // Résoudre ou créer les joueurs
-      let partner = selectedPlayers.partner;
-      let opp1 = selectedPlayers.opp1;
-      let opp2 = selectedPlayers.opp2;
+      // Valider exactement chaque joueur (sans création automatique)
+      let partner: PlayerSearchResult | null = null;
+      let opp1: PlayerSearchResult | null = null;
+      let opp2: PlayerSearchResult | null = null;
 
-      // Pour chaque joueur non sélectionné mais avec un nom, utiliser find_or_create_player
-      if (!partner && partnerName.trim()) {
-        console.log("🔍 Resolving partner:", partnerName);
-        partner = await findOrCreatePlayer(partnerName);
-        console.log("✅ Partner resolved:", partner);
-        if (partner) {
-          setSelectedPlayers((prev) => ({ ...prev, partner }));
-        }
-      }
-
-      if (!opp1 && opp1Name.trim()) {
-        console.log("🔍 Resolving opp1:", opp1Name);
-        opp1 = await findOrCreatePlayer(opp1Name);
-        console.log("✅ Opp1 resolved:", opp1);
-        if (opp1) {
-          setSelectedPlayers((prev) => ({ ...prev, opp1 }));
-        }
-      }
-
-      if (!opp2 && opp2Name.trim()) {
-        console.log("🔍 Resolving opp2:", opp2Name);
-        opp2 = await findOrCreatePlayer(opp2Name);
-        console.log("✅ Opp2 resolved:", opp2);
-        if (opp2) {
-          setSelectedPlayers((prev) => ({ ...prev, opp2 }));
-        }
-      }
-
-      console.log("✅ All players resolved:", { partner, opp1, opp2 });
-      
-      // Validation : vérifier que les champs sont remplis
-      const fieldError: Record<string, string> = {};
-      
+      // Validation du partenaire
       if (!partnerName.trim()) {
-        fieldError.partnerName = "Indiquez un partenaire";
-      } else if (!partner) {
-        // Essayer une dernière fois avec find_or_create_player
-        console.log("🔄 Last attempt for partner:", partnerName);
-        const lastAttempt = await findOrCreatePlayer(partnerName);
-        if (!lastAttempt) {
-          console.error("❌ Failed to resolve partner:", partnerName);
-          fieldError.partnerName = `Impossible de trouver ou créer le joueur "${partnerName}". Vérifiez l'orthographe ou réessayez.`;
-        } else {
-          console.log("✅ Partner resolved on last attempt");
-          partner = lastAttempt;
+        newErrors.partnerName = "Indiquez un partenaire (prénom et nom complet)";
+      } else {
+        console.log("🔍 Validating partner:", partnerName);
+        const partnerValidation = await validateExactPlayer(partnerName);
+        if (!partnerValidation.valid) {
+          console.error("❌ Partner validation failed:", partnerValidation.error);
+          newErrors.partnerName = partnerValidation.error || `Aucun joueur trouvé avec le nom exact "${partnerName}". Vérifiez l'orthographe (lettres, espaces, accents).`;
+        } else if (partnerValidation.player) {
+          partner = partnerValidation.player;
           setSelectedPlayers((prev) => ({ ...prev, partner }));
+          console.log("✅ Partner validated:", partner);
         }
       }
-      
+
+      // Validation de l'opposant 1
       if (!opp1Name.trim()) {
-        fieldError.opp1Name = "Indiquez un joueur";
-      } else if (!opp1) {
-        console.log("🔄 Last attempt for opp1:", opp1Name);
-        const lastAttempt = await findOrCreatePlayer(opp1Name);
-        if (!lastAttempt) {
-          console.error("❌ Failed to resolve opp1:", opp1Name);
-          fieldError.opp1Name = `Impossible de trouver ou créer le joueur "${opp1Name}". Vérifiez l'orthographe.`;
-        } else {
-          console.log("✅ Opp1 resolved on last attempt");
-          opp1 = lastAttempt;
+        newErrors.opp1Name = "Indiquez un joueur (prénom et nom complet)";
+      } else {
+        console.log("🔍 Validating opp1:", opp1Name);
+        const opp1Validation = await validateExactPlayer(opp1Name);
+        if (!opp1Validation.valid) {
+          console.error("❌ Opp1 validation failed:", opp1Validation.error);
+          newErrors.opp1Name = opp1Validation.error || `Aucun joueur trouvé avec le nom exact "${opp1Name}". Vérifiez l'orthographe (lettres, espaces, accents).`;
+        } else if (opp1Validation.player) {
+          opp1 = opp1Validation.player;
           setSelectedPlayers((prev) => ({ ...prev, opp1 }));
+          console.log("✅ Opp1 validated:", opp1);
         }
       }
-      
+
+      // Validation de l'opposant 2
       if (!opp2Name.trim()) {
-        fieldError.opp2Name = "Indiquez un joueur";
-      } else if (!opp2) {
-        console.log("🔄 Last attempt for opp2:", opp2Name);
-        const lastAttempt = await findOrCreatePlayer(opp2Name);
-        if (!lastAttempt) {
-          console.error("❌ Failed to resolve opp2:", opp2Name);
-          fieldError.opp2Name = `Impossible de trouver ou créer le joueur "${opp2Name}". Vérifiez l'orthographe.`;
-        } else {
-          console.log("✅ Opp2 resolved on last attempt");
-          opp2 = lastAttempt;
+        newErrors.opp2Name = "Indiquez un joueur (prénom et nom complet)";
+      } else {
+        console.log("🔍 Validating opp2:", opp2Name);
+        const opp2Validation = await validateExactPlayer(opp2Name);
+        if (!opp2Validation.valid) {
+          console.error("❌ Opp2 validation failed:", opp2Validation.error);
+          newErrors.opp2Name = opp2Validation.error || `Aucun joueur trouvé avec le nom exact "${opp2Name}". Vérifiez l'orthographe (lettres, espaces, accents).`;
+        } else if (opp2Validation.player) {
+          opp2 = opp2Validation.player;
           setSelectedPlayers((prev) => ({ ...prev, opp2 }));
+          console.log("✅ Opp2 validated:", opp2);
         }
       }
       
       // Vérifier s'il y a des erreurs de validation
-      const errorKeys = Object.keys(fieldError);
-      const hasErrors = errorKeys.length > 0 && errorKeys.some(key => fieldError[key]);
+      const errorKeys = Object.keys(newErrors);
+      const hasErrors = errorKeys.length > 0 && errorKeys.some(key => newErrors[key]);
       
       if (hasErrors) {
         // Filtrer les erreurs vides avant de les logger
         const filteredErrors = Object.fromEntries(
-          Object.entries(fieldError).filter(([_, value]) => value)
+          Object.entries(newErrors).filter(([_, value]) => value)
         );
         console.error("❌ Validation errors:", filteredErrors);
         setErrors(filteredErrors);
         setLoading(false);
+        return; // Ne pas effacer les données du formulaire
+      }
+
+      // S'assurer que tous les joueurs sont validés
+      if (!partner || !opp1 || !opp2) {
+        console.error("❌ Some players are missing after validation");
+        setErrors({ 
+          partnerName: !partner ? "Erreur de validation du partenaire" : "",
+          opp1Name: !opp1 ? "Erreur de validation du joueur 1" : "",
+          opp2Name: !opp2 ? "Erreur de validation du joueur 2" : "",
+        });
+        setLoading(false);
         return;
       }
+
+      console.log("✅ All players validated:", { partner, opp1, opp2 });
 
       // À ce stade, on sait que tous les joueurs sont résolus (validation faite plus haut)
       // TypeScript sait que partner, opp1, opp2 sont non-null grâce à la validation
@@ -787,16 +776,19 @@ export default function MatchForm({
             <input className="w-full cursor-not-allowed rounded-md border bg-gray-100 px-4 py-3 text-sm text-gray-600" disabled value="Vous (connecté)" />
           </div>
           <div>
-            <PlayerAutocomplete
+            <label className="mb-2 block text-sm font-medium text-white">Partenaire</label>
+            <input
+              type="text"
               value={partnerName}
-              onChange={setPartnerName}
-              onSelect={(player) => {
-                setSelectedPlayers((prev) => ({ ...prev, partner: player }));
-              }}
-              error={errors.partnerName}
-              label="Partenaire"
-              placeholder="Rechercher un partenaire..."
+              onChange={(e) => setPartnerName(e.target.value)}
+              placeholder="Prénom et nom complet"
+              className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.partnerName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
             />
+            {errors.partnerName && (
+              <div className="mt-1 text-xs text-red-400">{errors.partnerName}</div>
+            )}
           </div>
         </div>
       </div>
@@ -805,28 +797,34 @@ export default function MatchForm({
         <div className="mb-3 text-base font-semibold text-white">Équipe 2</div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <PlayerAutocomplete
+            <label className="mb-2 block text-sm font-medium text-white">Joueur 1</label>
+            <input
+              type="text"
               value={opp1Name}
-              onChange={setOpp1Name}
-              onSelect={(player) => {
-                setSelectedPlayers((prev) => ({ ...prev, opp1: player }));
-              }}
-              error={errors.opp1Name}
-              label="Joueur 1"
-              placeholder="Rechercher un joueur..."
+              onChange={(e) => setOpp1Name(e.target.value)}
+              placeholder="Prénom et nom complet"
+              className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.opp1Name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
             />
+            {errors.opp1Name && (
+              <div className="mt-1 text-xs text-red-400">{errors.opp1Name}</div>
+            )}
           </div>
           <div>
-            <PlayerAutocomplete
+            <label className="mb-2 block text-sm font-medium text-white">Joueur 2</label>
+            <input
+              type="text"
               value={opp2Name}
-              onChange={setOpp2Name}
-              onSelect={(player) => {
-                setSelectedPlayers((prev) => ({ ...prev, opp2: player }));
-              }}
-              error={errors.opp2Name}
-              label="Joueur 2"
-              placeholder="Rechercher un joueur..."
+              onChange={(e) => setOpp2Name(e.target.value)}
+              placeholder="Prénom et nom complet"
+              className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.opp2Name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
             />
+            {errors.opp2Name && (
+              <div className="mt-1 text-xs text-red-400">{errors.opp2Name}</div>
+            )}
           </div>
         </div>
       </div>
@@ -844,7 +842,7 @@ export default function MatchForm({
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
               }`}
             >
-              <span className="flex items-center gap-1"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 1</span>
+              <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 1</span>
             </button>
             <button
               type="button"
@@ -855,7 +853,7 @@ export default function MatchForm({
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
               }`}
             >
-              <span className="flex items-center gap-1"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 2</span>
+              <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 2</span>
             </button>
           </div>
           {errors.winner && (
@@ -1032,7 +1030,16 @@ export default function MatchForm({
       {!loadingBoostStats && boostStats && (
         <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 backdrop-blur-sm">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 text-2xl">⚡</div>
+            <div className="flex-shrink-0 flex items-center justify-center">
+              <Image 
+                src="/images/Éclair page avis.png" 
+                alt="Éclair" 
+                width={24} 
+                height={24} 
+                className="flex-shrink-0"
+                unoptimized
+              />
+            </div>
             <div className="flex-1">
               <label className="flex cursor-pointer items-center gap-3">
                 <input

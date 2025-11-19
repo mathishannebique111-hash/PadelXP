@@ -72,7 +72,7 @@ async function calculateStreak(supabase: any, userId: string): Promise<number> {
 }
 
 export default async function BadgesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return (
@@ -98,7 +98,7 @@ export default async function BadgesPage() {
     : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
 
   let finalChallengePoints = challengePoints;
-  
+
   if (!userClubId) {
     try {
       const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
@@ -385,8 +385,8 @@ export default async function BadgesPage() {
             {/* Zone texte - hauteur limitée pour éviter l'empiètement */}
             <div className="flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-2 px-1">
               <h3 className={`text-sm font-semibold leading-tight mb-1 text-center ${badge.obtained ? "text-gray-900" : "text-gray-500"}`}>
-                {badge.title}
-              </h3>
+                  {badge.title}
+                </h3>
               <p className="text-xs leading-relaxed text-gray-600 text-center line-clamp-2">{badge.description}</p>
             </div>
             

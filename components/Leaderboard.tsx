@@ -300,14 +300,14 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
             <table className="w-full">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2" style={{ borderColor: "rgba(0,0,0,0.15)" }}>
-                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 border-r border-gray-200 tabular-nums">Rang</th>
-                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 border-r border-gray-200">Joueur</th>
-                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 border-r border-gray-200">Niveau</th>
-                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 border-r border-gray-200 tabular-nums">Points</th>
-                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 border-r border-gray-200 tabular-nums">Winrate</th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-[0.05em] text-gray-900 border-r border-gray-200 tabular-nums">Rang</th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-[0.05em] text-gray-900 border-r border-gray-200">Joueur</th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-[0.05em] text-gray-900 border-r border-gray-200">Niveau</th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-[0.05em] text-gray-900 border-r border-gray-200 tabular-nums">Points</th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-[0.05em] text-gray-900 border-r border-gray-200 tabular-nums">Winrate</th>
                   <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 border-r border-gray-200 tabular-nums">V</th>
                   <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 border-r border-gray-200 tabular-nums">D</th>
-                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-[0.05em] text-gray-700 tabular-nums">MJ</th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-[0.05em] text-gray-900 tabular-nums">MJ</th>
                 </tr>
               </thead>
               <tbody>

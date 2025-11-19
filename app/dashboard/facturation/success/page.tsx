@@ -186,7 +186,7 @@ async function SuccessContent({ searchParams }: { searchParams: Promise<{ sessio
   const params = await searchParams;
   const sessionId = params?.session_id;
   
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

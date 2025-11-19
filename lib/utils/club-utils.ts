@@ -131,7 +131,7 @@ export type ClubLeaderboardRow = {
 };
 
 export async function getUserClubInfo(): Promise<ClubInfo> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError) {

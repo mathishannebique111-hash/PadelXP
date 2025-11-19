@@ -34,11 +34,11 @@ export default function RankBadge({ rank, size = "md", className = "" }: RankBad
       shadowColor: "rgba(249,115,22,0.4)",
     },
     default: {
-      gradient: "from-gray-900 via-gray-800 to-black",
-      border: "border-gray-700/50",
-      glow: "shadow-[0_0_15px_rgba(0,0,0,0.5)]",
-      bgPattern: "bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent_50%)]",
-      shadowColor: "rgba(0,0,0,0.5)",
+      gradient: "from-[#1A3A6E] via-[#1E4280] to-[#1A3A6E]",
+      border: "border-blue-500/50",
+      glow: "shadow-[0_0_15px_rgba(26,58,110,0.7)]",
+      bgPattern: "bg-[radial-gradient(circle_at_30%_20%,rgba(0,102,255,0.25),transparent_50%)]",
+      shadowColor: "rgba(26,58,110,0.7)",
     },
   };
 

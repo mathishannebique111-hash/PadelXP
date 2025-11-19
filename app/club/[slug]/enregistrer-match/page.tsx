@@ -10,7 +10,7 @@ export default function ClubRecordMatchPage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug || "";
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [userId, setUserId] = useState<string | null>(null);
   const [clubId, setClubId] = useState<string | null>(null);

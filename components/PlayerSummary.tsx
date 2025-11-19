@@ -22,7 +22,7 @@ const supabaseAdmin = createAdminClient(
 );
 
 export default async function PlayerSummary({ profileId }: { profileId: string }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   // Récupérer le club_id ET les points de challenges du joueur (utiliser admin pour bypass RLS)
   const { data: playerProfile } = await supabaseAdmin
@@ -583,7 +583,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
                 >
                   <span className="shimmer-layer" />
                   <span className="relative z-10 flex items-center gap-1">
-                    <BadgeIconDisplay icon={b.icon} size={16} className="flex-shrink-0" />
+                    <BadgeIconDisplay icon={b.icon} title={b.title} size={16} className="flex-shrink-0" />
                     <span>{b.title}</span>
                   </span>
                 </span>

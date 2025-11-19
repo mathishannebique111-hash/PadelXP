@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 import ClientLogout from './ClientLogout';
 
 export default function MobileMenu() {
@@ -27,17 +28,16 @@ export default function MobileMenu() {
   }, [isOpen]);
 
   const menuItems = [
-    { href: '/dashboard', label: 'Accueil', icon: '🏠' },
-    { href: '/dashboard/membres', label: 'Membres', icon: '👥' },
-    { href: '/dashboard/classement', label: 'Classement', icon: '🏆' },
-    { href: '/dashboard/historique', label: 'Historique des matchs', icon: '📊' },
-    { href: '/dashboard/page-club', label: 'Page publique du club', icon: '🌐' },
-    { href: '/dashboard/challenges', label: 'Challenges', icon: '⚔️' },
-    { href: '/dashboard/medias', label: 'Médias', icon: '📸' },
-    { href: '/dashboard/roles', label: 'Rôles et accès', icon: '👑' },
-    { href: '/dashboard/facturation', label: 'Facturation & essai', icon: '💳' },
-    { href: '/dashboard/import-export', label: 'Import / Export', icon: '📥' },
-    { href: '/dashboard/aide', label: 'Aide & Support', icon: '❓' },
+    { href: '/dashboard', label: 'Accueil', iconSrc: '/images/Accueil club.png' },
+    { href: '/dashboard/membres', label: 'Membres', iconSrc: '/images/Membres club.png' },
+    { href: '/dashboard/classement', label: 'Classement', iconSrc: '/images/Classement club.png' },
+    { href: '/dashboard/historique', label: 'Historique des matchs', iconSrc: '/images/Historique des matchs club.png' },
+    { href: '/dashboard/page-club', label: 'Page publique du club', iconSrc: '/images/Page publique du club.png' },
+    { href: '/dashboard/challenges', label: 'Challenges', iconSrc: '/images/Challenges club.png' },
+    { href: '/dashboard/roles', label: 'Rôles et accès', iconSrc: '/images/Role et accés club.png' },
+    { href: '/dashboard/facturation', label: 'Facturation & essai', iconSrc: '/images/Facturation et essai club.png' },
+    { href: '/dashboard/import-export', label: 'Import / Export', iconSrc: '/images/Import club.png' },
+    { href: '/dashboard/aide', label: 'Aide & Support', iconSrc: '/images/Aide et support club.png' },
   ];
 
   return (
@@ -99,8 +99,19 @@ export default function MobileMenu() {
                   isActive ? 'from-blue-500/20 to-indigo-600/20 border-blue-400/40' : ''
                 }`}
               >
-                <span className="flex items-center gap-2 font-semibold">
-                  <span>{item.icon}</span>
+                <span className="flex items-center gap-3 font-semibold">
+                  {item.iconSrc ? (
+                    <Image 
+                      src={item.iconSrc.replace(/\s/g, '%20')} 
+                      alt={item.label} 
+                      width={16} 
+                      height={16} 
+                      className="w-4 h-4 object-contain flex-shrink-0" 
+                      unoptimized 
+                    />
+                  ) : (
+                    <span className="text-base">{item.icon}</span>
+                  )}
                   <span>{item.label}</span>
                 </span>
               </Link>

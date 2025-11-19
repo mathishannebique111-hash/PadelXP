@@ -180,7 +180,7 @@ async function fetchClubRecord({
 }
 
 export default async function PlayerClubPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

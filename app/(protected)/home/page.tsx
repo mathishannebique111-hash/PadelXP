@@ -28,7 +28,7 @@ const supabaseAdmin = createAdminClient(
 );
 
 export default async function HomePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   // Vérifier d'abord la session pour éviter les déconnexions inattendues
   // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas
@@ -982,14 +982,14 @@ export default async function HomePage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Joueur</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">Niveau</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0">Points</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden md:table-cell">Winrate</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Joueur</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">Niveau</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Points</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell">Winrate</th>
                       <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
                       <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-700 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">MJ</th>
+                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">MJ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import ClientLogin from "@/app/login/ClientLogin";
 
 export default async function PlayerSignupPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     const { data: profile } = await supabase

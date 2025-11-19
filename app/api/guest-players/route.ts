@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { capitalizeFullName } from "@/lib/utils/name-utils";
 
 const createGuestSchema = z.object({
   first_name: z.string().min(1, "Le prénom est requis"),
@@ -20,7 +21,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const { first_name, last_name } = parsed.data;
+  const { first_name: rawFirstName, last_name: rawLastName } = parsed.data;
+
+  // Capitaliser automatiquement le prénom et le nom
+  const { firstName, lastName } = capitalizeFullName(rawFirstName, rawLastName);
 
   const supabase = createRouteHandlerClient({ cookies });
   const { data: { user } } = await supabase.auth.getUser();
@@ -48,8 +52,8 @@ export async function POST(req: Request) {
   const { data: existingGuest } = await serviceSupabase
     .from("guest_players")
     .select("id, first_name, last_name")
-    .eq("first_name", first_name.trim())
-    .eq("last_name", last_name.trim())
+    .eq("first_name", firstName)
+    .eq("last_name", lastName)
     .maybeSingle();
 
   if (existingGuest) {
@@ -60,10 +64,10 @@ export async function POST(req: Request) {
     });
   }
 
-  // Créer le nouveau guest
+  // Créer le nouveau guest avec les noms capitalisés
   const insertData = {
-    first_name: first_name.trim(),
-    last_name: last_name.trim(),
+    first_name: firstName,
+    last_name: lastName,
   };
 
   const { data: newGuest, error: insertError } = await serviceSupabase

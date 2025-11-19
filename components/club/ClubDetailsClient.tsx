@@ -113,20 +113,18 @@ export default function ClubDetailsClient({
           <div className="mt-5 space-y-4 text-sm">
             {addressLine ? (
               <div className="flex flex-col items-center gap-1 text-center">
-                <div 
-                  className="inline-flex items-center justify-center bg-white rounded-full"
-                  style={{ mixBlendMode: 'screen' }}
-                >
-                  <Image 
-                    src="/images/Gps page mon club.gif" 
-                    alt="GPS" 
-                    width={20} 
-                    height={20} 
-                    className="flex-shrink-0"
-                    style={{ mixBlendMode: 'multiply' }}
-                    unoptimized
-                  />
-                </div>
+                <Image 
+                  src="/images/Gps page mon club.png" 
+                  alt="GPS" 
+                  width={20} 
+                  height={20} 
+                  className="flex-shrink-0"
+                  style={{ 
+                    mixBlendMode: 'screen',
+                    filter: 'contrast(1.2) brightness(1.1)'
+                  }}
+                  unoptimized
+                />
                 <span className="font-medium leading-5 text-white/90">{addressLine}</span>
               </div>
             ) : (

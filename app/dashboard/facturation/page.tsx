@@ -11,7 +11,7 @@ type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" |
 type PlanType = "monthly" | "quarterly" | "annual" | null;
 
 export default async function BillingPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

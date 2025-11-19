@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { capitalizeFullName } from "@/lib/utils/name-utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -84,14 +85,23 @@ export async function POST(req: Request) {
       .eq("id", user.id)
       .maybeSingle();
 
-    const normalizedDisplayName = (displayName || existingProfile?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Joueur").trim();
-    const normalizedFirst = (firstName || existingProfile?.first_name || user.user_metadata?.first_name || normalizedDisplayName.split(' ')[0]).trim();
-    const normalizedLast = (lastName || existingProfile?.last_name || user.user_metadata?.last_name || normalizedDisplayName.split(' ').slice(1).join(' ')).trim();
+    // Récupérer les valeurs brutes
+    const rawDisplayName = (displayName || existingProfile?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Joueur").trim();
+    const rawFirst = (firstName || existingProfile?.first_name || user.user_metadata?.first_name || rawDisplayName.split(' ')[0] || "").trim();
+    const rawLast = (lastName || existingProfile?.last_name || user.user_metadata?.last_name || rawDisplayName.split(' ').slice(1).join(' ') || "").trim();
+    
+    // Capitaliser automatiquement le prénom et le nom
+    const { firstName: normalizedFirst, lastName: normalizedLast } = capitalizeFullName(rawFirst, rawLast);
     const normalizedEmail = email || existingProfile?.email || user.email || null;
+    
+    // Reconstruire le display_name avec les noms capitalisés
+    const finalDisplayName = normalizedFirst && normalizedLast 
+      ? `${normalizedFirst} ${normalizedLast}`.trim()
+      : normalizedFirst || normalizedLast || rawDisplayName;
 
     const upsertPayload = {
       id: user.id,
-      display_name: normalizedDisplayName,
+      display_name: finalDisplayName,
       first_name: normalizedFirst || null,
       last_name: normalizedLast || null,
       email: normalizedEmail,

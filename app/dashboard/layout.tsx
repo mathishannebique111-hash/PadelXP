@@ -19,7 +19,7 @@ const supabaseAdmin =
     : null;
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   // Vérifier d'abord la session pour éviter les déconnexions inattendues
   // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas

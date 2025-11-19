@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { capitalizeFullName } from '@/lib/utils/name-utils';
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,10 +94,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Aucun joueur inscrit trouvé: créer un joueur invité unique
-    const { firstName, lastName } = splitName(playerName);
-    if (!firstName) {
+    const { firstName: rawFirstName, lastName: rawLastName } = splitName(playerName);
+    if (!rawFirstName) {
       return NextResponse.json({ error: 'Nom du joueur invalide' }, { status: 400 });
     }
+
+    // Capitaliser automatiquement le prénom et le nom
+    const { firstName, lastName } = capitalizeFullName(rawFirstName, rawLastName || '');
 
     const { data: guest, error: guestError } = await supabaseAdmin
       .from('guest_players')

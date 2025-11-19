@@ -8,7 +8,7 @@ import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 export const dynamic = "force-dynamic";
 
 export default async function BoostPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

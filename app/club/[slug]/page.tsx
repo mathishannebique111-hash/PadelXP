@@ -14,7 +14,7 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   : null;
 
 async function getClubData(slug: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   // Essayer d'abord avec admin client
   if (supabaseAdmin) {

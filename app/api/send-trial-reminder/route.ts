@@ -10,8 +10,10 @@ export async function POST(request: Request) {
 
   const { email, clubName, daysLeft } = await request.json();
 
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'PadelXP <noreply@padelleague.com>';
+  
   const { data, error } = await resend.emails.send({
-    from: 'PadelXP <onboarding@resend.dev>',
+    from: fromEmail,
     to: email,
     subject: `Il reste ${daysLeft} jour${daysLeft > 1 ? 's' : ''} à votre essai PadelXP`,
     html: `

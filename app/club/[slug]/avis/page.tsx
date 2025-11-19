@@ -18,7 +18,7 @@ export default function ClubReviewsPage() {
     (async () => {
       setLoading(true);
       try {
-        const supabase = createClient();
+        const supabase = await createClient();
         // Récupérer les données du club
         const { data: club } = await supabase
           .from("clubs")

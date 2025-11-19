@@ -15,7 +15,7 @@ const supabaseAdmin = createAdminClient(
 );
 
 export default async function PlayerClubLogo() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -84,10 +84,10 @@ export default async function PlayerClubLogo() {
       if (adminError) {
         console.warn("[PlayerClubLogo] Error fetching user metadata:", adminError.message || adminError);
       } else {
-        const metadata = adminUser?.user?.user_metadata;
-        
-        if (metadata?.club_logo_url && typeof metadata.club_logo_url === 'string' && metadata.club_logo_url.trim() !== '') {
-          logoUrl = metadata.club_logo_url;
+      const metadata = adminUser?.user?.user_metadata;
+      
+      if (metadata?.club_logo_url && typeof metadata.club_logo_url === 'string' && metadata.club_logo_url.trim() !== '') {
+        logoUrl = metadata.club_logo_url;
         }
       }
     } catch (error) {
@@ -95,7 +95,7 @@ export default async function PlayerClubLogo() {
       if (error instanceof Error && error.message.includes('fetch failed')) {
         // Erreur réseau ou configuration - on ignore gracieusement
       } else {
-        console.warn("[PlayerClubLogo] Error fetching user metadata:", error);
+      console.warn("[PlayerClubLogo] Error fetching user metadata:", error);
       }
     }
   }
@@ -135,7 +135,7 @@ export default async function PlayerClubLogo() {
     } catch (error) {
       // Ignorer gracieusement les erreurs - ce n'est pas critique
       if (!(error instanceof Error && error.message.includes('fetch failed'))) {
-        console.warn("[PlayerClubLogo] Error fetching admin metadata:", error);
+      console.warn("[PlayerClubLogo] Error fetching admin metadata:", error);
       }
     }
   }
@@ -157,11 +157,11 @@ export default async function PlayerClubLogo() {
         zIndex: 100,
       } as React.CSSProperties}
     >
-      <img
-        src={publicLogoUrl}
-        alt="Logo du club"
+        <img
+          src={publicLogoUrl}
+          alt="Logo du club"
         className="h-12 w-12 sm:h-14 sm:w-14 lg:h-20 lg:w-20 rounded-full object-cover"
-      />
+        />
     </div>
   );
 }

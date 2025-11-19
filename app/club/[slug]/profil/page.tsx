@@ -4,7 +4,7 @@ import HomePage from "@/app/(protected)/home/page";
 
 export default async function ClubProfilPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 

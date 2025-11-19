@@ -4,6 +4,7 @@ import { getUserClubInfo, getClubDashboardData, getClubMatchHistory } from "@/li
 import RankBadge from "@/components/RankBadge";
 import TierBadge from "@/components/TierBadge";
 import PageTitle from "../PageTitle";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -17,7 +18,7 @@ function tierForPoints(points: number): "Bronze" | "Argent" | "Or" | "Diamant" |
 }
 
 export default async function ClassementPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -71,7 +72,14 @@ export default async function ClassementPage() {
             style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
-            <span aria-hidden>📊</span>
+            <Image
+              src="/images/Historique des matchs joueur.png"
+              alt="Historique"
+              width={16}
+              height={16}
+              className="relative w-4 h-4 object-contain flex-shrink-0"
+              unoptimized
+            />
             <span className="relative">{totalMatches} match{totalMatches > 1 ? "s" : ""} comptabilisé{totalMatches > 1 ? "s" : ""}</span>
           </span>
         </div>
@@ -82,7 +90,7 @@ export default async function ClassementPage() {
           <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
             <span className="h-px w-12 sm:w-16 md:w-24 bg-white/20" />
             <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/20 bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
-              Top joueurs du moment <span aria-hidden>✨</span>
+              Top joueurs du moment
             </span>
             <span className="h-px w-12 sm:w-16 md:w-24 bg-white/20" />
           </div>
@@ -254,7 +262,7 @@ export default async function ClassementPage() {
             <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
               <span className="h-px w-12 sm:w-16 md:w-24 bg-white/20" />
               <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/20 bg-white/10 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
-                Classement global <span aria-hidden>🏆</span>
+                Classement global
               </span>
               <span className="h-px w-12 sm:w-16 md:w-24 bg-white/20" />
             </div>

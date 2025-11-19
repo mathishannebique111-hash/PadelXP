@@ -196,7 +196,7 @@ export default function BoostPurchaseButton({
             </h3>
 
             {/* Badge "1 offert !" uniquement pour le pack 10 */}
-            {offerText && (
+                {offerText && (
               <div className="mx-auto mb-2 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#BFFF00] to-[#9FDF00] text-xs sm:text-sm font-bold text-gray-900 animate-pulse flex-shrink-0" style={{ animationDuration: '2s' }}>
                 🎁 {offerText}
               </div>

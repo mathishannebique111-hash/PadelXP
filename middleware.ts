@@ -13,10 +13,11 @@ export async function middleware(req: NextRequest) {
     ? pathname.slice(0, -1) 
     : pathname;
 
-  // 2) Laisser passer le cron et l'API d'email aussi par sécurité
+  // 2) Laisser passer le cron, l'API d'email et les webhooks aussi par sécurité
   if (
     normalizedPathname.startsWith("/api/cron/trial-check") ||
-    normalizedPathname.startsWith("/api/send-trial-reminder")
+    normalizedPathname.startsWith("/api/send-trial-reminder") ||
+    normalizedPathname.startsWith("/api/webhooks/")
   ) {
     return NextResponse.next();
   }

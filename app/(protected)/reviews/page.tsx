@@ -22,7 +22,7 @@ const supabaseAdmin = createAdminClient(
 
 export default async function ReviewsPage() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return (

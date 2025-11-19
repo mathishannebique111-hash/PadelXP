@@ -77,7 +77,7 @@ export default async function PlayerChallengesPage() {
   }
 
   // Récupérer les points et badges de challenges
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   let challengePoints = 0;
