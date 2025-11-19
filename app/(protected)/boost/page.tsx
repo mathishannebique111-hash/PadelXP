@@ -126,7 +126,7 @@ export default async function BoostPage() {
             priceId={BOOST_PRICE_IDS.x10}
             price={BOOST_PRICES.x10}
             isFeatured={true}
-            offerText="1 offert !"
+            offerText="1 boost GRATUIT inclus !"
             oldPrice={7.89}
           />
           
@@ -136,6 +136,17 @@ export default async function BoostPage() {
             priceId={BOOST_PRICE_IDS.x5}
             price={BOOST_PRICES.x5}
           />
+        </div>
+
+        {/* Section garantie et réassurance */}
+        <div className="mt-6 sm:mt-8 text-center">
+          <div className="flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm text-white/80 font-normal">
+            <span>✅ Paiement sécurisé par Stripe</span>
+            <span>·</span>
+            <span>Disponible immédiatement</span>
+            <span>·</span>
+            <span>Aucun abonnement</span>
+          </div>
         </div>
       </div>
 
@@ -187,17 +198,6 @@ export default async function BoostPage() {
             </div>
           </li>
         </ul>
-        </div>
-
-        {/* Section garantie et réassurance */}
-        <div className="mt-8 sm:mt-10 text-center">
-          <div className="flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm text-white/60">
-            <span>✅ Paiement sécurisé par Stripe</span>
-            <span>·</span>
-            <span>Disponible immédiatement</span>
-            <span>·</span>
-            <span>Aucun abonnement</span>
-          </div>
         </div>
       </div>
     </div>
