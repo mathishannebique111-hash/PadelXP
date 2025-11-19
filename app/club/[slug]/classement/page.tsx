@@ -24,7 +24,7 @@ export default function ClubClassementPage() {
     (async () => {
       setLoading(true);
       try {
-        const supabase = await createClient();
+        const supabase = createClient();
         
         // Récupérer les données du club
         const { data: club } = await supabase

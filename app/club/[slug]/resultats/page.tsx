@@ -29,7 +29,7 @@ export default function ClubResultatsPage() {
     (async () => {
       setLoading(true);
       try {
-        const supabase = await createClient();
+        const supabase = createClient();
         
         // Récupérer le club_id et les données du club
         let clubId: string | null = null;

@@ -18,7 +18,7 @@ export default function ClubBadgesPage() {
 
   useEffect(() => {
     (async () => {
-      const supabase = await createClient();
+      const supabase = createClient();
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id || null;
       setUserId(uid);
