@@ -17,7 +17,8 @@ export async function middleware(req: NextRequest) {
   if (
     normalizedPathname.startsWith("/api/cron/trial-check") ||
     normalizedPathname.startsWith("/api/send-trial-reminder") ||
-    normalizedPathname.startsWith("/api/webhooks/")
+    normalizedPathname.startsWith("/api/webhooks/") ||
+    normalizedPathname === "/api/resend-inbound"
   ) {
     return NextResponse.next();
   }
