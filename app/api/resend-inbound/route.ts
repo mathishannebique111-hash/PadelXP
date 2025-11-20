@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { extractReplyContent } from "@/lib/utils/email-utils";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 const FORWARD_TO = process.env.FORWARD_TO_EMAIL!; // contactpadelxp@gmail.com
@@ -285,8 +286,8 @@ export async function POST(req: NextRequest) {
         if (existingMessage) {
           console.log("Reply message already exists, skipping:", messageId);
         } else {
-          // Extraire le texte du message
-          const messageText = text.trim() || (html ? html.replace(/<[^>]*>/g, '').trim() : '');
+          // Extraire uniquement le contenu de la réponse, sans les citations
+          const messageText = extractReplyContent(text, html);
           
           if (messageText) {
             // Enregistrer la réponse dans la DB
