@@ -208,9 +208,11 @@ export async function POST(request: NextRequest) {
           fullError: JSON.stringify(convError, null, 2),
         });
         
-        // Si c'est une erreur de contrainte, donner plus de détails
+        // Gérer les différents types d'erreurs
         let errorMessage = convError.message || 'Erreur inconnue';
-        if (convError.code === '23503') {
+        if (convError.code === '42P01' || convError.message?.includes('does not exist') || convError.message?.includes('schema cache')) {
+          errorMessage = `La table 'support_conversations' n'existe pas. Veuillez exécuter le script SQL 'create_support_chat_system.sql' dans Supabase SQL Editor.`;
+        } else if (convError.code === '23503') {
           errorMessage = `Erreur de référence: Le club ou l'utilisateur spécifié n'existe pas.`;
         } else if (convError.code === '23505') {
           errorMessage = `Une conversation existe déjà pour ce club et cet utilisateur.`;

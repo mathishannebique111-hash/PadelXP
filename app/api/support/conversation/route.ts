@@ -70,6 +70,16 @@ export async function GET(request: NextRequest) {
 
     if (convError) {
       console.error('[support-conversation] Error fetching conversation:', convError);
+      
+      // Si la table n'existe pas, retourner un résultat vide plutôt qu'une erreur
+      if (convError.code === '42P01' || convError.message?.includes('does not exist') || convError.message?.includes('schema cache')) {
+        console.warn('[support-conversation] Table support_conversations does not exist. Please run create_support_chat_system.sql');
+        return NextResponse.json({ 
+          conversation: null,
+          messages: []
+        });
+      }
+      
       return NextResponse.json({ 
         error: 'Erreur lors de la récupération de la conversation',
         conversation: null,
@@ -89,6 +99,10 @@ export async function GET(request: NextRequest) {
 
       if (messagesError) {
         console.error('[support-conversation] Error fetching messages:', messagesError);
+        // Si la table n'existe pas, retourner un tableau vide
+        if (messagesError.code === '42P01' || messagesError.message?.includes('does not exist') || messagesError.message?.includes('schema cache')) {
+          messages = [];
+        }
       } else {
         messages = conversationMessages || [];
       }
