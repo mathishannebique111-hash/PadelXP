@@ -129,9 +129,9 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Utiliser le domaine par défaut de Resend si aucun domaine personnalisé n'est configuré
-    // Le domaine par défaut de Resend est "onboarding@resend.dev" ou "delivered@resend.dev"
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'PadelXP <onboarding@resend.dev>';
+    // Utiliser une adresse "from" avec le domaine vérifié updates.padelxp.eu
+    // Si RESEND_FROM_EMAIL est configuré, l'utiliser, sinon utiliser le domaine vérifié
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'PadelXP Support <support@updates.padelxp.eu>';
 
     console.log('[contact] Attempting to send email:', {
       from: fromEmail,
@@ -310,11 +310,22 @@ export async function POST(request: NextRequest) {
     if (emailResult.error) {
       console.error('[contact] Resend API error:', JSON.stringify(emailResult.error, null, 2));
       
-      // Gérer l'erreur spécifique du domaine non vérifié
+      // Gérer les erreurs spécifiques
       let errorMessage = emailResult.error.message || JSON.stringify(emailResult.error);
+      
+      // Si l'erreur concerne les emails de test, c'est que le domaine n'est pas vérifié ou mal configuré
       if (errorMessage.includes('testing emails') || errorMessage.includes('verify a domain')) {
-        errorMessage = `Le domaine ${INBOUND_EMAIL.split('@')[1]} n'est pas vérifié sur Resend. Veuillez vérifier le domaine sur resend.com/domains ou contacter l'administrateur.`;
+        const domain = INBOUND_EMAIL.split('@')[1];
+        errorMessage = `Configuration Resend : Le domaine ${domain} doit être vérifié ET l'adresse "from" doit utiliser ce domaine. Vérifiez que "support@${domain}" est configuré dans Resend ou configurez RESEND_FROM_EMAIL avec une adresse du domaine vérifié.`;
       }
+      
+      // Logger l'erreur complète pour debug
+      console.error('[contact] Resend API error details:', {
+        error: emailResult.error,
+        fromEmail,
+        to: INBOUND_EMAIL,
+        hasResendFromEmail: !!process.env.RESEND_FROM_EMAIL,
+      });
       
       return NextResponse.json({ 
         error: `Erreur lors de l'envoi: ${errorMessage}`,
