@@ -180,6 +180,7 @@ export async function POST(request: NextRequest) {
       console.log('[contact] Using existing conversation:', conversationId);
     } else {
       // Créer une nouvelle conversation
+      const now = new Date().toISOString();
       const { data: newConversation, error: convError } = await supabaseAdmin
         .from('support_conversations')
         .insert({
@@ -189,14 +190,35 @@ export async function POST(request: NextRequest) {
           club_name: clubName,
           subject: `Message de contact - ${clubName}`,
           status: 'open',
+          last_message_at: now,
+          created_at: now,
         })
         .select('id')
         .single();
 
-      if (convError || !newConversation) {
-        console.error('[contact] Error creating conversation:', convError);
+      if (convError) {
+        console.error('[contact] Error creating conversation:', {
+          error: convError,
+          errorMessage: convError.message,
+          errorDetails: convError.details,
+          errorHint: convError.hint,
+          errorCode: convError.code,
+          clubId,
+          userId: user.id,
+          userEmail,
+          clubName,
+        });
         return NextResponse.json({ 
-          error: 'Erreur lors de la création de la conversation' 
+          error: `Erreur lors de la création de la conversation: ${convError.message || 'Erreur inconnue'}`,
+          details: convError.details,
+          code: convError.code,
+        }, { status: 500 });
+      }
+
+      if (!newConversation) {
+        console.error('[contact] Conversation created but no data returned');
+        return NextResponse.json({ 
+          error: 'Erreur lors de la création de la conversation: aucune donnée retournée' 
         }, { status: 500 });
       }
 
