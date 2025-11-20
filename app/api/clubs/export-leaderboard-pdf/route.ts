@@ -66,11 +66,11 @@ export async function GET() {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
       background: linear-gradient(135deg, #121212 0%, #1E1E1E 100%);
       color: #fff;
-      padding: 10px 15px;
+      padding: 15px 10px;
       min-height: 100vh;
     }
     .container {
-      max-width: 1200px;
+      max-width: 100%;
       margin: 0 auto;
     }
     
@@ -80,7 +80,7 @@ export async function GET() {
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 12px;
     }
     .title-wrapper {
@@ -89,22 +89,22 @@ export async function GET() {
       gap: 12px;
     }
     .title-bar {
-      width: 6px;
+      width: 4px;
       border-radius: 9999px;
       background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.3));
     }
     .title-box {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      border-radius: 12px;
+      gap: 6px;
+      border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.05);
       backdrop-filter: blur(4px);
-      padding: 8px 16px;
+      padding: 4px 10px;
     }
     .title {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
       color: #fff;
       letter-spacing: -0.025em;
@@ -114,14 +114,14 @@ export async function GET() {
     .stats {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 8px;
     }
     .stat-badge {
       position: relative;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 9999px;
       background: linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%);
       border: 1px solid rgba(255,255,255,0.1);
@@ -143,24 +143,24 @@ export async function GET() {
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .top3-title-wrapper::before,
     .top3-title-wrapper::after {
       content: '';
       height: 1px;
-      width: 60px;
+      width: 40px;
       background: rgba(255,255,255,0.2);
     }
     .top3-title {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 3px 10px;
+      gap: 4px;
+      padding: 2px 8px;
       border-radius: 9999px;
       border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.1);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: #fff;
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
@@ -169,13 +169,13 @@ export async function GET() {
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
     }
     
-    /* Podium cards - reduced size for single page */
+    /* Podium cards - exact same as page */
     .podium-card {
-      border-radius: 12px;
+      border-radius: 16px;
       text-align: center;
       position: relative;
       overflow: visible;
@@ -183,27 +183,27 @@ export async function GET() {
     .podium-2 {
       flex: 1;
       max-width: 140px;
-      padding: 16px 12px;
+      padding: 12px 8px;
       border: 3px solid rgba(148, 163, 184, 0.8);
-      min-height: 160px;
+      min-height: 140px;
       background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
     .podium-1 {
-      flex: 1.15;
+      flex: 1.2;
       max-width: 160px;
-      padding: 18px 14px;
+      padding: 14px 10px;
       border: 3px solid rgba(234, 179, 8, 0.8);
-      min-height: 180px;
+      min-height: 160px;
       background: linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44);
       box-shadow: 0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6);
     }
     .podium-3 {
       flex: 1;
       max-width: 140px;
-      padding: 16px 12px;
+      padding: 12px 8px;
       border: 3px solid rgba(234, 88, 12, 0.8);
-      min-height: 160px;
+      min-height: 140px;
       background: linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
@@ -235,14 +235,14 @@ export async function GET() {
       text-align: center;
       position: relative;
       z-index: 10;
-      padding-top: 10px;
+      padding-top: 8px;
     }
     .podium-name {
       font-weight: 800;
       color: #111827;
       letter-spacing: -0.025em;
       text-align: center;
-      line-height: 1.2;
+      line-height: 1.1;
       margin-bottom: 8px;
     }
     .podium-2 .podium-name {
@@ -259,7 +259,7 @@ export async function GET() {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 8px;
+      margin-top: 6px;
     }
     .podium-points {
       display: inline-flex;
@@ -279,19 +279,19 @@ export async function GET() {
       padding: 3px 10px;
       border-color: #71717a;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 0 0 2px rgba(212, 212, 216, 0.5);
-      font-size: 12px;
+      font-size: 11px;
     }
     .podium-1 .podium-points {
       padding: 4px 12px;
       border-color: #eab308;
       box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35), 0 0 0 2px rgba(234, 179, 8, 0.5);
-      font-size: 14px;
+      font-size: 13px;
     }
     .podium-3 .podium-points {
       padding: 3px 10px;
       border-color: #f97316;
       box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25), 0 0 0 2px rgba(251, 146, 60, 0.5);
-      font-size: 12px;
+      font-size: 11px;
     }
     .podium-points-label {
       font-size: 7px;
@@ -309,9 +309,9 @@ export async function GET() {
       color: #374151;
     }
     
-    /* Leaderboard section - reduced for single page */
+    /* Leaderboard section - exact same as page */
     .leaderboard-section {
-      margin-top: 10px;
+      margin-top: 12px;
     }
     .leaderboard-header {
       padding: 8px 10px;
@@ -327,24 +327,24 @@ export async function GET() {
     .leaderboard-title-wrapper::after {
       content: '';
       height: 1px;
-      width: 60px;
+      width: 40px;
       background: rgba(255,255,255,0.2);
     }
     .leaderboard-title {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 3px 10px;
+      gap: 4px;
+      padding: 2px 8px;
       border-radius: 9999px;
       border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.1);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: #fff;
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .table-wrapper {
-      border-radius: 16px;
+      border-radius: 12px;
       overflow: hidden;
       border: 3px solid #cbd5e1;
       background: #fff;
@@ -359,7 +359,7 @@ export async function GET() {
       background: #f1f5f9;
     }
     th {
-      padding: 6px 8px;
+      padding: 6px 4px;
       text-align: center;
       font-size: 9px;
       font-weight: 600;
@@ -379,9 +379,9 @@ export async function GET() {
       border-bottom: none;
     }
     td {
-      padding: 6px 8px;
+      padding: 6px 4px;
       text-align: center;
-      font-size: 9px;
+      font-size: 10px;
       color: #1e293b;
       border-left: 1px solid #e2e8f0;
     }
@@ -393,7 +393,7 @@ export async function GET() {
       color: #1e293b;
     }
     
-    /* Rank badges - reduced size */
+    /* Rank badges - EXACT style from RankBadge component */
     .rank-badge {
       display: inline-flex;
       align-items: center;
@@ -402,7 +402,7 @@ export async function GET() {
       height: 24px;
       border-radius: 50%;
       font-weight: 800;
-      font-size: 9px;
+      font-size: 10px;
       border: 2px solid;
       position: relative;
       overflow: hidden;
@@ -495,7 +495,7 @@ export async function GET() {
       letter-spacing: 0.05em;
     }
     
-    /* Tier badges - reduced size */
+    /* Tier badges - EXACT style from TierBadge component */
     .tier-badge {
       display: inline-flex;
       align-items: center;
@@ -673,7 +673,7 @@ export async function GET() {
             <div class="podium-points-wrapper">
               <div class="podium-points podium-2">
                 <span>${top3[1].points.toLocaleString()}</span>
-                <span class="podium-points-label">pts</span>
+                <span class="podium-points-label">points</span>
               </div>
             </div>
           </div>
@@ -688,7 +688,7 @@ export async function GET() {
             <div class="podium-points-wrapper">
               <div class="podium-points podium-1">
                 <span>${top3[0].points.toLocaleString()}</span>
-                <span class="podium-points-label">pts</span>
+                <span class="podium-points-label">points</span>
               </div>
             </div>
           </div>
@@ -707,7 +707,7 @@ export async function GET() {
             <div class="podium-points-wrapper">
               <div class="podium-points podium-3">
                 <span>${top3[2].points.toLocaleString()}</span>
-                <span class="podium-points-label">pts</span>
+                <span class="podium-points-label">points</span>
               </div>
             </div>
           </div>
@@ -738,7 +738,7 @@ export async function GET() {
           </tr>
         </thead>
         <tbody>
-          ${leaderboard.slice(0, 10).map((player) => {
+          ${leaderboard.map((player) => {
             const winRate = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
             const tier = tierForPoints(player.points);
             const rankClass = player.rank === 1 ? 'rank-1' : player.rank === 2 ? 'rank-2' : player.rank === 3 ? 'rank-3' : 'rank-default';
@@ -776,12 +776,12 @@ export async function GET() {
       printBackground: true,
       preferCSSPageSize: false,
       margin: {
-        top: '15px',
-        right: '15px',
-        bottom: '15px',
-        left: '15px',
+        top: '8px',
+        right: '8px',
+        bottom: '8px',
+        left: '8px',
       },
-      scale: 0.95,
+      scale: 0.85,
     });
 
     await browser.close();
