@@ -325,25 +325,18 @@ export async function POST(request: NextRequest) {
         resendFromEmailValue: process.env.RESEND_FROM_EMAIL,
       });
       
-      // Gérer les erreurs spécifiques UNIQUEMENT si le message d'erreur correspond vraiment
-      let userFriendlyMessage = errorMessage;
-      
-      // Vérifier si c'est vraiment une erreur de domaine non vérifié (pas juste un texte qui contient ces mots)
-      const isTestingEmailError = errorMessage.includes('You can only send testing emails') || 
-                                   errorMessage.includes('testing emails to your own email address');
-      
-      const isDomainVerifyError = errorMessage.includes('verify a domain at resend.com/domains') ||
-                                  errorMessage.includes('verify a domain');
-      
-      if (isTestingEmailError || isDomainVerifyError) {
-        const domain = INBOUND_EMAIL.split('@')[1];
-        userFriendlyMessage = `Configuration Resend : Le domaine ${domain} doit être vérifié ET l'adresse "from" doit utiliser ce domaine. Vérifiez que "support@${domain}" est configuré dans Resend ou configurez RESEND_FROM_EMAIL avec une adresse du domaine vérifié. Erreur originale: ${errorMessage}`;
-      }
-      
+      // Afficher directement l'erreur de Resend pour le debug
+      // Ne pas modifier le message d'erreur pour voir ce qui se passe vraiment
       return NextResponse.json({ 
-        error: `Erreur lors de l'envoi: ${userFriendlyMessage}`,
+        error: `Erreur lors de l'envoi: ${errorMessage}`,
         errorDetails: emailResult.error,
         errorCode,
+        debug: {
+          fromEmail,
+          to: INBOUND_EMAIL,
+          hasResendFromEmail: !!process.env.RESEND_FROM_EMAIL,
+          resendFromEmailValue: process.env.RESEND_FROM_EMAIL?.substring(0, 50) + '...' || 'not set',
+        }
       }, { status: 500 });
     }
 
