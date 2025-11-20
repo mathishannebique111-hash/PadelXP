@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ClubHeader from "@/components/club/ClubHeader";
+import Image from "next/image";
 
 type Player = { 
   id: string; 
@@ -123,13 +124,19 @@ export default function ClubClassementPage() {
                 "bg-gradient-to-br from-gray-300 to-gray-500",
                 "bg-gradient-to-br from-orange-400 to-orange-600"
               ];
-              const medals = ["🥇", "🥈", "🥉"];
+              const medals = [
+                { src: "/images/Médaille top1.png", alt: "1ère place" },
+                { src: "/images/Médaille top2.png", alt: "2ème place" },
+                { src: "/images/Médaille top3.png", alt: "3ème place" }
+              ];
               return (
                 <div
                   key={p.id}
                   className={`${colors[idx]} rounded-xl p-6 text-center ${idx === 0 ? "order-2 md:order-2" : idx === 1 ? "order-1 md:order-1" : "order-3 md:order-3"}`}
                 >
-                  <div className="text-4xl mb-2">{medals[idx]}</div>
+                  <div className="mb-2">
+                    <Image src={medals[idx].src} alt={medals[idx].alt} width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" unoptimized />
+                  </div>
                   <div className="text-xl font-bold mb-2">{p.full_name || "Joueur"}</div>
                   <div className="bg-white/20 rounded-full px-4 py-2 inline-block">
                     <span className="font-bold">{p.points ?? 0} POINTS</span>
@@ -173,7 +180,10 @@ export default function ClubClassementPage() {
                 ) : (
                   players.map((p, idx) => {
                     const rank = idx + 1;
-                    const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+                    const medal = rank === 1 ? { type: "image", src: "/images/Médaille top1.png", alt: "1ère place" } : 
+                                  rank === 2 ? { type: "image", src: "/images/Médaille top2.png", alt: "2ème place" } : 
+                                  rank === 3 ? { type: "image", src: "/images/Médaille top3.png", alt: "3ème place" } : 
+                                  { type: "text", text: `#${rank}` };
                     // Calcul simplifié des stats (à adapter selon votre schéma)
                     const matches = 0; // TODO: calculer depuis match_participants
                     const wins = 0;
@@ -188,7 +198,13 @@ export default function ClubClassementPage() {
                     };
                     return (
                       <tr key={p.id} className="border-t border-white/5 hover:bg-white/5">
-                        <td className="px-4 py-3">{medal}</td>
+                        <td className="px-4 py-3">
+                          {medal.type === "image" ? (
+                            <Image src={medal.src} alt={medal.alt} width={24} height={24} className="w-6 h-6" unoptimized />
+                          ) : (
+                            medal.text
+                          )}
+                        </td>
                         <td className="px-4 py-3 font-medium">{p.full_name || "Joueur"}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${tierColors[tier] || tierColors.Bronze}`}>

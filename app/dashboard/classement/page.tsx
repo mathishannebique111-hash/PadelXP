@@ -104,7 +104,9 @@ export default async function ClassementPage() {
                   className="podium-silver border-2 sm:border-3 md:border-4 border-slate-400/80 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 hover:border-slate-300/90 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
                   style={{ background: "linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)", boxShadow: "0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)" }}
                 >
-                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2 text-3xl sm:text-4xl md:text-5xl z-20 opacity-90 drop-shadow-md">🥈</div>
+                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-20 opacity-90 drop-shadow-md">
+                    <Image src="/images/Médaille top2.png" alt="Médaille 2ème place" width={48} height={48} className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" unoptimized />
+                  </div>
                   <div className="text-center relative z-10 pt-3 sm:pt-4 md:pt-5">
                     <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold mb-4 sm:mb-6 md:mb-8 text-gray-900 tracking-tight">{top3[1].player_name}</h3>
                     <div className="flex items-center justify-center mt-2 sm:mt-3 md:mt-4">
@@ -126,7 +128,9 @@ export default async function ClassementPage() {
                   className="podium-gold border-2 sm:border-3 md:border-4 border-yellow-500/80 rounded-xl sm:rounded-2xl p-5 sm:p-7 md:p-9 hover:border-yellow-400/90 transition-all shadow-xl transform hover:scale-[1.02] relative overflow-hidden"
                   style={{ background: "linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)", boxShadow: "0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6)" }}
                 >
-                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2 text-3xl sm:text-4xl md:text-5xl z-20 opacity-95 drop-shadow-lg">🥇</div>
+                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-20 opacity-95 drop-shadow-lg">
+                    <Image src="/images/Médaille top1.png" alt="Médaille 1ère place" width={48} height={48} className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" unoptimized />
+                  </div>
                   <div className="text-center relative z-10 pt-4 sm:pt-5 md:pt-6">
                     <div className="absolute -top-3 sm:-top-4 -left-3 sm:-left-4 z-20">
                       <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold shadow-sm border border-yellow-300">
@@ -155,7 +159,9 @@ export default async function ClassementPage() {
                   className="podium-bronze border-2 sm:border-3 md:border-4 border-orange-600/80 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 hover:border-orange-500/90 transition-all shadow-lg transform hover:scale-[1.02] relative overflow-hidden"
                   style={{ background: "linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)", boxShadow: "0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)" }}
                 >
-                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2 text-3xl sm:text-4xl md:text-5xl z-20 opacity-90 drop-shadow-md">🥉</div>
+                  <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-20 opacity-90 drop-shadow-md">
+                    <Image src="/images/Médaille top3.png" alt="Médaille 3ème place" width={48} height={48} className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" unoptimized />
+                  </div>
                   <div className="text-center relative z-10 pt-3 sm:pt-4 md:pt-5">
                     <h3 className="text-base sm:text-lg md:text-lg font-extrabold mb-4 sm:mb-6 md:mb-8 text-gray-900 tracking-tight">
                       {(() => {
@@ -186,7 +192,11 @@ export default async function ClassementPage() {
 
           <div className="md:hidden space-y-3 sm:space-y-4 mt-6 sm:mt-8">
             {top3.map((player, index) => {
-              const icons = ["🥇", "🥈", "🥉"];
+              const icons = [
+                { src: "/images/Médaille top1.png", alt: "1ère place" },
+                { src: "/images/Médaille top2.png", alt: "2ème place" },
+                { src: "/images/Médaille top3.png", alt: "3ème place" }
+              ];
 
               return (
                 <div
@@ -202,8 +212,8 @@ export default async function ClassementPage() {
                       : { background: "linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)", boxShadow: "0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)" }
                   }
                 >
-                  <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 z-20 drop-shadow text-3xl sm:text-4xl md:text-5xl">
-                    {icons[index]}
+                  <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 z-20 drop-shadow">
+                    <Image src={icons[index].src} alt={icons[index].alt} width={48} height={48} className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" unoptimized />
                   </div>
                   {index === 0 && (
                     <div className="absolute -top-3 sm:-top-4 -left-3 sm:-left-4 z-20">

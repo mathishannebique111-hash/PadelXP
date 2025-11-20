@@ -12,6 +12,7 @@ import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import { calculatePointsForMultiplePlayers } from "@/lib/utils/boost-points-utils";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -870,7 +871,9 @@ export default async function HomePage() {
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
                     }}
                   >
-                    <div className="absolute top-2 right-2 text-5xl z-20 opacity-90 drop-shadow-md">🥈</div>
+                    <div className="absolute top-2 right-2 z-20 opacity-90 drop-shadow-md">
+                      <Image src="/images/Médaille top2.png" alt="Médaille 2ème place" width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" unoptimized />
+                    </div>
                     <div className="text-center relative z-10 pt-5">
                       <h3 className="text-xl font-semibold mb-8 text-gray-900 tracking-tight">
                         {leaderboard[1].player_name}
@@ -892,7 +895,9 @@ export default async function HomePage() {
                       boxShadow: '0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6)'
                     }}
                   >
-                    <div className="absolute top-2 right-2 text-5xl z-20 opacity-95 drop-shadow-lg">🥇</div>
+                    <div className="absolute top-2 right-2 z-20 opacity-95 drop-shadow-lg">
+                      <Image src="/images/Médaille top1.png" alt="Médaille 1ère place" width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" unoptimized />
+                    </div>
                     <div className="absolute top-1 left-1 z-20">
                       <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold shadow-sm border border-yellow-300">Meilleur joueur</span>
                     </div>
@@ -917,7 +922,9 @@ export default async function HomePage() {
                       boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
                     }}
                   >
-                    <div className="absolute top-2 right-2 text-5xl z-20 opacity-90 drop-shadow-md">🥉</div>
+                    <div className="absolute top-2 right-2 z-20 opacity-90 drop-shadow-md">
+                      <Image src="/images/Médaille top3.png" alt="Médaille 3ème place" width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" unoptimized />
+                    </div>
                     <div className="text-center relative z-10 pt-5">
                       <h3 className="text-xl font-semibold mb-8 text-gray-900 tracking-tight">
                         {(() => { var parts = (leaderboard[2].player_name || '').split(' '); var f = parts[0] || ''; var l = parts.slice(1).join(' '); return (<span><span className="text-xl">{f}</span>{l ? ' ' + l : ''}</span>); })()}
@@ -934,7 +941,11 @@ export default async function HomePage() {
               </div>
               <div className="md:hidden space-y-3 sm:space-y-4 mt-4 sm:mt-6">
                 {leaderboard.slice(0, 3).map(function(player, index) {
-                  var icons = ['🥇', '🥈', '🥉'];
+                  var icons = [
+                    { src: '/images/Médaille top1.png', alt: '1ère place' },
+                    { src: '/images/Médaille top2.png', alt: '2ème place' },
+                    { src: '/images/Médaille top3.png', alt: '3ème place' }
+                  ];
                   var borderColors = [
                     'border-yellow-500/80',
                     'border-slate-400/80',
@@ -949,7 +960,9 @@ export default async function HomePage() {
                   ];
                   return (
                     <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl p-5 shadow-2xl relative overflow-hidden')} style={bgGradients[index]}>
-                      <div className={"absolute top-2 right-2 z-20 opacity-90 drop-shadow-md text-5xl"}>{icons[index]}</div>
+                      <div className="absolute top-2 right-2 z-20 opacity-90 drop-shadow-md">
+                        <Image src={icons[index].src} alt={icons[index].alt} width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" unoptimized />
+                      </div>
                       <div className="relative z-10 pt-4">
                         <h3 className={"font-semibold mb-6 text-center text-gray-900 " + (index === 0 ? 'text-xl' : index === 1 ? 'text-xl' : 'text-xl')}>
                           {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-xl">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}

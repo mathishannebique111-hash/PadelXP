@@ -142,8 +142,8 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                 }}
               >
                 <div className="shimmer-layer shimmer-silver" style={{ animationDelay: '0.7s' }} />
-                <div className="absolute -top-2 -right-2 text-6xl z-10">
-                  🥈
+                <div className="absolute -top-2 -right-2 z-10">
+                  <Image src="/images/Médaille top2.png" alt="Médaille 2ème place" width={64} height={64} className="w-12 h-12 md:w-16 md:h-16" unoptimized />
                 </div>
                 <div className="mb-4">
                   <div className="text-2xl font-bold text-gray-900">{top3[1].player_name}</div>
@@ -178,8 +178,8 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                 }}
               >
                 <div className="shimmer-layer shimmer-gold" style={{ animationDelay: '0s' }} />
-                <div className="absolute -top-2 -right-2 text-6xl z-10">
-                  🥇
+                <div className="absolute -top-2 -right-2 z-10">
+                  <Image src="/images/Médaille top1.png" alt="Médaille 1ère place" width={64} height={64} className="w-12 h-12 md:w-16 md:h-16" unoptimized />
                 </div>
                 <div className="mb-4">
                   <div className="text-3xl font-bold text-gray-900">{top3[0].player_name}</div>
@@ -214,8 +214,8 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                 }}
               >
                 <div className="shimmer-layer shimmer-bronze" style={{ animationDelay: '1.4s' }} />
-                <div className="absolute -top-2 -right-2 text-6xl z-10">
-                  🥉
+                <div className="absolute -top-2 -right-2 z-10">
+                  <Image src="/images/Médaille top3.png" alt="Médaille 3ème place" width={64} height={64} className="w-12 h-12 md:w-16 md:h-16" unoptimized />
                 </div>
                 <div className="mb-4">
                   <div className="text-2xl font-bold text-gray-900">{top3[2].player_name}</div>

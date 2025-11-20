@@ -272,11 +272,11 @@ export default function MatchForm({
       return {
         valid: true,
         player: {
-          id: player.id,
-          first_name,
-          last_name,
-          type,
-          display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
+        id: player.id,
+        first_name,
+        last_name,
+        type,
+        display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
         },
       };
     } catch (error) {
@@ -302,11 +302,11 @@ export default function MatchForm({
       let partner: PlayerSearchResult | null = null;
       let opp1: PlayerSearchResult | null = null;
       let opp2: PlayerSearchResult | null = null;
-
+      
       // Validation du partenaire
       if (!partnerName.trim()) {
         newErrors.partnerName = "Indiquez un partenaire (prénom et nom complet)";
-      } else {
+        } else {
         console.log("🔍 Validating partner:", partnerName);
         const partnerValidation = await validateExactPlayer(partnerName);
         if (!partnerValidation.valid) {
@@ -318,11 +318,11 @@ export default function MatchForm({
           console.log("✅ Partner validated:", partner);
         }
       }
-
+      
       // Validation de l'opposant 1
       if (!opp1Name.trim()) {
         newErrors.opp1Name = "Indiquez un joueur (prénom et nom complet)";
-      } else {
+        } else {
         console.log("🔍 Validating opp1:", opp1Name);
         const opp1Validation = await validateExactPlayer(opp1Name);
         if (!opp1Validation.valid) {
@@ -334,11 +334,11 @@ export default function MatchForm({
           console.log("✅ Opp1 validated:", opp1);
         }
       }
-
+      
       // Validation de l'opposant 2
       if (!opp2Name.trim()) {
         newErrors.opp2Name = "Indiquez un joueur (prénom et nom complet)";
-      } else {
+        } else {
         console.log("🔍 Validating opp2:", opp2Name);
         const opp2Validation = await validateExactPlayer(opp2Name);
         if (!opp2Validation.valid) {

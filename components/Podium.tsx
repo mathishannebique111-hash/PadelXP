@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { LeaderboardEntry } from "@/lib/types";
 import TierBadge from "./TierBadge";
+import Image from "next/image";
 
 type PodiumProps = {
   top3: LeaderboardEntry[];
@@ -33,9 +34,9 @@ export default function Podium({ top3 }: PodiumProps) {
   }, [top3]);
 
   const positions = [
-    { class: "silver", medal: "🥈", border: "#C0C0C0", width: "280px" },
-    { class: "gold", medal: "🥇", border: "#FFA500", width: "320px" },
-    { class: "bronze", medal: "🥉", border: "#CD7F32", width: "280px" },
+    { class: "silver", medalSrc: "/images/Médaille top2.png", medalAlt: "Médaille 2ème place", border: "#C0C0C0", width: "280px" },
+    { class: "gold", medalSrc: "/images/Médaille top1.png", medalAlt: "Médaille 1ère place", border: "#FFA500", width: "320px" },
+    { class: "bronze", medalSrc: "/images/Médaille top3.png", medalAlt: "Médaille 3ème place", border: "#CD7F32", width: "280px" },
   ];
 
   return (
@@ -67,10 +68,10 @@ export default function Podium({ top3 }: PodiumProps) {
             >
               {/* Médaille */}
               <div 
-                className="absolute -top-6 -right-6 text-6xl z-20"
+                className="absolute -top-6 -right-6 z-20"
                 style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.2))" }}
               >
-                {pos.medal}
+                <Image src={pos.medalSrc} alt={pos.medalAlt} width={64} height={64} className="w-12 h-12 md:w-16 md:h-16" unoptimized />
               </div>
 
               {/* Header: Nom */}

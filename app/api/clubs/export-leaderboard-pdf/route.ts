@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo, getClubDashboardData, getClubMatchHistory } from "@/lib/utils/club-utils";
 import puppeteer from "puppeteer";
+import fs from "fs";
+import path from "path";
 
 function tierForPoints(points: number): "Bronze" | "Argent" | "Or" | "Diamant" | "Champion" {
   if (points >= 500) return "Champion";
@@ -45,6 +47,17 @@ export async function GET() {
     const top3 = leaderboard.slice(0, 3);
     const totalPlayers = leaderboard.length;
     const totalMatches = history.matches.length;
+
+    // Lire les images de médailles et les convertir en base64
+    const medal1Path = path.join(process.cwd(), "public/images/Médaille top1.png");
+    const medal2Path = path.join(process.cwd(), "public/images/Médaille top2.png");
+    const medal3Path = path.join(process.cwd(), "public/images/Médaille top3.png");
+    const medal1Base64 = fs.existsSync(medal1Path) ? fs.readFileSync(medal1Path).toString("base64") : "";
+    const medal2Base64 = fs.existsSync(medal2Path) ? fs.readFileSync(medal2Path).toString("base64") : "";
+    const medal3Base64 = fs.existsSync(medal3Path) ? fs.readFileSync(medal3Path).toString("base64") : "";
+    const medal1Src = medal1Base64 ? `data:image/png;base64,${medal1Base64}` : "";
+    const medal2Src = medal2Base64 ? `data:image/png;base64,${medal2Base64}` : "";
+    const medal3Src = medal3Base64 ? `data:image/png;base64,${medal3Base64}` : "";
 
     // Générer le HTML avec le même design que la page Classement
     const html = `
@@ -667,7 +680,7 @@ export async function GET() {
       <div class="top3-container">
         ${top3[1] ? `
         <div class="podium-card podium-2">
-          <div class="podium-emoji">🥈</div>
+          <img src="${medal2Src}" alt="Médaille 2ème place" class="podium-emoji" style="width: 32px; height: 32px;" />
           <div class="podium-content">
             <h3 class="podium-name podium-2">${top3[1].player_name}</h3>
             <div class="podium-points-wrapper">
@@ -682,7 +695,7 @@ export async function GET() {
         ${top3[0] ? `
         <div class="podium-card podium-1">
           <div class="meilleur-joueur-badge">Meilleur joueur</div>
-          <div class="podium-emoji">🥇</div>
+          <img src="${medal1Src}" alt="Médaille 1ère place" class="podium-emoji" style="width: 32px; height: 32px;" />
           <div class="podium-content">
             <h3 class="podium-name podium-1">${top3[0].player_name}</h3>
             <div class="podium-points-wrapper">
@@ -696,7 +709,7 @@ export async function GET() {
         ` : ''}
         ${top3[2] ? `
         <div class="podium-card podium-3">
-          <div class="podium-emoji">🥉</div>
+          <img src="${medal3Src}" alt="Médaille 3ème place" class="podium-emoji" style="width: 32px; height: 32px;" />
           <div class="podium-content">
             <h3 class="podium-name podium-3">${(() => {
               const parts = (top3[2].player_name || "").split(" ");
