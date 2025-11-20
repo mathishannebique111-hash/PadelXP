@@ -126,15 +126,20 @@ export default function HelpPage() {
       
       // Recharger immédiatement la conversation pour afficher le message depuis la DB
       // Attendre un peu pour que la DB soit à jour, puis recharger plusieurs fois
+      await loadConversation(); // Recharger immédiatement
+      
       setTimeout(async () => {
+        console.log('🔄 Reloading conversation after 500ms...');
         await loadConversation();
       }, 500);
       
       setTimeout(async () => {
+        console.log('🔄 Reloading conversation after 1500ms...');
         await loadConversation();
       }, 1500);
       
       setTimeout(async () => {
+        console.log('🔄 Reloading conversation after 3000ms...');
         await loadConversation();
       }, 3000);
       
@@ -182,8 +187,51 @@ export default function HelpPage() {
         </div>
       )}
 
-      {/* Conversation de chat - Afficher toujours le bloc si on a une conversation ou des messages */}
-      {(conversation || messages.length > 0) && (
+      {/* Conversation de chat - Afficher toujours le bloc */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+        <h2 className="font-semibold mb-4">Conversation de support</h2>
+        <div className="space-y-4">
+          <div className="bg-white/5 rounded-lg p-4 max-h-[500px] overflow-y-auto space-y-4">
+            {loadingMessages ? (
+              <div className="text-center text-white/50 py-8">
+                Chargement des messages...
+              </div>
+            ) : messages.length > 0 ? (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender_type === 'club' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      msg.sender_type === 'club'
+                        ? 'bg-blue-600/20 border border-blue-500/30'
+                        : 'bg-white/10 border border-white/20'
+                    }`}
+                  >
+                    <div className="text-xs text-white/60 mb-1">
+                      {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
+                    </div>
+                    <div className="text-white/90 whitespace-pre-wrap break-words">
+                      {msg.message_text}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-white/50 py-8">
+                {conversation 
+                  ? 'Aucun message pour le moment. Envoyez un message ci-dessous pour commencer la conversation.'
+                  : 'Aucune conversation active. Envoyez un message ci-dessous pour commencer.'}
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+      </div>
+
+      {/* Ancien bloc conditionnel - gardé pour référence mais remplacé ci-dessus */}
+      {false && (conversation || messages.length > 0) && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
           <h2 className="font-semibold mb-4">Conversation de support</h2>
           <div className="space-y-4">
