@@ -418,7 +418,7 @@ export default function HelpPage() {
                               <div
                                 className={`max-w-[80%] rounded-lg p-3 ${
                                   msg.sender_type === 'club'
-                                    ? 'bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white'
+                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
                                     : 'bg-white/10 border border-white/20'
                                 }`}
                               >
