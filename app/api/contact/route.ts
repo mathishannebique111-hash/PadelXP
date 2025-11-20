@@ -60,43 +60,64 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email introuvable' }, { status: 400 });
     }
 
-    // Récupérer le nom du club si disponible
+    // Utiliser le client admin pour récupérer le profil (bypass RLS)
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Récupérer le profil avec le client admin
     let clubName = 'Un club';
     let clubId: string | null = null;
-    const { data: profile } = await supabase
+    
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('display_name, club_id')
       .eq('id', user.id)
       .maybeSingle();
 
+    if (profileError) {
+      console.error('[contact] Error fetching profile:', profileError);
+    }
+
     if (profile?.club_id) {
       clubId = profile.club_id;
-      // Essayer de récupérer le nom du club
-      const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        }
-      );
-
-      const { data: club } = await supabaseAdmin
+      console.log('[contact] Found club_id from profile:', clubId);
+    } else {
+      // Si pas de club_id dans le profil, essayer de trouver via la table clubs (si l'utilisateur est admin)
+      console.log('[contact] No club_id in profile, trying to find club via clubs table...');
+      const { data: club, error: clubError } = await supabaseAdmin
         .from('clubs')
-        .select('name')
-        .eq('id', profile.club_id)
+        .select('id, name, admin_id')
+        .eq('admin_id', user.id)
         .maybeSingle();
 
-      if (club?.name) {
-        clubName = club.name;
+      if (clubError) {
+        console.error('[contact] Error fetching club:', clubError);
+      }
+
+      if (club?.id) {
+        clubId = club.id;
+        clubName = club.name || 'Un club';
+        console.log('[contact] Found club via admin_id:', clubId, clubName);
       }
     }
 
     if (!clubId) {
+      console.error('[contact] No club found for user:', {
+        userId: user.id,
+        userEmail,
+        profileHasClubId: !!profile?.club_id,
+        profileError: profileError?.message,
+      });
       return NextResponse.json({ 
-        error: 'Vous devez être rattaché à un club pour envoyer un message de contact.' 
+        error: 'Impossible de trouver votre club. Veuillez vérifier que votre compte est bien configuré.' 
       }, { status: 400 });
     }
 
@@ -129,17 +150,18 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Créer ou récupérer la conversation existante
-    const supabaseAdmin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
+    // Récupérer le nom du club si on ne l'a pas encore
+    if (clubName === 'Un club') {
+      const { data: club } = await supabaseAdmin
+        .from('clubs')
+        .select('name')
+        .eq('id', clubId)
+        .maybeSingle();
+
+      if (club?.name) {
+        clubName = club.name;
       }
-    );
+    }
 
     // Chercher une conversation ouverte existante pour ce club
     const { data: existingConversation } = await supabaseAdmin
