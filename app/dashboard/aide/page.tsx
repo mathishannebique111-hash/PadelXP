@@ -86,8 +86,17 @@ export default function HelpPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('Contact form error:', data);
-        throw new Error(data.error || 'Erreur lors de l\'envoi du message');
+        console.error('Contact form error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data,
+        });
+        
+        // Afficher un message d'erreur plus détaillé
+        const errorMessage = data.error || 'Erreur lors de l\'envoi du message';
+        const errorDetails = data.details ? ` (${data.details})` : '';
+        const errorHint = data.hint ? ` - ${data.hint}` : '';
+        throw new Error(errorMessage + errorDetails + errorHint);
       }
 
       setSuccess(true);

@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
       console.log('[contact] Using existing conversation:', conversationId);
     } else {
       // Créer une nouvelle conversation
-      const now = new Date().toISOString();
+      // Ne pas spécifier created_at et last_message_at car ils ont des valeurs par défaut dans la table
       const { data: newConversation, error: convError } = await supabaseAdmin
         .from('support_conversations')
         .insert({
@@ -190,8 +190,6 @@ export async function POST(request: NextRequest) {
           club_name: clubName,
           subject: `Message de contact - ${clubName}`,
           status: 'open',
-          last_message_at: now,
-          created_at: now,
         })
         .select('id')
         .single();
@@ -207,15 +205,26 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           userEmail,
           clubName,
+          fullError: JSON.stringify(convError, null, 2),
         });
+        
+        // Si c'est une erreur de contrainte, donner plus de détails
+        let errorMessage = convError.message || 'Erreur inconnue';
+        if (convError.code === '23503') {
+          errorMessage = `Erreur de référence: Le club ou l'utilisateur spécifié n'existe pas.`;
+        } else if (convError.code === '23505') {
+          errorMessage = `Une conversation existe déjà pour ce club et cet utilisateur.`;
+        }
+        
         return NextResponse.json({ 
-          error: `Erreur lors de la création de la conversation: ${convError.message || 'Erreur inconnue'}`,
+          error: `Erreur lors de la création de la conversation: ${errorMessage}`,
           details: convError.details,
+          hint: convError.hint,
           code: convError.code,
         }, { status: 500 });
       }
 
-      if (!newConversation) {
+      if (!newConversation || !newConversation.id) {
         console.error('[contact] Conversation created but no data returned');
         return NextResponse.json({ 
           error: 'Erreur lors de la création de la conversation: aucune donnée retournée' 
