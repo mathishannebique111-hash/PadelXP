@@ -296,43 +296,6 @@ export default async function DashboardHome() {
                 </a>
               </div>
             )}
-            ) : (
-              <ul className="text-xs sm:text-sm space-y-2">
-                {upcomingChallenges.map((c) => {
-                  const startDate = new Date(c.start_date);
-                  const endDate = new Date(c.end_date);
-                  const isActive = c.status === "active";
-                  const isFuture = c.status === "upcoming";
-                  
-                  return (
-                    <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2">
-                      <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-                            <span className="font-medium text-white truncate text-xs sm:text-sm">{c.title}</span>
-                            {isActive && (
-                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
-                                En cours
-                              </span>
-                            )}
-                            {isFuture && (
-                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
-                                À venir
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[10px] sm:text-xs text-white/50 truncate">{c.objective}</div>
-                        </div>
-                        <div className="flex flex-col items-end text-[10px] sm:text-xs text-white/60 whitespace-nowrap flex-shrink-0">
-                          <span>{startDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
-                          <span className="text-[9px] sm:text-[10px]">→ {endDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
           </div>
         </div>
       </section>
