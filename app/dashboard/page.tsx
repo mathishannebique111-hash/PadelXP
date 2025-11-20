@@ -286,16 +286,13 @@ export default async function DashboardHome() {
               )}
             </div>
             {upcomingChallenges.length === 0 && (
-              <div className="mt-auto pt-4">
+              <div className="mt-auto">
                 <a 
                   href="/dashboard/challenges" 
-                  className="group relative inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm text-white overflow-hidden transition-all hover:scale-105 hover:shadow-lg ring-1 ring-white/20 border border-white/10 w-full justify-center"
-                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)", boxShadow: "0 6px 22px rgba(0, 102, 255, 0.35)" }}
+                  className="group relative inline-flex items-center gap-2 w-full justify-center rounded-lg border px-4 py-2 text-sm font-semibold text-white overflow-hidden transition-all hover:brightness-110"
+                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #00CC99 100%)", boxShadow: "0 12px 24px rgba(0,102,255,0.35)", border: "1px solid rgba(255,255,255,0.25)" }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                  <span className="relative text-base sm:text-lg">➕</span>
                   <span className="relative">Créer un challenge</span>
-                  <span className="relative text-sm sm:text-base ml-1">›</span>
                 </a>
               </div>
             )}
