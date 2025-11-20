@@ -186,17 +186,17 @@ export async function GET() {
     .podium-2 {
       padding: 24px 16px;
       border: 3px solid;
-      min-height: 220px;
+      min-height: 240px;
     }
     .podium-1 {
-      padding: 28px 20px;
+      padding: 32px 24px;
       border: 4px solid;
-      min-height: 240px;
+      min-height: 260px;
     }
     .podium-3 {
       padding: 24px 16px;
       border: 3px solid;
-      min-height: 220px;
+      min-height: 240px;
     }
     .podium-2 {
       background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
@@ -236,16 +236,17 @@ export async function GET() {
       line-height: 1.2;
     }
     .podium-2 .podium-name {
-      font-size: 18px;
-      margin-bottom: 16px;
+      font-size: 20px;
+      margin-bottom: 24px;
     }
     .podium-1 .podium-name {
-      font-size: 24px;
-      margin-bottom: 20px;
+      font-size: 28px;
+      margin-bottom: 24px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .podium-3 .podium-name {
-      font-size: 16px;
-      margin-bottom: 16px;
+      font-size: 18px;
+      margin-bottom: 24px;
     }
     .podium-points {
       display: inline-flex;
@@ -260,19 +261,19 @@ export async function GET() {
       white-space: nowrap;
     }
     .podium-2 .podium-points {
-      padding: 6px 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      font-size: 18px;
+      padding: 6px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 0 0 2px rgba(212, 212, 216, 0.5);
+      font-size: 20px;
     }
     .podium-1 .podium-points {
-      padding: 8px 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      font-size: 24px;
+      padding: 10px 24px;
+      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35), 0 0 0 2px rgba(234, 179, 8, 0.5);
+      font-size: 28px;
     }
     .podium-3 .podium-points {
-      padding: 6px 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      font-size: 18px;
+      padding: 6px 20px;
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25), 0 0 0 2px rgba(251, 146, 60, 0.5);
+      font-size: 20px;
     }
     .podium-points-label {
       font-size: 10px;
@@ -286,15 +287,12 @@ export async function GET() {
     }
     .podium-2 .podium-points { 
       border-color: #71717a; 
-      box-shadow: 0 2px 8px rgba(113, 113, 122, 0.25), 0 0 0 2px rgba(212, 212, 216, 0.5);
     }
     .podium-1 .podium-points { 
       border-color: #eab308; 
-      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35), 0 0 0 2px rgba(234, 179, 8, 0.5);
     }
     .podium-3 .podium-points { 
       border-color: #f97316; 
-      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25), 0 0 0 2px rgba(251, 146, 60, 0.5);
     }
     .meilleur-joueur-badge {
       position: absolute;
@@ -629,7 +627,7 @@ export async function GET() {
             <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
               <div class="podium-points podium-2">
                 <span>${top3[1].points.toLocaleString()}</span>
-                <span class="podium-points-label">points</span>
+                <span class="podium-points-label" style="font-size: 10px; color: #374151;">points</span>
               </div>
             </div>
           </div>
@@ -644,7 +642,7 @@ export async function GET() {
             <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
               <div class="podium-points podium-1">
                 <span>${top3[0].points.toLocaleString()}</span>
-                <span class="podium-points-label">points</span>
+                <span class="podium-points-label" style="font-size: 10px; color: #111827;">points</span>
               </div>
             </div>
           </div>
@@ -658,12 +656,12 @@ export async function GET() {
               const parts = (top3[2].player_name || "").split(" ");
               const first = parts[0] || "";
               const last = parts.slice(1).join(" ");
-              return last ? `<span style="font-size: 20px; font-weight: 800; color: #111827;">${first}</span> <span style="font-size: 16px; font-weight: 800; color: #111827;">${last}</span>` : top3[2].player_name;
+              return last ? `<span style="font-size: 20px; font-weight: 800; color: #111827;">${first}</span> <span style="font-size: 18px; font-weight: 800; color: #111827;">${last}</span>` : top3[2].player_name;
             })()}</h3>
             <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
               <div class="podium-points podium-3">
                 <span>${top3[2].points.toLocaleString()}</span>
-                <span class="podium-points-label">points</span>
+                <span class="podium-points-label" style="font-size: 10px; color: #374151;">points</span>
               </div>
             </div>
           </div>
@@ -699,13 +697,13 @@ export async function GET() {
             return `
             <tr>
               <td><span class="rank-badge ${rankClass}"><span>#${player.rank}</span></span></td>
-              <td style="font-weight: 600; color: #1e293b;">${player.player_name}</td>
-              <td><span class="tier-badge tier-${tier}"><span>${tier}</span></span></td>
-              <td style="font-weight: 600; color: #0f172a;">${player.points}</td>
-              <td class="winrate" style="font-weight: 600;">${winRate}%</td>
-              <td class="wins" style="font-weight: 600;">${player.wins}</td>
-              <td class="losses" style="font-weight: 600;">${player.losses}</td>
-              <td style="font-weight: 600; color: #334155;">${player.matches}</td>
+              <td style="font-weight: 600; color: #1e293b; text-align: center;">${player.player_name}</td>
+              <td style="text-align: center;"><span class="tier-badge tier-${tier}"><span>${tier}</span></span></td>
+              <td style="font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums;">${player.points}</td>
+              <td class="winrate" style="font-weight: 600; font-variant-numeric: tabular-nums;">${winRate}%</td>
+              <td class="wins" style="font-weight: 600; font-variant-numeric: tabular-nums;">${player.wins}</td>
+              <td class="losses" style="font-weight: 600; font-variant-numeric: tabular-nums;">${player.losses}</td>
+              <td style="font-weight: 600; color: #334155; font-variant-numeric: tabular-nums;">${player.matches}</td>
             </tr>
             `;
           }).join('')}
