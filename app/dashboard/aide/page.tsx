@@ -324,8 +324,11 @@ export default function HelpPage() {
               const firstMessage = getFirstClubMessage(conversation);
               const unreadCount = getUnreadRepliesCount(conversation);
               const isOpen = openConversations.has(conversation.id);
-              const adminMessages = conversation.messages?.filter(m => m.sender_type === 'admin') || [];
-              const clubMessages = conversation.messages?.filter(m => m.sender_type === 'club') || [];
+              
+              // Trier tous les messages par ordre chronologique (sauf le premier message du club qui est déjà affiché dans l'en-tête)
+              const allMessages = (conversation.messages || [])
+                .filter(m => m.id !== firstMessage?.id) // Exclure le premier message du club
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
               if (!firstMessage) return null;
 
@@ -377,32 +380,23 @@ export default function HelpPage() {
                   {/* Contenu du bloc (réponses et formulaire de réponse) */}
                   {isOpen && (
                     <div className="mt-4 pt-4 border-t border-white/10 space-y-4">
-                      {/* Afficher toutes les réponses de l'admin */}
-                      {adminMessages.length > 0 && (
+                      {/* Afficher tous les messages dans l'ordre chronologique */}
+                      {allMessages.length > 0 && (
                         <div className="space-y-3">
-                          {adminMessages.map((msg) => (
-                            <div key={msg.id} className="flex justify-start">
-                              <div className="max-w-[80%] rounded-lg p-3 bg-white/10 border border-white/20">
+                          {allMessages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex ${msg.sender_type === 'club' ? 'justify-end' : 'justify-start'}`}
+                            >
+                              <div
+                                className={`max-w-[80%] rounded-lg p-3 ${
+                                  msg.sender_type === 'club'
+                                    ? 'bg-blue-600/20 border border-blue-500/30'
+                                    : 'bg-white/10 border border-white/20'
+                                }`}
+                              >
                                 <div className="text-xs text-white/60 mb-1">
-                                  Support PadelXP · {formatDate(msg.created_at)}
-                                </div>
-                                <div className="text-white/90 whitespace-pre-wrap break-words">
-                                  {msg.message_text}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Afficher tous les messages du club (sauf le premier qui est déjà affiché) */}
-                      {clubMessages.length > 1 && (
-                        <div className="space-y-3">
-                          {clubMessages.slice(1).map((msg) => (
-                            <div key={msg.id} className="flex justify-end">
-                              <div className="max-w-[80%] rounded-lg p-3 bg-blue-600/20 border border-blue-500/30">
-                                <div className="text-xs text-white/60 mb-1">
-                                  Vous · {formatDate(msg.created_at)}
+                                  {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
                                 </div>
                                 <div className="text-white/90 whitespace-pre-wrap break-words">
                                   {msg.message_text}
