@@ -86,11 +86,12 @@ export async function GET() {
       margin: 0 auto;
     }
     .title {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 30px;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 24px;
       text-align: center;
       color: #fff;
+      letter-spacing: -0.02em;
     }
     .stats {
       display: flex;
@@ -155,14 +156,11 @@ export async function GET() {
     }
     .podium-card {
       border-radius: 16px;
-      padding: 24px 20px;
+      padding: 32px 24px;
       text-align: center;
       position: relative;
       border: 4px solid;
-      min-height: 260px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
+      min-height: 280px;
       overflow: hidden;
     }
     .podium-2 {
@@ -198,6 +196,8 @@ export async function GET() {
       color: #111827;
       margin-bottom: 16px;
       letter-spacing: -0.025em;
+      text-align: center;
+      line-height: 1.2;
     }
     .podium-points {
       display: inline-flex;
@@ -211,6 +211,17 @@ export async function GET() {
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       font-size: 24px;
       font-weight: 800;
+      color: #111827;
+      white-space: nowrap;
+    }
+    .podium-points-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      color: #374151;
+    }
+    .podium-1 .podium-points-label {
       color: #111827;
     }
     .podium-2 .podium-points { 
@@ -402,23 +413,49 @@ export async function GET() {
         ${top3[1] ? `
         <div class="podium-card podium-2">
           <div class="podium-emoji">🥈</div>
-          <div class="podium-name">${top3[1].player_name}</div>
-          <div class="podium-points">${top3[1].points.toLocaleString()} <span style="font-size: 10px; text-transform: uppercase;">points</span></div>
+          <div style="text-align: center; position: relative; z-index: 10; padding-top: 16px;">
+            <h3 class="podium-name">${top3[1].player_name}</h3>
+            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+              <div class="podium-points">
+                <span>${top3[1].points.toLocaleString()}</span>
+                <span class="podium-points-label">points</span>
+              </div>
+            </div>
+          </div>
         </div>
         ` : ''}
         ${top3[0] ? `
         <div class="podium-card podium-1">
           <div class="meilleur-joueur-badge">Meilleur joueur</div>
           <div class="podium-emoji">🥇</div>
-          <div class="podium-name">${top3[0].player_name}</div>
-          <div class="podium-points">${top3[0].points.toLocaleString()} <span style="font-size: 10px; text-transform: uppercase;">points</span></div>
+          <div style="text-align: center; position: relative; z-index: 10; padding-top: 20px;">
+            <h3 class="podium-name" style="font-size: 28px; margin-bottom: 20px;">${top3[0].player_name}</h3>
+            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+              <div class="podium-points" style="gap: 10px; padding: 10px 24px;">
+                <span style="font-size: 28px;">${top3[0].points.toLocaleString()}</span>
+                <span class="podium-points-label">points</span>
+              </div>
+            </div>
+          </div>
         </div>
         ` : ''}
         ${top3[2] ? `
         <div class="podium-card podium-3">
           <div class="podium-emoji">🥉</div>
-          <div class="podium-name">${top3[2].player_name}</div>
-          <div class="podium-points">${top3[2].points.toLocaleString()} <span style="font-size: 10px; text-transform: uppercase;">points</span></div>
+          <div style="text-align: center; position: relative; z-index: 10; padding-top: 16px;">
+            <h3 class="podium-name" style="font-size: 20px;">${(() => {
+              const parts = (top3[2].player_name || "").split(" ");
+              const first = parts[0] || "";
+              const last = parts.slice(1).join(" ");
+              return last ? `<span style="font-size: 24px;">${first}</span> ${last}` : top3[2].player_name;
+            })()}</h3>
+            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+              <div class="podium-points">
+                <span>${top3[2].points.toLocaleString()}</span>
+                <span class="podium-points-label">points</span>
+              </div>
+            </div>
+          </div>
         </div>
         ` : ''}
       </div>
