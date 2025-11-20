@@ -8,9 +8,6 @@ import { createClient as createAdminClient } from '@supabase/supabase-js';
 const INBOUND_EMAIL = process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
 // Adresse email où les emails inbound seront transférés (Gmail)
 const FORWARD_TO_EMAIL = process.env.FORWARD_TO_EMAIL || 'contactpadelxp@gmail.com';
-// Adresse de destination : pour l'instant envoyer directement à Gmail (domaine inbound non vérifié)
-// TODO: Une fois le domaine vérifié sur Resend, utiliser INBOUND_EMAIL
-const CONTACT_EMAIL = FORWARD_TO_EMAIL;
 
 // Initialiser Resend au niveau du module
 let resend: Resend | null = null;
@@ -138,13 +135,12 @@ export async function POST(request: NextRequest) {
 
     console.log('[contact] Attempting to send email:', {
       from: fromEmail,
-      to: CONTACT_EMAIL, // Utiliser CONTACT_EMAIL (inbound si configuré, sinon Gmail directement)
+      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound pour que le webhook resend-inbound le transfère vers Gmail
       replyTo: userEmail,
       clubName,
       hasResendKey: !!process.env.RESEND_API_KEY,
       resendKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) + '...' : 'none',
       resendInitialized: !!resend,
-      usingInbound: !!process.env.RESEND_INBOUND_EMAIL,
     });
 
     if (!resend) {
@@ -250,7 +246,7 @@ export async function POST(request: NextRequest) {
     const emailSubject = `[${conversationId.substring(0, 8)}] Message de contact - ${clubName}`;
     const emailResult = await resend.emails.send({
       from: fromEmail,
-      to: CONTACT_EMAIL, // Envoyer à Gmail directement (si inbound n'est pas configuré) ou à l'inbound
+      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound de Resend (sera capturé par le webhook resend-inbound et transféré vers Gmail)
       replyTo: userEmail, // Réponses envoyées à l'email du club, mais Resend webhook les capturera
       subject: emailSubject,
       headers: {
@@ -313,15 +309,22 @@ export async function POST(request: NextRequest) {
 
     if (emailResult.error) {
       console.error('[contact] Resend API error:', JSON.stringify(emailResult.error, null, 2));
+      
+      // Gérer l'erreur spécifique du domaine non vérifié
+      let errorMessage = emailResult.error.message || JSON.stringify(emailResult.error);
+      if (errorMessage.includes('testing emails') || errorMessage.includes('verify a domain')) {
+        errorMessage = `Le domaine ${INBOUND_EMAIL.split('@')[1]} n'est pas vérifié sur Resend. Veuillez vérifier le domaine sur resend.com/domains ou contacter l'administrateur.`;
+      }
+      
       return NextResponse.json({ 
-        error: `Erreur lors de l'envoi: ${emailResult.error.message || JSON.stringify(emailResult.error)}`,
+        error: `Erreur lors de l'envoi: ${errorMessage}`,
         errorDetails: emailResult.error 
       }, { status: 500 });
     }
 
     console.log('[contact] Email sent successfully:', {
       id: emailResult.data?.id,
-      to: CONTACT_EMAIL,
+      to: INBOUND_EMAIL,
       conversationId,
     });
 
