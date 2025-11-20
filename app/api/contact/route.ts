@@ -445,10 +445,17 @@ export async function POST(request: NextRequest) {
       console.log('[contact] Message email_message_id updated:', emailResult.data.id);
     }
 
+    console.log('[contact] ✅ Success! Message sent and saved:', {
+      conversationId,
+      messageId: savedMessage?.id,
+      emailSent: !!emailResult.data?.id
+    });
+
     return NextResponse.json({ 
       success: true, 
       message: 'Message envoyé avec succès',
-      conversationId 
+      conversationId,
+      messageId: savedMessage?.id
     });
   } catch (error) {
     console.error('[contact] Unexpected error:', error);

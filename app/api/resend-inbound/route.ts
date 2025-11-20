@@ -70,10 +70,13 @@ export async function POST(req: NextRequest) {
     let conversationId = emailData.headers?.["X-Conversation-ID"] ?? emailData.headers?.["x-conversation-id"];
     const clubId = emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
     
-    // Vérifier si c'est une réponse (headers In-Reply-To ou References)
-    const inReplyTo = emailData.headers?.["In-Reply-To"] ?? emailData.headers?.["in-reply-to"];
-    const references = emailData.headers?.["References"] ?? emailData.headers?.["references"];
-    const isReply = !!(inReplyTo || references || (subject && subject.toLowerCase().includes('re:')));
+    // Vérifier si c'est une réponse (headers In-Reply-To ou References ou sujet avec "Re:")
+    const inReplyTo = emailData.headers?.["In-Reply-To"] ?? emailData.headers?.["in-reply-to"] ?? emailData.in_reply_to;
+    const references = emailData.headers?.["References"] ?? emailData.headers?.["references"] ?? emailData.references;
+    const isReply = !!(inReplyTo || references || (subject && (subject.toLowerCase().includes('re:') || subject.toLowerCase().includes('ré:'))));
+    
+    // Vérifier si l'email vient de l'inbound email (admin répond depuis Gmail)
+    const isFromInbound = to && (to.includes(INBOUND_EMAIL) || to.includes('contact@updates.padelxp.eu'));
     
     console.log("Email metadata:", {
       senderType,
@@ -199,8 +202,8 @@ export async function POST(req: NextRequest) {
 
     // Déterminer si c'est une réponse de l'admin ou un nouveau message du club
     // Si senderType est 'club', c'est un nouveau message du club
-    // Sinon, si c'est une réponse (In-Reply-To, References, ou sujet avec "Re:"), c'est une réponse de l'admin
-    const isAdminReply = isReply && (!senderType || senderType !== 'club');
+    // Sinon, si c'est une réponse ET que ça vient de l'inbound email, c'est une réponse de l'admin
+    const isAdminReply = isReply && (!senderType || senderType !== 'club') && isFromInbound;
     
     // Extraire le conversationId depuis les headers, le sujet, ou les références
     let detectedConversationId = conversationId;
@@ -241,10 +244,13 @@ export async function POST(req: NextRequest) {
     
     // Si c'est une réponse de l'admin, enregistrer dans la DB
     if (isAdminReply && detectedConversationId) {
-      console.log("Detected admin reply, saving to database:", {
+      console.log("✅ Detected admin reply, saving to database:", {
         conversationId: detectedConversationId,
         from,
-        subject
+        subject,
+        isReply,
+        isAdminReply,
+        senderType
       });
       
       // Vérifier que la conversation existe
@@ -285,7 +291,7 @@ export async function POST(req: NextRequest) {
               });
 
             if (messageError) {
-              console.error("Error saving admin reply to database:", messageError);
+              console.error("❌ Error saving admin reply to database:", messageError);
             } else {
               // Mettre à jour last_message_at de la conversation
               await supabaseAdmin
@@ -296,7 +302,7 @@ export async function POST(req: NextRequest) {
                 })
                 .eq('id', detectedConversationId);
               
-              console.log("Admin reply saved successfully to conversation:", detectedConversationId);
+              console.log("✅ Admin reply saved successfully to conversation:", detectedConversationId);
             }
           } else {
             console.warn("Admin reply has no content, skipping database save");

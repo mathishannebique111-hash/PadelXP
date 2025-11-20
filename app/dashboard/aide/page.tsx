@@ -45,13 +45,19 @@ export default function HelpPage() {
       const data = await response.json();
 
       if (response.ok) {
+        console.log('✅ Conversation loaded:', {
+          hasConversation: !!data.conversation,
+          messagesCount: data.messages?.length || 0,
+          conversationId: data.conversation?.id,
+          messages: data.messages
+        });
         setConversation(data.conversation);
         setMessages(data.messages || []);
       } else {
-        console.error('Error loading conversation:', data);
+        console.error('❌ Error loading conversation:', data);
       }
     } catch (err) {
-      console.error('Error loading conversation:', err);
+      console.error('❌ Error loading conversation:', err);
     } finally {
       setLoadingMessages(false);
     }
@@ -105,14 +111,18 @@ export default function HelpPage() {
       setMessage('');
       
       // Recharger immédiatement la conversation pour afficher le message depuis la DB
-      await loadConversation();
+      // Attendre un peu pour que la DB soit à jour, puis recharger plusieurs fois
+      setTimeout(async () => {
+        await loadConversation();
+      }, 500);
       
-      // Si pas de conversation encore, attendre un peu et recharger à nouveau
-      if (!conversation) {
-        setTimeout(async () => {
-          await loadConversation();
-        }, 1000);
-      }
+      setTimeout(async () => {
+        await loadConversation();
+      }, 1500);
+      
+      setTimeout(async () => {
+        await loadConversation();
+      }, 3000);
       
       // Réinitialiser le message de succès après 5 secondes
       setTimeout(() => {
@@ -150,8 +160,8 @@ export default function HelpPage() {
     <div className="space-y-6">
       <PageTitle title="Aide & Support" />
 
-      {/* Conversation de chat */}
-      {conversation && (
+      {/* Conversation de chat - Afficher toujours le bloc si on a une conversation ou des messages */}
+      {(conversation || messages.length > 0) && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
           <h2 className="font-semibold mb-4">Conversation de support</h2>
           <div className="space-y-4">
@@ -180,7 +190,7 @@ export default function HelpPage() {
                 ))
               ) : (
                 <div className="text-center text-white/50 py-8">
-                  Aucun message pour le moment. Envoyez un message ci-dessous pour commencer la conversation.
+                  Chargement des messages...
                 </div>
               )}
               <div ref={messagesEndRef} />
