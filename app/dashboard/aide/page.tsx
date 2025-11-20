@@ -284,7 +284,22 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      {/* Halos de couleur en fond qui défilent avec le scroll */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        {/* Halo bleu en haut à gauche */}
+        <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
+        {/* Halo lime/jaune en bas à droite */}
+        <div className="absolute -bottom-32 -right-28 h-[44rem] w-[44rem] bg-[radial-gradient(closest-side,rgba(191,255,0,0.3),transparent_70%)] blur-[90px] animate-pulse animate-drift-medium" style={{ animationDelay: "0.8s" }} />
+        {/* Halo bleu au centre */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.18),transparent_70%)] blur-[100px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
+        {/* Halo lime/jaune en haut à droite */}
+        <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(191,255,0,0.28),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
+        {/* Petit halo bleu */}
+        <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
+      </div>
+      
+      <div className="relative z-10">
       <PageTitle title="Aide & Support" />
 
       {/* Afficher un message d'erreur si les tables n'existent pas */}
@@ -476,6 +491,7 @@ export default function HelpPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
