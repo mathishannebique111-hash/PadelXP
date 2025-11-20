@@ -422,13 +422,13 @@ export default function HelpPage() {
                                     : 'bg-white/10 border border-white/20'
                                 }`}
                               >
-                                <div className={`text-xs mb-1.5 ${
-                                  msg.sender_type === 'club' ? 'text-white font-medium' : 'text-white/60'
+                                <div className={`text-xs mb-1 ${
+                                  msg.sender_type === 'club' ? 'text-white/80' : 'text-white/60'
                                 }`}>
                                   {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
                                 </div>
-                                <div className={`whitespace-pre-wrap break-words leading-relaxed ${
-                                  msg.sender_type === 'club' ? 'text-white font-semibold text-[15px]' : 'text-white/90'
+                                <div className={`whitespace-pre-wrap break-words ${
+                                  msg.sender_type === 'club' ? 'text-white/90' : 'text-white/90'
                                 }`}>
                                   {msg.message_text}
                                 </div>
