@@ -4,7 +4,10 @@ import { cookies } from 'next/headers';
 import { Resend } from 'resend';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 
-const CONTACT_EMAIL = 'contactpadelxp@gmail.com';
+// Adresse email inbound de Resend (les emails envoyés ici seront capturés par le webhook resend-inbound)
+const INBOUND_EMAIL = process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
+// Adresse email où les emails inbound seront transférés (Gmail)
+const FORWARD_TO_EMAIL = process.env.FORWARD_TO_EMAIL || 'contactpadelxp@gmail.com';
 
 // Initialiser Resend au niveau du module
 let resend: Resend | null = null;
@@ -111,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[contact] Attempting to send email:', {
       from: fromEmail,
-      to: CONTACT_EMAIL,
+      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound pour que le webhook le traite
       replyTo: userEmail,
       clubName,
       hasResendKey: !!process.env.RESEND_API_KEY,
@@ -188,13 +191,14 @@ export async function POST(request: NextRequest) {
     const emailSubject = `[${conversationId.substring(0, 8)}] Message de contact - ${clubName}`;
     const emailResult = await resend.emails.send({
       from: fromEmail,
-      to: CONTACT_EMAIL,
+      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound de Resend (sera capturé par le webhook resend-inbound)
       replyTo: userEmail, // Réponses envoyées à l'email du club, mais Resend webhook les capturera
       subject: emailSubject,
       headers: {
         'X-Conversation-ID': conversationId,
         'X-Club-ID': clubId,
         'X-Reply-Token': conversationToken, // Token pour identifier la conversation dans les réponses
+        'X-Sender-Type': 'club', // Indiquer que c'est un message du club
       },
       html: `
         <!DOCTYPE html>
@@ -258,7 +262,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[contact] Email sent successfully:', {
       id: emailResult.data?.id,
-      to: CONTACT_EMAIL,
+      to: INBOUND_EMAIL,
       conversationId,
     });
 

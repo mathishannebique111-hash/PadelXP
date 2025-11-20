@@ -1,8 +1,21 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 const FORWARD_TO = process.env.FORWARD_TO_EMAIL!; // contactpadelxp@gmail.com
+
+// Client Supabase admin pour enregistrer les messages dans la DB
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,6 +63,20 @@ export async function POST(req: NextRequest) {
     const from = emailData.from ?? emailData.headers?.["from"] ?? emailData.headers?.["From"] ?? emailData.sender_email ?? "Expéditeur inconnu";
     const to = emailData.to ?? emailData.headers?.["to"] ?? emailData.headers?.["To"] ?? emailData.recipient_email ?? "";
     const emailId = emailData.email_id;
+    
+    // Vérifier si c'est un message du club (depuis le formulaire de contact)
+    const senderType = emailData.headers?.["X-Sender-Type"] ?? emailData.headers?.["x-sender-type"];
+    const conversationId = emailData.headers?.["X-Conversation-ID"] ?? emailData.headers?.["x-conversation-id"];
+    const clubId = emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
+    
+    console.log("Email metadata:", {
+      senderType,
+      conversationId,
+      clubId,
+      from,
+      to,
+      subject
+    });
 
     // Si on a un email_id, récupérer le contenu via l'API Resend
     let text = "";
@@ -161,13 +188,29 @@ export async function POST(req: NextRequest) {
       `;
     }
 
-    // Renvoyer vers ta boîte Gmail
-    const { error: sendError } = await resend.emails.send({
+    // Si c'est un message du club, le message a déjà été enregistré dans /api/contact
+    // On transfère juste l'email vers Gmail pour que l'admin puisse répondre
+    // Si c'est une réponse de l'admin, elle sera gérée par /api/webhooks/resend
+    
+    // Transférer l'email vers Gmail avec les headers pour identifier la conversation
+    const forwardHeaders: Record<string, string> = {
+      'X-Conversation-ID': conversationId || '',
+      'X-Club-ID': clubId || '',
+      'X-Original-From': from,
+    };
+    
+    // Supprimer les headers vides
+    Object.keys(forwardHeaders).forEach(key => {
+      if (!forwardHeaders[key]) delete forwardHeaders[key];
+    });
+
+    const { error: sendError, data: forwardData } = await resend.emails.send({
       from: "PadelXP Support <support@updates.padelxp.eu>",
       to: [FORWARD_TO],
       subject: `📩 Nouveau message de ${from} : ${subject}`,
       html: emailHtml,
-      replyTo: from,
+      replyTo: from, // Permettre à l'admin de répondre directement depuis Gmail
+      headers: Object.keys(forwardHeaders).length > 0 ? forwardHeaders : undefined,
     });
 
     if (sendError) {
@@ -175,7 +218,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "forward_failed" }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true });
+    console.log("Email forwarded successfully:", {
+      to: FORWARD_TO,
+      conversationId,
+      messageId: forwardData?.id
+    });
+
+    return NextResponse.json({ ok: true, forwarded: true });
   } catch (error: any) {
     console.error("Unexpected error in resend-inbound:", error);
     return NextResponse.json(

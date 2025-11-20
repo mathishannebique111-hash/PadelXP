@@ -203,7 +203,7 @@ export default function HelpPage() {
             {loading ? 'Envoi en cours...' : 'Envoyer'}
           </button>
           <p className="text-xs text-white/50 text-center">
-            Le message sera envoyé à contactpadelxp@gmail.com. Les réponses à cet email apparaîtront automatiquement dans la conversation ci-dessus.
+            Votre message sera envoyé et apparaîtra dans la conversation ci-dessus. Les réponses apparaîtront automatiquement.
           </p>
         </form>
       </div>
