@@ -155,22 +155,40 @@ export default function HelpPage() {
       console.log('✅ Message sent successfully:', {
         conversationId: data.conversationId,
         messageId: data.messageId,
-        sentMessage: sentMessage.substring(0, 50) + '...'
+        sentMessage: sentMessage.substring(0, 50) + '...',
+        fullData: data
       });
       
-      // Si on a un conversationId, ajouter temporairement le message à l'état local
-      // pour qu'il apparaisse immédiatement, puis recharger depuis la DB
-      if (data.conversationId && sentMessage) {
-        const tempMessage: SupportMessage = {
-          id: `temp-${Date.now()}`,
-          conversation_id: data.conversationId,
-          sender_type: 'club',
-          sender_id: null,
-          message_text: sentMessage,
-          created_at: new Date().toISOString(),
-        };
-        console.log('📝 Adding temporary message to local state:', tempMessage.id);
-        setMessages(prev => [...prev, tempMessage]);
+      // TOUJOURS ajouter temporairement le message à l'état local pour qu'il apparaisse immédiatement
+      // Peu importe si la DB répond ou non, le message doit s'afficher
+      const tempMessageId = `temp-${Date.now()}`;
+      const tempMessage: SupportMessage = {
+        id: tempMessageId,
+        conversation_id: data.conversationId || `temp-conv-${Date.now()}`,
+        sender_type: 'club',
+        sender_id: null,
+        message_text: sentMessage,
+        created_at: new Date().toISOString(),
+      };
+      console.log('📝 Adding temporary message to local state:', {
+        tempMessageId,
+        messageText: sentMessage.substring(0, 50) + '...',
+        currentMessagesCount: messages.length
+      });
+      
+      // Ajouter le message temporaire à la liste
+      setMessages(prev => {
+        const updated = [...prev, tempMessage];
+        console.log('📝 Messages updated:', {
+          before: prev.length,
+          after: updated.length,
+          tempMessageId
+        });
+        return updated;
+      });
+      
+      // Si on a un conversationId, mettre à jour aussi la conversation
+      if (data.conversationId) {
         setConversation(prev => prev || {
           id: data.conversationId,
           club_id: '',
