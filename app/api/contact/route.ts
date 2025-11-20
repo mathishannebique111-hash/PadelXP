@@ -237,6 +237,47 @@ export async function POST(request: NextRequest) {
       console.log('[contact] Created new conversation:', conversationId);
     }
 
+    // IMPORTANT: Enregistrer le message dans la DB AVANT d'essayer d'envoyer l'email
+    // Comme ça, le message apparaîtra toujours dans le chat, même si l'envoi d'email échoue
+    console.log('[contact] Saving message to database first...');
+    const { error: messageError, data: savedMessage } = await supabaseAdmin
+      .from('support_messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_type: 'club',
+        sender_id: user.id,
+        sender_email: userEmail,
+        message_text: message.trim(),
+        html_content: message.replace(/\n/g, '<br>'),
+        // email_message_id sera mis à jour après l'envoi de l'email
+      })
+      .select()
+      .single();
+
+    if (messageError) {
+      console.error('[contact] Error saving message to database:', messageError);
+      // Si la table n'existe pas, retourner un message explicite
+      if (messageError.code === '42P01' || messageError.message?.includes('does not exist')) {
+        return NextResponse.json({ 
+          error: 'Système de chat non configuré',
+          hint: 'Veuillez exécuter le script create_support_chat_system.sql dans Supabase SQL Editor',
+          details: messageError.message
+        }, { status: 500 });
+      }
+      // Sinon, continuer quand même (l'envoi d'email peut toujours fonctionner)
+    } else {
+      console.log('[contact] Message saved to database:', savedMessage?.id);
+      
+      // Mettre à jour last_message_at de la conversation
+      await supabaseAdmin
+        .from('support_conversations')
+        .update({ 
+          last_message_at: new Date().toISOString(),
+          status: 'open'
+        })
+        .eq('id', conversationId);
+    }
+
     // Générer un identifiant unique pour lier l'email à la conversation
     const conversationToken = Buffer.from(conversationId).toString('base64url');
     
@@ -310,131 +351,98 @@ export async function POST(request: NextRequest) {
       dataDetails: emailResult.data ? JSON.stringify(emailResult.data, null, 2) : null,
     });
 
-    // Si l'envoi vers l'inbound échoue avec une erreur de test, essayer d'envoyer directement à Gmail
-    if (emailResult.error) {
+    // Si l'envoi vers l'inbound échoue, essayer d'envoyer directement à Gmail
+    if (emailResult.error && INBOUND_EMAIL !== FORWARD_TO_EMAIL) {
       const errorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
-      const isTestingEmailError = errorMessage.includes('testing emails') || errorMessage.includes('You can only send testing emails');
+      console.error('[contact] Resend API error when sending to inbound:', JSON.stringify(emailResult.error, null, 2));
+      console.log('[contact] Trying to send directly to Gmail as fallback...');
       
-      console.error('[contact] Resend API error:', JSON.stringify(emailResult.error, null, 2));
-      
-      // Si c'est une erreur de test et qu'on essaie d'envoyer vers l'inbound, essayer directement à Gmail
-      if (isTestingEmailError && INBOUND_EMAIL !== FORWARD_TO_EMAIL) {
-        console.log('[contact] Testing email error detected, trying to send directly to Gmail instead...');
-        
-        emailResult = await resend.emails.send({
-          from: fromEmail,
-          to: FORWARD_TO_EMAIL, // Envoyer directement à Gmail
-          replyTo: userEmail,
-          subject: emailSubject,
-          headers: {
-            'X-Conversation-ID': conversationId,
-            'X-Club-ID': clubId,
-            'X-Reply-Token': conversationToken,
-            'X-Sender-Type': 'club',
-            'X-Inbound-Email': INBOUND_EMAIL, // Garder l'info de l'inbound pour référence
-          },
-          html: `
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="utf-8">
-                <style>
-                  body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
-                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                  .header { background: linear-gradient(135deg, #0066FF, #0052CC); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                  .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-                  .message-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0066FF; }
-                  .info { background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
-                  .info-item { margin: 5px 0; }
-                  .reply-note { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107; font-size: 12px; color: #856404; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <div class="header">
-                    <h1>📧 Nouveau message de contact</h1>
-                  </div>
-                  <div class="content">
-                    <div class="info">
-                      <div class="info-item"><strong>Club :</strong> ${clubName}</div>
-                      <div class="info-item"><strong>Email du club :</strong> ${userEmail}</div>
-                    </div>
-                    <div class="message-box">
-                      <strong>Message :</strong>
-                      <p style="white-space: pre-wrap; margin-top: 10px;">${message.replace(/\n/g, '<br>')}</p>
-                    </div>
-                    <div class="reply-note">
-                      <strong>💡 Pour répondre :</strong> Répondez simplement à cet email. Votre réponse apparaîtra dans la page "Aide & Support" du club.
-                    </div>
-                    <p style="margin-top: 30px; font-size: 12px; color: #666;">
-                      Ce message a été envoyé depuis la page "Aide & Support" du compte club.
-                      <br/>
-                      <small>Conversation ID: ${conversationId}</small>
-                    </p>
-                  </div>
+      emailResult = await resend.emails.send({
+        from: fromEmail,
+        to: FORWARD_TO_EMAIL, // Envoyer directement à Gmail
+        replyTo: INBOUND_EMAIL, // Les réponses iront à l'inbound pour être capturées par le webhook
+        subject: emailSubject,
+        headers: {
+          'X-Conversation-ID': conversationId,
+          'X-Club-ID': clubId,
+          'X-Reply-Token': conversationToken,
+          'X-Sender-Type': 'club',
+          'X-Inbound-Email': INBOUND_EMAIL, // Garder l'info de l'inbound pour référence
+        },
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #0066FF, #0052CC); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                .message-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0066FF; }
+                .info { background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
+                .info-item { margin: 5px 0; }
+                .reply-note { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107; font-size: 12px; color: #856404; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>📧 Nouveau message de contact</h1>
                 </div>
-              </body>
-            </html>
-          `,
-        });
-        
-        // Si l'envoi direct à Gmail réussit, continuer normalement
-        if (!emailResult.error) {
-          console.log('[contact] Email sent successfully to Gmail (fallback from inbound):', {
-            id: emailResult.data?.id,
-            to: FORWARD_TO_EMAIL,
-            conversationId,
-          });
-        }
-      }
+                <div class="content">
+                  <div class="info">
+                    <div class="info-item"><strong>Club :</strong> ${clubName}</div>
+                    <div class="info-item"><strong>Email du club :</strong> ${userEmail}</div>
+                  </div>
+                  <div class="message-box">
+                    <strong>Message :</strong>
+                    <p style="white-space: pre-wrap; margin-top: 10px;">${message.replace(/\n/g, '<br>')}</p>
+                  </div>
+                  <div class="reply-note">
+                    <strong>💡 Pour répondre :</strong> Répondez simplement à cet email. Votre réponse apparaîtra dans la page "Aide & Support" du club.
+                  </div>
+                  <p style="margin-top: 30px; font-size: 12px; color: #666;">
+                    Ce message a été envoyé depuis la page "Aide & Support" du compte club.
+                    <br/>
+                    <small>Conversation ID: ${conversationId}</small>
+                  </p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+      });
       
-      // Si on a toujours une erreur après le fallback, retourner l'erreur
-      if (emailResult.error) {
-        const finalErrorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
-        const errorCode = emailResult.error.code || emailResult.error.name || '';
-        
-        console.error('[contact] Resend API error (after fallback):', JSON.stringify(emailResult.error, null, 2));
-        
-        return NextResponse.json({ 
-          error: `Erreur lors de l'envoi: ${finalErrorMessage}`,
-          errorDetails: emailResult.error,
-          errorCode,
-          debug: {
-            fromEmail,
-            to: INBOUND_EMAIL,
-            fallbackTo: FORWARD_TO_EMAIL,
-            hasResendFromEmail: !!process.env.RESEND_FROM_EMAIL,
-          }
-        }, { status: 500 });
+      if (!emailResult.error) {
+        console.log('[contact] Email sent successfully to Gmail (fallback):', {
+          id: emailResult.data?.id,
+          to: FORWARD_TO_EMAIL,
+          conversationId,
+        });
+      } else {
+        // Si même l'envoi direct à Gmail échoue, logger l'erreur mais ne pas bloquer (le message est déjà dans la DB)
+        console.error('[contact] Failed to send email even to Gmail (fallback):', JSON.stringify(emailResult.error, null, 2));
       }
     }
 
-    console.log('[contact] Email sent successfully:', {
-      id: emailResult.data?.id,
-      to: INBOUND_EMAIL,
-      conversationId,
-    });
+    // Si l'email a été envoyé avec succès, logger l'info
+    if (!emailResult.error && emailResult.data?.id) {
+      console.log('[contact] Email sent successfully:', {
+        id: emailResult.data.id,
+        to: emailResult.data.to || INBOUND_EMAIL,
+        conversationId,
+      });
+    }
 
-    // Enregistrer le message initial dans la base de données
-    if (emailResult.data?.id) {
-      const { error: messageError } = await supabaseAdmin
+    // Mettre à jour email_message_id si l'email a été envoyé avec succès
+    if (emailResult.data?.id && savedMessage?.id) {
+      await supabaseAdmin
         .from('support_messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_type: 'club',
-          sender_id: user.id,
-          sender_email: userEmail,
-          message_text: message.trim(),
-          html_content: message.replace(/\n/g, '<br>'),
-          email_message_id: emailResult.data.id,
-        });
-
-      if (messageError) {
-        console.error('[contact] Error saving message:', messageError);
-        // Ne pas échouer la requête si le message est sauvegardé, juste logger l'erreur
-      } else {
-        console.log('[contact] Message saved to database');
-      }
+        .update({ email_message_id: emailResult.data.id })
+        .eq('id', savedMessage.id);
+      
+      console.log('[contact] Message email_message_id updated:', emailResult.data.id);
     }
 
     return NextResponse.json({ 

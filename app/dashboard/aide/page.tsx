@@ -101,9 +101,24 @@ export default function HelpPage() {
       }
 
       setSuccess(true);
+      const sentMessage = message.trim();
       setMessage('');
       
-      // Recharger la conversation pour afficher le nouveau message
+      // Ajouter temporairement le message dans l'état local pour qu'il apparaisse immédiatement
+      // Le rechargement de la conversation va le remplacer par le vrai message de la DB
+      if (conversation) {
+        const tempMessage: SupportMessage = {
+          id: `temp-${Date.now()}`,
+          conversation_id: data.conversationId || conversation.id,
+          sender_type: 'club',
+          sender_id: null,
+          message_text: sentMessage,
+          created_at: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, tempMessage]);
+      }
+      
+      // Recharger la conversation pour afficher le message depuis la DB
       await loadConversation();
       
       // Réinitialiser le message de succès après 5 secondes
