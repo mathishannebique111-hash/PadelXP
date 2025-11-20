@@ -11,17 +11,6 @@ function tierForPoints(points: number): "Bronze" | "Argent" | "Or" | "Diamant" |
   return "Bronze";
 }
 
-function getTierColor(tier: "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"): string {
-  const colors = {
-    Bronze: "#CD7F32",
-    Argent: "#C0C0C0",
-    Or: "#FFD700",
-    Diamant: "#B9F2FF",
-    Champion: "#FF1493",
-  };
-  return colors[tier];
-}
-
 export async function GET() {
   let browser;
   try {
@@ -57,7 +46,7 @@ export async function GET() {
     const totalPlayers = leaderboard.length;
     const totalMatches = history.matches.length;
 
-    // Générer le HTML avec le même style que la page Classement
+    // Générer le HTML simple pour le PDF
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -72,210 +61,182 @@ export async function GET() {
       box-sizing: border-box;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d1b3d 50%, #1a2332 75%, #0f1629 100%);
-      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #f5f5f5;
+      color: #333;
       padding: 40px 20px;
-      min-height: 100vh;
     }
     .container {
       max-width: 1200px;
       margin: 0 auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     .title {
       font-size: 32px;
       font-weight: 700;
       margin-bottom: 30px;
       text-align: center;
-      color: #fff;
+      color: #333;
     }
     .stats {
       display: flex;
       justify-content: center;
-      gap: 15px;
+      gap: 20px;
       margin-bottom: 40px;
-      flex-wrap: wrap;
     }
     .stat-badge {
-      padding: 8px 16px;
-      border-radius: 9999px;
-      background: linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%);
-      border: 1px solid rgba(255,255,255,0.2);
+      padding: 10px 20px;
+      border-radius: 20px;
+      background: #e3f2fd;
       font-size: 14px;
       font-weight: 600;
+      color: #1976d2;
     }
     .top3-section {
       margin-bottom: 50px;
     }
     .top3-title {
       text-align: center;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
       margin-bottom: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-    }
-    .top3-title::before,
-    .top3-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(255,255,255,0.2);
-      max-width: 100px;
+      color: #333;
     }
     .top3-container {
       display: flex;
       justify-content: center;
       align-items: flex-end;
       gap: 20px;
-      margin-bottom: 30px;
     }
     .podium-card {
-      border-radius: 16px;
+      border-radius: 12px;
       padding: 30px 20px;
       text-align: center;
       position: relative;
       border: 3px solid;
       min-height: 250px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
+      flex: 1;
+      max-width: 250px;
     }
     .podium-2 {
-      background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
-      border-color: rgba(148, 163, 184, 0.8);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 0 120px rgba(192, 192, 192, 0.35);
+      background: #f5f5f5;
+      border-color: #9e9e9e;
     }
     .podium-1 {
-      background: linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44);
-      border-color: rgba(234, 179, 8, 0.8);
-      box-shadow: 0 6px 25px rgba(0,0,0,0.1), inset 0 0 140px rgba(255, 215, 0, 0.4);
+      background: #fff9c4;
+      border-color: #fbc02d;
     }
     .podium-3 {
-      background: linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085);
-      border-color: rgba(234, 88, 12, 0.8);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 0 120px rgba(205, 127, 50, 0.35);
+      background: #ffe0b2;
+      border-color: #ff9800;
     }
-    .podium-2 { flex: 1; max-width: 220px; }
-    .podium-1 { flex: 1.2; max-width: 280px; }
-    .podium-3 { flex: 1; max-width: 220px; }
     .podium-emoji {
       position: absolute;
       top: 10px;
       right: 10px;
-      font-size: 48px;
-      opacity: 0.9;
+      font-size: 40px;
     }
     .podium-name {
-      font-size: 22px;
-      font-weight: 800;
-      color: #111827;
+      font-size: 20px;
+      font-weight: 700;
+      color: #333;
       margin-bottom: 15px;
     }
     .podium-points {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: 9999px;
-      background: rgba(255,255,255,0.95);
-      border: 2px solid;
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 800;
-      color: #111827;
+      color: #333;
+      margin-top: 20px;
     }
-    .podium-2 .podium-points { border-color: #71717a; }
-    .podium-1 .podium-points { border-color: #eab308; }
-    .podium-3 .podium-points { border-color: #f97316; }
+    .meilleur-joueur-badge {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      padding: 4px 10px;
+      border-radius: 15px;
+      background: #fff59d;
+      color: #f57f17;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid #fbc02d;
+    }
     .leaderboard-section {
       margin-top: 40px;
     }
     .leaderboard-title {
       text-align: center;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
       margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-    }
-    .leaderboard-title::before,
-    .leaderboard-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(255,255,255,0.2);
-      max-width: 100px;
+      color: #333;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       background: #fff;
-      border-radius: 16px;
+      border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      border: 3px solid #cbd5e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     thead {
-      background: #f1f5f9;
+      background: #f5f5f5;
     }
     th {
-      padding: 12px 16px;
+      padding: 12px;
       text-align: center;
       font-size: 12px;
       font-weight: 600;
       text-transform: uppercase;
-      color: #475569;
-      border-left: 1px solid #e2e8f0;
+      color: #666;
+      border-bottom: 2px solid #ddd;
     }
-    th:first-child { border-left: none; }
-    td {
-      padding: 12px 16px;
-      text-align: center;
-      font-size: 14px;
-      color: #1e293b;
-      border-left: 1px solid #e2e8f0;
-      border-top: 1px solid #e2e8f0;
-    }
-    td:first-child { border-left: none; }
     tbody tr {
       background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+    tbody tr:hover {
+      background: #f9f9f9;
+    }
+    td {
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: #333;
     }
     .rank-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
       border-radius: 50%;
-      font-weight: 800;
-      font-size: 14px;
-      border: 2px solid;
+      font-weight: 700;
+      font-size: 12px;
+      color: #fff;
+      text-align: center;
     }
-    .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); border-color: rgba(234, 179, 8, 0.5); color: #fff; }
-    .rank-2 { background: linear-gradient(135deg, #d1d5db, #9ca3af, #6b7280); border-color: rgba(156, 163, 175, 0.5); color: #fff; }
-    .rank-3 { background: linear-gradient(135deg, #fb923c, #f97316, #ea580c); border-color: rgba(249, 115, 22, 0.5); color: #fff; }
-    .rank-default { background: linear-gradient(135deg, #1A3A6E, #1E4280, #1A3A6E); border-color: rgba(59, 130, 246, 0.5); color: #fff; }
+    .rank-1 { background: #ffd700; }
+    .rank-2 { background: #c0c0c0; }
+    .rank-3 { background: #cd7f32; }
+    .rank-default { background: #2196f3; }
     .tier-badge {
       display: inline-block;
-      padding: 4px 12px;
-      border-radius: 9999px;
+      padding: 4px 10px;
+      border-radius: 12px;
       font-size: 11px;
       font-weight: 700;
       color: #fff;
-      border: 2px solid;
     }
-    .tier-Bronze { background: #CD7F32; border-color: #CD7F32; }
-    .tier-Argent { background: #C0C0C0; border-color: #C0C0C0; color: #1e293b; }
-    .tier-Or { background: #FFD700; border-color: #FFD700; color: #1e293b; }
-    .tier-Diamant { background: #B9F2FF; border-color: #B9F2FF; color: #1e293b; }
-    .tier-Champion { background: #FF1493; border-color: #FF1493; }
-    .winrate { color: #059669; font-weight: 600; }
-    .wins { color: #047857; background: #ecfdf5; font-weight: 600; }
-    .losses { color: #b91c1c; background: #fef2f2; font-weight: 600; }
+    .tier-Bronze { background: #cd7f32; }
+    .tier-Argent { background: #c0c0c0; color: #333; }
+    .tier-Or { background: #ffd700; color: #333; }
+    .tier-Diamant { background: #b9f2ff; color: #333; }
+    .tier-Champion { background: #ff1493; }
+    .winrate { color: #4caf50; font-weight: 600; }
+    .wins { color: #4caf50; font-weight: 600; }
+    .losses { color: #f44336; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -295,21 +256,22 @@ export async function GET() {
         <div class="podium-card podium-2">
           <div class="podium-emoji">🥈</div>
           <div class="podium-name">${top3[1].player_name}</div>
-          <div class="podium-points">${top3[1].points.toLocaleString()} <span style="font-size: 10px; text-transform: uppercase;">points</span></div>
+          <div class="podium-points">${top3[1].points.toLocaleString()} points</div>
         </div>
         ` : ''}
         ${top3[0] ? `
         <div class="podium-card podium-1">
+          <div class="meilleur-joueur-badge">Meilleur joueur</div>
           <div class="podium-emoji">🥇</div>
           <div class="podium-name">${top3[0].player_name}</div>
-          <div class="podium-points">${top3[0].points.toLocaleString()} <span style="font-size: 10px; text-transform: uppercase;">points</span></div>
+          <div class="podium-points">${top3[0].points.toLocaleString()} points</div>
         </div>
         ` : ''}
         ${top3[2] ? `
         <div class="podium-card podium-3">
           <div class="podium-emoji">🥉</div>
           <div class="podium-name">${top3[2].player_name}</div>
-          <div class="podium-points">${top3[2].points.toLocaleString()} <span style="font-size: 10px; text-transform: uppercase;">points</span></div>
+          <div class="podium-points">${top3[2].points.toLocaleString()} points</div>
         </div>
         ` : ''}
       </div>
@@ -357,7 +319,6 @@ export async function GET() {
 </html>
     `;
 
-    // Lancer Puppeteer et générer le PDF
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
