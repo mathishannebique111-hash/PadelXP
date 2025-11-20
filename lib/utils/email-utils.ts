@@ -19,20 +19,35 @@ export function extractReplyContent(text: string, html?: string): string {
   
   // Patterns pour détecter le début des citations
   const quotePatterns = [
-    // Citations avec ">" au début de ligne
-    /^>.*$/m,
-    // "On ... a écrit :" ou "Le ... a écrit :"
-    /^(On|Le|Le\s+\d+[\/\-]\d+[\/\-]\d+.*?a écrit|From:|De:|Sent:|Envoyé|Date:).*$/mi,
+    // Citations avec ">" au début de ligne (peut commencer par des espaces avant le >)
+    /^[\s>]*>.*$/m,
+    // "On ... a écrit :" ou "Le ... a écrit :" (format français complet avec date)
+    /^(On|Le|lun\.|mar\.|mer\.|jeu\.|ven\.|sam\.|dim\.)\s+.*?(a écrit|écrit|wrote).*$/mi,
+    // Dates françaises "Le jeu. 20 nov. 2025"
+    /^(Le|On)\s+[a-z]+\s+\d+\s+[a-z]+\s+\d+.*$/mi,
+    // "From:", "To:", "Subject:", "De :", "À :" (en-têtes d'email)
+    /^(From|To|Subject|De|À|Objet|From:|To:|Subject:|De :|À :|Objet :)\s*:?\s*.*$/mi,
+    // "Sent:", "Envoyé", "Date:"
+    /^(Sent|Envoyé|Date|Sent:|Envoyé :|Date :)\s*:?\s*.*$/mi,
     // Séparateurs de citation
     /^[-_]{3,}.*$/m,
     /^_{10,}$/m,
     /^-{10,}$/m,
-    // "From:", "To:", "Subject:" (en-têtes d'email)
-    /^(From|To|Subject|De|À|Objet):\s+.*$/mi,
+    /^[=]{10,}$/m,
+    // "Tu as reçu un nouveau message" (pattern du template Resend)
+    /^Tu as reçu un.*nouveau message.*$/mi,
+    // "Nouveau message de contact"
+    /^Nouveau message de contact.*$/mi,
+    // "Club :", "Email du club :", "Message :" (patterns du template)
+    /^(Club|Email du club|Message)\s*:.*$/mi,
+    // "Pour répondre :", "Conversation ID:"
+    /^(Pour répondre|Conversation ID|Pour répondre :|Conversation ID :)\s*:?\s*.*$/mi,
+    // "Ce message a été envoyé depuis"
+    /^Ce message a été envoyé.*$/mi,
     // Dates et heures
     /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*$/m,
     // "Original Message" ou "Message original"
-    /^(Original Message|Message original|-----Original Message-----).*$/mi,
+    /^(Original Message|Message original|-----Original Message-----|-----\s*Original Message\s*-----).*$/mi,
   ];
   
   // Diviser le contenu en lignes

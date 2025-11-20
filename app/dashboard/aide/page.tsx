@@ -41,6 +41,7 @@ export default function HelpPage() {
   const [error, setError] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
   const [openConversations, setOpenConversations] = useState<Set<string>>(new Set());
+  const [readMessages, setReadMessages] = useState<Set<string>>(new Set()); // Messages que le club a vus
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -63,8 +64,20 @@ export default function HelpPage() {
           }))
         });
         
-        if (data.conversations && Array.isArray(data.conversations)) {
+          if (data.conversations && Array.isArray(data.conversations)) {
           setConversations(data.conversations);
+          
+          // Si une conversation est ouverte, marquer automatiquement ses messages comme lus
+          data.conversations.forEach((conv: ConversationWithMessages) => {
+            if (openConversations.has(conv.id)) {
+              const allMessageIds = conv.messages?.map(m => m.id) || [];
+              setReadMessages(prevRead => {
+                const newReadSet = new Set(prevRead);
+                allMessageIds.forEach(id => newReadSet.add(id));
+                return newReadSet;
+              });
+            }
+          });
         } else {
           setConversations([]);
         }
@@ -228,27 +241,15 @@ export default function HelpPage() {
     return conversation.messages?.find(m => m.sender_type === 'club') || null;
   };
 
-  // Compter les réponses non lues (messages de l'admin après le dernier message du club)
+  // Compter les réponses non lues (messages de l'admin qui n'ont pas été vus par le club)
   const getUnreadRepliesCount = (conversation: ConversationWithMessages): number => {
     const messages = conversation.messages || [];
     if (messages.length === 0) return 0;
 
-    // Trouver le dernier message du club
-    let lastClubMessageIndex = -1;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].sender_type === 'club') {
-        lastClubMessageIndex = i;
-        break;
-      }
-    }
-
-    // Si pas de message du club, pas de réponses non lues
-    if (lastClubMessageIndex === -1) return 0;
-
-    // Compter les messages de l'admin après le dernier message du club
+    // Compter uniquement les messages de l'admin qui n'ont pas été marqués comme lus
     let unreadCount = 0;
-    for (let i = lastClubMessageIndex + 1; i < messages.length; i++) {
-      if (messages[i].sender_type === 'admin') {
+    for (const msg of messages) {
+      if (msg.sender_type === 'admin' && !readMessages.has(msg.id)) {
         unreadCount++;
       }
     }
