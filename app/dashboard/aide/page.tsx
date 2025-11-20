@@ -418,14 +418,18 @@ export default function HelpPage() {
                               <div
                                 className={`max-w-[80%] rounded-lg p-3 ${
                                   msg.sender_type === 'club'
-                                    ? 'bg-blue-600 text-white'
+                                    ? 'bg-[#0066FF] text-white shadow-lg shadow-blue-500/30'
                                     : 'bg-white/10 border border-white/20'
                                 }`}
                               >
-                                <div className="text-xs text-white/60 mb-1">
+                                <div className={`text-xs mb-1 ${
+                                  msg.sender_type === 'club' ? 'text-white/80' : 'text-white/60'
+                                }`}>
                                   {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
                                 </div>
-                                <div className="text-white/90 whitespace-pre-wrap break-words">
+                                <div className={`whitespace-pre-wrap break-words ${
+                                  msg.sender_type === 'club' ? 'text-white font-medium' : 'text-white/90'
+                                }`}>
                                   {msg.message_text}
                                 </div>
                               </div>
