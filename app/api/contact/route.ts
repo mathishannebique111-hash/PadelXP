@@ -258,6 +258,7 @@ export async function POST(request: NextRequest) {
 
       conversationId = newConversation.id;
       console.log('[contact] Created new conversation:', conversationId);
+      }
     }
 
     // IMPORTANT: Enregistrer le message dans la DB AVANT d'essayer d'envoyer l'email
