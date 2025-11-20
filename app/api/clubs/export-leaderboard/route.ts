@@ -21,7 +21,7 @@ function formatDate(date: string | null | undefined): string {
 
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

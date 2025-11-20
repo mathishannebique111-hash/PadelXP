@@ -28,7 +28,7 @@ export async function GET() {
       );
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -40,11 +40,14 @@ export async function GET() {
     // Déterminer le club de l'utilisateur
     let clubId: string | null = null;
     {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("club_id")
         .eq("id", user.id)
         .maybeSingle();
+      if (profileError) {
+        console.error("[export-members] Error fetching profile:", profileError);
+      }
       if (profile?.club_id) {
         clubId = profile.club_id;
       }
