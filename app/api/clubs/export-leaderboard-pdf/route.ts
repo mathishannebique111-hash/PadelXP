@@ -11,17 +11,6 @@ function tierForPoints(points: number): "Bronze" | "Argent" | "Or" | "Diamant" |
   return "Bronze";
 }
 
-function getTierColor(tier: "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"): string {
-  const colors = {
-    Bronze: "#CD7F32",
-    Argent: "#C0C0C0",
-    Or: "#FFD700",
-    Diamant: "#B9F2FF",
-    Champion: "#FF1493",
-  };
-  return colors[tier];
-}
-
 export async function GET() {
   let browser;
   try {
@@ -57,7 +46,7 @@ export async function GET() {
     const totalPlayers = leaderboard.length;
     const totalMatches = history.matches.length;
 
-    // Générer le HTML avec EXACTEMENT le même style que la page Classement
+    // Générer le HTML avec EXACTEMENT le même style que la page Classement (version desktop md:)
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -74,22 +63,31 @@ export async function GET() {
       box-sizing: border-box;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      background: linear-gradient(to bottom, #121212, #1E1E1E);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #121212 0%, #1E1E1E 100%);
       color: #fff;
       padding: 40px 20px;
       min-height: 100vh;
-      position: relative;
     }
     .container {
       max-width: 1200px;
       margin: 0 auto;
+      space-y: 32px;
+    }
+    
+    /* PageTitle style */
+    .title-section {
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
     .title-wrapper {
       display: flex;
       align-items: stretch;
       gap: 12px;
-      margin-bottom: 24px;
     }
     .title-bar {
       width: 6px;
@@ -107,76 +105,77 @@ export async function GET() {
       padding: 8px 16px;
     }
     .title {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 800;
       color: #fff;
       letter-spacing: -0.025em;
     }
+    
+    /* Stats badges */
     .stats {
       display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 40px;
       flex-wrap: wrap;
+      gap: 8px;
     }
     .stat-badge {
-      padding: 4px 14px;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
       border-radius: 9999px;
       background: linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%);
       border: 1px solid rgba(255,255,255,0.1);
       box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      position: relative;
+      color: #fff;
       overflow: hidden;
       outline: 1px solid rgba(255,255,255,0.2);
       outline-offset: -1px;
     }
+    
+    /* Top 3 Section */
     .top3-section {
-      margin-bottom: 50px;
-    }
-    .top3-title {
-      text-align: center;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.1);
-      display: inline-flex;
-      margin-left: auto;
-      margin-right: auto;
+      margin-bottom: 32px;
     }
     .top3-title-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-bottom: 30px;
+      margin-bottom: 32px;
     }
     .top3-title-wrapper::before,
     .top3-title-wrapper::after {
       content: '';
       flex: 0 1 auto;
       height: 1px;
-      width: 48px;
+      width: 96px;
       background: rgba(255,255,255,0.2);
+    }
+    .top3-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .top3-container {
       display: flex;
-      justify-content: center;
       align-items: flex-end;
-      gap: 20px;
-      margin-bottom: 30px;
+      justify-content: center;
+      gap: 24px;
+      width: 100%;
     }
+    
+    /* Podium cards - desktop version (md:) */
     .podium-card {
       border-radius: 16px;
       text-align: center;
@@ -184,115 +183,40 @@ export async function GET() {
       overflow: visible;
     }
     .podium-2 {
-      padding: 24px 16px;
-      border: 3px solid;
-      min-height: 240px;
-    }
-    .podium-1 {
+      flex: 1;
+      max-width: 240px;
       padding: 32px 24px;
-      border: 4px solid;
-      min-height: 260px;
-    }
-    .podium-3 {
-      padding: 24px 16px;
-      border: 3px solid;
-      min-height: 240px;
-    }
-    .podium-2 {
+      border: 4px solid rgba(148, 163, 184, 0.8);
+      min-height: 280px;
       background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
-      border-color: rgba(148, 163, 184, 0.8);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
-      flex: 1;
-      max-width: 200px;
     }
     .podium-1 {
-      background: linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44);
-      border-color: rgba(234, 179, 8, 0.8);
-      box-shadow: 0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6);
       flex: 1.2;
-      max-width: 220px;
+      max-width: 280px;
+      padding: 36px 28px;
+      border: 4px solid rgba(234, 179, 8, 0.8);
+      min-height: 320px;
+      background: linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6);
     }
     .podium-3 {
-      background: linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085);
-      border-color: rgba(234, 88, 12, 0.8);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
       flex: 1;
-      max-width: 200px;
+      max-width: 240px;
+      padding: 32px 24px;
+      border: 4px solid rgba(234, 88, 12, 0.8);
+      min-height: 280px;
+      background: linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
     .podium-emoji {
       position: absolute;
-      top: 4px;
-      right: 4px;
-      font-size: 48px;
+      top: 8px;
+      right: 8px;
+      font-size: 64px;
       opacity: 0.95;
       z-index: 20;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-    }
-    .podium-name {
-      font-weight: 800;
-      color: #111827;
-      letter-spacing: -0.025em;
-      text-align: center;
-      line-height: 1.2;
-    }
-    .podium-2 .podium-name {
-      font-size: 20px;
-      margin-bottom: 24px;
-    }
-    .podium-1 .podium-name {
-      font-size: 28px;
-      margin-bottom: 24px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    .podium-3 .podium-name {
-      font-size: 18px;
-      margin-bottom: 24px;
-    }
-    .podium-points {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border-radius: 9999px;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(10px);
-      border: 2px solid;
-      font-weight: 800;
-      color: #111827;
-      white-space: nowrap;
-    }
-    .podium-2 .podium-points {
-      padding: 6px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 0 0 2px rgba(212, 212, 216, 0.5);
-      font-size: 20px;
-    }
-    .podium-1 .podium-points {
-      padding: 10px 24px;
-      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35), 0 0 0 2px rgba(234, 179, 8, 0.5);
-      font-size: 28px;
-    }
-    .podium-3 .podium-points {
-      padding: 6px 20px;
-      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25), 0 0 0 2px rgba(251, 146, 60, 0.5);
-      font-size: 20px;
-    }
-    .podium-points-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 600;
-      color: #374151;
-    }
-    .podium-1 .podium-points-label {
-      color: #111827;
-    }
-    .podium-2 .podium-points { 
-      border-color: #71717a; 
-    }
-    .podium-1 .podium-points { 
-      border-color: #eab308; 
-    }
-    .podium-3 .podium-points { 
-      border-color: #f97316; 
     }
     .meilleur-joueur-badge {
       position: absolute;
@@ -302,39 +226,125 @@ export async function GET() {
       border-radius: 9999px;
       background: #fef3c7;
       color: #92400e;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 600;
       border: 1px solid #fcd34d;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       z-index: 30;
       white-space: nowrap;
     }
+    .podium-content {
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      padding-top: 20px;
+    }
+    .podium-name {
+      font-weight: 800;
+      color: #111827;
+      letter-spacing: -0.025em;
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 24px;
+    }
+    .podium-2 .podium-name {
+      font-size: 20px;
+    }
+    .podium-1 .podium-name {
+      font-size: 28px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .podium-3 .podium-name {
+      font-size: 18px;
+    }
+    .podium-points-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .podium-points {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border: 2px solid;
+      font-weight: 800;
+      color: #111827;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .podium-2 .podium-points {
+      padding: 6px 20px;
+      border-color: #71717a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 0 0 2px rgba(212, 212, 216, 0.5);
+      font-size: 20px;
+    }
+    .podium-1 .podium-points {
+      padding: 10px 24px;
+      border-color: #eab308;
+      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35), 0 0 0 2px rgba(234, 179, 8, 0.5);
+      font-size: 28px;
+    }
+    .podium-3 .podium-points {
+      padding: 6px 20px;
+      border-color: #f97316;
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25), 0 0 0 2px rgba(251, 146, 60, 0.5);
+      font-size: 20px;
+    }
+    .podium-points-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .podium-2 .podium-points-label {
+      color: #374151;
+    }
+    .podium-1 .podium-points-label {
+      color: #111827;
+    }
+    .podium-3 .podium-points-label {
+      color: #374151;
+    }
+    
+    /* Leaderboard section */
     .leaderboard-section {
-      margin-top: 40px;
+      margin-top: 32px;
+    }
+    .leaderboard-header {
+      padding: 16px 20px;
     }
     .leaderboard-title-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .leaderboard-title-wrapper::before,
     .leaderboard-title-wrapper::after {
       content: '';
       flex: 0 1 auto;
       height: 1px;
-      width: 48px;
+      width: 96px;
       background: rgba(255,255,255,0.2);
     }
     .leaderboard-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       padding: 4px 12px;
       border-radius: 9999px;
       border: 1px solid rgba(255,255,255,0.2);
       background: rgba(255,255,255,0.1);
       font-size: 14px;
       font-weight: 600;
-      display: inline-flex;
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .table-wrapper {
       border-radius: 24px;
@@ -352,30 +362,41 @@ export async function GET() {
       background: #f1f5f9;
     }
     th {
-      padding: 12px 16px;
+      padding: 16px;
       text-align: center;
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: #475569;
       border-left: 1px solid #e2e8f0;
     }
-    th:first-child { border-left: none; }
+    th:first-child {
+      border-left: none;
+    }
     tbody tr {
       background: #fff;
-    }
-    tbody tr:not(:last-child) {
       border-bottom: 1px solid #e2e8f0;
     }
+    tbody tr:last-child {
+      border-bottom: none;
+    }
     td {
-      padding: 12px 16px;
+      padding: 16px;
       text-align: center;
-      font-size: 12px;
+      font-size: 14px;
       color: #1e293b;
       border-left: 1px solid #e2e8f0;
     }
-    td:first-child { border-left: none; }
+    td:first-child {
+      border-left: none;
+    }
+    .player-name {
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    /* Rank badges - EXACT style from RankBadge component */
     .rank-badge {
       display: inline-flex;
       align-items: center;
@@ -476,6 +497,8 @@ export async function GET() {
       font-weight: 800;
       letter-spacing: 0.05em;
     }
+    
+    /* Tier badges - EXACT style from TierBadge component */
     .tier-badge {
       display: inline-flex;
       align-items: center;
@@ -594,23 +617,49 @@ export async function GET() {
       font-weight: 700;
       letter-spacing: 0.05em;
     }
-    .winrate { color: #059669; font-weight: 600; }
-    .wins { color: #047857; background: #ecfdf5; font-weight: 600; }
-    .losses { color: #b91c1c; background: #fef2f2; font-weight: 600; }
+    
+    .winrate {
+      color: #059669;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .wins {
+      color: #047857;
+      background: #ecfdf5;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .losses {
+      color: #b91c1c;
+      background: #fef2f2;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .points {
+      font-weight: 600;
+      color: #0f172a;
+      font-variant-numeric: tabular-nums;
+    }
+    .matches {
+      font-weight: 600;
+      color: #334155;
+      font-variant-numeric: tabular-nums;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="title-wrapper">
-      <div class="title-bar"></div>
-      <div class="title-box">
-        <h1 class="title">Classement</h1>
+    <div class="title-section">
+      <div class="title-wrapper">
+        <div class="title-bar"></div>
+        <div class="title-box">
+          <h1 class="title">Classement</h1>
+        </div>
       </div>
-    </div>
-    
-    <div class="stats">
-      <span class="stat-badge">👥 ${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}</span>
-      <span class="stat-badge">📊 ${totalMatches} match${totalMatches > 1 ? 's' : ''} comptabilisé${totalMatches > 1 ? 's' : ''}</span>
+      <div class="stats">
+        <span class="stat-badge">👥 ${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}</span>
+        <span class="stat-badge">📊 ${totalMatches} match${totalMatches > 1 ? 's' : ''} comptabilisé${totalMatches > 1 ? 's' : ''}</span>
+      </div>
     </div>
 
     ${top3.length > 0 ? `
@@ -622,12 +671,12 @@ export async function GET() {
         ${top3[1] ? `
         <div class="podium-card podium-2">
           <div class="podium-emoji">🥈</div>
-          <div style="text-align: center; position: relative; z-index: 10; padding-top: 12px;">
+          <div class="podium-content">
             <h3 class="podium-name podium-2">${top3[1].player_name}</h3>
-            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+            <div class="podium-points-wrapper">
               <div class="podium-points podium-2">
                 <span>${top3[1].points.toLocaleString()}</span>
-                <span class="podium-points-label" style="font-size: 10px; color: #374151;">points</span>
+                <span class="podium-points-label">points</span>
               </div>
             </div>
           </div>
@@ -637,12 +686,12 @@ export async function GET() {
         <div class="podium-card podium-1">
           <div class="meilleur-joueur-badge">Meilleur joueur</div>
           <div class="podium-emoji">🥇</div>
-          <div style="text-align: center; position: relative; z-index: 10; padding-top: 16px;">
+          <div class="podium-content">
             <h3 class="podium-name podium-1">${top3[0].player_name}</h3>
-            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+            <div class="podium-points-wrapper">
               <div class="podium-points podium-1">
                 <span>${top3[0].points.toLocaleString()}</span>
-                <span class="podium-points-label" style="font-size: 10px; color: #111827;">points</span>
+                <span class="podium-points-label">points</span>
               </div>
             </div>
           </div>
@@ -651,17 +700,17 @@ export async function GET() {
         ${top3[2] ? `
         <div class="podium-card podium-3">
           <div class="podium-emoji">🥉</div>
-          <div style="text-align: center; position: relative; z-index: 10; padding-top: 12px;">
+          <div class="podium-content">
             <h3 class="podium-name podium-3">${(() => {
               const parts = (top3[2].player_name || "").split(" ");
               const first = parts[0] || "";
               const last = parts.slice(1).join(" ");
               return last ? `<span style="font-size: 20px; font-weight: 800; color: #111827;">${first}</span> <span style="font-size: 18px; font-weight: 800; color: #111827;">${last}</span>` : top3[2].player_name;
             })()}</h3>
-            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+            <div class="podium-points-wrapper">
               <div class="podium-points podium-3">
                 <span>${top3[2].points.toLocaleString()}</span>
-                <span class="podium-points-label" style="font-size: 10px; color: #374151;">points</span>
+                <span class="podium-points-label">points</span>
               </div>
             </div>
           </div>
@@ -672,8 +721,10 @@ export async function GET() {
     ` : ''}
 
     <div class="leaderboard-section">
-      <div class="leaderboard-title-wrapper">
-        <div class="leaderboard-title">Classement global</div>
+      <div class="leaderboard-header">
+        <div class="leaderboard-title-wrapper">
+          <div class="leaderboard-title">Classement global</div>
+        </div>
       </div>
       <div class="table-wrapper">
         <table>
@@ -697,13 +748,13 @@ export async function GET() {
             return `
             <tr>
               <td><span class="rank-badge ${rankClass}"><span>#${player.rank}</span></span></td>
-              <td style="font-weight: 600; color: #1e293b; text-align: center;">${player.player_name}</td>
-              <td style="text-align: center;"><span class="tier-badge tier-${tier}"><span>${tier}</span></span></td>
-              <td style="font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums;">${player.points}</td>
-              <td class="winrate" style="font-weight: 600; font-variant-numeric: tabular-nums;">${winRate}%</td>
-              <td class="wins" style="font-weight: 600; font-variant-numeric: tabular-nums;">${player.wins}</td>
-              <td class="losses" style="font-weight: 600; font-variant-numeric: tabular-nums;">${player.losses}</td>
-              <td style="font-weight: 600; color: #334155; font-variant-numeric: tabular-nums;">${player.matches}</td>
+              <td><span class="player-name">${player.player_name}</span></td>
+              <td><span class="tier-badge tier-${tier}"><span>${tier}</span></span></td>
+              <td class="points">${player.points}</td>
+              <td class="winrate">${winRate}%</td>
+              <td class="wins">${player.wins}</td>
+              <td class="losses">${player.losses}</td>
+              <td class="matches">${player.matches}</td>
             </tr>
             `;
           }).join('')}
@@ -716,7 +767,6 @@ export async function GET() {
 </html>
     `;
 
-    // Lancer Puppeteer et générer le PDF
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -760,4 +810,3 @@ export async function GET() {
     );
   }
 }
-
