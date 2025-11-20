@@ -156,12 +156,12 @@ export async function GET() {
     }
     .podium-card {
       border-radius: 16px;
-      padding: 32px 24px;
+      padding: 20px 16px;
       text-align: center;
       position: relative;
       border: 4px solid;
-      min-height: 280px;
-      overflow: hidden;
+      min-height: 200px;
+      overflow: visible;
     }
     .podium-2 {
       background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
@@ -178,9 +178,9 @@ export async function GET() {
       border-color: rgba(234, 88, 12, 0.8);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
-    .podium-2 { flex: 1; max-width: 240px; }
-    .podium-1 { flex: 1.2; max-width: 280px; }
-    .podium-3 { flex: 1; max-width: 240px; }
+    .podium-2 { flex: 1; max-width: 180px; }
+    .podium-1 { flex: 1.2; max-width: 200px; }
+    .podium-3 { flex: 1; max-width: 180px; }
     .podium-emoji {
       position: absolute;
       top: 8px;
@@ -191,10 +191,10 @@ export async function GET() {
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
     .podium-name {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 800;
       color: #111827;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       letter-spacing: -0.025em;
       text-align: center;
       line-height: 1.2;
@@ -202,14 +202,14 @@ export async function GET() {
     .podium-points {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 20px;
+      gap: 6px;
+      padding: 6px 16px;
       border-radius: 9999px;
       background: rgba(255,255,255,0.95);
       backdrop-filter: blur(10px);
       border: 2px solid;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 800;
       color: #111827;
       white-space: nowrap;
@@ -241,8 +241,8 @@ export async function GET() {
     }
     .meilleur-joueur-badge {
       position: absolute;
-      top: -12px;
-      left: -12px;
+      top: 8px;
+      left: 8px;
       padding: 4px 8px;
       border-radius: 9999px;
       background: #fef3c7;
@@ -251,7 +251,8 @@ export async function GET() {
       font-weight: 600;
       border: 1px solid #fcd34d;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      z-index: 20;
+      z-index: 30;
+      white-space: nowrap;
     }
     .leaderboard-section {
       margin-top: 40px;
@@ -329,66 +330,211 @@ export async function GET() {
       font-size: 14px;
       border: 2px solid;
       position: relative;
+      overflow: hidden;
       text-shadow: 0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255,255,255,0.5);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15) inset;
     }
     .rank-1 { 
       background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); 
       border-color: rgba(234, 179, 8, 0.5); 
       color: #fff;
-      box-shadow: 0 2px 12px rgba(234,179,8,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      box-shadow: 0 0 20px rgba(234,179,8,0.5), 0 2px 12px rgba(234,179,8,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .rank-1::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.6), transparent 50%);
+      opacity: 0.7;
+    }
+    .rank-1::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
     }
     .rank-2 { 
       background: linear-gradient(135deg, #d1d5db, #9ca3af, #6b7280); 
       border-color: rgba(156, 163, 175, 0.5); 
       color: #fff;
-      box-shadow: 0 2px 12px rgba(156,163,175,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      box-shadow: 0 0 15px rgba(156,163,175,0.4), 0 2px 12px rgba(156,163,175,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .rank-2::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.5), transparent 50%);
+      opacity: 0.7;
+    }
+    .rank-2::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
     }
     .rank-3 { 
       background: linear-gradient(135deg, #fb923c, #f97316, #ea580c); 
       border-color: rgba(249, 115, 22, 0.5); 
       color: #fff;
-      box-shadow: 0 2px 12px rgba(249,115,22,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      box-shadow: 0 0 15px rgba(249,115,22,0.4), 0 2px 12px rgba(249,115,22,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .rank-3::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3), transparent 50%);
+      opacity: 0.7;
+    }
+    .rank-3::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
     }
     .rank-default { 
       background: linear-gradient(135deg, #1A3A6E, #1E4280, #1A3A6E); 
       border-color: rgba(59, 130, 246, 0.5); 
       color: #fff;
-      box-shadow: 0 2px 12px rgba(26,58,110,0.7), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      box-shadow: 0 0 15px rgba(26,58,110,0.7), 0 2px 12px rgba(26,58,110,0.7), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .rank-default::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(0,102,255,0.25), transparent 50%);
+      opacity: 0.7;
+    }
+    .rank-default::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .rank-badge span {
+      position: relative;
+      z-index: 10;
+      font-weight: 800;
+      letter-spacing: 0.05em;
     }
     .tier-badge {
-      display: inline-block;
-      padding: 4px 12px;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 12px;
       border-radius: 9999px;
       font-size: 11px;
       font-weight: 700;
       color: #fff;
       border: 2px solid;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 12px rgba(255,255,255,0.4);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      position: relative;
+      overflow: hidden;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 12px rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.8);
     }
     .tier-Bronze { 
       background: linear-gradient(135deg, #fb923c, #f97316, #ea580c); 
       border-color: rgba(249, 115, 22, 0.5); 
+      box-shadow: 0 0 15px rgba(249,115,22,0.4), 0 2px 12px rgba(249,115,22,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .tier-Bronze::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3), transparent 50%);
+      opacity: 0.7;
+    }
+    .tier-Bronze::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.3);
     }
     .tier-Argent { 
       background: linear-gradient(135deg, #d1d5db, #9ca3af, #6b7280); 
       border-color: rgba(156, 163, 175, 0.5); 
       color: #1e293b;
+      box-shadow: 0 0 15px rgba(156,163,175,0.4), 0 2px 12px rgba(156,163,175,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .tier-Argent::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.5), transparent 50%);
+      opacity: 0.7;
+    }
+    .tier-Argent::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.3);
     }
     .tier-Or { 
       background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); 
       border-color: rgba(234, 179, 8, 0.5); 
       color: #1e293b;
+      box-shadow: 0 0 20px rgba(234,179,8,0.5), 0 2px 12px rgba(234,179,8,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .tier-Or::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.6), transparent 50%);
+      opacity: 0.7;
+    }
+    .tier-Or::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.3);
     }
     .tier-Diamant { 
       background: linear-gradient(135deg, #22d3ee, #3b82f6, #22d3ee); 
       border-color: rgba(34, 211, 238, 0.5); 
       color: #1e293b;
+      box-shadow: 0 0 25px rgba(34,211,238,0.6), 0 2px 12px rgba(34,211,238,0.6), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .tier-Diamant::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.7), transparent 50%);
+      opacity: 0.7;
+    }
+    .tier-Diamant::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.3);
     }
     .tier-Champion { 
       background: linear-gradient(135deg, #a855f7, #ec4899, #a855f7); 
       border-color: rgba(168, 85, 247, 0.5); 
+      box-shadow: 0 0 30px rgba(168,85,247,0.7), 0 2px 12px rgba(168,85,247,0.7), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .tier-Champion::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.8), transparent 50%);
+      opacity: 0.7;
+    }
+    .tier-Champion::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .tier-badge span {
+      position: relative;
+      z-index: 10;
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }
     .winrate { color: #059669; font-weight: 600; }
     .wins { color: #047857; background: #ecfdf5; font-weight: 600; }
@@ -487,9 +633,9 @@ export async function GET() {
             const rankClass = player.rank === 1 ? 'rank-1' : player.rank === 2 ? 'rank-2' : player.rank === 3 ? 'rank-3' : 'rank-default';
             return `
             <tr>
-              <td><span class="rank-badge ${rankClass}">#${player.rank}</span></td>
+              <td><span class="rank-badge ${rankClass}"><span>#${player.rank}</span></span></td>
               <td style="font-weight: 600;">${player.player_name}</td>
-              <td><span class="tier-badge tier-${tier}">${tier}</span></td>
+              <td><span class="tier-badge tier-${tier}"><span>${tier}</span></span></td>
               <td style="font-weight: 600;">${player.points}</td>
               <td class="winrate">${winRate}%</td>
               <td class="wins">${player.wins}</td>
