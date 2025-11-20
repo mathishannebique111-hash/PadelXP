@@ -21,7 +21,7 @@ export async function GET() {
     console.log('🔍 Fetching top 3 leaderboard (calcul direct depuis matchs)');
     
     // Récupérer le club_id de l'utilisateur authentifié
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {

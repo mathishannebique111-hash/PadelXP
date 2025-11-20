@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     }
 
     if (!userId) {
-      const supabaseServer = createServerClient();
+      const supabaseServer = await createServerClient();
       const { data: { user } } = await supabaseServer.auth.getUser();
       userId = user?.id || null;
     }
