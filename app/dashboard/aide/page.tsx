@@ -299,7 +299,7 @@ export default function HelpPage() {
         <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
       </div>
       
-      <div className="relative z-10">
+      <div className="relative z-10 space-y-6">
       <PageTitle title="Aide & Support" />
 
       {/* Afficher un message d'erreur si les tables n'existent pas */}
