@@ -45,9 +45,32 @@ export async function POST(request: NextRequest) {
       const fromEmail = emailData.from || emailData.from_email || emailData.from_address;
       const toEmail = emailData.to || emailData.to_email || emailData.to_address || emailData.recipient;
       const subject = emailData.subject || '';
-      const textContent = emailData.text || emailData.text_body || '';
-      const htmlContent = emailData.html || emailData.html_body || '';
-      const messageId = emailData.message_id || emailData.id;
+      const emailId = emailData.email_id || emailData.id;
+      
+      // Récupérer le contenu de l'email (peut être dans le payload ou via l'API)
+      let textContent = emailData.text || emailData.text_body || emailData.body_text || emailData.plain_text || '';
+      let htmlContent = emailData.html || emailData.html_body || emailData.body_html || emailData.body || '';
+      
+      // Si on a un email_id et pas de contenu, récupérer via l'API Resend
+      if (emailId && (!textContent && !htmlContent)) {
+        try {
+          console.log('[webhook-resend] Fetching email content for email_id:', emailId);
+          const resendEmails = resend?.emails as any;
+          const { data: emailContent, error: emailError } = await resendEmails?.receiving?.get(emailId) ?? { data: null, error: null };
+          
+          if (emailError) {
+            console.error('[webhook-resend] Error fetching email content:', emailError);
+          } else if (emailContent) {
+            textContent = emailContent.text || textContent;
+            htmlContent = emailContent.html || htmlContent;
+            console.log('[webhook-resend] Email content fetched:', { hasText: !!textContent, hasHtml: !!htmlContent });
+          }
+        } catch (fetchError) {
+          console.error('[webhook-resend] Error fetching email content:', fetchError);
+        }
+      }
+      
+      const messageId = emailData.message_id || emailId;
       const inReplyTo = emailData.in_reply_to || emailData.headers?.['In-Reply-To'] || emailData.references?.[0];
       const references = emailData.references || emailData.headers?.['References'] || [];
       const conversationIdHeader = emailData.headers?.['X-Conversation-ID'] || emailData.headers?.['x-conversation-id'];
