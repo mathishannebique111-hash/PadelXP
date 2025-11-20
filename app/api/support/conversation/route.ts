@@ -30,21 +30,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    // Récupérer le club_id de l'utilisateur
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('club_id')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (!profile?.club_id) {
-      return NextResponse.json({ 
-        error: 'Vous devez être rattaché à un club',
-        conversation: null,
-        messages: []
-      });
-    }
-
     // Utiliser admin client pour bypass RLS et récupérer toutes les données
     const supabaseAdmin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,13 +42,66 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    if (!supabaseAdmin) {
+      console.error('[support-conversation] ❌ Supabase admin client not initialized');
+      return NextResponse.json({ 
+        error: 'Erreur de configuration serveur',
+        conversation: null,
+        messages: []
+      }, { status: 500 });
+    }
+
+    // Récupérer le club_id de l'utilisateur en utilisant supabaseAdmin pour bypass RLS
+    // Même logique que dans /api/contact/route.ts
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('club_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('[support-conversation] ❌ Error fetching profile:', profileError);
+    }
+
+    let clubId = profile?.club_id;
+
+    // Fallback: vérifier dans club_admins si l'utilisateur est admin d'un club
+    if (!clubId) {
+      console.log('[support-conversation] ℹ️ No club_id in profile, checking club_admins...');
+      const { data: adminEntry, error: adminError } = await supabaseAdmin
+        .from('club_admins')
+        .select('club_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (adminError) {
+        console.error('[support-conversation] ❌ Error fetching club_admins:', adminError);
+      }
+
+      if (adminEntry?.club_id) {
+        clubId = adminEntry.club_id as string;
+        console.log('[support-conversation] ✅ Found club_id in club_admins:', clubId);
+      }
+    }
+
+    if (!clubId) {
+      console.error('[support-conversation] ❌ No club_id found for user:', user.id);
+      return NextResponse.json({ 
+        error: 'Vous devez être rattaché à un club',
+        conversation: null,
+        messages: []
+      });
+    }
+
+    console.log('[support-conversation] ✅ Found club_id:', clubId);
+
     // Récupérer la conversation active (open) pour ce club
     // Récupérer toutes les conversations ouvertes du club, puis prendre la plus récente
     // (car plusieurs utilisateurs du même club peuvent avoir leurs propres conversations)
     const { data: conversations, error: convError } = await supabaseAdmin
       .from('support_conversations')
       .select('*')
-      .eq('club_id', profile.club_id)
+      .eq('club_id', clubId)
       .eq('status', 'open')
       .order('last_message_at', { ascending: false });
 
@@ -101,7 +139,7 @@ export async function GET(request: NextRequest) {
         isUserConversation: !!userConversation
       });
     } else {
-      console.log('[support-conversation] ℹ️ No conversations found for club:', profile.club_id);
+      console.log('[support-conversation] ℹ️ No conversations found for club:', clubId);
     }
 
     let messages: any[] = [];
