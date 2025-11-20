@@ -49,15 +49,66 @@ export async function POST(req: NextRequest) {
     const subject = emailData.subject ?? emailData.headers?.["subject"] ?? emailData.headers?.["Subject"] ?? "(Sans sujet)";
     const from = emailData.from ?? emailData.headers?.["from"] ?? emailData.headers?.["From"] ?? emailData.sender_email ?? "Expéditeur inconnu";
     const to = emailData.to ?? emailData.headers?.["to"] ?? emailData.headers?.["To"] ?? emailData.recipient_email ?? "";
+    const emailId = emailData.email_id;
+
+    // Si on a un email_id, récupérer le contenu via l'API Resend
+    let text = "";
+    let html = "";
     
-    // Essayer différentes propriétés pour le contenu
-    const text = emailData.text ?? emailData.text_body ?? emailData.body_text ?? emailData.plain_text ?? "";
-    const html = emailData.html ?? emailData.html_body ?? emailData.body_html ?? emailData.body ?? "";
+    if (emailId) {
+      try {
+        console.log("Fetching email content for email_id:", emailId);
+        // Utiliser l'API Resend pour récupérer le contenu complet de l'email inbound
+        // Note: TypeScript ne reconnaît pas encore cette méthode, mais elle existe dans le SDK
+        const resendEmails = resend.emails as any;
+        const { data: emailContent, error: emailError } = await resendEmails.receiving?.get(emailId) ?? { data: null, error: null };
+        
+        if (emailError) {
+          console.error("Error fetching email content via Resend API:", emailError);
+        } else if (emailContent) {
+          console.log("Email content fetched:", JSON.stringify(emailContent, null, 2));
+          
+          // Extraire le contenu selon la structure de la réponse API Resend
+          text = emailContent.text ?? "";
+          html = emailContent.html ?? "";
+        } else {
+          // Fallback: essayer avec une requête HTTP directe
+          console.log("Trying direct HTTP request to Resend API...");
+          const response = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            const emailContent = await response.json();
+            console.log("Email content fetched via HTTP:", JSON.stringify(emailContent, null, 2));
+            text = emailContent.text ?? emailContent.text_body ?? "";
+            html = emailContent.html ?? emailContent.html_body ?? "";
+          } else {
+            console.error("Failed to fetch email content via HTTP:", response.status, response.statusText);
+            const errorText = await response.text();
+            console.error("Error response:", errorText);
+          }
+        }
+      } catch (fetchError: any) {
+        console.error("Error fetching email content via API:", fetchError);
+      }
+    }
+    
+    // Si le contenu n'a pas été récupéré via l'API, essayer dans le payload direct (fallback)
+    if (!text && !html) {
+      text = emailData.text ?? emailData.text_body ?? emailData.body_text ?? emailData.plain_text ?? "";
+      html = emailData.html ?? emailData.html_body ?? emailData.body_html ?? emailData.body ?? "";
+    }
     
     console.log("Extracted email content:", {
       subject,
       from,
       to,
+      emailId,
       hasText: !!text,
       hasHtml: !!html,
       textLength: text.length,
