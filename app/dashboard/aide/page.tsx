@@ -416,19 +416,19 @@ export default function HelpPage() {
                               className={`flex ${msg.sender_type === 'club' ? 'justify-end' : 'justify-start'}`}
                             >
                               <div
-                                className={`max-w-[80%] rounded-lg p-3 ${
+                                className={`max-w-[80%] rounded-xl ${
                                   msg.sender_type === 'club'
-                                    ? 'bg-[#0040A0] text-white shadow-lg shadow-blue-700/40'
-                                    : 'bg-white/10 border border-white/20'
+                                    ? 'bg-[#0040A0] text-white shadow-xl shadow-blue-700/50 border border-blue-400/20 px-4 py-3.5'
+                                    : 'bg-white/10 border border-white/20 rounded-lg p-3'
                                 }`}
                               >
-                                <div className={`text-xs mb-1 ${
-                                  msg.sender_type === 'club' ? 'text-white' : 'text-white/60'
+                                <div className={`text-xs mb-2 font-medium ${
+                                  msg.sender_type === 'club' ? 'text-white/90' : 'text-white/60'
                                 }`}>
                                   {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
                                 </div>
-                                <div className={`whitespace-pre-wrap break-words ${
-                                  msg.sender_type === 'club' ? 'text-white' : 'text-white/90'
+                                <div className={`whitespace-pre-wrap break-words leading-relaxed ${
+                                  msg.sender_type === 'club' ? 'text-white font-normal' : 'text-white/90'
                                 }`}>
                                   {msg.message_text}
                                 </div>
