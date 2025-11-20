@@ -243,8 +243,11 @@ export async function POST(request: NextRequest) {
     // Utiliser userEmail comme replyTo pour que les réponses arrivent à l'email du club
     // Les headers X-Conversation-ID permettront d'identifier la conversation dans le webhook
     console.log('[contact] Calling resend.emails.send...');
-    const emailSubject = `[${conversationId.substring(0, 8)}] Message de contact - ${clubName}`;
-    const emailResult = await resend.emails.send({
+    const emailSubject = `[${conversationId}] Message de contact - ${clubName}`;
+    
+    // Essayer d'abord d'envoyer vers l'inbound email
+    // Si ça échoue avec une erreur de test, envoyer directement à Gmail
+    let emailResult = await resend.emails.send({
       from: fromEmail,
       to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound de Resend (sera capturé par le webhook resend-inbound et transféré vers Gmail)
       replyTo: userEmail, // Réponses envoyées à l'email du club, mais Resend webhook les capturera
@@ -307,37 +310,103 @@ export async function POST(request: NextRequest) {
       dataDetails: emailResult.data ? JSON.stringify(emailResult.data, null, 2) : null,
     });
 
+    // Si l'envoi vers l'inbound échoue avec une erreur de test, essayer d'envoyer directement à Gmail
     if (emailResult.error) {
+      const errorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
+      const isTestingEmailError = errorMessage.includes('testing emails') || errorMessage.includes('You can only send testing emails');
+      
       console.error('[contact] Resend API error:', JSON.stringify(emailResult.error, null, 2));
       
-      // Extraire le message d'erreur réel
-      const errorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
-      const errorCode = emailResult.error.code || emailResult.error.name || '';
-      
-      // Logger l'erreur complète pour debug
-      console.error('[contact] Resend API error details:', {
-        error: emailResult.error,
-        errorMessage,
-        errorCode,
-        fromEmail,
-        to: INBOUND_EMAIL,
-        hasResendFromEmail: !!process.env.RESEND_FROM_EMAIL,
-        resendFromEmailValue: process.env.RESEND_FROM_EMAIL,
-      });
-      
-      // Afficher directement l'erreur de Resend pour le debug
-      // Ne pas modifier le message d'erreur pour voir ce qui se passe vraiment
-      return NextResponse.json({ 
-        error: `Erreur lors de l'envoi: ${errorMessage}`,
-        errorDetails: emailResult.error,
-        errorCode,
-        debug: {
-          fromEmail,
-          to: INBOUND_EMAIL,
-          hasResendFromEmail: !!process.env.RESEND_FROM_EMAIL,
-          resendFromEmailValue: process.env.RESEND_FROM_EMAIL?.substring(0, 50) + '...' || 'not set',
+      // Si c'est une erreur de test et qu'on essaie d'envoyer vers l'inbound, essayer directement à Gmail
+      if (isTestingEmailError && INBOUND_EMAIL !== FORWARD_TO_EMAIL) {
+        console.log('[contact] Testing email error detected, trying to send directly to Gmail instead...');
+        
+        emailResult = await resend.emails.send({
+          from: fromEmail,
+          to: FORWARD_TO_EMAIL, // Envoyer directement à Gmail
+          replyTo: userEmail,
+          subject: emailSubject,
+          headers: {
+            'X-Conversation-ID': conversationId,
+            'X-Club-ID': clubId,
+            'X-Reply-Token': conversationToken,
+            'X-Sender-Type': 'club',
+            'X-Inbound-Email': INBOUND_EMAIL, // Garder l'info de l'inbound pour référence
+          },
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <style>
+                  body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
+                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                  .header { background: linear-gradient(135deg, #0066FF, #0052CC); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                  .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                  .message-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0066FF; }
+                  .info { background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
+                  .info-item { margin: 5px 0; }
+                  .reply-note { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107; font-size: 12px; color: #856404; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1>📧 Nouveau message de contact</h1>
+                  </div>
+                  <div class="content">
+                    <div class="info">
+                      <div class="info-item"><strong>Club :</strong> ${clubName}</div>
+                      <div class="info-item"><strong>Email du club :</strong> ${userEmail}</div>
+                    </div>
+                    <div class="message-box">
+                      <strong>Message :</strong>
+                      <p style="white-space: pre-wrap; margin-top: 10px;">${message.replace(/\n/g, '<br>')}</p>
+                    </div>
+                    <div class="reply-note">
+                      <strong>💡 Pour répondre :</strong> Répondez simplement à cet email. Votre réponse apparaîtra dans la page "Aide & Support" du club.
+                    </div>
+                    <p style="margin-top: 30px; font-size: 12px; color: #666;">
+                      Ce message a été envoyé depuis la page "Aide & Support" du compte club.
+                      <br/>
+                      <small>Conversation ID: ${conversationId}</small>
+                    </p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `,
+        });
+        
+        // Si l'envoi direct à Gmail réussit, continuer normalement
+        if (!emailResult.error) {
+          console.log('[contact] Email sent successfully to Gmail (fallback from inbound):', {
+            id: emailResult.data?.id,
+            to: FORWARD_TO_EMAIL,
+            conversationId,
+          });
         }
-      }, { status: 500 });
+      }
+      
+      // Si on a toujours une erreur après le fallback, retourner l'erreur
+      if (emailResult.error) {
+        const finalErrorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
+        const errorCode = emailResult.error.code || emailResult.error.name || '';
+        
+        console.error('[contact] Resend API error (after fallback):', JSON.stringify(emailResult.error, null, 2));
+        
+        return NextResponse.json({ 
+          error: `Erreur lors de l'envoi: ${finalErrorMessage}`,
+          errorDetails: emailResult.error,
+          errorCode,
+          debug: {
+            fromEmail,
+            to: INBOUND_EMAIL,
+            fallbackTo: FORWARD_TO_EMAIL,
+            hasResendFromEmail: !!process.env.RESEND_FROM_EMAIL,
+          }
+        }, { status: 500 });
+      }
     }
 
     console.log('[contact] Email sent successfully:', {

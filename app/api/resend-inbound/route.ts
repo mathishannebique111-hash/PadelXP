@@ -189,44 +189,149 @@ export async function POST(req: NextRequest) {
       `;
     }
 
-    // Si c'est un message du club, le message a déjà été enregistré dans /api/contact
-    // On transfère juste l'email vers Gmail pour que l'admin puisse répondre
-    // Si c'est une réponse de l'admin, elle sera gérée par /api/webhooks/resend
+    // Déterminer si c'est une réponse de l'admin ou un nouveau message du club
+    const isReply = !senderType || senderType !== 'club';
     
-    // Transférer l'email vers Gmail avec les headers pour identifier la conversation
-    const forwardHeaders: Record<string, string> = {
-      'X-Conversation-ID': conversationId || '',
-      'X-Club-ID': clubId || '',
-      'X-Original-From': from,
-    };
+    // Extraire le conversationId depuis les headers, le sujet, ou les références
+    let detectedConversationId = conversationId;
     
-    // Supprimer les headers vides
-    Object.keys(forwardHeaders).forEach(key => {
-      if (!forwardHeaders[key]) delete forwardHeaders[key];
-    });
-
-    const { error: sendError, data: forwardData } = await resend.emails.send({
-      from: "PadelXP Support <support@updates.padelxp.eu>",
-      to: [FORWARD_TO],
-      subject: `📩 Nouveau message de ${from} : ${subject}`,
-      html: emailHtml,
-      // IMPORTANT: replyTo doit être l'inbound email pour que les réponses soient capturées par le webhook
-      replyTo: INBOUND_EMAIL || 'contact@updates.padelxp.eu',
-      headers: Object.keys(forwardHeaders).length > 0 ? forwardHeaders : undefined,
-    });
-
-    if (sendError) {
-      console.error("Error forwarding to Gmail:", sendError);
-      return NextResponse.json({ error: "forward_failed" }, { status: 500 });
+    // Si pas de conversationId dans les headers, chercher dans le sujet
+    if (!detectedConversationId) {
+      // Chercher d'abord un UUID complet
+      let subjectMatch = subject.match(/\[([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\]/);
+      if (subjectMatch && subjectMatch[1]) {
+        detectedConversationId = subjectMatch[1];
+      } else {
+        // Fallback: chercher les 8 premiers caractères et trouver la conversation correspondante
+        subjectMatch = subject.match(/\[([0-9a-fA-F]{8})\]/);
+        if (subjectMatch && subjectMatch[1]) {
+          const prefix = subjectMatch[1];
+          console.log("Found conversation ID prefix in subject, searching in database:", prefix);
+          // Chercher la conversation avec cet UUID préfixe
+          const { data: conversations } = await supabaseAdmin
+            .from('support_conversations')
+            .select('id')
+            .like('id', `${prefix}%`)
+            .limit(1);
+          
+          if (conversations && conversations.length > 0) {
+            detectedConversationId = conversations[0].id;
+            console.log("Found conversation with prefix:", detectedConversationId);
+          }
+        }
+      }
     }
+    
+    // Si c'est une réponse de l'admin, enregistrer dans la DB
+    if (isReply && detectedConversationId && !senderType) {
+      console.log("Detected admin reply, saving to database:", {
+        conversationId: detectedConversationId,
+        from,
+        subject
+      });
+      
+      // Vérifier que la conversation existe
+      const { data: conversation, error: convError } = await supabaseAdmin
+        .from('support_conversations')
+        .select('id, club_id, status')
+        .eq('id', detectedConversationId)
+        .maybeSingle();
 
-    console.log("Email forwarded successfully:", {
-      to: FORWARD_TO,
-      conversationId,
-      messageId: forwardData?.id
-    });
+      if (convError || !conversation) {
+        console.error("Conversation not found for reply:", detectedConversationId, convError);
+      } else {
+        // Vérifier si ce message n'a pas déjà été reçu (éviter les doublons)
+        const messageId = emailId || `reply-${Date.now()}`;
+        const { data: existingMessage } = await supabaseAdmin
+          .from('support_messages')
+          .select('id')
+          .eq('email_message_id', messageId)
+          .maybeSingle();
 
-    return NextResponse.json({ ok: true, forwarded: true });
+        if (existingMessage) {
+          console.log("Reply message already exists, skipping:", messageId);
+        } else {
+          // Extraire le texte du message
+          const messageText = text.trim() || (html ? html.replace(/<[^>]*>/g, '').trim() : '');
+          
+          if (messageText) {
+            // Enregistrer la réponse dans la DB
+            const { error: messageError } = await supabaseAdmin
+              .from('support_messages')
+              .insert({
+                conversation_id: detectedConversationId,
+                sender_type: 'admin',
+                sender_email: from,
+                message_text: messageText,
+                email_message_id: messageId,
+                created_at: new Date().toISOString()
+              });
+
+            if (messageError) {
+              console.error("Error saving admin reply to database:", messageError);
+            } else {
+              // Mettre à jour last_message_at de la conversation
+              await supabaseAdmin
+                .from('support_conversations')
+                .update({ 
+                  last_message_at: new Date().toISOString(),
+                  status: 'open'
+                })
+                .eq('id', detectedConversationId);
+              
+              console.log("Admin reply saved successfully to conversation:", detectedConversationId);
+            }
+          } else {
+            console.warn("Admin reply has no content, skipping database save");
+          }
+        }
+      }
+    }
+    
+    // Si c'est un message du club, le message a déjà été enregistré dans /api/contact
+    // On transfère juste l'email vers Gmail pour notifier l'admin
+    // Si c'est une réponse de l'admin, on ne transfère PAS vers Gmail (déjà enregistrée dans la DB ci-dessus)
+    
+    if (!isReply || senderType === 'club') {
+      // Transférer uniquement les messages du club vers Gmail
+      const forwardHeaders: Record<string, string> = {
+        'X-Conversation-ID': detectedConversationId || conversationId || '',
+        'X-Club-ID': clubId || '',
+        'X-Original-From': from,
+      };
+      
+      // Supprimer les headers vides
+      Object.keys(forwardHeaders).forEach(key => {
+        if (!forwardHeaders[key]) delete forwardHeaders[key];
+      });
+
+      const { error: sendError, data: forwardData } = await resend.emails.send({
+        from: "PadelXP Support <support@updates.padelxp.eu>",
+        to: [FORWARD_TO],
+        subject: `📩 Nouveau message de ${from} : ${subject}`,
+        html: emailHtml,
+        // IMPORTANT: replyTo doit être l'inbound email pour que les réponses soient capturées par le webhook
+        replyTo: INBOUND_EMAIL || 'contact@updates.padelxp.eu',
+        headers: Object.keys(forwardHeaders).length > 0 ? forwardHeaders : undefined,
+      });
+
+      if (sendError) {
+        console.error("Error forwarding to Gmail:", sendError);
+        return NextResponse.json({ error: "forward_failed" }, { status: 500 });
+      }
+
+      console.log("Email forwarded successfully:", {
+        to: FORWARD_TO,
+        conversationId: detectedConversationId || conversationId,
+        messageId: forwardData?.id
+      });
+
+      return NextResponse.json({ ok: true, forwarded: true });
+    } else {
+      // C'est une réponse de l'admin, déjà enregistrée dans la DB, ne pas transférer vers Gmail
+      console.log("Admin reply processed and saved to database, not forwarding to Gmail");
+      return NextResponse.json({ ok: true, forwarded: false, saved: true });
+    }
   } catch (error: any) {
     console.error("Unexpected error in resend-inbound:", error);
     return NextResponse.json(

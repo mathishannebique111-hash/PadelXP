@@ -8,9 +8,10 @@ interface SupportMessage {
   conversation_id: string;
   sender_type: 'club' | 'admin';
   sender_id: string | null;
-  sender_email: string;
-  message_text: string;
-  html_content: string | null;
+  sender_email?: string | null;
+  message_text?: string;
+  content?: string;
+  html_content?: string | null;
   created_at: string;
 }
 
@@ -142,32 +143,38 @@ export default function HelpPage() {
       <PageTitle title="Aide & Support" />
 
       {/* Conversation de chat */}
-      {conversation && messages.length > 0 && (
+      {conversation && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
           <h2 className="font-semibold mb-4">Conversation de support</h2>
           <div className="space-y-4">
             <div className="bg-white/5 rounded-lg p-4 max-h-[500px] overflow-y-auto space-y-4">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.sender_type === 'club' ? 'justify-end' : 'justify-start'}`}
-                >
+              {messages.length > 0 ? (
+                messages.map((msg) => (
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      msg.sender_type === 'club'
-                        ? 'bg-blue-600/20 border border-blue-500/30'
-                        : 'bg-white/10 border border-white/20'
-                    }`}
+                    key={msg.id}
+                    className={`flex ${msg.sender_type === 'club' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="text-xs text-white/60 mb-1">
-                      {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
-                    </div>
-                    <div className="text-white/90 whitespace-pre-wrap break-words">
-                      {msg.message_text}
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${
+                        msg.sender_type === 'club'
+                          ? 'bg-blue-600/20 border border-blue-500/30'
+                          : 'bg-white/10 border border-white/20'
+                      }`}
+                    >
+                      <div className="text-xs text-white/60 mb-1">
+                        {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
+                      </div>
+                      <div className="text-white/90 whitespace-pre-wrap break-words">
+                        {msg.message_text}
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center text-white/50 py-8">
+                  Aucun message pour le moment. Envoyez un message ci-dessous pour commencer la conversation.
                 </div>
-              ))}
+              )}
               <div ref={messagesEndRef} />
             </div>
           </div>
