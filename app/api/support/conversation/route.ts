@@ -107,6 +107,7 @@ export async function GET(request: NextRequest) {
     let messages: any[] = [];
 
     if (conversation) {
+      console.log('[support-conversation] Fetching messages for conversation:', conversation.id);
       // Récupérer les messages de cette conversation
       const { data: conversationMessages, error: messagesError } = await supabaseAdmin
         .from('support_messages')
@@ -115,14 +116,21 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: true });
 
       if (messagesError) {
-        console.error('[support-conversation] Error fetching messages:', messagesError);
+        console.error('[support-conversation] ❌ Error fetching messages:', messagesError);
         // Si la table n'existe pas, retourner un tableau vide
         if (messagesError.code === '42P01' || messagesError.message?.includes('does not exist') || messagesError.message?.includes('schema cache')) {
+          console.warn('[support-conversation] ⚠️ Table support_messages does not exist. Please run create_support_chat_system.sql');
           messages = [];
         }
       } else {
         messages = conversationMessages || [];
+        console.log('[support-conversation] ✅ Messages fetched:', {
+          count: messages.length,
+          messageIds: messages.map(m => m.id)
+        });
       }
+    } else {
+      console.log('[support-conversation] ℹ️ No conversation found, returning empty messages array');
     }
 
     return NextResponse.json({
