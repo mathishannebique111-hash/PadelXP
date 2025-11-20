@@ -1,22 +1,17 @@
-// app/api/resend-inbound/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 
 
-
 export async function POST(req: NextRequest) {
-
-  // Resend envoie du JSON, mais on lit d'abord le texte brut pour debug
-
-  const rawBody = await req.text();
-
-  console.log("Resend inbound RAW payload:", rawBody);
-
-
-
-  // Tu pourras parser ensuite avec JSON.parse(rawBody)
+  const bodyText = await req.text();
+  console.log("Resend inbound RAW payload:", bodyText);
 
   return new NextResponse("OK", { status: 200 });
-
 }
-
+export async function POST(req: Request) {
+  const payload = await req.json().catch(async () => {
+    // If not JSON, fallback to text
+    return await req.text();
+  });
+  console.log('Received inbound Resend payload:', payload);
+  return new Response('OK', { status: 200 });
+}
