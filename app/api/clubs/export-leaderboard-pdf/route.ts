@@ -85,13 +85,32 @@ export async function GET() {
       max-width: 1200px;
       margin: 0 auto;
     }
-    .title {
-      font-size: 28px;
-      font-weight: 800;
+    .title-wrapper {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
       margin-bottom: 24px;
-      text-align: center;
+    }
+    .title-bar {
+      width: 6px;
+      border-radius: 9999px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.3));
+    }
+    .title-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(4px);
+      padding: 8px 16px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 800;
       color: #fff;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.025em;
     }
     .stats {
       display: flex;
@@ -101,7 +120,7 @@ export async function GET() {
       flex-wrap: wrap;
     }
     .stat-badge {
-      padding: 6px 14px;
+      padding: 4px 14px;
       border-radius: 9999px;
       background: linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%);
       border: 1px solid rgba(255,255,255,0.1);
@@ -111,6 +130,10 @@ export async function GET() {
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      position: relative;
+      overflow: hidden;
+      outline: 1px solid rgba(255,255,255,0.2);
+      outline-offset: -1px;
     }
     .top3-section {
       margin-bottom: 50px;
@@ -156,63 +179,100 @@ export async function GET() {
     }
     .podium-card {
       border-radius: 16px;
-      padding: 20px 16px;
       text-align: center;
       position: relative;
-      border: 4px solid;
-      min-height: 200px;
       overflow: visible;
+    }
+    .podium-2 {
+      padding: 24px 16px;
+      border: 3px solid;
+      min-height: 220px;
+    }
+    .podium-1 {
+      padding: 28px 20px;
+      border: 4px solid;
+      min-height: 240px;
+    }
+    .podium-3 {
+      padding: 24px 16px;
+      border: 3px solid;
+      min-height: 220px;
     }
     .podium-2 {
       background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
       border-color: rgba(148, 163, 184, 0.8);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
+      flex: 1;
+      max-width: 200px;
     }
     .podium-1 {
       background: linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44);
       border-color: rgba(234, 179, 8, 0.8);
       box-shadow: 0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6);
+      flex: 1.2;
+      max-width: 220px;
     }
     .podium-3 {
       background: linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085);
       border-color: rgba(234, 88, 12, 0.8);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
+      flex: 1;
+      max-width: 200px;
     }
-    .podium-2 { flex: 1; max-width: 180px; }
-    .podium-1 { flex: 1.2; max-width: 200px; }
-    .podium-3 { flex: 1; max-width: 180px; }
     .podium-emoji {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 4px;
+      right: 4px;
       font-size: 48px;
       opacity: 0.95;
       z-index: 20;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
     .podium-name {
-      font-size: 18px;
       font-weight: 800;
       color: #111827;
-      margin-bottom: 12px;
       letter-spacing: -0.025em;
       text-align: center;
       line-height: 1.2;
     }
+    .podium-2 .podium-name {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    .podium-1 .podium-name {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .podium-3 .podium-name {
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
     .podium-points {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 16px;
+      gap: 8px;
       border-radius: 9999px;
       background: rgba(255,255,255,0.95);
       backdrop-filter: blur(10px);
       border: 2px solid;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      font-size: 18px;
       font-weight: 800;
       color: #111827;
       white-space: nowrap;
+    }
+    .podium-2 .podium-points {
+      padding: 6px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 18px;
+    }
+    .podium-1 .podium-points {
+      padding: 8px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 24px;
+    }
+    .podium-3 .podium-points {
+      padding: 6px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 18px;
     }
     .podium-points-label {
       font-size: 10px;
@@ -226,23 +286,20 @@ export async function GET() {
     }
     .podium-2 .podium-points { 
       border-color: #71717a; 
-      box-shadow: 0 2px 8px rgba(113, 113, 122, 0.25);
-      ring: 2px solid rgba(212, 212, 216, 0.5);
+      box-shadow: 0 2px 8px rgba(113, 113, 122, 0.25), 0 0 0 2px rgba(212, 212, 216, 0.5);
     }
     .podium-1 .podium-points { 
       border-color: #eab308; 
-      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35);
-      ring: 2px solid rgba(234, 179, 8, 0.5);
+      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35), 0 0 0 2px rgba(234, 179, 8, 0.5);
     }
     .podium-3 .podium-points { 
       border-color: #f97316; 
-      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25);
-      ring: 2px solid rgba(251, 146, 60, 0.5);
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25), 0 0 0 2px rgba(251, 146, 60, 0.5);
     }
     .meilleur-joueur-badge {
       position: absolute;
-      top: 8px;
-      left: 8px;
+      top: -12px;
+      left: -12px;
       padding: 4px 8px;
       border-radius: 9999px;
       background: #fef3c7;
@@ -310,13 +367,15 @@ export async function GET() {
     tbody tr {
       background: #fff;
     }
+    tbody tr:not(:last-child) {
+      border-bottom: 1px solid #e2e8f0;
+    }
     td {
       padding: 12px 16px;
       text-align: center;
       font-size: 12px;
       color: #1e293b;
       border-left: 1px solid #e2e8f0;
-      border-top: 1px solid #e2e8f0;
     }
     td:first-child { border-left: none; }
     .rank-badge {
@@ -431,6 +490,7 @@ export async function GET() {
       position: relative;
       overflow: hidden;
       text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 12px rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.8);
+      letter-spacing: 0.05em;
     }
     .tier-Bronze { 
       background: linear-gradient(135deg, #fb923c, #f97316, #ea580c); 
@@ -543,7 +603,12 @@ export async function GET() {
 </head>
 <body>
   <div class="container">
-    <h1 class="title">Classement</h1>
+    <div class="title-wrapper">
+      <div class="title-bar"></div>
+      <div class="title-box">
+        <h1 class="title">Classement</h1>
+      </div>
+    </div>
     
     <div class="stats">
       <span class="stat-badge">👥 ${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}</span>
@@ -559,10 +624,10 @@ export async function GET() {
         ${top3[1] ? `
         <div class="podium-card podium-2">
           <div class="podium-emoji">🥈</div>
-          <div style="text-align: center; position: relative; z-index: 10; padding-top: 16px;">
-            <h3 class="podium-name">${top3[1].player_name}</h3>
+          <div style="text-align: center; position: relative; z-index: 10; padding-top: 12px;">
+            <h3 class="podium-name podium-2">${top3[1].player_name}</h3>
             <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
-              <div class="podium-points">
+              <div class="podium-points podium-2">
                 <span>${top3[1].points.toLocaleString()}</span>
                 <span class="podium-points-label">points</span>
               </div>
@@ -574,11 +639,11 @@ export async function GET() {
         <div class="podium-card podium-1">
           <div class="meilleur-joueur-badge">Meilleur joueur</div>
           <div class="podium-emoji">🥇</div>
-          <div style="text-align: center; position: relative; z-index: 10; padding-top: 20px;">
-            <h3 class="podium-name" style="font-size: 22px; margin-bottom: 16px;">${top3[0].player_name}</h3>
-            <div style="display: flex; align-items: center; justify-content: center; margin-top: 12px;">
-              <div class="podium-points" style="gap: 8px; padding: 8px 20px;">
-                <span style="font-size: 20px;">${top3[0].points.toLocaleString()}</span>
+          <div style="text-align: center; position: relative; z-index: 10; padding-top: 16px;">
+            <h3 class="podium-name podium-1">${top3[0].player_name}</h3>
+            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
+              <div class="podium-points podium-1">
+                <span>${top3[0].points.toLocaleString()}</span>
                 <span class="podium-points-label">points</span>
               </div>
             </div>
@@ -588,15 +653,15 @@ export async function GET() {
         ${top3[2] ? `
         <div class="podium-card podium-3">
           <div class="podium-emoji">🥉</div>
-          <div style="text-align: center; position: relative; z-index: 10; padding-top: 16px;">
-            <h3 class="podium-name" style="font-size: 20px;">${(() => {
+          <div style="text-align: center; position: relative; z-index: 10; padding-top: 12px;">
+            <h3 class="podium-name podium-3">${(() => {
               const parts = (top3[2].player_name || "").split(" ");
               const first = parts[0] || "";
               const last = parts.slice(1).join(" ");
-              return last ? `<span style="font-size: 24px;">${first}</span> ${last}` : top3[2].player_name;
+              return last ? `<span style="font-size: 20px; font-weight: 800; color: #111827;">${first}</span> <span style="font-size: 16px; font-weight: 800; color: #111827;">${last}</span>` : top3[2].player_name;
             })()}</h3>
             <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
-              <div class="podium-points">
+              <div class="podium-points podium-3">
                 <span>${top3[2].points.toLocaleString()}</span>
                 <span class="podium-points-label">points</span>
               </div>
@@ -634,13 +699,13 @@ export async function GET() {
             return `
             <tr>
               <td><span class="rank-badge ${rankClass}"><span>#${player.rank}</span></span></td>
-              <td style="font-weight: 600;">${player.player_name}</td>
+              <td style="font-weight: 600; color: #1e293b;">${player.player_name}</td>
               <td><span class="tier-badge tier-${tier}"><span>${tier}</span></span></td>
-              <td style="font-weight: 600;">${player.points}</td>
-              <td class="winrate">${winRate}%</td>
-              <td class="wins">${player.wins}</td>
-              <td class="losses">${player.losses}</td>
-              <td style="font-weight: 600;">${player.matches}</td>
+              <td style="font-weight: 600; color: #0f172a;">${player.points}</td>
+              <td class="winrate" style="font-weight: 600;">${winRate}%</td>
+              <td class="wins" style="font-weight: 600;">${player.wins}</td>
+              <td class="losses" style="font-weight: 600;">${player.losses}</td>
+              <td style="font-weight: 600; color: #334155;">${player.matches}</td>
             </tr>
             `;
           }).join('')}
