@@ -518,12 +518,14 @@ export async function GET() {
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
+      preferCSSPageSize: false,
       margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px',
+        top: '15px',
+        right: '15px',
+        bottom: '15px',
+        left: '15px',
       },
+      scale: 0.95,
     });
 
     await browser.close();
