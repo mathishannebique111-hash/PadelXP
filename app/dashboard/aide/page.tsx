@@ -51,11 +51,32 @@ export default function HelpPage() {
           hasConversation: !!data.conversation,
           messagesCount: data.messages?.length || 0,
           conversationId: data.conversation?.id,
-          messages: data.messages,
+          messages: data.messages?.map(m => ({
+            id: m.id,
+            sender_type: m.sender_type,
+            message_text: m.message_text?.substring(0, 50) + '...',
+            created_at: m.created_at
+          })),
           fullData: data
         });
-        setConversation(data.conversation);
-        setMessages(data.messages || []);
+        
+        // Ne mettre à jour que si on a vraiment des données (pour éviter d'écraser le message temporaire trop tôt)
+        if (data.conversation || (data.messages && data.messages.length > 0)) {
+          setConversation(data.conversation);
+          // Filtrer les messages temporaires et les remplacer par les vrais messages
+          const realMessages = (data.messages || []).filter(m => !m.id.startsWith('temp-'));
+          const tempMessages = messages.filter(m => m.id.startsWith('temp-'));
+          
+          // Si on a de vrais messages, les utiliser, sinon garder les temporaires
+          if (realMessages.length > 0) {
+            setMessages(realMessages);
+          } else if (tempMessages.length > 0) {
+            // Garder les messages temporaires si pas encore de vrais messages
+            setMessages(tempMessages);
+          } else {
+            setMessages([]);
+          }
+        }
         setIsInitialLoad(false);
         
         // Si pas de conversation mais erreur spécifique, afficher l'erreur
@@ -131,6 +152,38 @@ export default function HelpPage() {
       const sentMessage = message.trim();
       setMessage('');
       
+      console.log('✅ Message sent successfully:', {
+        conversationId: data.conversationId,
+        messageId: data.messageId,
+        sentMessage: sentMessage.substring(0, 50) + '...'
+      });
+      
+      // Si on a un conversationId, ajouter temporairement le message à l'état local
+      // pour qu'il apparaisse immédiatement, puis recharger depuis la DB
+      if (data.conversationId && sentMessage) {
+        const tempMessage: SupportMessage = {
+          id: `temp-${Date.now()}`,
+          conversation_id: data.conversationId,
+          sender_type: 'club',
+          sender_id: null,
+          message_text: sentMessage,
+          created_at: new Date().toISOString(),
+        };
+        console.log('📝 Adding temporary message to local state:', tempMessage.id);
+        setMessages(prev => [...prev, tempMessage]);
+        setConversation(prev => prev || {
+          id: data.conversationId,
+          club_id: '',
+          user_id: '',
+          user_email: '',
+          club_name: '',
+          subject: null,
+          status: 'open',
+          last_message_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        } as SupportConversation);
+      }
+      
       // Recharger immédiatement la conversation pour afficher le message depuis la DB
       // Attendre un peu pour que la DB soit à jour, puis recharger plusieurs fois (sans afficher "Chargement")
       await loadConversation(false); // Recharger immédiatement sans afficher "Chargement"
@@ -187,10 +240,15 @@ export default function HelpPage() {
       <PageTitle title="Aide & Support" />
 
       {/* Afficher un message d'erreur si les tables n'existent pas */}
-      {error && error.includes('non configuré') && (
+      {(error && error.includes('non configuré')) && (
         <div className="rounded-xl border border-red-500/50 bg-red-500/20 p-6">
-          <h2 className="font-semibold mb-2 text-red-200">Configuration requise</h2>
-          <p className="text-red-200 text-sm">{error}</p>
+          <h2 className="font-semibold mb-2 text-red-200">⚠️ Configuration requise</h2>
+          <p className="text-red-200 text-sm mb-2">{error}</p>
+          <p className="text-red-200/80 text-xs">
+            Pour activer le système de chat support, veuillez exécuter le script SQL{' '}
+            <code className="bg-red-500/30 px-2 py-1 rounded">create_support_chat_system.sql</code>{' '}
+            dans Supabase SQL Editor.
+          </p>
         </div>
       )}
 
