@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     // Vérifier si l'email vient de l'inbound email (admin répond depuis Gmail)
     const isFromInbound = to && (to.includes(INBOUND_EMAIL) || to.includes('contact@updates.padelxp.eu'));
     
-    console.log("Email metadata:", {
+    console.log("📧 Email metadata:", {
       senderType,
       conversationId,
       clubId,
@@ -87,7 +87,8 @@ export async function POST(req: NextRequest) {
       subject,
       inReplyTo,
       references,
-      isReply
+      isReply,
+      isFromInbound: isFromInbound
     });
 
     // Si on a un email_id, récupérer le contenu via l'API Resend
@@ -202,8 +203,18 @@ export async function POST(req: NextRequest) {
 
     // Déterminer si c'est une réponse de l'admin ou un nouveau message du club
     // Si senderType est 'club', c'est un nouveau message du club
-    // Sinon, si c'est une réponse ET que ça vient de l'inbound email, c'est une réponse de l'admin
-    const isAdminReply = isReply && (!senderType || senderType !== 'club') && isFromInbound;
+    // Sinon, si c'est une réponse (In-Reply-To, References, ou sujet avec "Re:"), c'est une réponse de l'admin
+    // ET que l'email est destiné à l'inbound email (admin répond depuis Gmail)
+    const isAdminReply = isReply && (!senderType || senderType !== 'club');
+    
+    console.log("🔍 Detecting reply type:", {
+      isReply,
+      senderType,
+      isAdminReply,
+      isFromInbound,
+      from,
+      to
+    });
     
     // Extraire le conversationId depuis les headers, le sujet, ou les références
     let detectedConversationId = conversationId;
@@ -329,13 +340,23 @@ export async function POST(req: NextRequest) {
       });
 
       const { error: sendError, data: forwardData } = await resend.emails.send({
-        from: "PadelXP Support <support@updates.padelxp.eu>",
+        // CRITIQUE: Le from DOIT être l'inbound email (contact@updates.padelxp.eu) 
+        // pour que quand Gmail répond, la réponse aille directement à cette adresse
+        // et soit capturée par le webhook resend-inbound
+        from: `PadelXP Support <${INBOUND_EMAIL || 'contact@updates.padelxp.eu'}>`,
         to: [FORWARD_TO],
         subject: `📩 Nouveau message de ${from} : ${subject}`,
         html: emailHtml,
-        // IMPORTANT: replyTo doit être l'inbound email pour que les réponses soient capturées par le webhook
+        // Le replyTo est aussi l'inbound email pour double sécurité
         replyTo: INBOUND_EMAIL || 'contact@updates.padelxp.eu',
         headers: Object.keys(forwardHeaders).length > 0 ? forwardHeaders : undefined,
+      });
+      
+      console.log("📧 Email forwarded to Gmail with correct from/replyTo:", {
+        from: INBOUND_EMAIL || 'contact@updates.padelxp.eu',
+        replyTo: INBOUND_EMAIL || 'contact@updates.padelxp.eu',
+        to: FORWARD_TO,
+        conversationId: detectedConversationId || conversationId
       });
 
       if (sendError) {

@@ -69,19 +69,16 @@ export async function GET(request: NextRequest) {
 
     // Prendre la conversation la plus récente (priorité à celle de l'utilisateur actuel, sinon la plus récente du club)
     let conversation = null;
-    if (!convError && conversations && conversations.length > 0) {
-      // Chercher d'abord une conversation de l'utilisateur actuel
-      const userConversation = conversations.find(c => c.user_id === user.id);
-      conversation = userConversation || conversations[0]; // Sinon prendre la plus récente
-    }
-
+    
     if (convError) {
-      console.error('[support-conversation] Error fetching conversation:', convError);
+      console.error('[support-conversation] ❌ Error fetching conversation:', convError);
       
-      // Si la table n'existe pas, retourner un résultat vide plutôt qu'une erreur
+      // Si la table n'existe pas, retourner un message explicite
       if (convError.code === '42P01' || convError.message?.includes('does not exist') || convError.message?.includes('schema cache')) {
-        console.warn('[support-conversation] Table support_conversations does not exist. Please run create_support_chat_system.sql');
+        console.warn('[support-conversation] ⚠️ Table support_conversations does not exist. Please run create_support_chat_system.sql');
         return NextResponse.json({ 
+          error: 'Système de chat non configuré',
+          hint: 'Veuillez exécuter le script create_support_chat_system.sql dans Supabase SQL Editor',
           conversation: null,
           messages: []
         });
@@ -92,6 +89,19 @@ export async function GET(request: NextRequest) {
         conversation: null,
         messages: []
       }, { status: 500 });
+    }
+    
+    if (conversations && conversations.length > 0) {
+      // Chercher d'abord une conversation de l'utilisateur actuel
+      const userConversation = conversations.find(c => c.user_id === user.id);
+      conversation = userConversation || conversations[0]; // Sinon prendre la plus récente
+      console.log('[support-conversation] ✅ Found conversation:', {
+        conversationId: conversation.id,
+        totalConversations: conversations.length,
+        isUserConversation: !!userConversation
+      });
+    } else {
+      console.log('[support-conversation] ℹ️ No conversations found for club:', profile.club_id);
     }
 
     let messages: any[] = [];

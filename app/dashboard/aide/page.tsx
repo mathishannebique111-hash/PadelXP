@@ -49,12 +49,26 @@ export default function HelpPage() {
           hasConversation: !!data.conversation,
           messagesCount: data.messages?.length || 0,
           conversationId: data.conversation?.id,
-          messages: data.messages
+          messages: data.messages,
+          fullData: data
         });
         setConversation(data.conversation);
         setMessages(data.messages || []);
+        
+        // Si pas de conversation mais erreur spécifique, afficher l'erreur
+        if (!data.conversation && data.error) {
+          console.error('❌ Error in conversation data:', data.error);
+        }
       } else {
-        console.error('❌ Error loading conversation:', data);
+        console.error('❌ Error loading conversation:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        });
+        // Afficher l'erreur à l'utilisateur si c'est un problème de configuration
+        if (data.error && data.error.includes('non configuré')) {
+          setError(data.error + (data.hint ? ' - ' + data.hint : ''));
+        }
       }
     } catch (err) {
       console.error('❌ Error loading conversation:', err);
@@ -159,6 +173,14 @@ export default function HelpPage() {
   return (
     <div className="space-y-6">
       <PageTitle title="Aide & Support" />
+
+      {/* Afficher un message d'erreur si les tables n'existent pas */}
+      {error && error.includes('non configuré') && (
+        <div className="rounded-xl border border-red-500/50 bg-red-500/20 p-6">
+          <h2 className="font-semibold mb-2 text-red-200">Configuration requise</h2>
+          <p className="text-red-200 text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Conversation de chat - Afficher toujours le bloc si on a une conversation ou des messages */}
       {(conversation || messages.length > 0) && (
