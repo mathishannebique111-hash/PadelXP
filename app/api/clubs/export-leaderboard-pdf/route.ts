@@ -575,10 +575,10 @@ export async function GET() {
           <div class="meilleur-joueur-badge">Meilleur joueur</div>
           <div class="podium-emoji">🥇</div>
           <div style="text-align: center; position: relative; z-index: 10; padding-top: 20px;">
-            <h3 class="podium-name" style="font-size: 28px; margin-bottom: 20px;">${top3[0].player_name}</h3>
-            <div style="display: flex; align-items: center; justify-content: center; margin-top: 16px;">
-              <div class="podium-points" style="gap: 10px; padding: 10px 24px;">
-                <span style="font-size: 28px;">${top3[0].points.toLocaleString()}</span>
+            <h3 class="podium-name" style="font-size: 22px; margin-bottom: 16px;">${top3[0].player_name}</h3>
+            <div style="display: flex; align-items: center; justify-content: center; margin-top: 12px;">
+              <div class="podium-points" style="gap: 8px; padding: 8px 20px;">
+                <span style="font-size: 20px;">${top3[0].points.toLocaleString()}</span>
                 <span class="podium-points-label">points</span>
               </div>
             </div>
