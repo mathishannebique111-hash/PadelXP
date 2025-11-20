@@ -256,7 +256,7 @@ export default function ImportExportPage() {
     try {
       setExportErrorMessage(null);
       setIsExportingLeaderboard(true);
-      const response = await fetch("/api/clubs/export-leaderboard", {
+      const response = await fetch("/api/clubs/export-leaderboard-pdf", {
         method: "GET",
         credentials: "include",
       });
@@ -267,7 +267,7 @@ export default function ImportExportPage() {
       const blob = await response.blob();
       const disposition = response.headers.get("Content-Disposition") || "";
       const match = disposition.match(/filename="([^"]+)"/);
-      const filename = match ? match[1] : `classement_${new Date().toISOString().slice(0, 10)}.csv`;
+      const filename = match ? match[1] : `classement_${new Date().toISOString().slice(0, 10)}.pdf`;
       triggerDownload(blob, filename);
     } catch (error: any) {
       setExportErrorMessage(error?.message || "Erreur lors de l'export du classement.");
@@ -399,7 +399,7 @@ export default function ImportExportPage() {
             disabled={isExportingLeaderboard}
             className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/15 disabled:opacity-60 transition-colors"
           >
-            {isExportingLeaderboard ? "Export en cours..." : "Classement (CSV)"}
+            {isExportingLeaderboard ? "Export en cours..." : "Classement (PDF)"}
           </button>
         </div>
         {exportErrorMessage && (
