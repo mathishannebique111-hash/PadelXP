@@ -57,7 +57,7 @@ export async function GET() {
     const totalPlayers = leaderboard.length;
     const totalMatches = history.matches.length;
 
-    // Générer le HTML avec le même style que la page Classement
+    // Générer le HTML avec EXACTEMENT le même style que la page Classement
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -66,6 +66,8 @@ export async function GET() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Classement</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+    
     * {
       margin: 0;
       padding: 0;
@@ -73,10 +75,11 @@ export async function GET() {
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d1b3d 50%, #1a2332 75%, #0f1629 100%);
+      background: linear-gradient(to bottom, #121212, #1E1E1E);
       color: #fff;
       padding: 40px 20px;
       min-height: 100vh;
+      position: relative;
     }
     .container {
       max-width: 1200px;
@@ -97,33 +100,51 @@ export async function GET() {
       flex-wrap: wrap;
     }
     .stat-badge {
-      padding: 8px 16px;
+      padding: 6px 14px;
       border-radius: 9999px;
       background: linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%);
-      border: 1px solid rgba(255,255,255,0.2);
-      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      font-size: 12px;
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .top3-section {
       margin-bottom: 50px;
     }
     .top3-title {
       text-align: center;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 15px;
+      gap: 12px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      display: inline-flex;
+      margin-left: auto;
+      margin-right: auto;
     }
-    .top3-title::before,
-    .top3-title::after {
+    .top3-title-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .top3-title-wrapper::before,
+    .top3-title-wrapper::after {
       content: '';
-      flex: 1;
+      flex: 0 1 auto;
       height: 1px;
+      width: 48px;
       background: rgba(255,255,255,0.2);
-      max-width: 100px;
     }
     .top3-container {
       display: flex;
@@ -134,90 +155,131 @@ export async function GET() {
     }
     .podium-card {
       border-radius: 16px;
-      padding: 30px 20px;
+      padding: 24px 20px;
       text-align: center;
       position: relative;
-      border: 3px solid;
-      min-height: 250px;
+      border: 4px solid;
+      min-height: 260px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+      overflow: hidden;
     }
     .podium-2 {
       background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
       border-color: rgba(148, 163, 184, 0.8);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 0 120px rgba(192, 192, 192, 0.35);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
     .podium-1 {
       background: linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44);
       border-color: rgba(234, 179, 8, 0.8);
-      box-shadow: 0 6px 25px rgba(0,0,0,0.1), inset 0 0 140px rgba(255, 215, 0, 0.4);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6);
     }
     .podium-3 {
       background: linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085);
       border-color: rgba(234, 88, 12, 0.8);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 0 120px rgba(205, 127, 50, 0.35);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
-    .podium-2 { flex: 1; max-width: 220px; }
+    .podium-2 { flex: 1; max-width: 240px; }
     .podium-1 { flex: 1.2; max-width: 280px; }
-    .podium-3 { flex: 1; max-width: 220px; }
+    .podium-3 { flex: 1; max-width: 240px; }
     .podium-emoji {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 8px;
+      right: 8px;
       font-size: 48px;
-      opacity: 0.9;
+      opacity: 0.95;
+      z-index: 20;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
     .podium-name {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 800;
       color: #111827;
-      margin-bottom: 15px;
+      margin-bottom: 16px;
+      letter-spacing: -0.025em;
     }
     .podium-points {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
+      padding: 8px 20px;
       border-radius: 9999px;
       background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
       border: 2px solid;
-      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 24px;
       font-weight: 800;
       color: #111827;
     }
-    .podium-2 .podium-points { border-color: #71717a; }
-    .podium-1 .podium-points { border-color: #eab308; }
-    .podium-3 .podium-points { border-color: #f97316; }
+    .podium-2 .podium-points { 
+      border-color: #71717a; 
+      box-shadow: 0 2px 8px rgba(113, 113, 122, 0.25);
+      ring: 2px solid rgba(212, 212, 216, 0.5);
+    }
+    .podium-1 .podium-points { 
+      border-color: #eab308; 
+      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35);
+      ring: 2px solid rgba(234, 179, 8, 0.5);
+    }
+    .podium-3 .podium-points { 
+      border-color: #f97316; 
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25);
+      ring: 2px solid rgba(251, 146, 60, 0.5);
+    }
+    .meilleur-joueur-badge {
+      position: absolute;
+      top: -12px;
+      left: -12px;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid #fcd34d;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      z-index: 20;
+    }
     .leaderboard-section {
       margin-top: 40px;
     }
-    .leaderboard-title {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 20px;
+    .leaderboard-title-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 15px;
+      gap: 12px;
+      margin-bottom: 20px;
     }
-    .leaderboard-title::before,
-    .leaderboard-title::after {
+    .leaderboard-title-wrapper::before,
+    .leaderboard-title-wrapper::after {
       content: '';
-      flex: 1;
+      flex: 0 1 auto;
       height: 1px;
+      width: 48px;
       background: rgba(255,255,255,0.2);
-      max-width: 100px;
+    }
+    .leaderboard-title {
+      padding: 4px 12px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+    }
+    .table-wrapper {
+      border-radius: 24px;
+      overflow: hidden;
+      border: 4px solid #cbd5e1;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
     table {
       width: 100%;
       border-collapse: collapse;
       background: #fff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      border: 3px solid #cbd5e1;
     }
     thead {
       background: #f1f5f9;
@@ -225,25 +287,26 @@ export async function GET() {
     th {
       padding: 12px 16px;
       text-align: center;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: #475569;
       border-left: 1px solid #e2e8f0;
     }
     th:first-child { border-left: none; }
+    tbody tr {
+      background: #fff;
+    }
     td {
       padding: 12px 16px;
       text-align: center;
-      font-size: 14px;
+      font-size: 12px;
       color: #1e293b;
       border-left: 1px solid #e2e8f0;
       border-top: 1px solid #e2e8f0;
     }
     td:first-child { border-left: none; }
-    tbody tr {
-      background: #fff;
-    }
     .rank-badge {
       display: inline-flex;
       align-items: center;
@@ -254,11 +317,34 @@ export async function GET() {
       font-weight: 800;
       font-size: 14px;
       border: 2px solid;
+      position: relative;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255,255,255,0.5);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.15) inset;
     }
-    .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); border-color: rgba(234, 179, 8, 0.5); color: #fff; }
-    .rank-2 { background: linear-gradient(135deg, #d1d5db, #9ca3af, #6b7280); border-color: rgba(156, 163, 175, 0.5); color: #fff; }
-    .rank-3 { background: linear-gradient(135deg, #fb923c, #f97316, #ea580c); border-color: rgba(249, 115, 22, 0.5); color: #fff; }
-    .rank-default { background: linear-gradient(135deg, #1A3A6E, #1E4280, #1A3A6E); border-color: rgba(59, 130, 246, 0.5); color: #fff; }
+    .rank-1 { 
+      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); 
+      border-color: rgba(234, 179, 8, 0.5); 
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(234,179,8,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .rank-2 { 
+      background: linear-gradient(135deg, #d1d5db, #9ca3af, #6b7280); 
+      border-color: rgba(156, 163, 175, 0.5); 
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(156,163,175,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .rank-3 { 
+      background: linear-gradient(135deg, #fb923c, #f97316, #ea580c); 
+      border-color: rgba(249, 115, 22, 0.5); 
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(249,115,22,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .rank-default { 
+      background: linear-gradient(135deg, #1A3A6E, #1E4280, #1A3A6E); 
+      border-color: rgba(59, 130, 246, 0.5); 
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(26,58,110,0.7), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
     .tier-badge {
       display: inline-block;
       padding: 4px 12px;
@@ -267,12 +353,32 @@ export async function GET() {
       font-weight: 700;
       color: #fff;
       border: 2px solid;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 12px rgba(255,255,255,0.4);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.15) inset;
     }
-    .tier-Bronze { background: #CD7F32; border-color: #CD7F32; }
-    .tier-Argent { background: #C0C0C0; border-color: #C0C0C0; color: #1e293b; }
-    .tier-Or { background: #FFD700; border-color: #FFD700; color: #1e293b; }
-    .tier-Diamant { background: #B9F2FF; border-color: #B9F2FF; color: #1e293b; }
-    .tier-Champion { background: #FF1493; border-color: #FF1493; }
+    .tier-Bronze { 
+      background: linear-gradient(135deg, #fb923c, #f97316, #ea580c); 
+      border-color: rgba(249, 115, 22, 0.5); 
+    }
+    .tier-Argent { 
+      background: linear-gradient(135deg, #d1d5db, #9ca3af, #6b7280); 
+      border-color: rgba(156, 163, 175, 0.5); 
+      color: #1e293b;
+    }
+    .tier-Or { 
+      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); 
+      border-color: rgba(234, 179, 8, 0.5); 
+      color: #1e293b;
+    }
+    .tier-Diamant { 
+      background: linear-gradient(135deg, #22d3ee, #3b82f6, #22d3ee); 
+      border-color: rgba(34, 211, 238, 0.5); 
+      color: #1e293b;
+    }
+    .tier-Champion { 
+      background: linear-gradient(135deg, #a855f7, #ec4899, #a855f7); 
+      border-color: rgba(168, 85, 247, 0.5); 
+    }
     .winrate { color: #059669; font-weight: 600; }
     .wins { color: #047857; background: #ecfdf5; font-weight: 600; }
     .losses { color: #b91c1c; background: #fef2f2; font-weight: 600; }
@@ -289,7 +395,9 @@ export async function GET() {
 
     ${top3.length > 0 ? `
     <div class="top3-section">
-      <div class="top3-title">Top joueurs du moment</div>
+      <div class="top3-title-wrapper">
+        <div class="top3-title">Top joueurs du moment</div>
+      </div>
       <div class="top3-container">
         ${top3[1] ? `
         <div class="podium-card podium-2">
@@ -300,6 +408,7 @@ export async function GET() {
         ` : ''}
         ${top3[0] ? `
         <div class="podium-card podium-1">
+          <div class="meilleur-joueur-badge">Meilleur joueur</div>
           <div class="podium-emoji">🥇</div>
           <div class="podium-name">${top3[0].player_name}</div>
           <div class="podium-points">${top3[0].points.toLocaleString()} <span style="font-size: 10px; text-transform: uppercase;">points</span></div>
@@ -317,8 +426,11 @@ export async function GET() {
     ` : ''}
 
     <div class="leaderboard-section">
-      <div class="leaderboard-title">Classement global</div>
-      <table>
+      <div class="leaderboard-title-wrapper">
+        <div class="leaderboard-title">Classement global</div>
+      </div>
+      <div class="table-wrapper">
+        <table>
         <thead>
           <tr>
             <th>Rang</th>
@@ -351,6 +463,7 @@ export async function GET() {
           }).join('')}
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </body>
