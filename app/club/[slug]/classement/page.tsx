@@ -151,7 +151,15 @@ export default function ClubClassementPage() {
         <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
           <div className="px-4 py-3 bg-white/5 border-b border-white/10">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              🏆 Classement global
+              <Image
+                src="/images/Trophée page badges.png"
+                alt="Trophée"
+                width={20}
+                height={20}
+                className="w-5 h-5 object-contain flex-shrink-0"
+                unoptimized
+              />
+              Classement global
             </h2>
           </div>
           <div className="overflow-x-auto">

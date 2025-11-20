@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BadgeIcon from "../icons/BadgeIcon";
 import BadgeIconDisplay from "../BadgeIconDisplay";
+import Image from "next/image";
 
 type NavKey = "home" | "match" | "history" | "badges" | "club" | "challenges" | "reviews";
 
@@ -35,7 +36,14 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
         </Link>
         <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <span className={label}>Challenges</span>
-          <span className={icon}>🏆</span>
+          <Image
+            src="/images/Trophée page badges.png"
+            alt="Challenges"
+            width={18}
+            height={18}
+            className={`${icon} w-[18px] h-[18px] object-contain flex-shrink-0`}
+            unoptimized
+          />
         </Link>
         <Link href="/reviews" className={`${base} ${currentPage === "reviews" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <span className={label}>Avis</span>

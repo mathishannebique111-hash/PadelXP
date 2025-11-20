@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getUserClubInfo, getClubDashboardData } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import PageTitle from "../PageTitle";
+import Image from "next/image";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -127,7 +128,14 @@ export default async function MembersPage() {
           style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
-          <span aria-hidden>👥</span>
+          <Image
+            src="/images/Membres page membres.png"
+            alt="Membres"
+            width={16}
+            height={16}
+            className="relative w-4 h-4 object-contain flex-shrink-0"
+            unoptimized
+          />
           <span className="relative">
           {filteredMembers.length} joueur{filteredMembers.length > 1 ? "s" : ""}
           </span>

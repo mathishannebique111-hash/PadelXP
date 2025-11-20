@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     }
 
     if (!user) {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data: { user: cookieUser } } = await supabase.auth.getUser();
       user = cookieUser ?? null;
     }

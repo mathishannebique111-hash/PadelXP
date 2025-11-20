@@ -34,7 +34,7 @@ export default async function BillingPage() {
       </div>
       <div className="relative z-10 space-y-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Facturation & essai</h1>
+          <h1 className="text-2xl font-extrabold text-white">Abonnement & essai</h1>
           <p className="text-sm text-white/60 mt-1">Gérez votre abonnement et votre période d'essai</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
@@ -140,7 +140,7 @@ export default async function BillingPage() {
       <div className="relative z-10 space-y-4 sm:space-y-5 md:space-y-6">
         {/* Sync Stripe → App au retour du portail */}
         <SyncOnReturn />
-        <PageTitle title="Facturation & essai" subtitle="Gérez votre abonnement et votre période d'essai" />
+        <PageTitle title="Abonnement & essai" subtitle="Gérez votre abonnement et votre période d'essai" />
 
       {/* Bandeau Essai */}
       <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-4 sm:p-5 md:p-6">

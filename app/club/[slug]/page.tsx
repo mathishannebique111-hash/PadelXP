@@ -3,6 +3,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import ClubHeader from "@/components/club/ClubHeader";
 import { getClubPublicExtras } from "@/lib/utils/club-utils";
+import Image from "next/image";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -66,7 +67,8 @@ export default async function ClubHomePage({ params }: { params: Promise<{ slug:
       title: "Classement",
       description: "Consultez le classement des membres de votre club",
       href: `/club/${slugValue}/classement`,
-      icon: "🏆",
+      icon: "/images/Trophée page badges.png",
+      iconType: "image" as const,
       color: "from-yellow-500 to-orange-500"
     },
     {
@@ -74,6 +76,7 @@ export default async function ClubHomePage({ params }: { params: Promise<{ slug:
       description: "Historique des matchs joués par les membres",
       href: `/club/${slugValue}/resultats`,
       icon: "📊",
+      iconType: "emoji" as const,
       color: "from-blue-500 to-cyan-500"
     }
   ];
@@ -95,8 +98,19 @@ export default async function ClubHomePage({ params }: { params: Promise<{ slug:
               href={section.href}
               className="group relative rounded-xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition-all hover:scale-105"
             >
-              <div className={`text-4xl mb-4 bg-gradient-to-br ${section.color} bg-clip-text text-transparent`}>
-                {section.icon}
+              <div className={`text-4xl mb-4 ${section.iconType === "image" ? "" : `bg-gradient-to-br ${section.color} bg-clip-text text-transparent`}`}>
+                {section.iconType === "image" ? (
+                  <Image
+                    src={section.icon}
+                    alt={section.title}
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 object-contain flex-shrink-0"
+                    unoptimized
+                  />
+                ) : (
+                  section.icon
+                )}
               </div>
               <h2 className="text-xl font-bold mb-2">{section.title}</h2>
               <p className="text-white/60 text-sm">{section.description}</p>

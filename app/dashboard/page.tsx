@@ -232,70 +232,70 @@ export default async function DashboardHome() {
           slug={club?.slug ?? null}
         />
         {/* À venir */}
-        <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6 flex flex-col h-full">
-          <h2 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Challenges en cours et à venir</h2>
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 space-y-3 sm:space-y-4 pt-4 sm:pt-6">
-              {upcomingChallenges.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-6 sm:py-8">
-                  <div className="mb-4 sm:mb-6 text-center">
-                    <div className="mb-2 sm:mb-3 flex items-center justify-center opacity-50">
+        <div className="w-full max-w-2xl rounded-2xl border border-[#00CC99]/40 bg-gradient-to-br from-[#03204a] via-[#01142d] to-[#000916] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)] flex flex-col h-full">
+          <div className="flex flex-col gap-5 flex-1">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Challenges en cours et à venir</h2>
+              {upcomingChallenges.length === 0 && (
+                <p className="mt-1 text-sm text-white/70">
+                  Créez un challenge pour motiver vos joueurs et animer votre club.
+                </p>
+              )}
+            </div>
+            {upcomingChallenges.length === 0 ? (
+              <div className="rounded-2xl border border-white/15 bg-gradient-to-r from-[#02346d]/60 via-[#012a58]/60 to-[#01403f]/60 px-6 py-5 shadow-[0_8px_30px_rgba(0,102,255,0.25)]">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="mb-4 text-center">
+                    <div className="mb-2 flex items-center justify-center opacity-50">
                       <BadgeIconDisplay icon="🎯" size={32} className="flex-shrink-0" />
                     </div>
                     <p className="text-xs sm:text-sm text-white/60">Aucun challenge à venir</p>
                   </div>
+                  <a 
+                    href="/dashboard/challenges" 
+                    className="mt-4 w-full rounded-lg border px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 text-center"
+                    style={{ background: "linear-gradient(135deg, #0066FF 0%, #00CC99 100%)", boxShadow: "0 12px 24px rgba(0,102,255,0.35)", border: "1px solid rgba(255,255,255,0.25)" }}
+                  >
+                    Créer un challenge
+                  </a>
                 </div>
-              ) : (
-                <ul className="text-xs sm:text-sm space-y-2">
-                  {upcomingChallenges.map((c) => {
-                    const startDate = new Date(c.start_date);
-                    const endDate = new Date(c.end_date);
-                    const isActive = c.status === "active";
-                    const isFuture = c.status === "upcoming";
-                    
-                    return (
-                      <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2">
-                        <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-                              <span className="font-medium text-white truncate text-xs sm:text-sm">{c.title}</span>
-                              {isActive && (
-                                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
-                                  En cours
-                                </span>
-                              )}
-                              {isFuture && (
-                                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
-                                  À venir
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] sm:text-xs text-white/50 truncate">{c.objective}</div>
-                          </div>
-                          <div className="flex flex-col items-end text-[10px] sm:text-xs text-white/60 whitespace-nowrap flex-shrink-0">
-                            <span>{startDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
-                            <span className="text-[9px] sm:text-[10px]">→ {endDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-            {upcomingChallenges.length === 0 && (
-              <div className="mt-auto pt-8">
-                <a 
-                  href="/dashboard/challenges" 
-                  className="group relative inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-xs sm:text-sm text-white overflow-hidden transition-all hover:scale-105 hover:shadow-lg ring-1 ring-white/20 border border-white/10 w-full justify-center"
-                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)", boxShadow: "0 6px 22px rgba(0, 102, 255, 0.35)" }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                  <span className="relative text-base sm:text-lg">➕</span>
-                  <span className="relative">Créer un challenge</span>
-                  <span className="relative text-sm sm:text-base ml-1">›</span>
-                </a>
               </div>
+            ) : (
+              <ul className="text-xs sm:text-sm space-y-2">
+                {upcomingChallenges.map((c) => {
+                  const startDate = new Date(c.start_date);
+                  const endDate = new Date(c.end_date);
+                  const isActive = c.status === "active";
+                  const isFuture = c.status === "upcoming";
+                  
+                  return (
+                    <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2">
+                      <div className="flex items-start justify-between gap-1.5 sm:gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                            <span className="font-medium text-white truncate text-xs sm:text-sm">{c.title}</span>
+                            {isActive && (
+                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
+                                En cours
+                              </span>
+                            )}
+                            {isFuture && (
+                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
+                                À venir
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] sm:text-xs text-white/50 truncate">{c.objective}</div>
+                        </div>
+                        <div className="flex flex-col items-end text-[10px] sm:text-xs text-white/60 whitespace-nowrap flex-shrink-0">
+                          <span>{startDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
+                          <span className="text-[9px] sm:text-[10px]">→ {endDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
         </div>
@@ -317,7 +317,7 @@ export default async function DashboardHome() {
           // Essai actif
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-start gap-3 sm:gap-4">
-              <div className="flex-shrink-0 flex items-center justify-center">
+              <div className="flex-shrink-0 pt-0.5">
                 <Image
                   src="/images/cadeau accueil club.png"
                   alt="Cadeau"
@@ -338,10 +338,10 @@ export default async function DashboardHome() {
                     {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-white/70">
+                <p className="text-xs sm:text-sm text-white/70 mt-2 sm:mt-3">
                   {showTrialWarning
                     ? `Votre essai se termine dans ${daysRemaining} jour${daysRemaining > 1 ? "s" : ""}. Choisissez une offre pour continuer.`
-                    : `Profitez d'encore ${daysRemaining} jour${daysRemaining > 1 ? "s" : ""} avant la fin de votre essai gratuit.`}
+                    : `Profitez de ${daysRemaining} jour${daysRemaining > 1 ? "s" : ""} avant la fin de votre essai gratuit.`}
                 </p>
                 {showTrialWarning && (
                   <div className="mt-2 sm:mt-3">

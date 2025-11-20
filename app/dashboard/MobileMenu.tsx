@@ -35,7 +35,7 @@ export default function MobileMenu() {
     { href: '/dashboard/page-club', label: 'Page publique du club', iconSrc: '/images/Page publique du club.png' },
     { href: '/dashboard/challenges', label: 'Challenges', iconSrc: '/images/Challenges club.png' },
     { href: '/dashboard/roles', label: 'Rôles et accès', iconSrc: '/images/Role et accés club.png' },
-    { href: '/dashboard/facturation', label: 'Facturation & essai', iconSrc: '/images/Facturation et essai club.png' },
+    { href: '/dashboard/facturation', label: 'Abonnement & essai', iconSrc: '/images/Facturation et essai club.png' },
     { href: '/dashboard/import-export', label: 'Import / Export', iconSrc: '/images/Import club.png' },
     { href: '/dashboard/aide', label: 'Aide & Support', iconSrc: '/images/Aide et support club.png' },
   ];

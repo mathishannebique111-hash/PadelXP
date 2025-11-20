@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import ClubPublicPageWrapper from "@/components/club/ClubPublicPageWrapper";
-import { getClubPublicExtras } from "@/lib/utils/club-utils";
+import { getClubPublicExtras, getUserClubInfo } from "@/lib/utils/club-utils";
 import PageTitle from "../PageTitle";
 
 export const dynamic = "force-dynamic";
@@ -17,18 +17,20 @@ export default async function PageClubPage() {
     redirect("/clubs/login?next=/dashboard/page-club");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("club_id")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Récupérer les infos du club de la même manière que dans layout.tsx
+  const clubInfo = await getUserClubInfo();
+  const clubId = clubInfo.clubId;
+  const clubLogo = clubInfo.clubLogoUrl; // Logo déjà converti en URL publique via getUserClubInfo
 
-  const clubId: string | null = profile?.club_id ?? (user.user_metadata?.club_id as string | null) ?? null;
+  if (!clubId) {
+    redirect("/clubs/login?next=/dashboard/page-club");
+  }
 
+  // Récupérer les autres données du club
   const { data: clubRecord } = clubId
     ? await supabase
         .from("clubs")
-        .select("name, address, postal_code, city, phone, website, number_of_courts, court_type, logo_url")
+        .select("name, address, postal_code, city, phone, website, number_of_courts, court_type")
         .eq("id", clubId)
         .maybeSingle()
     : { data: null };
@@ -52,8 +54,8 @@ export default async function PageClubPage() {
 
   const initialPreviewData = clubRecord
     ? {
-        name: clubRecord.name,
-        logoUrl: clubRecord.logo_url,
+        name: clubRecord.name ?? clubInfo.clubName ?? "Club",
+        logoUrl: clubLogo, // Logo déjà converti en URL publique via getUserClubInfo (même que celui en haut de page)
         description: extras.description ?? null,
         addressLine,
         phone: clubRecord.phone ?? extras.phone ?? null,
@@ -63,8 +65,8 @@ export default async function PageClubPage() {
         openingHours: extras.opening_hours ?? null,
       }
     : {
-        name: "",
-        logoUrl: null,
+        name: clubInfo.clubName ?? "Club",
+        logoUrl: clubLogo, // Logo déjà converti en URL publique via getUserClubInfo (même que celui en haut de page)
         description: null,
         addressLine: null,
         phone: null,

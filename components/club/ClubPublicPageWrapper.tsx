@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ClubPublicFormClient from "./ClubPublicFormClient";
 import ClubPublicPreview from "./ClubPublicPreview";
 
@@ -26,6 +26,15 @@ type Props = {
 
 export default function ClubPublicPageWrapper({ initialData, clubId }: Props) {
   const [previewData, setPreviewData] = useState<ClubPreviewData>(initialData);
+  
+  // Mettre à jour previewData quand initialData change (pour le logo notamment)
+  useEffect(() => {
+    setPreviewData((prev) => ({
+      ...prev,
+      logoUrl: initialData.logoUrl, // Toujours utiliser le logo depuis initialData (déjà converti en URL publique)
+      name: initialData.name, // Garder le nom à jour aussi
+    }));
+  }, [initialData.logoUrl, initialData.name]);
 
   // Fonction pour mettre à jour l'aperçu depuis le formulaire
   const handleFormDataChange = useCallback((data: {
@@ -38,14 +47,15 @@ export default function ClubPublicPageWrapper({ initialData, clubId }: Props) {
     numberOfCourts: string;
     courtType: string;
     openingHours: OpeningHours;
+    logoUrl?: string | null; // Logo du club (même que celui en haut de page)
   }) => {
     const addressLine = [data.street, data.postal, data.city]
       .filter(Boolean)
       .join(" · ") || null;
 
-    setPreviewData({
-      name: initialData.name,
-      logoUrl: initialData.logoUrl,
+    setPreviewData((prev) => ({
+      name: prev.name, // Garder le nom actuel
+      logoUrl: data.logoUrl !== undefined ? data.logoUrl : prev.logoUrl, // Mettre à jour logoUrl si fourni, sinon garder celui existant
       description: data.description || null,
       addressLine,
       phone: data.phone || null,
@@ -53,8 +63,8 @@ export default function ClubPublicPageWrapper({ initialData, clubId }: Props) {
       numberOfCourts: data.numberOfCourts ? Number(data.numberOfCourts) : null,
       courtType: data.courtType || null,
       openingHours: data.openingHours || null,
-    });
-  }, [initialData]);
+    }));
+  }, []);
 
   if (!clubId) {
     return (
@@ -69,7 +79,10 @@ export default function ClubPublicPageWrapper({ initialData, clubId }: Props) {
 
   return (
     <>
-      <ClubPublicFormClient onDataChange={handleFormDataChange} />
+      <ClubPublicFormClient 
+        onDataChange={handleFormDataChange}
+        initialLogoUrl={initialData.logoUrl} // Passer le logo initial (déjà converti en URL publique)
+      />
       <ClubPublicPreview {...previewData} />
     </>
   );

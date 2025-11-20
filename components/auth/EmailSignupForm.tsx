@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { capitalizeFullName } from "@/lib/utils/name-utils";
 
 type PrecheckResult =
   | boolean
@@ -65,9 +66,15 @@ export default function EmailSignupForm({
 
       if (!precheckContext?.club?.slug || !precheckContext?.club?.code) {
         setLoading(false);
-        setError("Sélectionnez un club / complexe valide et saisissez le code d’invitation");
+        setError("Sélectionnez un club / complexe valide et saisissez le code d'invitation");
         return;
       }
+
+      // Capitaliser automatiquement le prénom et le nom
+      const { firstName: capitalizedFirstName, lastName: capitalizedLastName } = capitalizeFullName(
+        firstName.trim(),
+        lastName.trim()
+      );
 
       const supabase = createClient();
       const { data, error } = await supabase.auth.signUp({
@@ -75,14 +82,14 @@ export default function EmailSignupForm({
         password,
         options: {
           data: {
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
+            first_name: capitalizedFirstName,
+            last_name: capitalizedLastName,
           },
         },
       });
       if (error) throw error;
 
-      const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
+      const displayName = `${capitalizedFirstName} ${capitalizedLastName}`.trim();
       let accessToken = data.session?.access_token || null;
 
       if (!data.session) {
@@ -119,8 +126,8 @@ export default function EmailSignupForm({
           body: JSON.stringify({
             slug: precheckContext?.club?.slug,
             code: precheckContext?.club?.code,
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
+            firstName: capitalizedFirstName,
+            lastName: capitalizedLastName,
             displayName,
             email,
           })

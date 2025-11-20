@@ -65,18 +65,24 @@ async function ensureBucket() {
 }
 
 async function loadExtras(clubId: string): Promise<ExtrasPayload | null> {
-  if (!supabaseAdmin) return null;
+  if (!supabaseAdmin) {
+    console.warn("[api/clubs/public] loadExtras: supabaseAdmin not available");
+    return null;
+  }
   const storage = supabaseAdmin.storage.from(BUCKET_NAME);
   const { data, error } = await storage.download(`${clubId}.json`);
   if (error || !data) {
     if (error && !error.message?.toLowerCase().includes("not found")) {
       console.warn("[api/clubs/public] loadExtras error", error);
+    } else {
+      console.log("[api/clubs/public] loadExtras: No existing file found for clubId:", clubId);
     }
     return null;
   }
   try {
     const text = await data.text();
     const parsed = JSON.parse(text);
+    console.log("[api/clubs/public] loadExtras: Loaded data for clubId:", clubId, "opening_hours:", JSON.stringify(parsed?.opening_hours, null, 2));
     return {
       address: typeof parsed?.address === "string" ? parsed.address : null,
       postal_code: typeof parsed?.postal_code === "string" ? parsed.postal_code : null,
@@ -86,20 +92,47 @@ async function loadExtras(clubId: string): Promise<ExtrasPayload | null> {
       number_of_courts: typeof parsed?.number_of_courts === "number" ? parsed.number_of_courts : null,
       court_type: typeof parsed?.court_type === "string" ? parsed.court_type : null,
       description: typeof parsed?.description === "string" ? parsed.description : null,
-      opening_hours: parsed?.opening_hours && typeof parsed.opening_hours === "object" ? parsed.opening_hours as OpeningHoursPayload : null,
+      opening_hours: parsed?.opening_hours && typeof parsed.opening_hours === "object" && !Array.isArray(parsed.opening_hours) ? parsed.opening_hours as OpeningHoursPayload : null,
     };
   } catch (err) {
-    console.warn("[api/clubs/public] loadExtras parse error", err);
+    console.error("[api/clubs/public] loadExtras parse error", err);
     return null;
   }
 }
 
 async function saveExtras(clubId: string, extras: ExtrasPayload) {
-  if (!supabaseAdmin) return;
-  await ensureBucket();
-  const storage = supabaseAdmin.storage.from(BUCKET_NAME);
-  const payload = JSON.stringify(extras, null, 2);
-  await storage.upload(`${clubId}.json`, payload, { upsert: true, contentType: "application/json" });
+  if (!supabaseAdmin) {
+    console.warn("[api/clubs/public] saveExtras: supabaseAdmin not available");
+    return;
+  }
+  try {
+    await ensureBucket();
+    const storage = supabaseAdmin.storage.from(BUCKET_NAME);
+    const payload = JSON.stringify(extras, null, 2);
+    console.log("[api/clubs/public] saveExtras: Uploading payload for clubId:", clubId, "Size:", payload.length);
+    const { data, error } = await storage.upload(`${clubId}.json`, payload, { upsert: true, contentType: "application/json" });
+    if (error) {
+      console.error("[api/clubs/public] saveExtras: Upload error:", error);
+      throw error;
+    }
+    console.log("[api/clubs/public] saveExtras: Upload successful:", data);
+    
+    // Attendre un peu pour s'assurer que le fichier est bien écrit
+    // et vérifier que le fichier a bien été sauvegardé
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Vérifier que le fichier a bien été sauvegardé en le relisant
+    const { data: verifyData, error: verifyError } = await storage.download(`${clubId}.json`);
+    if (verifyError || !verifyData) {
+      console.error("[api/clubs/public] saveExtras: Verification failed after upload:", verifyError);
+      // Ne pas throw ici car le upload a réussi, c'est juste une vérification
+    } else {
+      console.log("[api/clubs/public] saveExtras: Verification successful, file exists");
+    }
+  } catch (err) {
+    console.error("[api/clubs/public] saveExtras: Exception:", err);
+    throw err;
+  }
 }
 
 async function resolveClubId(userId: string, metadata?: Record<string, any>): Promise<string | null> {
@@ -187,6 +220,25 @@ function buildTablePayload(payload: any): SanitisedPayload {
 }
 
 function buildExtras(payload: SanitisedPayload, body: any): ExtrasPayload {
+  let openingHours: OpeningHoursPayload | null = null;
+  
+  // CRITICAL: Accepter TOUJOURS les horaires du body s'ils sont présents
+  // Ne pas vérifier s'ils sont "vides" ou non - l'objet peut avoir des jours avec des valeurs null
+  if (body.opening_hours !== undefined && body.opening_hours !== null) {
+    if (typeof body.opening_hours === "object" && !Array.isArray(body.opening_hours)) {
+      // Accepter l'objet tel quel, même s'il a des valeurs null pour certains jours
+      openingHours = body.opening_hours as OpeningHoursPayload;
+      console.log("[api/clubs/public] buildExtras - ACCEPTED opening_hours from body:", JSON.stringify(openingHours, null, 2));
+      console.log("[api/clubs/public] buildExtras - opening_hours has", Object.keys(openingHours).length, "keys");
+    } else {
+      console.error("[api/clubs/public] buildExtras - opening_hours is not a valid object (type:", typeof body.opening_hours, "isArray:", Array.isArray(body.opening_hours), "), setting to null");
+      openingHours = null;
+    }
+  } else {
+    console.log("[api/clubs/public] buildExtras - No opening_hours in body (undefined or null), setting to null");
+    openingHours = null;
+  }
+  
   return {
     address: payload.address ?? null,
     postal_code: payload.postal_code ?? null,
@@ -196,14 +248,12 @@ function buildExtras(payload: SanitisedPayload, body: any): ExtrasPayload {
     number_of_courts: payload.number_of_courts ?? null,
     court_type: payload.court_type ?? null,
     description: typeof body.description === "string" && body.description.trim() ? body.description.trim() : null,
-    opening_hours: body.opening_hours && typeof body.opening_hours === "object"
-      ? body.opening_hours as OpeningHoursPayload
-      : null,
+    opening_hours: openingHours, // TOUJOURS inclure opening_hours, même si null
   };
 }
 
 export async function GET(request: Request) {
-  const supabase = createClient({ headers: Object.fromEntries(request.headers) });
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -285,7 +335,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Serveur mal configuré" }, { status: 500 });
   }
 
-  const supabase = createClient({ headers: Object.fromEntries(request.headers) });
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -302,12 +352,39 @@ export async function POST(request: Request) {
   let body: any;
   try {
     body = await request.json();
+    console.log("[api/clubs/public] POST request body keys:", Object.keys(body));
+    console.log("[api/clubs/public] POST request body opening_hours TYPE:", typeof body.opening_hours);
+    console.log("[api/clubs/public] POST request body opening_hours:", JSON.stringify(body.opening_hours, null, 2));
+    console.log("[api/clubs/public] POST request body opening_hours is array?", Array.isArray(body.opening_hours));
+    console.log("[api/clubs/public] POST request body opening_hours keys:", body.opening_hours ? Object.keys(body.opening_hours) : "null/undefined");
   } catch {
     return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   }
 
+  // CRITICAL: Vérifier si opening_hours est présent dans le body AVANT de construire extrasPayload
+  const hasOpeningHoursInBody = body.opening_hours !== undefined && body.opening_hours !== null;
+  console.log("[api/clubs/public] hasOpeningHoursInBody:", hasOpeningHoursInBody);
+  console.log("[api/clubs/public] body.opening_hours:", JSON.stringify(body.opening_hours, null, 2));
+  
   const updatePayload = buildTablePayload(body);
   const extrasPayload = buildExtras(updatePayload, body);
+  
+  console.log("[api/clubs/public] Built extrasPayload opening_hours:", JSON.stringify(extrasPayload.opening_hours, null, 2));
+  console.log("[api/clubs/public] extrasPayload.opening_hours is null?", extrasPayload.opening_hours === null);
+  console.log("[api/clubs/public] extrasPayload.opening_hours is undefined?", extrasPayload.opening_hours === undefined);
+  
+  // CRITICAL: Si opening_hours était présent dans le body mais est devenu null dans extrasPayload,
+  // il y a un problème dans buildExtras - on doit le corriger
+  if (hasOpeningHoursInBody && extrasPayload.opening_hours === null) {
+    console.error("[api/clubs/public] ERROR: opening_hours was in body but became null in extrasPayload!");
+    console.error("[api/clubs/public] Body opening_hours type:", typeof body.opening_hours);
+    console.error("[api/clubs/public] Body opening_hours keys:", Object.keys(body.opening_hours || {}));
+    // Forcer l'inclusion des horaires du body même si buildExtras les a rejetés
+    if (typeof body.opening_hours === "object" && !Array.isArray(body.opening_hours)) {
+      extrasPayload.opening_hours = body.opening_hours as OpeningHoursPayload;
+      console.log("[api/clubs/public] FORCED extrasPayload.opening_hours from body:", JSON.stringify(extrasPayload.opening_hours, null, 2));
+    }
+  }
 
   const updateKeys = Object.keys(updatePayload);
 
@@ -338,7 +415,18 @@ export async function POST(request: Request) {
   }
 
   if (supabaseAdmin) {
-    await saveExtras(clubId, extrasPayload);
+    console.log("[api/clubs/public] Saving extras with opening_hours:", JSON.stringify(extrasPayload.opening_hours, null, 2));
+    try {
+      await saveExtras(clubId, extrasPayload);
+      console.log("[api/clubs/public] Extras saved successfully");
+    } catch (saveError: any) {
+      console.error("[api/clubs/public] Error saving extras:", saveError);
+      return NextResponse.json({ 
+        error: saveError?.message || "Impossible d'enregistrer les horaires d'ouverture" 
+      }, { status: 500 });
+    }
+  } else {
+    console.warn("[api/clubs/public] supabaseAdmin not available, cannot save extras");
   }
 
   let refreshedClub: any = null;
@@ -359,34 +447,72 @@ export async function POST(request: Request) {
     refreshedClub = data ?? null;
   }
 
+  // Attendre un peu plus longtemps après la sauvegarde pour s'assurer que le fichier est disponible
+  if (supabaseAdmin) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  
+  // ATTENTION: Attendre plus longtemps pour que le storage soit à jour
+  if (supabaseAdmin) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
   const extrasRefreshed = supabaseAdmin ? await loadExtras(clubId) : null;
+  console.log("[api/clubs/public] Loaded extras after save - opening_hours:", JSON.stringify(extrasRefreshed?.opening_hours, null, 2));
+  
+  // CRITICAL: Utiliser TOUJOURS les horaires qu'on vient de sauvegarder (extrasPayload.opening_hours)
+  // car le rechargement peut ne pas être à jour immédiatement
+  // Si opening_hours était dans le body, on DOIT l'utiliser même s'il est null (c'est une suppression volontaire)
+  const hasOpeningHoursInRequest = body.opening_hours !== undefined;
+  
+  const finalExtras: ExtrasPayload = {
+    address: extrasPayload.address ?? extrasRefreshed?.address ?? null,
+    postal_code: extrasPayload.postal_code ?? extrasRefreshed?.postal_code ?? null,
+    city: extrasPayload.city ?? extrasRefreshed?.city ?? null,
+    phone: extrasPayload.phone ?? extrasRefreshed?.phone ?? null,
+    website: extrasPayload.website ?? extrasRefreshed?.website ?? null,
+    number_of_courts: extrasPayload.number_of_courts ?? extrasRefreshed?.number_of_courts ?? null,
+    court_type: extrasPayload.court_type ?? extrasRefreshed?.court_type ?? null,
+    description: extrasPayload.description ?? extrasRefreshed?.description ?? null,
+    // PRIORITÉ ABSOLUE aux horaires qu'on vient de sauvegarder (extrasPayload)
+    // Si opening_hours était dans la requête, utiliser extrasPayload.opening_hours (même si null)
+    // Sinon, utiliser extrasRefreshed.opening_hours comme fallback
+    opening_hours: hasOpeningHoursInRequest
+      ? extrasPayload.opening_hours  // Utiliser TOUJOURS les horaires de la requête (même si null)
+      : (extrasRefreshed?.opening_hours ?? extrasPayload.opening_hours ?? null),
+  };
+  
+  console.log("[api/clubs/public] hasOpeningHoursInRequest:", hasOpeningHoursInRequest);
+  console.log("[api/clubs/public] Final extras opening_hours:", JSON.stringify(finalExtras.opening_hours, null, 2));
+  console.log("[api/clubs/public] extrasPayload.opening_hours was:", JSON.stringify(extrasPayload.opening_hours, null, 2));
+  console.log("[api/clubs/public] extrasRefreshed?.opening_hours was:", JSON.stringify(extrasRefreshed?.opening_hours, null, 2));
   const response = refreshedClub
     ? {
         ...refreshedClub,
-        address: refreshedClub.address ?? extrasRefreshed?.address ?? extrasPayload.address ?? null,
-        postal_code: refreshedClub.postal_code ?? extrasRefreshed?.postal_code ?? extrasPayload.postal_code ?? null,
-        city: refreshedClub.city ?? extrasRefreshed?.city ?? extrasPayload.city ?? null,
-        phone: refreshedClub.phone ?? extrasRefreshed?.phone ?? extrasPayload.phone ?? null,
-        website: refreshedClub.website ?? extrasRefreshed?.website ?? extrasPayload.website ?? null,
-        number_of_courts: refreshedClub.number_of_courts ?? extrasRefreshed?.number_of_courts ?? extrasPayload.number_of_courts ?? null,
-        court_type: refreshedClub.court_type ?? extrasRefreshed?.court_type ?? extrasPayload.court_type ?? null,
-        description: extrasRefreshed?.description ?? extrasPayload.description ?? null,
-        opening_hours: extrasRefreshed?.opening_hours ?? extrasPayload.opening_hours ?? null,
+        address: refreshedClub.address ?? finalExtras?.address ?? null,
+        postal_code: refreshedClub.postal_code ?? finalExtras?.postal_code ?? null,
+        city: refreshedClub.city ?? finalExtras?.city ?? null,
+        phone: refreshedClub.phone ?? finalExtras?.phone ?? null,
+        website: refreshedClub.website ?? finalExtras?.website ?? null,
+        number_of_courts: refreshedClub.number_of_courts ?? finalExtras?.number_of_courts ?? null,
+        court_type: refreshedClub.court_type ?? finalExtras?.court_type ?? null,
+        description: finalExtras?.description ?? null,
+        opening_hours: finalExtras?.opening_hours ?? null,
       }
-    : extrasRefreshed
+    : finalExtras
         ? {
             id: clubId,
             name: null,
-            address: extrasRefreshed.address ?? extrasPayload.address ?? null,
-            postal_code: extrasRefreshed.postal_code ?? extrasPayload.postal_code ?? null,
-            city: extrasRefreshed.city ?? extrasPayload.city ?? null,
-            phone: extrasRefreshed.phone ?? extrasPayload.phone ?? null,
-            website: extrasRefreshed.website ?? extrasPayload.website ?? null,
-            number_of_courts: extrasRefreshed.number_of_courts ?? extrasPayload.number_of_courts ?? null,
-            court_type: extrasRefreshed.court_type ?? extrasPayload.court_type ?? null,
+            address: finalExtras.address ?? null,
+            postal_code: finalExtras.postal_code ?? null,
+            city: finalExtras.city ?? null,
+            phone: finalExtras.phone ?? null,
+            website: finalExtras.website ?? null,
+            number_of_courts: finalExtras.number_of_courts ?? null,
+            court_type: finalExtras.court_type ?? null,
             logo_url: null,
-            description: extrasRefreshed.description ?? extrasPayload.description ?? null,
-            opening_hours: extrasRefreshed.opening_hours ?? extrasPayload.opening_hours ?? null,
+            description: finalExtras.description ?? null,
+            opening_hours: finalExtras.opening_hours ?? null,
           }
         : null;
 
@@ -394,5 +520,7 @@ export async function POST(request: Request) {
   revalidatePath("/dashboard");
   revalidatePath("/club");
 
-  return NextResponse.json({ ok: true, club: response, extras: extrasRefreshed ?? extrasPayload });
+  console.log("[api/clubs/public] Returning response with opening_hours:", JSON.stringify(response?.opening_hours ?? finalExtras?.opening_hours, null, 2));
+
+  return NextResponse.json({ ok: true, club: response, extras: finalExtras });
 }

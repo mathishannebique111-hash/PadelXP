@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getUserClubInfo, getClubMatchHistory } from "@/lib/utils/club-utils";
 import PageTitle from "../PageTitle";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -50,7 +51,14 @@ export default async function DashboardHistoriquePage() {
           style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
-          <span aria-hidden>📊</span>
+          <Image
+            src="/images/Historique des matchs joueur.png"
+            alt="Historique"
+            width={16}
+            height={16}
+            className="relative w-4 h-4 object-contain flex-shrink-0"
+            unoptimized
+          />
           <span className="relative">{totalMatches} match{totalMatches > 1 ? "s" : ""}</span>
         </span>
       </header>
@@ -68,12 +76,14 @@ export default async function DashboardHistoriquePage() {
 
             let cardClasses = "border-gray-200 bg-gray-50";
             let icon = "⏱️";
+            let iconType: "emoji" | "image" = "emoji";
             let title = "Match en attente";
             let titleColor = "text-gray-700";
 
             if (match.result === "win") {
               cardClasses = "border-green-500 bg-green-50";
-              icon = "🏆";
+              icon = "/images/Trophée page badges.png";
+              iconType = "image";
               title = "Victoire du club";
               titleColor = "text-green-600";
             } else if (match.result === "loss") {
@@ -83,7 +93,8 @@ export default async function DashboardHistoriquePage() {
               titleColor = "text-red-600";
             } else if (match.result === "internal") {
               cardClasses = "border-blue-300 bg-blue-50";
-              icon = "🤝";
+              icon = "/images/Poignée de main.png";
+              iconType = "image";
               title = "Match interne";
               titleColor = "text-blue-600";
             }
@@ -94,7 +105,18 @@ export default async function DashboardHistoriquePage() {
               <div key={match.id} className={`rounded-2xl border-2 p-6 transition-all ${cardClasses}`}>
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <span className={`text-2xl ${titleColor}`}>{icon}</span>
+                    {iconType === "image" ? (
+                      <Image
+                        src={icon}
+                        alt={title}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 object-contain flex-shrink-0"
+                        unoptimized
+                      />
+                    ) : (
+                      <span className={`text-2xl ${titleColor}`}>{icon}</span>
+                    )}
                     <div>
                       <div className={`font-semibold ${titleColor}`}>{title}</div>
                       <div className="text-sm text-gray-600">
@@ -126,9 +148,18 @@ export default async function DashboardHistoriquePage() {
                     return (
                       <div key={teamIndex} className={`rounded-lg border ${teamClasses} p-4 transition-colors`}>
                         <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-600">
-                          <span>
+                          <span className="flex items-center gap-1">
                             {label}
-                            {isWinner && " 🏆"}
+                            {isWinner && (
+                              <Image
+                                src="/images/Trophée page badges.png"
+                                alt="Gagnant"
+                                width={16}
+                                height={16}
+                                className="w-4 h-4 object-contain flex-shrink-0"
+                                unoptimized
+                              />
+                            )}
                           </span>
                           {match.clubTeam === teamIndex + 1 && (
                             <span className="rounded-full border border-white/10 ring-1 ring-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/80">
