@@ -232,12 +232,10 @@ export default async function DashboardHome() {
           slug={club?.slug ?? null}
         />
         {/* À venir */}
-        <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-8 flex flex-col h-full">
-          <div>
-            <h2 className="font-semibold text-xl text-white">Challenges en cours et à venir</h2>
-          </div>
-          <div className="flex-1 flex flex-col mt-5">
-            <div className="flex-1 space-y-3 sm:space-y-4">
+        <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6 flex flex-col h-full">
+          <h2 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Challenges en cours et à venir</h2>
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 space-y-3 sm:space-y-4 pt-4 sm:pt-6">
               {upcomingChallenges.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-6 sm:py-8">
                   <div className="mb-4 sm:mb-6 text-center">
@@ -286,13 +284,16 @@ export default async function DashboardHome() {
               )}
             </div>
             {upcomingChallenges.length === 0 && (
-              <div className="mt-auto">
+              <div className="mt-auto pt-8">
                 <a 
                   href="/dashboard/challenges" 
-                  className="group relative inline-flex items-center gap-2 w-full justify-center rounded-lg border px-4 py-2 text-sm font-semibold text-white overflow-hidden transition-all hover:brightness-110"
-                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #00CC99 100%)", boxShadow: "0 12px 24px rgba(0,102,255,0.35)", border: "1px solid rgba(255,255,255,0.25)" }}
+                  className="group relative inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-semibold text-xs sm:text-sm text-white overflow-hidden transition-all hover:scale-105 hover:shadow-lg ring-1 ring-white/20 border border-white/10 w-full justify-center"
+                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #0052CC 100%)", boxShadow: "0 6px 22px rgba(0, 102, 255, 0.35)" }}
                 >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                  <span className="relative text-base sm:text-lg">➕</span>
                   <span className="relative">Créer un challenge</span>
+                  <span className="relative text-sm sm:text-base ml-1">›</span>
                 </a>
               </div>
             )}
