@@ -58,15 +58,22 @@ export async function GET(request: NextRequest) {
     );
 
     // Récupérer la conversation active (open) pour ce club
-    const { data: conversation, error: convError } = await supabaseAdmin
+    // Récupérer toutes les conversations ouvertes du club, puis prendre la plus récente
+    // (car plusieurs utilisateurs du même club peuvent avoir leurs propres conversations)
+    const { data: conversations, error: convError } = await supabaseAdmin
       .from('support_conversations')
       .select('*')
       .eq('club_id', profile.club_id)
-      .eq('user_id', user.id)
       .eq('status', 'open')
-      .order('last_message_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order('last_message_at', { ascending: false });
+
+    // Prendre la conversation la plus récente (priorité à celle de l'utilisateur actuel, sinon la plus récente du club)
+    let conversation = null;
+    if (!convError && conversations && conversations.length > 0) {
+      // Chercher d'abord une conversation de l'utilisateur actuel
+      const userConversation = conversations.find(c => c.user_id === user.id);
+      conversation = userConversation || conversations[0]; // Sinon prendre la plus récente
+    }
 
     if (convError) {
       console.error('[support-conversation] Error fetching conversation:', convError);

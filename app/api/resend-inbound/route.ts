@@ -67,8 +67,13 @@ export async function POST(req: NextRequest) {
     
     // Vérifier si c'est un message du club (depuis le formulaire de contact)
     const senderType = emailData.headers?.["X-Sender-Type"] ?? emailData.headers?.["x-sender-type"];
-    const conversationId = emailData.headers?.["X-Conversation-ID"] ?? emailData.headers?.["x-conversation-id"];
+    let conversationId = emailData.headers?.["X-Conversation-ID"] ?? emailData.headers?.["x-conversation-id"];
     const clubId = emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
+    
+    // Vérifier si c'est une réponse (headers In-Reply-To ou References)
+    const inReplyTo = emailData.headers?.["In-Reply-To"] ?? emailData.headers?.["in-reply-to"];
+    const references = emailData.headers?.["References"] ?? emailData.headers?.["references"];
+    const isReply = !!(inReplyTo || references || (subject && subject.toLowerCase().includes('re:')));
     
     console.log("Email metadata:", {
       senderType,
@@ -76,7 +81,10 @@ export async function POST(req: NextRequest) {
       clubId,
       from,
       to,
-      subject
+      subject,
+      inReplyTo,
+      references,
+      isReply
     });
 
     // Si on a un email_id, récupérer le contenu via l'API Resend
@@ -190,17 +198,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Déterminer si c'est une réponse de l'admin ou un nouveau message du club
-    const isReply = !senderType || senderType !== 'club';
+    // Si senderType est 'club', c'est un nouveau message du club
+    // Sinon, si c'est une réponse (In-Reply-To, References, ou sujet avec "Re:"), c'est une réponse de l'admin
+    const isAdminReply = isReply && (!senderType || senderType !== 'club');
     
     // Extraire le conversationId depuis les headers, le sujet, ou les références
     let detectedConversationId = conversationId;
     
     // Si pas de conversationId dans les headers, chercher dans le sujet
     if (!detectedConversationId) {
-      // Chercher d'abord un UUID complet
+      // Chercher d'abord un UUID complet dans le sujet
       let subjectMatch = subject.match(/\[([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\]/);
       if (subjectMatch && subjectMatch[1]) {
         detectedConversationId = subjectMatch[1];
+        console.log("Found full conversation ID in subject:", detectedConversationId);
       } else {
         // Fallback: chercher les 8 premiers caractères et trouver la conversation correspondante
         subjectMatch = subject.match(/\[([0-9a-fA-F]{8})\]/);
@@ -222,8 +233,14 @@ export async function POST(req: NextRequest) {
       }
     }
     
+    // Si toujours pas de conversationId et que c'est une réponse, chercher dans les headers References
+    if (!detectedConversationId && isAdminReply && references) {
+      // Les références peuvent contenir l'ID du message précédent qui peut nous aider
+      console.log("No conversation ID found yet, checking references:", references);
+    }
+    
     // Si c'est une réponse de l'admin, enregistrer dans la DB
-    if (isReply && detectedConversationId && !senderType) {
+    if (isAdminReply && detectedConversationId) {
       console.log("Detected admin reply, saving to database:", {
         conversationId: detectedConversationId,
         from,
@@ -292,7 +309,7 @@ export async function POST(req: NextRequest) {
     // On transfère juste l'email vers Gmail pour notifier l'admin
     // Si c'est une réponse de l'admin, on ne transfère PAS vers Gmail (déjà enregistrée dans la DB ci-dessus)
     
-    if (!isReply || senderType === 'club') {
+    if (senderType === 'club' || (!isAdminReply && !isReply)) {
       // Transférer uniquement les messages du club vers Gmail
       const forwardHeaders: Record<string, string> = {
         'X-Conversation-ID': detectedConversationId || conversationId || '',
