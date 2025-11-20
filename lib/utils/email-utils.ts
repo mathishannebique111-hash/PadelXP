@@ -21,10 +21,14 @@ export function extractReplyContent(text: string, html?: string): string {
   const quotePatterns = [
     // Citations avec ">" au début de ligne (peut commencer par des espaces avant le >)
     /^[\s>]*>.*$/m,
+    // Format complet avec date et email "Le jeu. 20 nov. 2025 à 15:02, PadelXP Support <contact@updates.padelxp.eu> a écrit :"
+    /^(Le|On)\s+(lun|mar|mer|jeu|ven|sam|dim)\.\s+\d+\s+(jan|fév|mar|avr|mai|jun|jul|aoû|sep|oct|nov|déc)\.\s+\d+\s+à\s+\d+:\d+,.*a écrit\s*:/mi,
     // "On ... a écrit :" ou "Le ... a écrit :" (format français complet avec date)
-    /^(On|Le|lun\.|mar\.|mer\.|jeu\.|ven\.|sam\.|dim\.)\s+.*?(a écrit|écrit|wrote).*$/mi,
+    /^(On|Le|lun\.|mar\.|mer\.|jeu\.|ven\.|sam\.|dim\.)\s+.*?(a écrit|écrit|wrote)\s*:.*$/mi,
     // Dates françaises "Le jeu. 20 nov. 2025"
-    /^(Le|On)\s+[a-z]+\s+\d+\s+[a-z]+\s+\d+.*$/mi,
+    /^(Le|On)\s+[a-z]+\.\s+\d+\s+[a-z]+\.\s+\d+.*$/mi,
+    // Adresses email dans les citations "<email@domain.com>" ou "email@domain.com"
+    /^.*<[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}>.*(a écrit|écrit|wrote)\s*:.*$/mi,
     // "From:", "To:", "Subject:", "De :", "À :" (en-têtes d'email)
     /^(From|To|Subject|De|À|Objet|From:|To:|Subject:|De :|À :|Objet :)\s*:?\s*.*$/mi,
     // "Sent:", "Envoyé", "Date:"

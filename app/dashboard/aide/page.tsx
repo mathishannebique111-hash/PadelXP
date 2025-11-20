@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import PageTitle from "../PageTitle";
 
 interface SupportMessage {
@@ -44,6 +44,7 @@ export default function HelpPage() {
   const [readMessages, setReadMessages] = useState<Set<string>>(new Set()); // Messages que le club a vus
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const replyFormRefs = useRef<{ [conversationId: string]: HTMLFormElement | null }>({});
 
   // Charger toutes les conversations et leurs messages
   const loadConversations = async (showLoading = false) => {
@@ -121,7 +122,9 @@ export default function HelpPage() {
   const toggleConversation = (conversationId: string) => {
     setOpenConversations(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(conversationId)) {
+      const wasOpen = newSet.has(conversationId);
+      
+      if (wasOpen) {
         newSet.delete(conversationId);
       } else {
         newSet.add(conversationId);
@@ -135,6 +138,19 @@ export default function HelpPage() {
             return newReadSet;
           });
         }
+        
+        // Scroller vers le formulaire de réponse après un court délai pour que le DOM soit mis à jour
+        setTimeout(() => {
+          const formElement = replyFormRefs.current[conversationId];
+          if (formElement) {
+            formElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Focus sur le textarea du formulaire
+            const textarea = formElement.querySelector('textarea') as HTMLTextAreaElement;
+            if (textarea) {
+              textarea.focus();
+            }
+          }
+        }, 100);
       }
       return newSet;
     });
@@ -420,6 +436,11 @@ export default function HelpPage() {
 
                       {/* Formulaire de réponse dans le bloc */}
                       <form
+                        ref={(el) => {
+                          if (el) {
+                            replyFormRefs.current[conversation.id] = el;
+                          }
+                        }}
                         onSubmit={(e) => handleReply(conversation.id, e)}
                         className="space-y-3 pt-3 border-t border-white/10"
                       >
