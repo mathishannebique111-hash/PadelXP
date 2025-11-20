@@ -345,7 +345,7 @@ export default function ImportExportPage() {
     <div className="space-y-6">
       <PageTitle title="Import / Export" subtitle="Importez vos membres et exportez vos données en toute simplicité" />
       <div className="rounded-xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4">
-        <h2 className="font-semibold mb-2">Import membres (CSV)</h2>
+        <h2 className="font-semibold mb-4">Import membres (CSV)</h2>
         <div className="flex gap-2">
           <button
             type="button"
@@ -409,7 +409,7 @@ export default function ImportExportPage() {
         )}
       </div>
       <div className="rounded-xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 space-y-3">
-        <h2 className="font-semibold">Import logo du club</h2>
+        <h2 className="font-semibold mb-4">Import logo du club</h2>
         <p className="text-sm text-white/60">
           Ajoutez ou remplacez le logo affiché en haut de votre espace club.
         </p>
@@ -447,7 +447,7 @@ export default function ImportExportPage() {
       </div>
 
       <div className="rounded-xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4">
-        <h2 className="font-semibold mb-2">Exports</h2>
+        <h2 className="font-semibold mb-4">Exports</h2>
         <div className="flex flex-wrap gap-2 text-sm">
           <button
             type="button"
@@ -464,14 +464,6 @@ export default function ImportExportPage() {
             className="px-3 py-2 rounded bg-white/10 border border-white/10 hover:bg-white/15 disabled:opacity-60 transition-colors"
           >
             {isExportingLeaderboard ? "Export en cours..." : "Classement (CSV)"}
-          </button>
-          <button
-            type="button"
-            disabled
-            className="px-3 py-2 rounded bg-white/10 border border-white/10 opacity-50 cursor-not-allowed"
-            title="Disponible prochainement"
-          >
-            Médias (Archive)
           </button>
         </div>
         {exportErrorMessage && (
