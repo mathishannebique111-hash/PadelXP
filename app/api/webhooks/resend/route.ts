@@ -86,11 +86,30 @@ export async function POST(request: NextRequest) {
         conversationId = inReplyTo;
       }
       
-      // Méthode 4: Chercher dans le sujet ou le corps du message
+      // Méthode 4: Chercher dans le sujet (format [8 premiers chars] ou [UUID complet])
       if (!conversationId) {
-        const subjectMatch = subject.match(/\[([a-f0-9-]{36})\]/i);
-        if (subjectMatch && subjectMatch[1]) {
-          conversationId = subjectMatch[1];
+        // Chercher d'abord un UUID complet (36 caractères avec tirets)
+        const fullUuidMatch = subject.match(/\[([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\]/i);
+        if (fullUuidMatch && fullUuidMatch[1]) {
+          conversationId = fullUuidMatch[1];
+        } else {
+          // Si pas d'UUID complet, chercher les 8 premiers caractères et chercher la conversation correspondante
+          const shortIdMatch = subject.match(/\[([a-f0-9]{8})\]/i);
+          if (shortIdMatch && shortIdMatch[1]) {
+            const shortId = shortIdMatch[1];
+            // Chercher une conversation dont l'ID commence par ces 8 caractères
+            const { data: matchingConversation } = await supabaseAdmin
+              .from('support_conversations')
+              .select('id')
+              .like('id', `${shortId}%`)
+              .limit(1)
+              .maybeSingle();
+            
+            if (matchingConversation) {
+              conversationId = matchingConversation.id;
+              console.log('[webhook-resend] Found conversation by short ID:', shortId, '->', conversationId);
+            }
+          }
         }
       }
 

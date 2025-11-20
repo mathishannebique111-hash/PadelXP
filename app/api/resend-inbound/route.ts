@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js';
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 const FORWARD_TO = process.env.FORWARD_TO_EMAIL!; // contactpadelxp@gmail.com
+const INBOUND_EMAIL = process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
 
 // Client Supabase admin pour enregistrer les messages dans la DB
 const supabaseAdmin = createAdminClient(
@@ -209,7 +210,8 @@ export async function POST(req: NextRequest) {
       to: [FORWARD_TO],
       subject: `📩 Nouveau message de ${from} : ${subject}`,
       html: emailHtml,
-      replyTo: from, // Permettre à l'admin de répondre directement depuis Gmail
+      // IMPORTANT: replyTo doit être l'inbound email pour que les réponses soient capturées par le webhook
+      replyTo: INBOUND_EMAIL || 'contact@updates.padelxp.eu',
       headers: Object.keys(forwardHeaders).length > 0 ? forwardHeaders : undefined,
     });
 
