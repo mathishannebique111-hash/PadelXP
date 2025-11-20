@@ -182,62 +182,63 @@ export async function GET() {
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      gap: 8px;
+      gap: 16px;
       width: 100%;
     }
     
     /* Podium cards - exact same as page */
     .podium-card {
-      border-radius: 16px;
+      border-radius: 12px;
       text-align: center;
       position: relative;
       overflow: visible;
     }
     .podium-2 {
       flex: 1;
-      max-width: 140px;
-      padding: 12px 8px;
-      border: 3px solid rgba(148, 163, 184, 0.8);
-      min-height: 140px;
+      max-width: 200px;
+      padding: 24px 20px;
+      border: 4px solid rgba(148, 163, 184, 0.8);
+      min-height: 220px;
       background: linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
     .podium-1 {
       flex: 1.2;
-      max-width: 160px;
-      padding: 14px 10px;
-      border: 3px solid rgba(234, 179, 8, 0.8);
-      min-height: 160px;
+      max-width: 240px;
+      padding: 28px 24px;
+      border: 4px solid rgba(234, 179, 8, 0.8);
+      min-height: 260px;
       background: linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44);
       box-shadow: 0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6);
     }
     .podium-3 {
       flex: 1;
-      max-width: 140px;
-      padding: 12px 8px;
-      border: 3px solid rgba(234, 88, 12, 0.8);
-      min-height: 140px;
+      max-width: 200px;
+      padding: 24px 20px;
+      border: 4px solid rgba(234, 88, 12, 0.8);
+      min-height: 220px;
       background: linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085);
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5);
     }
     .podium-emoji {
       position: absolute;
-      top: 4px;
-      right: 4px;
-      font-size: 32px;
+      top: 8px;
+      right: 8px;
+      width: 48px;
+      height: 48px;
       opacity: 0.95;
       z-index: 20;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
     .meilleur-joueur-badge {
       position: absolute;
-      top: -8px;
-      left: -8px;
-      padding: 2px 6px;
+      top: -12px;
+      left: -12px;
+      padding: 4px 10px;
       border-radius: 9999px;
       background: #fef3c7;
       color: #92400e;
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 600;
       border: 1px solid #fcd34d;
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
@@ -248,37 +249,37 @@ export async function GET() {
       text-align: center;
       position: relative;
       z-index: 10;
-      padding-top: 8px;
+      padding-top: 16px;
     }
     .podium-name {
       font-weight: 800;
       color: #111827;
       letter-spacing: -0.025em;
       text-align: center;
-      line-height: 1.1;
-      margin-bottom: 8px;
+      line-height: 1.2;
+      margin-bottom: 16px;
     }
     .podium-2 .podium-name {
-      font-size: 12px;
+      font-size: 18px;
     }
     .podium-1 .podium-name {
-      font-size: 14px;
+      font-size: 22px;
       text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .podium-3 .podium-name {
-      font-size: 11px;
+      font-size: 18px;
     }
     .podium-points-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 6px;
+      margin-top: 12px;
     }
     .podium-points {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
+      gap: 6px;
+      padding: 8px 16px;
       border-radius: 9999px;
       background: rgba(255,255,255,0.95);
       backdrop-filter: blur(10px);
@@ -289,25 +290,25 @@ export async function GET() {
       font-variant-numeric: tabular-nums;
     }
     .podium-2 .podium-points {
-      padding: 3px 10px;
+      padding: 6px 16px;
       border-color: #71717a;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 0 0 2px rgba(212, 212, 216, 0.5);
-      font-size: 11px;
+      font-size: 18px;
     }
     .podium-1 .podium-points {
-      padding: 4px 12px;
+      padding: 10px 20px;
       border-color: #eab308;
       box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35), 0 0 0 2px rgba(234, 179, 8, 0.5);
-      font-size: 13px;
+      font-size: 22px;
     }
     .podium-3 .podium-points {
-      padding: 3px 10px;
+      padding: 6px 16px;
       border-color: #f97316;
       box-shadow: 0 2px 8px rgba(249, 115, 22, 0.25), 0 0 0 2px rgba(251, 146, 60, 0.5);
-      font-size: 11px;
+      font-size: 18px;
     }
     .podium-points-label {
-      font-size: 7px;
+      font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       font-weight: 600;
@@ -357,9 +358,9 @@ export async function GET() {
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .table-wrapper {
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      border: 3px solid #cbd5e1;
+      border: 4px solid #cbd5e1;
       background: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
@@ -372,9 +373,9 @@ export async function GET() {
       background: #f1f5f9;
     }
     th {
-      padding: 6px 4px;
+      padding: 12px 8px;
       text-align: center;
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -392,9 +393,9 @@ export async function GET() {
       border-bottom: none;
     }
     td {
-      padding: 6px 4px;
+      padding: 10px 8px;
       text-align: center;
-      font-size: 10px;
+      font-size: 12px;
       color: #1e293b;
       border-left: 1px solid #e2e8f0;
     }
@@ -411,11 +412,11 @@ export async function GET() {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       font-weight: 800;
-      font-size: 10px;
+      font-size: 12px;
       border: 2px solid;
       position: relative;
       overflow: hidden;
@@ -512,12 +513,12 @@ export async function GET() {
     .tier-badge {
       display: inline-flex;
       align-items: center;
-      padding: 1px 6px;
+      padding: 2px 10px;
       border-radius: 9999px;
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 700;
       color: #fff;
-      border: 1.5px solid;
+      border: 2px solid;
       position: relative;
       overflow: hidden;
       text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 12px rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.8);
@@ -680,7 +681,7 @@ export async function GET() {
       <div class="top3-container">
         ${top3[1] ? `
         <div class="podium-card podium-2">
-          <img src="${medal2Src}" alt="Médaille 2ème place" class="podium-emoji" style="width: 32px; height: 32px;" />
+          <img src="${medal2Src}" alt="Médaille 2ème place" class="podium-emoji" />
           <div class="podium-content">
             <h3 class="podium-name podium-2">${top3[1].player_name}</h3>
             <div class="podium-points-wrapper">
@@ -695,7 +696,7 @@ export async function GET() {
         ${top3[0] ? `
         <div class="podium-card podium-1">
           <div class="meilleur-joueur-badge">Meilleur joueur</div>
-          <img src="${medal1Src}" alt="Médaille 1ère place" class="podium-emoji" style="width: 32px; height: 32px;" />
+          <img src="${medal1Src}" alt="Médaille 1ère place" class="podium-emoji" />
           <div class="podium-content">
             <h3 class="podium-name podium-1">${top3[0].player_name}</h3>
             <div class="podium-points-wrapper">
@@ -709,7 +710,7 @@ export async function GET() {
         ` : ''}
         ${top3[2] ? `
         <div class="podium-card podium-3">
-          <img src="${medal3Src}" alt="Médaille 3ème place" class="podium-emoji" style="width: 32px; height: 32px;" />
+          <img src="${medal3Src}" alt="Médaille 3ème place" class="podium-emoji" />
           <div class="podium-content">
             <h3 class="podium-name podium-3">${(() => {
               const parts = (top3[2].player_name || "").split(" ");
