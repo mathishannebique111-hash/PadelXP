@@ -125,6 +125,16 @@ export default function HelpPage() {
         newSet.delete(conversationId);
       } else {
         newSet.add(conversationId);
+        // Quand on ouvre une conversation, marquer tous les messages de cette conversation comme lus
+        const conversation = conversations.find(c => c.id === conversationId);
+        if (conversation) {
+          const allMessageIds = conversation.messages?.map(m => m.id) || [];
+          setReadMessages(prevRead => {
+            const newReadSet = new Set(prevRead);
+            allMessageIds.forEach(id => newReadSet.add(id));
+            return newReadSet;
+          });
+        }
       }
       return newSet;
     });
