@@ -95,21 +95,15 @@ export async function GET(request: NextRequest) {
 
     console.log('[support-conversation] ✅ Found club_id:', clubId);
 
-    // Récupérer la conversation active (open) pour ce club
-    // Récupérer toutes les conversations ouvertes du club, puis prendre la plus récente
-    // (car plusieurs utilisateurs du même club peuvent avoir leurs propres conversations)
+    // Récupérer TOUTES les conversations (ouvertes et fermées) pour ce club
     const { data: conversations, error: convError } = await supabaseAdmin
       .from('support_conversations')
       .select('*')
       .eq('club_id', clubId)
-      .eq('status', 'open')
       .order('last_message_at', { ascending: false });
 
-    // Prendre la conversation la plus récente (priorité à celle de l'utilisateur actuel, sinon la plus récente du club)
-    let conversation = null;
-    
     if (convError) {
-      console.error('[support-conversation] ❌ Error fetching conversation:', convError);
+      console.error('[support-conversation] ❌ Error fetching conversations:', convError);
       
       // Si la table n'existe pas, retourner un message explicite
       if (convError.code === '42P01' || convError.message?.includes('does not exist') || convError.message?.includes('schema cache')) {
@@ -117,63 +111,53 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ 
           error: 'Système de chat non configuré',
           hint: 'Veuillez exécuter le script create_support_chat_system.sql dans Supabase SQL Editor',
-          conversation: null,
-          messages: []
+          conversations: []
         });
       }
       
       return NextResponse.json({ 
-        error: 'Erreur lors de la récupération de la conversation',
-        conversation: null,
-        messages: []
+        error: 'Erreur lors de la récupération des conversations',
+        conversations: []
       }, { status: 500 });
     }
-    
-    if (conversations && conversations.length > 0) {
-      // Chercher d'abord une conversation de l'utilisateur actuel
-      const userConversation = conversations.find(c => c.user_id === user.id);
-      conversation = userConversation || conversations[0]; // Sinon prendre la plus récente
-      console.log('[support-conversation] ✅ Found conversation:', {
-        conversationId: conversation.id,
-        totalConversations: conversations.length,
-        isUserConversation: !!userConversation
-      });
-    } else {
-      console.log('[support-conversation] ℹ️ No conversations found for club:', clubId);
-    }
 
-    let messages: any[] = [];
+    const conversationsList = conversations || [];
+    console.log('[support-conversation] ✅ Found conversations:', {
+      count: conversationsList.length,
+      conversationIds: conversationsList.map(c => c.id)
+    });
 
-    if (conversation) {
-      console.log('[support-conversation] Fetching messages for conversation:', conversation.id);
-      // Récupérer les messages de cette conversation
-      const { data: conversationMessages, error: messagesError } = await supabaseAdmin
-        .from('support_messages')
-        .select('*')
-        .eq('conversation_id', conversation.id)
-        .order('created_at', { ascending: true });
+    // Pour chaque conversation, récupérer ses messages
+    const conversationsWithMessages = await Promise.all(
+      conversationsList.map(async (conv) => {
+        const { data: conversationMessages, error: messagesError } = await supabaseAdmin
+          .from('support_messages')
+          .select('*')
+          .eq('conversation_id', conv.id)
+          .order('created_at', { ascending: true });
 
-      if (messagesError) {
-        console.error('[support-conversation] ❌ Error fetching messages:', messagesError);
-        // Si la table n'existe pas, retourner un tableau vide
-        if (messagesError.code === '42P01' || messagesError.message?.includes('does not exist') || messagesError.message?.includes('schema cache')) {
-          console.warn('[support-conversation] ⚠️ Table support_messages does not exist. Please run create_support_chat_system.sql');
-          messages = [];
+        if (messagesError) {
+          console.error(`[support-conversation] ❌ Error fetching messages for conversation ${conv.id}:`, messagesError);
+          return {
+            ...conv,
+            messages: []
+          };
         }
-      } else {
-        messages = conversationMessages || [];
-        console.log('[support-conversation] ✅ Messages fetched:', {
-          count: messages.length,
-          messageIds: messages.map(m => m.id)
-        });
-      }
-    } else {
-      console.log('[support-conversation] ℹ️ No conversation found, returning empty messages array');
-    }
+
+        return {
+          ...conv,
+          messages: conversationMessages || []
+        };
+      })
+    );
+
+    console.log('[support-conversation] ✅ Conversations with messages:', {
+      count: conversationsWithMessages.length,
+      totalMessages: conversationsWithMessages.reduce((sum, c) => sum + (c.messages?.length || 0), 0)
+    });
 
     return NextResponse.json({
-      conversation: conversation || null,
-      messages: messages || [],
+      conversations: conversationsWithMessages || [],
     });
   } catch (error) {
     console.error('[support-conversation] Unexpected error:', error);

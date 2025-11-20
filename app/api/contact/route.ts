@@ -24,7 +24,9 @@ try {
 
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json();
+    const body = await request.json();
+    const message = body.message;
+    const providedConversationId = body.conversationId;
 
     if (!message || !message.trim()) {
       return NextResponse.json({ error: 'Le message est requis' }, { status: 400 });
@@ -163,22 +165,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Chercher une conversation ouverte existante pour ce club
-    const { data: existingConversation } = await supabaseAdmin
-      .from('support_conversations')
-      .select('id')
-      .eq('club_id', clubId)
-      .eq('user_id', user.id)
-      .eq('status', 'open')
-      .order('last_message_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
     let conversationId: string;
-    if (existingConversation) {
-      conversationId = existingConversation.id;
-      console.log('[contact] Using existing conversation:', conversationId);
+    
+    // Si un conversationId a été fourni, l'utiliser (réponse dans une conversation existante)
+    if (providedConversationId) {
+      // Vérifier que la conversation existe et appartient au club
+      const { data: existingConversation, error: convCheckError } = await supabaseAdmin
+        .from('support_conversations')
+        .select('id, club_id')
+        .eq('id', providedConversationId)
+        .eq('club_id', clubId)
+        .maybeSingle();
+
+      if (convCheckError || !existingConversation) {
+        console.error('[contact] Error checking conversation:', convCheckError);
+        return NextResponse.json({ 
+          error: 'Conversation introuvable ou vous n\'avez pas accès à cette conversation' 
+        }, { status: 404 });
+      }
+
+      conversationId = providedConversationId;
+      console.log('[contact] Using provided conversationId:', conversationId);
     } else {
+      // Sinon, chercher une conversation ouverte existante pour ce club
+      const { data: existingConversation } = await supabaseAdmin
+        .from('support_conversations')
+        .select('id')
+        .eq('club_id', clubId)
+        .eq('user_id', user.id)
+        .eq('status', 'open')
+        .order('last_message_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingConversation) {
+        conversationId = existingConversation.id;
+        console.log('[contact] Using existing conversation:', conversationId);
+      } else {
       // Créer une nouvelle conversation
       // Ne pas spécifier created_at et last_message_at car ils ont des valeurs par défaut dans la table
       const { data: newConversation, error: convError } = await supabaseAdmin

@@ -25,20 +25,27 @@ interface SupportConversation {
   status: 'open' | 'closed' | 'resolved';
   last_message_at: string;
   created_at: string;
+  messages?: SupportMessage[];
+}
+
+interface ConversationWithMessages extends SupportConversation {
+  messages: SupportMessage[];
 }
 
 export default function HelpPage() {
   const [message, setMessage] = useState('');
+  const [replyMessage, setReplyMessage] = useState<{ [conversationId: string]: string }>({});
   const [loading, setLoading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ [conversationId: string]: boolean }>({});
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversation, setConversation] = useState<SupportConversation | null>(null);
-  const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
+  const [openConversations, setOpenConversations] = useState<Set<string>>(new Set());
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Charger la conversation et les messages
-  const loadConversation = async (showLoading = false) => {
+  // Charger toutes les conversations et leurs messages
+  const loadConversations = async (showLoading = false) => {
     try {
       if (showLoading || isInitialLoad) {
         setLoadingMessages(true);
@@ -47,56 +54,41 @@ export default function HelpPage() {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('✅ Conversation loaded:', {
-          hasConversation: !!data.conversation,
-          messagesCount: data.messages?.length || 0,
-          conversationId: data.conversation?.id,
-          messages: data.messages?.map(m => ({
-            id: m.id,
-            sender_type: m.sender_type,
-            message_text: m.message_text?.substring(0, 50) + '...',
-            created_at: m.created_at
-          })),
-          fullData: data
+        console.log('✅ Conversations loaded:', {
+          count: data.conversations?.length || 0,
+          conversations: data.conversations?.map((c: ConversationWithMessages) => ({
+            id: c.id,
+            messagesCount: c.messages?.length || 0,
+            firstMessage: c.messages?.find(m => m.sender_type === 'club')?.message_text?.substring(0, 50) + '...'
+          }))
         });
         
-        // Ne mettre à jour que si on a vraiment des données (pour éviter d'écraser le message temporaire trop tôt)
-        if (data.conversation || (data.messages && data.messages.length > 0)) {
-          setConversation(data.conversation);
-          // Filtrer les messages temporaires et les remplacer par les vrais messages
-          const realMessages = (data.messages || []).filter(m => !m.id.startsWith('temp-'));
-          const tempMessages = messages.filter(m => m.id.startsWith('temp-'));
-          
-          // Si on a de vrais messages, les utiliser, sinon garder les temporaires
-          if (realMessages.length > 0) {
-            setMessages(realMessages);
-          } else if (tempMessages.length > 0) {
-            // Garder les messages temporaires si pas encore de vrais messages
-            setMessages(tempMessages);
-          } else {
-            setMessages([]);
-          }
+        if (data.conversations && Array.isArray(data.conversations)) {
+          setConversations(data.conversations);
+        } else {
+          setConversations([]);
         }
         setIsInitialLoad(false);
         
-        // Si pas de conversation mais erreur spécifique, afficher l'erreur
-        if (!data.conversation && data.error) {
-          console.error('❌ Error in conversation data:', data.error);
+        if (data.error) {
+          console.error('❌ Error in conversations data:', data.error);
+          if (data.error.includes('non configuré')) {
+            setError(data.error + (data.hint ? ' - ' + data.hint : ''));
+          }
         }
       } else {
-        console.error('❌ Error loading conversation:', {
+        console.error('❌ Error loading conversations:', {
           status: response.status,
           statusText: response.statusText,
           data: data
         });
-        // Afficher l'erreur à l'utilisateur si c'est un problème de configuration
         if (data.error && data.error.includes('non configuré')) {
           setError(data.error + (data.hint ? ' - ' + data.hint : ''));
         }
         setIsInitialLoad(false);
       }
     } catch (err) {
-      console.error('❌ Error loading conversation:', err);
+      console.error('❌ Error loading conversations:', err);
       setIsInitialLoad(false);
     } finally {
       if (showLoading || isInitialLoad) {
@@ -107,16 +99,25 @@ export default function HelpPage() {
 
   // Charger au montage et toutes les 5 secondes pour les nouvelles réponses
   useEffect(() => {
-    loadConversation(true); // Afficher le chargement au premier chargement
-    const interval = setInterval(() => loadConversation(false), 5000); // Rafraîchir toutes les 5 secondes sans afficher "Chargement"
+    loadConversations(true);
+    const interval = setInterval(() => loadConversations(false), 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // Scroll automatique désactivé selon demande
-  // useEffect(() => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  // }, [messages]);
+  // Ouvrir/fermer une conversation
+  const toggleConversation = (conversationId: string) => {
+    setOpenConversations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(conversationId)) {
+        newSet.delete(conversationId);
+      } else {
+        newSet.add(conversationId);
+      }
+      return newSet;
+    });
+  };
 
+  // Envoyer un nouveau message (crée une nouvelle conversation)
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -135,13 +136,6 @@ export default function HelpPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('Contact form error:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: data,
-        });
-        
-        // Afficher un message d'erreur plus détaillé
         const errorMessage = data.error || 'Erreur lors de l\'envoi du message';
         const errorDetails = data.details ? ` (${data.details})` : '';
         const errorHint = data.hint ? ` - ${data.hint}` : '';
@@ -149,86 +143,62 @@ export default function HelpPage() {
       }
 
       setSuccess(true);
-      const sentMessage = message.trim();
       setMessage('');
       
-      console.log('✅ Message sent successfully:', {
-        conversationId: data.conversationId,
-        messageId: data.messageId,
-        sentMessage: sentMessage.substring(0, 50) + '...',
-        fullData: data
-      });
+      // Recharger les conversations
+      await loadConversations(false);
+      setTimeout(() => loadConversations(false), 500);
+      setTimeout(() => loadConversations(false), 1500);
+      setTimeout(() => loadConversations(false), 3000);
       
-      // TOUJOURS ajouter temporairement le message à l'état local pour qu'il apparaisse immédiatement
-      // Peu importe si la DB répond ou non, le message doit s'afficher
-      const tempMessageId = `temp-${Date.now()}`;
-      const tempMessage: SupportMessage = {
-        id: tempMessageId,
-        conversation_id: data.conversationId || `temp-conv-${Date.now()}`,
-        sender_type: 'club',
-        sender_id: null,
-        message_text: sentMessage,
-        created_at: new Date().toISOString(),
-      };
-      console.log('📝 Adding temporary message to local state:', {
-        tempMessageId,
-        messageText: sentMessage.substring(0, 50) + '...',
-        currentMessagesCount: messages.length
-      });
-      
-      // Ajouter le message temporaire à la liste
-      setMessages(prev => {
-        const updated = [...prev, tempMessage];
-        console.log('📝 Messages updated:', {
-          before: prev.length,
-          after: updated.length,
-          tempMessageId
-        });
-        return updated;
-      });
-      
-      // Si on a un conversationId, mettre à jour aussi la conversation
-      if (data.conversationId) {
-        setConversation(prev => prev || {
-          id: data.conversationId,
-          club_id: '',
-          user_id: '',
-          user_email: '',
-          club_name: '',
-          subject: null,
-          status: 'open',
-          last_message_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-        } as SupportConversation);
-      }
-      
-      // Recharger immédiatement la conversation pour afficher le message depuis la DB
-      // Attendre un peu pour que la DB soit à jour, puis recharger plusieurs fois (sans afficher "Chargement")
-      await loadConversation(false); // Recharger immédiatement sans afficher "Chargement"
-      
-      setTimeout(async () => {
-        console.log('🔄 Reloading conversation after 500ms...');
-        await loadConversation(false);
-      }, 500);
-      
-      setTimeout(async () => {
-        console.log('🔄 Reloading conversation after 1500ms...');
-        await loadConversation(false);
-      }, 1500);
-      
-      setTimeout(async () => {
-        console.log('🔄 Reloading conversation after 3000ms...');
-        await loadConversation(false);
-      }, 3000);
-      
-      // Réinitialiser le message de succès après 5 secondes
-      setTimeout(() => {
-        setSuccess(false);
-      }, 5000);
+      setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi du message');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Envoyer une réponse dans une conversation existante
+  const handleReply = async (conversationId: string, e: FormEvent) => {
+    e.preventDefault();
+    const replyText = replyMessage[conversationId]?.trim();
+    if (!replyText) return;
+
+    setReplyingTo(prev => ({ ...prev, [conversationId]: true }));
+    setError(null);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: replyText,
+          conversationId: conversationId // Passer l'ID de conversation pour répondre dans la même conversation
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = data.error || 'Erreur lors de l\'envoi de la réponse';
+        throw new Error(errorMessage);
+      }
+
+      // Vider le champ de réponse
+      setReplyMessage(prev => ({ ...prev, [conversationId]: '' }));
+      
+      // Recharger les conversations
+      await loadConversations(false);
+      setTimeout(() => loadConversations(false), 500);
+      setTimeout(() => loadConversations(false), 1500);
+      setTimeout(() => loadConversations(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi de la réponse');
+    } finally {
+      setReplyingTo(prev => ({ ...prev, [conversationId]: false }));
     }
   };
 
@@ -253,6 +223,39 @@ export default function HelpPage() {
     });
   };
 
+  // Obtenir le premier message du club pour une conversation
+  const getFirstClubMessage = (conversation: ConversationWithMessages): SupportMessage | null => {
+    return conversation.messages?.find(m => m.sender_type === 'club') || null;
+  };
+
+  // Compter les réponses non lues (messages de l'admin après le dernier message du club)
+  const getUnreadRepliesCount = (conversation: ConversationWithMessages): number => {
+    const messages = conversation.messages || [];
+    if (messages.length === 0) return 0;
+
+    // Trouver le dernier message du club
+    let lastClubMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].sender_type === 'club') {
+        lastClubMessageIndex = i;
+        break;
+      }
+    }
+
+    // Si pas de message du club, pas de réponses non lues
+    if (lastClubMessageIndex === -1) return 0;
+
+    // Compter les messages de l'admin après le dernier message du club
+    let unreadCount = 0;
+    for (let i = lastClubMessageIndex + 1; i < messages.length; i++) {
+      if (messages[i].sender_type === 'admin') {
+        unreadCount++;
+      }
+    }
+
+    return unreadCount;
+  };
+
   return (
     <div className="space-y-6">
       <PageTitle title="Aide & Support" />
@@ -270,11 +273,9 @@ export default function HelpPage() {
         </div>
       )}
 
-      {/* Formulaire d'envoi de message - EN HAUT */}
+      {/* Formulaire d'envoi de nouveau message - EN HAUT */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-        <h2 className="font-semibold mb-4">
-          {conversation ? 'Envoyer un nouveau message' : 'Contact'}
-        </h2>
+        <h2 className="font-semibold mb-4">Envoyer un nouveau message</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="message" className="block text-sm font-medium text-white/90 mb-2">
@@ -285,19 +286,19 @@ export default function HelpPage() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Écrivez votre message ici..."
-              rows={8}
+              rows={6}
               required
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             />
           </div>
-          {error && (
+          {error && !error.includes('non configuré') && (
             <div className="px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
               {error}
             </div>
           )}
           {success && (
             <div className="px-4 py-3 rounded-xl bg-green-500/20 border border-green-500/50 text-green-200 text-sm">
-              ✓ Message envoyé avec succès ! Votre message apparaîtra dans l'historique ci-dessous.
+              ✓ Message envoyé avec succès ! Un nouveau bloc a été créé dans l'historique.
             </div>
           )}
           <button
@@ -307,9 +308,6 @@ export default function HelpPage() {
           >
             {loading ? 'Envoi en cours...' : 'Envoyer'}
           </button>
-          <p className="text-xs text-white/50 text-center">
-            Votre message sera envoyé et apparaîtra dans l'historique ci-dessous. Les réponses apparaîtront automatiquement.
-          </p>
         </form>
       </div>
 
@@ -317,45 +315,138 @@ export default function HelpPage() {
       <div className="rounded-xl border border-white/10 bg-white/5 p-6">
         <h2 className="font-semibold mb-4">Historique des conversations</h2>
         <div className="space-y-4">
-          <div className="bg-white/5 rounded-lg p-4 overflow-y-auto space-y-4">
-            {loadingMessages && isInitialLoad ? (
-              <div className="text-center text-white/50 py-8">
-                Chargement des messages...
-              </div>
-            ) : messages.length > 0 ? (
-              messages.map((msg) => (
+          {loadingMessages && isInitialLoad ? (
+            <div className="text-center text-white/50 py-8">
+              Chargement des conversations...
+            </div>
+          ) : conversations.length > 0 ? (
+            conversations.map((conversation) => {
+              const firstMessage = getFirstClubMessage(conversation);
+              const unreadCount = getUnreadRepliesCount(conversation);
+              const isOpen = openConversations.has(conversation.id);
+              const adminMessages = conversation.messages?.filter(m => m.sender_type === 'admin') || [];
+              const clubMessages = conversation.messages?.filter(m => m.sender_type === 'club') || [];
+
+              if (!firstMessage) return null;
+
+              return (
                 <div
-                  key={msg.id}
-                  className={`flex ${msg.sender_type === 'club' ? 'justify-end' : 'justify-start'}`}
+                  key={conversation.id}
+                  className="rounded-lg border border-white/10 bg-white/5 p-4"
                 >
+                  {/* En-tête du bloc avec le premier message */}
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      msg.sender_type === 'club'
-                        ? 'bg-blue-600/20 border border-blue-500/30'
-                        : 'bg-white/10 border border-white/20'
-                    }`}
+                    className="cursor-pointer flex items-start justify-between gap-4"
+                    onClick={() => toggleConversation(conversation.id)}
                   >
-                    <div className="text-xs text-white/60 mb-1">
-                      {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white/60 mb-1">
+                        Vous · {formatDate(firstMessage.created_at)}
+                      </div>
+                      <div className="text-white/90 whitespace-pre-wrap break-words line-clamp-2">
+                        {firstMessage.message_text}
+                      </div>
                     </div>
-                    <div className="text-white/90 whitespace-pre-wrap break-words">
-                      {msg.message_text}
-                    </div>
+                    {unreadCount > 0 && (
+                      <div className="flex-shrink-0 flex items-center gap-2">
+                        <span className="px-2 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold">
+                          {unreadCount}
+                        </span>
+                        <svg
+                          className={`w-5 h-5 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    )}
+                    {unreadCount === 0 && (
+                      <svg
+                        className={`w-5 h-5 text-white/60 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
                   </div>
+
+                  {/* Contenu du bloc (réponses et formulaire de réponse) */}
+                  {isOpen && (
+                    <div className="mt-4 pt-4 border-t border-white/10 space-y-4">
+                      {/* Afficher toutes les réponses de l'admin */}
+                      {adminMessages.length > 0 && (
+                        <div className="space-y-3">
+                          {adminMessages.map((msg) => (
+                            <div key={msg.id} className="flex justify-start">
+                              <div className="max-w-[80%] rounded-lg p-3 bg-white/10 border border-white/20">
+                                <div className="text-xs text-white/60 mb-1">
+                                  Support PadelXP · {formatDate(msg.created_at)}
+                                </div>
+                                <div className="text-white/90 whitespace-pre-wrap break-words">
+                                  {msg.message_text}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Afficher tous les messages du club (sauf le premier qui est déjà affiché) */}
+                      {clubMessages.length > 1 && (
+                        <div className="space-y-3">
+                          {clubMessages.slice(1).map((msg) => (
+                            <div key={msg.id} className="flex justify-end">
+                              <div className="max-w-[80%] rounded-lg p-3 bg-blue-600/20 border border-blue-500/30">
+                                <div className="text-xs text-white/60 mb-1">
+                                  Vous · {formatDate(msg.created_at)}
+                                </div>
+                                <div className="text-white/90 whitespace-pre-wrap break-words">
+                                  {msg.message_text}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Formulaire de réponse dans le bloc */}
+                      <form
+                        onSubmit={(e) => handleReply(conversation.id, e)}
+                        className="space-y-3 pt-3 border-t border-white/10"
+                      >
+                        <textarea
+                          value={replyMessage[conversation.id] || ''}
+                          onChange={(e) => setReplyMessage(prev => ({ ...prev, [conversation.id]: e.target.value }))}
+                          placeholder="Écrivez votre réponse ici..."
+                          rows={3}
+                          className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <button
+                          type="submit"
+                          disabled={!replyMessage[conversation.id]?.trim() || replyingTo[conversation.id]}
+                          className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-[0_2px_8px_rgba(59,130,246,0.25)] hover:shadow-[0_4px_12px_rgba(59,130,246,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none active:scale-[0.98] text-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {replyingTo[conversation.id] ? 'Envoi...' : 'Répondre'}
+                        </button>
+                      </form>
+                    </div>
+                  )}
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-white/50 py-8">
-                {conversation 
-                  ? 'Aucun message pour le moment. Envoyez un message ci-dessus pour commencer la conversation.'
-                  : 'Aucune conversation active. Envoyez un message ci-dessus pour commencer.'}
-              </div>
-            )}
-          </div>
+              );
+            })
+          ) : (
+            <div className="text-center text-white/50 py-8">
+              Aucune conversation active. Envoyez un message ci-dessus pour commencer.
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-
