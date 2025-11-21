@@ -6,15 +6,16 @@ import RankBadge from "@/components/RankBadge";
 import TierBadge from "@/components/TierBadge";
 import { ALL_BADGES } from "@/lib/badges";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import Image from "next/image";
 
 export default function FeaturesDetailed() {
   const [activeTab, setActiveTab] = useState("ranking");
 
   const tabs = [
-    { id: "ranking", label: "🏆 Classement", emoji: "🏆" },
-    { id: "gamification", label: "🎮 Gamification", emoji: "🎮" },
-    { id: "public-page", label: "📱 Page Club", emoji: "📱" },
-    { id: "inscription", label: "👥 Inscription", emoji: "👥" }
+    { id: "ranking", label: "Classement", emoji: "🏆", image: "/images/Trophée page badges.png" },
+    { id: "gamification", label: "Gamification", emoji: "🎮" },
+    { id: "public-page", label: "Page Club", emoji: "📱" },
+    { id: "inscription", label: "Inscription", emoji: "👥" }
   ];
 
   return (
@@ -98,18 +99,17 @@ function RankingFeature() {
       {/* Profil joueur - Style réel avec fond sombre */}
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">👤 MARC L.</h3>
+          <h3 className="text-xl font-bold text-white">MARC L.</h3>
           <div className="flex items-center gap-2">
             <RankBadge rank={1} size="sm" />
-            <span className="text-2xl">🥇</span>
           </div>
         </div>
         
         <div className="space-y-6">
           {/* Statistiques */}
           <div>
-            <h4 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
-              <span>📊</span> STATISTIQUES
+            <h4 className="text-sm font-semibold text-white/80 mb-3">
+              STATISTIQUES
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white/5 rounded-lg p-3 border border-white/10">
@@ -130,33 +130,51 @@ function RankingFeature() {
               </div>
             </div>
             <div className="mt-3 flex items-center gap-2 text-sm text-white/70">
-              <span>🔥</span>
+              <Image src="/images/Flamme page badges.png" alt="Flamme" width={16} height={16} className="flex-shrink-0" unoptimized />
               <span>Série actuelle : 3 victoires</span>
             </div>
           </div>
 
           {/* Badges */}
           <div>
-            <h4 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
-              <span>🏆</span> BADGES (4)
+            <h4 className="text-sm font-semibold text-white/80 mb-3">
+              BADGES (4)
             </h4>
             <div className="flex flex-wrap gap-2">
-              {[ALL_BADGES[0], ALL_BADGES[1], ALL_BADGES[7], ALL_BADGES[9]].map((badge, i) => (
-                <span 
-                  key={i} 
-                  title={badge.title}
-                  className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium text-white bg-gray-800"
-                >
-                  {badge.icon} {badge.title}
-                </span>
-              ))}
+              {[ALL_BADGES[0], ALL_BADGES[1], ALL_BADGES[7], ALL_BADGES[9]].map((badge, i) => {
+                let badgeImage = null;
+                if (badge.title === "Première victoire") {
+                  badgeImage = "/images/Trophée page badges.png";
+                } else if (badge.title === "Marathonien") {
+                  badgeImage = "/images/Badge Marathonien.png";
+                } else if (badge.title === "Top Scorer") {
+                  badgeImage = "/images/Badge Top Scorer.png";
+                } else if (badge.icon === "🔥") {
+                  badgeImage = "/images/Flamme page badges.png";
+                }
+                
+                return (
+                  <span 
+                    key={i} 
+                    title={badge.title}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-white bg-gray-800"
+                  >
+                    {badgeImage ? (
+                      <Image src={badgeImage} alt={badge.title} width={16} height={16} className="flex-shrink-0" unoptimized />
+                    ) : (
+                      <span>{badge.icon}</span>
+                    )}
+                    {badge.title}
+                  </span>
+                );
+              })}
             </div>
           </div>
 
           {/* Historique */}
           <div>
-            <h4 className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2">
-              <span>📈</span> HISTORIQUE RÉCENT
+            <h4 className="text-sm font-semibold text-white/80 mb-4">
+              HISTORIQUE RÉCENT
             </h4>
             <div className="space-y-3">
               {[
@@ -173,8 +191,8 @@ function RankingFeature() {
                   date: "5 novembre 2025", 
                   time: "20:34",
                   result: "Défaite", 
-                  team1Players: ["Marc L.", "Hatim"],
-                  team2Players: ["Capucine", "Théo"],
+                  team1Players: ["Marc L.", "Lucas B."],
+                  team2Players: ["Julie M.", "Thomas R."],
                   score: "1-2",
                   won: false 
                 },
@@ -190,9 +208,11 @@ function RankingFeature() {
                   {/* Header */}
                   <div className="mb-4 flex items-center justify-between p-4 pb-3">
                     <div className="flex items-center gap-3">
-                      <span className={`text-2xl ${match.won ? "text-green-600" : "text-red-600"}`}>
-                        {match.won ? "🏆" : "❌"}
-                      </span>
+                      {match.won ? (
+                        <Image src="/images/Trophée page badges.png" alt="Trophée" width={24} height={24} className="flex-shrink-0" unoptimized />
+                      ) : (
+                        <span className="text-2xl text-red-600">❌</span>
+                      )}
                       <div>
                         <div className="font-semibold text-gray-900">
                           {match.result}
@@ -215,8 +235,10 @@ function RankingFeature() {
                   <div className="grid grid-cols-2 gap-4 px-4 pb-4">
                     {/* Équipe 1 */}
                     <div className="rounded-lg border border-gray-200 bg-white p-3">
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                        ÉQUIPE 1 {match.won && match.score === "2-0" && "🏆"}
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600 flex items-center gap-1">
+                        ÉQUIPE 1 {match.won && match.score === "2-0" && (
+                          <Image src="/images/Trophée page badges.png" alt="Trophée" width={14} height={14} className="flex-shrink-0" unoptimized />
+                        )}
                       </div>
                       <div className="space-y-1">
                         {match.team1Players.map((player, idx) => (
@@ -236,8 +258,10 @@ function RankingFeature() {
 
                     {/* Équipe 2 */}
                     <div className="rounded-lg border border-gray-200 bg-white p-3">
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                        ÉQUIPE 2 {!match.won && match.score === "1-2" && "🏆"}
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600 flex items-center gap-1">
+                        ÉQUIPE 2 {!match.won && match.score === "1-2" && (
+                          <Image src="/images/Trophée page badges.png" alt="Trophée" width={14} height={14} className="flex-shrink-0" unoptimized />
+                        )}
                       </div>
                       <div className="space-y-1">
                         {match.team2Players.map((player, idx) => (
@@ -258,7 +282,10 @@ function RankingFeature() {
       {/* Classement avec Top 3 et liste globale */}
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl p-6 flex flex-col">
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-white text-center">🏆 CLASSEMENT - CLUB PADEL TOULOUSE</h3>
+          <h3 className="text-xl font-bold text-white text-center flex items-center justify-center gap-2">
+            <Image src="/images/Trophée page badges.png" alt="Trophée" width={24} height={24} className="flex-shrink-0" unoptimized />
+            CLASSEMENT - CLUB PADEL TOULOUSE
+          </h3>
         </div>
 
         {/* Top 3 Podium */}
@@ -349,7 +376,10 @@ function RankingFeature() {
 
         {/* Joueurs les plus actifs */}
         <div className="mt-auto p-4 rounded-lg bg-gray-800/50 border border-gray-700/50">
-          <div className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-3">🔥 Joueurs les plus actifs</div>
+          <div className="text-xs font-semibold text-white/60 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Image src="/images/Flamme page badges.png" alt="Flamme" width={14} height={14} className="flex-shrink-0" unoptimized />
+            Joueurs les plus actifs
+          </div>
           <div className="space-y-2">
             {mockPlayers
               .sort((a, b) => b.matches - a.matches)
@@ -388,77 +418,107 @@ function GamificationFeature() {
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700">
-          <h3 className="text-xl font-bold text-white mb-4">🏆 BADGES AUTOMATIQUES</h3>
+          <h3 className="text-xl font-bold text-white mb-4">
+            BADGES AUTOMATIQUES
+          </h3>
           <div className="grid grid-cols-2 gap-3">
-            {ALL_BADGES.slice(0, 10).map((badge, i) => (
-              <div key={i} className="p-3 bg-white/5 rounded-lg border border-white/10 text-center">
-                <div className="text-2xl mb-1">{badge.icon}</div>
-                <div className="text-xs text-white/70">{badge.title}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700">
-          <h3 className="text-xl font-bold text-white mb-4">📢 FEED SOCIAL DU CLUB</h3>
-          <div className="space-y-4 max-h-[500px] overflow-y-auto">
             {[
-              { time: "Il y a 5 min", content: "🏆 Marc L. a remporté son match contre Sophie D. (6-4, 7-5) et prend la 1ère place ! 🥇", likes: 12, comments: 3 },
-              { time: "Il y a 23 min", content: "🔥 Thomas R. a débloqué le badge \"Hot Streak\" ! 5 victoires consécutives 💪", likes: 18, comments: 5 },
-              { time: "Il y a 1h", content: "🎉 Nouveau challenge : \"Challenge Automne 2025\" Inscriptions ouvertes !", likes: 24, comments: 8 },
-              { time: "Il y a 3h", content: "📊 Changement au classement : Sophie D. monte en 2ème position ! Bravo 🎉", likes: 15, comments: 2 },
-            ].map((post, i) => (
-              <div key={i} className="p-4 bg-white/5 rounded-lg border border-white/10">
-                <div className="text-xs text-white/60 mb-2">{post.time}</div>
-                <div className="text-sm text-white mb-2">{post.content}</div>
-                <div className="flex items-center gap-4 text-xs text-white/60">
-                  <span className="flex items-center gap-1"><BadgeIconDisplay icon="💬" size={14} className="flex-shrink-0" /> {post.comments}</span>
-                  <span>❤️ {post.likes}</span>
+              ALL_BADGES[0], // Première victoire
+              ALL_BADGES[1], // Série de 3
+              ALL_BADGES[8], // Centurion (remplace Série de 5)
+              ALL_BADGES[14], // Amour du padel (remplace Série de 7)
+              ALL_BADGES[4], // Série de 10
+              ALL_BADGES[10], // Diamant (remplace série de 15)
+              ALL_BADGES[12], // Précision (remplace série de 20)
+              ALL_BADGES[7], // Marathonien
+              ALL_BADGES[9], // Top Scorer
+              ALL_BADGES[15], // Contributeur
+            ].map((badge, i) => {
+              // Mapping des badges vers leurs images
+              let badgeImage = null;
+              if (badge.title === "Première victoire") {
+                badgeImage = "/images/Trophée page badges.png";
+              } else if (badge.title === "Série de 3" || badge.title === "Série de 10") {
+                badgeImage = "/images/Flamme page badges.png";
+              } else if (badge.title === "Marathonien") {
+                badgeImage = "/images/Badge Marathonien.png";
+              } else if (badge.title === "Centurion") {
+                badgeImage = "/images/Badge Centurion.png";
+              } else if (badge.title === "Top Scorer") {
+                badgeImage = "/images/Badge Top Scorer.png";
+              } else if (badge.title === "Diamant") {
+                badgeImage = "/images/Badge Diamant.png";
+              } else if (badge.title === "Amour du padel") {
+                badgeImage = "/images/Historique des matchs joueur.png";
+              } else if (badge.title === "Précision") {
+                badgeImage = "/images/Badge.png"; // Badge générique pour Précision
+              } else if (badge.title === "Contributeur") {
+                badgeImage = "/images/Badge Contributeur.png";
+              }
+              
+              return (
+                <div key={i} className="p-3 bg-white/5 rounded-lg border border-white/10 text-center">
+                  {badgeImage ? (
+                    <Image src={badgeImage} alt={badge.title} width={32} height={32} className="mx-auto mb-1" unoptimized />
+                  ) : (
+                    <div className="text-2xl mb-1">{badge.icon}</div>
+                  )}
+                  <div className="text-xs text-white/70">{badge.title}</div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
-      </div>
 
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <BadgeIconDisplay icon="🎯" size={24} className="flex-shrink-0" />
-          <span>CHALLENGE NOVEMBRE : "Warriors"</span>
-        </h3>
-        <div className="space-y-4">
-          <div className="text-white/70">
-            Objectif : Jouer minimum 10 matchs en novembre
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold text-white/80 mb-3">🏆 CLASSEMENT DU CHALLENGE</h4>
-            <div className="space-y-3">
-              {[
-                { name: "Marc L.", progress: 12, target: 10, completed: true },
-                { name: "Thomas R.", progress: 11, target: 10, completed: true },
-                { name: "Sophie D.", progress: 10, target: 10, completed: true },
-                { name: "Julie M.", progress: 8, target: 10, completed: false },
-                { name: "Alex K.", progress: 6, target: 10, completed: false },
-              ].map((player, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white">{i + 1}. {player.name}</span>
-                    <span className={`font-semibold ${player.completed ? "text-green-400" : "text-white/70"}`}>
-                      {player.progress}/{player.target} {player.completed && "✅"}
-                    </span>
-                  </div>
-                  <div className="w-full bg-white/10 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${player.completed ? "bg-green-400" : "bg-[#0066FF]"}`}
-                      style={{ width: `${Math.min((player.progress / player.target) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 flex flex-col h-full">
+          <h3 className="text-xl font-bold text-white mb-4">
+            CHALLENGE NOVEMBRE : "Warriors"
+          </h3>
+          <div className="flex-1 space-y-4">
+            <div className="text-sm text-white/70">
+              Objectif : Jouer minimum 10 matchs en novembre
             </div>
-          </div>
-          <div className="pt-4 border-t border-white/10 text-sm text-white/70">
-            Récompense : Badge "November Warrior" + mise en avant spéciale sur le feed
+            <div>
+              <h4 className="text-xs font-semibold text-white/80 mb-3 flex items-center gap-2">
+                <Image src="/images/Trophée page badges.png" alt="Trophée" width={16} height={16} className="flex-shrink-0" unoptimized />
+                CLASSEMENT DU CHALLENGE
+              </h4>
+              <div className="space-y-2.5">
+                {[
+                  { name: "Marc L.", progress: 12, target: 10, completed: true },
+                  { name: "Thomas R.", progress: 11, target: 10, completed: true },
+                  { name: "Sophie D.", progress: 10, target: 10, completed: true },
+                  { name: "Julie M.", progress: 8, target: 10, completed: false },
+                  { name: "Alex K.", progress: 6, target: 10, completed: false },
+                ].map((player, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-white font-medium">{i + 1}. {player.name}</span>
+                      <span className={`font-semibold ${player.completed ? "text-green-400" : "text-white/70"}`}>
+                        {player.progress}/{player.target} {player.completed && "✅"}
+                      </span>
+                    </div>
+                    <div className="w-full bg-white/10 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full ${player.completed ? "bg-green-400" : "bg-[#0066FF]"}`}
+                        style={{ width: `${Math.min((player.progress / player.target) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2 pt-2 border-t border-white/10">
+              <div className="text-xs text-white/70">
+                <span className="font-semibold text-white/90">Récompense :</span> Badge "November Warrior"
+              </div>
+              <div className="text-xs text-white/60">
+                Durée : 1er - 30 novembre 2025
+              </div>
+              <div className="text-xs text-white/60">
+                3/5 participants ont complété le challenge
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -467,76 +527,234 @@ function GamificationFeature() {
 }
 
 function PublicPageFeature() {
+  const gradientStyle = {
+    background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
+    boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
+  };
+
+  const cardStyle = {
+    background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
+    borderColor: "rgba(72,128,210,0.55)",
+  };
+
+  const clubName = "CLUB PADEL TOULOUSE";
+  const logoUrl = null; // Pas de logo pour le mockup
+  const description = "Club convivial au cœur de Toulouse, tous niveaux bienvenus. Ambiance familiale et compétitive avec événements réguliers.";
+  const addressLine = "12 Avenue de Toulouse · 31000 · Toulouse";
+  const phone = "05 61 42 38 19";
+  const website = "www.clubpadeltoulouse.fr";
+  const numberOfCourts = 4;
+  const courtType = "Couvert";
+  
+  const openingHours = {
+    monday: { open: "08:00", close: "23:00" },
+    tuesday: { open: "08:00", close: "23:00" },
+    wednesday: { open: "08:00", close: "23:00" },
+    thursday: { open: "08:00", close: "23:00" },
+    friday: { open: "08:00", close: "23:00" },
+    saturday: { open: "08:00", close: "23:00" },
+    sunday: { closed: true },
+  };
+
+  const DAYS = [
+    { key: "monday", label: "Lundi" },
+    { key: "tuesday", label: "Mardi" },
+    { key: "wednesday", label: "Mercredi" },
+    { key: "thursday", label: "Jeudi" },
+    { key: "friday", label: "Vendredi" },
+    { key: "saturday", label: "Samedi" },
+    { key: "sunday", label: "Dimanche" },
+  ];
+
+  const formatHour = (value: string | null | undefined) => {
+    if (!value) return null;
+    try {
+      const [h, m] = value.split(":");
+      if (Number.isNaN(Number(h)) || Number.isNaN(Number(m))) {
+        return value;
+      }
+      return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+    } catch {
+      return value;
+    }
+  };
+
+  const hours = DAYS.map(({ key, label }) => {
+    const data = openingHours[key as keyof typeof openingHours];
+    const open = formatHour(data?.open ?? null);
+    const close = formatHour(data?.close ?? null);
+    const isClosed = data?.closed === true || (!open || !close);
+    return {
+      key,
+      label,
+      value: isClosed ? "Fermé" : `${open} – ${close}`,
+      isClosed,
+    };
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700"
+      className="space-y-6"
     >
-      <div className="space-y-6">
-        <div className="bg-gradient-to-r from-gray-800 to-gray-700 h-32 rounded-lg flex items-center justify-center text-white/60">
-          [PHOTO COUVERTURE CLUB - Grande bannière]
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-2xl">
-            🏟️
+      {/* ClubHeader */}
+      <section
+        className="relative overflow-hidden rounded-2xl border border-white p-4 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+        style={gradientStyle}
+      >
+        <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" />
+        <div className="relative z-10 flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex h-36 w-36 items-center justify-center overflow-hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={`Logo ${clubName}`}
+                  className="h-20 w-20 object-contain"
+                />
+              ) : (
+                <Image 
+                  src="/images/logo fonctionnalités.png" 
+                  alt="Logo club" 
+                  width={80} 
+                  height={80} 
+                  className="object-contain"
+                  unoptimized
+                />
+              )}
+            </div>
+            <h1 className="text-3xl font-extrabold md:text-4xl tracking-tight text-white/95 leading-tight md:leading-none flex items-center">
+              {clubName}
+            </h1>
           </div>
-          <div>
-            <h3 className="text-2xl font-bold text-white">CLUB PADEL TOULOUSE</h3>
-            <div className="text-sm text-white/60">[Logo du club]</div>
-          </div>
         </div>
+        <span className="pointer-events-none absolute inset-x-6 bottom-3 h-px rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      </section>
 
-        <div className="space-y-3 text-sm text-white/70">
-          <div>📍 12 Avenue de Toulouse, 31000 Toulouse</div>
-          <div>⏰ Ouvert 7j/7 • 8h-23h</div>
-          <div className="flex items-center gap-1">
-            <BadgeIconDisplay icon="🎾" size={16} className="flex-shrink-0" />
-            <span>4 terrains couverts • Climatisation</span>
-          </div>
-          <div>👥 156 membres actifs</div>
-          <div>📞 05 XX XX XX XX</div>
-          <div>🌐 www.clubpadeltoulouse.fr</div>
-        </div>
-
-        <div className="pt-4 border-t border-white/10">
-          <h4 className="text-sm font-semibold text-white/80 mb-2">📝 À PROPOS</h4>
-          <p className="text-sm text-white/70">
-            Club convivial au cœur de Toulouse, tous niveaux bienvenus. Ambiance familiale et compétitive avec événements réguliers.
+      {/* Description */}
+      {description && (
+        <section
+          className="rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+          style={cardStyle}
+        >
+          <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/85">À propos</h2>
+          <p className="mt-3 text-sm leading-7 text-white/90">
+            {description}
           </p>
+        </section>
+      )}
+
+      {/* ClubDetailsClient */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="flex flex-col gap-5">
+          {/* Coordonnées */}
+          <section
+            className="rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+            style={cardStyle}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">Coordonnées</h2>
+              {website && (
+                <span
+                  className="text-xs font-semibold uppercase tracking-wide text-white/70 cursor-default"
+                  onClick={(e) => e.preventDefault()}
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  Visiter le site ↗
+                </span>
+              )}
+            </div>
+
+            <div className="mt-5 space-y-4 text-sm">
+              {addressLine ? (
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <Image 
+                    src="/images/Gps page mon club.png" 
+                    alt="GPS" 
+                    width={20} 
+                    height={20} 
+                    className="flex-shrink-0"
+                    style={{ 
+                      mixBlendMode: 'screen',
+                      filter: 'contrast(1.2) brightness(1.1)'
+                    }}
+                    unoptimized
+                  />
+                  <span className="font-medium leading-5 text-white/90">{addressLine}</span>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-center text-xs text-white/60">
+                  Adresse non renseignée
+                </div>
+              )}
+              {phone ? (
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <Image 
+                    src="/images/Téléphone page mon club.png" 
+                    alt="Téléphone" 
+                    width={20} 
+                    height={20} 
+                    className="flex-shrink-0"
+                    unoptimized
+                  />
+                  <span className="font-medium tracking-wide text-white/90">{phone}</span>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-center text-xs text-white/60">
+                  Téléphone non renseigné
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Infrastructure */}
+          <section
+            className="rounded-2xl border p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)] min-h-[240px]"
+            style={cardStyle}
+          >
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">Infrastructures</h2>
+            <div className="mt-4 grid gap-3 text-sm">
+              {numberOfCourts && courtType ? (
+                <>
+                  <div className="flex items-center justify-between rounded-lg border border-white/18 bg-black/25 px-3 py-2 text-white/85">
+                    <span className="uppercase tracking-[0.25em] text-white">Terrains</span>
+                    <span className="font-semibold">{numberOfCourts}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-white/18 bg-black/25 px-3 py-2 text-white/85">
+                    <span className="uppercase tracking-[0.25em] text-white">Type</span>
+                    <span className="font-semibold">{courtType}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-lg border border-white/18 bg-white/10 px-3 py-2 text-center text-xs text-white/60">
+                  Informations non renseignées
+                </div>
+              )}
+            </div>
+          </section>
         </div>
 
-        <div className="pt-4 border-t border-white/10">
-          <h4 className="text-sm font-semibold text-white/80 mb-3">🏆 TOP 3 DU CLUB</h4>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-white">
-              <span>🥇</span> Marc L. - 156 pts
+        <div className="flex flex-col gap-5">
+          {/* Horaires d'ouverture */}
+          <section
+            className="rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+            style={cardStyle}
+          >
+            <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">Horaires d'ouverture</h2>
+            <div className="mt-4 space-y-2 text-sm">
+              {hours.map((item) => (
+                <div
+                  key={item.key}
+                  className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-semibold tracking-wide ${item.isClosed ? "border-rose-400/45 bg-rose-500/15 text-rose-100" : "border-emerald-400/45 bg-emerald-500/15 text-emerald-50"}`}
+                >
+                  <span className="uppercase tracking-[0.25em] text-white">{item.label}</span>
+                  <span className="text-white">{item.value}</span>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-2 text-sm text-white">
-              <span>🥈</span> Sophie D. - 148 pts
-            </div>
-            <div className="flex items-center gap-2 text-sm text-white">
-              <span>🥉</span> Thomas R. - 142 pts
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-white/10">
-          <h4 className="text-sm font-semibold text-white/80 mb-3">🎪 PROCHAINS ÉVÉNEMENTS</h4>
-          <div className="space-y-2 text-sm text-white/70">
-            <div>• Challenge d'Automne - 1-30 Nov 2025</div>
-          </div>
-        </div>
-
-        <div className="flex gap-4 pt-4">
-          <button className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 rounded-lg transition-colors">
-            📧 Nous contacter
-          </button>
-          <button className="flex-1 bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-semibold py-2 rounded-lg">
-            📱 Rejoindre le club
-          </button>
+          </section>
         </div>
       </div>
     </motion.div>
@@ -549,60 +767,77 @@ function InscriptionFeature() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 max-w-2xl mx-auto"
+      className="flex justify-center"
     >
-      <h3 className="text-xl font-bold text-white mb-6 text-center">📍 REJOINDRE UN CLUB / COMPLEXE</h3>
-      
-      <div className="space-y-6">
-        <div>
-          <label className="text-sm text-white/70 mb-2 block">Entrez le code d'invitation de votre club / complexe :</label>
-          <div className="bg-white/5 rounded-lg p-3 border border-white/10 text-white/50 mb-4">
-            [________________]
+      <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-8">
+        <h1 className="text-2xl font-extrabold mb-2">Inscription joueur</h1>
+        <p className="text-white/60 mb-6 text-sm">Créez votre compte, puis associez‑le à votre club / complexe avec le code d'invitation.</p>
+        
+        <form className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="text"
+              placeholder="Prénom"
+              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+              disabled
+            />
+            <input
+              type="text"
+              placeholder="Nom"
+              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+              disabled
+            />
           </div>
-          <button className="w-full bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-semibold py-3 rounded-lg">
-            Rejoindre
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+            disabled
+          />
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+            disabled
+          />
+          
+          <div className="space-y-3 pt-2">
+            <label className="block text-sm text-white/70">Club / complexe</label>
+            <select
+              className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-white"
+              disabled
+            >
+              <option value="">Sélectionnez votre club / complexe</option>
+              <option value="club-padel-toulouse">Club Padel Toulouse</option>
+              <option value="padel-center-lyon">Padel Center Lyon</option>
+              <option value="padel-club-marseille">Padel Club Marseille</option>
+            </select>
+
+            <label className="block text-sm text-white/70">Code d'invitation</label>
+            <input
+              placeholder="Saisir le code reçu"
+              className="w-full rounded-md px-3 py-2 text-white placeholder-white/40 border bg-white/5 border-white/10"
+              disabled
+            />
+          </div>
+          
+          <button
+            disabled
+            className="w-full rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105 disabled:opacity-60 cursor-default"
+            style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}
+          >
+            Créer mon compte
           </button>
-        </div>
-
-        <div className="pt-6 border-t border-white/10">
-          <div className="text-sm text-white/70 mb-3">Ou recherchez votre club / complexe partenaire :</div>
-          <div className="bg-white/5 rounded-lg p-3 border border-white/10 text-white/50 mb-6">
-            🔍 [Rechercher un club par ville________]
-          </div>
-
-          <div>
-            <div className="text-sm font-semibold text-white/80 mb-4">CLUBS / COMPLEXES PARTENAIRES DISPONIBLES :</div>
-            <div className="space-y-3">
-              {[
-                { name: "Club Padel Toulouse", city: "Toulouse", members: 156, courts: 4 },
-                { name: "Padel Center Lyon", city: "Lyon", members: 203, courts: 6 },
-                { name: "Padel Club Marseille", city: "Marseille", members: 87, courts: 3 },
-              ].map((club, i) => (
-                <div key={i} className="p-4 bg-white/5 rounded-lg border border-white/10">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span>🏆</span>
-                      <span className="font-semibold text-white">{club.name}</span>
-                    </div>
-                    <button className="text-xs bg-[#0066FF] text-white px-3 py-1 rounded-lg">
-                      Rejoindre avec code
-                    </button>
-                  </div>
-                  <div className="text-xs text-white/60">
-                    📍 {club.city} • {club.members} membres • {club.courts} terrains
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-white/10 text-center">
-            <div className="text-sm text-white/70 mb-3">🏟️ Votre club / complexe n'est pas listé ?</div>
-            <div className="text-sm text-white/70 mb-4">Parlez-lui de Padel Pro !</div>
-            <button className="bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-2 rounded-lg transition-colors">
-              Recommander à mon club / complexe
-            </button>
-          </div>
+        </form>
+        
+        <div className="mt-4 text-center text-sm text-white/70">
+          Déjà membre ? <span 
+            className="underline cursor-default" 
+            onClick={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            Se connecter
+          </span>
         </div>
       </div>
     </motion.div>

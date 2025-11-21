@@ -14,19 +14,19 @@ export default function FAQ() {
   const faqs: FAQItem[] = [
     {
       question: "Comment mes membres rejoignent-ils le club / complexe sur l'app ?",
-      answer: "Vous recevez un code d'invitation unique (ex: TOULOUSE2025) que vous partagez à vos membres. Ils téléchargent l'app, entrent ce code, et c'est tout ! Vous pouvez aussi leur envoyer un lien d'invitation automatique par email."
+      answer: "Vous recevez un code d'invitation unique (ex: TOULOUSE31000) que vous partagez à vos membres. Ils s'inscrivent sur le site, entrent ce code, et c'est tout ! Vous pouvez aussi leur envoyer un lien d'invitation par email pour qu'ils accédent à la page d'inscription directement."
     },
     {
       question: "Mes membres doivent-ils payer quelque chose ?",
-      answer: "Non, l'application est 100% gratuite pour tous vos membres. Seul le club / complexe paie l'abonnement de 49€/mois."
+      answer: "Non, l'inscription est 100% gratuite pour tous vos membres. Seul le club / complexe paie un abonnement par mois."
     },
     {
       question: "L'installation est-elle compliquée ?",
-      answer: "Pas du tout ! 5 minutes suffisent : créez votre profil club / complexe, ajoutez logo/photos, et partagez le code à vos membres. Tutoriel vidéo et support inclus."
+      answer: "Pas du tout ! 5 minutes suffisent : créez votre profil club / complexe, ajoutez logo/photos, et partagez le code à vos membres."
     },
     {
       question: "Que se passe-t-il après l'essai de 30 jours ?",
-      answer: "Si vous êtes satisfait, l'abonnement démarre à 49€/mois. Sinon, annulez gratuitement avant la fin de l'essai, aucune obligation."
+      answer: "Si vous êtes satisfait, vous pouvez activer votre abonnement. Sinon, votre essai prendra fin et aucun prélèvement ne sera effectué."
     },
     {
       question: "Puis-je annuler à tout moment ?",
@@ -34,11 +34,7 @@ export default function FAQ() {
     },
     {
       question: "Combien de membres peuvent utiliser la plateforme ?",
-      answer: "Illimité ! Que vous ayez 30 ou 300 membres, le prix reste 49€/mois."
-    },
-    {
-      question: "Puis-je personnaliser avec les couleurs de mon club / complexe ?",
-      answer: "Oui, vous pouvez ajouter votre logo et choisir les couleurs principales. Votre club / complexe a son identité propre."
+      answer: "Illimité ! Que vous ayez 30 ou 300 membres, le prix reste le même."
     },
     {
       question: "Les données de mes membres sont-elles sécurisées ?",

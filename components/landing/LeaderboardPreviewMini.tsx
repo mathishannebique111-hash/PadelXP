@@ -119,7 +119,7 @@ export default function LeaderboardPreviewMini() {
   return (
     <div className="relative rounded-xl border border-white/10 bg-white/5 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-white/90 font-semibold"><span>Classement en temps réel</span><span className="ml-2 inline-flex items-center rounded-full bg-red-500/20 text-red-200 text-[10px] px-2 py-0.5">LIVE</span></div>
+        <div className="flex items-center gap-2 text-white/90 font-semibold"><span>Classement en temps réel</span></div>
       </div>
       <div className="overflow-x-auto rounded-lg bg-white/5">
         <table className="w-full text-xs">

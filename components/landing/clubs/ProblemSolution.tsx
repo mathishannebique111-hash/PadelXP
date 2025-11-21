@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import Image from "next/image";
 
 export default function ProblemSolution() {
   return (
@@ -22,7 +23,7 @@ export default function ProblemSolution() {
           <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 rounded-2xl p-8 border-2 border-red-500/30">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-start gap-4">
-                <span className="text-3xl">📉</span>
+                <Image src="/images/Graphique bas.png" alt="Graphique bas" width={48} height={48} className="flex-shrink-0" unoptimized />
                 <div>
                   <h3 className="text-xl font-bold text-white mb-2">Membres déconnectés</h3>
                   <p className="text-white/70">Ils jouent, repartent, zéro lien communautaire</p>
@@ -30,7 +31,7 @@ export default function ProblemSolution() {
               </div>
               
               <div className="flex items-start gap-4">
-                <span className="text-3xl">📊</span>
+                <Image src="/images/Historique des matchs joueur.png" alt="Historique" width={48} height={48} className="flex-shrink-0" unoptimized />
                 <div>
                   <h3 className="text-xl font-bold text-white mb-2">Aucune visibilité sur les performances</h3>
                   <p className="text-white/70">Impossible de suivre sa progression, classements imprécis, pas de données exploitables</p>
@@ -38,15 +39,15 @@ export default function ProblemSolution() {
               </div>
               
               <div className="flex items-start gap-4">
-                <span className="text-3xl">🏁</span>
+                <Image src="/images/historiqueclubslandingpage.png" alt="Historique" width={48} height={48} className="flex-shrink-0" unoptimized />
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">Animations chronophages</h3>
-                  <p className="text-white/70">Excel, WhatsApp, relances... perte de temps pour gérer les défis</p>
+                  <h3 className="text-xl font-bold text-white mb-2">Pas d'historique automatique des matchs</h3>
+                  <p className="text-white/70">Impossible de consulter facilement l'historique de ses matchs</p>
                 </div>
               </div>
               
               <div className="flex items-start gap-4">
-                <span className="text-3xl">💤</span>
+                <Image src="/images/ZZZ.png" alt="ZZZ" width={48} height={48} className="flex-shrink-0" unoptimized />
                 <div>
                   <h3 className="text-xl font-bold text-white mb-2">Pas de stimulation pour les membres</h3>
                   <p className="text-white/70">Aucun système de récompenses ou reconnaissance</p>
@@ -77,6 +78,7 @@ export default function ProblemSolution() {
           {[
             {
               emoji: "🏆",
+              image: "/images/Trophée page badges.png",
               title: "CLASSEMENT VIVANT",
               items: [
                 "• En temps réel",
@@ -86,20 +88,21 @@ export default function ProblemSolution() {
             },
             {
               emoji: "🎯",
-              title: "TOURNOIS AUTOMATISÉS",
+              title: "CRÉATION DE CHALLENGES",
               items: [
                 "• Création en 3 clics",
                 "• Inscriptions automatiques",
-                "• Tableaux générés automatiquement"
+                "• Récompenses gérées automatiquement"
               ]
             },
             {
               emoji: "🎮",
+              image: "/images/Manette landing page.png",
               title: "ENGAGEMENT MAXIMAL",
               items: [
-                "• Feed social actif",
+                "• Historique automatique des matchs",
                 "• Badges de récompenses",
-                "• Challenges mensuels"
+                "• Code d'invitation pour les membres"
               ]
             }
           ].map((solution, idx) => (
@@ -112,7 +115,11 @@ export default function ProblemSolution() {
               className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 border-2 border-[#0066FF]/30 hover:border-[#0066FF]/60 transition-all hover:shadow-[0_0_30px_rgba(0,102,255,0.3)]"
             >
               <div className="mb-4 flex items-center justify-center">
-                <BadgeIconDisplay icon={solution.emoji} size={48} className="flex-shrink-0" />
+                {solution.image ? (
+                  <Image src={solution.image} alt="" width={48} height={48} className="flex-shrink-0" unoptimized />
+                ) : (
+                  <BadgeIconDisplay icon={solution.emoji} size={48} className="flex-shrink-0" />
+                )}
               </div>
               <h3 className="text-xl font-bold text-white mb-6 text-center">{solution.title}</h3>
               <ul className="space-y-3">

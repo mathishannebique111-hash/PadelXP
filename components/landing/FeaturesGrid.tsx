@@ -1,36 +1,43 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import LeaderboardPreviewMini from "@/components/landing/LeaderboardPreviewMini";
 
 const features = [
-  // Inversés: le premier devient "Système de badges" et le second "Classement en temps réel"
+  // Échangés: les deux premiers cadres sont maintenant en bas
   {
-    title: "🏅 Système de badges",
-    description: "Gagne des badges uniques selon tes performances.",
-    gridClass: "md:col-span-1 md:row-span-2",
-    gradient: "from-[#0066FF] to-[#0052CC]",
-    showBadgesPreview: true,
-  },
-  {
-    title: "📊 Classement en temps réel",
-    description: "Classement mis à jour après chaque match.",
-    gridClass: "md:col-span-2 md:row-span-2",
-    gradient: "from-[#0066FF] to-[#0052CC]",
-    showLeaderboard: true,
-  },
-  {
-    title: "⚡ Enregistrement instantané",
+    title: "Enregistrement instantané",
     description: "Soumets un résultat en quelques secondes.",
     gridClass: "md:col-span-2 md:row-span-1",
     gradient: "from-[#0066FF] to-[#0052CC]",
     showForm: true,
+    iconType: "lightning",
   },
   {
-    title: "📊 Historique des matchs",
+    title: "Historique des matchs",
     description: "Retrouve tous tes résultats et scores par date.",
     gridClass: "md:col-span-1 md:row-span-1",
     gradient: "from-[#0066FF] to-[#0052CC]",
+    iconType: "graph",
+    showHistory: true,
+  },
+  {
+    title: "Système de badges",
+    description: "Gagne des badges uniques selon tes performances.",
+    gridClass: "md:col-span-1 md:row-span-2",
+    gradient: "from-[#0066FF] to-[#0052CC]",
+    showBadgesPreview: true,
+    iconType: "badge",
+  },
+  {
+    title: "Classement en temps réel",
+    description: "Classement mis à jour après chaque match.",
+    gridClass: "md:col-span-2 md:row-span-2",
+    gradient: "from-[#0066FF] to-[#0052CC]",
+    showLeaderboard: true,
+    iconType: "graph",
   },
 ];
 
@@ -47,7 +54,14 @@ function MatchFormPreview() {
             aria-label="Équipe 1 sélectionnée"
             type="button"
           >
-            <span>🏆</span>
+            <Image 
+              src="/images/Trophée page badges.png" 
+              alt="Trophée" 
+              width={20} 
+              height={20} 
+              className="flex-shrink-0"
+              unoptimized
+            />
             <span>Équipe 1</span>
           </button>
           <button
@@ -55,7 +69,14 @@ function MatchFormPreview() {
             aria-label="Choisir l'équipe 2"
             type="button"
           >
-            <span>🏆</span>
+            <Image 
+              src="/images/Trophée page badges.png" 
+              alt="Trophée" 
+              width={20} 
+              height={20} 
+              className="flex-shrink-0"
+              unoptimized
+            />
             <span>Équipe 2</span>
           </button>
         </div>
@@ -129,9 +150,40 @@ export default function FeaturesGrid() {
 
               {/* Contenu */}
               <div className="relative z-10">
-                <div className="text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3 md:mb-4">{feature.title.split(" ")[0]}</div>
+                <div className="mb-2 sm:mb-3 md:mb-4 flex items-center gap-2">
+                  {feature.iconType === "graph" ? (
+                    <Image 
+                      src="/images/Historique des matchs joueur.png" 
+                      alt="Graphique" 
+                      width={32} 
+                      height={32} 
+                      className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12"
+                      unoptimized
+                    />
+                  ) : feature.iconType === "lightning" ? (
+                    <Image 
+                      src="/images/Éclair page avis.png" 
+                      alt="Éclair" 
+                      width={32} 
+                      height={32} 
+                      className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12"
+                      unoptimized
+                    />
+                  ) : feature.iconType === "badge" ? (
+                    <Image 
+                      src="/images/Badge Centurion.png" 
+                      alt="Badge Centurion" 
+                      width={32} 
+                      height={32} 
+                      className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-2xl sm:text-3xl md:text-4xl">{feature.title.split(" ")[0]}</span>
+                  )}
+                </div>
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-1 sm:mb-2">
-                  {feature.title.split(" ").slice(1).join(" ")}
+                  {feature.iconType === "graph" || feature.iconType === "lightning" || feature.iconType === "badge" ? feature.title : feature.title.split(" ").slice(1).join(" ")}
                 </h3>
                 <p className="text-white/60 text-xs sm:text-sm">{feature.description}</p>
 
@@ -144,14 +196,20 @@ export default function FeaturesGrid() {
 
                 {feature.showBadgesPreview && (
                   <div className="mt-4 sm:mt-5 md:mt-6 flex gap-1.5 sm:gap-2 flex-wrap">
-                    {["🏆", "🔥", "👑", "⭐", "🎖️", "💯"].map((badge, i) => (
+                    {[
+                      { emoji: "🏆", title: "Première victoire" },
+                      { emoji: "🔥", title: "Série de 3" },
+                      { emoji: "🏅", title: "Centurion" },
+                      { emoji: "💎", title: "Diamant" },
+                      { emoji: "🎖️", title: "Marathonien" },
+                      { emoji: "💯", title: "Top Scorer" }
+                    ].map((badge, i) => (
                       <motion.div
                         key={i}
                         initial={{ scale: 0 }}
                         whileInView={{ scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.5 + i * 0.1 }}
-                        className="text-2xl sm:text-3xl"
                         animate={{ y: [0, -5, 0] }}
                         transition={{
                           duration: 2,
@@ -159,7 +217,12 @@ export default function FeaturesGrid() {
                           delay: i * 0.2,
                         }}
                       >
-                        {badge}
+                        <BadgeIconDisplay 
+                          icon={badge.emoji} 
+                          title={badge.title}
+                          size={32}
+                          className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
+                        />
                       </motion.div>
                     ))}
                   </div>
@@ -167,7 +230,7 @@ export default function FeaturesGrid() {
 
                 {feature.showForm && <MatchFormPreview />}
 
-                {idx === 3 && (
+                {feature.showHistory && (
                   <div className="mt-4 sm:mt-5 md:mt-6 space-y-2 sm:space-y-3">
                     {[
                       { date: "Hier", score: "6-3, 6-4", result: "W" },
@@ -185,9 +248,18 @@ export default function FeaturesGrid() {
                           }`}
                         >
                           <div className="flex items-center gap-2 sm:gap-3">
-                            <span className={`text-xl sm:text-2xl ${won ? "text-green-600" : "text-red-600"}`}>
-                              {won ? "🏆" : "❌"}
-                            </span>
+                            {won ? (
+                              <Image 
+                                src="/images/Trophée page badges.png" 
+                                alt="Trophée" 
+                                width={24} 
+                                height={24} 
+                                className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8"
+                                unoptimized
+                              />
+                            ) : (
+                              <span className="text-xl sm:text-2xl text-red-600">❌</span>
+                            )}
                             <div className="flex-1 min-w-0">
                               <div className="font-semibold text-gray-900 text-xs sm:text-sm">
                                 {won ? "Victoire" : "Défaite"}

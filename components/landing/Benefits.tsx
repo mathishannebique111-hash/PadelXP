@@ -9,7 +9,7 @@ const benefits = [
   "Classement mis à jour en temps réel",
   "Badges de récompense exclusifs",
   "Historique complet de tes matchs",
-  "Analyse de ta progression",
+  "Participe à des challenges excitants",
   "Communauté de passionnés",
 ];
 

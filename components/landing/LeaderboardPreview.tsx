@@ -55,7 +55,7 @@ export default function LeaderboardPreview() {
           </h2>
         </motion.div>
 
-        {/* Podium dynamique avec synchronisation temps réel */}
+        {/* Podium d'exemple avec top 3 joueurs */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -103,7 +103,7 @@ export default function LeaderboardPreview() {
           className="text-center mt-8 sm:mt-10 md:mt-12 px-4"
         >
           <Link
-            href="/player/login"
+            href="/player/signup"
             className="inline-block w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white font-bold text-base sm:text-lg shadow-[0_0_30px_rgba(0,102,255,0.5)] hover:shadow-[0_0_40px_rgba(0,102,255,0.7)] transition-all duration-300 hover:scale-105"
           >
             Commence à jouer →

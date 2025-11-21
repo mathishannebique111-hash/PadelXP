@@ -5,6 +5,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import TierBadge from "@/components/TierBadge";
+import Image from "next/image";
 
 export default function ClubsHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -102,16 +104,6 @@ export default function ClubsHeroSection() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="lg:col-span-3 space-y-8"
           >
-            {/* Emoji */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: isVisible ? 1 : 0 }}
-              transition={{ duration: 0.6, delay: 0.2, type: "spring" }}
-              className="text-6xl mb-4"
-            >
-              🏟️
-            </motion.div>
-
             {/* Headline principal */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">
               Transformez votre club / complexe en{" "}
@@ -140,15 +132,15 @@ export default function ClubsHeroSection() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl flex-shrink-0">✅</span>
                 <div className="flex-1">
-                  <span className="font-semibold text-white">Défis en 3 clics :</span>
-                  <span className="text-white/80"> Lancez des animations sans tableurs ni relances</span>
+                  <span className="font-semibold text-white">Création de challenges en 3 clics :</span>
+                  <span className="text-white/80"> Créez et lancez des challenges pour motiver vos membres</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-2xl flex-shrink-0">✅</span>
                 <div className="flex-1">
                   <span className="font-semibold text-white">Communauté engagée :</span>
-                  <span className="text-white/80"> Badges, challenges et feed social qui créent du lien</span>
+                  <span className="text-white/80"> Badges, challenges et actualités du club qui créent du lien</span>
                 </div>
               </div>
             </div>
@@ -188,57 +180,83 @@ export default function ClubsHeroSection() {
           >
             {/* Mockup classement */}
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
-              <div className="text-sm font-semibold text-white/80 mb-4">🏆 CLASSEMENT - CLUB PADEL TOULOUSE</div>
+              <div className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2">
+                <Image 
+                  src="/images/Trophée page badges.png" 
+                  alt="Trophée" 
+                  width={20} 
+                  height={20} 
+                  className="flex-shrink-0"
+                  unoptimized
+                />
+                CLASSEMENT - CLUB PADEL TOULOUSE
+              </div>
               <div className="space-y-3">
                 {[
-                  { rank: 1, name: "Marc L.", points: 156, record: "12V-2D", trend: "↗️", medal: "🥇" },
-                  { rank: 2, name: "Sophie D.", points: 148, record: "11V-3D", trend: "↗️", medal: "🥈" },
-                  { rank: 3, name: "Thomas R.", points: 142, record: "10V-2D", trend: "→", medal: "🥉" },
-                  { rank: 4, name: "Julie M.", points: 128, record: "9V-4D", trend: "↘️", medal: "📍" },
-                  { rank: 5, name: "Alex K.", points: 124, record: "9V-5D", trend: "↗️", medal: "📍" },
+                  { rank: 1, name: "Marc L.", points: 156, record: "12V-2D", tier: "Or", medal: "🥇" },
+                  { rank: 2, name: "Sophie D.", points: 148, record: "11V-3D", tier: "Or", medal: "🥈" },
+                  { rank: 3, name: "Thomas R.", points: 142, record: "10V-2D", tier: "Argent", medal: "🥉" },
+                  { rank: 4, name: "Julie M.", points: 128, record: "9V-4D", tier: "Argent", medal: "📍" },
+                  { rank: 5, name: "Alex K.", points: 124, record: "9V-5D", tier: "Bronze", medal: "📍" },
                 ].map((player) => (
                   <div key={player.rank} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{player.medal}</span>
                       <div>
-                        <div className="font-semibold text-white text-sm">{player.name}</div>
-                        <div className="text-xs text-white/60">{player.record}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white text-sm">{player.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-white/60">{player.record}</span>
+                          <span className="text-[10px] text-white/40">• {player.points} pts</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-white">{player.points} pts</span>
-                      <span className="text-lg">{player.trend}</span>
+                    <div className="flex items-center">
+                      <TierBadge tier={player.tier as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Mockup feed social */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
-              <div className="text-sm font-semibold text-white/80 mb-4">📢 ACTUALITÉS DU CLUB</div>
-              <div className="space-y-4">
-                <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                  <div className="text-xs text-white/60 mb-2">Il y a 5 min</div>
-                  <div className="text-sm text-white">
-                    🏆 Marc L. a remporté son match contre Sophie D. (6-4, 7-5) et prend la 1ère place ! 🥇
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-white/60">
-                    <span className="flex items-center gap-1"><BadgeIconDisplay icon="💬" size={14} className="flex-shrink-0" /> 3</span>
-                    <span>❤️ 12</span>
-                  </div>
-                </div>
-                <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                  <div className="text-xs text-white/60 mb-2">Il y a 23 min</div>
-                  <div className="text-sm text-white">
-                    🔥 Thomas R. a débloqué le badge "Hot Streak" ! 5 victoires consécutives 💪
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-white/60">
-                    <span className="flex items-center gap-1"><BadgeIconDisplay icon="💬" size={14} className="flex-shrink-0" /> 5</span>
-                    <span>❤️ 18</span>
-                  </div>
-                </div>
-              </div>
+            {/* Mockup challenges créées par le club */}
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-4">
+              <h2 className="text-sm font-semibold text-white mb-3">Challenges créées par le club</h2>
+              <ul className="text-xs space-y-2">
+                {[
+                  { title: "Challenge du mois de mars", objective: "Atteindre 100 points ce mois", status: "active", startDate: "1 mars", endDate: "31 mars" },
+                  { title: "Top 10 avril", objective: "Finir dans le top 10 du classement", status: "upcoming", startDate: "1 avril", endDate: "30 avril" },
+                  { title: "Défi Victoires", objective: "Remporter 15 matchs minimum", status: "active", startDate: "10 mars", endDate: "10 avril" },
+                  { title: "Rising Star", objective: "Progresser d'au moins 20 points", status: "upcoming", startDate: "15 avril", endDate: "15 mai" },
+                  { title: "Champion du mois", objective: "Terminer 1er du classement", status: "active", startDate: "1 mars", endDate: "31 mars" },
+                ].map((challenge, idx) => (
+                  <li key={idx} className="rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5">
+                    <div className="flex items-start justify-between gap-1.5">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                          <span className="font-medium text-white truncate text-xs">{challenge.title}</span>
+                          {challenge.status === "active" && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
+                              En cours
+                            </span>
+                          )}
+                          {challenge.status === "upcoming" && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
+                              À venir
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-white/50 truncate">{challenge.objective}</div>
+                      </div>
+                      <div className="flex flex-col items-end text-[10px] text-white/60 whitespace-nowrap flex-shrink-0">
+                        <span>{challenge.startDate}</span>
+                        <span className="text-[9px]">→ {challenge.endDate}</span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </motion.div>
         </div>

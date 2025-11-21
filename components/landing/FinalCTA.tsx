@@ -61,11 +61,10 @@ export default function FinalCTA() {
           className="space-y-8"
         >
           <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
-            Prêt à devenir{" "}
+            Prêt à devenir un{" "}
             <span className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] bg-clip-text text-transparent">
               champion
-            </span>
-            ?
+            </span>{" "}?
           </h2>
 
           <p className="text-2xl md:text-3xl text-white/80 mb-8">

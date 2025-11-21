@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
@@ -17,25 +18,13 @@ export default function ClubsPromo() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
-              <div className="text-5xl mb-4">🏟️</div>
               <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
                 VOUS GÉREZ UN CLUB DE PADEL ?
               </h2>
-              <p className="text-xl text-white/80 mb-6 leading-relaxed">
-                Offrez à vos membres une expérience digitale exceptionnelle avec classements et animations communautaires automatiques.
-              </p>
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-3 text-white/80">
+              <div className="mb-8">
+                <div className="flex items-center gap-3 text-white/80 text-lg">
                   <span>✅</span>
-                  <span>Installation en 5 min</span>
-                </div>
-                <div className="flex items-center gap-3 text-white/80">
-                  <span>✅</span>
-                  <span>Essai gratuit 30 jours</span>
-                </div>
-                <div className="flex items-center gap-3 text-white/80">
-                  <span>✅</span>
-                  <span>49€/mois tout compris</span>
+                  <span>Essai gratuit 30 jours sans CB</span>
                 </div>
               </div>
               <Link
@@ -57,23 +46,50 @@ export default function ClubsPromo() {
             </div>
             
             <div className="hidden md:block">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 border border-gray-700">
-                  <div className="text-2xl mb-2">🏆</div>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-gray-700 flex flex-col items-start">
+                  <div className="mb-3 min-h-[32px]">
+                    <Image 
+                      src="/images/Trophée page badges.png" 
+                      alt="Trophée" 
+                      width={32} 
+                      height={32} 
+                      className="flex-shrink-0"
+                      unoptimized
+                    />
+                  </div>
                   <div className="text-white font-semibold text-sm">Classement automatique</div>
                 </div>
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 border border-gray-700">
-                  <div className="mb-2 flex items-center justify-center">
-                    <BadgeIconDisplay icon="🎯" size={32} className="flex-shrink-0" />
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-gray-700 flex flex-col items-start">
+                  <div className="mb-3 min-h-[32px]">
+                    <BadgeIconDisplay icon="🎯" size={24} className="flex-shrink-0" />
                   </div>
-                  <div className="text-white font-semibold text-sm">Défis mensuels en 3 clics</div>
+                  <div className="text-white font-semibold text-sm">Création de challenges en 3 clics</div>
                 </div>
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 border border-gray-700">
-                  <div className="text-2xl mb-2">🎮</div>
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-gray-700 flex flex-col items-start">
+                  <div className="mb-3 min-h-[32px]">
+                    <Image 
+                      src="/images/Manette landing page.png" 
+                      alt="Manette" 
+                      width={32} 
+                      height={32} 
+                      className="flex-shrink-0"
+                      unoptimized
+                    />
+                  </div>
                   <div className="text-white font-semibold text-sm">Gamification</div>
                 </div>
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 border border-gray-700">
-                  <div className="text-2xl mb-2">📱</div>
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-gray-700 flex flex-col items-start">
+                  <div className="mb-3 min-h-[32px]">
+                    <Image 
+                      src="/images/Page publique du club.png" 
+                      alt="Page club publique" 
+                      width={32} 
+                      height={32} 
+                      className="flex-shrink-0"
+                      unoptimized
+                    />
+                  </div>
                   <div className="text-white font-semibold text-sm">Page club publique</div>
                 </div>
               </div>
