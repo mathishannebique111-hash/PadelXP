@@ -145,30 +145,28 @@ export async function POST(request: NextRequest) {
           memberDisplayName: displayName
         });
         
-        // Match exact sur display_name, prénom + nom, ou prénom seul (si unique)
-        if (normalizedInput === normalizedDisplayName || 
-            normalizedInput === normalizedFullName ||
-            (normalizedInput === normalizedFirstName && normalizedFirstName)) {
-          // Si c'est juste le prénom, vérifier qu'il n'y a qu'un seul résultat avec ce prénom
-          if (normalizedInput === normalizedFirstName && normalizedInput !== normalizedFullName && normalizedInput !== normalizedDisplayName) {
-            const sameFirstNameCount = clubMembers.filter((p: any) => 
-              normalizeForComparison(p.first_name || '') === normalizedFirstName
-            ).length;
-            
-            console.log('[validate-exact] First name match, count:', sameFirstNameCount);
-            
-            // Si plusieurs joueurs ont le même prénom, ne pas valider avec juste le prénom
-            if (sameFirstNameCount > 1) {
-              continue;
-            }
+        // Accepter UNIQUEMENT un match exact sur "first_name last_name" (prénom + nom complet)
+        // Ne pas accepter display_name ou prénom seul
+        if (normalizedInput === normalizedFullName) {
+          const first_name = member.first_name || '';
+          const last_name = member.last_name || '';
+          
+          // Vérifier que le joueur a un prénom ET un nom (non vides)
+          if (!first_name || !first_name.trim() || !last_name || !last_name.trim()) {
+            // Le joueur n'a pas de prénom et nom complet, ne pas valider
+            continue;
           }
           
-          console.log('[validate-exact] Match found!', displayName);
+          console.log('[validate-exact] Match found on full name!', `${first_name} ${last_name}`);
+          const fullName = `${first_name} ${last_name}`.trim();
+          
           return NextResponse.json({
             valid: true,
             player: {
               id: member.id,
-              display_name: displayName,
+              display_name: fullName,
+              first_name: first_name,
+              last_name: last_name,
               email: member.email || null,
               was_created: false,
               type: 'user',
@@ -206,46 +204,34 @@ export async function POST(request: NextRequest) {
     });
 
     if (guestPlayers && guestPlayers.length > 0) {
-      // Vérifier d'abord les matches exacts sur le nom complet
+      // Accepter UNIQUEMENT un match exact sur "first_name last_name" (prénom + nom complet)
       for (const guest of guestPlayers) {
-        const guestFullName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
+        const first_name = guest.first_name || '';
+        const last_name = guest.last_name || '';
+        
+        // Vérifier que le guest a un prénom ET un nom (non vides)
+        if (!first_name || !first_name.trim() || !last_name || !last_name.trim()) {
+          continue;
+        }
+        
+        const guestFullName = `${first_name} ${last_name}`.trim();
         const normalizedGuestName = normalizeForComparison(guestFullName);
         
-        // Match exact sur le nom complet
+        // Match exact UNIQUEMENT sur le nom complet (prénom + nom)
         if (normalizedInput === normalizedGuestName) {
           return NextResponse.json({
             valid: true,
             player: {
               id: guest.id,
               display_name: guestFullName,
+              first_name: first_name,
+              last_name: last_name,
               email: null,
               was_created: false,
               type: 'guest',
             },
           });
         }
-      }
-      
-      // Si pas de match sur le nom complet, vérifier si c'est juste le prénom
-      // et qu'il n'y a qu'un seul guest avec ce prénom
-      const matchingGuestsByFirstName = guestPlayers.filter((g: any) => {
-        const normalizedGuestFirstName = normalizeForComparison(g.first_name || '');
-        return normalizedInput === normalizedGuestFirstName;
-      });
-      
-      if (matchingGuestsByFirstName.length === 1) {
-        const guest = matchingGuestsByFirstName[0];
-        const guestFullName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
-        return NextResponse.json({
-          valid: true,
-          player: {
-            id: guest.id,
-            display_name: guestFullName,
-            email: null,
-            was_created: false,
-            type: 'guest',
-          },
-        });
       }
     }
 

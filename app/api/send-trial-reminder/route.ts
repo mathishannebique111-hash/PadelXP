@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       <p><strong>Objet original :</strong> ${subject}</p>
       <hr style="margin:16px 0" />
       ${bodyHtml}
-    </div>
+                </div>
   `;
 
   const { error: sendError } = await resend.emails.send({

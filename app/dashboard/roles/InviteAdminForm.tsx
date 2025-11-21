@@ -59,8 +59,7 @@ export default function InviteAdminForm() {
   return (
     <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-xl">✉️</span>
-        <h2 className="font-semibold">Inviter un administrateur</h2>
+        <h2 className="font-semibold text-sm sm:text-base">Inviter un administrateur</h2>
       </div>
       
       <form onSubmit={handleSubmit}>

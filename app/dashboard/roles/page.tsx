@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import InviteAdminForm from "./InviteAdminForm";
 import RemoveAdminButton from "./RemoveAdminButton";
@@ -95,8 +96,7 @@ export default async function RolesPage() {
       {/* Administrateurs actifs */}
       <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
         <div className="flex items-center gap-2 mb-5">
-          <span className="text-xl">👥</span>
-          <h2 className="font-bold text-lg">Administrateurs</h2>
+          <h2 className="font-semibold text-sm sm:text-base">Administrateurs</h2>
         </div>
         <div className="space-y-2 sm:space-y-3">
           {activeAdmins.length > 0 ? (
@@ -128,7 +128,11 @@ export default async function RolesPage() {
 
                   <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                     <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30">
-                      <span className="text-xl sm:text-2xl">{admin.role === "owner" ? "👑" : "👤"}</span>
+                      {admin.role === "owner" ? (
+                        <Image src="/images/Role et accés club.png" alt="Propriétaire" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+                      ) : (
+                        <Image src="/images/Administrateur invité page role et accés.png" alt="Administrateur invité" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
@@ -147,12 +151,10 @@ export default async function RolesPage() {
                         >
                           {admin.role === "owner" ? (
                             <>
-                              <span>👑</span>
                               <span>Propriétaire du compte</span>
                             </>
                           ) : (
                             <>
-                              <span>🔑</span>
                               <span>Administrateur invité</span>
                             </>
                           )}
@@ -187,7 +189,6 @@ export default async function RolesPage() {
       {/* Invitations en attente */}
       <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
-          <span className="text-lg sm:text-xl">⏳</span>
           <h2 className="font-semibold text-sm sm:text-base">Invitations en attente</h2>
         </div>
         {pendingInvitations.length > 0 ? (
@@ -199,7 +200,7 @@ export default async function RolesPage() {
               >
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
-                    <span className="text-base sm:text-lg">✉️</span>
+                    <Image src="/images/Sablier page role et accés.png" alt="Sablier" width={20} height={20} className="w-5 h-5 object-contain" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-xs sm:text-sm font-medium text-white truncate">{invitation.email}</div>

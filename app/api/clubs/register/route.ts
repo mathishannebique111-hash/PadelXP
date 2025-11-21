@@ -214,20 +214,26 @@ export async function POST(req: Request) {
       .select("id, slug, code_invitation")
       .single();
     if (clubError || !club) {
-      const clubErrorMessage = clubError?.message || "Impossible d’enregistrer le club (erreur Supabase).";
+      const clubErrorMessage = clubError?.message || "Impossible d'enregistrer le club (erreur Supabase).";
       return NextResponse.json({ error: clubErrorMessage }, { status: 400 });
     }
 
-    await supabaseAdmin
+    // Ne pas créer de profil joueur pour les comptes club
+    // Les comptes club ne doivent pas avoir d'entrée dans la table profiles
+    // On vérifie si un profil existe déjà et on le supprime si c'est le cas
+    const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
-      .upsert(
-        {
-          id: userId,
-          club_id: club.id,
-          club_slug: club.slug,
-        },
-        { onConflict: "id" }
-      );
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+    
+    if (existingProfile) {
+      // Supprimer le profil joueur s'il existe pour ce compte club
+      await supabaseAdmin
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+    }
 
     const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(userId);
     const mergedMetadata = {

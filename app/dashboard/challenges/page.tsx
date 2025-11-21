@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import PageTitle from "../PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
@@ -215,7 +216,7 @@ export default function ChallengesPage() {
                 onClick={() => handleRewardChange("points")}
                 className={`flex h-32 flex-col items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition ${rewardType === "points" ? "border-yellow-400/60 bg-yellow-400/15 text-yellow-200 shadow-[0_16px_35px_rgba(250,204,21,0.35)]" : "border-white/15 bg-white/5 text-white/70 hover:border-yellow-400/40 hover:bg-yellow-400/10 hover:text-yellow-100"}`}
               >
-                <span className="text-3xl">💎</span>
+                <Image src="/images/Badge Diamant.png" alt="Diamant" width={48} height={48} className="w-12 h-12 object-contain" />
                 <span className="mt-2 uppercase tracking-[0.3em]">Points</span>
               </button>
               <button
@@ -223,7 +224,7 @@ export default function ChallengesPage() {
                 onClick={() => handleRewardChange("badge")}
                 className={`flex h-32 flex-col items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition ${rewardType === "badge" ? "border-violet-400/60 bg-violet-500/15 text-violet-100 shadow-[0_16px_35px_rgba(139,92,246,0.35)]" : "border-white/15 bg-white/5 text-white/70 hover:border-violet-400/40 hover:bg-violet-500/10 hover:text-violet-100"}`}
               >
-                <span className="text-3xl">🏅</span>
+                <Image src="/images/Badge Centurion.png" alt="Badge" width={48} height={48} className="w-12 h-12 object-contain" />
                 <span className="mt-2 uppercase tracking-[0.3em]">Badge</span>
               </button>
             </div>
@@ -286,7 +287,6 @@ export default function ChallengesPage() {
               const rewardBadgeClasses = challenge.rewardType === "points"
                 ? "border-2 border-yellow-400/30 bg-yellow-400/10 text-yellow-200 shadow-[0_0_20px_rgba(250,204,21,0.15)]"
                 : "border-2 border-violet-400/30 bg-violet-400/10 text-violet-200 shadow-[0_0_20px_rgba(167,139,250,0.15)]";
-              const rewardIcon = challenge.rewardType === "points" ? "💎" : "🏅";
               
               return (
                 <article
@@ -310,7 +310,11 @@ export default function ChallengesPage() {
                       
                       {/* Badge récompense élégant */}
                       <div className={`flex items-center gap-2.5 rounded-2xl px-5 py-3 text-sm font-bold backdrop-blur-sm transition-all ${rewardBadgeClasses}`}>
-                        <span className="text-xl">{rewardIcon}</span>
+                        {challenge.rewardType === "points" ? (
+                          <Image src="/images/Badge Diamant.png" alt="Diamant" width={20} height={20} className="w-5 h-5 object-contain" />
+                        ) : (
+                          <Image src="/images/Badge Centurion.png" alt="Badge" width={20} height={20} className="w-5 h-5 object-contain" />
+                        )}
                         <span>
                           {challenge.rewardType === "points" 
                             ? `${challenge.rewardLabel} points`

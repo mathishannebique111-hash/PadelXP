@@ -5,6 +5,7 @@ import StripeCheckoutButton from "@/components/billing/StripeCheckoutButton";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
 import ParallaxHalos from "@/components/ParallaxHalos";
 import PageTitle from "../PageTitle";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
@@ -160,7 +161,9 @@ export default async function BillingPage() {
             </h2>
           </div>
           {isTrialActive && (
-            <div className="text-3xl sm:text-4xl md:text-5xl flex-shrink-0">🎁</div>
+            <div className="flex-shrink-0">
+              <Image src="/images/Cadeau accueil club.png" alt="Cadeau" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 object-contain" />
+            </div>
           )}
         </div>
 
@@ -219,7 +222,7 @@ export default async function BillingPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           {/* Mensuel */}
-          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-4 sm:p-5 md:p-6 transition-all duration-300 hover:scale-105 ${
+          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
             currentPlan === "monthly"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
@@ -232,8 +235,7 @@ export default async function BillingPage() {
               </div>
             )}
             <div className="mb-3 sm:mb-4">
-              <h3 className="text-lg sm:text-xl font-extrabold text-white mb-0.5 sm:mb-1">Mensuel</h3>
-              <div className="text-[10px] sm:text-xs text-white/60">Tarif de référence</div>
+              <h3 className="text-lg sm:text-xl font-extrabold text-white">Mensuel</h3>
             </div>
             <div className="mb-4 sm:mb-5">
               <div className="flex items-baseline gap-1">
@@ -241,7 +243,7 @@ export default async function BillingPage() {
                 <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
               </div>
             </div>
-            <div className="mb-4 sm:mb-5 space-y-1.5 sm:space-y-2">
+            <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
               <div className="flex items-center">
                 <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
                 <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation mensuelle</div>
@@ -262,7 +264,7 @@ export default async function BillingPage() {
           </div>
 
           {/* Trimestriel */}
-          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-4 sm:p-5 md:p-6 transition-all duration-300 hover:scale-105 ${
+          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
             currentPlan === "quarterly"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-emerald-400/60 bg-gradient-to-br from-emerald-500/15 via-green-600/10 to-emerald-500/15 shadow-[0_12px_40px_rgba(16,185,129,0.3)]"
@@ -274,16 +276,8 @@ export default async function BillingPage() {
                 </span>
               </div>
             )}
-            {currentPlan !== "quarterly" && (
-              <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                <span className="rounded-full border-2 border-emerald-400/80 bg-gradient-to-r from-emerald-500 to-green-600 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                  -10%
-                </span>
-              </div>
-            )}
             <div className="mb-3 sm:mb-4">
-              <h3 className="text-lg sm:text-xl font-extrabold text-white mb-0.5 sm:mb-1">Trimestriel</h3>
-              <div className="text-[10px] sm:text-xs text-emerald-300 font-semibold">Économisez 10%</div>
+              <h3 className="text-lg sm:text-xl font-extrabold text-white">Trimestriel</h3>
             </div>
             <div className="mb-4 sm:mb-5">
               <div className="flex items-baseline gap-1">
@@ -294,8 +288,8 @@ export default async function BillingPage() {
                 {Math.round(quarterlyTotalPrice)}€ tous les 3 mois
               </div>
             </div>
-            <div className="mb-4 sm:mb-5 space-y-1.5 sm:space-y-2">
-              <div className="text-[10px] sm:text-xs font-semibold text-emerald-300 bg-emerald-500/20 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded w-fit -ml-1">Réduction de 10% par rapport au mensuel</div>
+            <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
+              <div className="text-xs sm:text-sm text-emerald-300 font-extrabold">Économisez 10% par rapport à l'offre mensuelle</div>
               <div className="flex items-center">
                 <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
                 <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation tous les 3 mois</div>
@@ -316,7 +310,7 @@ export default async function BillingPage() {
           </div>
 
           {/* Annuel */}
-          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-4 sm:p-5 md:p-6 transition-all duration-300 hover:scale-105 ${
+          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
             currentPlan === "annual"
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]"
@@ -330,14 +324,13 @@ export default async function BillingPage() {
             )}
             {currentPlan !== "annual" && (
               <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                <span className="rounded-full border-2 border-yellow-400/80 bg-gradient-to-r from-yellow-500 to-amber-600 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                  MEILLEUR
+                <span className="rounded-full border-2 border-yellow-400/80 bg-gradient-to-r from-yellow-500 to-amber-600 px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-xs sm:text-sm font-extrabold text-white shadow-lg">
+                  2 mois gratuits
                 </span>
               </div>
             )}
             <div className="mb-3 sm:mb-4">
-              <h3 className="text-lg sm:text-xl font-extrabold text-white mb-0.5 sm:mb-1">Annuel</h3>
-              <div className="text-[10px] sm:text-xs text-yellow-300 font-semibold">Économisez 17%</div>
+              <h3 className="text-lg sm:text-xl font-extrabold text-white">Annuel</h3>
             </div>
             <div className="mb-4 sm:mb-5">
               <div className="flex items-baseline gap-1">
@@ -348,11 +341,8 @@ export default async function BillingPage() {
                 {Math.round(annualTotalPrice)}€ par an
               </div>
             </div>
-            <div className="mb-4 sm:mb-5 space-y-1.5 sm:space-y-2">
-              <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap -ml-1">
-                <span className="text-[10px] sm:text-xs font-semibold text-yellow-300 bg-yellow-500/20 px-1.5 sm:px-2 py-0.5 rounded">Réduction de 17% par rapport au mensuel</span>
-                <span className="text-[10px] sm:text-xs text-white/60 ml-1">(≈ 2 mois offerts)</span>
-              </div>
+            <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
+              <div className="text-xs sm:text-sm text-yellow-300 font-extrabold">Économisez 17% par rapport à l'offre mensuelle</div>
               <div className="flex items-center">
                 <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
                 <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation annuelle</div>
@@ -568,7 +558,9 @@ export default async function BillingPage() {
           {/* Historique */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="text-center py-8">
-              <div className="text-4xl mb-3 opacity-50">📄</div>
+              <div className="flex justify-center mb-3 opacity-50">
+                <Image src="/images/Facturation et essai club.png" alt="Facturation" width={48} height={48} className="w-12 h-12 object-contain" />
+              </div>
               <p className="text-sm text-white/70">Aucune facture disponible pour le moment</p>
               <p className="text-xs text-white/50 mt-1">
                 Vos factures apparaîtront ici après l'activation de votre abonnement

@@ -105,11 +105,18 @@ export default function MatchForm({
           const data = await res.json();
           setBoostStats(data);
         } else {
-          console.error('Failed to load boost stats');
+          // Ne pas afficher d'erreur console si l'utilisateur n'a pas de profil (compte club)
+          // Les comptes club n'ont pas besoin de stats de boost
+          if (res.status !== 404) {
+            console.error('Failed to load boost stats:', res.status, res.statusText);
+          }
           setBoostStats(null);
         }
       } catch (error) {
-        console.error('Error loading boost stats:', error);
+        // Ne pas afficher d'erreur console si c'est une erreur silencieuse (compte club)
+        if (error instanceof Error && !error.message.includes('404')) {
+          console.error('Error loading boost stats:', error);
+        }
         setBoostStats(null);
       } finally {
         setLoadingBoostStats(false);
@@ -221,6 +228,61 @@ export default function MatchForm({
     }
   };
 
+  // Fonction pour valider un joueur en temps réel (appelée lors du blur)
+  const validatePlayerField = async (fieldName: 'partnerName' | 'opp1Name' | 'opp2Name', playerName: string) => {
+    if (!playerName.trim()) {
+      setErrors((prev) => ({ ...prev, [fieldName]: "" }));
+      return;
+    }
+
+    const validation = await validateExactPlayer(playerName);
+    
+    if (!validation.valid) {
+      setErrors((prev) => ({ ...prev, [fieldName]: validation.error || `Aucun joueur trouvé avec le nom exact "${playerName}".` }));
+      return;
+    }
+
+    if (!validation.player) {
+      setErrors((prev) => ({ ...prev, [fieldName]: `Aucun joueur trouvé avec le nom exact "${playerName}".` }));
+      return;
+    }
+
+    // Vérifier que le joueur a un prénom ET un nom dans la base de données
+    const firstName = validation.player.first_name || '';
+    const lastName = validation.player.last_name || '';
+
+    if (!firstName || !firstName.trim() || !lastName || !lastName.trim()) {
+      setErrors((prev) => ({ ...prev, [fieldName]: "Ce joueur doit avoir un prénom et un nom complet. Veuillez compléter les informations du joueur dans son profil." }));
+      return;
+    }
+
+    // Vérifier que le nom saisi correspond exactement à "prénom nom" du joueur
+    const expectedFullName = `${firstName} ${lastName}`.trim();
+    const normalizedInput = playerName.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const normalizedExpected = expectedFullName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    if (normalizedInput !== normalizedExpected) {
+      setErrors((prev) => ({ ...prev, [fieldName]: `Le nom doit être écrit exactement comme "${expectedFullName}" (prénom et nom complet).` }));
+      return;
+    }
+
+    // Le joueur est valide et le nom saisi correspond exactement, on nettoie l'erreur
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
+
+    // Stocker le joueur validé dans selectedPlayers (sans modifier le champ de saisie)
+    if (fieldName === 'partnerName') {
+      setSelectedPlayers((prev) => ({ ...prev, partner: validation.player }));
+    } else if (fieldName === 'opp1Name') {
+      setSelectedPlayers((prev) => ({ ...prev, opp1: validation.player }));
+    } else if (fieldName === 'opp2Name') {
+      setSelectedPlayers((prev) => ({ ...prev, opp2: validation.player }));
+    }
+  };
+
   // Fonction pour valider exactement un nom de joueur (sans création automatique)
   const validateExactPlayer = async (name: string): Promise<{ valid: boolean; player?: PlayerSearchResult | null; error?: string }> => {
     if (!name.trim()) {
@@ -256,15 +318,23 @@ export default function MatchForm({
 
       const player = data.player;
       
-      // Parser le display_name pour extraire first_name et last_name
-      const nameParts = player.display_name.trim().split(/\s+/);
-      const first_name = nameParts[0] || "";
-      const last_name = nameParts.slice(1).join(" ") || "";
+      // Utiliser UNIQUEMENT first_name et last_name de la base de données
+      // Ne pas extraire depuis display_name - si ces champs sont vides, c'est une erreur
+      const first_name = player.first_name || "";
+      const last_name = player.last_name || "";
+      
+      // Construire le nom complet avec prénom + nom
+      const fullName = (first_name && first_name.trim() && last_name && last_name.trim())
+        ? `${first_name.trim()} ${last_name.trim()}`.trim()
+        : player.display_name || "";
 
       console.log(`Player validated for "${name}":`, {
         id: player.id,
-        display_name: player.display_name,
+        display_name: fullName,
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
         type: player.type,
+        hasCompleteName: !!(first_name && first_name.trim() && last_name && last_name.trim())
       });
 
       const type: "user" | "guest" = (player.type || (player.email ? "user" : "guest")) as "user" | "guest";
@@ -272,11 +342,11 @@ export default function MatchForm({
       return {
         valid: true,
         player: {
-        id: player.id,
-        first_name,
-        last_name,
-        type,
-        display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
+          id: player.id,
+          first_name: first_name.trim(),
+          last_name: last_name.trim(),
+          type,
+          display_name: type === "guest" ? `${fullName} 👤` : fullName,
         },
       };
     } catch (error) {
@@ -298,6 +368,65 @@ export default function MatchForm({
     try {
       console.log("📋 Current state:", { partnerName, opp1Name, opp2Name, selectedPlayers });
       
+      // Vérifier d'abord que le joueur connecté (selfId) a un prénom et un nom
+      // Utiliser l'API pour récupérer le profil du joueur connecté AVANT de valider les autres joueurs
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          newErrors.partnerName = "Vous devez être connecté pour enregistrer un match.";
+          setErrors(newErrors);
+          setLoading(false);
+          return;
+        }
+        
+        // Utiliser l'API pour récupérer le profil (évite les problèmes RLS)
+        const profileRes = await fetch('/api/player/profile', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (!profileRes.ok) {
+          console.error("❌ Error fetching self profile from API:", profileRes.status, profileRes.statusText);
+          if (profileRes.status === 404) {
+            setErrorMessage("Votre profil n'a pas été trouvé. Veuillez contacter le support.");
+          } else {
+            setErrorMessage("Erreur lors de la vérification de votre profil. Veuillez réessayer.");
+          }
+          setLoading(false);
+          return;
+        }
+        
+        const profileData = await profileRes.json();
+        
+        console.log("🔍 Self profile data received:", {
+          id: profileData.id,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          display_name: profileData.display_name,
+          hasFirstName: profileData.hasFirstName,
+          hasLastName: profileData.hasLastName,
+          hasCompleteName: profileData.hasCompleteName
+        });
+        
+        // Vérifier que le profil a un prénom ET un nom (non vides)
+        if (!profileData.hasCompleteName) {
+          console.error("❌ Self profile missing first_name or last_name:", profileData);
+          setErrorMessage("Votre profil doit avoir un prénom et un nom complet pour enregistrer un match. Veuillez compléter vos informations dans les paramètres de votre profil.");
+          setLoading(false);
+          return;
+        }
+        
+        console.log("✅ Self profile validated:", {
+          first_name: profileData.first_name,
+          last_name: profileData.last_name
+        });
+      } catch (profileError) {
+        console.error("❌ Error checking self profile:", profileError);
+        setErrorMessage("Erreur lors de la vérification de votre profil. Veuillez réessayer.");
+        setLoading(false);
+        return;
+      }
+      
       // Valider exactement chaque joueur (sans création automatique)
       let partner: PlayerSearchResult | null = null;
       let opp1: PlayerSearchResult | null = null;
@@ -306,48 +435,105 @@ export default function MatchForm({
       // Validation du partenaire
       if (!partnerName.trim()) {
         newErrors.partnerName = "Indiquez un partenaire (prénom et nom complet)";
-        } else {
+      } else {
         console.log("🔍 Validating partner:", partnerName);
         const partnerValidation = await validateExactPlayer(partnerName);
         if (!partnerValidation.valid) {
           console.error("❌ Partner validation failed:", partnerValidation.error);
           newErrors.partnerName = partnerValidation.error || `Aucun joueur trouvé avec le nom exact "${partnerName}". Vérifiez l'orthographe (lettres, espaces, accents).`;
         } else if (partnerValidation.player) {
-          partner = partnerValidation.player;
-          setSelectedPlayers((prev) => ({ ...prev, partner }));
-          console.log("✅ Partner validated:", partner);
+          // Vérifier que le joueur a un prénom ET un nom dans la base de données
+          const partnerFirstName = partnerValidation.player.first_name || '';
+          const partnerLastName = partnerValidation.player.last_name || '';
+          
+          // Vérifier que le joueur a un prénom ET un nom (non vides dans la DB)
+          if (!partnerFirstName || !partnerFirstName.trim() || !partnerLastName || !partnerLastName.trim()) {
+            newErrors.partnerName = "Ce joueur doit avoir un prénom et un nom complet. Veuillez compléter les informations du joueur dans son profil.";
+          } else {
+            // Vérifier que le nom saisi correspond exactement à "prénom nom"
+            const expectedFullName = `${partnerFirstName} ${partnerLastName}`.trim();
+            const normalizeForComparison = (str: string) => str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const normalizedInput = normalizeForComparison(partnerName);
+            const normalizedExpected = normalizeForComparison(expectedFullName);
+
+            if (normalizedInput !== normalizedExpected) {
+              newErrors.partnerName = `Le nom doit être écrit exactement comme "${expectedFullName}" (prénom et nom complet).`;
+            } else {
+              partner = partnerValidation.player;
+              setSelectedPlayers((prev) => ({ ...prev, partner }));
+              console.log("✅ Partner validated:", partner);
+            }
+          }
         }
       }
       
       // Validation de l'opposant 1
       if (!opp1Name.trim()) {
         newErrors.opp1Name = "Indiquez un joueur (prénom et nom complet)";
-        } else {
+      } else {
         console.log("🔍 Validating opp1:", opp1Name);
         const opp1Validation = await validateExactPlayer(opp1Name);
         if (!opp1Validation.valid) {
           console.error("❌ Opp1 validation failed:", opp1Validation.error);
           newErrors.opp1Name = opp1Validation.error || `Aucun joueur trouvé avec le nom exact "${opp1Name}". Vérifiez l'orthographe (lettres, espaces, accents).`;
         } else if (opp1Validation.player) {
-          opp1 = opp1Validation.player;
-          setSelectedPlayers((prev) => ({ ...prev, opp1 }));
-          console.log("✅ Opp1 validated:", opp1);
+          // Vérifier que le joueur a un prénom ET un nom dans la base de données
+          const opp1FirstName = opp1Validation.player.first_name || '';
+          const opp1LastName = opp1Validation.player.last_name || '';
+          
+          // Vérifier que le joueur a un prénom ET un nom (non vides dans la DB)
+          if (!opp1FirstName || !opp1FirstName.trim() || !opp1LastName || !opp1LastName.trim()) {
+            newErrors.opp1Name = "Ce joueur doit avoir un prénom et un nom complet. Veuillez compléter les informations du joueur dans son profil.";
+          } else {
+            // Vérifier que le nom saisi correspond exactement à "prénom nom"
+            const expectedFullName = `${opp1FirstName} ${opp1LastName}`.trim();
+            const normalizeForComparison = (str: string) => str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const normalizedInput = normalizeForComparison(opp1Name);
+            const normalizedExpected = normalizeForComparison(expectedFullName);
+
+            if (normalizedInput !== normalizedExpected) {
+              newErrors.opp1Name = `Le nom doit être écrit exactement comme "${expectedFullName}" (prénom et nom complet).`;
+            } else {
+              opp1 = opp1Validation.player;
+              setSelectedPlayers((prev) => ({ ...prev, opp1 }));
+              console.log("✅ Opp1 validated:", opp1);
+            }
+          }
         }
       }
       
       // Validation de l'opposant 2
       if (!opp2Name.trim()) {
         newErrors.opp2Name = "Indiquez un joueur (prénom et nom complet)";
-        } else {
+      } else {
         console.log("🔍 Validating opp2:", opp2Name);
         const opp2Validation = await validateExactPlayer(opp2Name);
         if (!opp2Validation.valid) {
           console.error("❌ Opp2 validation failed:", opp2Validation.error);
           newErrors.opp2Name = opp2Validation.error || `Aucun joueur trouvé avec le nom exact "${opp2Name}". Vérifiez l'orthographe (lettres, espaces, accents).`;
         } else if (opp2Validation.player) {
-          opp2 = opp2Validation.player;
-          setSelectedPlayers((prev) => ({ ...prev, opp2 }));
-          console.log("✅ Opp2 validated:", opp2);
+          // Vérifier que le joueur a un prénom ET un nom dans la base de données
+          const opp2FirstName = opp2Validation.player.first_name || '';
+          const opp2LastName = opp2Validation.player.last_name || '';
+          
+          // Vérifier que le joueur a un prénom ET un nom (non vides dans la DB)
+          if (!opp2FirstName || !opp2FirstName.trim() || !opp2LastName || !opp2LastName.trim()) {
+            newErrors.opp2Name = "Ce joueur doit avoir un prénom et un nom complet. Veuillez compléter les informations du joueur dans son profil.";
+          } else {
+            // Vérifier que le nom saisi correspond exactement à "prénom nom"
+            const expectedFullName = `${opp2FirstName} ${opp2LastName}`.trim();
+            const normalizeForComparison = (str: string) => str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const normalizedInput = normalizeForComparison(opp2Name);
+            const normalizedExpected = normalizeForComparison(expectedFullName);
+
+            if (normalizedInput !== normalizedExpected) {
+              newErrors.opp2Name = `Le nom doit être écrit exactement comme "${expectedFullName}" (prénom et nom complet).`;
+            } else {
+              opp2 = opp2Validation.player;
+              setSelectedPlayers((prev) => ({ ...prev, opp2 }));
+              console.log("✅ Opp2 validated:", opp2);
+            }
+          }
         }
       }
       
@@ -780,7 +966,22 @@ export default function MatchForm({
             <input
               type="text"
               value={partnerName}
-              onChange={(e) => setPartnerName(e.target.value)}
+              onChange={(e) => {
+                setPartnerName(e.target.value);
+                // Nettoyer l'erreur quand l'utilisateur tape
+                if (errors.partnerName) {
+                  setErrors((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.partnerName;
+                    return newErrors;
+                  });
+                }
+              }}
+              onBlur={() => {
+                if (partnerName.trim()) {
+                  validatePlayerField('partnerName', partnerName);
+                }
+              }}
               placeholder="Prénom et nom complet"
               className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.partnerName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
@@ -801,7 +1002,22 @@ export default function MatchForm({
             <input
               type="text"
               value={opp1Name}
-              onChange={(e) => setOpp1Name(e.target.value)}
+              onChange={(e) => {
+                setOpp1Name(e.target.value);
+                // Nettoyer l'erreur quand l'utilisateur tape
+                if (errors.opp1Name) {
+                  setErrors((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.opp1Name;
+                    return newErrors;
+                  });
+                }
+              }}
+              onBlur={() => {
+                if (opp1Name.trim()) {
+                  validatePlayerField('opp1Name', opp1Name);
+                }
+              }}
               placeholder="Prénom et nom complet"
               className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.opp1Name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
@@ -816,7 +1032,22 @@ export default function MatchForm({
             <input
               type="text"
               value={opp2Name}
-              onChange={(e) => setOpp2Name(e.target.value)}
+              onChange={(e) => {
+                setOpp2Name(e.target.value);
+                // Nettoyer l'erreur quand l'utilisateur tape
+                if (errors.opp2Name) {
+                  setErrors((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.opp2Name;
+                    return newErrors;
+                  });
+                }
+              }}
+              onBlur={() => {
+                if (opp2Name.trim()) {
+                  validatePlayerField('opp2Name', opp2Name);
+                }
+              }}
               placeholder="Prénom et nom complet"
               className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.opp2Name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'

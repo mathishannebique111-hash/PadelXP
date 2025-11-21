@@ -4,6 +4,10 @@
 
 /**
  * Filtre les matchs pour ne garder que les 2 premiers matchs par jour pour chaque joueur
+ * IMPORTANT: Les matchs qui dépassent la limite quotidienne sont exclus du calcul des points.
+ * Cela signifie que NI les victoires (+10 points) NI les défaites (+3 points) ne comptent
+ * pour les matchs qui dépassent la limite de 2 matchs par jour.
+ * 
  * @param matchParticipants Array de participants avec match_id et user_id
  * @param matchesData Map ou Array de matchs avec id et played_at
  * @param maxMatchesPerDay Nombre maximum de matchs par jour (défaut: 2)

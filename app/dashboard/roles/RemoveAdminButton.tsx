@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 type RemoveAdminButtonProps = {
@@ -45,10 +46,10 @@ export default function RemoveAdminButton({ adminId, adminEmail, isPending = fal
       return (
         <button
           onClick={() => setShowConfirm(true)}
-          className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-500/25 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/20 border border-red-400/30 text-red-300 hover:bg-red-500/30 transition-colors"
           title={`Supprimer l'invitation de ${adminEmail}`}
         >
-          ✖ Supprimer
+          <Image src="/images/Poubelle page role et accés.png" alt="Supprimer" width={16} height={16} className="w-4 h-4 object-contain" />
         </button>
       );
     }
@@ -59,7 +60,7 @@ export default function RemoveAdminButton({ adminId, adminEmail, isPending = fal
         className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/20 border border-red-400/30 text-red-300 hover:bg-red-500/30 transition-colors"
         title={`Supprimer ${adminEmail}`}
       >
-        🗑️
+        <Image src="/images/Poubelle page role et accés.png" alt="Supprimer" width={16} height={16} className="w-4 h-4 object-contain" />
       </button>
     );
   }

@@ -17,15 +17,35 @@ export async function GET() {
       );
     }
 
+    // Vérifier si l'utilisateur a un profil (les comptes club n'ont pas de profil)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    // Si l'utilisateur n'a pas de profil (compte club), retourner des stats par défaut
+    if (!profile) {
+      return NextResponse.json({
+        creditsAvailable: 0,
+        usedThisMonth: 0,
+        remainingThisMonth: 0,
+        canUse: false,
+      });
+    }
+
     const stats = await getPlayerBoostStats(user.id);
 
     return NextResponse.json(stats);
   } catch (error) {
     console.error('[boost/stats] Error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    // En cas d'erreur, retourner des stats par défaut au lieu d'une erreur HTTP
+    return NextResponse.json({
+      creditsAvailable: 0,
+      usedThisMonth: 0,
+      remainingThisMonth: 0,
+      canUse: false,
+    });
   }
 }
 

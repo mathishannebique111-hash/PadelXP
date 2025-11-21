@@ -78,6 +78,13 @@ END $$;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Ne pas créer de profil joueur si c'est un compte club (role = 'owner')
+  IF NEW.raw_user_meta_data->>'role' = 'owner' THEN
+    -- C'est un compte club, on ne crée pas de profil joueur
+    RETURN NEW;
+  END IF;
+  
+  -- Sinon, créer le profil joueur comme d'habitude
   INSERT INTO public.profiles (id, display_name, email, first_name, last_name)
   VALUES (
     NEW.id,
@@ -108,6 +115,7 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION public.handle_new_user();
 
 -- 4. CRÉER LES PROFILS MANQUANTS POUR LES UTILISATEURS EXISTANTS
+-- (mais PAS pour les comptes club)
 -- ============================================
 INSERT INTO public.profiles (id, display_name, email, first_name, last_name)
 SELECT 
@@ -124,7 +132,16 @@ SELECT
 FROM auth.users u
 LEFT JOIN public.profiles p ON u.id = p.id
 WHERE p.id IS NULL
+  AND (u.raw_user_meta_data->>'role' IS NULL OR u.raw_user_meta_data->>'role' != 'owner')
 ON CONFLICT (id) DO NOTHING;
+
+-- Supprimer les profils existants pour les comptes club
+DELETE FROM public.profiles
+WHERE id IN (
+  SELECT u.id
+  FROM auth.users u
+  WHERE u.raw_user_meta_data->>'role' = 'owner'
+);
 
 -- 5. CONFIGURER LES RLS POLICIES (PERMISSIVES POUR LE MÊME CLUB)
 -- ============================================
