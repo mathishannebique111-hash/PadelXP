@@ -38,22 +38,89 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Récupérer l'utilisateur authentifié
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error('[checkout-boost] Unauthorized:', authError);
+    // Récupérer l'utilisateur authentifié avec gestion d'erreur robuste
+    let supabase;
+    try {
+      supabase = await createClient();
+      if (!supabase) {
+        console.error('[checkout-boost] Supabase client is null or undefined after creation');
+        return NextResponse.json(
+          { error: 'Erreur de configuration serveur. Veuillez rafraîchir la page et réessayer.' },
+          { status: 500 }
+        );
+      }
+    } catch (clientError) {
+      console.error('[checkout-boost] Error creating Supabase client:', clientError);
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Erreur de configuration serveur. Veuillez rafraîchir la page et réessayer.' },
+        { status: 500 }
+      );
+    }
+
+    let user;
+    let authError;
+    try {
+      const authResult = await supabase.auth.getUser();
+      user = authResult.data?.user || null;
+      authError = authResult.error || null;
+      
+      // Log pour debugging
+      if (authError) {
+        console.error('[checkout-boost] Auth error from getUser:', {
+          message: authError.message,
+          status: authError.status,
+        });
+      }
+      
+      if (!user) {
+        console.error('[checkout-boost] User is null after getUser:', {
+          hasError: !!authError,
+          errorMessage: authError?.message,
+        });
+      }
+    } catch (authException) {
+      console.error('[checkout-boost] Exception during getUser:', authException);
+      return NextResponse.json(
+        { error: 'Erreur d\'authentification. Veuillez vous reconnecter.' },
         { status: 401 }
       );
     }
 
-    // Parser le body de la requête
-    const body = await req.json();
-    priceId = body.priceId; // Le priceId est maintenant passé directement depuis le frontend
-    quantity = body.quantity || 1;
+    if (authError || !user) {
+      console.error('[checkout-boost] Unauthorized access attempt:', {
+        hasError: !!authError,
+        errorMessage: authError?.message,
+        errorStatus: authError?.status,
+        hasUser: !!user,
+      });
+      return NextResponse.json(
+        { error: 'Session expirée. Veuillez vous reconnecter.' },
+        { status: 401 }
+      );
+    }
+
+    // Vérifier que l'utilisateur a un ID valide
+    if (!user.id || typeof user.id !== 'string') {
+      console.error('[checkout-boost] Invalid user ID:', user.id);
+      return NextResponse.json(
+        { error: 'Informations utilisateur invalides. Veuillez vous reconnecter.' },
+        { status: 401 }
+      );
+    }
+
+    // Parser le body de la requête avec gestion d'erreur
+    let body;
+    try {
+      body = await req.json();
+      priceId = body?.priceId; // Le priceId est maintenant passé directement depuis le frontend
+      quantity = body?.quantity || 1;
+    } catch (parseError) {
+      console.error('[checkout-boost] Error parsing request body:', parseError);
+      return NextResponse.json(
+        { error: 'Format de requête invalide' },
+        { status: 400 }
+      );
+    }
 
     // Debug: Vérifier les valeurs reçues
     console.log('[checkout-boost] Request body:', {
@@ -117,80 +184,133 @@ export async function POST(req: NextRequest) {
     });
 
     // Créer la session de checkout en mode "payment" (paiement unique, pas abonnement)
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment', // Paiement unique
-      line_items: [
-        {
-          price: priceId,
-          quantity: stripeQuantity, // Toujours 1 pour les produits fixes
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: 'payment', // Paiement unique
+        line_items: [
+          {
+            price: priceId,
+            quantity: stripeQuantity, // Toujours 1 pour les produits fixes
+          },
+        ],
+        success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/boost/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/boost?cancelled=true`,
+        customer_email: user.email || undefined,
+        metadata: {
+          user_id: user.id,
+          type: 'player_boost',
+          quantity: boostsToCredit.toString(), // Quantité réelle de boosts à créditer (1, 5 ou 10)
+          price_id: priceId, // Stocker le Price ID pour référence
         },
-      ],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/boost/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/boost?cancelled=true`,
-      customer_email: user.email || undefined,
-      metadata: {
-        user_id: user.id,
-        type: 'player_boost',
-        quantity: boostsToCredit.toString(), // Quantité réelle de boosts à créditer (1, 5 ou 10)
-        price_id: priceId, // Stocker le Price ID pour référence
-      },
-    });
+      });
+    } catch (stripeError) {
+      console.error('[checkout-boost] Stripe session creation error:', stripeError);
+      if (stripeError instanceof Stripe.errors.StripeError) {
+        throw stripeError; // Serà géré dans le catch global
+      }
+      throw new Error(`Erreur lors de la création de la session Stripe: ${stripeError instanceof Error ? stripeError.message : 'Erreur inconnue'}`);
+    }
 
-    // Renvoyer l'URL de la session
-    if (!session.url) {
+    // Vérifier que la session et l'URL existent
+    if (!session) {
+      console.error('[checkout-boost] Session created but is null/undefined');
       return NextResponse.json(
-        { error: 'Failed to create checkout session URL' },
+        { error: 'Échec de la création de la session de paiement' },
+        { status: 500 }
+      );
+    }
+
+    if (!session.url || typeof session.url !== 'string') {
+      console.error('[checkout-boost] Session URL is missing or invalid:', session);
+      return NextResponse.json(
+        { error: 'URL de session de paiement manquante' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    // Logger l'erreur complète pour le debugging
-    let errorMessage = 'Unknown error';
+    // Logger l'erreur complète pour le debugging avec gestion robuste
+    let errorMessage = 'Erreur lors de la création de la session de paiement';
     let errorDetails: any = {};
+    let statusCode = 500;
 
-    if (error instanceof Stripe.errors.StripeError) {
-      errorMessage = error.message;
-      errorDetails = {
-        type: error.type,
-        code: error.code,
-        param: error.param,
-        message: error.message,
-      };
+    try {
+      if (error instanceof Stripe.errors.StripeError) {
+        errorMessage = error.message || errorMessage;
+        errorDetails = {
+          type: error.type,
+          code: error.code,
+          param: error.param,
+          message: error.message,
+        };
 
-      // Message plus spécifique selon le type d'erreur
-      if (error.type === 'StripeInvalidRequestError') {
-        if (error.message?.includes('No such price')) {
-          errorMessage = `Price ID invalide : "${priceId}". Vérifiez que vous utilisez un Price ID de test Stripe valide.`;
-        } else if (error.message?.includes('Invalid API Key')) {
-          errorMessage = 'Clé API Stripe invalide. Vérifiez votre STRIPE_SECRET_KEY.';
+        // Message plus spécifique selon le type d'erreur
+        if (error.type === 'StripeInvalidRequestError') {
+          if (error.message?.includes('No such price')) {
+            errorMessage = `Price ID invalide : "${priceId || 'non fourni'}". Vérifiez que vous utilisez un Price ID de test Stripe valide.`;
+            statusCode = 400;
+          } else if (error.message?.includes('Invalid API Key')) {
+            errorMessage = 'Clé API Stripe invalide. Vérifiez votre STRIPE_SECRET_KEY.';
+            statusCode = 500;
+          }
+        } else if (error.type === 'StripeAuthenticationError') {
+          errorMessage = 'Erreur d\'authentification Stripe. Vérifiez votre configuration.';
+          statusCode = 500;
         }
+      } else if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+        errorDetails = {
+          message: error.message,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        };
+        
+        // Gérer les erreurs spécifiques
+        if (error.message?.includes('Unauthorized') || error.message?.includes('auth')) {
+          statusCode = 401;
+        } else if (error.message?.includes('invalid') || error.message?.includes('Invalid')) {
+          statusCode = 400;
+        }
+      } else {
+        errorDetails = { raw: String(error) };
       }
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-      errorDetails = {
-        message: error.message,
-        stack: error.stack,
-      };
-    } else {
-      errorDetails = { raw: String(error) };
+    } catch (nestedError) {
+      console.error('[checkout-boost] Error processing error:', nestedError);
+      // En cas d'erreur lors du traitement de l'erreur, utiliser un message générique
+      errorMessage = 'Erreur serveur lors de la création de la session de paiement';
+      statusCode = 500;
     }
 
     console.error('[checkout-boost] Stripe checkout error:', {
       error: errorMessage,
-      details: errorDetails,
+      details: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
       priceId: priceId || 'unknown',
       quantity,
     });
 
-    return NextResponse.json(
-      {
+    // Toujours retourner une réponse JSON valide avec gestion d'erreur
+    try {
+      const responseData: any = {
         error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
-      },
-      { status: 500 }
-    );
+      };
+      
+      if (process.env.NODE_ENV === 'development' && errorDetails && Object.keys(errorDetails).length > 0) {
+        responseData.details = errorDetails;
+      }
+
+      return NextResponse.json(responseData, { status: statusCode });
+    } catch (jsonError) {
+      // En dernier recours, retourner une réponse simple
+      console.error('[checkout-boost] Error creating error response:', jsonError);
+      return new NextResponse(
+        JSON.stringify({ error: 'Erreur serveur critique' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
   }
 }
 

@@ -56,18 +56,110 @@ export async function getPlayerBoostCreditsAvailable(userId: string): Promise<nu
   }
 
   try {
-    const { count, error } = await supabaseAdmin
+    console.log("[boost-utils] Counting boost credits for user:", userId);
+    
+    // Vérifier d'abord que le client admin est disponible
+    if (!supabaseAdmin) {
+      console.error("[boost-utils] Supabase admin client is null or undefined");
+      return 0;
+    }
+    
+    // Récupérer tous les crédits pour ce user_id (même consommés pour debug)
+    const { data: allCreditsData, error: allCreditsError } = await supabaseAdmin
+      .from("player_boost_credits")
+      .select("id, user_id, consumed_at, created_at")
+      .eq("user_id", userId);
+
+    if (allCreditsError) {
+      console.error("[boost-utils] Error fetching all credits:", allCreditsError);
+      logSupabaseError("Error fetching all boost credits", allCreditsError);
+    } else {
+      console.log("[boost-utils] All credits for user (including consumed):", allCreditsData?.length || 0);
+      if (allCreditsData && allCreditsData.length > 0) {
+        console.log("[boost-utils] Sample credit data:", allCreditsData[0]);
+      }
+    }
+
+    // Méthode 1: Récupérer tous les crédits et filtrer
+    const { data: creditsData, error: fetchError } = await supabaseAdmin
+      .from("player_boost_credits")
+      .select("id, user_id, consumed_at, created_at")
+      .eq("user_id", userId)
+      .is("consumed_at", null);
+
+    if (fetchError) {
+      console.error("[boost-utils] Error fetching available credits:", fetchError);
+      logSupabaseError("Error fetching available boost credits", fetchError);
+      // Essayer une autre approche : vérifier si consumed_at est null ou undefined
+      const { data: creditsDataAlt, error: fetchErrorAlt } = await supabaseAdmin
+        .from("player_boost_credits")
+        .select("id, user_id, consumed_at")
+        .eq("user_id", userId);
+      
+      if (!fetchErrorAlt && creditsDataAlt) {
+        const availableCount = creditsDataAlt.filter(c => !c.consumed_at).length;
+        console.log("[boost-utils] Available credits (alt method):", availableCount);
+        return availableCount;
+      }
+      return 0;
+    }
+
+    const count = creditsData?.length || 0;
+    console.log("[boost-utils] Available boost credits (method 1 - filter):", count);
+    
+    if (creditsData && creditsData.length > 0) {
+      console.log("[boost-utils] Available credits details:", creditsData.map(c => ({
+        id: c.id,
+        user_id: c.user_id,
+        consumed_at: c.consumed_at,
+        created_at: c.created_at
+      })));
+    }
+
+    // Méthode 2: Utiliser count pour vérifier
+    const { count: countFromQuery, error: countError } = await supabaseAdmin
       .from("player_boost_credits")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .is("consumed_at", null);
 
-    if (error) {
-      logSupabaseError("Error counting boost credits", error);
-      return 0;
+    if (countError) {
+      console.error("[boost-utils] Error counting boost credits:", countError);
+      logSupabaseError("Error counting boost credits", countError);
+      // Retourner le count de la méthode 1
+      console.log("[boost-utils] Using method 1 count:", count);
+      return count;
     }
 
-    return count || 0;
+    console.log("[boost-utils] Available boost credits (method 2 - count):", countFromQuery);
+
+    // Méthode 3: Double vérification avec une requête explicite
+    const { data: directCheck, error: directError } = await supabaseAdmin
+      .from("player_boost_credits")
+      .select("id")
+      .eq("user_id", userId)
+      .or("consumed_at.is.null");
+    
+    const directCount = directCheck?.length || 0;
+    console.log("[boost-utils] Available boost credits (method 3 - direct):", directCount);
+
+    // Prendre le maximum entre les trois méthodes pour être sûr
+    const counts = [count, countFromQuery || 0, directCount].filter(c => typeof c === 'number');
+    const finalCount = counts.length > 0 ? Math.max(...counts) : 0;
+    
+    console.log("[boost-utils] Final count for user:", userId, "is", finalCount, "(from counts:", counts, ")");
+    
+    // Si on a récupéré tous les crédits, vérifier manuellement
+    if (allCreditsData) {
+      const manualCount = allCreditsData.filter(c => c.consumed_at === null || c.consumed_at === undefined).length;
+      console.log("[boost-utils] Manual count from all credits:", manualCount);
+      if (manualCount !== finalCount) {
+        console.warn("[boost-utils] Count mismatch! Manual:", manualCount, "vs Final:", finalCount);
+        return manualCount; // Utiliser le compte manuel qui est plus fiable
+      }
+    }
+    
+    return finalCount;
   } catch (error) {
     logSupabaseError("Exception counting boost credits", error);
     return 0;
@@ -195,12 +287,28 @@ export async function consumeBoostForMatch(
     }
 
     // Calculer les points après boost (+30%)
+    // Exemple: 10 * (1 + 0.3) = 10 * 1.3 = 13 points
     const pointsAfterBoost = Math.round(pointsBeforeBoost * (1 + BOOST_PERCENTAGE));
+    
+    console.log(`[consumeBoostForMatch] Calculating boosted points:`, {
+      pointsBeforeBoost,
+      BOOST_PERCENTAGE,
+      calculation: `${pointsBeforeBoost} * (1 + ${BOOST_PERCENTAGE}) = ${pointsBeforeBoost * (1 + BOOST_PERCENTAGE)}`,
+      pointsAfterBoost: Math.round(pointsBeforeBoost * (1 + BOOST_PERCENTAGE)),
+      finalValue: pointsAfterBoost
+    });
 
     // Marquer le crédit comme consommé
+    console.log(`[consumeBoostForMatch] Marking credit as consumed:`, {
+      creditId: availableCredit.id,
+      userId,
+      timestamp: new Date().toISOString()
+    });
+    
+    const consumedAt = new Date().toISOString();
     const { error: consumeError } = await supabaseAdmin
       .from("player_boost_credits")
-      .update({ consumed_at: new Date().toISOString() })
+      .update({ consumed_at: consumedAt })
       .eq("id", availableCredit.id);
 
     if (consumeError) {
@@ -211,7 +319,40 @@ export async function consumeBoostForMatch(
       };
     }
 
-    // Enregistrer l'utilisation du boost
+    // Vérifier que le crédit a bien été consommé
+    const { data: verifyCredit, error: verifyError } = await supabaseAdmin
+      .from("player_boost_credits")
+      .select("id, consumed_at")
+      .eq("id", availableCredit.id)
+      .single();
+
+    if (verifyError || !verifyCredit || !verifyCredit.consumed_at) {
+      console.error(`[consumeBoostForMatch] ❌ Credit not consumed properly:`, {
+        creditId: availableCredit.id,
+        verifyError,
+        verifyCredit
+      });
+      return {
+        success: false,
+        error: "Erreur lors de la vérification de la consommation du boost",
+      };
+    }
+
+    console.log(`[consumeBoostForMatch] ✅ Credit consumed successfully:`, {
+      creditId: availableCredit.id,
+      consumedAt: verifyCredit.consumed_at
+    });
+
+    // Enregistrer l'utilisation du boost avec les points boostés (13 points au lieu de 10)
+    console.log(`[consumeBoostForMatch] Recording boost use in database:`, {
+      userId,
+      matchId,
+      boostCreditId: availableCredit.id,
+      pointsBeforeBoost,
+      pointsAfterBoost,
+      percentage: BOOST_PERCENTAGE
+    });
+    
     const { data: boostUse, error: useError } = await supabaseAdmin
       .from("player_boost_uses")
       .insert({
@@ -220,9 +361,9 @@ export async function consumeBoostForMatch(
         boost_credit_id: availableCredit.id,
         percentage: BOOST_PERCENTAGE,
         points_before_boost: pointsBeforeBoost,
-        points_after_boost: pointsAfterBoost,
+        points_after_boost: pointsAfterBoost, // 13 points au lieu de 10
       })
-      .select("id")
+      .select("id, points_after_boost, points_before_boost")
       .single();
 
     if (useError || !boostUse) {
@@ -237,6 +378,13 @@ export async function consumeBoostForMatch(
         error: "Erreur lors de l'enregistrement de l'utilisation du boost",
       };
     }
+
+    console.log(`[consumeBoostForMatch] ✅ Boost use recorded successfully:`, {
+      boostUseId: boostUse.id,
+      pointsBeforeBoost: boostUse.points_before_boost,
+      pointsAfterBoost: boostUse.points_after_boost,
+      expectedPointsAfterBoost: pointsAfterBoost
+    });
 
     return {
       success: true,
@@ -326,20 +474,32 @@ export async function getPlayerBoostStats(userId: string): Promise<{
   remainingThisMonth: number;
   canUse: boolean;
 }> {
+  console.log("[boost-utils] Getting boost stats for user:", userId);
+  
   const [creditsAvailable, usedThisMonth] = await Promise.all([
     getPlayerBoostCreditsAvailable(userId),
     getPlayerBoostsUsedThisMonth(userId),
   ]);
 
+  console.log("[boost-utils] Boost stats calculated:", {
+    userId,
+    creditsAvailable,
+    usedThisMonth,
+  });
+
   const remainingThisMonth = Math.max(0, MAX_BOOSTS_PER_MONTH - usedThisMonth);
   const canUse = creditsAvailable > 0 && usedThisMonth < MAX_BOOSTS_PER_MONTH;
 
-  return {
+  const stats = {
     creditsAvailable,
     usedThisMonth,
     remainingThisMonth,
     canUse,
   };
+
+  console.log("[boost-utils] Final boost stats:", stats);
+
+  return stats;
 }
 
 

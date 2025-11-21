@@ -180,15 +180,7 @@ export default function ClubsHeroSection() {
           >
             {/* Mockup classement */}
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
-              <div className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2">
-                <Image 
-                  src="/images/Trophée page badges.png" 
-                  alt="Trophée" 
-                  width={20} 
-                  height={20} 
-                  className="flex-shrink-0"
-                  unoptimized
-                />
+              <div className="text-sm font-semibold text-white/80 mb-4">
                 CLASSEMENT - CLUB PADEL TOULOUSE
               </div>
               <div className="space-y-3">

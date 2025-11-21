@@ -12,6 +12,14 @@ import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import Image from "next/image";
 
+function tierForPoints(points: number) {
+  if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
+  if (points >= 300) return { label: "Diamant", className: "bg-gradient-to-r from-cyan-500 to-blue-500 text-white", nextAt: 500 };
+  if (points >= 200) return { label: "Or", className: "bg-gradient-to-r from-amber-400 to-yellow-500 text-white", nextAt: 300 };
+  if (points >= 100) return { label: "Argent", className: "bg-gradient-to-r from-zinc-300 to-zinc-400 text-zinc-800", nextAt: 200 };
+  return { label: "Bronze", className: "bg-gradient-to-r from-orange-400 to-orange-600 text-white", nextAt: 100 };
+}
+
 export const dynamic = "force-dynamic";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques

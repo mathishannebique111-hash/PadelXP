@@ -51,7 +51,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_player_boost_uses_credit_unique
 -- 3. RLS Policies pour player_boost_credits
 ALTER TABLE public.player_boost_credits ENABLE ROW LEVEL SECURITY;
 
--- Les joueurs peuvent voir leurs propres crédits
+-- Les joueurs peuvent voir leurs propres crédits (supprimer d'abord si elle existe)
+DROP POLICY IF EXISTS "Users can view their own boost credits" ON public.player_boost_credits;
 CREATE POLICY "Users can view their own boost credits"
   ON public.player_boost_credits
   FOR SELECT
@@ -63,7 +64,8 @@ CREATE POLICY "Users can view their own boost credits"
 -- 4. RLS Policies pour player_boost_uses
 ALTER TABLE public.player_boost_uses ENABLE ROW LEVEL SECURITY;
 
--- Les joueurs peuvent voir leurs propres utilisations de boost
+-- Les joueurs peuvent voir leurs propres utilisations de boost (supprimer d'abord si elle existe)
+DROP POLICY IF EXISTS "Users can view their own boost uses" ON public.player_boost_uses;
 CREATE POLICY "Users can view their own boost uses"
   ON public.player_boost_uses
   FOR SELECT

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Vérifier l'authentification
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

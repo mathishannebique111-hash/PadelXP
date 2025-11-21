@@ -282,8 +282,7 @@ function RankingFeature() {
       {/* Classement avec Top 3 et liste globale */}
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl p-6 flex flex-col">
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-white text-center flex items-center justify-center gap-2">
-            <Image src="/images/Trophée page badges.png" alt="Trophée" width={24} height={24} className="flex-shrink-0" unoptimized />
+          <h3 className="text-xl font-bold text-white text-center">
             CLASSEMENT - CLUB PADEL TOULOUSE
           </h3>
         </div>

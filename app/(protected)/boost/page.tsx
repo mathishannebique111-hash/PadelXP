@@ -4,6 +4,7 @@ import { getPlayerBoostStats } from "@/lib/utils/boost-utils";
 import BoostPurchaseButton from "@/components/BoostPurchaseButton";
 import { BOOST_PRICE_IDS, BOOST_PRICES } from "@/lib/config/boost-prices";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import BoostCreditChecker from "@/components/BoostCreditChecker";
 
 export const dynamic = "force-dynamic";
 
@@ -78,8 +79,8 @@ export default async function BoostPage() {
           <div className="relative z-10 flex flex-col items-center justify-center">
             <div className="mb-3 flex justify-center">
               <img 
-                src="/images/Éclair%20boost.png" 
-                alt="Éclair boost" 
+                src="/images/accélération page boost.png" 
+                alt="Accélération boost" 
                 className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
               />
             </div>
@@ -151,6 +152,11 @@ export default async function BoostPage() {
         </div>
       </div>
 
+        {/* Boost Credit Checker */}
+        <BoostCreditChecker 
+          currentStats={boostStats}
+        />
+
         {/* Stats Section */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-white bg-white p-5 backdrop-blur-sm">
@@ -172,7 +178,6 @@ export default async function BoostPage() {
         <h3 className="mb-4 text-xl font-semibold text-white">Comment ça marche ?</h3>
         <ul className="space-y-3">
           <li className="flex items-start gap-3">
-            <BadgeIconDisplay icon="🎯" size={20} className="flex-shrink-0 mt-0.5" />
             <div>
               <strong className="text-sm font-semibold text-white">Active un boost lors de l'enregistrement d'un match</strong>
               <p className="mt-1 text-xs text-white/60 font-normal">
@@ -181,7 +186,6 @@ export default async function BoostPage() {
             </div>
           </li>
           <li className="flex items-start gap-3">
-            <BadgeIconDisplay icon="🏆" size={20} className="flex-shrink-0 mt-0.5" />
             <div>
               <strong className="text-sm font-semibold text-white">Gagne +30% de points si tu gagnes</strong>
               <p className="mt-1 text-xs text-white/60 font-normal">
@@ -190,7 +194,6 @@ export default async function BoostPage() {
             </div>
           </li>
           <li className="flex items-start gap-3">
-            <span className="text-base">📊</span>
             <div>
               <strong className="text-sm font-semibold text-white">Limite de 10 boosts par mois</strong>
               <p className="mt-1 text-xs text-white/60 font-normal">

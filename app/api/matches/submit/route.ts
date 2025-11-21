@@ -5,7 +5,7 @@ import { createHash } from "crypto";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
-import { consumeBoostForMatch, canPlayerUseBoost } from "@/lib/utils/boost-utils";
+import { consumeBoostForMatch, canPlayerUseBoost, getPlayerBoostCreditsAvailable } from "@/lib/utils/boost-utils";
 
 const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -363,38 +363,69 @@ export async function POST(req: Request) {
       
       if (isWinner) {
         // Le joueur a gagné, vérifier s'il peut utiliser un boost
-        const canUse = await canPlayerUseBoost(user.id);
+        // Vérifier d'abord si le joueur n'a pas atteint sa limite quotidienne de matchs
+        const isUserOverLimit = playersOverLimit.includes(user.id);
         
-        if (canUse.canUse) {
-          // Points normaux pour une victoire : +10
-          const pointsBeforeBoost = 10;
+        if (!isUserOverLimit) {
+          // Le joueur n'a pas atteint sa limite quotidienne, vérifier s'il a des crédits disponibles
+          const { getPlayerBoostCreditsAvailable } = await import('@/lib/utils/boost-utils');
+          const creditsAvailable = await getPlayerBoostCreditsAvailable(user.id);
           
-          // Consommer le boost
-          const boostResult = await consumeBoostForMatch(
-            user.id,
-            match.id,
-            pointsBeforeBoost
-          );
-          
-          if (boostResult.success && boostResult.pointsAfterBoost) {
-            boostApplied = true;
-            boostPointsInfo = {
-              before: pointsBeforeBoost,
-              after: boostResult.pointsAfterBoost,
-            };
-            console.log("✅ Boost applied successfully:", {
-              userId: user.id,
-              matchId: match.id,
-              pointsBefore: pointsBeforeBoost,
-              pointsAfter: boostResult.pointsAfterBoost,
-            });
+          if (creditsAvailable > 0) {
+            // Le joueur a des crédits disponibles et n'a pas atteint sa limite quotidienne
+            // Vérifier aussi la limite mensuelle avant d'appliquer le boost
+            const canUse = await canPlayerUseBoost(user.id);
+            
+            if (canUse.canUse) {
+              // Points normaux pour une victoire : +10
+              const pointsBeforeBoost = 10;
+              
+              // Consommer le boost
+              const boostResult = await consumeBoostForMatch(
+                user.id,
+                match.id,
+                pointsBeforeBoost
+              );
+              
+              if (boostResult.success && boostResult.pointsAfterBoost) {
+                boostApplied = true;
+                boostPointsInfo = {
+                  before: pointsBeforeBoost,
+                  after: boostResult.pointsAfterBoost,
+                };
+                console.log("✅ Boost applied successfully:", {
+                  userId: user.id,
+                  matchId: match.id,
+                  pointsBefore: pointsBeforeBoost,
+                  pointsAfter: boostResult.pointsAfterBoost,
+                });
+                
+                // Vérifier que le boost a bien été consommé en recalculant les stats
+                const { getPlayerBoostCreditsAvailable } = await import('@/lib/utils/boost-utils');
+                const creditsAfterConsumption = await getPlayerBoostCreditsAvailable(user.id);
+                console.log("✅ Boost stats after consumption:", {
+                  userId: user.id,
+                  creditsBefore: creditsAvailable,
+                  creditsAfter: creditsAfterConsumption,
+                  expectedAfter: creditsAvailable - 1
+                });
+              } else {
+                boostError = boostResult.error || "Erreur lors de l'application du boost";
+                console.error("❌ Boost application failed:", boostError);
+              }
+            } else {
+              // Le joueur a atteint sa limite mensuelle de boosts
+              boostError = canUse.reason || "Tu as atteint la limite mensuelle de 10 boosts";
+              console.warn("⚠️ Boost cannot be used (monthly limit reached):", boostError);
+            }
           } else {
-            boostError = boostResult.error || "Erreur lors de l'application du boost";
-            console.error("❌ Boost application failed:", boostError);
+            boostError = "Tu n'as plus de boosts disponibles";
+            console.warn("⚠️ Boost requested but no credits available");
           }
         } else {
-          boostError = canUse.reason || "Impossible d'utiliser un boost";
-          console.warn("⚠️ Boost cannot be used:", boostError);
+          // Le joueur a atteint sa limite quotidienne de matchs
+          boostError = "Le boost ne peut pas être appliqué car tu as déjà atteint ta limite de 2 matchs par jour";
+          console.warn("⚠️ Boost requested but player has reached daily match limit");
         }
       } else {
         boostError = "Le boost ne peut être utilisé que si tu gagnes le match";

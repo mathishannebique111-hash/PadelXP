@@ -49,22 +49,21 @@ export default function BoostPurchaseButton({
 
   // Icônes selon le pack
   const getIcon = () => {
-    if (quantity === 1) return "⚡";
+    if (quantity === 1) return "/images/éclair page avis.png";
     if (quantity === 5) return "/images/Flamme page badges.png";
-    if (quantity === 10) return "🚀";
-    return "⚡";
+    if (quantity === 10) return "/images/fusée page boost.png";
+    return "/images/éclair page avis.png";
   };
   
   const getIconType = () => {
-    if (quantity === 5) return "image";
-    return "emoji";
+    return "image";
   };
 
   // Couleurs de fond selon le pack
   const getBackgroundGradient = () => {
     if (isFeatured) {
-      // Pack 10 - corail/rouge-orange désaturé, premium
-      return "bg-gradient-to-br from-[#FF6B5A] via-[#FF7A6B] to-[#FF5A4A]";
+      // Pack 10 - rouge très prononcé
+      return "bg-gradient-to-br from-[#FF3333] via-[#FF4444] to-[#FF2222]";
     }
     // Pack 1 et 5 - bleu foncé élégant
     return "bg-gradient-to-br from-[#0F1B3D] via-[#1A2B4D] to-[#0F1B3D]";
@@ -100,20 +99,64 @@ export default function BoostPurchaseButton({
         }),
       });
 
+      // Gérer les erreurs HTTP de manière robuste
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: "Erreur serveur" }));
-        throw new Error(errorData.error || "Erreur lors de la création de la session de paiement");
+        let errorMessage = "Erreur lors de la création de la session de paiement";
+        try {
+          const errorData = await res.json();
+          if (errorData && typeof errorData === 'object' && 'error' in errorData) {
+            errorMessage = errorData.error || errorMessage;
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          }
+        } catch (parseError) {
+          // Si le JSON ne peut pas être parsé, utiliser le message par défaut
+          console.error("Error parsing error response:", parseError);
+          errorMessage = `Erreur serveur (${res.status}): ${res.statusText || 'Erreur inconnue'}`;
+        }
+        
+        // Gérer spécifiquement les erreurs d'authentification
+        if (res.status === 401) {
+          errorMessage = errorMessage || "Session expirée. Veuillez vous reconnecter.";
+          // Optionnel : rediriger vers la page de connexion
+          setTimeout(() => {
+            window.location.href = '/login?redirect=/boost';
+          }, 2000);
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
-      } else {
-        throw new Error("URL de paiement non reçue");
+      // Parser la réponse avec gestion d'erreur robuste
+      let responseData;
+      try {
+        responseData = await res.json();
+      } catch (parseError) {
+        console.error("Error parsing success response:", parseError);
+        throw new Error("Erreur lors de la lecture de la réponse du serveur");
       }
+
+      // Vérifier que l'URL existe et est valide
+      if (!responseData || typeof responseData !== 'object' || !responseData.url) {
+        console.error("Invalid response data:", responseData);
+        throw new Error("URL de paiement non reçue du serveur");
+      }
+
+      const { url } = responseData;
+      if (typeof url !== 'string' || !url.trim()) {
+        throw new Error("URL de paiement invalide");
+      }
+
+      // Rediriger vers l'URL de paiement Stripe
+      window.location.href = url;
     } catch (err) {
       console.error("Error purchasing boosts:", err);
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : typeof err === 'string'
+        ? err
+        : "Erreur inconnue lors de la création de la session de paiement";
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -135,7 +178,7 @@ export default function BoostPurchaseButton({
     : "p-4 sm:p-5"; // Cartes 1 et 5
   
   const cardClasses = isFeatured
-    ? `${cardBaseClasses} ${cardPadding} z-10 scale-[1.02] sm:scale-[1.05] shadow-xl border-2 border-white/40 shadow-[0_0_30px_rgba(255,107,90,0.25)] hover:shadow-[0_0_40px_rgba(255,107,90,0.35)] active:scale-[0.99] active:opacity-90 active:duration-150`
+    ? `${cardBaseClasses} ${cardPadding} z-10 scale-[1.02] sm:scale-[1.05] shadow-xl border-2 border-white/40 shadow-[0_0_30px_rgba(255,51,51,0.25)] hover:shadow-[0_0_40px_rgba(255,51,51,0.35)] active:scale-[0.99] active:opacity-90 active:duration-150`
     : `${cardBaseClasses} ${cardPadding} shadow-lg border border-white/20 hover:shadow-xl active:scale-[0.99] active:opacity-90 active:duration-150`;
 
   // Vérifier que le priceId est défini
@@ -171,7 +214,7 @@ export default function BoostPurchaseButton({
 
         {/* Halo pour le pack 10 (glow subtil) */}
         {isFeatured && (
-          <div className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_50%_50%,rgba(255,107,90,0.15),transparent_70%)] pointer-events-none" />
+          <div className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_50%_50%,rgba(255,51,51,0.15),transparent_70%)] pointer-events-none" />
         )}
 
         <button
@@ -182,7 +225,7 @@ export default function BoostPurchaseButton({
           {/* Zone icône + titre + badges avec hauteur minimale fixe (réduite) */}
           <div className="min-h-[100px] sm:min-h-[110px] flex flex-col items-center justify-start">
             {/* Icône */}
-            <div className={`mb-2 flex-shrink-0 ${getIconType() === 'image' ? '' : `${getIconColor()} text-3xl sm:text-4xl`}`}>
+            <div className={`mb-2 flex-shrink-0 ${getIconType() === 'image' ? '' : `${getIconColor()} text-3xl sm:text-4xl`} ${isFeatured && quantity === 10 ? 'mt-2' : ''}`}>
               {getIconType() === 'image' ? (
                 <Image src={getIcon() as string} alt="Boost" width={32} height={32} className="w-8 h-8 sm:w-10 sm:h-10" unoptimized />
               ) : (
@@ -220,7 +263,7 @@ export default function BoostPurchaseButton({
           {/* Message d'offre (uniquement pack 10) */}
           {isFeatured && (
             <div className="text-sm sm:text-base text-white font-semibold mb-3 text-center">
-              🚀 10 boosts pour le prix de 9 !
+              10 boosts pour le prix de 9 !
             </div>
           )}
 

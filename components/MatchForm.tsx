@@ -89,41 +89,101 @@ export default function MatchForm({
     }
   };
 
-  // Charger les stats de boost au montage
+  // Charger les stats de boost au montage et les recharger périodiquement
   useEffect(() => {
+    let cancelled = false;
+    
     async function loadBoostStats() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        if (!user || cancelled) {
           setBoostStats(null);
           setLoadingBoostStats(false);
           return;
         }
 
-        const res = await fetch('/api/player/boost/stats');
+        // Forcer le rechargement avec un timestamp unique
+        const timestamp = Date.now();
+        const res = await fetch(`/api/player/boost/stats?t=${timestamp}`, {
+          method: 'GET',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        });
+        
+        if (cancelled) return;
+        
         if (res.ok) {
           const data = await res.json();
-          setBoostStats(data);
-        } else {
-          // Ne pas afficher d'erreur console si l'utilisateur n'a pas de profil (compte club)
-          // Les comptes club n'ont pas besoin de stats de boost
-          if (res.status !== 404) {
-            console.error('Failed to load boost stats:', res.status, res.statusText);
+          console.log('[MatchForm] ===== RAW API RESPONSE =====');
+          console.log('[MatchForm] Raw boost stats response:', JSON.stringify(data, null, 2));
+          
+          if (data && typeof data === 'object' && !cancelled) {
+            // Utiliser directement les valeurs de l'API - FORCER LA CONVERSION EN NOMBRE
+            const creditsAvailable = Number(data.creditsAvailable) || 0;
+            const usedThisMonth = Number(data.usedThisMonth) || 0;
+            const remainingThisMonth = Number(data.remainingThisMonth) || 0;
+            const canUse = creditsAvailable > 0 && usedThisMonth < 10;
+            
+            const stats = {
+              creditsAvailable,
+              usedThisMonth,
+              remainingThisMonth,
+              canUse,
+            };
+            
+            console.log('[MatchForm] ===== BOOST STATS PARSED =====');
+            console.log('[MatchForm] creditsAvailable:', creditsAvailable, 'type:', typeof creditsAvailable);
+            console.log('[MatchForm] Number(creditsAvailable):', Number(creditsAvailable));
+            console.log('[MatchForm] creditsAvailable >= 1?', creditsAvailable >= 1);
+            console.log('[MatchForm] Checkbox will be:', creditsAvailable >= 1 ? '✅ ENABLED' : '❌ DISABLED');
+            console.log('[MatchForm] Full stats:', stats);
+            console.log('[MatchForm] =============================');
+            
+            if (!cancelled) {
+              setBoostStats(stats);
+              // Forcer un re-render en mettant à jour l'état
+              console.log('[MatchForm] State updated with stats:', stats);
+            }
+          } else if (!cancelled) {
+            console.error('[MatchForm] ❌ Invalid boost stats data:', data);
+            setBoostStats(null);
           }
+        } else if (!cancelled) {
+          const errorText = await res.text();
+          console.error('[MatchForm] Failed to load boost stats:', res.status, res.statusText, errorText);
           setBoostStats(null);
         }
       } catch (error) {
-        // Ne pas afficher d'erreur console si c'est une erreur silencieuse (compte club)
-        if (error instanceof Error && !error.message.includes('404')) {
-          console.error('Error loading boost stats:', error);
+        if (!cancelled && error instanceof Error && !error.message.includes('404')) {
+          console.error('[MatchForm] Error loading boost stats:', error);
         }
-        setBoostStats(null);
+        if (!cancelled) {
+          setBoostStats(null);
+        }
       } finally {
-        setLoadingBoostStats(false);
+        if (!cancelled) {
+          setLoadingBoostStats(false);
+        }
       }
     }
 
     loadBoostStats();
+    
+    // Recharger toutes les 2 secondes pour s'assurer que les données sont à jour
+    const interval = setInterval(() => {
+      if (!cancelled) {
+        loadBoostStats();
+      }
+    }, 2000);
+    
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [supabase]);
 
   const addSet = () => {
@@ -764,7 +824,7 @@ export default function MatchForm({
         winner,
         sets,
         tieBreak: hasTieBreak && tieBreak.team1Score && tieBreak.team2Score ? tieBreak : undefined,
-        useBoost: useBoost && boostStats?.canUse, // Seulement si le joueur peut utiliser un boost
+        useBoost: useBoost, // Envoyer la valeur de la case, la vérification se fera côté serveur
       };
       
       console.log("📤 Données envoyées à l'API:", JSON.stringify(payload, null, 2));
@@ -802,6 +862,47 @@ export default function MatchForm({
         if (data.boostApplied) {
           console.log("⚡ Boost applied:", data.boostPointsInfo);
           // Le message de succès inclura les infos du boost
+          
+          // Recharger immédiatement les stats de boost pour refléter la consommation
+          // Cela mettra à jour le nombre de boosts disponibles et la case à cocher
+          console.log("🔄 Reloading boost stats after boost consumption...");
+          try {
+            const timestamp = Date.now();
+            const boostRes = await fetch(`/api/player/boost/stats?t=${timestamp}`, {
+              method: 'GET',
+              cache: 'no-store',
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+              },
+            });
+            
+            if (boostRes.ok) {
+              const boostData = await boostRes.json();
+              console.log('[MatchForm] ✅ Boost stats reloaded after consumption:', boostData);
+              
+              const creditsAvailable = Number(boostData.creditsAvailable) || 0;
+              const usedThisMonth = Number(boostData.usedThisMonth) || 0;
+              const remainingThisMonth = Number(boostData.remainingThisMonth) || 0;
+              const canUse = creditsAvailable > 0 && usedThisMonth < 10;
+              
+              setBoostStats({
+                creditsAvailable,
+                usedThisMonth,
+                remainingThisMonth,
+                canUse,
+              });
+              
+              // Réinitialiser la case à cocher si plus de boosts disponibles
+              if (creditsAvailable === 0) {
+                setUseBoost(false);
+                console.log('[MatchForm] ✅ Checkbox reset (no boosts remaining)');
+              }
+            }
+          } catch (boostError) {
+            console.error('[MatchForm] ❌ Error reloading boost stats:', boostError);
+          }
         } else if (data.boostError) {
           console.warn("⚠️ Boost error:", data.boostError);
           // Afficher l'erreur de boost mais ne pas bloquer le match
@@ -1276,30 +1377,49 @@ export default function MatchForm({
                 <input
                   type="checkbox"
                   checked={useBoost}
-                  onChange={(e) => setUseBoost(e.target.checked)}
-                  disabled={!boostStats.canUse}
+                  onChange={(e) => {
+                    console.log('[MatchForm] Boost checkbox changed:', e.target.checked, 'boostStats:', boostStats);
+                    setUseBoost(e.target.checked);
+                  }}
+                  disabled={!boostStats || boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) < 1}
+                  title={boostStats && boostStats.creditsAvailable >= 1 ? `Tu as ${boostStats.creditsAvailable} boost${boostStats.creditsAvailable > 1 ? 's' : ''} disponible${boostStats.creditsAvailable > 1 ? 's' : ''}` : 'Tu n\'as pas de boosts disponibles'}
                   className="h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <span className="text-sm font-semibold text-white">
                   Appliquer un boost (+30% de points si tu gagnes)
                 </span>
               </label>
-              {boostStats.canUse && (
-                <p className="mt-2 text-xs text-white/70">
-                  Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
-                  {boostStats.usedThisMonth > 0 && (
-                    <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
-                  )}
-                </p>
+              {/* Debug info - toujours afficher pour voir les valeurs */}
+              {boostStats && (
+                <div className="mt-2 text-xs text-gray-400 font-mono">
+                  [Debug] creditsAvailable: {String(boostStats.creditsAvailable)} (type: {typeof boostStats.creditsAvailable}), 
+                  disabled: {String(!boostStats || boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) < 1)},
+                  checkbox enabled: {String(boostStats && Number(boostStats.creditsAvailable) >= 1)},
+                  raw value: {JSON.stringify(boostStats.creditsAvailable)}
+                </div>
               )}
-              {!boostStats.canUse && (
+              {boostStats && (
                 <p className="mt-2 text-xs text-white/70">
-                  {boostStats.creditsAvailable === 0 
-                    ? "Tu n'as plus de boosts disponibles. " 
-                    : `Tu as déjà utilisé ${boostStats.usedThisMonth} boost${boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci (limite de 10). `}
-                  <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
-                    Achète-en de nouveaux
-                  </a>
+                  {boostStats.creditsAvailable > 0 ? (
+                    <>
+                      Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
+                      {boostStats.usedThisMonth > 0 && (
+                        <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
+                      )}
+                      {boostStats.usedThisMonth >= 10 && (
+                        <span className="block mt-1 text-yellow-300">
+                          ⚠️ Tu as atteint la limite mensuelle de 10 boosts. Le boost ne sera pas appliqué.
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      Tu n'as plus de boosts disponibles.{" "}
+                      <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
+                        Achète-en de nouveaux
+                      </a>
+                    </>
+                  )}
                 </p>
               )}
             </div>
