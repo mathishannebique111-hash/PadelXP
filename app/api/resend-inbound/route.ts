@@ -330,21 +330,6 @@ export async function POST(req: NextRequest) {
     let detectedConversationId = conversationId;
     
     // Si pas de conversationId dans les headers, chercher dans le sujet
-    if (!detectedConversationId) {
-      // Chercher d'abord un UUID complet dans le sujet
-      let subjectMatch = subject.match(/\[([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\]/);
-      if (subjectMatch && subjectMatch[1]) {
-        detectedConversationId = subjectMatch[1];
-        console.log("Found full conversation ID in subject:", detectedConversationId);
-      }
-    }
-    
-    // Vérifier si c'est une conversation d'avis modéré (via conversationId dans review_conversations)
-    let isReviewConversation = false;
-    // Extraire le conversationId depuis les headers, le sujet, ou les références
-    let detectedConversationId = conversationId;
-    
-    // Si pas de conversationId dans les headers, chercher dans le sujet
     // Gmail peut modifier le sujet quand on répond, donc on cherche aussi sans les crochets
     if (!detectedConversationId) {
       console.log("🔍 No conversationId in headers, searching in subject:", subject);
