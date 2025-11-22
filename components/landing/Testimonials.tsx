@@ -21,7 +21,8 @@ export default function Testimonials() {
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/reviews", {
+      // Récupérer uniquement les avis positifs (4+ étoiles) pour la section "La voix de la communauté"
+      const response = await fetch("/api/reviews?minRating=4", {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache'

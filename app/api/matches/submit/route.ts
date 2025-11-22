@@ -349,8 +349,10 @@ export async function POST(req: Request) {
   let boostError: string | null = null;
   let boostPointsInfo: { before: number; after: number } | null = null;
 
+  console.log("🔍 [Match Submit] Boost check - useBoost value:", useBoost, "type:", typeof useBoost, "user:", user.id);
+  
   if (useBoost === true) {
-    console.log("⚡ Boost requested by user:", user.id);
+    console.log("⚡ [Match Submit] Boost requested by user:", user.id);
     
     // Vérifier que le joueur connecté a gagné le match
     const winner_team = Number(winner) === 1 ? team1_id : team2_id;
@@ -444,7 +446,10 @@ export async function POST(req: Request) {
     revalidatePath("/dashboard/classement");
     revalidatePath("/dashboard/membres");
     revalidatePath("/challenges");
-    console.log("✅ All paths revalidated, including /challenges");
+    revalidatePath("/"); // Page d'accueil avec les points
+    revalidatePath("/matches/history"); // Historique des matchs
+    revalidatePath("/boost"); // Page des boosts
+    console.log("✅ All paths revalidated, including /, /matches/history, and /boost");
   } catch (revalidateError) {
     console.warn("⚠️ Failed to revalidate pages after match submission", revalidateError);
   }

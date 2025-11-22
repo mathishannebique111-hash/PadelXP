@@ -64,67 +64,9 @@ export default async function ReviewsPage() {
       }
     }
 
-    if (!userClubId) {
-      return (
-        <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-          {/* Background avec overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-          
-          {/* Pattern animé - halos de la landing page */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-            <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-          </div>
+    // Plus besoin de vérifier le club_id - tous les joueurs inscrits peuvent laisser des avis
 
-          <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 md:pt-8 pb-8 text-white">
-            <div className="mb-6">
-              <PageTitle title="Avis membres" />
-            </div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
-              <p>Vous devez être rattaché à un club pour consulter ou publier des avis. Merci de contacter votre club pour obtenir un code d'invitation.</p>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    const { data: clubMembers } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("club_id", userClubId);
-
-    const memberIds = (clubMembers || []).map(member => member.id).filter(Boolean);
-    if (!memberIds.includes(user.id)) {
-      memberIds.push(user.id);
-    }
-
-    if (memberIds.length === 0) {
-      return (
-        <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-          {/* Background avec overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-          
-          {/* Pattern animé - halos de la landing page */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-            <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-          </div>
-
-          <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 md:pt-8 pb-8 text-white">
-            <div className="mb-6">
-              <PageTitle title="Avis membres" />
-            </div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70">
-              <p>Aucun membre pour le moment dans votre club.</p>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Récupérer tous les avis avec jointure manuelle vers profiles
+    // Récupérer TOUS les avis de tous les joueurs inscrits (pas seulement ceux du club)
     const { data: reviews, error: reviewsError } = await supabase
       .from("reviews")
       .select(`
@@ -134,31 +76,23 @@ export default async function ReviewsPage() {
         created_at,
         user_id
       `)
-      .in("user_id", memberIds)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(100);
 
     // Gérer les erreurs de récupération des avis
     if (reviewsError) {
       console.error("❌ Error fetching reviews:", reviewsError);
     }
 
-    // Récupérer les profils pour chaque user_id (filtrés par club)
+    // Récupérer les profils pour chaque user_id (tous les profils)
     let enrichedReviews = reviews || [];
     if (reviews && reviews.length > 0) {
       const userIds = reviews.map(r => r.user_id).filter((id, index, self) => self.indexOf(id) === index);
-      // Utiliser le client admin pour bypass RLS
-      let profilesQuery = supabaseAdmin
+      // Utiliser le client admin pour bypass RLS et récupérer tous les profils
+      const { data: profiles, error: profilesError } = await supabaseAdmin
         .from("profiles")
         .select("id, display_name")
-        .in("id", userIds);
-      
-      // Filtrer par club_id si disponible
-      if (userClubId) {
-        profilesQuery = profilesQuery.eq("club_id", userClubId);
-      }
-      
-      const { data: profiles, error: profilesError } = await profilesQuery;
+        .in("id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]); // Fallback si pas d'IDs
       
       if (profilesError) {
         const errorDetails = {
@@ -182,14 +116,11 @@ export default async function ReviewsPage() {
           return acc;
         }, {} as Record<string, { display_name: string }>);
         
-        // Filtrer les avis : ne garder que ceux dont l'auteur appartient au même club
-        const validUserIds = new Set(profiles.map(p => p.id));
-        enrichedReviews = reviews
-          .filter(review => validUserIds.has(review.user_id))
-          .map(review => ({
-            ...review,
-            profiles: profilesMap[review.user_id] || null
-          }));
+        // Enrichir tous les avis avec les profils (pas de filtre par club)
+        enrichedReviews = reviews.map(review => ({
+          ...review,
+          profiles: profilesMap[review.user_id] || null
+        }));
       }
     }
 

@@ -827,6 +827,7 @@ export default function MatchForm({
         useBoost: useBoost, // Envoyer la valeur de la case, la vérification se fera côté serveur
       };
       
+      console.log("🔍 [MatchForm] useBoost value before sending:", useBoost, "type:", typeof useBoost);
       console.log("📤 Données envoyées à l'API:", JSON.stringify(payload, null, 2));
       console.log("📤 Structure détaillée:", {
         playersCount: players.length,
@@ -866,38 +867,55 @@ export default function MatchForm({
           // Recharger immédiatement les stats de boost pour refléter la consommation
           // Cela mettra à jour le nombre de boosts disponibles et la case à cocher
           console.log("🔄 Reloading boost stats after boost consumption...");
+          
+          // Attendre un peu pour que la base de données soit mise à jour
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           try {
-            const timestamp = Date.now();
-            const boostRes = await fetch(`/api/player/boost/stats?t=${timestamp}`, {
-              method: 'GET',
-              cache: 'no-store',
-              headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0',
-              },
-            });
-            
-            if (boostRes.ok) {
-              const boostData = await boostRes.json();
-              console.log('[MatchForm] ✅ Boost stats reloaded after consumption:', boostData);
-              
-              const creditsAvailable = Number(boostData.creditsAvailable) || 0;
-              const usedThisMonth = Number(boostData.usedThisMonth) || 0;
-              const remainingThisMonth = Number(boostData.remainingThisMonth) || 0;
-              const canUse = creditsAvailable > 0 && usedThisMonth < 10;
-              
-              setBoostStats({
-                creditsAvailable,
-                usedThisMonth,
-                remainingThisMonth,
-                canUse,
+            // Faire plusieurs tentatives pour s'assurer que les stats sont mises à jour
+            for (let attempt = 0; attempt < 3; attempt++) {
+              const timestamp = Date.now();
+              const boostRes = await fetch(`/api/player/boost/stats?t=${timestamp}&attempt=${attempt}`, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0',
+                },
               });
               
-              // Réinitialiser la case à cocher si plus de boosts disponibles
-              if (creditsAvailable === 0) {
-                setUseBoost(false);
-                console.log('[MatchForm] ✅ Checkbox reset (no boosts remaining)');
+              if (boostRes.ok) {
+                const boostData = await boostRes.json();
+                console.log(`[MatchForm] ✅ Boost stats reloaded after consumption (attempt ${attempt + 1}):`, boostData);
+                
+                const creditsAvailable = Number(boostData.creditsAvailable) || 0;
+                const usedThisMonth = Number(boostData.usedThisMonth) || 0;
+                const remainingThisMonth = Number(boostData.remainingThisMonth) || 0;
+                const canUse = creditsAvailable > 0 && usedThisMonth < 10;
+                
+                setBoostStats({
+                  creditsAvailable,
+                  usedThisMonth,
+                  remainingThisMonth,
+                  canUse,
+                });
+                
+                // Réinitialiser la case à cocher si plus de boosts disponibles
+                if (creditsAvailable === 0) {
+                  setUseBoost(false);
+                  console.log('[MatchForm] ✅ Checkbox reset (no boosts remaining)');
+                }
+                
+                // Si on a trouvé la bonne valeur (boost consommé), arrêter les tentatives
+                if (attempt === 0 || creditsAvailable > 0) {
+                  break;
+                }
+                
+                // Sinon, attendre un peu avant de réessayer
+                if (attempt < 2) {
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                }
               }
             }
           } catch (boostError) {

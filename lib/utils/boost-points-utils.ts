@@ -189,12 +189,13 @@ export async function calculatePointsForMultiplePlayers(
       return results;
     }
 
-    // Récupérer toutes les utilisations de boost en une seule requête
+    // Récupérer TOUS les boosts pour les joueurs concernés (sans filtrer par match_id)
+    // Cela garantit que même les boosts sur des matchs récemment créés sont trouvés
+    console.log(`[boost-points-utils] Fetching boosts for ${userIds.length} users and ${allMatchIds.size} match IDs`);
     const { data: allBoostUses, error } = await supabaseAdmin
       .from("player_boost_uses")
-      .select("user_id, match_id, points_after_boost")
-      .in("user_id", userIds)
-      .in("match_id", Array.from(allMatchIds));
+      .select("user_id, match_id, points_after_boost, applied_at")
+      .in("user_id", userIds);
 
     if (error) {
       logSupabaseError("Error fetching boost uses for multiple players", error);
@@ -212,15 +213,38 @@ export async function calculatePointsForMultiplePlayers(
       return results;
     }
 
-    // Organiser les boosts par utilisateur et par match
+    // Filtrer les boosts pour ne garder que ceux sur des matchs gagnés (dans allMatchIds)
+    const filteredBoostUses = allBoostUses?.filter(boostUse => 
+      allMatchIds.has(boostUse.match_id)
+    ) || [];
+
+    console.log(`[boost-points-utils] Found ${allBoostUses?.length || 0} total boosts, ${filteredBoostUses.length} for win matches`);
+
+    // Organiser les boosts par utilisateur et par match (seulement ceux sur des matchs gagnés)
     const boostsByUser = new Map<string, Map<string, number>>();
-    if (allBoostUses) {
-      allBoostUses.forEach((boostUse: any) => {
+    if (filteredBoostUses && filteredBoostUses.length > 0) {
+      console.log(`[boost-points-utils] Found ${filteredBoostUses.length} boost uses in database for win matches:`, filteredBoostUses.map(b => ({
+        user_id: b.user_id?.substring(0, 8),
+        match_id: b.match_id?.substring(0, 8),
+        points_after_boost: b.points_after_boost,
+        applied_at: b.applied_at
+      })));
+      filteredBoostUses.forEach((boostUse: any) => {
         if (!boostsByUser.has(boostUse.user_id)) {
           boostsByUser.set(boostUse.user_id, new Map());
         }
         boostsByUser.get(boostUse.user_id)!.set(boostUse.match_id, boostUse.points_after_boost);
       });
+    } else {
+      console.log(`[boost-points-utils] No boost uses found in database for ${userIds.length} users and ${allMatchIds.size} win matches`);
+      if (allBoostUses && allBoostUses.length > 0) {
+        console.log(`[boost-points-utils] ⚠️ Found ${allBoostUses.length} boosts total, but none match win matches:`, allBoostUses.map(b => ({
+          user_id: b.user_id?.substring(0, 8),
+          match_id: b.match_id?.substring(0, 8),
+          points_after_boost: b.points_after_boost
+        })));
+        console.log(`[boost-points-utils] Win match IDs:`, Array.from(allMatchIds).map(id => id.substring(0, 8)));
+      }
     }
 
     // Calculer les points pour chaque joueur
@@ -242,12 +266,19 @@ export async function calculatePointsForMultiplePlayers(
           if (pointsAfterBoost && typeof pointsAfterBoost === 'number') {
             // Points normaux pour une victoire : 10
             // Bonus = points_after_boost - 10
-            boostBonus += pointsAfterBoost - 10;
+            const matchBoost = pointsAfterBoost - 10;
+            boostBonus += matchBoost;
+            console.log(`[boost-points-utils] Boost found for user ${userId.substring(0, 8)} match ${matchId.substring(0, 8)}: ${pointsAfterBoost} points (bonus: +${matchBoost})`);
           }
         });
+      } else {
+        if (winMatches.size > 0) {
+          console.log(`[boost-points-utils] No boosts found for user ${userId.substring(0, 8)} with ${winMatches.size} win matches`);
+        }
       }
 
       const totalPoints = basePoints + boostBonus + bonusNum + challengePointsNum;
+      console.log(`[boost-points-utils] Total points for user ${userId.substring(0, 8)}: basePoints=${basePoints}, boostBonus=${boostBonus}, bonus=${bonusNum}, challengePoints=${challengePointsNum}, total=${totalPoints}`);
       results.set(userId, totalPoints);
     });
   } catch (error) {

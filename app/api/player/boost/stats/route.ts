@@ -48,14 +48,42 @@ export async function GET() {
         console.log('[boost/stats] Query result - Data:', JSON.stringify(creditsData, null, 2));
         
         if (!creditsError && creditsData) {
-          const availableCredits = creditsData.filter(c => !c.consumed_at);
+          // Filtrer les boosts disponibles (consumed_at est null ou undefined)
+          const availableCredits = creditsData.filter(c => 
+            c.consumed_at === null || 
+            c.consumed_at === undefined || 
+            c.consumed_at === ''
+          );
+          // Filtrer les boosts consommés (consumed_at n'est pas null/undefined/vide)
+          const consumedCredits = creditsData.filter(c => 
+            c.consumed_at !== null && 
+            c.consumed_at !== undefined && 
+            c.consumed_at !== ''
+          );
           directCheckCredits = availableCredits.length;
           
           console.log('[boost/stats] Direct DB check - Total credits:', creditsData.length);
           console.log('[boost/stats] Direct DB check - Available credits:', directCheckCredits);
+          console.log('[boost/stats] Direct DB check - Consumed credits:', consumedCredits.length);
           console.log('[boost/stats] Available credits details:', availableCredits.map(c => ({
             id: c.id,
             consumed_at: c.consumed_at,
+            created_at: c.created_at
+          })));
+          console.log('[boost/stats] Consumed credits details:', consumedCredits.map(c => ({
+            id: c.id,
+            consumed_at: c.consumed_at,
+            created_at: c.created_at
+          })));
+          
+          // Vérification supplémentaire : vérifier tous les boosts pour debug
+          console.log('[boost/stats] All credits raw data:', creditsData.map(c => ({
+            id: c.id,
+            user_id: c.user_id?.substring(0, 8),
+            consumed_at: c.consumed_at,
+            consumed_at_type: typeof c.consumed_at,
+            consumed_at_null: c.consumed_at === null,
+            consumed_at_undefined: c.consumed_at === undefined,
             created_at: c.created_at
           })));
         } else {
@@ -81,6 +109,24 @@ export async function GET() {
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
           const monthStartISO = monthStart.toISOString();
           
+          // D'abord récupérer tous les boosts utilisés ce mois-ci pour debug
+          const { data: usedBoostsData, error: usedDataError } = await supabaseAdmin
+            .from("player_boost_uses")
+            .select("id, user_id, match_id, applied_at, points_after_boost")
+            .eq("user_id", user.id)
+            .gte("applied_at", monthStartISO);
+
+          console.log('[boost/stats] Used boosts data:', {
+            count: usedBoostsData?.length || 0,
+            error: usedDataError,
+            data: usedBoostsData?.map(b => ({
+              id: b.id?.substring(0, 8),
+              match_id: b.match_id?.substring(0, 8),
+              applied_at: b.applied_at,
+              points_after_boost: b.points_after_boost
+            })) || []
+          });
+
           const { count: usedCount, error: usedError } = await supabaseAdmin
             .from("player_boost_uses")
             .select("id", { count: "exact", head: true })
@@ -90,6 +136,8 @@ export async function GET() {
           if (!usedError) {
             usedThisMonth = usedCount || 0;
             console.log('[boost/stats] Direct used count:', usedThisMonth);
+          } else {
+            console.error('[boost/stats] Error counting used boosts:', usedError);
           }
         } catch (error) {
           console.error('[boost/stats] Error counting used boosts:', error);

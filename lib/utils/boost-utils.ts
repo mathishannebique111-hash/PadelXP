@@ -386,6 +386,46 @@ export async function consumeBoostForMatch(
       expectedPointsAfterBoost: pointsAfterBoost
     });
 
+    // Vérification finale : s'assurer que tout est bien enregistré dans la base de données
+    console.log(`[consumeBoostForMatch] Final verification: checking database state...`);
+    const { data: finalCreditCheck, error: finalCreditError } = await supabaseAdmin
+      .from("player_boost_credits")
+      .select("id, consumed_at")
+      .eq("id", availableCredit.id)
+      .single();
+    
+    const { data: finalUseCheck, error: finalUseError } = await supabaseAdmin
+      .from("player_boost_uses")
+      .select("id, user_id, match_id, points_after_boost, applied_at")
+      .eq("user_id", userId)
+      .eq("match_id", matchId)
+      .single();
+
+    console.log(`[consumeBoostForMatch] Final verification results:`, {
+      credit: finalCreditCheck ? {
+        id: finalCreditCheck.id,
+        consumed_at: finalCreditCheck.consumed_at
+      } : null,
+      creditError: finalCreditError,
+      use: finalUseCheck ? {
+        id: finalUseCheck.id,
+        user_id: finalUseCheck.user_id?.substring(0, 8),
+        match_id: finalUseCheck.match_id?.substring(0, 8),
+        points_after_boost: finalUseCheck.points_after_boost,
+        applied_at: finalUseCheck.applied_at
+      } : null,
+      useError: finalUseError
+    });
+
+    if (!finalCreditCheck?.consumed_at || !finalUseCheck) {
+      console.error(`[consumeBoostForMatch] ❌ Final verification failed!`, {
+        creditConsumed: !!finalCreditCheck?.consumed_at,
+        useRecorded: !!finalUseCheck
+      });
+    } else {
+      console.log(`[consumeBoostForMatch] ✅ Final verification passed - all data correctly recorded`);
+    }
+
     return {
       success: true,
       boostCreditId: availableCredit.id,
