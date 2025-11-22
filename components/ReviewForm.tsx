@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Image from "next/image";
+import BadgeIconDisplay from "./BadgeIconDisplay";
 
 interface ReviewFormProps {
   onSubmit?: () => void;
@@ -49,6 +50,9 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
 
       const data = await response.json();
 
+      console.log("[ReviewForm] API Response:", data);
+      console.log("[ReviewForm] isFirstReviewForUser:", data.isFirstReviewForUser);
+
       if (!response.ok) {
         // Ne pas afficher "Unauthorized" brut - utiliser un message plus user-friendly
         const errorMessage = data.error === "Unauthorized" || data.error?.includes("Unauthorized")
@@ -58,8 +62,13 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
       }
 
       setSuccess(true);
+      
+      // Vérifier si c'est le premier avis
+      const isFirstReview = data.isFirstReviewForUser === true;
+      console.log("[ReviewForm] Is first review:", isFirstReview);
+      
       setBadgeInfo({
-        isFirstReviewForUser: data.isFirstReviewForUser || false
+        isFirstReviewForUser: isFirstReview
       });
       
       // Sauvegarder l'avis soumis pour l'afficher en lecture seule
@@ -74,17 +83,32 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
       setComment("");
       setShowNewReviewForm(false);
       
-      // Afficher le pop-up de remerciement
-      setShowThankYouModal(true);
-      
-      // Simple confetti/celebration for 5 stars
-      if (rating === 5) {
+      // Si c'est le premier avis, afficher le pop-up spécial
+      if (isFirstReview) {
+        console.log("[ReviewForm] 🎉 Premier avis détecté ! Affichage du pop-up spécial");
+      } else if (rating === 5) {
+        // Confetti simple pour 5 étoiles
         const el = document.createElement("div");
-        el.className = "fixed inset-0 pointer-events-none z-[9999] flex items-center justify-center";
+        el.className = "fixed inset-0 pointer-events-none z-[9998] flex items-center justify-center";
         el.innerHTML = "<div class='text-5xl animate-bounce'>🎉</div>";
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 1200);
       }
+      
+      // Afficher le pop-up de remerciement
+      console.log("[ReviewForm] Affichage du pop-up de remerciement, isFirstReview:", isFirstReview);
+      console.log("[ReviewForm] badgeInfo après update:", { isFirstReviewForUser: isFirstReview });
+      
+      // Forcer l'affichage du pop-up immédiatement
+      setShowThankYouModal(true);
+      
+      // Forcer le re-render pour s'assurer que le pop-up s'affiche
+      setTimeout(() => {
+        console.log("[ReviewForm] Vérification du state:", {
+          showThankYouModal,
+          badgeInfo: { isFirstReviewForUser: isFirstReview }
+        });
+      }, 100);
       
       // Attendre un peu pour s'assurer que l'insertion est bien terminée
       // puis déclencher l'événement pour mettre à jour les avis sans recharger la page
@@ -112,10 +136,21 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
     }
   };
 
+  // Debug: Afficher l'état actuel
+  useEffect(() => {
+    console.log("[ReviewForm] State update:", {
+      showThankYouModal,
+      badgeInfo,
+      isFirstReview: badgeInfo?.isFirstReviewForUser,
+    });
+  }, [showThankYouModal, badgeInfo]);
+
   // Si un avis a été soumis, l'afficher en lecture seule
+  // MAIS garder le pop-up visible même après la soumission
   if (submittedReview && !showNewReviewForm) {
     return (
-      <div className="space-y-5">
+      <>
+        <div className="space-y-5">
         {/* Avis soumis en lecture seule */}
         <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200/60 p-5 sm:p-6 shadow-md">
           <div className="flex items-center justify-between mb-4">
@@ -163,6 +198,84 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
           Laisser un nouvel avis
         </button>
       </div>
+      {/* Pop-up de remerciement - Style cohérent avec les autres pop-ups du site */}
+      {showThankYouModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <button
+              aria-label="Fermer"
+              onClick={() => setShowThankYouModal(false)}
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            
+            {badgeInfo?.isFirstReviewForUser ? (
+              // Pop-up spécial pour le premier avis
+              <>
+                <div className="mb-3 text-center text-5xl">🎊</div>
+                <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Félicitations !</h3>
+                <p className="mb-4 text-center text-sm text-gray-600">
+                  Vous avez laissé votre premier avis
+                </p>
+                
+                {/* Section Badge + Points */}
+                <div className="mx-auto mt-3 flex w-full max-w-sm flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <BadgeIconDisplay icon="💬" title="Contributeur" size={48} />
+                  <div className="text-center">
+                    <div className="text-base font-bold text-gray-900">Badge Contributeur débloqué !</div>
+                  </div>
+                  
+                  {/* Section Points */}
+                  <div className="mt-2 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 p-3 shadow-md">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-2xl">🎯</div>
+                      <div className="text-left">
+                        <div className="text-xs text-emerald-100 uppercase tracking-wide mb-0.5 font-semibold">
+                          Bonus gagné
+                        </div>
+                        <div className="text-xl font-extrabold text-white">
+                          +10 points
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="mt-4 text-center text-xs text-gray-500">
+                  Votre avis sera visible par toute la communauté.
+                </p>
+                
+                <button
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md"
+                  onClick={() => setShowThankYouModal(false)}
+                >
+                  Parfait
+                </button>
+              </>
+            ) : (
+              // Pop-up standard pour les autres avis
+              <>
+                <div className="mb-3 text-center text-5xl">🎉</div>
+                <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Merci pour votre avis !</h3>
+                <p className="mb-6 text-center text-gray-700">
+                  Votre avis a été enregistré et sera visible par toute la communauté.
+                </p>
+                <button
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md"
+                  onClick={() => setShowThankYouModal(false)}
+                >
+                  Parfait
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
     );
   }
 
@@ -249,52 +362,80 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
         {loading ? "Envoi..." : "Envoyer l'avis"}
       </button>
 
-      {/* Pop-up de remerciement */}
+      {/* Pop-up de remerciement - Style cohérent avec les autres pop-ups du site */}
       {showThankYouModal && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-fade-in">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <button
+              aria-label="Fermer"
               onClick={() => setShowThankYouModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
             
-            <div className="text-center">
-              <div className="text-6xl mb-4 animate-bounce">🎉</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Merci pour votre avis !
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Votre avis a été enregistré et sera visible par toute la communauté.
-              </p>
-              
-              {badgeInfo && badgeInfo.isFirstReviewForUser && (
-                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-4 mb-4">
-                  <div className="mb-2 flex items-center justify-center">
-                    <BadgeIconDisplay icon="💬" size={40} className="flex-shrink-0" />
+            {badgeInfo?.isFirstReviewForUser ? (
+              // Pop-up spécial pour le premier avis
+              <>
+                <div className="mb-3 text-center text-5xl">🎊</div>
+                <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Félicitations !</h3>
+                <p className="mb-4 text-center text-sm text-gray-600">
+                  Vous avez laissé votre premier avis
+                </p>
+                
+                {/* Section Badge + Points */}
+                <div className="mx-auto mt-3 flex w-full max-w-sm flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <BadgeIconDisplay icon="💬" title="Contributeur" size={48} />
+                  <div className="text-center">
+                    <div className="text-base font-bold text-gray-900">Badge Contributeur débloqué !</div>
                   </div>
-                  <div className="font-bold text-gray-900 mb-1">
-                    Badge Contributeur débloqué !
-                  </div>
-                  <div className="text-sm text-gray-700">
-                    Vous avez laissé votre premier avis !
-                  </div>
-                  <div className="mt-2 text-sm font-semibold text-emerald-700">
-                    ✅ Bonus: vous gagnez 10 points.
+                  
+                  {/* Section Points */}
+                  <div className="mt-2 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 p-3 shadow-md">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-2xl">🎯</div>
+                      <div className="text-left">
+                        <div className="text-xs text-emerald-100 uppercase tracking-wide mb-0.5 font-semibold">
+                          Bonus gagné
+                        </div>
+                        <div className="text-xl font-extrabold text-white">
+                          +10 points
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
-              
-              <button
-                onClick={() => setShowThankYouModal(false)}
-                className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold hover:shadow-lg transition-all"
-              >
-                Parfait !
-              </button>
-            </div>
+                
+                <p className="mt-4 text-center text-xs text-gray-500">
+                  Votre avis sera visible par toute la communauté.
+                </p>
+                
+                <button
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md"
+                  onClick={() => setShowThankYouModal(false)}
+                >
+                  Parfait
+                </button>
+              </>
+            ) : (
+              // Pop-up standard pour les autres avis
+              <>
+                <div className="mb-3 text-center text-5xl">🎉</div>
+                <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Merci pour votre avis !</h3>
+                <p className="mb-6 text-center text-gray-700">
+                  Votre avis a été enregistré et sera visible par toute la communauté.
+                </p>
+                <button
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md"
+                  onClick={() => setShowThankYouModal(false)}
+                >
+                  Parfait
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

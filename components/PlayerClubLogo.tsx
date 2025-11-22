@@ -1,57 +1,69 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
+import PlayerClubLogoDisplay from "./PlayerClubLogoDisplay";
 
-// Créer un client admin pour bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
+  ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  : null;
 
 export default async function PlayerClubLogo() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
-    return null;
+    return (
+      <PlayerClubLogoDisplay publicLogoUrl={null} name={null} />
+    );
   }
 
-  // Récupérer le club_id de l'utilisateur
-  let clubId: string | null = null;
-  let logoUrl: string | null = null;
-
-  // Essayer d'abord avec le client standard
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("club_id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.club_id) {
-    clubId = profile.club_id;
-  }
-
-  // Si pas de club_id, essayer avec le client admin
-  if (!clubId && supabaseAdmin) {
+  // Utiliser EXACTEMENT la même logique que la page "mon club" (app/(protected)/club/page.tsx)
+  // pour récupérer le logo avec TOUS les fallbacks
+  
+  const metadata = (user.user_metadata || {}) as Record<string, any>;
+  
+  // Étape 1: Récupérer les infos du club avec getUserClubInfo
+  let { clubId: initialClubId, clubSlug: initialClubSlug, clubName: initialClubName, clubLogoUrl: initialClubLogoUrl } = await getUserClubInfo();
+  
+  // Étape 2: Essayer de récupérer depuis la table profiles avec admin client
+  let clubId = initialClubId;
+  let clubSlug = initialClubSlug;
+  
+  if ((!clubId || !clubSlug) && supabaseAdmin) {
     const { data: adminProfile } = await supabaseAdmin
       .from("profiles")
-      .select("club_id")
+      .select("club_id, club_slug")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (adminProfile?.club_id) {
-      clubId = adminProfile.club_id;
+    if (adminProfile) {
+      clubId = clubId ?? (adminProfile.club_id as string | null);
+      clubSlug = clubSlug ?? (adminProfile.club_slug as string | null);
     }
   }
 
-  // Si toujours pas de club_id, vérifier si l'utilisateur est un admin de club
-  if (!clubId && supabaseAdmin) {
+  // Étape 3: Si toujours pas de club, essayer avec le client standard
+  if (!clubId || !clubSlug) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("club_id, club_slug")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileRow) {
+      clubId = clubId ?? (profileRow.club_id as string | null);
+      clubSlug = clubSlug ?? (profileRow.club_slug as string | null);
+    }
+  }
+
+  // Étape 4: Si toujours pas de club, vérifier si l'utilisateur est un admin de club
+  if ((!clubId || !clubSlug) && supabaseAdmin) {
     const { data: clubAdmin } = await supabaseAdmin
       .from("club_admins")
       .select("club_id")
@@ -59,66 +71,119 @@ export default async function PlayerClubLogo() {
       .maybeSingle();
 
     if (clubAdmin?.club_id) {
-      clubId = clubAdmin.club_id;
+      clubId = clubAdmin.club_id as string;
+
+      // Récupérer le slug et les infos depuis la table clubs
+      const { data: clubData } = await supabaseAdmin
+        .from("clubs")
+        .select("slug, name, logo_url")
+        .eq("id", clubAdmin.club_id)
+        .maybeSingle();
+
+      if (clubData) {
+        clubSlug = clubSlug ?? (clubData.slug as string | null);
+      }
     }
   }
 
-  // Récupérer le logo du club
-  if (clubId && supabaseAdmin) {
-    const { data: club } = await supabaseAdmin
+  if (!clubId && clubSlug && supabaseAdmin) {
+    const { data: slugLookup } = await supabaseAdmin
       .from("clubs")
-      .select("logo_url")
-      .eq("id", clubId)
+      .select("id")
+      .eq("slug", clubSlug)
+      .maybeSingle();
+    if (slugLookup?.id) {
+      clubId = slugLookup.id as string;
+    }
+  }
+
+  if (!clubId && clubSlug) {
+    const { data: slugLookup } = await supabase
+      .from("clubs")
+      .select("id")
+      .eq("slug", clubSlug)
+      .maybeSingle();
+    if (slugLookup?.id) {
+      clubId = slugLookup.id as string;
+    }
+  }
+
+  const finalClubId = clubId;
+
+  // Récupérer le logo EXACTEMENT comme dans la page "mon club"
+  let name: string | null = initialClubName || null;
+  let logoUrl: string | null = null;
+
+  // Priorité absolue : récupérer depuis clubs avec admin client (EXACTEMENT comme dans la page "mon club")
+  if (finalClubId && supabaseAdmin) {
+    const { data: clubData, error: clubError } = await supabaseAdmin
+      .from("clubs")
+      .select("name, logo_url")
+      .eq("id", finalClubId)
+      .maybeSingle();
+    
+    if (clubData && !clubError) {
+      name = (clubData.name as string) || name;
+      const rawLogoUrl = clubData.logo_url;
+      if (rawLogoUrl && typeof rawLogoUrl === 'string' && rawLogoUrl.trim() !== '') {
+        logoUrl = rawLogoUrl;
+      }
+    }
+  }
+
+  // Si pas encore récupéré complètement, essayer avec le slug (admin)
+  if (!logoUrl && clubSlug && supabaseAdmin) {
+    const { data: clubData, error: clubError } = await supabaseAdmin
+      .from("clubs")
+      .select("name, logo_url")
+      .eq("slug", clubSlug)
       .maybeSingle();
 
-    if (club?.logo_url && typeof club.logo_url === 'string' && club.logo_url.trim() !== '') {
-      logoUrl = club.logo_url;
-    }
-  }
-
-  // Si pas de logo depuis la table clubs, essayer depuis les métadonnées
-  if (!logoUrl && supabaseAdmin && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    try {
-      const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.getUserById(user.id);
-      
-      if (adminError) {
-        console.warn("[PlayerClubLogo] Error fetching user metadata:", adminError.message || adminError);
-      } else {
-      const metadata = adminUser?.user?.user_metadata;
-      
-      if (metadata?.club_logo_url && typeof metadata.club_logo_url === 'string' && metadata.club_logo_url.trim() !== '') {
-        logoUrl = metadata.club_logo_url;
-        }
-      }
-    } catch (error) {
-      // Ignorer silencieusement les erreurs de fetch - ce n'est pas critique pour le fonctionnement
-      if (error instanceof Error && error.message.includes('fetch failed')) {
-        // Erreur réseau ou configuration - on ignore gracieusement
-      } else {
-      console.warn("[PlayerClubLogo] Error fetching user metadata:", error);
+    if (clubData && !clubError) {
+      if (!name) name = (clubData.name as string) || null;
+      const rawLogoUrl = clubData.logo_url;
+      if (!logoUrl && rawLogoUrl && typeof rawLogoUrl === 'string' && rawLogoUrl.trim() !== '') {
+        logoUrl = rawLogoUrl;
       }
     }
   }
 
-  // Si toujours pas de logo et qu'on a un clubId, essayer avec les admins du club
-  if (!logoUrl && clubId && supabaseAdmin && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  // Priorité sur clubLogoUrl si disponible (depuis getUserClubInfo qui vérifie aussi les métadonnées)
+  if (!logoUrl && initialClubLogoUrl && typeof initialClubLogoUrl === 'string' && initialClubLogoUrl.trim() !== '') {
+    logoUrl = initialClubLogoUrl;
+  }
+  
+  // Si toujours pas de logo, essayer de le récupérer depuis les métadonnées utilisateur
+  if (!logoUrl && metadata?.club_logo_url && typeof metadata.club_logo_url === 'string' && metadata.club_logo_url.trim() !== '') {
+    logoUrl = metadata.club_logo_url as string;
+  }
+
+  // Dernier essai : récupérer directement depuis la table clubs avec une requête simple
+  if (!logoUrl && finalClubId && supabaseAdmin) {
+    const { data: directLogoData, error: directLogoError } = await supabaseAdmin
+      .from("clubs")
+      .select("logo_url")
+      .eq("id", finalClubId)
+      .maybeSingle();
+    
+    if (directLogoData?.logo_url && typeof directLogoData.logo_url === 'string' && directLogoData.logo_url.trim() !== '') {
+      logoUrl = directLogoData.logo_url;
+    }
+  }
+
+  // Fallback spécial : récupérer depuis les métadonnées des admins du club
+  if (!logoUrl && finalClubId && supabaseAdmin) {
     try {
-      const { data: clubAdmins } = await supabaseAdmin
+      const { data: clubAdmins, error: adminsError } = await supabaseAdmin
         .from("club_admins")
         .select("user_id")
-        .eq("club_id", clubId)
+        .eq("club_id", finalClubId)
         .limit(5);
-
-      if (clubAdmins && clubAdmins.length > 0) {
+      
+      if (clubAdmins && clubAdmins.length > 0 && !adminsError) {
         for (const admin of clubAdmins) {
           try {
-            const { data: adminUser, error: adminError } = await supabaseAdmin.auth.admin.getUserById(admin.user_id);
-            
-            if (adminError) {
-              // Continue to next admin sans logger (erreur non critique)
-              continue;
-            }
-            
+            const { data: adminUser } = await supabaseAdmin.auth.admin.getUserById(admin.user_id);
             if (adminUser?.user?.user_metadata?.club_logo_url) {
               const adminLogoUrl = adminUser.user.user_metadata.club_logo_url as string;
               if (typeof adminLogoUrl === 'string' && adminLogoUrl.trim() !== '') {
@@ -127,42 +192,29 @@ export default async function PlayerClubLogo() {
               }
             }
           } catch (userError) {
-            // Continue to next admin - ignore les erreurs de fetch
-            continue;
+            // Ignorer les erreurs
           }
         }
       }
     } catch (error) {
-      // Ignorer gracieusement les erreurs - ce n'est pas critique
-      if (!(error instanceof Error && error.message.includes('fetch failed'))) {
-      console.warn("[PlayerClubLogo] Error fetching admin metadata:", error);
-      }
+      // Ignorer les erreurs
     }
   }
 
-  // Convertir le logo en URL publique si nécessaire
+  console.log('[PlayerClubLogo] Logo récupéré (même logique que page mon club):', {
+    finalClubId,
+    clubSlug,
+    name,
+    logoUrl: logoUrl ? `${logoUrl.substring(0, 50)}...` : null,
+    hasLogo: !!logoUrl,
+  });
+
+  // Convertir le logo en URL publique si nécessaire (comme dans getUserClubInfo)
   const publicLogoUrl = logoUrl ? getClubLogoPublicUrl(logoUrl) : null;
-
-  if (!publicLogoUrl) {
-    return null;
-  }
-
-  return (
-    <div 
-      className="absolute top-4 right-4 z-[100]"
-      style={{
-        position: 'absolute',
-        top: '1rem',
-        right: '1rem',
-        zIndex: 100,
-      } as React.CSSProperties}
-    >
-        <img
-          src={publicLogoUrl}
-          alt="Logo du club"
-        className="h-12 w-12 sm:h-14 sm:w-14 lg:h-20 lg:w-20 rounded-full object-cover"
-        />
-    </div>
-  );
+  
+  // Augmenter encore plus la taille du logo : 7rem (112px)
+  const logoSize = '7rem'; // 112px
+  
+  // Passer les données au composant Client pour l'affichage
+  return <PlayerClubLogoDisplay publicLogoUrl={publicLogoUrl} name={name} logoSize={logoSize} />;
 }
-

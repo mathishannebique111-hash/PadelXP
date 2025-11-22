@@ -35,9 +35,11 @@ export async function GET() {
       .maybeSingle();
     
     const userClubId = userProfile?.club_id || null;
+    // NE PLUS bloquer si pas de club_id - retourner un top3 vide au lieu de 403
+    // Cela permet aux nouveaux joueurs d'accéder à l'interface même sans club_id
     if (!userClubId) {
-      console.warn('⚠️ User without club attempting to fetch top3');
-      return NextResponse.json({ top3: [] }, { status: 403 });
+      console.log('ℹ️ User without club fetching top3 - returning empty array');
+      return NextResponse.json({ top3: [] }, { status: 200 });
     }
     
     // Calculer directement depuis les matchs

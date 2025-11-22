@@ -67,7 +67,8 @@ export default async function ReviewsPage() {
     // Plus besoin de vérifier le club_id - tous les joueurs inscrits peuvent laisser des avis
 
     // Récupérer TOUS les avis de tous les joueurs inscrits (pas seulement ceux du club)
-    const { data: reviews, error: reviewsError } = await supabase
+    // Exclure les avis masqués (is_hidden = true)
+    const { data: reviews, error: reviewsError } = await supabaseAdmin
       .from("reviews")
       .select(`
         id,
@@ -76,6 +77,7 @@ export default async function ReviewsPage() {
         created_at,
         user_id
       `)
+      .eq("is_hidden", false) // Exclure les avis masqués
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -130,7 +132,13 @@ export default async function ReviewsPage() {
       : 0;
 
     // L'utilisateur a-t-il déjà laissé au moins un avis ?
-    const hasUserReview = (enrichedReviews || []).some((r) => r.user_id === user.id);
+    // Vérifier TOUS les avis (y compris les avis masqués) pour savoir si l'utilisateur a déjà laissé un avis
+    const { count: userReviewsCount } = await supabaseAdmin
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+    
+    const hasUserReview = (userReviewsCount || 0) > 0;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">

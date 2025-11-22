@@ -6,12 +6,9 @@ export default async function PlayerSignupPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("club_slug")
-      .eq("id", user.id)
-      .maybeSingle();
-    redirect(profile?.club_slug ? `/club/${profile.club_slug}/profil` : "/home");
+    // TOUJOURS rediriger vers /home pour garantir l'affichage du menu hamburger et du logo du club
+    // /home utilise le layout (protected) qui contient PlayerSidebar et PlayerClubLogo
+    redirect("/home");
   }
 
   return (

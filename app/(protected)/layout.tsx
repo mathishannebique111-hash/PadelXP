@@ -1,6 +1,7 @@
 // Layout pour toutes les pages du compte joueur
 // Ce fichier assure une typographie cohérente sur toutes les pages
-import { Suspense } from 'react';
+// TOUJOURS afficher le menu hamburger et le logo du club sur TOUS les formats
+// Même pour les nouveaux joueurs qui viennent de s'inscrire
 import PlayerSidebar from '@/components/PlayerSidebar';
 import PlayerClubLogo from '@/components/PlayerClubLogo';
 
@@ -11,14 +12,46 @@ export default function PlayerAccountLayout({
 }) {
   return (
     <>
-      <Suspense fallback={null}>
-        <PlayerSidebar />
-      </Suspense>
-      <div className="relative">
-      <Suspense fallback={null}>
+      {/* Styles critiques inline pour garantir l'affichage AVANT l'hydratation React */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            [data-hamburger-button] {
+              position: fixed !important;
+              top: 1rem !important;
+              left: 1rem !important;
+              z-index: 99999 !important;
+              display: flex !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              width: 3rem !important;
+              height: 3rem !important;
+              min-width: 3rem !important;
+              min-height: 3rem !important;
+              pointer-events: auto !important;
+            }
+            [data-club-logo-container="true"] {
+              position: fixed !important;
+              top: 0.25rem !important;
+              right: 0.25rem !important;
+              z-index: 99999 !important;
+              visibility: visible !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              opacity: 1 !important;
+            }
+          `,
+        }}
+      />
+      {/* Menu hamburger - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
+      {/* Composant client, s'affiche immédiatement sans attendre la vérification du club_id */}
+      <PlayerSidebar />
+      <div className="relative min-h-screen">
+        {/* Logo du club - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
+        {/* NE PLUS utiliser Suspense - afficher directement pour garantir la visibilité immédiate */}
         <PlayerClubLogo />
-      </Suspense>
-      {children}
+        {children}
       </div>
     </>
   );

@@ -15,7 +15,9 @@ export default async function PlayerLoginPage() {
     
     if (profile) {
       // L'utilisateur a un profil joueur, le rediriger vers l'espace joueur
-      redirect(profile.club_slug ? `/club/${profile.club_slug}/profil` : "/home");
+      // TOUJOURS rediriger vers /home pour garantir l'affichage du menu hamburger et du logo du club
+      // /home utilise le layout (protected) qui contient PlayerSidebar et PlayerClubLogo
+      redirect("/home");
     }
   }
 

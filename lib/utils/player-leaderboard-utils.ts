@@ -331,14 +331,38 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     }
   }
 
-  // Récupérer les points de challenges pour tous les joueurs
+  // Récupérer les points de challenges pour tous les joueurs ET tous les profils du club
   const challengePointsMap = new Map<string, number>();
-  {
+  const allClubProfilesMap = new Map<string, { display_name: string; first_name: string | null; last_name: string | null; points: number }>();
+  
+  // Récupérer tous les profils du club (pas seulement ceux avec des matchs)
+  if (clubId) {
+    const { data: allClubProfiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, first_name, last_name, points")
+      .eq("club_id", clubId);
+    
+    if (allClubProfiles) {
+      allClubProfiles.forEach((p: any) => {
+        const challengePoints = typeof p.points === 'number' 
+          ? p.points 
+          : (typeof p.points === 'string' ? parseInt(p.points, 10) || 0 : 0);
+        challengePointsMap.set(p.id, challengePoints);
+        allClubProfilesMap.set(p.id, {
+          display_name: p.display_name || "",
+          first_name: p.first_name || null,
+          last_name: p.last_name || null,
+          points: challengePoints,
+        });
+      });
+    }
+  } else {
+    // Si pas de clubId, récupérer les points pour les joueurs avec matchs seulement
     const userIdsForChallenges = Object.keys(byPlayer).filter(id => !id.startsWith("guest_") && byPlayer[id].isGuest === false);
     if (userIdsForChallenges.length > 0) {
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
-        .select("id, points")
+        .select("id, display_name, first_name, last_name, points")
         .in("id", userIdsForChallenges);
       
       (profiles || []).forEach((p: any) => {
@@ -346,14 +370,21 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
           ? p.points 
           : (typeof p.points === 'string' ? parseInt(p.points, 10) || 0 : 0);
         challengePointsMap.set(p.id, challengePoints);
+        allClubProfilesMap.set(p.id, {
+          display_name: p.display_name || "",
+          first_name: p.first_name || null,
+          last_name: p.last_name || null,
+          points: challengePoints,
+        });
       });
     }
   }
 
   // Préparer les données pour le calcul de points avec boosts
-  const allPlayers = Object.values(byPlayer).map(p => ({
-    first_name: p.name.split(/\s+/).slice(0,1)[0] || "",
-    last_name: p.name.split(/\s+/).slice(1).join(" ") || "",
+  // Créer allPlayers à partir de tous les profils du club, pas seulement ceux avec matchs
+  const allPlayers = Array.from(allClubProfilesMap.values()).map(p => ({
+    first_name: p.first_name || (p.display_name ? p.display_name.split(/\s+/)[0] : ""),
+    last_name: p.last_name || (p.display_name ? p.display_name.split(/\s+/).slice(1).join(" ") : ""),
   }));
 
   const playersForBoostCalculation = Object.entries(byPlayer)
@@ -422,11 +453,71 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         badges: [],
         isGuest: s.isGuest,
       };
+    });
+
+  // Ajouter TOUS les joueurs du club qui n'ont pas encore de matchs (même avec 0 points)
+  // Cela permet d'afficher les joueurs dès leur inscription, même s'ils n'ont pas encore joué
+  const playersWithNoMatches: LeaderboardEntry[] = [];
+  
+  if (clubId && allClubProfilesMap.size > 0) {
+    // Récupérer tous les joueurs qui ont déjà un avis (pour le bonus de 10 points)
+    const allProfileIds = Array.from(allClubProfilesMap.keys());
+    const { data: allReviews } = await supabaseAdmin
+      .from("reviews")
+      .select("user_id")
+      .in("user_id", allProfileIds);
+    
+    const hasReview = new Set((allReviews || []).map((r: any) => r.user_id));
+    
+    // Créer un Set des joueurs déjà dans le leaderboard
+    const playersInLeaderboard = new Set(leaderboard.map(p => p.user_id));
+    
+    allClubProfilesMap.forEach((profile, playerId) => {
+      // Vérifier si le joueur n'est pas déjà dans le leaderboard
+      if (!playersInLeaderboard.has(playerId)) {
+        // Calculer les points (peut être 0 pour les nouveaux joueurs)
+        const challengePoints = profile.points;
+        const bonus = hasReview.has(playerId) ? 10 : 0;
+        const totalPoints = challengePoints + bonus;
+        
+        // Ajouter TOUS les joueurs au leaderboard, même avec 0 points
+        const firstName = profile.first_name || (profile.display_name ? profile.display_name.split(/\s+/)[0] : "");
+        const lastName = profile.last_name || (profile.display_name ? profile.display_name.split(/\s+/).slice(1).join(" ") : "");
+        const displayName = getPlayerDisplayName(
+          { first_name: firstName, last_name: lastName },
+          allPlayers
+        );
+        
+        playersWithNoMatches.push({
+          rank: 0,
+          user_id: playerId,
+          player_name: displayName,
+          points: totalPoints,
+          wins: 0,
+          losses: 0,
+          matches: 0,
+          badges: [],
+          isGuest: false,
+        });
+      }
+    });
+  }
+  
+  // Fusionner le leaderboard avec TOUS les joueurs sans matchs (même avec 0 points)
+  const finalLeaderboard = [
+    ...leaderboard,
+    ...playersWithNoMatches
+  ]
+    .sort((a, b) => {
+      // Trier par points décroissants, puis par nom alphabétiquement pour les ex-aequo
+      if (b.points !== a.points) {
+        return b.points - a.points;
+      }
+      return a.player_name.localeCompare(b.player_name);
     })
-    .sort((a, b) => b.points - a.points)
     .map((r, idx) => ({ ...r, rank: idx + 1 }));
 
-  console.log("[calculatePlayerLeaderboard] Leaderboard calculated:", leaderboard.length, "players");
+  console.log("[calculatePlayerLeaderboard] Leaderboard calculated:", finalLeaderboard.length, "players (including", playersWithNoMatches.length, "players with no matches, even with 0 points)");
 
-  return leaderboard;
+  return finalLeaderboard;
 }

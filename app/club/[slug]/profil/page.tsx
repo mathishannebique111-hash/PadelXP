@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import HomePage from "@/app/(protected)/home/page";
 
 export default async function ClubProfilPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -8,28 +7,10 @@ export default async function ClubProfilPage({ params }: { params: Promise<{ slu
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Vérifier que le slug correspond au club de l'utilisateur
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("club_slug, club_id")
-    .eq("id", user.id)
-    .single();
-
-  let userClubSlug = profile?.club_slug || null;
-  if (!userClubSlug && profile?.club_id) {
-    const { data: club } = await supabase
-      .from("clubs")
-      .select("slug")
-      .eq("id", profile.club_id)
-      .single();
-    userClubSlug = club?.slug || null;
-  }
-
-  // Si le slug ne correspond pas, rediriger vers le bon club ou la page home
-  if (userClubSlug && userClubSlug !== slug) {
-    redirect(`/club/${userClubSlug}/profil`);
-  }
-
-  return <HomePage />;
+  // Rediriger TOUJOURS vers /home pour garantir l'affichage du menu hamburger et du logo du club
+  // /home utilise le layout (protected) qui contient PlayerSidebar et PlayerClubLogo
+  // Cette page était utilisée pour l'ancienne redirection après inscription/connexion
+  // Maintenant, toutes les redirections vont vers /home qui affiche correctement le menu et le logo
+  redirect("/home");
 }
 

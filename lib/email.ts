@@ -146,7 +146,8 @@ export async function sendModeratedReviewEmail(
   playerEmail: string,
   rating: number,
   comment: string | null,
-  reviewId: string
+  reviewId: string,
+  conversationId?: string // Optionnel: ID de la conversation si elle existe déjà
 ): Promise<void> {
   if (!resend || !process.env.RESEND_API_KEY) {
     console.warn("RESEND_API_KEY not configured. Email not sent for moderated review.");
@@ -156,11 +157,28 @@ export async function sendModeratedReviewEmail(
   try {
     const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
     
-    await resend.emails.send({
+    // Utiliser le système d'inbound email comme pour le support club
+    // Envoyer l'email à l'inbound email qui sera transféré à Gmail
+    const INBOUND_EMAIL = process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
+    const FORWARD_TO_EMAIL = process.env.FORWARD_TO_EMAIL || adminEmail;
+    
+    // Préparer les options d'email
+    const emailOptions: any = {
       from: process.env.RESEND_FROM_EMAIL || "PadelXP <noreply@padelleague.com>",
-      to: adminEmail,
-      subject: `⚠️ Avis modéré - ${playerName} (${rating}/5 étoiles)`,
-      html: `
+      to: INBOUND_EMAIL, // Envoyer à l'inbound email pour être capturé par le webhook et transféré à Gmail
+      subject: conversationId 
+        ? `⚠️ Avis modéré - ${playerName} (${rating}/5 étoiles) [${conversationId}]`
+        : `⚠️ Avis modéré - ${playerName} (${rating}/5 étoiles) [${reviewId}]`,
+      headers: {
+        'X-Review-ID': reviewId,
+        'X-Conversation-ID': conversationId || '', // ID de la conversation pour les réponses
+        'X-Player-Email': playerEmail,
+        'X-Player-Name': playerName,
+        'X-Sender-Type': 'moderated-review', // Identifier que c'est un avis modéré
+      },
+    };
+    
+    emailOptions.html = `
         <!DOCTYPE html>
         <html>
           <head>
@@ -222,6 +240,12 @@ export async function sendModeratedReviewEmail(
                   <li>Si l'avis est justifié, vous pouvez le laisser masqué ou le supprimer</li>
                 </ul>
                 
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #2196F3;">
+                  <p style="margin: 0; font-size: 14px; color: #1976D2;">
+                    <strong>💡 Astuce :</strong> Vous pouvez répondre directement à cet email pour contacter le joueur. Votre réponse lui sera envoyée automatiquement à <strong>${playerEmail}</strong>.
+                  </p>
+                </div>
+                
                 <p style="margin-top: 30px; font-size: 12px; color: #666;">
                   Cet avis n'est pas visible sur le site public tant qu'il n'a pas été modéré.
                 </p>
@@ -229,10 +253,12 @@ export async function sendModeratedReviewEmail(
             </div>
           </body>
         </html>
-      `,
-    });
+      `;
     
-    console.log(`✅ Moderated review email sent to ${adminEmail} for review ${reviewId}`);
+    // Envoyer à l'inbound email pour être capturé par le webhook et transféré à Gmail
+    await resend.emails.send(emailOptions);
+    
+    console.log(`✅ Moderated review email sent via inbound email for review ${reviewId} (player: ${playerEmail})`);
   } catch (error) {
     console.error("❌ Error sending moderated review email:", error);
     // Ne pas throw l'erreur pour ne pas bloquer la soumission de l'avis

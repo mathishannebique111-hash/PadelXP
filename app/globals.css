@@ -102,6 +102,36 @@ p {
   }
 }
 
+/* FORCER l'affichage du menu hamburger et du logo du club pour TOUS les joueurs, y compris nouveaux inscrits */
+[data-hamburger-button] {
+  position: fixed !important;
+  top: 1rem !important;
+  left: 1rem !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  min-width: 3rem !important;
+  min-height: 3rem !important;
+  pointer-events: auto !important;
+}
+
+/* FORCER l'affichage du conteneur du logo du club */
+.absolute.top-4.right-4,
+[data-club-logo-container="true"] {
+  position: fixed !important;
+  top: 0.25rem !important;
+  right: 0.25rem !important;
+  z-index: 99999 !important;
+  visibility: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+}
+
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;

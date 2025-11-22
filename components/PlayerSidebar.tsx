@@ -19,6 +19,56 @@ export default function PlayerSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
+  // FORCER l'affichage immédiatement, y compris avant l'hydratation complète
+  // Utiliser plusieurs timers pour garantir l'affichage même si l'un échoue
+  useEffect(() => {
+    console.log('[PlayerSidebar] Component mounted - TOUJOURS VISIBLE (même pour nouveaux joueurs)');
+    
+    // Fonction pour forcer l'affichage du bouton
+    const forceButtonDisplay = () => {
+      const button = document.querySelector('[data-hamburger-button]') as HTMLElement;
+      if (button) {
+        button.style.cssText = `
+          position: fixed !important;
+          top: 1rem !important;
+          left: 1rem !important;
+          width: 3rem !important;
+          height: 3rem !important;
+          min-width: 3rem !important;
+          min-height: 3rem !important;
+          z-index: 99999 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+        `;
+        console.log('[PlayerSidebar] Button display forced');
+      }
+    };
+    
+    // Forcer immédiatement
+    forceButtonDisplay();
+    
+    // Forcer après des délais multiples pour garantir l'affichage même avec des problèmes de timing
+    const timers = [
+      setTimeout(forceButtonDisplay, 0),
+      setTimeout(forceButtonDisplay, 50),
+      setTimeout(forceButtonDisplay, 100),
+      setTimeout(forceButtonDisplay, 200),
+      setTimeout(forceButtonDisplay, 500),
+    ];
+    
+    // Vérifier aussi sur le prochain frame
+    requestAnimationFrame(forceButtonDisplay);
+    requestAnimationFrame(() => requestAnimationFrame(forceButtonDisplay));
+    
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, []);
+
   // Fermer le menu quand on change de page
   useEffect(() => {
     setIsOpen(false);
@@ -71,12 +121,32 @@ export default function PlayerSidebar() {
 
   return (
     <>
-      {/* Bouton hamburger - visible sur tous les formats */}
+      {/* Bouton hamburger - TOUJOURS visible sur TOUS les formats (desktop au mobile) - FORCER L'AFFICHAGE */}
+      {/* S'affiche même avant l'hydratation pour garantir la visibilité dès le SSR */}
+      {/* Utiliser suppressHydrationWarning pour éviter les warnings lors de l'hydratation */}
       <button
+        data-hamburger-button
+        suppressHydrationWarning
         onClick={() => {
           setIsOpen(prev => !prev);
         }}
-        className="fixed top-4 left-4 z-[100] flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 border border-white/10 hover:bg-white/20 hover:border-white/20 transition-all duration-300 cursor-pointer backdrop-blur"
+        className="flex items-center justify-center rounded-xl bg-white/10 border border-white/10 hover:bg-white/20 hover:border-white/20 transition-all duration-300 cursor-pointer backdrop-blur"
+        style={{
+          position: 'fixed',
+          top: '1rem',
+          left: '1rem',
+          width: '3rem',
+          height: '3rem',
+          minWidth: '3rem',
+          minHeight: '3rem',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'auto',
+          visibility: 'visible',
+          opacity: 1,
+        } as React.CSSProperties}
         aria-label="Menu"
         type="button"
       >
@@ -102,16 +172,35 @@ export default function PlayerSidebar() {
       {/* Overlay sombre - visible quand le menu est ouvert */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-[90] transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 transition-opacity duration-300"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 99998,
+          }}
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Menu latéral - toujours caché par défaut, s'ouvre avec le bouton */}
+      {/* TOUJOURS présent dans le DOM pour garantir l'affichage même pour nouveaux joueurs */}
       <aside
-        className={`fixed top-0 left-0 h-full w-72 bg-black/95 border-r border-white/10 z-[95] transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-full w-72 bg-black/95 border-r border-white/10 transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: '100%',
+          width: '18rem',
+          zIndex: 99999,
+          visibility: 'visible',
+          display: 'block',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <nav className="p-4 pt-20 space-y-2 text-sm flex-1 h-full overflow-y-auto">

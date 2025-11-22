@@ -43,7 +43,7 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
   };
 
   // Mapper les emojis vers les images
-  const getIconSrc = (emoji: string) => {
+  const getIconSrc = (emoji: string, badgeTitle?: string) => {
     if (emoji === "🏆" || emoji.includes("🏆")) {
       return "/images/Trophée page badges.png";
     }
@@ -51,6 +51,10 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
       return "/images/Flamme page badges.png";
     }
     if (emoji === "💬" || emoji.includes("💬")) {
+      // Si le titre est "Contributeur", utiliser le badge Contributeur, sinon utiliser le commentaire
+      if (badgeTitle === "Contributeur") {
+        return "/images/Badge Contributeur.png";
+      }
       return "/images/Commentaire page avis.png";
     }
     if (emoji === "🎯" || emoji.includes("🎯")) {
@@ -65,7 +69,7 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
 
   // Vérifier d'abord par titre, puis par icône
   const iconSrcByTitle = getIconSrcByTitle(title);
-  const iconSrc = iconSrcByTitle || getIconSrc(icon);
+  const iconSrc = iconSrcByTitle || getIconSrc(icon, title);
 
   if (iconSrc) {
     return (

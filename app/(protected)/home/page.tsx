@@ -44,69 +44,58 @@ export default async function HomePage() {
   // Essayer d'obtenir l'utilisateur avec gestion d'erreur gracieuse
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  // Si ni session ni utilisateur, rediriger vers login (le middleware devrait déjà l'avoir fait)
-  if (!user && !session) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10">
-        <h1 className="text-xl font-semibold">Session requise</h1>
-        <a className="text-blue-600 underline" href="/login">Se connecter</a>
-      </div>
-    );
-  }
+  // NE PLUS retourner tôt pour permettre au layout (menu hamburger + logo) de TOUJOURS s'afficher
+  // Même si la session/user n'est pas encore disponible, le layout doit être visible
+  // Cela garantit l'affichage lors de la première connexion d'un nouveau joueur
   
-  // Si une session existe mais getUser() échoue temporairement, afficher un message d'erreur temporaire
-  if (session && !user && userError) {
+  // Si ni session ni utilisateur, afficher un message mais permettre au layout de s'afficher
+  const hasNoAuth = !user && !session;
+  
+  // Si une session existe mais getUser() échoue temporairement, continuer le rendu
+  const hasSessionButNoUser = session && !user && userError;
+  
+  if (hasSessionButNoUser) {
     console.warn("[HomePage] Session exists but getUser() failed (temporary error?):", {
       errorCode: userError?.code,
       errorMessage: userError?.message,
     });
-    // Afficher une page avec un message d'erreur temporaire plutôt que de rediriger
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10">
-        <h1 className="text-xl font-semibold">Erreur temporaire</h1>
-        <p className="text-gray-600">Veuillez rafraîchir la page.</p>
-        <a className="text-blue-600 underline" href="/home">Rafraîchir</a>
-      </div>
-    );
+    // NE PLUS retourner tôt - continuer le rendu pour permettre au layout de s'afficher
   }
   
-  // Si pas d'utilisateur à ce stade, il y a un problème
+  // Si pas d'utilisateur, créer un profil minimal pour permettre l'affichage
+  // Le layout (menu hamburger + logo) DOIT TOUJOURS s'afficher
   if (!user) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-4 py-10">
-        <h1 className="text-xl font-semibold">Session requise</h1>
-        <a className="text-blue-600 underline" href="/login">Se connecter</a>
-      </div>
-    );
+    // Créer un profil minimal pour permettre le rendu de la page
+    // Le layout sera toujours visible
   }
 
-  // Ensuite récupérer le profil
+  // Ensuite récupérer le profil (seulement si user existe)
   let profile: any = null;
-  {
+  if (user) {
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     profile = data ?? null;
-  }
 
-  if (!profile || !profile.club_id) {
-    try {
-      const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
-        .from("profiles")
-        .select("id, display_name, first_name, last_name, email, club_id, club_slug")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (adminProfileError) {
-        console.error("[Home] Failed to fetch profile via admin client", {
-          message: adminProfileError.message,
-          details: adminProfileError.details,
-          hint: adminProfileError.hint,
-          code: adminProfileError.code,
-        });
+    if (!profile || !profile.club_id) {
+      try {
+        const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
+          .from("profiles")
+          .select("id, display_name, first_name, last_name, email, club_id, club_slug")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (adminProfileError) {
+          console.error("[Home] Failed to fetch profile via admin client", {
+            message: adminProfileError.message,
+            details: adminProfileError.details,
+            hint: adminProfileError.hint,
+            code: adminProfileError.code,
+          });
+        }
+        if (adminProfile) {
+          profile = { ...profile, ...adminProfile };
+        }
+      } catch (e) {
+        console.error("[Home] Unexpected error when fetching profile via admin client", e);
       }
-      if (adminProfile) {
-        profile = { ...profile, ...adminProfile };
-      }
-    } catch (e) {
-      console.error("[Home] Unexpected error when fetching profile via admin client", e);
     }
   }
 
@@ -140,13 +129,20 @@ export default async function HomePage() {
   }
 
   // Sécurité: si malgré tout le profil est absent, on construit un profil minimal pour débloquer l'UI
-  if (!profile) {
+  // Cela garantit que le layout (menu hamburger + logo) peut toujours s'afficher
+  if (!profile && user) {
     const fallbackName =
       user.user_metadata?.full_name ||
       user.user_metadata?.name ||
       user.email?.split("@")[0] ||
       "Joueur";
     profile = { id: user.id, display_name: fallbackName } as any;
+  }
+  
+  // Si toujours pas de profil (première connexion), créer un profil minimal pour permettre le rendu
+  // Le layout doit TOUJOURS s'afficher, même sans données utilisateur complètes
+  if (!profile) {
+    profile = { id: 'loading', display_name: 'Chargement...' } as any;
   }
 
   // Récupérer le club_id de l'utilisateur pour filtrer les données
@@ -244,31 +240,14 @@ export default async function HomePage() {
     userClubId
   });
 
-  if (!userClubId) {
-    return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        
-        {/* Pattern animé */}
-
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 sm:pt-10 pb-10 text-white">
-          <div className="mb-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-white">Bienvenue !</h1>
-            </div>
-          </div>
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
-            <p>Vous devez être rattaché à un club pour accéder à votre espace joueur. Vérifiez que vous avez saisi le bon code d'invitation ou contactez votre club.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // NE PLUS bloquer l'affichage si pas de club_id
+  // Le layout (menu hamburger + logo) doit TOUJOURS s'afficher, même pour nouveaux joueurs
+  // Afficher simplement un leaderboard vide si pas de club_id
+  const hasNoClub = !userClubId;
 
   // Utiliser la fonction de calcul du leaderboard (même logique que la page profil)
-  const leaderboard = await calculatePlayerLeaderboard(userClubId);
+  // Si pas de club_id, retourner un tableau vide au lieu d'appeler la fonction
+  const leaderboard = hasNoClub ? [] : await calculatePlayerLeaderboard(userClubId);
   
   // Récupérer les profils pour l'affichage des noms (première partie en gras)
   const profilesFirstNameMap = new Map<string, string>();
@@ -276,24 +255,24 @@ export default async function HomePage() {
   
   if (leaderboard.length > 0) {
     const userIds = leaderboard.filter(p => !p.isGuest).map(p => p.user_id);
-  if (userIds.length > 0) {
-    let profilesQuery = supabaseAdmin
-      .from("profiles")
+    if (userIds.length > 0) {
+      let profilesQuery = supabaseAdmin
+        .from("profiles")
         .select("id, first_name, last_name")
-      .in("id", userIds);
-    
-    if (userClubId) {
-      profilesQuery = profilesQuery.eq("club_id", userClubId);
-    }
-    
+        .in("id", userIds);
+      
+      if (userClubId) {
+        profilesQuery = profilesQuery.eq("club_id", userClubId);
+      }
+      
       const { data: profiles } = await profilesQuery;
       if (profiles) {
-      profiles.forEach(p => {
-        if (p.first_name) {
-          profilesFirstNameMap.set(p.id, p.first_name);
-        }
-        if (p.last_name) {
-          profilesLastNameMap.set(p.id, p.last_name);
+        profiles.forEach(p => {
+          if (p.first_name) {
+            profilesFirstNameMap.set(p.id, p.first_name);
+          }
+          if (p.last_name) {
+            profilesLastNameMap.set(p.id, p.last_name);
           }
         });
       }
@@ -336,214 +315,253 @@ export default async function HomePage() {
       {/* Pattern animé - halos de la landing page */}
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 pt-20 sm:pt-4 sm:py-4 md:py-6 md:py-8 pb-4 sm:pb-6 md:pb-8">
-        <Top3Notification currentUserId={profile.id} />
-        <div className="mb-4 sm:mb-6">
-          <PageTitle title={`Bienvenue ${profile.display_name} !`} subtitle={clubName ? `Club : ${clubName}` : undefined} />
-        </div>
+        {/* Afficher un message d'avertissement si pas de club_id, mais continuer à afficher l'interface */}
+        {hasNoClub && (
+          <div className="mb-4 sm:mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
+            <p className="font-semibold mb-1">⚠️ Club non défini</p>
+            <p>Vous devez être rattaché à un club pour accéder au classement. Contactez votre club pour obtenir un code d'invitation.</p>
+          </div>
+        )}
+        {/* Afficher les messages d'erreur si pas d'auth */}
+        {hasNoAuth && (
+          <div className="mb-4 sm:mb-6 rounded-2xl bg-red-500/10 border border-red-500/30 p-4 text-sm text-red-200">
+            <p className="font-semibold mb-1">⚠️ Session requise</p>
+            <p>Veuillez vous connecter pour accéder à votre espace joueur.</p>
+            <a className="text-blue-400 underline mt-2 inline-block" href="/login">Se connecter</a>
+          </div>
+        )}
+        
+        {/* Afficher un message si session existe mais user non disponible (première connexion) */}
+        {hasSessionButNoUser && (
+          <div className="mb-4 sm:mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
+            <p className="font-semibold mb-1">⏳ Chargement...</p>
+            <p>Veuillez patienter pendant le chargement de vos données. Le menu hamburger et le logo du club sont disponibles.</p>
+          </div>
+        )}
+        
+        {/* Afficher le contenu seulement si profile et user existent */}
+        {profile && user && (
+          <>
+            <Top3Notification currentUserId={profile.id} />
+            <div className="mb-4 sm:mb-6">
+              <PageTitle title={`Bienvenue ${profile.display_name} !`} subtitle={clubName ? `Club : ${clubName}` : undefined} />
+            </div>
+          </>
+        )}
+        
+        {/* Si pas de profile/user, afficher un message de chargement mais permettre au layout de s'afficher */}
+        {(!profile || !user) && !hasNoAuth && (
+          <div className="mb-4 sm:mb-6">
+            <PageTitle title="Chargement..." subtitle="Le menu hamburger et le logo du club sont disponibles" />
+          </div>
+        )}
       
-      <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-4 space-y-4 sm:space-y-6">
-          <PlayerSummary profileId={profile.id} />
-          <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
-        </div>
-        <div className="lg:col-span-8 lg:mt-0 mt-4 sm:mt-0 space-y-4 sm:space-y-6">
-          {leaderboard.length >= 3 && (
-            <div className="mb-6 sm:mb-8">
-              <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
-                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
-                    Top joueurs du moment
-                  </span>
-                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-              </div>
-              <div className="hidden md:flex items-end justify-center gap-4 md:gap-6 w-full mt-6 md:mt-8">
-                <div className="flex-1 max-w-[240px]">
-                  <div 
-                    className="podium-silver border-4 border-slate-400/80 rounded-2xl p-8 shadow-lg relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
-                    }}
-                  >
-                    <div className="absolute top-2 right-2 z-30">
-                      <span className="text-3xl md:text-4xl lg:text-5xl">🥈</span>
-                    </div>
-                    <div className="text-center relative z-10 pt-5">
-                      <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight">
-                        {leaderboard[1].player_name}
-                      </h3>
-                      <div className="flex items-center justify-center mt-4">
-                        <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-zinc-500 ring-2 ring-zinc-300 shadow-lg shadow-zinc-300/70">
-                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[1].points.toLocaleString()}</span>
-                          <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
-                        </div>
-                      </div>
-                    </div>
+        {/* Afficher le contenu principal seulement si profile et user existent */}
+        {profile && user ? (
+          <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-4 space-y-4 sm:space-y-6">
+              <PlayerSummary profileId={profile.id} />
+              <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
+            </div>
+            <div className="lg:col-span-8 lg:mt-0 mt-4 sm:mt-0 space-y-4 sm:space-y-6">
+              {leaderboard.length >= 3 && (
+                <div className="mb-6 sm:mb-8">
+                  <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+                    <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
+                        Top joueurs du moment
+                      </span>
+                    <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
                   </div>
-                </div>
-                <div className="flex-1 max-w-[280px]">
-                  <div 
-                    className="podium-gold border-4 border-yellow-500/80 rounded-2xl p-9 shadow-xl relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)',
-                      boxShadow: '0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6)'
-                    }}
-                  >
-                    <div className="absolute top-2 right-2 z-30">
-                      <span className="text-3xl md:text-4xl lg:text-5xl">🥇</span>
-                    </div>
-                    <div className="absolute top-1 left-1 z-20">
-                      <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold shadow-sm border border-yellow-300">Meilleur joueur</span>
-                    </div>
-                    <div className="text-center relative z-10 pt-6">
-                      <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow-sm">
-                        {leaderboard[0].player_name}
-                      </h3>
-                      <div className="flex items-center justify-center mt-4">
-                        <div className="inline-flex items-center gap-3 rounded-full px-6 py-2.5 bg-white/95 backdrop-blur border-2 border-yellow-500 ring-2 ring-yellow-300 shadow-xl shadow-yellow-300/70">
-                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[0].points.toLocaleString()}</span>
-                          <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
+                  <div className="hidden md:flex items-end justify-center gap-4 md:gap-6 w-full mt-6 md:mt-8">
+                    <div className="flex-1 max-w-[240px]">
+                      <div 
+                        className="podium-silver border-4 border-slate-400/80 rounded-2xl p-8 shadow-lg relative overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
+                        }}
+                      >
+                        <div className="absolute top-2 right-2 z-30">
+                          <span className="text-3xl md:text-4xl lg:text-5xl">🥈</span>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-1 max-w-[240px]">
-                  <div 
-                    className="podium-bronze border-4 border-orange-600/80 rounded-2xl p-8 shadow-lg relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
-                    }}
-                  >
-                    <div className="absolute top-2 right-2 z-30">
-                      <span className="text-3xl md:text-4xl lg:text-5xl">🥉</span>
-                    </div>
-                    <div className="text-center relative z-10 pt-5">
-                      <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight">
-                        {(() => { var parts = (leaderboard[2].player_name || '').split(' '); var f = parts[0] || ''; var l = parts.slice(1).join(' '); return (<span><span className="text-2xl md:text-3xl">{f}</span>{l ? ' ' + l : ''}</span>); })()}
-                      </h3>
-                      <div className="flex items-center justify-center mt-4">
-                        <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-orange-500 ring-2 ring-orange-300 shadow-lg shadow-orange-300/70">
-                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[2].points.toLocaleString()}</span>
-                          <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="md:hidden space-y-3 sm:space-y-4 mt-4 sm:mt-6">
-                {leaderboard.slice(0, 3).map(function(player, index) {
-                  var medalEmojis = ['🥇', '🥈', '🥉'];
-                  var borderColors = [
-                    'border-yellow-500/80',
-                    'border-slate-400/80',
-                    'border-orange-600/80'
-                  ];
-                  var borderWidth = 'border-4';
-                  var shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
-                  var bgGradients = [
-                    { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
-                    { background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' },
-                    { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
-                  ];
-                  return (
-                    <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl p-5 shadow-2xl relative overflow-hidden')} style={bgGradients[index]}>
-                      <div className="absolute top-2 right-2 z-30">
-                        <span className="text-3xl md:text-4xl">{medalEmojis[index]}</span>
-                      </div>
-                      <div className="relative z-10 pt-4">
-                        <h3 className={"font-extrabold mb-6 text-center text-gray-900 " + (index === 0 ? 'text-2xl' : index === 1 ? 'text-2xl' : 'text-2xl')}>
-                          {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-2xl">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}
-                        </h3>
-                        <div className="flex items-center justify-center mt-2">
-                          <div className={"inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-white/95 backdrop-blur border-2 shadow-lg " + (index === 0 ? 'border-yellow-500 ring-2 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-2 ring-zinc-300' : 'border-orange-500 ring-2 ring-orange-300')}>
-                            <span className="text-2xl font-bold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
-                            <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
+                        <div className="text-center relative z-10 pt-5">
+                          <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight">
+                            {leaderboard[1].player_name}
+                          </h3>
+                          <div className="flex items-center justify-center mt-4">
+                            <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-zinc-500 ring-2 ring-zinc-300 shadow-lg shadow-zinc-300/70">
+                              <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[1].points.toLocaleString()}</span>
+                              <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {leaderboard.length > 0 ? (
-            <div className="overflow-hidden">
-              <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5">
-                <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
-                  <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
-                    Classement global
-                  </span>
-                  <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                </div>
-              </div>
-              <div className="overflow-x-auto rounded-xl sm:rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Joueur</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">Niveau</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Points</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell">Winrate</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
-                      <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">MJ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {leaderboard.map(function(player, idx) {
-                      var isCurrentUser = player.user_id === profile.id;
-                      var winRate = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
-                      // Même logique que PlayerSummary.tierForPoints
-                      var tierLabel = (player.points >= 500) ? 'Champion' : (player.points >= 300) ? 'Diamant' : (player.points >= 200) ? 'Or' : (player.points >= 100) ? 'Argent' : 'Bronze';
-                      var tierClassName = (player.points >= 500) ? 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white' :
-                                         (player.points >= 300) ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' :
-                                         (player.points >= 200) ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-white' :
-                                         (player.points >= 100) ? 'bg-gradient-to-r from-zinc-300 to-zinc-400 text-zinc-800' :
-                                                                 'bg-gradient-to-r from-orange-400 to-orange-600 text-white';
-                      // Utiliser first_name depuis Supabase si disponible
-                      var firstName = profilesFirstNameMap.get(player.user_id) || '';
-                      var lastName = profilesLastNameMap.get(player.user_id) || '';
-                      // Si first_name n'est pas disponible, diviser depuis player_name
-                      if (!firstName && player.player_name) {
-                      var nameParts = (player.player_name || '').trim().split(' ');
-                        firstName = nameParts[0] || '';
-                        lastName = nameParts.slice(1).join(' ');
-                      }
-                      var rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
+                    <div className="flex-1 max-w-[280px]">
+                      <div 
+                        className="podium-gold border-4 border-yellow-500/80 rounded-2xl p-9 shadow-xl relative overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)',
+                          boxShadow: '0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6)'
+                        }}
+                      >
+                        <div className="absolute top-2 right-2 z-30">
+                          <span className="text-3xl md:text-4xl lg:text-5xl">🥇</span>
+                        </div>
+                        <div className="absolute top-1 left-1 z-20">
+                          <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold shadow-sm border border-yellow-300">Meilleur joueur</span>
+                        </div>
+                        <div className="text-center relative z-10 pt-6">
+                          <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow-sm">
+                            {leaderboard[0].player_name}
+                          </h3>
+                          <div className="flex items-center justify-center mt-4">
+                            <div className="inline-flex items-center gap-3 rounded-full px-6 py-2.5 bg-white/95 backdrop-blur border-2 border-yellow-500 ring-2 ring-yellow-300 shadow-xl shadow-yellow-300/70">
+                              <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[0].points.toLocaleString()}</span>
+                              <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex-1 max-w-[240px]">
+                      <div 
+                        className="podium-bronze border-4 border-orange-600/80 rounded-2xl p-8 shadow-lg relative overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
+                        }}
+                      >
+                        <div className="absolute top-2 right-2 z-30">
+                          <span className="text-3xl md:text-4xl lg:text-5xl">🥉</span>
+                        </div>
+                        <div className="text-center relative z-10 pt-5">
+                          <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight">
+                            {(() => { var parts = (leaderboard[2].player_name || '').split(' '); var f = parts[0] || ''; var l = parts.slice(1).join(' '); return (<span><span className="text-2xl md:text-3xl">{f}</span>{l ? ' ' + l : ''}</span>); })()}
+                          </h3>
+                          <div className="flex items-center justify-center mt-4">
+                            <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-orange-500 ring-2 ring-orange-300 shadow-lg shadow-orange-300/70">
+                              <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[2].points.toLocaleString()}</span>
+                              <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="md:hidden space-y-3 sm:space-y-4 mt-4 sm:mt-6">
+                    {leaderboard.slice(0, 3).map(function(player, index) {
+                      var medalEmojis = ['🥇', '🥈', '🥉'];
+                      var borderColors = [
+                        'border-yellow-500/80',
+                        'border-slate-400/80',
+                        'border-orange-600/80'
+                      ];
+                      var borderWidth = 'border-4';
+                      var shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
+                      var bgGradients = [
+                        { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
+                        { background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' },
+                        { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
+                      ];
                       return (
-                        <tr key={player.user_id} className={rowClass}>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                            <RankBadge rank={player.rank} size="md" />
-                          </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                            <span className="truncate block max-w-[120px] sm:max-w-none"><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}</span>
-                          </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
-                            <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
-                          </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate > 60 ? '#10B981' : winRate >= 40 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>{player.wins}</td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>{player.losses}</td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell">{player.matches}</td>
-                        </tr>
+                        <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl p-5 shadow-2xl relative overflow-hidden')} style={bgGradients[index]}>
+                          <div className="absolute top-2 right-2 z-30">
+                            <span className="text-3xl md:text-4xl">{medalEmojis[index]}</span>
+                          </div>
+                          <div className="relative z-10 pt-4">
+                            <h3 className={"font-extrabold mb-6 text-center text-gray-900 " + (index === 0 ? 'text-2xl' : index === 1 ? 'text-2xl' : 'text-2xl')}>
+                              {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-2xl">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}
+                            </h3>
+                            <div className="flex items-center justify-center mt-2">
+                              <div className={"inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-white/95 backdrop-blur border-2 shadow-lg " + (index === 0 ? 'border-yellow-500 ring-2 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-2 ring-zinc-300' : 'border-orange-500 ring-2 ring-orange-300')}>
+                                <span className="text-2xl font-bold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
+                                <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              )}
+              {leaderboard.length > 0 ? (
+                <div className="overflow-hidden">
+                  <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5">
+                    <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+                      <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
+                        Classement global
+                      </span>
+                      <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto rounded-xl sm:rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Joueur</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">Niveau</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Points</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell">Winrate</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">MJ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 bg-white">
+                        {leaderboard.map(function(player, idx) {
+                          var isCurrentUser = profile && user && player.user_id === profile.id;
+                          var winRate = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
+                          // Même logique que PlayerSummary.tierForPoints
+                          var tierLabel = (player.points >= 500) ? 'Champion' : (player.points >= 300) ? 'Diamant' : (player.points >= 200) ? 'Or' : (player.points >= 100) ? 'Argent' : 'Bronze';
+                          var tierClassName = (player.points >= 500) ? 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white' :
+                                             (player.points >= 300) ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' :
+                                             (player.points >= 200) ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-white' :
+                                             (player.points >= 100) ? 'bg-gradient-to-r from-zinc-300 to-zinc-400 text-zinc-800' :
+                                                                     'bg-gradient-to-r from-orange-400 to-orange-600 text-white';
+                          // Utiliser first_name depuis Supabase si disponible
+                          var firstName = profilesFirstNameMap.get(player.user_id) || '';
+                          var lastName = profilesLastNameMap.get(player.user_id) || '';
+                          // Si first_name n'est pas disponible, diviser depuis player_name
+                          if (!firstName && player.player_name) {
+                            var nameParts = (player.player_name || '').trim().split(' ');
+                            firstName = nameParts[0] || '';
+                            lastName = nameParts.slice(1).join(' ');
+                          }
+                          var rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
+                          return (
+                            <tr key={player.user_id} className={rowClass}>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
+                                <RankBadge rank={player.rank} size="md" />
+                              </td>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
+                                <span className="truncate block max-w-[120px] sm:max-w-none"><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}</span>
+                              </td>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
+                                <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
+                              </td>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate > 60 ? '#10B981' : winRate >= 40 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>{player.wins}</td>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>{player.losses}</td>
+                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell">{player.matches}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 text-gray-500 text-sm">Aucun joueur dans le classement</div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-10 text-gray-500 text-sm">Aucun joueur dans le classement</div>
-          )}
-        </div>
-      </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

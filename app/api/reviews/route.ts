@@ -191,12 +191,15 @@ export async function POST(req: Request) {
     const validated = reviewSchema.parse(body);
 
     // Vérifier si c'est le premier avis de l'utilisateur
-    const { count: userReviewsCount } = await supabase
+    // Utiliser supabaseAdmin pour bypass RLS et voir TOUS les avis (même masqués)
+    const { count: userReviewsCount } = await supabaseAdmin
       .from('reviews')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id);
 
     const isFirstReviewForUser = (userReviewsCount || 0) === 0;
+    
+    console.log(`[POST /api/reviews] First review check: userReviewsCount=${userReviewsCount}, isFirstReviewForUser=${isFirstReviewForUser}`);
 
     // Vérifier si l'avis doit être modéré (3 étoiles ou moins ET 6 mots ou moins)
     const wordCount = countWords(validated.comment);
@@ -221,54 +224,77 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Si l'avis doit être modéré, envoyer un email à l'administrateur
+    // Si l'avis doit être modéré, créer une conversation et envoyer un email à l'administrateur
     if (shouldModerate && insertedReview) {
       const adminEmail = process.env.ADMIN_EMAIL || process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
       
-      console.log(`[POST /api/reviews] Sending moderation email for review ${insertedReview.id}`);
+      console.log(`[POST /api/reviews] Creating conversation and sending moderation email for review ${insertedReview.id}`);
       
       try {
-        await sendModeratedReviewEmail(
-          adminEmail,
-          profile.display_name || 'Joueur',
-          playerEmail,
-          validated.rating,
-          validated.comment || null,
-          insertedReview.id
-        );
+        // Créer une conversation pour cet avis modéré
+        const { data: conversation, error: convError } = await supabaseAdmin
+          .from('review_conversations')
+          .insert({
+            review_id: insertedReview.id,
+            user_id: user.id,
+            user_email: playerEmail,
+            user_name: profile.display_name || 'Joueur',
+            subject: `Avis modéré - ${profile.display_name || 'Joueur'} (${validated.rating}/5 étoiles)`,
+            status: 'open',
+          })
+          .select('id')
+          .single();
+
+        if (convError) {
+          console.error('❌ Error creating review conversation:', convError);
+          // Continuer quand même pour envoyer l'email
+        } else if (conversation) {
+          console.log(`[POST /api/reviews] Created conversation ${conversation.id} for review ${insertedReview.id}`);
+          
+          // Enregistrer le message initial du joueur (l'avis)
+          const messageText = `Note: ${validated.rating}/5\n${validated.comment ? `Commentaire: ${validated.comment}` : 'Aucun commentaire'}`;
+          
+          const { error: messageError } = await supabaseAdmin
+            .from('review_messages')
+            .insert({
+              conversation_id: conversation.id,
+              sender_type: 'player',
+              sender_id: user.id,
+              sender_email: playerEmail,
+              message_text: messageText,
+              html_content: `<p><strong>Note:</strong> ${validated.rating}/5</p>${validated.comment ? `<p><strong>Commentaire:</strong> ${validated.comment}</p>` : '<p>Aucun commentaire</p>'}`,
+            });
+
+          if (messageError) {
+            console.error('❌ Error creating review message:', messageError);
+          } else {
+            console.log(`[POST /api/reviews] Created initial message for conversation ${conversation.id}`);
+          }
+          
+          // Envoyer l'email avec la conversationId dans les headers
+          await sendModeratedReviewEmail(
+            adminEmail,
+            profile.display_name || 'Joueur',
+            playerEmail,
+            validated.rating,
+            validated.comment || null,
+            insertedReview.id,
+            conversation.id // Passer la conversationId
+          );
+        }
       } catch (emailError) {
-        console.error('❌ Error sending moderation email (non-blocking):', emailError);
+        console.error('❌ Error in moderation flow (non-blocking):', emailError);
         // Ne pas bloquer la soumission de l'avis si l'email échoue
       }
     }
 
-    // Si c'est le premier avis, créditer 10 points dans la colonne points du profil
+    // Les 10 points pour le premier avis sont calculés dynamiquement dans le leaderboard et PlayerSummary
+    // via le paramètre bonus (reviewsBonus), pas besoin de créditer dans la colonne points du profil
+    // pour éviter un double crédit (10 points dans la colonne + 10 points calculés dynamiquement = 20 points)
     if (isFirstReviewForUser) {
-      // Récupérer les points actuels du profil
-      const { data: currentProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('points')
-        .eq('id', user.id)
-        .single();
-
-      const currentPoints = typeof currentProfile?.points === 'number' 
-        ? currentProfile.points 
-        : (typeof currentProfile?.points === 'string' ? parseInt(currentProfile.points, 10) || 0 : 0);
-
-      // Ajouter 10 points pour le premier avis
-      const newPoints = currentPoints + 10;
-
-      const { error: updateError } = await supabaseAdmin
-        .from('profiles')
-        .update({ points: newPoints })
-        .eq('id', user.id);
-
-      if (updateError) {
-        console.error('❌ Error updating points for first review:', updateError);
-        // Ne pas bloquer la soumission de l'avis si l'update des points échoue
-      } else {
-        console.log(`✅ 10 points credited to user ${user.id.substring(0, 8)} for first review. Points: ${currentPoints} → ${newPoints}`);
-      }
+      console.log(`[POST /api/reviews] First review detected for user ${user.id}. Points will be calculated dynamically in leaderboard/PlayerSummary (10 points bonus).`);
+    } else {
+      console.log(`[POST /api/reviews] Not first review (user has ${userReviewsCount} reviews), no bonus points`);
     }
 
     const enrichedReview = {

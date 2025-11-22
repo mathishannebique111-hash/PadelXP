@@ -35,9 +35,11 @@ export async function GET() {
       .maybeSingle();
     
     const userClubId = userProfile?.club_id || null;
+    // NE PLUS bloquer si pas de club_id - retourner un leaderboard vide au lieu de 403
+    // Cela permet aux nouveaux joueurs d'accéder à l'interface même sans club_id
     if (!userClubId) {
-      console.warn('⚠️ User without club attempting to fetch leaderboard');
-      return NextResponse.json({ leaderboard: [] }, { status: 403 });
+      console.log('ℹ️ User without club fetching leaderboard - returning empty array');
+      return NextResponse.json({ leaderboard: [] }, { status: 200 });
     }
 
     // Calculer le leaderboard depuis les matchs
