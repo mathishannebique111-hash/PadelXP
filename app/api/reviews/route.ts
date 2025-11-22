@@ -2,6 +2,26 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { z } from "zod";
+import { sendModeratedReviewEmail } from "@/lib/email";
+
+/**
+ * Compte le nombre de mots dans un texte
+ */
+function countWords(text: string | null | undefined): number {
+  if (!text || typeof text !== 'string') {
+    return 0;
+  }
+  
+  // Nettoyer le texte et compter les mots
+  const cleaned = text.trim();
+  if (cleaned.length === 0) {
+    return 0;
+  }
+  
+  // Diviser par les espaces et filtrer les chaînes vides
+  const words = cleaned.split(/\s+/).filter(word => word.length > 0);
+  return words.length;
+}
 
 const reviewSchema = z.object({
   rating: z.number().min(1).max(5),
@@ -37,9 +57,11 @@ export async function GET(req: Request) {
     );
 
     // Récupérer TOUS les avis de tous les joueurs inscrits (avec client admin pour bypass RLS)
+    // Exclure les avis masqués (is_hidden = true)
     const { data: reviews, error } = await supabaseAdmin
       .from("reviews")
       .select("id, rating, comment, created_at, updated_at, user_id")
+      .eq("is_hidden", false) // Exclure les avis masqués
       .order("created_at", { ascending: false })
       .limit(100); // Augmenter la limite pour avoir plus d'avis
 
@@ -143,7 +165,7 @@ export async function POST(req: Request) {
   // Récupérer le profil de l'utilisateur avec le client admin (bypass RLS)
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
-    .select('display_name')
+    .select('display_name, email')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -155,6 +177,13 @@ export async function POST(req: Request) {
   if (!profile) {
     console.error(`❌ Profile not found for user ${user.id}`);
     return NextResponse.json({ error: "Profil non trouvé. Veuillez contacter le support." }, { status: 404 });
+  }
+
+  // Récupérer l'email de l'utilisateur depuis auth.users
+  let playerEmail = profile.email || user.email || '';
+  if (!playerEmail) {
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
+    playerEmail = authUser?.user?.email || '';
   }
 
   try {
@@ -169,20 +198,48 @@ export async function POST(req: Request) {
 
     const isFirstReviewForUser = (userReviewsCount || 0) === 0;
 
-    // Insérer l'avis
-    const { data: insertedReview, error } = await supabase
+    // Vérifier si l'avis doit être modéré (3 étoiles ou moins ET 6 mots ou moins)
+    const wordCount = countWords(validated.comment);
+    const shouldModerate = validated.rating <= 3 && wordCount <= 6;
+
+    console.log(`[POST /api/reviews] Review moderation check: rating=${validated.rating}, wordCount=${wordCount}, shouldModerate=${shouldModerate}`);
+
+    // Insérer l'avis (avec is_hidden si besoin)
+    const { data: insertedReview, error } = await supabaseAdmin
       .from('reviews')
       .insert({
         user_id: user.id,
         rating: validated.rating,
         comment: validated.comment || null,
+        is_hidden: shouldModerate, // Masquer l'avis s'il doit être modéré
       })
-      .select('id, rating, comment, created_at, updated_at, user_id')
+      .select('id, rating, comment, created_at, updated_at, user_id, is_hidden')
       .single();
 
     if (error) {
       console.error('❌ Error inserting review:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Si l'avis doit être modéré, envoyer un email à l'administrateur
+    if (shouldModerate && insertedReview) {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
+      
+      console.log(`[POST /api/reviews] Sending moderation email for review ${insertedReview.id}`);
+      
+      try {
+        await sendModeratedReviewEmail(
+          adminEmail,
+          profile.display_name || 'Joueur',
+          playerEmail,
+          validated.rating,
+          validated.comment || null,
+          insertedReview.id
+        );
+      } catch (emailError) {
+        console.error('❌ Error sending moderation email (non-blocking):', emailError);
+        // Ne pas bloquer la soumission de l'avis si l'email échoue
+      }
     }
 
     // Si c'est le premier avis, créditer 10 points dans la colonne points du profil

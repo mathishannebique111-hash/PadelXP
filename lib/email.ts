@@ -136,3 +136,106 @@ export async function sendAdminInvitationEmail(
   }
 }
 
+/**
+ * Envoie un email à l'administrateur lorsqu'un avis problématique est soumis
+ * (3 étoiles ou moins avec 6 mots ou moins)
+ */
+export async function sendModeratedReviewEmail(
+  adminEmail: string,
+  playerName: string,
+  playerEmail: string,
+  rating: number,
+  comment: string | null,
+  reviewId: string
+): Promise<void> {
+  if (!resend || !process.env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY not configured. Email not sent for moderated review.");
+    return;
+  }
+
+  try {
+    const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+    
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "PadelXP <noreply@padelleague.com>",
+      to: adminEmail,
+      subject: `⚠️ Avis modéré - ${playerName} (${rating}/5 étoiles)`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #FF6B6B, #EE5A6F); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+              .review-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF6B6B; }
+              .info-row { margin: 10px 0; }
+              .info-label { font-weight: bold; color: #666; }
+              .info-value { color: #333; }
+              .stars { color: #FFD700; font-size: 18px; }
+              .comment-box { background: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0; font-style: italic; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>⚠️ Avis modéré détecté</h1>
+              </div>
+              <div class="content">
+                <p>Bonjour,</p>
+                <p>Un avis a été soumis avec une note faible (3 étoiles ou moins) et un texte court (6 mots ou moins). Cet avis a été automatiquement masqué du site et nécessite votre attention.</p>
+                
+                <div class="review-box">
+                  <div class="info-row">
+                    <span class="info-label">Joueur :</span>
+                    <span class="info-value">${playerName}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Email :</span>
+                    <span class="info-value">${playerEmail}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Note :</span>
+                    <span class="stars">${stars}</span>
+                    <span class="info-value">${rating}/5</span>
+                  </div>
+                  ${comment ? `
+                    <div class="info-row">
+                      <span class="info-label">Commentaire :</span>
+                    </div>
+                    <div class="comment-box">
+                      "${comment}"
+                    </div>
+                  ` : '<div class="info-row"><span class="info-label">Commentaire :</span> <span class="info-value">Aucun commentaire</span></div>'}
+                  <div class="info-row">
+                    <span class="info-label">ID de l'avis :</span>
+                    <span class="info-value">${reviewId}</span>
+                  </div>
+                </div>
+                
+                <p><strong>Action recommandée :</strong></p>
+                <ul style="margin: 10px 0 0 20px;">
+                  <li>Contactez le joueur pour comprendre son problème</li>
+                  <li>Résolvez le problème s'il y en a un</li>
+                  <li>Si l'avis est justifié, vous pouvez le laisser masqué ou le supprimer</li>
+                </ul>
+                
+                <p style="margin-top: 30px; font-size: 12px; color: #666;">
+                  Cet avis n'est pas visible sur le site public tant qu'il n'a pas été modéré.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+    
+    console.log(`✅ Moderated review email sent to ${adminEmail} for review ${reviewId}`);
+  } catch (error) {
+    console.error("❌ Error sending moderated review email:", error);
+    // Ne pas throw l'erreur pour ne pas bloquer la soumission de l'avis
+  }
+}
+
