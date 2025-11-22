@@ -212,8 +212,9 @@ export default async function PlayerClubLogo() {
   // Convertir le logo en URL publique si nécessaire (comme dans getUserClubInfo)
   const publicLogoUrl = logoUrl ? getClubLogoPublicUrl(logoUrl) : null;
   
-  // Augmenter encore plus la taille du logo : 7rem (112px)
-  const logoSize = '7rem'; // 112px
+  // Taille standardisée pour tous les logos : 6rem (96px)
+  // Le CSS global force cette taille pour assurer la cohérence entre tous les clubs
+  const logoSize = '6rem'; // 96px
   
   // Passer les données au composant Client pour l'affichage
   return <PlayerClubLogoDisplay publicLogoUrl={publicLogoUrl} name={name} logoSize={logoSize} />;

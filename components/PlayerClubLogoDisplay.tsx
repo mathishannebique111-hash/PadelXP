@@ -11,7 +11,7 @@ interface PlayerClubLogoDisplayProps {
 export default function PlayerClubLogoDisplay({
   publicLogoUrl,
   name,
-  logoSize = "7rem",
+  logoSize = "6rem",
 }: PlayerClubLogoDisplayProps) {
   return (
     <div 
@@ -30,10 +30,12 @@ export default function PlayerClubLogoDisplay({
           alt={name ? `Logo de ${name}` : "Logo du club"}
           className="h-full w-full object-contain"
           style={{
-            width: '100%',
-            height: '100%',
-            maxWidth: '100%',
-            maxHeight: '100%',
+            width: '6rem',
+            height: '6rem',
+            minWidth: '6rem',
+            minHeight: '6rem',
+            maxWidth: '6rem',
+            maxHeight: '6rem',
             objectFit: 'contain',
           }}
           onError={(e) => {

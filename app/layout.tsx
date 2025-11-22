@@ -45,15 +45,30 @@ export default function RootLayout({
                     pointer-events: auto !important;
                   }
                   [data-club-logo-container="true"] {
-                    position: fixed !important;
-                    top: 0.25rem !important;
-                    right: 0.25rem !important;
+                    position: absolute !important;
+                    top: 1rem !important;
+                    right: 1rem !important;
                     z-index: 99999 !important;
                     visibility: visible !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
+                    width: 6rem !important;
+                    height: 6rem !important;
+                    min-width: 6rem !important;
+                    min-height: 6rem !important;
+                    max-width: 6rem !important;
+                    max-height: 6rem !important;
                     opacity: 1 !important;
+                  }
+                  [data-club-logo-container="true"] img {
+                    width: 6rem !important;
+                    height: 6rem !important;
+                    min-width: 6rem !important;
+                    min-height: 6rem !important;
+                    max-width: 6rem !important;
+                    max-height: 6rem !important;
+                    object-fit: contain !important;
                   }
                 \`;
                 document.head.appendChild(criticalStyle);
@@ -68,7 +83,12 @@ export default function RootLayout({
                   }
                   
                   if (logo) {
-                    logo.style.cssText = 'position: fixed !important; top: 0.25rem !important; right: 0.25rem !important; z-index: 99999 !important; visibility: visible !important; display: flex !important; align-items: center !important; justify-content: center !important; opacity: 1 !important;';
+                    logo.style.cssText = 'position: absolute !important; top: 1rem !important; right: 1rem !important; z-index: 99999 !important; visibility: visible !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 6rem !important; height: 6rem !important; min-width: 6rem !important; min-height: 6rem !important; max-width: 6rem !important; max-height: 6rem !important; opacity: 1 !important;';
+                    // Forcer la taille des images à l'intérieur du conteneur
+                    const logoImages = logo.querySelectorAll('img');
+                    logoImages.forEach((img) => {
+                      img.style.cssText = 'width: 6rem !important; height: 6rem !important; min-width: 6rem !important; min-height: 6rem !important; max-width: 6rem !important; max-height: 6rem !important; object-fit: contain !important;';
+                    });
                   }
                 }
                 
