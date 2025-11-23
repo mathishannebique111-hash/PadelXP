@@ -314,7 +314,7 @@ export default async function HomePage() {
       
       {/* Pattern animé - halos de la landing page */}
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 pt-20 sm:pt-4 sm:py-4 md:py-6 md:py-8 pb-4 sm:pb-6 md:pb-8">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 lg:pt-12 pb-4 sm:pb-6 md:pb-8">
         {/* Afficher un message d'avertissement si pas de club_id, mais continuer à afficher l'interface */}
         {hasNoClub && (
           <div className="mb-4 sm:mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
@@ -359,11 +359,11 @@ export default async function HomePage() {
         {/* Afficher le contenu principal seulement si profile et user existent */}
         {profile && user ? (
           <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-12">
-            <div className="lg:col-span-4 space-y-4 sm:space-y-6">
+            <div className="lg:col-span-4 space-y-3 sm:space-y-4 md:space-y-6">
               <PlayerSummary profileId={profile.id} />
-              <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
+              <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
             </div>
-            <div className="lg:col-span-8 lg:mt-0 mt-4 sm:mt-0 space-y-4 sm:space-y-6">
+            <div className="lg:col-span-8 lg:mt-0 mt-3 sm:mt-4 md:mt-6 space-y-3 sm:space-y-4 md:space-y-6">
               {leaderboard.length >= 3 && (
                 <div className="mb-6 sm:mb-8">
                   <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
@@ -498,18 +498,18 @@ export default async function HomePage() {
                       <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
                     </div>
                   </div>
-                  <div className="overflow-x-auto rounded-xl sm:rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
+                  <div className="overflow-x-auto rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100">Rang</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Joueur</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">Niveau</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0">Points</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell">Winrate</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell">MJ</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100 whitespace-nowrap">Rang</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Joueur</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap">Niveau</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Points</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell whitespace-nowrap">Winrate</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0 whitespace-nowrap" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0 whitespace-nowrap" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
+                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap">MJ</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 bg-white">
@@ -539,7 +539,7 @@ export default async function HomePage() {
                                 <RankBadge rank={player.rank} size="md" />
                               </td>
                               <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                                <span className="truncate block max-w-[120px] sm:max-w-none"><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}</span>
+                                <span className="truncate block max-w-[100px] sm:max-w-[150px] md:max-w-none"><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}</span>
                               </td>
                               <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
                                 <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />

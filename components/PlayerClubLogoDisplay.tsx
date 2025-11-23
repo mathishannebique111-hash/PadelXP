@@ -16,11 +16,8 @@ export default function PlayerClubLogoDisplay({
   return (
     <div 
       data-club-logo-container="true"
+      className="absolute top-3 right-3 sm:top-4 sm:right-4 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24"
       style={{
-        width: logoSize,
-        height: logoSize,
-        minWidth: logoSize,
-        minHeight: logoSize,
         pointerEvents: (publicLogoUrl || name) ? 'auto' : 'none',
       } as React.CSSProperties}
     >
@@ -30,12 +27,6 @@ export default function PlayerClubLogoDisplay({
           alt={name ? `Logo de ${name}` : "Logo du club"}
           className="h-full w-full object-contain"
           style={{
-            width: '6rem',
-            height: '6rem',
-            minWidth: '6rem',
-            minHeight: '6rem',
-            maxWidth: '6rem',
-            maxHeight: '6rem',
             objectFit: 'contain',
           }}
           onError={(e) => {

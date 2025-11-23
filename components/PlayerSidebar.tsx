@@ -24,18 +24,22 @@ export default function PlayerSidebar() {
   useEffect(() => {
     console.log('[PlayerSidebar] Component mounted - TOUJOURS VISIBLE (même pour nouveaux joueurs)');
     
-    // Fonction pour forcer l'affichage du bouton
+    // Fonction pour forcer l'affichage du bouton (responsive)
     const forceButtonDisplay = () => {
       const button = document.querySelector('[data-hamburger-button]') as HTMLElement;
       if (button) {
+        const isMobile = window.innerWidth < 640;
+        const top = isMobile ? '0.75rem' : '1rem';
+        const left = isMobile ? '0.75rem' : '1rem';
+        const size = isMobile ? '2.5rem' : '3rem';
         button.style.cssText = `
           position: fixed !important;
-          top: 1rem !important;
-          left: 1rem !important;
-          width: 3rem !important;
-          height: 3rem !important;
-          min-width: 3rem !important;
-          min-height: 3rem !important;
+          top: ${top} !important;
+          left: ${left} !important;
+          width: ${size} !important;
+          height: ${size} !important;
+          min-width: ${size} !important;
+          min-height: ${size} !important;
           z-index: 99999 !important;
           display: flex !important;
           align-items: center !important;
@@ -43,8 +47,12 @@ export default function PlayerSidebar() {
           visibility: visible !important;
           opacity: 1 !important;
           pointer-events: auto !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          border-radius: 0.75rem !important;
+          background-color: rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
         `;
-        console.log('[PlayerSidebar] Button display forced');
+        console.log('[PlayerSidebar] Button display forced (responsive)');
       }
     };
     
@@ -130,15 +138,15 @@ export default function PlayerSidebar() {
         onClick={() => {
           setIsOpen(prev => !prev);
         }}
-        className="flex items-center justify-center rounded-xl bg-white/10 border border-white/10 hover:bg-white/20 hover:border-white/20 transition-all duration-300 cursor-pointer backdrop-blur"
+        className="fixed top-3 left-3 sm:top-4 sm:left-4 z-[99999] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 cursor-pointer backdrop-blur shadow-sm"
         style={{
           position: 'fixed',
-          top: '1rem',
-          left: '1rem',
-          width: '3rem',
-          height: '3rem',
-          minWidth: '3rem',
-          minHeight: '3rem',
+          top: '0.75rem',
+          left: '0.75rem',
+          width: '2.5rem',
+          height: '2.5rem',
+          minWidth: '2.5rem',
+          minHeight: '2.5rem',
           zIndex: 99999,
           display: 'flex',
           alignItems: 'center',
@@ -188,7 +196,7 @@ export default function PlayerSidebar() {
       {/* Menu latéral - toujours caché par défaut, s'ouvre avec le bouton */}
       {/* TOUJOURS présent dans le DOM pour garantir l'affichage même pour nouveaux joueurs */}
       <aside
-        className={`fixed top-0 left-0 h-full w-72 bg-black/95 border-r border-white/10 transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-full w-64 sm:w-72 bg-black/95 border-r border-white/10 transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{
@@ -196,7 +204,7 @@ export default function PlayerSidebar() {
           top: 0,
           left: 0,
           height: '100%',
-          width: '18rem',
+          width: '16rem',
           zIndex: 99999,
           visibility: 'visible',
           display: 'block',
