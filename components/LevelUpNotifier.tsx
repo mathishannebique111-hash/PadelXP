@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 
 interface Props {
   tier: string; // Bronze / Argent / Or / Diamant / Champion
@@ -9,24 +9,44 @@ interface Props {
 export default function LevelUpNotifier({ tier }: Props) {
   const [show, setShow] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
+  const checkedTierRef = useRef<string | null>(null); // Pour suivre le tier déjà vérifié dans cette session
 
   const tierKey = useMemo(() => `padelleague.lastTier`, []);
+  const shownTierKey = useMemo(() => `padelleague.shownTier`, []); // Clé pour suivre les tiers déjà affichés
 
   useEffect(() => {
+    // Ne vérifier que si le tier a changé depuis la dernière vérification
+    if (checkedTierRef.current === tier) return;
+    
     try {
       const last = window.localStorage.getItem(tierKey);
+      const shownTiers = window.localStorage.getItem(shownTierKey);
+      const shownTiersList: string[] = shownTiers ? JSON.parse(shownTiers) : [];
+      
       if (tier && tier !== last) {
-        // Eviter d'afficher au premier chargement si aucun historique ?
-        if (last !== null) {
+        // Vérifier si ce tier a déjà été affiché (pour éviter de réafficher si le joueur se reconnecte)
+        const hasBeenShown = shownTiersList.includes(tier);
+        
+        // Afficher seulement si :
+        // 1. Il y avait un tier précédent (pas le premier chargement)
+        // 2. Ce tier n'a pas encore été affiché
+        if (last !== null && !hasBeenShown) {
           setCurrent(tier);
           setShow(true);
+          // Marquer ce tier comme affiché
+          const updated = Array.from(new Set([...shownTiersList, tier]));
+          window.localStorage.setItem(shownTierKey, JSON.stringify(updated));
         }
+        // Toujours mettre à jour le dernier tier
         window.localStorage.setItem(tierKey, tier);
       }
+      // Marquer ce tier comme vérifié dans cette session
+      checkedTierRef.current = tier;
     } catch (e) {
       // fail silent
+      checkedTierRef.current = tier; // Marquer comme vérifié même en cas d'erreur
     }
-  }, [tier, tierKey]);
+  }, [tier, tierKey, shownTierKey]);
 
   if (!show || !current) return null;
 

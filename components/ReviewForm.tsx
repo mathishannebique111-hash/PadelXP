@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Image from "next/image";
 import BadgeIconDisplay from "./BadgeIconDisplay";
@@ -50,9 +50,6 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
 
       const data = await response.json();
 
-      console.log("[ReviewForm] API Response:", data);
-      console.log("[ReviewForm] isFirstReviewForUser:", data.isFirstReviewForUser);
-
       if (!response.ok) {
         // Ne pas afficher "Unauthorized" brut - utiliser un message plus user-friendly
         const errorMessage = data.error === "Unauthorized" || data.error?.includes("Unauthorized")
@@ -63,12 +60,11 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
 
       setSuccess(true);
       
-      // Vérifier si c'est le premier avis
-      const isFirstReview = data.isFirstReviewForUser === true;
-      console.log("[ReviewForm] Is first review:", isFirstReview);
+      // Afficher le pop-up "10 points" seulement si c'est le premier avis valide pour le bonus
+      const isFirstValidReview = data.isFirstValidReviewForBonus === true;
       
       setBadgeInfo({
-        isFirstReviewForUser: isFirstReview
+        isFirstReviewForUser: isFirstValidReview
       });
       
       // Sauvegarder l'avis soumis pour l'afficher en lecture seule
@@ -83,9 +79,9 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
       setComment("");
       setShowNewReviewForm(false);
       
-      // Si c'est le premier avis, afficher le pop-up spécial
-      if (isFirstReview) {
-        console.log("[ReviewForm] 🎉 Premier avis détecté ! Affichage du pop-up spécial");
+      // Si c'est le premier avis valide, afficher le pop-up spécial
+      if (isFirstValidReview) {
+        // Premier avis valide détecté - pop-up spécial sera affiché
       } else if (rating === 5) {
         // Confetti simple pour 5 étoiles
         const el = document.createElement("div");
@@ -96,31 +92,18 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
       }
       
       // Afficher le pop-up de remerciement
-      console.log("[ReviewForm] Affichage du pop-up de remerciement, isFirstReview:", isFirstReview);
-      console.log("[ReviewForm] badgeInfo après update:", { isFirstReviewForUser: isFirstReview });
-      
       // Forcer l'affichage du pop-up immédiatement
       setShowThankYouModal(true);
-      
-      // Forcer le re-render pour s'assurer que le pop-up s'affiche
-      setTimeout(() => {
-        console.log("[ReviewForm] Vérification du state:", {
-          showThankYouModal,
-          badgeInfo: { isFirstReviewForUser: isFirstReview }
-        });
-      }, 100);
       
       // Attendre un peu pour s'assurer que l'insertion est bien terminée
       // puis déclencher l'événement pour mettre à jour les avis sans recharger la page
       setTimeout(() => {
-        console.log("📢 Dispatching reviewSubmitted event with review:", data.review);
         const event = new CustomEvent("reviewSubmitted", { 
           detail: { review: data.review },
           bubbles: true,
           cancelable: true
         });
-        const dispatched = window.dispatchEvent(event);
-        console.log("📢 Event dispatched:", dispatched);
+        window.dispatchEvent(event);
       }, 800);
       
       // Appeler le callback si fourni
@@ -136,14 +119,7 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
     }
   };
 
-  // Debug: Afficher l'état actuel
-  useEffect(() => {
-    console.log("[ReviewForm] State update:", {
-      showThankYouModal,
-      badgeInfo,
-      isFirstReview: badgeInfo?.isFirstReviewForUser,
-    });
-  }, [showThankYouModal, badgeInfo]);
+  // useEffect supprimé pour éviter les erreurs d'affichage
 
   // Si un avis a été soumis, l'afficher en lecture seule
   // MAIS garder le pop-up visible même après la soumission

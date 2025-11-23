@@ -82,6 +82,43 @@ export function limitReviews(reviews: Review[], limit: number): Review[] {
 }
 
 /**
+ * Compte le nombre de mots dans un texte
+ */
+export function countWords(text: string | null | undefined): number {
+  if (!text || typeof text !== 'string') {
+    return 0;
+  }
+  
+  // Nettoyer le texte et compter les mots
+  const cleaned = text.trim();
+  if (cleaned.length === 0) {
+    return 0;
+  }
+  
+  // Diviser par les espaces et filtrer les chaînes vides
+  const words = cleaned.split(/\s+/).filter(word => word.length > 0);
+  return words.length;
+}
+
+/**
+ * Vérifie si un avis est valide pour l'attribution des points/badge
+ * Un avis est valide si :
+ * - rating > 3 (4 ou 5 étoiles) : toujours valide
+ * - rating <= 3 ET words > 6 : valide
+ * Sinon : invalide (rating <= 3 ET words <= 6)
+ */
+export function isReviewValidForBonus(rating: number, comment: string | null | undefined): boolean {
+  // Si rating > 3, toujours valide
+  if (rating > 3) {
+    return true;
+  }
+  
+  // Si rating <= 3, vérifier le nombre de mots
+  const wordCount = countWords(comment);
+  return wordCount > 6;
+}
+
+/**
  * Prépare les avis pour l'affichage : filtre, trie et limite
  */
 export function prepareReviewsForDisplay(

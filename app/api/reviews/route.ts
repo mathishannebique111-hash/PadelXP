@@ -302,10 +302,42 @@ export async function POST(req: Request) {
       profiles: profile?.display_name ? { display_name: profile.display_name } : null,
     };
 
+    // Vérifier si l'avis soumis est valide pour les points/badge
+    // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
+    // wordCount a déjà été déclaré plus haut (ligne 205)
+    const isReviewValid = validated.rating > 3 || (validated.rating <= 3 && wordCount > 6);
+    
+    // Vérifier si l'utilisateur avait déjà un avis valide AVANT de soumettre celui-ci
+    let hadValidReviewBefore = false;
+    if (!isFirstReviewForUser) {
+      // Récupérer tous les autres avis de l'utilisateur (avant celui qu'on vient de créer)
+      const { data: otherReviews } = await supabaseAdmin
+        .from('reviews')
+        .select('rating, comment')
+        .eq('user_id', user.id)
+        .neq('id', insertedReview.id);
+      
+      if (otherReviews && otherReviews.length > 0) {
+        hadValidReviewBefore = otherReviews.some((r: any) => {
+          const rWordCount = countWords(r.comment);
+          return (r.rating || 0) > 3 || ((r.rating || 0) <= 3 && rWordCount > 6);
+        });
+      }
+    }
+    
+    // L'utilisateur a maintenant un avis valide si : soit il en avait déjà un, soit celui-ci est valide
+    const hasValidReviewNow = hadValidReviewBefore || isReviewValid;
+    
+    // C'est le premier avis valide si : c'est le premier avis ET qu'il est valide
+    // OU si ce n'est pas le premier avis mais qu'il n'avait pas d'avis valide avant ET que celui-ci est valide
+    const isFirstValidReview = (isFirstReviewForUser && isReviewValid) || (!hadValidReviewBefore && isReviewValid);
+
     return NextResponse.json({
       review: enrichedReview,
       updated: false,
       isFirstReviewForUser,
+      isReviewValidForBonus: isReviewValid,
+      isFirstValidReviewForBonus: isFirstValidReview,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

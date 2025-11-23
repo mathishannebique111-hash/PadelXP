@@ -1396,7 +1396,6 @@ export default function MatchForm({
                   type="checkbox"
                   checked={useBoost}
                   onChange={(e) => {
-                    console.log('[MatchForm] Boost checkbox changed:', e.target.checked, 'boostStats:', boostStats);
                     setUseBoost(e.target.checked);
                   }}
                   disabled={!boostStats || boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) < 1}
@@ -1407,37 +1406,25 @@ export default function MatchForm({
                   Appliquer un boost (+30% de points si tu gagnes)
                 </span>
               </label>
-              {/* Debug info - toujours afficher pour voir les valeurs */}
-              {boostStats && (
-                <div className="mt-2 text-xs text-gray-400 font-mono">
-                  [Debug] creditsAvailable: {String(boostStats.creditsAvailable)} (type: {typeof boostStats.creditsAvailable}), 
-                  disabled: {String(!boostStats || boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) < 1)},
-                  checkbox enabled: {String(boostStats && Number(boostStats.creditsAvailable) >= 1)},
-                  raw value: {JSON.stringify(boostStats.creditsAvailable)}
-                </div>
-              )}
-              {boostStats && (
+              {boostStats && Number(boostStats.creditsAvailable) > 0 && (
                 <p className="mt-2 text-xs text-white/70">
-                  {boostStats.creditsAvailable > 0 ? (
-                    <>
-                      Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
-                      {boostStats.usedThisMonth > 0 && (
-                        <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
-                      )}
-                      {boostStats.usedThisMonth >= 10 && (
-                        <span className="block mt-1 text-yellow-300">
-                          ⚠️ Tu as atteint la limite mensuelle de 10 boosts. Le boost ne sera pas appliqué.
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      Tu n'as plus de boosts disponibles.{" "}
-                      <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
-                        Achète-en de nouveaux
-                      </a>
-                    </>
+                  Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
+                  {boostStats.usedThisMonth > 0 && (
+                    <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
                   )}
+                  {boostStats.usedThisMonth >= 10 && (
+                    <span className="block mt-1 text-yellow-300">
+                      ⚠️ Tu as atteint la limite mensuelle de 10 boosts. Le boost ne sera pas appliqué.
+                    </span>
+                  )}
+                </p>
+              )}
+              {boostStats && (boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) <= 0) && (
+                <p className="mt-2 text-xs text-white/70">
+                  Tu n'as plus de boosts disponibles.{" "}
+                  <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
+                    Achète-en de nouveaux
+                  </a>
                 </p>
               )}
             </div>

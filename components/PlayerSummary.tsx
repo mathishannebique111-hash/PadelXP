@@ -207,15 +207,25 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     console.log("[PlayerSummary] Win matches count:", winMatches.size);
     console.log("[PlayerSummary] Win matches:", Array.from(winMatches));
   }
-  // Calcul du bonus XP pour le premier avis ( +10 XP une seule fois )
+  // Calcul du bonus XP pour le premier avis valide ( +10 XP une seule fois )
+  // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
   let reviewsBonus = 0;
   {
-    const { count: myReviewsCount } = await supabase
+    const { data: myReviews } = await supabase
       .from("reviews")
-      .select("id", { count: "exact", head: true })
+      .select("rating, comment")
       .eq("user_id", profileId);
-    if ((myReviewsCount || 0) > 0) {
-      reviewsBonus = 10;
+    
+    if (myReviews && myReviews.length > 0) {
+      // Vérifier si au moins un avis est valide
+      const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
+      const hasValidReview = myReviews.some((r: any) => 
+        isReviewValidForBonus(r.rating || 0, r.comment || null)
+      );
+      
+      if (hasValidReview) {
+        reviewsBonus = 10;
+      }
     }
   }
   
@@ -427,20 +437,32 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
   // Calcul des badges dynamiques basés sur les stats (EXACTEMENT comme la page badges)
   const statsForBadges: PlayerStats = { wins: badgeWins, losses: badgeLosses, matches: badgeMatches, points: badgePoints, streak: badgeStreak };
-  const computedBadges = getBadges(statsForBadges);
+  let computedBadges = getBadges(statsForBadges);
   // Utiliser icon + title comme clé unique car plusieurs badges peuvent avoir la même icône
   const obtainedBadgeKeys = new Set(computedBadges.map(b => `${b.icon}|${b.title}`));
   
-  // Badges liés aux avis: Contributeur (premier avis du joueur)
-  // Un joueur peut avoir plusieurs avis; utiliser un COUNT fiable plutôt que maybeSingle()
-  const { count: myReviewsCount } = await supabase
+  // Badges liés aux avis: Contributeur (premier avis valide du joueur)
+  // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
+  const { data: myReviewsForBadge } = await supabase
     .from("reviews")
-    .select("id", { count: "exact", head: true })
+    .select("rating, comment")
     .eq("user_id", profileId);
 
   // Ajouter les badges d'avis au Set (évite les doublons)
   const extraObtained = new Set<string>();
-  if ((myReviewsCount || 0) > 0) extraObtained.add("💬|Contributeur"); // Contributeur: au moins 1 avis
+  if (myReviewsForBadge && myReviewsForBadge.length > 0) {
+    // Vérifier si au moins un avis est valide
+    const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
+    const hasValidReviewForBadge = myReviewsForBadge.some((r: any) => 
+      isReviewValidForBonus(r.rating || 0, r.comment || null)
+    );
+    
+    if (hasValidReviewForBadge) {
+      extraObtained.add("💬|Contributeur"); // Contributeur: au moins 1 avis valide
+      // Ajouter le badge Contributeur à computedBadges pour BadgesUnlockNotifier
+      computedBadges = [...computedBadges, ALL_BADGES.find(b => b.title === "Contributeur")!].filter(Boolean);
+    }
+  }
 
   // Créer la liste avec le statut de chaque badge (même logique que la page badges)
   const badgesWithStatus = ALL_BADGES.map((badge) => ({

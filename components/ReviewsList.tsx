@@ -5,6 +5,16 @@ import Image from "next/image";
 import { getPositiveReviews, getOtherReviews, sortReviewsByDate } from "@/lib/utils/review-utils";
 import type { Review } from "@/lib/utils/review-utils";
 
+// Fonction pour formater la date sur une seule ligne
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const monthNames = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+};
+
 interface ReviewsListProps {
   initialReviews?: Review[];
   initialAverageRating?: number;
@@ -106,20 +116,22 @@ export default function ReviewsList({
                   className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-white to-blue-50 p-5 sm:p-6 border-2 border-blue-200 shadow-[0_20px_50px_rgba(4,16,46,0.25)] opacity-0 animate-fade-in relative"
                   style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards' }}
                 >
-                  {/* Badge "Avis positif" */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                    <span>★</span>
-                    <span>4+ étoiles</span>
-                  </div>
-                  <div className="flex items-start justify-between mb-3 pr-20">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#003D99] text-white flex items-center justify-center font-bold text-sm">
-                        {(review.profiles?.display_name || 'Joueur').slice(0,1).toUpperCase()}
+                      <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-[#0066FF] via-[#0052CC] to-[#003D99] text-white flex items-center justify-center font-bold text-sm sm:text-base shadow-lg ring-2 ring-blue-200/50">
+                        {(() => {
+                          const name = review.profiles?.display_name || 'Joueur';
+                          const words = name.trim().split(' ');
+                          if (words.length >= 2) {
+                            return (words[0][0] + words[1][0]).toUpperCase();
+                          }
+                          return name.slice(0, 2).toUpperCase();
+                        })()}
                       </div>
                       <div>
                         <div className="font-semibold text-slate-900">{review.profiles?.display_name || 'Joueur'}</div>
-                        <div className="text-xs sm:text-sm text-slate-500">
-                          {new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        <div className="text-xs sm:text-sm text-slate-500 whitespace-nowrap">
+                          {formatDate(review.created_at)}
                         </div>
                       </div>
                     </div>
@@ -154,13 +166,20 @@ export default function ReviewsList({
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#0066FF] to-[#003D99] text-white flex items-center justify-center font-bold text-sm">
-                          {(review.profiles?.display_name || 'Joueur').slice(0,1).toUpperCase()}
+                        <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-[#0066FF] via-[#0052CC] to-[#003D99] text-white flex items-center justify-center font-bold text-sm sm:text-base shadow-lg ring-2 ring-blue-200/50">
+                          {(() => {
+                            const name = review.profiles?.display_name || 'Joueur';
+                            const words = name.trim().split(' ');
+                            if (words.length >= 2) {
+                              return (words[0][0] + words[1][0]).toUpperCase();
+                            }
+                            return name.slice(0, 2).toUpperCase();
+                          })()}
                         </div>
                         <div>
                           <div className="font-semibold text-slate-900">{review.profiles?.display_name || 'Joueur'}</div>
-                          <div className="text-xs sm:text-sm text-slate-500">
-                            {new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          <div className="text-xs sm:text-sm text-slate-500 whitespace-nowrap">
+                            {new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </div>
                         </div>
                       </div>

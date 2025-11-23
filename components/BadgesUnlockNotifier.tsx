@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 
 type Badge = {
@@ -16,10 +16,14 @@ interface Props {
 export default function BadgesUnlockNotifier({ obtained }: Props) {
   const [toCelebrate, setToCelebrate] = useState<Badge[]>([]);
   const [show, setShow] = useState(false);
+  const checkedKeysRef = useRef<string>(""); // Pour suivre les badges déjà vérifiés dans cette session
 
-  const obtainedKeys = useMemo(() => obtained.map(b => `${b.icon}|${b.title}`), [obtained]);
+  const obtainedKeys = useMemo(() => obtained.map(b => `${b.icon}|${b.title}`).sort().join(","), [obtained]);
 
   useEffect(() => {
+    // Ne vérifier que si les badges ont changé depuis la dernière vérification
+    if (checkedKeysRef.current === obtainedKeys) return;
+    
     try {
       const key = "padelleague.seenBadges";
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
@@ -29,14 +33,17 @@ export default function BadgesUnlockNotifier({ obtained }: Props) {
       if (newlyUnlocked.length > 0) {
         setToCelebrate(newlyUnlocked);
         setShow(true);
-        // marquer comme vus immédiatement pour éviter les répétitions en boucle
+        // marquer comme vus immédiatement pour éviter les répétitions
         const updated = Array.from(new Set([...seen, ...newlyUnlocked.map(b => `${b.icon}|${b.title}`)]));
         window.localStorage.setItem(key, JSON.stringify(updated));
       }
+      // Marquer ces badges comme vérifiés dans cette session
+      checkedKeysRef.current = obtainedKeys;
     } catch (e) {
       // fail silent
+      checkedKeysRef.current = obtainedKeys; // Marquer comme vérifié même en cas d'erreur
     }
-  }, [obtainedKeys.join(",")]);
+  }, [obtainedKeys]);
 
   if (!show || toCelebrate.length === 0) return null;
 

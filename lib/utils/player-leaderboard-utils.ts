@@ -315,18 +315,33 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     }
   });
   
-  // Bonus premier avis: +10 points pour les users ayant au moins un avis
+  // Bonus premier avis: +10 points pour les users ayant au moins un avis valide
+  // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
   const bonusMap = new Map<string, number>();
   {
     const userIdsForBonus = Object.keys(byPlayer).filter(id => !id.startsWith("guest_") && byPlayer[id].isGuest === false);
     if (userIdsForBonus.length > 0) {
       const { data: reviewers } = await supabaseAdmin
         .from("reviews")
-        .select("user_id")
+        .select("user_id, rating, comment")
         .in("user_id", userIdsForBonus);
-      const hasReview = new Set((reviewers || []).map((r: any) => r.user_id));
+      
+      // Créer un map pour vérifier si chaque utilisateur a au moins un avis valide
+      const usersWithValidReview = new Set<string>();
+      
+      if (reviewers && reviewers.length > 0) {
+        // Importer la fonction utilitaire
+        const { isReviewValidForBonus } = await import("./review-utils");
+        
+        reviewers.forEach((r: any) => {
+          if (isReviewValidForBonus(r.rating || 0, r.comment || null)) {
+            usersWithValidReview.add(r.user_id);
+          }
+        });
+      }
+      
       userIdsForBonus.forEach(uid => {
-        if (hasReview.has(uid)) bonusMap.set(uid, 10);
+        if (usersWithValidReview.has(uid)) bonusMap.set(uid, 10);
       });
     }
   }
