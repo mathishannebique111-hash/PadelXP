@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import Image from "next/image";
-import BadgeIconDisplay from "./BadgeIconDisplay";
 
 interface ReviewFormProps {
   onSubmit?: () => void;
@@ -192,7 +191,6 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
             {badgeInfo?.isFirstReviewForUser ? (
               // Pop-up spécial pour le premier avis
               <>
-                <div className="mb-3 text-center text-5xl">🎊</div>
                 <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Félicitations !</h3>
                 <p className="mb-4 text-center text-sm text-gray-600">
                   Vous avez laissé votre premier avis
@@ -200,7 +198,14 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
                 
                 {/* Section Badge + Points */}
                 <div className="mx-auto mt-3 flex w-full max-w-sm flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <BadgeIconDisplay icon="💬" title="Contributeur" size={48} />
+                  <Image 
+                    src="/images/Badge.png" 
+                    alt="Badge Contributeur" 
+                    width={48} 
+                    height={48} 
+                    className="flex-shrink-0"
+                    unoptimized
+                  />
                   <div className="text-center">
                     <div className="text-base font-bold text-gray-900">Badge Contributeur débloqué !</div>
                   </div>
@@ -208,7 +213,14 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
                   {/* Section Points */}
                   <div className="mt-2 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 p-3 shadow-md">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="text-2xl">🎯</div>
+                      <Image 
+                        src="/images/Étoile points challenges.png" 
+                        alt="Points" 
+                        width={24} 
+                        height={24} 
+                        className="flex-shrink-0"
+                        unoptimized
+                      />
                       <div className="text-left">
                         <div className="text-xs text-emerald-100 uppercase tracking-wide mb-0.5 font-semibold">
                           Bonus gagné
@@ -356,7 +368,6 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
             {badgeInfo?.isFirstReviewForUser ? (
               // Pop-up spécial pour le premier avis
               <>
-                <div className="mb-3 text-center text-5xl">🎊</div>
                 <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Félicitations !</h3>
                 <p className="mb-4 text-center text-sm text-gray-600">
                   Vous avez laissé votre premier avis
@@ -364,7 +375,14 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
                 
                 {/* Section Badge + Points */}
                 <div className="mx-auto mt-3 flex w-full max-w-sm flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <BadgeIconDisplay icon="💬" title="Contributeur" size={48} />
+                  <Image 
+                    src="/images/Badge.png" 
+                    alt="Badge Contributeur" 
+                    width={48} 
+                    height={48} 
+                    className="flex-shrink-0"
+                    unoptimized
+                  />
                   <div className="text-center">
                     <div className="text-base font-bold text-gray-900">Badge Contributeur débloqué !</div>
                   </div>
@@ -372,7 +390,14 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
                   {/* Section Points */}
                   <div className="mt-2 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 p-3 shadow-md">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="text-2xl">🎯</div>
+                      <Image 
+                        src="/images/Étoile points challenges.png" 
+                        alt="Points" 
+                        width={24} 
+                        height={24} 
+                        className="flex-shrink-0"
+                        unoptimized
+                      />
                       <div className="text-left">
                         <div className="text-xs text-emerald-100 uppercase tracking-wide mb-0.5 font-semibold">
                           Bonus gagné

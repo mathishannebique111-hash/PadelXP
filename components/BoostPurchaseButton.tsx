@@ -240,9 +240,9 @@ export default function BoostPurchaseButton({
 
             {/* Badge "1 offert !" uniquement pour le pack 10 */}
                 {offerText && (
-              <div className="mx-auto mb-2 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#BFFF00] to-[#9FDF00] text-xs sm:text-sm font-bold text-gray-900 animate-pulse flex-shrink-0 flex items-center gap-1.5 justify-center" style={{ animationDuration: '2s' }}>
-                <Image src="/images/Cadeau accueil club.png" alt="Cadeau" width={16} height={16} className="flex-shrink-0" unoptimized />
-                <span>{offerText}</span>
+              <div className="mx-auto mb-2 max-w-full px-2 py-0.5 rounded-full bg-gradient-to-r from-[#BFFF00] to-[#9FDF00] text-[10px] sm:text-xs font-bold text-gray-900 animate-pulse flex-shrink-0 flex items-center gap-1 justify-center whitespace-nowrap overflow-hidden" style={{ animationDuration: '2s' }}>
+                <Image src="/images/Cadeau accueil club.png" alt="Cadeau" width={14} height={14} className="flex-shrink-0" unoptimized />
+                <span className="truncate">{offerText}</span>
               </div>
             )}
           </div>

@@ -8,6 +8,14 @@ interface ReviewsStatsProps {
   initialAverageRating?: number;
 }
 
+interface RewardStatus {
+  goalReached: boolean;
+  totalReviews: number;
+  isEligible: boolean;
+  hasClaimed: boolean;
+  canClaim: boolean;
+}
+
 export default function ReviewsStats({ 
   initialReviews = [], 
   initialAverageRating = 0,
@@ -15,6 +23,8 @@ export default function ReviewsStats({
   const [reviews, setReviews] = useState(initialReviews);
   const [averageRating, setAverageRating] = useState(initialAverageRating);
   const [loading, setLoading] = useState(false);
+  const [rewardStatus, setRewardStatus] = useState<RewardStatus | null>(null);
+  const [claiming, setClaiming] = useState(false);
 
   // Synchroniser l'état initial avec les props au montage
   useEffect(() => {
@@ -22,6 +32,74 @@ export default function ReviewsStats({
     setAverageRating(initialAverageRating);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Charger le statut de la récompense
+  useEffect(() => {
+    const loadRewardStatus = async () => {
+      try {
+        const response = await fetch("/api/reviews/reward-status");
+        if (response.ok) {
+          const data = await response.json();
+          setRewardStatus(data);
+        }
+      } catch (error) {
+        console.error("Error loading reward status:", error);
+      }
+    };
+
+    loadRewardStatus();
+  }, []);
+
+  // Recharger le statut après soumission d'avis
+  useEffect(() => {
+    const handleReviewSubmitted = async () => {
+      try {
+        const response = await fetch("/api/reviews/reward-status");
+        if (response.ok) {
+          const data = await response.json();
+          setRewardStatus(data);
+        }
+      } catch (error) {
+        console.error("Error reloading reward status:", error);
+      }
+    };
+
+    window.addEventListener("reviewSubmitted", handleReviewSubmitted as EventListener);
+    return () => {
+      window.removeEventListener("reviewSubmitted", handleReviewSubmitted as EventListener);
+    };
+  }, []);
+
+  const handleClaimReward = async () => {
+    if (claiming || !rewardStatus?.canClaim) return;
+
+    setClaiming(true);
+    try {
+      const response = await fetch("/api/reviews/claim-free-boost", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Recharger le statut
+        const statusResponse = await fetch("/api/reviews/reward-status");
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          setRewardStatus(statusData);
+        }
+        // Optionnel : afficher un message de succès
+        alert("Boost gratuit attribué avec succès ! 🎉");
+      } else {
+        alert(data.error || "Erreur lors de la réclamation du boost");
+      }
+    } catch (error) {
+      console.error("Error claiming reward:", error);
+      alert("Erreur lors de la réclamation du boost");
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   // Écouter les événements de soumission d'avis
   useEffect(() => {
@@ -126,11 +204,64 @@ export default function ReviewsStats({
             {Math.min(100, Math.round(((reviews?.length || 0)/50)*100))}%
           </div>
         </div>
-        <div className="h-2.5 sm:h-3 w-full rounded-full bg-slate-200/60 overflow-hidden">
+        <div className="h-2.5 sm:h-3 w-full rounded-full bg-slate-200/60 overflow-hidden mb-4">
           <div 
             className="h-full rounded-full bg-[#10B981] shadow-sm" 
             style={{ width: `${Math.min(100, Math.round(((reviews?.length || 0)/50)*100))}%` }} 
           />
+        </div>
+
+        {/* Cadre de récompense */}
+        <div className="rounded-lg border border-yellow-400/40 bg-gradient-to-br from-yellow-500/15 to-amber-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <Image 
+              src="/images/Éclair boost.png" 
+              alt="Boost" 
+              width={24} 
+              height={24} 
+              className="flex-shrink-0 mt-0.5"
+              unoptimized
+            />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-slate-900 mb-1">
+                1 boost gratuit offert
+              </div>
+              <div className="text-xs text-slate-700 mb-3">
+                Tous les joueurs ayant laissé un avis avant l'atteinte de l'objectif recevront 1 boost gratuit pour avoir participé à cette réussite communautaire !
+              </div>
+              
+              {/* Bouton de réclamation ou statut */}
+              {rewardStatus && (
+                <>
+                  {rewardStatus.goalReached && rewardStatus.isEligible && !rewardStatus.hasClaimed && (
+                    <button
+                      onClick={handleClaimReward}
+                      disabled={claiming}
+                      className="w-full rounded-lg bg-gradient-to-r from-yellow-400 to-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {claiming ? "Récupération..." : "Récupérer mon boost gratuit"}
+                    </button>
+                  )}
+                  {rewardStatus.goalReached && rewardStatus.isEligible && rewardStatus.hasClaimed && (
+                    <div className="flex items-center gap-2 text-xs text-green-700 font-medium">
+                      <span>✅</span>
+                      <span>Boost gratuit réclamé !</span>
+                    </div>
+                  )}
+                  {rewardStatus.goalReached && !rewardStatus.isEligible && (
+                    <div className="text-xs text-slate-600">
+                      Vous n'êtes pas éligible pour cette récompense. Seuls les joueurs ayant laissé un avis avant l'atteinte de l'objectif peuvent réclamer le boost.
+                    </div>
+                  )}
+                  {!rewardStatus.goalReached && (
+                    <div className="text-xs text-slate-600">
+                      L'objectif n'est pas encore atteint. Continuez à laisser des avis pour débloquer cette récompense !
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>
