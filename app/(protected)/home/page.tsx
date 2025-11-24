@@ -3,6 +3,8 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import PlayerSummary from "@/components/PlayerSummary";
 import LogoutButton from "@/components/LogoutButton";
 import Top3Notification from "@/components/Top3Notification";
+import ReferralNotifier from "@/components/ReferralNotifier";
+import ReferralSection from "@/components/ReferralSection";
 import TierBadge from "@/components/TierBadge";
 import RankBadge from "@/components/RankBadge";
 import Link from "next/link";
@@ -343,6 +345,7 @@ export default async function HomePage() {
         {profile && user && (
           <>
             <Top3Notification currentUserId={profile.id} />
+            <ReferralNotifier />
             <div className="mb-4 sm:mb-6">
               <PageTitle title={`Bienvenue ${profile.display_name} !`} subtitle={clubName ? `Club : ${clubName}` : undefined} />
             </div>
@@ -362,6 +365,7 @@ export default async function HomePage() {
             <div className="lg:col-span-4 space-y-3 sm:space-y-4 md:space-y-6">
               <PlayerSummary profileId={profile.id} />
               <a href="/match/new" className="inline-flex w-full items-center justify-center rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
+              <ReferralSection userId={profile.id} />
             </div>
             <div className="lg:col-span-8 lg:mt-0 mt-3 sm:mt-4 md:mt-6 space-y-3 sm:space-y-4 md:space-y-6">
               {leaderboard.length >= 3 && (

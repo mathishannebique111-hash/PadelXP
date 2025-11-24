@@ -439,6 +439,49 @@ export async function POST(req: Request) {
     }
   }
 
+  // Si un boost a été appliqué, attendre un peu et vérifier qu'il est bien visible dans la base de données
+  // avant de revalider les pages (pour éviter des problèmes de timing)
+  if (boostApplied && match?.id) {
+    console.log("⏳ Waiting for boost to be fully committed to database...");
+    await new Promise(resolve => setTimeout(resolve, 500)); // Augmenter à 500ms pour être sûr
+    
+    // Vérifier que le boost est bien enregistré dans la base de données
+    // Essayer plusieurs fois si nécessaire
+    let verifyBoost = null;
+    let verifyError = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error } = await supabaseAdmin
+        .from("player_boost_uses")
+        .select("id, match_id, points_after_boost, applied_at, user_id")
+        .eq("user_id", user.id)
+        .eq("match_id", match.id)
+        .maybeSingle();
+      
+      if (error) {
+        verifyError = error;
+        console.error(`❌ Error verifying boost (attempt ${attempt + 1}):`, error);
+      } else if (data) {
+        verifyBoost = data;
+        console.log(`✅ Boost verified in database (attempt ${attempt + 1}):`, {
+          matchId: verifyBoost.match_id?.substring(0, 8),
+          pointsAfterBoost: verifyBoost.points_after_boost,
+          appliedAt: verifyBoost.applied_at,
+          userId: verifyBoost.user_id?.substring(0, 8)
+        });
+        break;
+      } else {
+        console.warn(`⚠️ Boost not found in database (attempt ${attempt + 1})`);
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 200)); // Attendre 200ms de plus
+        }
+      }
+    }
+    
+    if (!verifyBoost) {
+      console.error("❌ CRITICAL: Boost not found in database after multiple attempts - this will cause incorrect point calculation!");
+    }
+  }
+
   try {
     console.log("🔄 Revalidating paths after match submission...");
     revalidatePath("/dashboard");

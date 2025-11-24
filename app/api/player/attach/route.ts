@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
+import { processReferralCode } from "@/lib/utils/referral-utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -14,13 +15,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    let { slug, code, firstName, lastName, displayName, email } = body as {
+    let { slug, code, firstName, lastName, displayName, email, referralCode } = body as {
       slug?: string;
       code?: string;
       firstName?: string;
       lastName?: string;
       displayName?: string;
       email?: string;
+      referralCode?: string;
     };
     if (!slug || !code) {
       return NextResponse.json({ error: "Club et code requis" }, { status: 400 });
@@ -99,6 +101,9 @@ export async function POST(req: Request) {
       ? `${normalizedFirst} ${normalizedLast}`.trim()
       : normalizedFirst || normalizedLast || rawDisplayName;
 
+    // Vérifier si le profil existe déjà pour savoir si on doit générer un code de parrainage
+    const shouldGenerateReferralCode = !existingProfile;
+
     const upsertPayload = {
       id: user.id,
       display_name: finalDisplayName,
@@ -107,20 +112,75 @@ export async function POST(req: Request) {
       email: normalizedEmail,
       club_id: club.id,
       club_slug: club.slug,
+      // Le code de parrainage sera généré automatiquement par le trigger SQL si null
+      referral_code: existingProfile?.referral_code || null,
     };
 
-    const { data: upsertedProfile, error: upsertError } = await supabaseAdmin
+    let upsertedProfile = null;
+    let upsertError = null;
+    
+    // Première tentative d'upsert
+    const upsertResult = await supabaseAdmin
       .from("profiles")
       .upsert(upsertPayload, { onConflict: "id" })
       .select("id, club_id, club_slug")
       .single();
+    
+    upsertedProfile = upsertResult.data;
+    upsertError = upsertResult.error;
+
+    // Si erreur liée au code de parrainage (contrainte unique), réessayer
+    if (upsertError && (upsertError.code === "23505" || upsertError.message?.includes("referral_code"))) {
+      console.warn("[player/attach] Referral code conflict, retrying with null code to trigger regeneration...");
+      const retryPayload = {
+        ...upsertPayload,
+        referral_code: null, // Laisser le trigger générer un nouveau code
+      };
+      const retryResult = await supabaseAdmin
+        .from("profiles")
+        .upsert(retryPayload, { onConflict: "id" })
+        .select("id, club_id, club_slug")
+        .single();
+      
+      if (retryResult.error || !retryResult.data) {
+        console.error("[player/attach] Retry upsert error", retryResult.error);
+        return NextResponse.json({ 
+          error: "Erreur lors de la création du profil. Veuillez réessayer ou contacter le support." 
+        }, { status: 500 });
+      }
+      
+      upsertedProfile = retryResult.data;
+      upsertError = null;
+    }
 
     if (upsertError || !upsertedProfile) {
       console.error("[player/attach] Upsert error", upsertError, { upsertPayload });
-      return NextResponse.json({ error: upsertError?.message || "Impossible d’attacher le club" }, { status: 400 });
+      return NextResponse.json({ 
+        error: upsertError?.message || "Impossible d'attacher le club. Veuillez réessayer ou contacter le support." 
+      }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true });
+    // Traiter le code de parrainage si fourni
+    let referralResult = null;
+    if (referralCode && referralCode.trim().length > 0) {
+      try {
+        referralResult = await processReferralCode(referralCode.trim(), user.id);
+        if (!referralResult.success) {
+          console.warn("[player/attach] Referral code processing failed:", referralResult.error);
+          // Ne pas échouer l'inscription si le code de parrainage échoue
+          // On retourne quand même un succès mais avec un avertissement
+        }
+      } catch (referralError) {
+        console.error("[player/attach] Referral code processing error:", referralError);
+        // Ne pas échouer l'inscription si le code de parrainage échoue
+      }
+    }
+
+    return NextResponse.json({ 
+      ok: true,
+      referralProcessed: referralResult?.success || false,
+      referralError: referralResult?.error || null,
+    });
   } catch (e) {
     console.error("[player/attach] Unexpected error", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

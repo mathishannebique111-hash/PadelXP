@@ -32,6 +32,7 @@ export async function middleware(req: NextRequest) {
     "/api/public/", 
     "/api/challenges/", 
     "/api/player/", 
+    "/api/referrals/", // Permettre la validation des codes de parrainage lors de l'inscription
     "/_next/", 
     "/images/", 
     "/onboarding/"

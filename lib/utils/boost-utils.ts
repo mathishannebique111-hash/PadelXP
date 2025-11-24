@@ -344,13 +344,15 @@ export async function consumeBoostForMatch(
     });
 
     // Enregistrer l'utilisation du boost avec les points boostés (13 points au lieu de 10)
+    const appliedAt = new Date().toISOString();
     console.log(`[consumeBoostForMatch] Recording boost use in database:`, {
       userId,
       matchId,
       boostCreditId: availableCredit.id,
       pointsBeforeBoost,
       pointsAfterBoost,
-      percentage: BOOST_PERCENTAGE
+      percentage: BOOST_PERCENTAGE,
+      appliedAt
     });
     
     const { data: boostUse, error: useError } = await supabaseAdmin
@@ -362,8 +364,9 @@ export async function consumeBoostForMatch(
         percentage: BOOST_PERCENTAGE,
         points_before_boost: pointsBeforeBoost,
         points_after_boost: pointsAfterBoost, // 13 points au lieu de 10
+        applied_at: appliedAt, // Ajouter la date d'application
       })
-      .select("id, points_after_boost, points_before_boost")
+      .select("id, points_after_boost, points_before_boost, applied_at")
       .single();
 
     if (useError || !boostUse) {

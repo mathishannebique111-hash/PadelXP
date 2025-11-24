@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
@@ -31,8 +31,84 @@ export default function EmailSignupForm({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [referralCodeValidating, setReferralCodeValidating] = useState(false);
+  const [referralCodeStatus, setReferralCodeStatus] = useState<{
+    valid: boolean;
+    error?: string;
+    referrerName?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Validation du code de parrainage en temps réel
+  const validateReferralCode = async (code: string) => {
+    if (!code || code.trim().length === 0) {
+      setReferralCodeStatus(null);
+      return;
+    }
+
+    setReferralCodeValidating(true);
+    try {
+      const response = await fetch("/api/referrals/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.trim() }),
+      });
+
+      if (!response.ok) {
+        // Si la réponse n'est pas OK, essayer de parser l'erreur
+        const errorData = await response.json().catch(() => ({ error: "Erreur lors de la validation" }));
+        setReferralCodeStatus({
+          valid: false,
+          error: errorData.error || "Erreur lors de la validation",
+        });
+        return;
+      }
+
+      const data = await response.json();
+      setReferralCodeStatus({
+        valid: data.valid || false,
+        error: data.error || undefined,
+        referrerName: data.referrerName || undefined,
+      });
+    } catch (error) {
+      setReferralCodeStatus({
+        valid: false,
+        error: "Erreur lors de la validation",
+      });
+    } finally {
+      setReferralCodeValidating(false);
+    }
+  };
+
+  // Debounce pour la validation du code de parrainage
+  const [validationTimeout, setValidationTimeout] = useState<NodeJS.Timeout | null>(null);
+  const handleReferralCodeChange = (value: string) => {
+    setReferralCode(value);
+    setReferralCodeStatus(null);
+
+    if (validationTimeout) {
+      clearTimeout(validationTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      if (value.trim().length > 0) {
+        validateReferralCode(value);
+      }
+    }, 500);
+
+    setValidationTimeout(timeout);
+  };
+
+  // Nettoyer le timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (validationTimeout) {
+        clearTimeout(validationTimeout);
+      }
+    };
+  }, [validationTimeout]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +120,15 @@ export default function EmailSignupForm({
         setError("Le prénom et le nom sont requis");
         setLoading(false);
         return;
+      }
+
+      // Si un code de parrainage est fourni, vérifier qu'il est valide
+      if (referralCode.trim().length > 0) {
+        if (!referralCodeStatus || !referralCodeStatus.valid) {
+          setError(referralCodeStatus?.error || "Code de parrainage invalide");
+          setLoading(false);
+          return;
+        }
       }
 
       let precheckContext: { club?: { slug: string; code: string } } | undefined;
@@ -87,7 +172,14 @@ export default function EmailSignupForm({
           },
         },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("[EmailSignup] SignUp error:", error);
+        // Améliorer le message d'erreur pour l'utilisateur
+        if (error.message?.includes("Database") || error.message?.includes("database")) {
+          throw new Error("Erreur lors de la création du compte. Veuillez réessayer ou contacter le support.");
+        }
+        throw error;
+      }
 
       const displayName = `${capitalizedFirstName} ${capitalizedLastName}`.trim();
       let accessToken = data.session?.access_token || null;
@@ -130,6 +222,7 @@ export default function EmailSignupForm({
             lastName: capitalizedLastName,
             displayName,
             email,
+            referralCode: referralCode.trim().length > 0 ? referralCode.trim() : undefined,
           })
         });
 
@@ -139,10 +232,26 @@ export default function EmailSignupForm({
           const message = errorData?.error || "Impossible d'attacher le club";
           throw new Error(message);
         }
+
+        const attachData = await response.json();
+        
+        // Si un code de parrainage a été traité avec succès, stocker l'info pour la notification
+        if (attachData.referralProcessed) {
+          // La notification sera affichée lors de la prochaine connexion via ReferralNotifier
+          // On peut aussi stocker dans sessionStorage pour afficher immédiatement
+          sessionStorage.setItem("referral_reward_received", "true");
+        }
       } catch (attachError) {
         console.error('[EmailSignup] Error attaching club:', attachError);
         if (attachError instanceof Error) {
-          setError(attachError.message);
+          // Améliorer le message d'erreur pour l'utilisateur
+          let errorMessage = attachError.message;
+          if (errorMessage.includes("Database") || errorMessage.includes("database")) {
+            errorMessage = "Erreur lors de la création du profil. Veuillez réessayer ou contacter le support.";
+          }
+          setError(errorMessage);
+        } else {
+          setError("Erreur lors de l'attachement au club. Veuillez réessayer.");
         }
         setLoading(false);
         return;
@@ -153,7 +262,13 @@ export default function EmailSignupForm({
       }
       router.replace(customRedirect || redirectTo);
     } catch (e: any) {
-      setError(e?.message || "Impossible de créer le compte");
+      console.error("[EmailSignup] Unexpected error:", e);
+      // Améliorer le message d'erreur pour l'utilisateur
+      let errorMessage = e?.message || "Impossible de créer le compte";
+      if (errorMessage.includes("Database") || errorMessage.includes("database")) {
+        errorMessage = "Erreur lors de la création du compte. Veuillez réessayer ou contacter le support.";
+      }
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -196,6 +311,41 @@ export default function EmailSignupForm({
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
+      
+      {/* Champ code de parrainage (optionnel) */}
+      <div>
+        <input
+          type="text"
+          placeholder="Code de parrainage (optionnel)"
+          className={`w-full rounded-lg bg-white/5 border px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
+            referralCodeStatus?.valid
+              ? "border-green-500/50 focus:ring-green-500"
+              : referralCodeStatus?.valid === false
+              ? "border-red-500/50 focus:ring-red-500"
+              : "border-white/10 focus:ring-[#0066FF]"
+          }`}
+          value={referralCode}
+          onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
+          maxLength={8}
+        />
+        {referralCodeValidating && (
+          <p className="mt-1 text-xs text-white/60">Vérification du code...</p>
+        )}
+        {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
+          <p className="mt-1 text-xs text-green-400">
+            ✓ Code valide ! Parrain : {referralCodeStatus.referrerName}
+          </p>
+        )}
+        {referralCodeStatus?.valid === false && referralCodeStatus.error && (
+          <p className="mt-1 text-xs text-red-400">{referralCodeStatus.error}</p>
+        )}
+        {referralCode.trim().length > 0 && !referralCodeStatus && !referralCodeValidating && (
+          <p className="mt-1 text-xs text-white/60">
+            Vous recevrez +1 boost gratuit si le code est valide
+          </p>
+        )}
+      </div>
+      
       {extra}
       <button
         disabled={loading}

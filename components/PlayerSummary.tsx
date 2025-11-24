@@ -237,7 +237,8 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     reviewsBonus,
     challengePoints,
     winMatchesCount: winMatches.size,
-    filteredMatchesCount: filteredMp.length
+    filteredMatchesCount: filteredMp.length,
+    winMatchIds: Array.from(winMatches).map(id => id.substring(0, 8))
   });
 
   // Calculer les points avec boosts
