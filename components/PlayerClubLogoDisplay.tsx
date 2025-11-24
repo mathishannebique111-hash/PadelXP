@@ -13,22 +13,39 @@ export default function PlayerClubLogoDisplay({
   name,
   logoSize = "6rem",
 }: PlayerClubLogoDisplayProps) {
+  const resolvedSize = logoSize ?? "6rem";
+  const containerStyle: React.CSSProperties = {
+    width: resolvedSize,
+    height: resolvedSize,
+    minWidth: resolvedSize,
+    minHeight: resolvedSize,
+    maxWidth: resolvedSize,
+    maxHeight: resolvedSize,
+    pointerEvents: publicLogoUrl || name ? "auto" : "none",
+  };
+
+  const imageStyle: React.CSSProperties = {
+    width: resolvedSize,
+    height: resolvedSize,
+    minWidth: resolvedSize,
+    minHeight: resolvedSize,
+    maxWidth: resolvedSize,
+    maxHeight: resolvedSize,
+    objectFit: "contain",
+  };
+
   return (
     <div 
       data-club-logo-container="true"
-      className="absolute top-3 right-3 sm:top-4 sm:right-4 w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24"
-      style={{
-        pointerEvents: (publicLogoUrl || name) ? 'auto' : 'none',
-      } as React.CSSProperties}
+      suppressHydrationWarning
+      style={containerStyle}
     >
       {publicLogoUrl ? (
         <img
           src={publicLogoUrl}
           alt={name ? `Logo de ${name}` : "Logo du club"}
           className="h-full w-full object-contain"
-          style={{
-            objectFit: 'contain',
-          }}
+          style={imageStyle}
           onError={(e) => {
             console.error("[PlayerClubLogoDisplay] Erreur lors du chargement du logo:", {
               publicLogoUrl,
@@ -40,12 +57,7 @@ export default function PlayerClubLogoDisplay({
       ) : name ? (
         <div 
           className="rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center"
-          style={{
-            width: '100%',
-            height: '100%',
-            minWidth: '100%',
-            minHeight: '100%',
-          }}
+          style={imageStyle}
         >
           <span className="text-white text-base font-bold text-center px-1" style={{ lineHeight: 1.1 }}>
             {name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}

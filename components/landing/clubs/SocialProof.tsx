@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import Image from "next/image";
 
 export default function SocialProof() {
   const testimonials = [
@@ -67,9 +68,14 @@ export default function SocialProof() {
               {/* Étoiles */}
               <div className="flex gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <span key={n} className="text-[#FFD700] text-xl">
-                    ⭐
-                  </span>
+                  <Image
+                    key={n}
+                    src="/images/Étoile points challenges.png"
+                    alt="Étoile"
+                    width={20}
+                    height={20}
+                    className="object-contain"
+                  />
                 ))}
               </div>
 

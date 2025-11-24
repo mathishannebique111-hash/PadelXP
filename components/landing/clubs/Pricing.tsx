@@ -74,7 +74,7 @@ export default function Pricing() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                 <div className="bg-white/5 rounded-xl p-6 border border-white/10 text-center">
                   <div className="mb-3 flex justify-center">
-                    <Image src="/images/éclair page avis.png" alt="Éclair" width={32} height={32} className="flex-shrink-0" unoptimized />
+                    <Image src="/images/Éclair boost.png" alt="Éclair" width={32} height={32} className="flex-shrink-0" unoptimized />
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">En 5 minutes</h3>
                   <p className="text-white/70 text-sm">Votre club est opérationnel en quelques clics</p>
@@ -88,7 +88,7 @@ export default function Pricing() {
                 </div>
                 <div className="bg-white/5 rounded-xl p-6 border border-white/10 text-center">
                   <div className="mb-3 flex justify-center">
-                    <Image src="/images/bouclier.png" alt="Bouclier" width={32} height={32} className="flex-shrink-0" unoptimized />
+                    <Image src="/images/Bouclier.png" alt="Bouclier" width={32} height={32} className="flex-shrink-0" unoptimized />
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2">Sans engagement</h3>
                   <p className="text-white/70 text-sm">Annulez à tout moment, sans pénalité</p>

@@ -49,10 +49,10 @@ export default function BoostPurchaseButton({
 
   // Icônes selon le pack
   const getIcon = () => {
-    if (quantity === 1) return "/images/éclair page avis.png";
+    if (quantity === 1) return "/images/Éclair boost.png";
     if (quantity === 5) return "/images/Flamme page badges.png";
     if (quantity === 10) return "/images/fusée page boost.png";
-    return "/images/éclair page avis.png";
+    return "/images/Éclair boost.png";
   };
   
   const getIconType = () => {

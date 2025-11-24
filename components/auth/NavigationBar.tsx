@@ -47,7 +47,13 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
         </Link>
         <Link href="/reviews" className={`${base} ${currentPage === "reviews" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <span className={label}>Avis</span>
-          <span className={icon}>⭐</span>
+          <Image
+            src="/images/Étoile points challenges.png"
+            alt="Étoile"
+            width={16}
+            height={16}
+            className={`${icon} object-contain`}
+          />
         </Link>
       </div>
     </div>

@@ -36,9 +36,22 @@ const supabaseAdmin = createAdminClient(
   }
 );
 
+// Fonction pour extraire le nombre cible depuis l'objectif
+function extractTarget(objective: string): number {
+  const match = objective.match(/(\d+)/);
+  if (!match) return 1;
+  const value = parseInt(match[1], 10);
+  if (!Number.isFinite(value) || value <= 0) return 1;
+  return value;
+}
+
 export default async function PlayerChallengesPage() {
   const requestHeaders = headers();
-  const cookieHeader = cookies().toString();
+  const cookieStore = cookies();
+  const cookieHeader = cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
   const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
   const host = requestHeaders.get("host");
 
@@ -50,13 +63,17 @@ export default async function PlayerChallengesPage() {
   const timestamp = Date.now();
   const response = await fetch(`${protocol}://${host}/api/player/challenges?t=${timestamp}`, {
     headers: {
-      cookie: cookieHeader,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
+      ...(cookieHeader ? { cookie: cookieHeader } : {}),
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
     },
+    credentials: "include",
     cache: "no-store",
     next: { revalidate: 0 },
-  }).catch(() => null);
+  }).catch((error) => {
+    console.error("[PlayerChallengesPage] fetch error", error);
+    return null;
+  });
   
   console.log(`[PlayerChallengesPage] Fetched at ${new Date().toISOString()} - response status:`, response?.status);
 
@@ -64,21 +81,123 @@ export default async function PlayerChallengesPage() {
     redirect("/login");
   }
 
-  if (response.status === 401) {
-    redirect("/login");
-  }
-
   let challenges: PlayerChallenge[] = [];
-  try {
-    const payload = await response.json();
-    challenges = payload?.challenges ?? [];
-  } catch (error) {
-    console.error("[PlayerChallengesPage] parse error", error);
+  let responseStatus = response.status;
+  if (responseStatus === 200) {
+    try {
+      const raw = await response.text();
+      if (!raw || raw.trim().length === 0) {
+        console.warn("[PlayerChallengesPage] Empty response body, will try fallback");
+      } else {
+        const payload = JSON.parse(raw);
+        challenges = Array.isArray(payload?.challenges) ? payload.challenges : [];
+        console.log(`[PlayerChallengesPage] Loaded ${challenges.length} challenges from API`);
+      }
+    } catch (error) {
+      console.error("[PlayerChallengesPage] parse error, will try fallback", error);
+    }
+  } else {
+    console.warn(`[PlayerChallengesPage] API returned status ${responseStatus}, will try fallback`);
   }
 
   // Récupérer les points et badges de challenges
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Fallback: Si l'API n'a pas retourné de challenges, charger directement depuis Supabase Storage
+  if (challenges.length === 0 && user) {
+    try {
+      // Résoudre le club_id du joueur
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("club_id, club_slug")
+        .eq("id", user.id)
+        .maybeSingle();
+      
+      let clubId: string | null = profile?.club_id || null;
+      
+      // Si pas de club_id, essayer avec club_slug
+      if (!clubId && profile?.club_slug) {
+        const { data: clubBySlug } = await supabaseAdmin
+          .from("clubs")
+          .select("id")
+          .eq("slug", profile.club_slug)
+          .maybeSingle();
+        if (clubBySlug?.id) {
+          clubId = clubBySlug.id;
+        }
+      }
+      
+      // Dernier recours: métadonnées auth
+      if (!clubId) {
+        try {
+          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
+          const metadata = (authUser?.user?.user_metadata || {}) as Record<string, any>;
+          clubId = metadata.club_id || null;
+          if (!clubId && metadata.club_slug) {
+            const { data: clubFromMeta } = await supabaseAdmin
+              .from("clubs")
+              .select("id")
+              .eq("slug", metadata.club_slug)
+              .maybeSingle();
+            if (clubFromMeta?.id) {
+              clubId = clubFromMeta.id;
+            }
+          }
+        } catch (authError) {
+          console.warn("[PlayerChallengesPage] Error fetching auth metadata", authError);
+        }
+      }
+
+      // Charger les challenges depuis le bucket
+      if (clubId) {
+        const BUCKET_NAME = "club-challenges";
+        const { data: challengeFile, error: storageError } = await supabaseAdmin
+          .storage
+          .from(BUCKET_NAME)
+          .download(`${clubId}.json`);
+        
+        if (!storageError && challengeFile) {
+          try {
+            const text = await challengeFile.text();
+            if (text && text.trim().length > 0) {
+              const parsed = JSON.parse(text);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                // Convertir les challenges au format PlayerChallenge
+                const now = new Date();
+                challenges = parsed.map((record: any) => {
+                  const start = new Date(record.start_date);
+                  const end = new Date(record.end_date);
+                  let status: "active" | "upcoming" | "completed" = "active";
+                  if (now < start) status = "upcoming";
+                  else if (now > end) status = "completed";
+                  
+                  const target = Math.max(1, extractTarget(record.objective));
+                  return {
+                    id: record.id,
+                    title: record.title,
+                    startDate: record.start_date,
+                    endDate: record.end_date,
+                    objective: record.objective,
+                    rewardType: record.reward_type,
+                    rewardLabel: record.reward_label,
+                    status,
+                    progress: { current: 0, target }, // Target extrait de l'objectif
+                    rewardClaimed: false,
+                  };
+                });
+                console.log(`[PlayerChallengesPage] Loaded ${challenges.length} challenges from storage fallback`);
+              }
+            }
+          } catch (parseError) {
+            console.error("[PlayerChallengesPage] Error parsing challenge file from storage", parseError);
+          }
+        }
+      }
+    } catch (fallbackError) {
+      console.error("[PlayerChallengesPage] Error in fallback challenge loading", fallbackError);
+    }
+  }
   
   let challengePoints = 0;
   let challengeBadgesCount = 0;

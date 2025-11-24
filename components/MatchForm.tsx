@@ -53,7 +53,9 @@ export default function MatchForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showMatchLimitInfo, setShowMatchLimitInfo] = useState(true);
+  // État pour le message d'information sur la limite de 2 matchs par jour
+  // Initialiser à null pour éviter le flash, puis vérifier localStorage
+  const [showMatchLimitInfo, setShowMatchLimitInfo] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
   
@@ -74,18 +76,32 @@ export default function MatchForm({
   const tieBreakTeam2Ref = useRef<HTMLInputElement | null>(null);
 
   // Vérifier si l'utilisateur a déjà cliqué sur "Compris" pour le cadre d'information
+  // Afficher le message seulement si l'utilisateur ne l'a jamais vu
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
-      setShowMatchLimitInfo(!hasClickedUnderstood);
+      try {
+        const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
+        // Afficher le message seulement si l'utilisateur n'a pas encore cliqué sur "Compris"
+        setShowMatchLimitInfo(!hasClickedUnderstood);
+      } catch (error) {
+        // En cas d'erreur avec localStorage (par exemple, mode privé), afficher le message
+        console.warn('[MatchForm] Error accessing localStorage:', error);
+        setShowMatchLimitInfo(true);
+      }
     }
   }, []);
   
   const handleUnderstoodClick = () => {
     // Sauvegarder dans localStorage que l'utilisateur a compris
     if (typeof window !== 'undefined') {
-      localStorage.setItem('matchLimitInfoUnderstood', 'true');
-      setShowMatchLimitInfo(false);
+      try {
+        localStorage.setItem('matchLimitInfoUnderstood', 'true');
+        setShowMatchLimitInfo(false);
+      } catch (error) {
+        // En cas d'erreur avec localStorage, masquer quand même le message
+        console.warn('[MatchForm] Error saving to localStorage:', error);
+        setShowMatchLimitInfo(false);
+      }
     }
   };
 
@@ -1048,7 +1064,7 @@ export default function MatchForm({
       )}
 
       {/* Message d'information sur la limite de 2 matchs par jour */}
-      {showMatchLimitInfo && (
+      {showMatchLimitInfo === true && (
         <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-sm">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 text-2xl">ℹ️</div>

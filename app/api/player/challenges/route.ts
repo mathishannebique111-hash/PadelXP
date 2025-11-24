@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
+import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -53,12 +56,47 @@ async function resolveClubId(userId: string) {
   // Essayer via le profil (pour les joueurs)
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("club_id")
+    .select("club_id, club_slug")
     .eq("id", userId)
     .maybeSingle();
   
   if (profile?.club_id) {
     return profile.club_id;
+  }
+
+  // Tenter avec club_slug enregistré sur le profil
+  if (profile?.club_slug) {
+    const { data: clubBySlug, error: clubSlugError } = await supabaseAdmin
+      .from("clubs")
+      .select("id")
+      .eq("slug", profile.club_slug)
+      .maybeSingle();
+    if (!clubSlugError && clubBySlug?.id) {
+      return clubBySlug.id;
+    }
+  }
+
+  // Dernier recours: métadonnées de l'utilisateur auth (club_id ou club_slug stockés)
+  try {
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const metadata = (authUser?.user?.user_metadata || {}) as Record<string, any>;
+    const metaClubId = typeof metadata.club_id === "string" ? metadata.club_id : null;
+    if (metaClubId) {
+      return metaClubId;
+    }
+    const metaClubSlug = typeof metadata.club_slug === "string" ? metadata.club_slug : null;
+    if (metaClubSlug) {
+      const { data: clubFromMetaSlug } = await supabaseAdmin
+        .from("clubs")
+        .select("id")
+        .eq("slug", metaClubSlug)
+        .maybeSingle();
+      if (clubFromMetaSlug?.id) {
+        return clubFromMetaSlug.id;
+      }
+    }
+  } catch (authError) {
+    console.warn("[api/player/challenges] resolveClubId auth metadata lookup failed", authError);
   }
   
   console.warn("[api/player/challenges] resolveClubId: aucun club trouvé pour userId", userId);
@@ -76,6 +114,10 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   }
   try {
     const text = await data.text();
+    if (!text || text.trim().length === 0) {
+      console.warn(`[api/player/challenges] Empty JSON for club ${clubId}, returning []`);
+      return [];
+    }
     const parsed = JSON.parse(text);
     if (Array.isArray(parsed)) {
       return parsed as ChallengeRecord[];
@@ -103,6 +145,12 @@ function isDifferentPartnersObjective(objective: string) {
   const lower = objective.toLowerCase();
   return /(partenaire|partenaires|coéquipier|coéquipiers|joueur|joueurs).*(différent|différents|différente|différentes|divers|variés)/.test(lower) ||
          /(différent|différents|différente|différentes|divers|variés).*(partenaire|partenaires|coéquipier|coéquipiers|joueur|joueurs)/.test(lower);
+}
+
+function isConsecutiveWinsObjective(objective: string) {
+  const lower = objective.toLowerCase();
+  // Détecter si l'objectif mentionne "consécutif", "consécutifs", "consécutivement", "sans défaite", "sans défaites", "d'affilée", "de suite"
+  return /(consécutif|consécutifs|consécutivement|consecutive|consecutives|sans.*défaite|sans.*défaites|d'affilée|de suite|enchaîner|enchaîné|enchaînés)/.test(lower);
 }
 
 type MatchHistoryItem = {
@@ -138,7 +186,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
   // ÉTAPE 2: Récupérer les détails des matchs
   const { data: matches, error: matchError } = await supabaseAdmin
     .from("matches")
-    .select("id, played_at, winner_team_id, team1_id, team2_id, score_team1, score_team2")
+    .select("id, played_at, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at")
     .in("id", matchIds)
     .order("played_at", { ascending: true });
 
@@ -150,6 +198,27 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
   }
 
   console.log(`[loadPlayerHistory] ✅ Found ${matches.length} matches for user ${userId}`);
+
+  // ÉTAPE 2.5: Filtrer les matchs selon la limite quotidienne (2 matchs par jour)
+  // Seuls les matchs qui comptent pour les points comptent pour les challenges
+  const matchParticipants = userParticipations.map((p) => ({
+    match_id: p.match_id,
+    user_id: userId,
+  }));
+  
+  const validMatchIdsForPoints = filterMatchesByDailyLimit(
+    matchParticipants,
+    matches.map((m) => ({
+      id: m.id,
+      played_at: m.played_at ?? m.created_at ?? new Date().toISOString(),
+    })),
+    MAX_MATCHES_PER_DAY
+  );
+
+  console.log(`[loadPlayerHistory] Valid matches after daily limit: ${validMatchIdsForPoints.size} / ${matches.length}`);
+
+  // Filtrer les matchs pour ne garder que ceux qui respectent la limite quotidienne
+  const validMatches = matches.filter((m) => validMatchIdsForPoints.has(m.id));
 
   // ÉTAPE 3: Récupérer tous les participants pour identifier les partenaires
   const { data: allParticipants } = await supabaseAdmin
@@ -169,7 +238,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     });
   }
 
-  return matches.map((match) => {
+  return validMatches.map((match) => {
     const team = teamMap.get(match.id) || null;
     const teamNum = typeof team === "number" ? team : team ? Number(team) : null;
     
@@ -186,7 +255,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
 
     return {
       matchId: match.id,
-      playedAt: match.played_at ?? null,
+      playedAt: match.played_at ?? match.created_at ?? null,
       isWinner,
       partnerId,
     };
@@ -197,6 +266,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
   const target = Math.max(1, extractTarget(record.objective));
   const metricIsWin = isWinObjective(record.objective);
   const isDifferentPartners = isDifferentPartnersObjective(record.objective);
+  const isConsecutiveWins = isConsecutiveWinsObjective(record.objective);
   
   // Convertir les dates en objets Date et normaliser au début/fin de journée en UTC
   const start = new Date(record.start_date);
@@ -213,6 +283,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     target,
     metricIsWin,
     isDifferentPartners,
+    isConsecutiveWins,
     period: { 
       start: start.toISOString(), 
       end: end.toISOString(),
@@ -237,13 +308,39 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     return inPeriod;
   });
 
+  // Trier les matchs par date croissante pour les victoires consécutives
+  const sortedRelevant = [...relevant].sort((a, b) => {
+    if (!a.playedAt || !b.playedAt) return 0;
+    return new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime();
+  });
+
   let current = 0;
   
-  if (isDifferentPartners) {
+  if (isConsecutiveWins && metricIsWin) {
+    // Pour les challenges de victoires consécutives : compter la série actuelle (se réinitialise à 0 en cas de défaite)
+    // La barre de progression doit refléter la série en cours, pas la meilleure série historique
+    let currentStreak = 0;
+    
+    for (const item of sortedRelevant) {
+      if (item.isWinner) {
+        currentStreak++;
+        console.log(`  ✅ Match ${item.matchId.substring(0, 8)}: VICTOIRE - streak=${currentStreak}`);
+      } else {
+        // Une défaite interrompt la série et la réinitialise à 0
+        console.log(`  ❌ Match ${item.matchId.substring(0, 8)}: DÉFAITE - streak interrompu (était ${currentStreak}, maintenant 0)`);
+        currentStreak = 0;
+      }
+    }
+    
+    // Utiliser la série actuelle (currentStreak) au lieu de la meilleure série historique
+    // Cela permet à la barre de progression de retomber à 0 si le joueur perd un match
+    current = currentStreak;
+    console.log(`[Challenge ${record.id}] Consecutive wins: current streak = ${currentStreak}/${target}`);
+  } else if (isDifferentPartners) {
     // Pour les challenges avec partenaires différents, compter uniquement les partenaires uniques
     const uniquePartners = new Set<string>();
     
-    relevant.forEach((item) => {
+    sortedRelevant.forEach((item) => {
       if (item.partnerId) {
         // Si l'objectif mentionne "gagner/remporter", ne compter que les victoires
         // Sinon (juste "jouer"), compter tous les matchs
@@ -257,12 +354,12 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     console.log(`[Challenge ${record.id}] Different partners found:`, Array.from(uniquePartners).map(id => id.substring(0, 8)));
     console.log(`[Challenge ${record.id}] Counting ${metricIsWin ? 'wins only' : 'all matches'} with different partners`);
   } else if (metricIsWin) {
-    current = relevant.filter((item) => item.isWinner).length;
+    current = sortedRelevant.filter((item) => item.isWinner).length;
   } else {
-    current = relevant.length;
+    current = sortedRelevant.length;
   }
 
-  console.log(`[Challenge ${record.id}] Result: ${current}/${target} (${relevant.length} relevant matches, ${isDifferentPartners ? 'counting unique partners' : metricIsWin ? 'counting wins only' : 'counting all'})`);
+  console.log(`[Challenge ${record.id}] Result: ${current}/${target} (${sortedRelevant.length} relevant matches, ${isConsecutiveWins ? 'consecutive wins' : isDifferentPartners ? 'counting unique partners' : metricIsWin ? 'counting wins only' : 'counting all'})`);
 
   return {
     current: Math.min(current, target),
@@ -275,7 +372,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Serveur mal configuré" }, { status: 500 });
   }
 
-  const supabase = createClient({ headers: Object.fromEntries(request.headers) });
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -285,12 +382,14 @@ export async function GET(request: Request) {
   }
 
   const clubId = await resolveClubId(user.id);
+  console.log(`[api/player/challenges] Resolved clubId for user ${user.id}:`, clubId);
   if (!clubId) {
+    console.warn(`[api/player/challenges] No clubId found for user ${user.id}, returning empty challenges`);
     return NextResponse.json({ challenges: [] });
   }
 
   const records = await loadChallenges(clubId);
-  console.log(`[Player ${user.id}] Loaded ${records.length} challenges for club ${clubId}`);
+  console.log(`[api/player/challenges] Loaded ${records.length} challenges for club ${clubId}`);
   if (records.length > 0) {
     console.log(`[Player ${user.id}] Challenges:`, records.map(r => ({
       id: r.id.substring(0, 8),

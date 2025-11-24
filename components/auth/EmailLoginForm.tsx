@@ -41,14 +41,21 @@ export default function EmailLoginForm({
         }
       }
       const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw new Error(error.message || "Impossible de se connecter. Vérifiez vos identifiants.");
+      }
+
       if (data.session) {
         const profileInit = await fetch("/api/profile/init", {
           method: "POST",
           credentials: "include",
           headers: {
-            "Authorization": `Bearer ${data.session.access_token}`,
+            Authorization: `Bearer ${data.session.access_token}`,
             "Content-Type": "application/json",
           },
         });

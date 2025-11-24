@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import BadgeIcon from "@/components/icons/BadgeIcon";
+import Image from "next/image";
 
 interface PlayerChallenge {
   id: string;
@@ -59,6 +60,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
   const [showCongrats, setShowCongrats] = useState(false);
   const [rewardValue, setRewardValue] = useState("");
   const [hasClaimed, setHasClaimed] = useState(false);
+  const [autoCloseTimeout, setAutoCloseTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const now = new Date();
   const endDate = new Date(challenge.endDate);
@@ -69,14 +71,14 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
   console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] "${challenge.title}" - Progress: ${challenge.progress.current}/${challenge.progress.target}, isCompleted: ${isCompleted}, isExpired: ${isExpired}, isFailed: ${isFailed}, canClaim: ${canClaim}, rewardClaimed: ${challenge.rewardClaimed}, hasClaimed: ${hasClaimed}`);
 
-  // Auto-claim quand le challenge est complété (uniquement si pas expiré)
+  // Nettoyer le timeout si le composant est démonté ou si le pop-up est fermé
   useEffect(() => {
-    console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] useEffect triggered - canClaim: ${canClaim}`);
-    if (canClaim) {
-      console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🎯 Attempting to claim reward...`);
-      claimReward();
-    }
-  }, [canClaim]);
+    return () => {
+      if (autoCloseTimeout) {
+        clearTimeout(autoCloseTimeout);
+      }
+    };
+  }, [autoCloseTimeout]);
 
   const claimReward = async () => {
     if (claiming || challenge.rewardClaimed || hasClaimed) {
@@ -106,13 +108,14 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         setRewardValue(data.rewardValue);
         setShowCongrats(true);
         
-        // Masquer le pop-up après 8 secondes
-        setTimeout(() => {
+        // Masquer le pop-up après 8 secondes (mais peut être fermé manuellement avant)
+        const timeout = setTimeout(() => {
           setShowCongrats(false);
           if (onRewardClaimed) {
             onRewardClaimed();
           }
         }, 8000);
+        setAutoCloseTimeout(timeout);
       } else {
         const error = await response.json();
         console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] ⚠️ Error response:`, error);
@@ -132,6 +135,17 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
       setHasClaimed(false);
     } finally {
       setClaiming(false);
+    }
+  };
+
+  const handleClosePopup = () => {
+    if (autoCloseTimeout) {
+      clearTimeout(autoCloseTimeout);
+      setAutoCloseTimeout(null);
+    }
+    setShowCongrats(false);
+    if (onRewardClaimed) {
+      onRewardClaimed();
     }
   };
 
@@ -162,7 +176,13 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
               {/* Récompense */}
               <div className="mx-auto mb-6 inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-yellow-400/25 to-amber-500/20 px-6 py-4 shadow-lg ring-1 ring-yellow-400/40">
                 {challenge.rewardType === "points" ? (
-                  <span className="text-4xl">⭐</span>
+                  <Image
+                    src="/images/Étoile points challenges.png"
+                    alt="Étoile"
+                    width={40}
+                    height={40}
+                    className="object-contain"
+                  />
                 ) : (
                   <BadgeIcon size={40} />
                 )}
@@ -178,11 +198,19 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
                 </div>
               </div>
 
-              <p className="text-sm text-white/70">
+              <p className="mb-6 text-sm text-white/70">
                 {challenge.rewardType === "points"
                   ? "Vos points ont été ajoutés à votre compte"
                   : "Le badge a été ajouté à votre page badges"}
               </p>
+
+              {/* Bouton fermer */}
+              <button
+                onClick={handleClosePopup}
+                className="mx-auto rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
+              >
+                Fermer
+              </button>
             </div>
           </div>
         </div>
@@ -219,9 +247,23 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
             </span>
             <div className="flex items-center gap-2">
               {challenge.rewardType === "points" ? (
-                <span className="text-2xl">⭐</span>
+                <Image
+                  src="/images/Étoile points challenges.png"
+                  alt="Étoile"
+                  width={28}
+                  height={28}
+                  className="object-contain"
+                />
               ) : (
-                <BadgeIcon size={28} />
+                <div className="flex items-center gap-1">
+                  <Image
+                    src="/images/Badge.png"
+                    alt="Badge"
+                    width={28}
+                    height={28}
+                    className="object-contain"
+                  />
+                </div>
               )}
               <span className="text-lg font-bold text-white">
                 {challenge.rewardType === "points"
@@ -278,6 +320,37 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
             </div>
           </div>
         </div>
+
+        {/* Bouton récupérer la récompense - En bas du cadre */}
+        {canClaim && !hasClaimed && (
+          <div className="mb-2">
+            <button
+              onClick={claimReward}
+              disabled={claiming}
+              className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-yellow-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+            >
+              {/* Effet de brillance animé */}
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+              
+              {/* Contenu du bouton */}
+              <div className="relative z-10 flex items-center justify-center gap-2">
+                {claiming ? (
+                  <>
+                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Récupération...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base sm:text-lg">Récupérer la récompense</span>
+                  </>
+                )}
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* Message de challenge terminé */}
         {isExpired && (

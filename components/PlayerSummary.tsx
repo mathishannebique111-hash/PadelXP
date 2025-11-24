@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getBadges, ALL_BADGES, type PlayerStats } from "@/lib/badges";
 import BadgesUnlockNotifier from "./BadgesUnlockNotifier";
@@ -61,6 +62,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   // Initialiser filteredMp et winMatches pour qu'ils soient toujours définis
   let filteredMp: any[] = [];
   let winMatches = new Set<string>();
+  let validMatchIdsForPoints = new Set<string>(); // Déclarer en dehors pour être accessible dans le calcul de la série
   
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
@@ -79,7 +81,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     
     // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour sur TOUS les matchs
     // (tous clubs confondus, comme dans home/page.tsx)
-    const validMatchIdsForPoints = filterMatchesByDailyLimit(
+    validMatchIdsForPoints = filterMatchesByDailyLimit(
       mp.map((p: any) => ({ match_id: p.match_id, user_id: profileId })),
       (allMs || []).map((m: any) => ({ id: m.id, played_at: m.played_at || m.created_at })),
       MAX_MATCHES_PER_DAY
@@ -260,14 +262,16 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   }
   const tier = tierForPoints(points);
 
-  // Calculer la série de victoires consécutives
+  // Calculer les séries de victoires (meilleure et en cours)
+  // IMPORTANT: Seuls les matchs qui respectent la limite quotidienne comptent pour la série
   let streak = 0;
+  let currentWinStreak = 0;
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
     
     const { data: ms, error: msStreakError } = await supabase
       .from("matches")
-      .select("id, winner_team_id, team1_id, team2_id, created_at")
+      .select("id, winner_team_id, team1_id, team2_id, created_at, played_at")
       .in("id", matchIds)
       .order("created_at", { ascending: false });
     
@@ -305,37 +309,66 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     }
     
     if (ms && ms.length > 0) {
+      // Filtrer les matchs pour ne garder que ceux qui respectent la limite quotidienne
+      // Utiliser validMatchIdsForPoints qui a déjà été calculé plus haut
+      const validMatchesForStreak = ms.filter((m: any) => {
+        // Si validMatchIdsForPoints a été calculé (dans le scope précédent), l'utiliser
+        if (validMatchIdsForPoints.size > 0) {
+          return validMatchIdsForPoints.has(m.id);
+        }
+        // Fallback: recalculer si validMatchIdsForPoints n'est pas disponible
+        const matchParticipants = mp.map((p: any) => ({ match_id: p.match_id, user_id: profileId }));
+        const validIds = filterMatchesByDailyLimit(
+          matchParticipants,
+          ms.map((m: any) => ({ id: m.id, played_at: m.played_at || m.created_at || new Date().toISOString() })),
+          MAX_MATCHES_PER_DAY
+        );
+        return validIds.has(m.id);
+      });
+
       const byId: Record<string, number> = {};
-      ms.forEach((m: any) => {
-        // Ignorer les matchs sans winner_team_id
+      validMatchesForStreak.forEach((m: any) => {
         if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
-        
-        // Déterminer winner_team (1 ou 2) à partir de winner_team_id
         const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
         byId[m.id] = winner_team;
       });
-      
-      let currentStreak = 0;
-      for (const p of mp.sort((a: any, b: any) => {
-        const aMatch = ms.find((m: any) => m.id === a.match_id);
-        const bMatch = ms.find((m: any) => m.id === b.match_id);
+
+      // Filtrer mp pour ne garder que les matchs valides
+      const validMpForStreak = mp.filter((p: any) => byId[p.match_id] !== undefined);
+
+      const matchesSortedDesc = [...validMpForStreak].sort((a: any, b: any) => {
+        const aMatch = validMatchesForStreak.find((m: any) => m.id === a.match_id);
+        const bMatch = validMatchesForStreak.find((m: any) => m.id === b.match_id);
         return (bMatch?.created_at || "").localeCompare(aMatch?.created_at || "");
-      })) {
-        // Ignorer les matchs sans données valides
+      });
+      const matchesSortedAsc = [...matchesSortedDesc].reverse();
+
+      let rollingStreak = 0;
+      for (const p of matchesSortedAsc) {
         if (!byId[p.match_id]) continue;
-        
         const won = byId[p.match_id] === p.team;
         if (won) {
-          currentStreak++;
-          if (currentStreak > streak) streak = currentStreak;
+          rollingStreak++;
+          if (rollingStreak > streak) streak = rollingStreak;
         } else {
-          currentStreak = 0;
+          rollingStreak = 0;
+        }
+      }
+
+      currentWinStreak = 0;
+      for (const p of matchesSortedDesc) {
+        if (!byId[p.match_id]) continue;
+        const won = byId[p.match_id] === p.team;
+        if (won) {
+          currentWinStreak++;
+        } else {
+          break;
         }
       }
     }
   }
   
-  console.log("[PlayerSummary] Streak calculated:", streak);
+  console.log("[PlayerSummary] Streak calculated:", { best: streak, current: currentWinStreak });
 
   // IMPORTANT: Calculer les stats pour les badges EXACTEMENT comme dans la page badges
   // (sans limite quotidienne, points simples wins*10 + losses*3)
@@ -494,12 +527,51 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="md" />
         </div>
         
+        {/* Série de victoires en cours - Cadre en longueur, séparé */}
+        <div className="mb-3 sm:mb-4">
+          <div
+            className="rounded-lg border border-orange-400/40 bg-gradient-to-br from-orange-500/30 via-amber-500/20 to-yellow-500/15 px-3 sm:px-4 py-2 sm:py-2.5 shadow-md ring-1 ring-orange-400/30 animate-fadeInUp relative overflow-hidden text-white"
+            style={{ animationDelay: "0ms" }}
+          >
+            {/* Effet de brillance subtil */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer" />
+            
+            <div className="relative z-10 flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] text-white/80 font-medium mb-1">
+                  Série de victoires en cours
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-black tabular-nums">
+                    {currentWinStreak}
+                  </span>
+                  <span className="text-[10px] sm:text-xs text-white/80 uppercase tracking-[0.1em]">
+                    victoire{currentWinStreak >= 2 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1.5">
+                <Image
+                  src="/images/Flamme page badges.png"
+                  alt="Icône flamme"
+                  width={36}
+                  height={36}
+                  className="w-6 sm:w-7 md:w-8 h-auto drop-shadow-[0_6px_18px_rgba(249,115,22,0.55)]"
+                />
+                <div className="text-[9px] sm:text-[10px] text-white/80">
+                  Meilleure : <span className="font-semibold tabular-nums text-white">{streak}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {/* Grid 2x4 compact pour les stats */}
         <div className="grid grid-cols-2 gap-4 sm:gap-5 md:gap-7 text-xs sm:text-sm">
           {/* Points - Stat principale */}
           <div 
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '0ms', borderLeftWidth: '3px', borderLeftColor: '#0066FF' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: '3px', borderLeftColor: '#0066FF' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Points</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">
