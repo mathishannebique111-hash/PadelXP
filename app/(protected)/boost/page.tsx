@@ -4,7 +4,6 @@ import { getPlayerBoostStats } from "@/lib/utils/boost-utils";
 import BoostPurchaseButton from "@/components/BoostPurchaseButton";
 import { BOOST_PRICE_IDS, BOOST_PRICES } from "@/lib/config/boost-prices";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
-import BoostCreditChecker from "@/components/BoostCreditChecker";
 
 export const dynamic = "force-dynamic";
 
@@ -151,11 +150,6 @@ export default async function BoostPage() {
           </div>
         </div>
       </div>
-
-        {/* Boost Credit Checker */}
-        <BoostCreditChecker 
-          currentStats={boostStats}
-        />
 
         {/* Stats Section */}
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">

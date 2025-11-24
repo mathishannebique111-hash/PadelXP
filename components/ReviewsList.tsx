@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { getPositiveReviews, getOtherReviews, sortReviewsByDate } from "@/lib/utils/review-utils";
+import { sortReviewsByDate } from "@/lib/utils/review-utils";
 import type { Review } from "@/lib/utils/review-utils";
 
 // Fonction pour formater la date sur une seule ligne
@@ -30,9 +30,8 @@ export default function ReviewsList({
   const [averageRating, setAverageRating] = useState(initialAverageRating);
   const [loading, setLoading] = useState(false);
 
-  // Séparer les avis positifs (4+ étoiles) des autres avis (3 étoiles ou moins)
-  const positiveReviews = sortReviewsByDate(getPositiveReviews(reviews));
-  const otherReviews = sortReviewsByDate(getOtherReviews(reviews));
+  // Trier tous les avis par date (plus récents en premier)
+  const sortedReviews = sortReviewsByDate(reviews);
 
   // Synchroniser l'état initial avec les props au montage
   useEffect(() => {
@@ -103,14 +102,14 @@ export default function ReviewsList({
     <>
       {/* LISTE DES AVIS */}
       <div className="space-y-4 sm:space-y-6">
-        {/* SECTION AVIS POSITIFS (4+ étoiles) - Mis en avant */}
-        {positiveReviews.length > 0 && (
+        {/* TOUS LES AVIS */}
+        {sortedReviews.length > 0 && (
           <>
             <h2 className="text-xl sm:text-2xl font-semibold text-white mb-5 sm:mb-6 tracking-tight">
-              Avis de la communauté {otherReviews.length > 0 ? '- Mis en avant' : ''} ({positiveReviews.length})
+              Avis de la communauté ({sortedReviews.length})
             </h2>
             <div className="space-y-4 sm:space-y-6">
-              {positiveReviews.map((review: Review, idx: number) => (
+              {sortedReviews.map((review: Review, idx: number) => (
                 <div
                   key={review.id}
                   className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-white to-blue-50 p-5 sm:p-6 border-2 border-blue-200 shadow-[0_20px_50px_rgba(4,16,46,0.25)] opacity-0 animate-fade-in relative"
@@ -150,57 +149,8 @@ export default function ReviewsList({
           </>
         )}
 
-        {/* SECTION AUTRES AVIS (3 étoiles ou moins) - Affichés séparément */}
-        {otherReviews.length > 0 && (
-          <>
-            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/10">
-              <h2 className="text-lg sm:text-xl font-semibold text-white/80 mb-4 sm:mb-5 tracking-tight">
-                Autres avis ({otherReviews.length})
-              </h2>
-              <div className="space-y-4 sm:space-y-6">
-                {otherReviews.map((review: Review, idx: number) => (
-                  <div
-                    key={review.id}
-                    className="rounded-xl sm:rounded-2xl bg-white/90 p-5 sm:p-6 border border-white/10 shadow-[0_20px_50px_rgba(4,16,46,0.15)] opacity-0 animate-fade-in"
-                    style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards' }}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-[#0066FF] via-[#0052CC] to-[#003D99] text-white flex items-center justify-center font-bold text-sm sm:text-base shadow-lg ring-2 ring-blue-200/50">
-                          {(() => {
-                            const name = review.profiles?.display_name || 'Joueur';
-                            const words = name.trim().split(' ');
-                            if (words.length >= 2) {
-                              return (words[0][0] + words[1][0]).toUpperCase();
-                            }
-                            return name.slice(0, 2).toUpperCase();
-                          })()}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-900">{review.profiles?.display_name || 'Joueur'}</div>
-                          <div className="text-xs sm:text-sm text-slate-500 whitespace-nowrap">
-                            {new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-0.5">
-                        {[1,2,3,4,5].map(n => (
-                          <span key={n} className={`${n <= review.rating ? 'text-[#FFD700] drop-shadow-[0_0_3px_rgba(255,215,0,0.5)]' : 'text-slate-300'} text-lg sm:text-xl`}>★</span>
-                        ))}
-                      </div>
-                    </div>
-                    {review.comment && (
-                      <p className="text-slate-700 text-sm sm:text-base leading-relaxed">{review.comment}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
         {/* MESSAGE SI AUCUN AVIS */}
-        {reviews && reviews.length === 0 && (
+        {sortedReviews && sortedReviews.length === 0 && (
           <div className="rounded-xl sm:rounded-2xl bg-white p-8 sm:p-10 text-center border border-white/10 shadow-[0_20px_50px_rgba(4,16,46,0.25)]">
             <div className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-5">Soyez le premier à partager votre passion !</div>
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-xs sm:text-sm font-semibold text-amber-700 shadow-sm">

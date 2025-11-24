@@ -84,54 +84,57 @@ export default function ReferralNotifier() {
   if (!show || !notification) return null;
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative mx-4 max-w-md transform animate-[scale-in_0.3s_ease-out] rounded-3xl bg-gradient-to-br from-yellow-500/20 via-amber-500/15 to-orange-500/10 p-8 text-center shadow-2xl ring-2 ring-yellow-400/30">
-        {/* Confettis effet */}
-        <div className="absolute -top-4 -left-4 h-24 w-24 rounded-full bg-yellow-400/20 blur-2xl" />
-        <div className="absolute -bottom-4 -right-4 h-32 w-32 rounded-full bg-amber-400/20 blur-2xl" />
-
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         {/* Contenu */}
-        <div className="relative z-10">
-          <div className="mb-4 text-6xl">
-            {notification.type === "referrer" ? "🎉" : "🎁"}
-          </div>
-          <h2 className="mb-3 text-3xl font-bold text-yellow-300">
+        <div className="text-center">
+          {/* Emoji - seulement pour le parrain */}
+          {notification.type === "referrer" && (
+            <div className="mb-3 text-center text-5xl">
+              🎉
+            </div>
+          )}
+          
+          {/* Titre */}
+          <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">
             {notification.type === "referrer" ? "Excellent !" : "Bienvenue !"}
-          </h2>
-          <p className="mb-6 text-lg text-white/90">
+          </h3>
+          
+          {/* Message */}
+          <p className="mb-4 text-sm text-gray-700">
             {notification.type === "referrer" ? (
               <>
-                <span className="font-semibold text-white">{notification.referredName || "Un joueur"}</span> a utilisé votre code de parrainage.
+                <span className="font-semibold text-gray-900">{notification.referredName || "Un joueur"}</span> a utilisé votre code de parrainage.
                 <br />
-                <span className="font-semibold text-yellow-300">Vous gagnez +1 boost !</span>
+                <span className="font-semibold text-blue-600">Vous gagnez +1 boost !</span>
               </>
             ) : (
               <>
-                Vous avez reçu <span className="font-semibold text-yellow-300">+1 boost</span> grâce au code de parrainage utilisé.
+                Vous avez reçu <span className="font-semibold text-blue-600">+1 boost</span> grâce au code de parrainage utilisé.
               </>
             )}
           </p>
 
           {/* Affichage du boost */}
-          <div className="mx-auto mb-6 inline-flex items-center gap-3 rounded-2xl bg-gradient-to-br from-yellow-400/25 to-amber-500/20 px-6 py-4 shadow-lg ring-1 ring-yellow-400/40">
+          <div className="mx-auto mb-6 flex w-full max-w-sm items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
             <Image
               src="/images/Éclair boost.png"
               alt="Boost"
-              width={40}
-              height={40}
+              width={32}
+              height={32}
               className="object-contain"
               unoptimized
             />
             <div className="text-left">
-              <div className="text-sm font-medium text-yellow-200/80">Récompense</div>
-              <div className="text-2xl font-bold text-white">+1 boost</div>
+              <div className="text-xs text-gray-600">Récompense</div>
+              <div className="text-sm font-bold text-gray-900">+1 boost</div>
             </div>
           </div>
 
           {/* Bouton fermer */}
           <button
+            className="mt-2 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md"
             onClick={() => setShow(false)}
-            className="mt-6 rounded-xl bg-white/10 px-6 py-3 font-semibold text-white transition-colors hover:bg-white/20"
           >
             Fermer
           </button>

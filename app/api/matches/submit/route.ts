@@ -433,11 +433,11 @@ export async function POST(req: Request) {
         boostError = "Le boost ne peut être utilisé que si tu gagnes le match";
         console.warn("⚠️ Boost requested but player lost:", user.id);
       }
-    } else {
-      boostError = "Joueur non trouvé parmi les participants";
-      console.error("❌ Boost requested but player not found in participants");
+      } else {
+        boostError = "Joueur non trouvé parmi les participants";
+        console.error("❌ Boost requested but player not found in participants");
+      }
     }
-  }
 
   // Si un boost a été appliqué, attendre un peu et vérifier qu'il est bien visible dans la base de données
   // avant de revalider les pages (pour éviter des problèmes de timing)

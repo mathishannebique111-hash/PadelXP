@@ -312,14 +312,15 @@ export async function calculatePointsForMultiplePlayers(
 
     // Si aucun match ID ou user ID, calculer sans boost
     if (allMatchIds.size === 0 || userIds.length === 0) {
-      playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
+      playersData.forEach(({ userId, wins, losses, ties = 0, bonus, challengePoints }) => {
         // S'assurer que tous les paramètres sont des nombres
         const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
         const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+        const tiesNum = typeof ties === 'number' ? ties : (typeof ties === 'string' ? parseInt(String(ties), 10) || 0 : 0);
         const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
         const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
         
-        const basePoints = winsNum * 10 + lossesNum * 3;
+        const basePoints = winsNum * 10 + lossesNum * 3 + tiesNum * 4;
         results.set(userId, basePoints + bonusNum + challengePointsNum);
       });
       return results;
@@ -336,14 +337,15 @@ export async function calculatePointsForMultiplePlayers(
     if (error) {
       logSupabaseError("Error fetching boost uses for multiple players", error);
       // Fallback : calculer sans boost
-      playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
+      playersData.forEach(({ userId, wins, losses, ties = 0, bonus, challengePoints }) => {
         // S'assurer que tous les paramètres sont des nombres
         const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
         const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+        const tiesNum = typeof ties === 'number' ? ties : (typeof ties === 'string' ? parseInt(String(ties), 10) || 0 : 0);
         const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
         const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
         
-        const basePoints = winsNum * 10 + lossesNum * 3;
+        const basePoints = winsNum * 10 + lossesNum * 3 + tiesNum * 4;
         results.set(userId, basePoints + bonusNum + challengePointsNum);
       });
       return results;
@@ -441,14 +443,15 @@ export async function calculatePointsForMultiplePlayers(
   } catch (error) {
     console.error("[boost-points-utils] Exception calculating points:", error);
     // Fallback : calculer sans boost
-    playersData.forEach(({ userId, wins, losses, bonus, challengePoints }) => {
+    playersData.forEach(({ userId, wins, losses, ties = 0, bonus, challengePoints }) => {
       // S'assurer que tous les paramètres sont des nombres
       const winsNum = typeof wins === 'number' ? wins : (typeof wins === 'string' ? parseInt(String(wins), 10) || 0 : 0);
       const lossesNum = typeof losses === 'number' ? losses : (typeof losses === 'string' ? parseInt(String(losses), 10) || 0 : 0);
+      const tiesNum = typeof ties === 'number' ? ties : (typeof ties === 'string' ? parseInt(String(ties), 10) || 0 : 0);
       const bonusNum = typeof bonus === 'number' ? bonus : (typeof bonus === 'string' ? parseInt(String(bonus), 10) || 0 : 0);
       const challengePointsNum = typeof challengePoints === 'number' ? challengePoints : (typeof challengePoints === 'string' ? parseInt(String(challengePoints), 10) || 0 : 0);
       
-      const basePoints = winsNum * 10 + lossesNum * 3;
+      const basePoints = winsNum * 10 + lossesNum * 3 + tiesNum * 4;
       results.set(userId, basePoints + bonusNum + challengePointsNum);
     });
   }
