@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import BadgeIcon from "@/components/icons/BadgeIcon";
 import Image from "next/image";
 
 interface PlayerChallenge {
@@ -184,7 +183,13 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
                     className="object-contain"
                   />
                 ) : (
-                  <BadgeIcon size={40} />
+                  <Image
+                    src="/images/Badge.png"
+                    alt="Badge"
+                    width={40}
+                    height={40}
+                    className="object-contain"
+                  />
                 )}
                 <div className="text-left">
                   <div className="text-sm font-medium text-yellow-200/80">

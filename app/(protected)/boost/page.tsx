@@ -79,7 +79,7 @@ export default async function BoostPage() {
           <div className="relative z-10 flex flex-col items-center justify-center">
             <div className="mb-3 flex justify-center">
               <img 
-                src="/images/accélération page boost.png" 
+                src="/images/Accélération page boost.png" 
                 alt="Accélération boost" 
                 className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
               />
