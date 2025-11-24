@@ -1,10 +1,91 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+const generalRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(100, "15 m"),
+  analytics: true,
+  prefix: "ratelimit:general",
+});
+
+const loginRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, "15 m"),
+  analytics: true,
+  prefix: "ratelimit:login",
+});
+
+const matchSubmitRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, "5 m"),
+  analytics: true,
+  prefix: "ratelimit:match",
+});
 
 export async function middleware(req: NextRequest) {
-  // 1) Si la requête vient de Vercel Cron, on la laisse passer
+  // 1) Si la requête vient de Vercel Cron, on la laisse passer (pas de rate limiting)
   if (req.headers.get("x-vercel-cron") === "1") {
     return NextResponse.next();
+  }
+
+  // RATE LIMITING - Appliqué avant toute autre logique
+  const ip = req.ip ?? req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
+  const pathnameForRateLimit = req.nextUrl.pathname;
+
+  // Variables pour stocker les informations de rate limiting (pour les headers de réponse)
+  let rateLimitInfo: { limit: string; remaining: number; reset: number } | null = null;
+
+  try {
+    // Rate limiting pour les tentatives de connexion
+    if (pathnameForRateLimit.startsWith("/login") || pathnameForRateLimit.startsWith("/api/auth/login") || pathnameForRateLimit.startsWith("/api/auth/callback")) {
+      const { success, remaining, reset } = await loginRatelimit.limit(ip);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Trop de tentatives de connexion. Réessayez dans 15 minutes.", retryAfter: reset },
+          { status: 429 }
+        );
+      }
+      rateLimitInfo = { limit: "5", remaining, reset };
+    }
+
+    // Rate limiting pour la soumission de matchs
+    if (pathnameForRateLimit === "/api/matches/submit") {
+      const userId = req.headers.get("x-user-id") || ip;
+      const { success, remaining, reset } = await matchSubmitRatelimit.limit(userId);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Trop de matchs soumis. Limite: 5 matchs par 5 minutes.", retryAfter: reset },
+          { status: 429 }
+        );
+      }
+      rateLimitInfo = { limit: "5", remaining, reset };
+    }
+
+    // Rate limiting général pour toutes les routes API (sauf celles déjà gérées et les webhooks/cron)
+    if (
+      pathnameForRateLimit.startsWith("/api/") &&
+      !pathnameForRateLimit.startsWith("/api/cron/trial-check") &&
+      !pathnameForRateLimit.startsWith("/api/send-trial-reminder") &&
+      !pathnameForRateLimit.startsWith("/api/webhooks/") &&
+      pathnameForRateLimit !== "/api/resend-inbound" &&
+      pathnameForRateLimit !== "/api/matches/submit" // Déjà géré ci-dessus
+    ) {
+      const { success, remaining, reset } = await generalRatelimit.limit(ip);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Trop de requêtes. Réessayez plus tard.", retryAfter: reset },
+          { status: 429 }
+        );
+      }
+      rateLimitInfo = { limit: "100", remaining, reset };
+    }
+  } catch (error) {
+    // En cas d'erreur de rate limiting (Redis indisponible par exemple), on continue
+    // pour ne pas bloquer l'application, mais on log l'erreur
+    console.error("[Middleware] Rate limiting error:", error);
+    // Continuer avec le reste de la logique
   }
 
   // Normaliser le pathname : enlever le trailing slash et convertir en minuscules pour la comparaison
@@ -70,10 +151,24 @@ export async function middleware(req: NextRequest) {
 
   // Si la route est publique, laisser passer immédiatement sans vérification d'authentification
   if (isPublic) {
-    return NextResponse.next();
+    const publicResponse = NextResponse.next();
+    // Ajouter les headers de rate limiting si appliqué
+    if (rateLimitInfo) {
+      publicResponse.headers.set("X-RateLimit-Limit", rateLimitInfo.limit);
+      publicResponse.headers.set("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
+      publicResponse.headers.set("X-RateLimit-Reset", rateLimitInfo.reset.toString());
+    }
+    return publicResponse;
   }
 
   const res = NextResponse.next();
+  
+  // Ajouter les headers de rate limiting à la réponse si appliqué
+  if (rateLimitInfo) {
+    res.headers.set("X-RateLimit-Limit", rateLimitInfo.limit);
+    res.headers.set("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
+    res.headers.set("X-RateLimit-Reset", rateLimitInfo.reset.toString());
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
