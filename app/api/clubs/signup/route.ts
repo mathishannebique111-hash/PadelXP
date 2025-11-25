@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 export const runtime = "nodejs";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ClubSignupSchema = z.object({
+  email: z.string().email("Email invalide").trim().toLowerCase(),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  firstName: z.string().trim().min(1, "Le prénom est requis"),
+  lastName: z.string().trim().min(1, "Le nom est requis"),
+});
 
 export async function POST(req: Request) {
   try {
@@ -17,14 +24,16 @@ export async function POST(req: Request) {
     });
 
     const body = await req.json();
-    const email = String(body.email || "").trim().toLowerCase();
-    const password = String(body.password || "").trim();
-    const firstName = String(body.firstName || "").trim();
-    const lastName = String(body.lastName || "").trim();
 
-    if (!email || !password || !firstName || !lastName) {
-      return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
-    }
+// Validation Zod
+const parsed = ClubSignupSchema.safeParse(body);
+if (!parsed.success) {
+  const fieldErrors = parsed.error.flatten().fieldErrors;
+  const firstError = Object.values(fieldErrors).flat()[0] ?? "Champs requis manquants";
+  return NextResponse.json({ error: firstError }, { status: 400 });
+}
+
+const { email, password, firstName, lastName } = parsed.data;
 
     const fullName = `${firstName} ${lastName}`.trim();
 

@@ -24,9 +24,7 @@ try {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const message = body.message;
-    const providedConversationId = body.conversationId;
+    const { message } = await request.json();
 
     if (!message || !message.trim()) {
       return NextResponse.json({ error: 'Le message est requis' }, { status: 400 });
@@ -131,13 +129,13 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Utiliser une adresse "from" avec le domaine vérifié updates.padelxp.eu
-    // Si RESEND_FROM_EMAIL est configuré, l'utiliser, sinon utiliser le domaine vérifié
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'PadelXP Support <support@updates.padelxp.eu>';
+    // Utiliser le domaine par défaut de Resend si aucun domaine personnalisé n'est configuré
+    // Le domaine par défaut de Resend est "onboarding@resend.dev" ou "delivered@resend.dev"
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'PadelXP <onboarding@resend.dev>';
 
     console.log('[contact] Attempting to send email:', {
       from: fromEmail,
-      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound pour que le webhook resend-inbound le transfère vers Gmail
+      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound pour que le webhook le traite
       replyTo: userEmail,
       clubName,
       hasResendKey: !!process.env.RESEND_API_KEY,
@@ -165,45 +163,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Chercher une conversation ouverte existante pour ce club
+    const { data: existingConversation } = await supabaseAdmin
+      .from('support_conversations')
+      .select('id')
+      .eq('club_id', clubId)
+      .eq('user_id', user.id)
+      .eq('status', 'open')
+      .order('last_message_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     let conversationId: string;
-    
-    // Si un conversationId a été fourni, l'utiliser (réponse dans une conversation existante)
-    if (providedConversationId) {
-      // Vérifier que la conversation existe et appartient au club
-      const { data: existingConversation, error: convCheckError } = await supabaseAdmin
-        .from('support_conversations')
-        .select('id, club_id')
-        .eq('id', providedConversationId)
-        .eq('club_id', clubId)
-        .maybeSingle();
-
-      if (convCheckError || !existingConversation) {
-        console.error('[contact] Error checking conversation:', convCheckError);
-        return NextResponse.json({ 
-          error: 'Conversation introuvable ou vous n\'avez pas accès à cette conversation' 
-        }, { status: 404 });
-      }
-
-      conversationId = providedConversationId;
-      console.log('[contact] Using provided conversationId:', conversationId);
+    if (existingConversation) {
+      conversationId = existingConversation.id;
+      console.log('[contact] Using existing conversation:', conversationId);
     } else {
-      // Sinon, chercher une conversation ouverte existante pour ce club
-      const { data: existingConversation } = await supabaseAdmin
-        .from('support_conversations')
-        .select('id')
-        .eq('club_id', clubId)
-        .eq('user_id', user.id)
-        .eq('status', 'open')
-        .order('last_message_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (existingConversation) {
-        conversationId = existingConversation.id;
-        console.log('[contact] Using existing conversation:', conversationId);
-      } else {
       // Créer une nouvelle conversation
-      // Ne pas spécifier created_at et last_message_at car ils ont des valeurs par défaut dans la table
       const { data: newConversation, error: convError } = await supabaseAdmin
         .from('support_conversations')
         .insert({
@@ -217,89 +193,15 @@ export async function POST(request: NextRequest) {
         .select('id')
         .single();
 
-      if (convError) {
-        console.error('[contact] Error creating conversation:', {
-          error: convError,
-          errorMessage: convError.message,
-          errorDetails: convError.details,
-          errorHint: convError.hint,
-          errorCode: convError.code,
-          clubId,
-          userId: user.id,
-          userEmail,
-          clubName,
-          fullError: JSON.stringify(convError, null, 2),
-        });
-        
-        // Gérer les différents types d'erreurs
-        let errorMessage = convError.message || 'Erreur inconnue';
-        if (convError.code === '42P01' || convError.message?.includes('does not exist') || convError.message?.includes('schema cache')) {
-          errorMessage = `La table 'support_conversations' n'existe pas. Veuillez exécuter le script SQL 'create_support_chat_system.sql' dans Supabase SQL Editor.`;
-        } else if (convError.code === '23503') {
-          errorMessage = `Erreur de référence: Le club ou l'utilisateur spécifié n'existe pas.`;
-        } else if (convError.code === '23505') {
-          errorMessage = `Une conversation existe déjà pour ce club et cet utilisateur.`;
-        }
-        
+      if (convError || !newConversation) {
+        console.error('[contact] Error creating conversation:', convError);
         return NextResponse.json({ 
-          error: `Erreur lors de la création de la conversation: ${errorMessage}`,
-          details: convError.details,
-          hint: convError.hint,
-          code: convError.code,
-        }, { status: 500 });
-      }
-
-      if (!newConversation || !newConversation.id) {
-        console.error('[contact] Conversation created but no data returned');
-        return NextResponse.json({ 
-          error: 'Erreur lors de la création de la conversation: aucune donnée retournée' 
+          error: 'Erreur lors de la création de la conversation' 
         }, { status: 500 });
       }
 
       conversationId = newConversation.id;
       console.log('[contact] Created new conversation:', conversationId);
-      }
-    }
-
-    // IMPORTANT: Enregistrer le message dans la DB AVANT d'essayer d'envoyer l'email
-    // Comme ça, le message apparaîtra toujours dans le chat, même si l'envoi d'email échoue
-    console.log('[contact] Saving message to database first...');
-    const { error: messageError, data: savedMessage } = await supabaseAdmin
-      .from('support_messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_type: 'club',
-        sender_id: user.id,
-        sender_email: userEmail,
-        message_text: message.trim(),
-        html_content: message.replace(/\n/g, '<br>'),
-        // email_message_id sera mis à jour après l'envoi de l'email
-      })
-      .select()
-      .single();
-
-    if (messageError) {
-      console.error('[contact] Error saving message to database:', messageError);
-      // Si la table n'existe pas, retourner un message explicite
-      if (messageError.code === '42P01' || messageError.message?.includes('does not exist')) {
-        return NextResponse.json({ 
-          error: 'Système de chat non configuré',
-          hint: 'Veuillez exécuter le script create_support_chat_system.sql dans Supabase SQL Editor',
-          details: messageError.message
-        }, { status: 500 });
-      }
-      // Sinon, continuer quand même (l'envoi d'email peut toujours fonctionner)
-    } else {
-      console.log('[contact] Message saved to database:', savedMessage?.id);
-      
-      // Mettre à jour last_message_at de la conversation
-      await supabaseAdmin
-        .from('support_conversations')
-        .update({ 
-          last_message_at: new Date().toISOString(),
-          status: 'open'
-        })
-        .eq('id', conversationId);
     }
 
     // Générer un identifiant unique pour lier l'email à la conversation
@@ -308,13 +210,10 @@ export async function POST(request: NextRequest) {
     // Utiliser userEmail comme replyTo pour que les réponses arrivent à l'email du club
     // Les headers X-Conversation-ID permettront d'identifier la conversation dans le webhook
     console.log('[contact] Calling resend.emails.send...');
-    const emailSubject = `[${conversationId}] Message de contact - ${clubName}`;
-    
-    // Essayer d'abord d'envoyer vers l'inbound email
-    // Si ça échoue avec une erreur de test, envoyer directement à Gmail
-    let emailResult = await resend.emails.send({
+    const emailSubject = `[${conversationId.substring(0, 8)}] Message de contact - ${clubName}`;
+    const emailResult = await resend.emails.send({
       from: fromEmail,
-      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound de Resend (sera capturé par le webhook resend-inbound et transféré vers Gmail)
+      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound de Resend (sera capturé par le webhook resend-inbound)
       replyTo: userEmail, // Réponses envoyées à l'email du club, mais Resend webhook les capturera
       subject: emailSubject,
       headers: {
@@ -375,111 +274,46 @@ export async function POST(request: NextRequest) {
       dataDetails: emailResult.data ? JSON.stringify(emailResult.data, null, 2) : null,
     });
 
-    // Si l'envoi vers l'inbound échoue, essayer d'envoyer directement à Gmail
-    if (emailResult.error && INBOUND_EMAIL !== FORWARD_TO_EMAIL) {
-      const errorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
-      console.error('[contact] Resend API error when sending to inbound:', JSON.stringify(emailResult.error, null, 2));
-      console.log('[contact] Trying to send directly to Gmail as fallback...');
-      
-      emailResult = await resend.emails.send({
-        from: fromEmail,
-        to: FORWARD_TO_EMAIL, // Envoyer directement à Gmail
-        replyTo: INBOUND_EMAIL, // Les réponses iront à l'inbound pour être capturées par le webhook
-        subject: emailSubject,
-        headers: {
-          'X-Conversation-ID': conversationId,
-          'X-Club-ID': clubId,
-          'X-Reply-Token': conversationToken,
-          'X-Sender-Type': 'club',
-          'X-Inbound-Email': INBOUND_EMAIL, // Garder l'info de l'inbound pour référence
-        },
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <style>
-                body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #0066FF, #0052CC); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-                .message-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0066FF; }
-                .info { background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
-                .info-item { margin: 5px 0; }
-                .reply-note { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107; font-size: 12px; color: #856404; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h1>📧 Nouveau message de contact</h1>
-                </div>
-                <div class="content">
-                  <div class="info">
-                    <div class="info-item"><strong>Club :</strong> ${clubName}</div>
-                    <div class="info-item"><strong>Email du club :</strong> ${userEmail}</div>
-                  </div>
-                  <div class="message-box">
-                    <strong>Message :</strong>
-                    <p style="white-space: pre-wrap; margin-top: 10px;">${message.replace(/\n/g, '<br>')}</p>
-                  </div>
-                  <div class="reply-note">
-                    <strong>💡 Pour répondre :</strong> Répondez simplement à cet email. Votre réponse apparaîtra dans la page "Aide & Support" du club.
-                  </div>
-                  <p style="margin-top: 30px; font-size: 12px; color: #666;">
-                    Ce message a été envoyé depuis la page "Aide & Support" du compte club.
-                    <br/>
-                    <small>Conversation ID: ${conversationId}</small>
-                  </p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `,
-      });
-      
-      if (!emailResult.error) {
-        console.log('[contact] Email sent successfully to Gmail (fallback):', {
-          id: emailResult.data?.id,
-          to: FORWARD_TO_EMAIL,
-          conversationId,
+    if (emailResult.error) {
+      console.error('[contact] Resend API error:', JSON.stringify(emailResult.error, null, 2));
+      return NextResponse.json({ 
+        error: `Erreur lors de l'envoi: ${emailResult.error.message || JSON.stringify(emailResult.error)}`,
+        errorDetails: emailResult.error 
+      }, { status: 500 });
+    }
+
+    console.log('[contact] Email sent successfully:', {
+      id: emailResult.data?.id,
+      to: INBOUND_EMAIL,
+      conversationId,
+    });
+
+    // Enregistrer le message initial dans la base de données
+    if (emailResult.data?.id) {
+      const { error: messageError } = await supabaseAdmin
+        .from('support_messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_type: 'club',
+          sender_id: user.id,
+          sender_email: userEmail,
+          message_text: message.trim(),
+          html_content: message.replace(/\n/g, '<br>'),
+          email_message_id: emailResult.data.id,
         });
+
+      if (messageError) {
+        console.error('[contact] Error saving message:', messageError);
+        // Ne pas échouer la requête si le message est sauvegardé, juste logger l'erreur
       } else {
-        // Si même l'envoi direct à Gmail échoue, logger l'erreur mais ne pas bloquer (le message est déjà dans la DB)
-        console.error('[contact] Failed to send email even to Gmail (fallback):', JSON.stringify(emailResult.error, null, 2));
+        console.log('[contact] Message saved to database');
       }
     }
-
-    // Si l'email a été envoyé avec succès, logger l'info
-    if (!emailResult.error && emailResult.data?.id) {
-      console.log('[contact] Email sent successfully:', {
-        id: emailResult.data.id,
-        to: emailResult.data.to || INBOUND_EMAIL,
-        conversationId,
-      });
-    }
-
-    // Mettre à jour email_message_id si l'email a été envoyé avec succès
-    if (emailResult.data?.id && savedMessage?.id) {
-      await supabaseAdmin
-        .from('support_messages')
-        .update({ email_message_id: emailResult.data.id })
-        .eq('id', savedMessage.id);
-      
-      console.log('[contact] Message email_message_id updated:', emailResult.data.id);
-    }
-
-    console.log('[contact] ✅ Success! Message sent and saved:', {
-      conversationId,
-      messageId: savedMessage?.id,
-      emailSent: !!emailResult.data?.id
-    });
 
     return NextResponse.json({ 
       success: true, 
       message: 'Message envoyé avec succès',
-      conversationId,
-      messageId: savedMessage?.id
+      conversationId 
     });
   } catch (error) {
     console.error('[contact] Unexpected error:', error);
