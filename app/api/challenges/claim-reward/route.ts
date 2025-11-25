@@ -3,6 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+const ClaimRewardSchema = z.object({
+  challengeId: z.string().uuid("challengeId doit être un UUID valide"),
+});
 
 const supabaseAdmin = createServiceClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -117,15 +121,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { challengeId, rewardType, rewardValue } = body;
+      // Lecture du JSON brut
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "JSON invalide" },
+      { status: 400 }
+    );
+  }
 
-    if (!challengeId || !rewardType || !rewardValue) {
-      return NextResponse.json(
-        { error: "Données manquantes" },
-        { status: 400 }
-      );
-    }
+  // Validation avec Zod pour challengeId
+  const parsed = ClaimRewardSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "Validation échouée",
+        details: parsed.error.flatten().fieldErrors,
+      },
+      { status: 400 }
+    );
+  }
+
+  const { challengeId } = parsed.data;
+  const { rewardType, rewardValue } = body;
+
+  if (!rewardType || !rewardValue) {
+    return NextResponse.json(
+      { error: "Données manquantes" },
+      { status: 400 }
+    );
+  }
 
     console.log(`[claim-reward] User ${user.id} claiming reward for challenge ${challengeId}`);
 
