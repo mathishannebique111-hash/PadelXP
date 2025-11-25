@@ -1,20 +1,41 @@
 import { NextResponse } from "next/server";
 import { validateReferralCode } from "@/lib/utils/referral-utils";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+const ReferralValidateSchema = z.object({
+  code: z.string().trim().min(1, "Code requis").max(50, "Code trop long"),
+});
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { code } = body as { code?: string };
-
-    if (!code || typeof code !== "string") {
-      return NextResponse.json(
-        { valid: false, error: "Code de parrainage requis" },
-        { status: 400 }
-      );
-    }
+        // 1) Lecture du JSON brut
+        let body;
+        try {
+          body = await req.json();
+        } catch {
+          return NextResponse.json(
+            { valid: false, error: "JSON invalide" },
+            { status: 400 }
+          );
+        }
+    
+        // 2) Validation avec Zod
+        const parsed = ReferralValidateSchema.safeParse(body);
+        if (!parsed.success) {
+          return NextResponse.json(
+            {
+              valid: false,
+              error: "Validation échouée",
+              details: parsed.error.flatten().fieldErrors,
+            },
+            { status: 400 }
+          );
+        }
+    
+        const { code } = parsed.data;
+    
 
     // Valider le code de parrainage
     // Note: On ne vérifie pas l'auto-parrainage ici car l'utilisateur peut ne pas être connecté
