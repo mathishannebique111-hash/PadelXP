@@ -300,6 +300,55 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Club créé mais synchronisation du compte impossible. Contactez le support." }, { status: 500 });
     }
 
+    // Créer l'entrée dans club_admins pour définir l'utilisateur comme propriétaire
+    // Note: club_id est TEXT dans club_admins, donc on convertit l'UUID en string
+    const userEmail = existingUser?.user?.email || ownerEmail || '';
+    
+    const { data: existingAdmin } = await supabaseAdmin
+      .from('club_admins')
+      .select('id')
+      .eq('club_id', String(club.id))
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!existingAdmin) {
+      const { error: adminError } = await supabaseAdmin
+        .from('club_admins')
+        .insert({
+          club_id: String(club.id),
+          user_id: userId,
+          email: userEmail,
+          role: 'owner',
+          invited_by: userId,
+          activated_at: new Date().toISOString(),
+        });
+
+      if (adminError) {
+        console.error("[clubs/register] Error creating club_admin:", adminError);
+        // Ne pas bloquer si l'admin existe déjà ou si c'est une erreur de contrainte unique
+        if (!adminError.message?.includes('duplicate') && !adminError.code?.includes('23505')) {
+          console.warn("[clubs/register] Club created but admin entry failed (non-blocking):", adminError);
+        }
+      } else {
+        console.log("[clubs/register] ✅ Club admin created successfully");
+      }
+    }
+
+    // Initialiser l'abonnement en essai pour le club
+    try {
+      const { error: subscriptionError } = await supabaseAdmin.rpc("initialize_club_subscription", {
+        p_club_id: club.id,
+      });
+      
+      if (subscriptionError) {
+        console.warn("[clubs/register] Could not initialize subscription (non-blocking):", subscriptionError);
+        // Ne pas bloquer la création du compte si l'initialisation de l'abonnement échoue
+        // L'abonnement pourra être initialisé plus tard
+      }
+    } catch (subErr) {
+      console.warn("[clubs/register] Subscription initialization error (non-blocking):", subErr);
+    }
+
     return NextResponse.json({ ok: true, club: { ...club, logo_url: logoUrl || null } });
   } catch (error: any) {
     console.error("[clubs/register] Unexpected error", error);
