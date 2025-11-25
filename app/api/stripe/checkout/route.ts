@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { getClubSubscription } from '@/lib/utils/subscription-utils';
@@ -10,6 +11,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 });
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Schéma Stripe checkout : priceId obligatoire (Stripe price_*), mode optionnel limité à subscription/payment.
+ */
+const stripeCheckoutSchema = z.object({
+  priceId: z.string().min(1, 'priceId requis').regex(/^price_[a-zA-Z0-9]+$/, 'priceId invalide'),
+  mode: z.enum(['subscription', 'payment']).optional(),
+});
 
 export async function POST(req: NextRequest) {
   let priceId: string | undefined;
@@ -33,31 +42,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parser le body de la requête
+    // Parser et valider le body de la requête
     const body = await req.json();
-    priceId = body.priceId;
-    const { mode } = body as {
-      priceId: string;
-      mode?: 'subscription' | 'payment';
-    };
-
-    // Valider le priceId
-    if (!priceId || typeof priceId !== 'string') {
-      console.error('[checkout] Invalid priceId:', { priceId, type: typeof priceId });
+    const parsedBody = stripeCheckoutSchema.safeParse(body);
+    if (!parsedBody.success) {
+      console.error('[checkout] Invalid payload', parsedBody.error.flatten().fieldErrors);
       return NextResponse.json(
-        { error: 'priceId is required and must be a string' },
+        { error: 'Invalid checkout payload', details: parsedBody.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    // Vérifier que le priceId n'est pas vide (cas où la variable d'environnement n'est pas définie)
-    if (priceId === '') {
-      console.error('[checkout] Empty priceId - check environment variables NEXT_PUBLIC_STRIPE_PRICE_*');
-      return NextResponse.json(
-        { error: 'Price ID not configured. Please check your Stripe price IDs in environment variables.' },
-        { status: 400 }
-      );
-    }
+    priceId = parsedBody.data.priceId;
+    const { mode } = parsedBody.data;
 
     // Déterminer le mode (par défaut 'subscription')
     const checkoutMode: 'subscription' | 'payment' = mode || 'subscription';

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 import { creditPlayerBoosts, getPlayerBoostStats } from '@/lib/utils/boost-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { z } from 'zod';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -18,6 +19,20 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   : null;
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Schéma de crédit de boosts : session Stripe (cs_*) ou quantité positive, checkAll booléen.
+ */
+const creditBoostsSchema = z
+  .object({
+    sessionId: z.string().trim().regex(/^cs_[A-Za-z0-9]+$/, 'Session Stripe invalide').optional(),
+    quantity: z.coerce.number().int().positive('Quantité doit être positive').optional(),
+    checkAll: z.boolean().optional(),
+  })
+  .refine((data) => data.sessionId || data.quantity || data.checkAll, {
+    message: 'sessionId, quantity ou checkAll requis',
+    path: ['sessionId'],
+  });
 
 // Route pour créditer manuellement les boosts d'un joueur
 // Utile pour réparer les cas où les boosts n'ont pas été crédités
@@ -41,8 +56,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const { sessionId, quantity, checkAll } = body as { sessionId?: string; quantity?: number; checkAll?: boolean };
+    const parsedBody = creditBoostsSchema.safeParse(await req.json());
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: 'Payload invalide', details: parsedBody.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { sessionId, quantity, checkAll } = parsedBody.data;
 
     // Si sessionId fourni, vérifier la session Stripe et créditer
     if (sessionId) {

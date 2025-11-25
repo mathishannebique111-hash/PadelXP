@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { sendAdminInvitationEmail } from "@/lib/email";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,6 +12,13 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
       auth: { autoRefreshToken: false, persistSession: false },
     })
   : null;
+
+/**
+ * Schéma d'invitation admin : email obligatoire, normalisé (trim + lowercase).
+ */
+const inviteAdminSchema = z.object({
+  email: z.string().trim().email("Email invalide").transform((value) => value.toLowerCase()),
+});
 
 export async function POST(request: Request) {
   try {
@@ -50,19 +58,15 @@ export async function POST(request: Request) {
 
     const clubName = club?.name || "votre club";
 
-    const { email } = await request.json();
-
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email requis" }, { status: 400 });
+    const parsedBody = inviteAdminSchema.safeParse(await request.json());
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: "Payload invalide", details: parsedBody.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: "Email invalide" }, { status: 400 });
-    }
-
-    // Normaliser l'email en minuscules
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = parsedBody.data.email;
 
     // Vérifier si l'utilisateur existe déjà dans auth.users
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();

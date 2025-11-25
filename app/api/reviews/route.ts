@@ -23,9 +23,12 @@ function countWords(text: string | null | undefined): number {
   return words.length;
 }
 
+/**
+ * Schéma d'avis : note entière entre 1 et 5, commentaire optionnel (1000 caractères max, trim appliqué).
+ */
 const reviewSchema = z.object({
-  rating: z.number().min(1).max(5),
-  comment: z.string().optional(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().trim().max(1000, "Le commentaire est limité à 1000 caractères").optional(),
 });
 
 async function getClubMemberIds(supabase: ReturnType<typeof createServerClient>, clubId: string) {

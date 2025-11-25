@@ -5,9 +5,12 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
 
+/**
+ * Schéma de création d'un guest : prénom/nom obligatoires, trim automatique, 60 caractères max.
+ */
 const createGuestSchema = z.object({
-  first_name: z.string().min(1, "Le prénom est requis"),
-  last_name: z.string().min(1, "Le nom est requis"),
+  first_name: z.string().trim().min(1, "Le prénom est requis").max(60, "Le prénom est trop long"),
+  last_name: z.string().trim().min(1, "Le nom est requis").max(60, "Le nom est trop long"),
 });
 
 export async function POST(req: Request) {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies, headers } from "next/headers";
+import { z } from "zod";
 import type { Database } from "@/lib/types_db";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,6 +13,13 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
       auth: { autoRefreshToken: false, persistSession: false },
     })
   : null;
+
+/**
+ * Schéma de suppression d'admin : identifiant UUID obligatoire.
+ */
+const removeAdminSchema = z.object({
+  admin_id: z.string().uuid("admin_id doit être un UUID valide"),
+});
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -52,11 +60,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    const { admin_id } = await request.json();
-
-    if (!admin_id || typeof admin_id !== "string") {
-      return NextResponse.json({ error: "ID administrateur requis" }, { status: 400 });
+    const parsedBody = removeAdminSchema.safeParse(await request.json());
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: "Payload invalide", details: parsedBody.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { admin_id } = parsedBody.data;
 
     const { data: currentUserAdmin } = await supabaseAdmin
       .from("club_admins")

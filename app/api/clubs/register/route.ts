@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { Buffer } from "buffer";
+import { z } from "zod";
 
 function slugify(value: string, fallback: string) {
   const base = (value || fallback)
@@ -39,6 +40,44 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
     })
   : null;
 
+const optionalText = (max: number) => z.string().trim().max(max).nullish();
+
+/**
+ * Schéma d'enregistrement d'un club : nom/postal requis, coordonnées optionnelles nettoyées, logo base64 sécurisé.
+ */
+const clubRegisterSchema = z.object({
+  name: z.string().trim().min(2, "Le nom du club est requis").max(120, "Nom de club trop long"),
+  postal_code: z
+    .string()
+    .trim()
+    .regex(/^\d{5}$/, "Le code postal doit contenir 5 chiffres"),
+  city: optionalText(120),
+  street: optionalText(200),
+  phone: optionalText(30),
+  website: optionalText(200),
+  number_of_courts: z
+    .preprocess((val) => {
+      if (val === null || val === undefined || val === "") return undefined;
+      if (typeof val === "string") return Number(val);
+      return val;
+    }, z.number().int().min(1).max(100))
+    .optional(),
+  court_type: optionalText(60),
+  owner_email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Email administrateur invalide")
+    .nullish(),
+  logo_payload: z
+    .object({
+      filename: z.string().trim().max(200),
+      mime: z.string().trim().max(100).optional(),
+      data: z.string().min(1, "Le fichier logo est requis"),
+    })
+    .nullish(),
+});
+
 async function ensureLogoBucket() {
   if (!supabaseAdmin) return;
   try {
@@ -61,24 +100,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Serveur mal configuré" }, { status: 500 });
     }
 
-    const payload = await req.json();
-    const name = String(payload.name || "").trim();
-    const postal_code = String(payload.postal_code || "").trim();
-    const city = payload.city ? String(payload.city).trim() : null;
-    const address = payload.street ? String(payload.street).trim() : null;
-    const phone = payload.phone ? String(payload.phone).trim() : null;
-    const website = payload.website ? String(payload.website).trim() : null;
-    const number_of_courts = payload.number_of_courts ? Number(payload.number_of_courts) : null;
-    const court_type = payload.court_type ? String(payload.court_type).trim() : null;
-    const ownerEmail = payload.owner_email ? String(payload.owner_email).trim().toLowerCase() : null;
-    const logoPayload = payload.logo_payload && payload.logo_payload.data ? payload.logo_payload : null;
+    const parsedPayload = clubRegisterSchema.safeParse(await req.json());
+    if (!parsedPayload.success) {
+      return NextResponse.json(
+        { error: "Données invalides", details: parsedPayload.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
-    if (!name) {
-      return NextResponse.json({ error: "Le nom du club est requis" }, { status: 400 });
-    }
-    if (!postal_code) {
-      return NextResponse.json({ error: "Le code postal est requis" }, { status: 400 });
-    }
+    const {
+      name,
+      postal_code,
+      city,
+      street,
+      phone,
+      website,
+      number_of_courts,
+      court_type,
+      owner_email,
+      logo_payload,
+    } = parsedPayload.data;
+
+    const address = street || null;
+    const ownerEmail = owner_email || null;
+    const numberOfCourts = typeof number_of_courts === "number" ? number_of_courts : null;
+    const logoPayload = logo_payload && logo_payload.data ? logo_payload : null;
 
     let postalDigits: string;
     try {
@@ -193,7 +239,7 @@ export async function POST(req: Request) {
       address,
       phone,
       website,
-      number_of_courts,
+      number_of_courts: numberOfCourts,
       court_type,
     };
 

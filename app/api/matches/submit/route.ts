@@ -4,10 +4,52 @@ import { cookies } from "next/headers";
 import { createHash } from "crypto";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { consumeBoostForMatch, canPlayerUseBoost, getPlayerBoostCreditsAvailable } from "@/lib/utils/boost-utils";
 
 const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * Schéma strict de soumission d'un match :
+ * - 2 ou 4 joueurs uniquement, chacun avec un type valide et des identifiants non vides
+ * - Winner limité à "1" ou "2"
+ * - Minimum 2 sets, chaque score étant une chaîne numérique non vide
+ * - Tie-break optionnel mais complet si présent
+ * - useBoost optionnel et booléen
+ */
+const matchSubmitSchema = z.object({
+  players: z
+    .array(
+      z.object({
+        player_type: z.enum(["user", "guest"]),
+        user_id: z.string().min(1),
+        guest_player_id: z.string().min(1).nullable(),
+      })
+    )
+    .min(2, "Au moins 2 joueurs requis")
+    .max(4, "Maximum 4 joueurs autorisés")
+    .refine((players) => players.length === 2 || players.length === 4, {
+      message: "Le match doit avoir 2 ou 4 joueurs",
+    }),
+  winner: z.enum(["1", "2"]),
+  sets: z
+    .array(
+      z.object({
+        setNumber: z.number().int().positive(),
+        team1Score: z.string().min(1),
+        team2Score: z.string().min(1),
+      })
+    )
+    .min(2, "Au moins 2 sets requis"),
+  tieBreak: z
+    .object({
+      team1Score: z.string().min(1),
+      team2Score: z.string().min(1),
+    })
+    .optional(),
+  useBoost: z.boolean().optional(),
+});
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,24 +74,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
     }
     
-  const { players, winner, sets, tieBreak, useBoost } = body as {
-    players: Array<{
-      player_type: "user" | "guest";
-      user_id: string;
-      guest_player_id: string | null;
-    }>;
-    winner: "1" | "2";
-    sets: Array<{
-      setNumber: number;
-      team1Score: string;
-      team2Score: string;
-    }>;
-    tieBreak?: {
-      team1Score: string;
-      team2Score: string;
-    };
-    useBoost?: boolean; // Optionnel : true si le joueur veut utiliser un boost
-  };
+  const parsedBody = matchSubmitSchema.safeParse(body);
+  if (!parsedBody.success) {
+    console.error("❌ Match submission validation failed:", parsedBody.error.flatten().fieldErrors);
+    return NextResponse.json({ error: "Données invalides", details: parsedBody.error.flatten().fieldErrors }, { status: 400 });
+  }
+
+  const { players, winner, sets, tieBreak, useBoost } = parsedBody.data;
   
   const cookieStore = await cookies();
   const supabase = createServerClient(

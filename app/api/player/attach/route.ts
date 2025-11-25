@@ -1,11 +1,45 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
 import { processReferralCode } from "@/lib/utils/referral-utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const nameRegex = /^[a-zA-Z0-9À-ÿ\s\-']+$/;
+
+/**
+ * Schéma d'attachement joueur : slug/code obligatoires, identités optionnelles mais nettoyées.
+ */
+const playerAttachSchema = z.object({
+  slug: z.string().trim().min(1, "Slug requis"),
+  code: z.string().trim().min(1, "Code requis"),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, "Prénom requis")
+    .max(100, "Prénom trop long")
+    .regex(nameRegex, "Prénom invalide")
+    .optional(),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, "Nom requis")
+    .max(100, "Nom trop long")
+    .regex(nameRegex, "Nom invalide")
+    .optional(),
+  displayName: z
+    .string()
+    .trim()
+    .min(1, "Nom d'affichage requis")
+    .max(100, "Nom d'affichage trop long")
+    .regex(nameRegex, "Nom d'affichage invalide")
+    .optional(),
+  email: z.string().trim().email("Email invalide").transform((value) => value.toLowerCase()).optional(),
+  referralCode: z.string().trim().max(50).optional(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -14,19 +48,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
-    const body = await req.json();
-    let { slug, code, firstName, lastName, displayName, email, referralCode } = body as {
-      slug?: string;
-      code?: string;
-      firstName?: string;
-      lastName?: string;
-      displayName?: string;
-      email?: string;
-      referralCode?: string;
-    };
-    if (!slug || !code) {
-      return NextResponse.json({ error: "Club et code requis" }, { status: 400 });
+    const parsedBody = playerAttachSchema.safeParse(await req.json());
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: "Payload invalide", details: parsedBody.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    let { slug, code, firstName, lastName, displayName, email, referralCode } = parsedBody.data;
 
     slug = String(slug).trim();
     code = String(code).trim().toUpperCase().replace(/[^A-Z0-9]+/g, "");

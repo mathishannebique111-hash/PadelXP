@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,20 +14,36 @@ const supabaseAdmin =
 
 const INVITE_VALIDITY_HOURS = 48;
 
+/**
+ * Schéma de régénération d'invitation : email (trim + lowercase) ou token requis.
+ */
+const adminInviteReissueSchema = z
+  .object({
+    email: z.string().trim().email("Email invalide").transform((value) => value.toLowerCase()).optional(),
+    token: z.string().trim().min(1, "Token requis").optional(),
+  })
+  .refine((data) => Boolean(data.email) || Boolean(data.token), {
+    message: "Email ou token requis",
+    path: ["email"],
+  });
+
 export async function POST(request: Request) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: "Configuration serveur invalide" }, { status: 500 });
     }
 
-    const { email, token: requestToken } = await request.json();
-
-    if ((!email || typeof email !== "string") && (!requestToken || typeof requestToken !== "string")) {
-      return NextResponse.json({ error: "Email ou token requis" }, { status: 400 });
+    const parsedBody = adminInviteReissueSchema.safeParse(await request.json());
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: "Payload invalide", details: parsedBody.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
-    let normalizedEmail: string | null =
-      typeof email === "string" ? email.trim().toLowerCase() : null;
+    const { email, token: requestToken } = parsedBody.data;
+
+    let normalizedEmail: string | null = email ?? null;
     let userIdFromToken: string | null = null;
 
     if (!normalizedEmail && requestToken) {

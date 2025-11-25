@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  productionBrowserSourceMaps: false,
   // Headers de sécurité HTTP
   async headers() {
     return [

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { BOOST_PRICE_IDS } from '@/lib/config/boost-prices';
 
@@ -14,6 +15,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 });
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Schéma Stripe checkout boost : priceId Stripe obligatoire, quantity entière positive (fallback = 1).
+ */
+const checkoutBoostSchema = z.object({
+  priceId: z.string().min(1, 'priceId requis').regex(/^price_[a-zA-Z0-9]+$/, 'priceId Stripe invalide'),
+  quantity: z.number().int().positive().max(100).optional(),
+});
 
 export async function POST(req: NextRequest) {
   let priceId: string | undefined;
@@ -112,8 +121,6 @@ export async function POST(req: NextRequest) {
     let body;
     try {
       body = await req.json();
-      priceId = body?.priceId; // Le priceId est maintenant passé directement depuis le frontend
-      quantity = body?.quantity || 1;
     } catch (parseError) {
       console.error('[checkout-boost] Error parsing request body:', parseError);
       return NextResponse.json(
@@ -121,6 +128,18 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const parsedBody = checkoutBoostSchema.safeParse(body);
+    if (!parsedBody.success) {
+      console.error('[checkout-boost] Invalid payload', parsedBody.error.flatten().fieldErrors);
+      return NextResponse.json(
+        { error: 'Payload invalide', details: parsedBody.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    priceId = parsedBody.data.priceId;
+    quantity = parsedBody.data.quantity ?? 1;
 
     // Debug: Vérifier les valeurs reçues
     console.log('[checkout-boost] Request body:', {
