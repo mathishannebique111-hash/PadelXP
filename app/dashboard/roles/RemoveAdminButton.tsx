@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 type RemoveAdminButtonProps = {
   adminId: string;
@@ -14,14 +15,23 @@ export default function RemoveAdminButton({ adminId, adminEmail, isPending = fal
   const router = useRouter();
   const [isRemoving, setIsRemoving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const supabase = createClient();
 
   const handleRemove = async () => {
     setIsRemoving(true);
 
     try {
+      // Récupérer la session actuelle pour authentifier la requête côté serveur
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch("/api/clubs/remove-admin", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         credentials: "include",
         body: JSON.stringify({ admin_id: adminId }),
       });

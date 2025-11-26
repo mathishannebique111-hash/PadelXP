@@ -9,7 +9,7 @@ export const fetchCache = "force-no-store";
 export async function GET() {
   try {
     // Essayer d'abord avec le client serveur normal
-    let supabase = createClient();
+    let supabase = await createClient();
     
     // Si disponible, utiliser le service role key pour contourner RLS
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -103,23 +103,23 @@ export async function POST(request: Request) {
       .eq("id", adminInviteRow.club_id)
       .maybeSingle();
 
-    const redirectTo = `${
-      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-    }/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}`;
+      const redirectTo = `${
+        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+      }/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail!)}`;
+      // Ajout du ! pour dire à TypeScript : "Je garantis que c'est pas null ici"      
 
-    if (adminInviteRow.user_id) {
-      await supabaseAdmin.auth.admin.updateUserById(adminInviteRow.user_id, {
-        email: normalizedEmail,
-        email_confirm: true,
-      });
-    }
+      if (adminInviteRow.user_id) {
+        await supabaseAdmin.auth.admin.updateUserById(adminInviteRow.user_id, {
+          email: normalizedEmail || undefined, // Convertit null en undefined
+          email_confirm: true,
+        });
+      }      
 
     let linkType: "magiclink" | "recovery" = "magiclink";
 
     let linkResult = await supabaseAdmin.auth.admin.generateLink({
       type: "invite",
-      email: normalizedEmail,
-      user_id: adminInviteRow.user_id ?? undefined,
+      email: normalizedEmail!,
       options: {
         redirectTo,
         data: {
@@ -134,15 +134,9 @@ export async function POST(request: Request) {
       linkType = "recovery";
       linkResult = await supabaseAdmin.auth.admin.generateLink({
         type: "recovery",
-        email: normalizedEmail,
-        user_id: adminInviteRow.user_id ?? undefined,
+        email: normalizedEmail!,
         options: {
           redirectTo,
-          data: {
-            club_id: adminInviteRow.club_id,
-            club_slug: clubRow?.slug ?? null,
-            club_name: clubRow?.name ?? null,
-          },
         },
       });
     }
@@ -152,7 +146,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Impossible de régénérer le lien" }, { status: 500 });
     }
 
-    const linkData = linkResult.data;
+    // Étendre le typage de linkData pour accéder aux propriétés spécifiques (email_otp, hashed_token, action_link, etc.)
+    const linkData: any = linkResult.data;
     console.log("[admin-invite/reissue] link generated", {
       linkType,
       email: normalizedEmail,

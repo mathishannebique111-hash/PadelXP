@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import type { Database } from "@/lib/types_db";
 
@@ -42,12 +42,7 @@ export async function POST(request: Request) {
     }
 
     if (!currentUser) {
-      const cookieStore = cookies();
-      const headerList = headers();
-      const supabase = createRouteHandlerClient<Database>({
-        cookies: () => cookieStore,
-        headers: () => headerList,
-      });
+      const supabase = createRouteHandlerClient<Database>({ cookies });
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -111,7 +106,28 @@ export async function POST(request: Request) {
       .select("user_id")
       .eq("id", admin_id)
       .maybeSingle();
-
+      if (adminToRemove.role === "owner") {
+        return NextResponse.json(
+          { error: "Vous ne pouvez pas supprimer un propriétaire" },
+          { status: 403 }
+        );
+      }
+      
+      // === AJOUT : Protection self-delete ===
+      const { data: adminData } = await supabaseAdmin
+        .from("club_admins")
+        .select("user_id")
+        .eq("id", admin_id)
+        .maybeSingle();
+      
+      if (adminData?.user_id === currentUser.id) {
+        return NextResponse.json(
+          { error: "Vous ne pouvez pas vous supprimer vous-même" },
+          { status: 403 }
+        );
+      }
+      // === FIN AJOUT ===
+      
     let adminUserId = adminData?.user_id ?? null;
 
     if (!adminUserId) {
