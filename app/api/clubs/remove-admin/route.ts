@@ -106,28 +106,15 @@ export async function POST(request: Request) {
       .select("user_id")
       .eq("id", admin_id)
       .maybeSingle();
-      if (adminToRemove.role === "owner") {
-        return NextResponse.json(
-          { error: "Vous ne pouvez pas supprimer un propriétaire" },
-          { status: 403 }
-        );
-      }
-      
-      // === AJOUT : Protection self-delete ===
-      const { data: adminData } = await supabaseAdmin
-        .from("club_admins")
-        .select("user_id")
-        .eq("id", admin_id)
-        .maybeSingle();
-      
-      if (adminData?.user_id === currentUser.id) {
-        return NextResponse.json(
-          { error: "Vous ne pouvez pas vous supprimer vous-même" },
-          { status: 403 }
-        );
-      }
-      // === FIN AJOUT ===
-      
+
+    // Protection: empêcher un admin de se supprimer lui-même
+    if (adminData?.user_id === currentUser.id) {
+      return NextResponse.json(
+        { error: "Vous ne pouvez pas vous supprimer vous-même" },
+        { status: 403 }
+      );
+    }
+    
     let adminUserId = adminData?.user_id ?? null;
 
     if (!adminUserId) {
