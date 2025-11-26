@@ -2,16 +2,20 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
+import { z } from "zod";
+
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET_NAME = "club-challenges";
+
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     })
   : null;
+
 
 type ChallengeRecord = {
   id: string;
@@ -25,14 +29,27 @@ type ChallengeRecord = {
   created_at: string;
 };
 
-type ChallengePayload = {
-  name: string;
-  startDate: string;
-  endDate: string;
-  objective: string;
-  rewardType: "points" | "badge";
-  rewardLabel: string;
-};
+
+// === AJOUT : Schéma Zod pour validation ===
+const challengeSchema = z.object({
+  name: z.string().trim().min(1, "Le titre est requis").max(100, "Le titre est trop long"),
+  objective: z.string().trim().min(1, "L'objectif est requis").max(500, "L'objectif est trop long"),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format de date invalide (YYYY-MM-DD)"),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format de date invalide (YYYY-MM-DD)"),
+  rewardType: z.enum(["points", "badge"], { errorMap: () => ({ message: "Type de récompense invalide" }) }),
+  rewardLabel: z.string().trim().min(1, "Le label de récompense est requis").max(50, "Le label est trop long"),
+}).refine(
+  (data) => {
+    const start = new Date(data.startDate + "T00:00:00.000Z");
+    const end = new Date(data.endDate + "T23:59:59.999Z");
+    return end >= start;
+  },
+  { message: "La date de fin doit être postérieure ou égale à la date de début", path: ["endDate"] }
+);
+
+type ChallengePayload = z.infer<typeof challengeSchema>;
+// === FIN AJOUT ===
+
 
 function computeStatus(challenge: ChallengeRecord): "upcoming" | "active" | "completed" {
   const now = new Date();
@@ -42,6 +59,7 @@ function computeStatus(challenge: ChallengeRecord): "upcoming" | "active" | "com
   if (now > end) return "completed";
   return "active";
 }
+
 
 async function ensureBucket() {
   if (!supabaseAdmin) return;
@@ -58,6 +76,7 @@ async function ensureBucket() {
     }
   }
 }
+
 
 async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   if (!supabaseAdmin) return [];
@@ -82,6 +101,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   return [];
 }
 
+
 async function saveChallenges(clubId: string, records: ChallengeRecord[]) {
   if (!supabaseAdmin) return;
   const storage = supabaseAdmin.storage.from(BUCKET_NAME);
@@ -89,6 +109,7 @@ async function saveChallenges(clubId: string, records: ChallengeRecord[]) {
   const payload = JSON.stringify(records, null, 2);
   await storage.upload(path, payload, { upsert: true, contentType: "application/json" });
 }
+
 
 async function resolveClubId(userId: string) {
   if (!supabaseAdmin) return null;
@@ -140,40 +161,6 @@ async function resolveClubId(userId: string) {
   return null;
 }
 
-function sanitisePayload(payload: any): ChallengePayload {
-  if (!payload) throw new Error("Payload manquant");
-  const name = String(payload.name || "").trim();
-  const objective = String(payload.objective || "").trim();
-  const startDate = String(payload.startDate || "").trim();
-  const endDate = String(payload.endDate || "").trim();
-  const rewardType = payload.rewardType === "badge" ? "badge" : "points";
-  const rewardLabel = String(payload.rewardLabel || "").trim();
-
-  if (!name || !objective || !startDate || !endDate || !rewardLabel) {
-    throw new Error("Tous les champs sont requis");
-  }
-  
-  // Parser les dates au format YYYY-MM-DD et les garder au format ISO date (sans heure)
-  // pour éviter les problèmes de fuseau horaire
-  const start = new Date(startDate + "T00:00:00.000Z");
-  const end = new Date(endDate + "T23:59:59.999Z");
-  
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    throw new Error("Dates invalides");
-  }
-  if (end < start) {
-    throw new Error("La date de fin doit être postérieure au début");
-  }
-
-  return { 
-    name, 
-    objective, 
-    startDate: start.toISOString(), 
-    endDate: end.toISOString(), 
-    rewardType, 
-    rewardLabel 
-  };
-}
 
 export async function GET(request: Request) {
   if (!supabaseAdmin) {
@@ -240,6 +227,7 @@ export async function GET(request: Request) {
   return NextResponse.json({ challenges });
 }
 
+
 export async function POST(request: Request) {
   if (!supabaseAdmin) {
     return NextResponse.json({ error: "Serveur mal configuré" }, { status: 500 });
@@ -261,12 +249,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
   }
 
-  let payload: ChallengePayload;
+  // === MODIFICATION : Validation Zod avec safeParse ===
+  let body;
   try {
-    payload = sanitisePayload(await request.json());
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Requête invalide" }, { status: 400 });
+    body = await request.json();
+  } catch (parseError) {
+    return NextResponse.json({ error: "Format de requête invalide" }, { status: 400 });
   }
+
+  const parsed = challengeSchema.safeParse(body);
+  if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const firstError = Object.values(fieldErrors).flat()[0] ?? "Données invalides";
+    return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
+  }
+
+  const payload = parsed.data;
+  // === FIN MODIFICATION ===
 
   const existing = await loadChallenges(clubId);
 

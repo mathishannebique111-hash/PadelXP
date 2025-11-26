@@ -64,7 +64,9 @@ export const signupRateLimit = redisClient
 export const apiRateLimit = redisClient
   ? new Ratelimit({
       redis: redisClient,
-      limiter: Ratelimit.slidingWindow(100, "15 m"), // 100 requêtes / 15 minutes
+      // Augmenter le quota général pour les appels API côté serveur
+      // 1000 requêtes / 15 minutes par identifiant
+      limiter: Ratelimit.slidingWindow(1000, "15 m"),
       analytics: true,
       prefix: "@upstash/ratelimit/api",
     })

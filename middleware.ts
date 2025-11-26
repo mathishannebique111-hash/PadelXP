@@ -5,7 +5,9 @@ import { Redis } from "@upstash/redis";
 
 const generalRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(100, "15 m"),
+  // Augmenter le quota général pour éviter les 429 sur les actions normales des joueurs
+  // 1000 requêtes / 15 minutes par IP
+  limiter: Ratelimit.slidingWindow(1000, "15 m"),
   analytics: true,
   prefix: "ratelimit:general",
 });
@@ -79,7 +81,7 @@ export async function middleware(req: NextRequest) {
           { status: 429 }
         );
       }
-      rateLimitInfo = { limit: "100", remaining, reset };
+      rateLimitInfo = { limit: "1000", remaining, reset };
     }
   } catch (error) {
     // En cas d'erreur de rate limiting (Redis indisponible par exemple), on continue

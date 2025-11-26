@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { sendModeratedReviewEmail } from "@/lib/email";
 
+
 /**
  * Compte le nombre de mots dans un texte
  */
@@ -23,6 +24,7 @@ function countWords(text: string | null | undefined): number {
   return words.length;
 }
 
+
 /**
  * Schéma d'avis : note entière entre 1 et 5, commentaire optionnel (1000 caractères max, trim appliqué).
  */
@@ -30,6 +32,7 @@ const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().trim().max(1000, "Le commentaire est limité à 1000 caractères").optional(),
 });
+
 
 async function getClubMemberIds(supabase: ReturnType<typeof createServerClient>, clubId: string) {
   const { data } = await supabase
@@ -40,6 +43,7 @@ async function getClubMemberIds(supabase: ReturnType<typeof createServerClient>,
   const ids = (data || []).map((member) => member.id).filter(Boolean) as string[];
   return ids;
 }
+
 
 // GET - Récupérer tous les avis (tous les joueurs inscrits)
 // Query params: ?minRating=4 pour filtrer les avis positifs
@@ -128,6 +132,7 @@ export async function GET(req: Request) {
   }
 }
 
+
 // POST - Créer un nouvel avis (tous les joueurs inscrits)
 export async function POST(req: Request) {
   const cookieStore = await cookies();
@@ -190,8 +195,23 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
-    const validated = reviewSchema.parse(body);
+    // === MODIFICATION ICI : Validation Zod avec safeParse ===
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      return NextResponse.json({ error: "Format de requête invalide" }, { status: 400 });
+    }
+
+    const parsed = reviewSchema.safeParse(body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] ?? "Données invalides";
+      return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
+    }
+
+    const { rating, comment } = parsed.data;
+    // === FIN DE LA MODIFICATION ===
 
     // Vérifier si c'est le premier avis de l'utilisateur
     // Utiliser supabaseAdmin pour bypass RLS et voir TOUS les avis (même masqués)
@@ -205,18 +225,18 @@ export async function POST(req: Request) {
     console.log(`[POST /api/reviews] First review check: userReviewsCount=${userReviewsCount}, isFirstReviewForUser=${isFirstReviewForUser}`);
 
     // Vérifier si l'avis doit être modéré (3 étoiles ou moins ET 6 mots ou moins)
-    const wordCount = countWords(validated.comment);
-    const shouldModerate = validated.rating <= 3 && wordCount <= 6;
+    const wordCount = countWords(comment);
+    const shouldModerate = rating <= 3 && wordCount <= 6;
 
-    console.log(`[POST /api/reviews] Review moderation check: rating=${validated.rating}, wordCount=${wordCount}, shouldModerate=${shouldModerate}`);
+    console.log(`[POST /api/reviews] Review moderation check: rating=${rating}, wordCount=${wordCount}, shouldModerate=${shouldModerate}`);
 
     // Insérer l'avis (avec is_hidden si besoin)
     const { data: insertedReview, error } = await supabaseAdmin
       .from('reviews')
       .insert({
         user_id: user.id,
-        rating: validated.rating,
-        comment: validated.comment || null,
+        rating: rating,
+        comment: comment || null,
         is_hidden: shouldModerate, // Masquer l'avis s'il doit être modéré
       })
       .select('id, rating, comment, created_at, updated_at, user_id, is_hidden')
@@ -242,7 +262,7 @@ export async function POST(req: Request) {
             user_id: user.id,
             user_email: playerEmail,
             user_name: profile.display_name || 'Joueur',
-            subject: `Avis modéré - ${profile.display_name || 'Joueur'} (${validated.rating}/5 étoiles)`,
+            subject: `Avis modéré - ${profile.display_name || 'Joueur'} (${rating}/5 étoiles)`,
             status: 'open',
           })
           .select('id')
@@ -255,7 +275,7 @@ export async function POST(req: Request) {
           console.log(`[POST /api/reviews] Created conversation ${conversation.id} for review ${insertedReview.id}`);
           
           // Enregistrer le message initial du joueur (l'avis)
-          const messageText = `Note: ${validated.rating}/5\n${validated.comment ? `Commentaire: ${validated.comment}` : 'Aucun commentaire'}`;
+          const messageText = `Note: ${rating}/5\n${comment ? `Commentaire: ${comment}` : 'Aucun commentaire'}`;
           
           const { error: messageError } = await supabaseAdmin
             .from('review_messages')
@@ -265,7 +285,7 @@ export async function POST(req: Request) {
               sender_id: user.id,
               sender_email: playerEmail,
               message_text: messageText,
-              html_content: `<p><strong>Note:</strong> ${validated.rating}/5</p>${validated.comment ? `<p><strong>Commentaire:</strong> ${validated.comment}</p>` : '<p>Aucun commentaire</p>'}`,
+              html_content: `<p><strong>Note:</strong> ${rating}/5</p>${comment ? `<p><strong>Commentaire:</strong> ${comment}</p>` : '<p>Aucun commentaire</p>'}`,
             });
 
           if (messageError) {
@@ -279,8 +299,8 @@ export async function POST(req: Request) {
             adminEmail,
             profile.display_name || 'Joueur',
             playerEmail,
-            validated.rating,
-            validated.comment || null,
+            rating,
+            comment || null,
             insertedReview.id,
             conversation.id // Passer la conversationId
           );
@@ -307,8 +327,8 @@ export async function POST(req: Request) {
 
     // Vérifier si l'avis soumis est valide pour les points/badge
     // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
-    // wordCount a déjà été déclaré plus haut (ligne 205)
-    const isReviewValid = validated.rating > 3 || (validated.rating <= 3 && wordCount > 6);
+    // wordCount a déjà été déclaré plus haut
+    const isReviewValid = rating > 3 || (rating <= 3 && wordCount > 6);
     
     // Vérifier si l'utilisateur avait déjà un avis valide AVANT de soumettre celui-ci
     let hadValidReviewBefore = false;
@@ -343,11 +363,8 @@ export async function POST(req: Request) {
       isFirstValidReviewForBonus: isFirstValidReview,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid data", details: error.errors }, { status: 400 });
-    }
+    // === SUPPRESSION DU CATCH ZOD (déjà géré avec safeParse) ===
     console.error("❌ Unexpected error in POST /api/reviews:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
