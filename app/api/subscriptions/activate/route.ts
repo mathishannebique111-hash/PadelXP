@@ -7,16 +7,24 @@ import {
   PlanCycle,
 } from "@/lib/utils/subscription-utils";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
+import { z } from "zod";
 
-/**
- * Active l'abonnement d'un club (immédiatement ou à la fin de l'essai)
- */
+// === AJOUT : Schéma Zod ===
+const activateBodySchema = z.object({
+  planCycle: z.enum(["monthly", "quarterly", "annual"])
+    .refine(
+      (val) => ["monthly", "quarterly", "annual"].includes(val),
+      { message: "Cycle de plan invalide" }
+    ),
+  activateNow: z.boolean().optional().default(false)
+});
+
+// === FIN AJOUT ===
+
 export async function POST(req: Request) {
   try {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -27,20 +35,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
     }
 
-    const body = await req.json();
-    const { planCycle, activateNow = false } = body as {
-      planCycle: PlanCycle;
-      activateNow?: boolean;
-    };
-
-    if (!planCycle || !["monthly", "quarterly", "annual"].includes(planCycle)) {
-      return NextResponse.json(
-        { error: "Cycle de plan invalide" },
-        { status: 400 }
-      );
+    // === MODIFICATION : Validation Zod ===
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      return NextResponse.json({ error: "Format de requête invalide" }, { status: 400 });
     }
+    const parsed = activateBodySchema.safeParse(body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] ?? "Données invalides";
+      return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
+    }
+    const { planCycle, activateNow } = parsed.data;
+    // === FIN MODIFICATION ===
 
-    // Récupérer l'abonnement
     let subscription = await getClubSubscription(clubId);
     if (!subscription) {
       return NextResponse.json(
@@ -49,7 +59,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Vérifier si l'utilisateur a un moyen de paiement
     if (!subscription.has_payment_method) {
       return NextResponse.json(
         {
@@ -60,7 +69,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Activer maintenant ou programmer l'activation
     let success = false;
     if (activateNow) {
       success = await activateSubscription(subscription.id, planCycle, user.id);
@@ -75,7 +83,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Récupérer l'abonnement mis à jour
     subscription = await getClubSubscription(clubId);
 
     return NextResponse.json({
@@ -93,4 +100,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
+import { getClubSubscription, Subscription } from "@/lib/utils/subscription-utils";
 import BillingInfoSection from "@/components/billing/BillingInfoSection";
 import StripeCheckoutButton from "@/components/billing/StripeCheckoutButton";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
@@ -52,6 +53,9 @@ export default async function BillingPage() {
     .eq("id", clubId)
     .maybeSingle();
 
+  // Récupérer l'abonnement du club pour connaître l'état et le plan choisi
+  const subscription: Subscription | null = await getClubSubscription(clubId);
+
   // Calculer le nombre de jours restants de l'essai
   function calculateDaysRemaining(trialStart: string | null): number | null {
     if (!trialStart) return null;
@@ -84,19 +88,45 @@ export default async function BillingPage() {
       })()
     : null;
 
-  // Déterminer le statut de l'abonnement (simplifié pour l'instant)
-  const subscriptionStatus: SubscriptionStatus = isTrialActive
-    ? "trial_active"
-    : isTrialExpired
-    ? "trial_expired"
-    : "none";
+  // Déterminer le statut de l'abonnement à partir de l'essai et de la souscription
+  let subscriptionStatus: SubscriptionStatus = "none";
+  if (subscription) {
+    if (subscription.status === "trialing" && subscription.auto_activate_at_trial_end && subscription.plan_cycle) {
+      // Anciennes données : essai en cours mais activation auto programmée
+      subscriptionStatus = "payment_pending";
+    } else if (subscription.status === "trialing" && isTrialActive) {
+      subscriptionStatus = "trial_active";
+    } else if (subscription.status === "trialing" && isTrialExpired) {
+      subscriptionStatus = "trial_expired";
+    } else if (subscription.status === "scheduled_activation") {
+      subscriptionStatus = "payment_pending";
+    } else if (subscription.status === "active") {
+      subscriptionStatus = "active";
+    } else if (subscription.status === "canceled") {
+      subscriptionStatus = "cancelled";
+    }
+  } else if (isTrialActive) {
+    subscriptionStatus = "trial_active";
+  } else if (isTrialExpired) {
+    subscriptionStatus = "trial_expired";
+  }
 
-  // TODO: Récupérer depuis la base de données
-  const currentPlan: PlanType = null;
-  const autoRenewal = true;
-  const nextBillingDate = null;
-  const cancelledUntil = null;
-  const paymentMethod = null;
+  const currentPlan: PlanType = (subscription?.plan_cycle as PlanType) ?? null;
+  const autoRenewal = subscription?.cancel_at_period_end === false;
+  const nextBillingDate = subscription?.next_renewal_at
+    ? new Date(subscription.next_renewal_at)
+    : null;
+  const cancelledUntil = subscription?.cancel_at_period_end && subscription?.current_period_end
+    ? new Date(subscription.current_period_end)
+    : null;
+  const paymentMethod = subscription?.has_payment_method && subscription?.payment_method_last4
+    ? {
+        type: subscription.payment_method_brand || subscription.payment_method_type || "Carte",
+        last4: subscription.payment_method_last4,
+        brand: subscription.payment_method_brand || "",
+        expiry: subscription.payment_method_expiry || "",
+      }
+    : null;
   const billingEmail = user.email;
   const legalName = club?.name || "";
   const billingAddress = null;
@@ -113,6 +143,23 @@ export default async function BillingPage() {
 
   const annualMonthlyPrice = MONTHLY_PRICE * (1 - ANNUAL_DISCOUNT); // 82.17€
   const annualTotalPrice = annualMonthlyPrice * 12; // 986.04€
+
+  // Informations sur une activation programmée après l'essai
+  const hasScheduledActivation =
+    subscription?.status === "scheduled_activation" ||
+    (subscription?.status === "trialing" &&
+      subscription.auto_activate_at_trial_end &&
+      !!subscription.plan_cycle);
+  const scheduledStartDate =
+    (subscription?.current_period_start && new Date(subscription.current_period_start)) ||
+    trialEndDate;
+  const scheduledPlanLabel: string | null = subscription?.plan_cycle
+    ? subscription.plan_cycle === "monthly"
+      ? "abonnement mensuel"
+      : subscription.plan_cycle === "quarterly"
+      ? "abonnement trimestriel"
+      : "abonnement annuel"
+    : null;
 
   const formatDate = (date: Date | null): string => {
     if (!date) return "—";
@@ -174,6 +221,17 @@ export default async function BillingPage() {
                 ? `Votre essai se termine dans ${daysRemaining} jour${daysRemaining > 1 ? "s" : ""}. Choisissez une offre pour continuer à utiliser la plateforme après le ${formatDate(trialEndDate)}.`
                 : `Votre essai gratuit se termine le ${formatDate(trialEndDate)}. Vous pouvez activer votre abonnement maintenant ou choisir une offre ci-dessous.`}
             </p>
+
+            {hasScheduledActivation && scheduledStartDate && (
+              <div className="rounded-lg border border-emerald-400/50 bg-emerald-500/15 p-2.5 sm:p-3">
+                <p className="text-xs text-emerald-200">
+                  {`Vous avez déjà choisi un ${scheduledPlanLabel ?? "abonnement"}. Il sera activé automatiquement le ${formatDate(
+                    scheduledStartDate
+                  )}, à la fin de votre période d'essai gratuite. Vous ne serez prélevé qu'à partir de cette date.`}
+                </p>
+              </div>
+            )}
+
             {showWarning && (
               <div className="rounded-lg border border-orange-400/40 bg-orange-500/10 p-2.5 sm:p-3">
                 <p className="text-xs text-orange-200 flex items-start gap-2">

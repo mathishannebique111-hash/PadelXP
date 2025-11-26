@@ -2,13 +2,20 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getClubSubscription, cancelSubscription } from "@/lib/utils/subscription-utils";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
+import { z } from "zod";
+
+// === AJOUT : Schéma Zod ===
+const cancelSubscriptionSchema = z.object({
+  cancelAtPeriodEnd: z.boolean().default(true),
+});
+// === FIN AJOUT ===
 
 /**
  * Annule l'abonnement d'un club
  */
 export async function POST(req: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -22,8 +29,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
     }
 
-    const body = await req.json();
-    const { cancelAtPeriodEnd = true } = body as { cancelAtPeriodEnd?: boolean };
+    // === MODIFICATION : Validation Zod ===
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      return NextResponse.json({ error: "Format de requête invalide" }, { status: 400 });
+    }
+
+    const parsed = cancelSubscriptionSchema.safeParse(body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] ?? "Données invalides";
+      return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
+    }
+
+    const { cancelAtPeriodEnd } = parsed.data;
+    // === FIN MODIFICATION ===
 
     const subscription = await getClubSubscription(clubId);
     if (!subscription) {
@@ -71,4 +93,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
