@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { capitalizeFullName } from '@/lib/utils/name-utils';
+import { z } from 'zod';
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,6 +15,17 @@ const supabaseAdmin = createAdminClient(
     },
   }
 );
+
+// === AJOUT : Schéma Zod ===
+const findOrCreatePlayerSchema = z.object({
+  playerName: z
+    .string()
+    .trim()
+    .min(1, 'Le nom du joueur est requis')
+    .max(100, 'Le nom du joueur est trop long')
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Le nom du joueur contient des caractères invalides'),
+});
+// === FIN AJOUT ===
 
 function splitName(fullName: string) {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -27,11 +39,23 @@ function splitName(fullName: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { playerName } = await request.json();
-
-    if (!playerName || !playerName.trim()) {
-      return NextResponse.json({ error: 'Player name required' }, { status: 400 });
+    // === MODIFICATION : Validation Zod ===
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json({ error: 'Format de requête invalide' }, { status: 400 });
     }
+
+    const parsed = findOrCreatePlayerSchema.safeParse(body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] ?? 'Données invalides';
+      return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
+    }
+
+    const { playerName } = parsed.data;
+    // === FIN MODIFICATION ===
 
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -131,4 +155,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

@@ -7,7 +7,7 @@ import { getClubSubscription } from '@/lib/utils/subscription-utils';
 
 // Initialiser Stripe avec la clé secrète
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-10-29.clover',
 });
 
 export const dynamic = 'force-dynamic';
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     
     if (checkoutMode === 'subscription') {
       try {
-        const supabase = createClient();
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
