@@ -21,7 +21,7 @@ export default function PlayerAccountLayout({
               position: fixed !important;
               top: 0.75rem !important;
               left: 0.75rem !important;
-              z-index: 99999 !important;
+              z-index: 100000 !important;
               display: flex !important;
               visibility: visible !important;
               opacity: 1 !important;

@@ -39,7 +39,7 @@ export default function RootLayout({
                     position: fixed !important;
                     top: 0.75rem !important;
                     left: 0.75rem !important;
-                    z-index: 99999 !important;
+                    z-index: 100000 !important;
                     display: flex !important;
                     visibility: visible !important;
                     opacity: 1 !important;
@@ -146,7 +146,7 @@ export default function RootLayout({
                     const top = isMobile ? '0.75rem' : '1rem';
                     const left = isMobile ? '0.75rem' : '1rem';
                     const size = isMobile ? '2.5rem' : '3rem';
-                    button.style.cssText = 'position: fixed !important; top: ' + top + ' !important; left: ' + left + ' !important; z-index: 99999 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; width: ' + size + ' !important; height: ' + size + ' !important; min-width: ' + size + ' !important; min-height: ' + size + ' !important; pointer-events: auto !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 0.75rem !important; background-color: rgba(255, 255, 255, 0.1) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;';
+                    button.style.cssText = 'position: fixed !important; top: ' + top + ' !important; left: ' + left + ' !important; z-index: 100000 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; width: ' + size + ' !important; height: ' + size + ' !important; min-width: ' + size + ' !important; min-height: ' + size + ' !important; pointer-events: auto !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 0.75rem !important; background-color: rgba(255, 255, 255, 0.1) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;';
                   }
                   
                   if (logo) {

@@ -40,7 +40,7 @@ export default function PlayerSidebar() {
           height: ${size} !important;
           min-width: ${size} !important;
           min-height: ${size} !important;
-          z-index: 99999 !important;
+          z-index: 100000 !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
@@ -106,7 +106,7 @@ export default function PlayerSidebar() {
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
     { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 12), navKey: 'history' },
     { href: '/badges', label: 'Badges', icon: getIconPath('Badge.png', 11), navKey: 'badges' },
-    { href: '/club', label: 'Mon club', icon: getIconPath('mon club.png', 10), navKey: 'club' },
+    { href: '/club', label: 'Mon club', icon: '/images/mon club.png', navKey: 'club' },
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
@@ -138,7 +138,7 @@ export default function PlayerSidebar() {
         onClick={() => {
           setIsOpen(prev => !prev);
         }}
-        className="fixed top-3 left-3 sm:top-4 sm:left-4 z-[99999] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 cursor-pointer backdrop-blur shadow-sm"
+        className="fixed top-3 left-3 sm:top-4 sm:left-4 z-[100000] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 cursor-pointer backdrop-blur shadow-sm"
         style={{
           position: 'fixed',
           top: '0.75rem',
@@ -147,7 +147,7 @@ export default function PlayerSidebar() {
           height: '2.5rem',
           minWidth: '2.5rem',
           minHeight: '2.5rem',
-          zIndex: 99999,
+          zIndex: 100000,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
