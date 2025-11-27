@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { sendModeratedReviewEmail } from "@/lib/email";
-
+import DOMPurify from "isomorphic-dompurify";
 
 /**
  * Compte le nombre de mots dans un texte
@@ -213,6 +213,13 @@ export async function POST(req: Request) {
     const { rating, comment } = parsed.data;
     // === FIN DE LA MODIFICATION ===
 
+// Sanitizer le commentaire pour bloquer XSS
+const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
+  ALLOWED_TAGS: [], // Aucun HTML autorisé
+  ALLOWED_ATTR: [],
+  KEEP_CONTENT: true // Garde le texte mais retire les tags
+}).trim() : null;
+
     // Vérifier si c'est le premier avis de l'utilisateur
     // Utiliser supabaseAdmin pour bypass RLS et voir TOUS les avis (même masqués)
     const { count: userReviewsCount } = await supabaseAdmin
@@ -225,7 +232,7 @@ export async function POST(req: Request) {
     console.log(`[POST /api/reviews] First review check: userReviewsCount=${userReviewsCount}, isFirstReviewForUser=${isFirstReviewForUser}`);
 
     // Vérifier si l'avis doit être modéré (3 étoiles ou moins ET 6 mots ou moins)
-    const wordCount = countWords(comment);
+    const wordCount = countWords(sanitizedComment);
     const shouldModerate = rating <= 3 && wordCount <= 6;
 
     console.log(`[POST /api/reviews] Review moderation check: rating=${rating}, wordCount=${wordCount}, shouldModerate=${shouldModerate}`);
@@ -236,7 +243,7 @@ export async function POST(req: Request) {
       .insert({
         user_id: user.id,
         rating: rating,
-        comment: comment || null,
+        comment: sanitizedComment,
         is_hidden: shouldModerate, // Masquer l'avis s'il doit être modéré
       })
       .select('id, rating, comment, created_at, updated_at, user_id, is_hidden')
