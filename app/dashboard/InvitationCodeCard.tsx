@@ -18,10 +18,10 @@ export default function InvitationCodeCard({ code, slug }: Props) {
   };
 
   return (
-    <div className="w-full max-w-2xl rounded-2xl border border-[#00CC99]/40 bg-gradient-to-br from-[#03204a] via-[#01142d] to-[#000916] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-      <div className="flex flex-col gap-5">
-        <div>
-          <h2 className="text-xl font-semibold text-white">Code d’invitation joueurs</h2>
+    <div className="w-full max-w-2xl rounded-2xl border border-[#00CC99]/40 bg-gradient-to-br from-[#03204a] via-[#01142d] to-[#000916] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)] flex flex-col h-full">
+      <div className="flex flex-col gap-5 flex-1">
+        <div className="min-h-[4.5rem]">
+          <h2 className="text-xl font-semibold text-white">Code d'invitation joueurs</h2>
           <p className="mt-1 text-sm text-white/70">
             Partagez ce code pour que vos joueurs rejoignent immédiatement votre club lors de leur inscription.
           </p>

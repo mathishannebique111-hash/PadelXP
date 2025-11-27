@@ -546,8 +546,8 @@ export default async function BillingPage() {
               )}
             </div>
 
-            {/* Bouton de réactivation visible dès qu'une annulation à fin de période est programmée */}
-            {subscription && subscription.cancel_at_period_end && (
+            {/* Bouton de réactivation visible dès qu'une annulation à fin de période est programmée et qu'un plan a été choisi */}
+            {subscription && subscription.cancel_at_period_end && subscription.plan_cycle && (
               <ReactivateSubscriptionButton
                 className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-extrabold text-white bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 border border-emerald-300/70 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_26px_rgba(16,185,129,0.55)] hover:scale-105 active:scale-100 transition-all duration-300"
               >
@@ -651,9 +651,9 @@ export default async function BillingPage() {
             </div>
           </div>
 
-          {/* Bouton d'annulation en bas du cadre Statut : visible dès qu'un abonnement existe, n'est pas déjà annulé
-              et n'est pas déjà marqué comme complètement canceled côté Stripe */}
-          {subscription && !subscription.cancel_at_period_end && subscription.status !== "canceled" && (
+          {/* Bouton d'annulation en bas du cadre Statut : visible dès qu'un abonnement existe, qu'un plan a été choisi,
+              n'est pas déjà annulé et n'est pas déjà marqué comme complètement canceled côté Stripe */}
+          {subscription && subscription.plan_cycle && !subscription.cancel_at_period_end && subscription.status !== "canceled" && (
             <div className="pt-2 flex justify-end">
               <CancelSubscriptionButton
                 cancelAtPeriodEnd={!!subscription.cancel_at_period_end}

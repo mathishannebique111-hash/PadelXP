@@ -77,30 +77,149 @@ export default function MatchForm({
 
   // Vérifier si l'utilisateur a déjà cliqué sur "Compris" pour le cadre d'information
   // Afficher le message seulement si l'utilisateur ne l'a jamais vu
+  // Vérification dans la base de données (persistant même après déconnexion/reconnexion)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    async function checkMatchLimitInfoStatus() {
       try {
-        const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
-        // Afficher le message seulement si l'utilisateur n'a pas encore cliqué sur "Compris"
-        setShowMatchLimitInfo(!hasClickedUnderstood);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          // Si pas d'utilisateur, vérifier localStorage comme fallback
+          if (typeof window !== 'undefined') {
+            try {
+              const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
+              setShowMatchLimitInfo(!hasClickedUnderstood);
+            } catch (error) {
+              setShowMatchLimitInfo(true);
+            }
+          }
+          return;
+        }
+
+        // Vérifier dans la base de données (table profiles)
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('match_limit_info_understood')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn('[MatchForm] Error fetching profile:', profileError);
+          // Fallback sur localStorage en cas d'erreur
+          if (typeof window !== 'undefined') {
+            try {
+              const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
+              setShowMatchLimitInfo(!hasClickedUnderstood);
+            } catch (error) {
+              setShowMatchLimitInfo(true);
+            }
+          }
+          return;
+        }
+
+        // Si le champ existe dans la base de données, l'utiliser
+        if (profile && profile.match_limit_info_understood === true) {
+          setShowMatchLimitInfo(false);
+          // Synchroniser localStorage pour la rétrocompatibilité
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('matchLimitInfoUnderstood', 'true');
+            } catch (error) {
+              // Ignorer les erreurs localStorage
+            }
+          }
+        } else {
+          // Vérifier localStorage comme fallback (pour les utilisateurs existants)
+          if (typeof window !== 'undefined') {
+            try {
+              const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
+              setShowMatchLimitInfo(!hasClickedUnderstood);
+              // Si trouvé dans localStorage mais pas en DB, synchroniser en DB
+              if (hasClickedUnderstood) {
+                await supabase
+                  .from('profiles')
+                  .update({ match_limit_info_understood: true })
+                  .eq('id', user.id);
+              }
+            } catch (error) {
+              setShowMatchLimitInfo(true);
+            }
+          } else {
+            setShowMatchLimitInfo(true);
+          }
+        }
       } catch (error) {
-        // En cas d'erreur avec localStorage (par exemple, mode privé), afficher le message
-        console.warn('[MatchForm] Error accessing localStorage:', error);
-        setShowMatchLimitInfo(true);
+        console.warn('[MatchForm] Error checking match limit info status:', error);
+        // En cas d'erreur, vérifier localStorage comme fallback
+        if (typeof window !== 'undefined') {
+          try {
+            const hasClickedUnderstood = localStorage.getItem('matchLimitInfoUnderstood') === 'true';
+            setShowMatchLimitInfo(!hasClickedUnderstood);
+          } catch (localStorageError) {
+            setShowMatchLimitInfo(true);
+          }
+        } else {
+          setShowMatchLimitInfo(true);
+        }
       }
     }
-  }, []);
+
+    checkMatchLimitInfoStatus();
+  }, [supabase]);
   
-  const handleUnderstoodClick = () => {
-    // Sauvegarder dans localStorage que l'utilisateur a compris
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('matchLimitInfoUnderstood', 'true');
-        setShowMatchLimitInfo(false);
-      } catch (error) {
-        // En cas d'erreur avec localStorage, masquer quand même le message
-        console.warn('[MatchForm] Error saving to localStorage:', error);
-        setShowMatchLimitInfo(false);
+  const handleUnderstoodClick = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Sauvegarder dans la base de données (persistant même après déconnexion/reconnexion)
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ match_limit_info_understood: true })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.warn('[MatchForm] Error saving to database:', updateError);
+          // Fallback sur localStorage en cas d'erreur
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('matchLimitInfoUnderstood', 'true');
+            } catch (localStorageError) {
+              console.warn('[MatchForm] Error saving to localStorage:', localStorageError);
+            }
+          }
+        } else {
+          // Synchroniser localStorage pour la rétrocompatibilité
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('matchLimitInfoUnderstood', 'true');
+            } catch (localStorageError) {
+              // Ignorer les erreurs localStorage, la DB est la source de vérité
+            }
+          }
+        }
+      } else {
+        // Si pas d'utilisateur, utiliser localStorage comme fallback
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('matchLimitInfoUnderstood', 'true');
+          } catch (error) {
+            console.warn('[MatchForm] Error saving to localStorage:', error);
+          }
+        }
+      }
+
+      setShowMatchLimitInfo(false);
+    } catch (error) {
+      console.warn('[MatchForm] Error in handleUnderstoodClick:', error);
+      // Masquer le message même en cas d'erreur
+      setShowMatchLimitInfo(false);
+      // Essayer de sauvegarder dans localStorage comme fallback
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('matchLimitInfoUnderstood', 'true');
+        } catch (localStorageError) {
+          // Ignorer
+        }
       }
     }
   };

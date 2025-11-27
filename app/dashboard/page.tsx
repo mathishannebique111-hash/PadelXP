@@ -234,17 +234,17 @@ export default async function DashboardHome() {
         {/* À venir */}
         <div className="w-full max-w-2xl rounded-2xl border border-[#00CC99]/40 bg-gradient-to-br from-[#03204a] via-[#01142d] to-[#000916] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)] flex flex-col h-full">
           <div className="flex flex-col gap-5 flex-1">
-            <div>
+            <div className="min-h-[4.5rem]">
               <h2 className="text-xl font-semibold text-white">Challenges en cours et à venir</h2>
-              {upcomingChallenges.length === 0 && (
-                <p className="mt-1 text-sm text-white/70">
-                  Créez un challenge pour motiver vos joueurs et animer votre club.
-                </p>
-              )}
+              <p className="mt-1 text-sm text-white/70">
+                {upcomingChallenges.length === 0
+                  ? "Créez un challenge pour motiver vos joueurs et animer votre club."
+                  : "Suivez les challenges actifs et à venir de votre club."}
+              </p>
             </div>
-            {upcomingChallenges.length === 0 ? (
-              <div className="rounded-2xl border border-white/15 bg-gradient-to-r from-[#02346d]/60 via-[#012a58]/60 to-[#01403f]/60 px-6 py-5 shadow-[0_8px_30px_rgba(0,102,255,0.25)]">
-                <div className="flex flex-col items-center justify-center">
+            <div className="rounded-2xl border border-white/15 bg-gradient-to-r from-[#02346d]/60 via-[#012a58]/60 to-[#01403f]/60 px-6 py-5 shadow-[0_8px_30px_rgba(0,102,255,0.25)]">
+              {upcomingChallenges.length === 0 ? (
+                <div className="flex flex-col items-center">
                   <div className="mb-4 text-center">
                     <div className="mb-2 flex items-center justify-center opacity-50">
                       <BadgeIconDisplay icon="🎯" size={32} className="flex-shrink-0" />
@@ -259,44 +259,47 @@ export default async function DashboardHome() {
                     Créer un challenge
                   </a>
                 </div>
-              </div>
-            ) : (
-              <ul className="text-xs sm:text-sm space-y-2">
-                {upcomingChallenges.map((c) => {
-                  const startDate = new Date(c.start_date);
-                  const endDate = new Date(c.end_date);
-                  const isActive = c.status === "active";
-                  const isFuture = c.status === "upcoming";
-                  
-                  return (
-                    <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2">
-                      <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
-                            <span className="font-medium text-white truncate text-xs sm:text-sm">{c.title}</span>
-                            {isActive && (
-                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
-                                En cours
-                              </span>
-                            )}
-                            {isFuture && (
-                              <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
-                                À venir
-                              </span>
-                            )}
+              ) : (
+                <ul className="text-xs sm:text-sm space-y-2">
+                  {upcomingChallenges.map((c) => {
+                    const startDate = new Date(c.start_date);
+                    const endDate = new Date(c.end_date);
+                    const isActive = c.status === "active";
+                    const isFuture = c.status === "upcoming";
+                    
+                    return (
+                      <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2">
+                        <div className="flex items-start justify-between gap-1.5 sm:gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                              <span className="font-medium text-white truncate text-xs sm:text-sm">{c.title}</span>
+                              {isActive && (
+                                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
+                                  En cours
+                                </span>
+                              )}
+                              {isFuture && (
+                                <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
+                                  À venir
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] sm:text-xs text-white/50 truncate">{c.objective}</div>
                           </div>
-                          <div className="text-[10px] sm:text-xs text-white/50 truncate">{c.objective}</div>
+                          <div className="flex flex-col items-end text-[10px] sm:text-xs text-white/60 whitespace-nowrap flex-shrink-0">
+                            <span>{startDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
+                            <span className="text-[9px] sm:text-[10px]">→ {endDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col items-end text-[10px] sm:text-xs text-white/60 whitespace-nowrap flex-shrink-0">
-                          <span>{startDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
-                          <span className="text-[9px] sm:text-[10px]">→ {endDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            <p className="text-xs text-white/60">
+              Gérez vos challenges depuis la page dédiée pour créer des événements motivants pour vos joueurs.
+            </p>
           </div>
         </div>
       </section>
@@ -319,7 +322,7 @@ export default async function DashboardHome() {
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="flex-shrink-0 pt-0.5">
                 <Image
-                  src="/images/cadeau accueil club.png"
+                  src="/images/Cadeau accueil club.png"
                   alt="Cadeau"
                   width={24}
                   height={24}
