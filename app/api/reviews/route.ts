@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { sendModeratedReviewEmail } from "@/lib/email";
 import DOMPurify from "isomorphic-dompurify";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Compte le nombre de mots dans un texte
@@ -25,6 +27,7 @@ function countWords(text: string | null | undefined): number {
 }
 
 
+
 /**
  * Schéma d'avis : note entière entre 1 et 5, commentaire optionnel (1000 caractères max, trim appliqué).
  */
@@ -34,15 +37,18 @@ const reviewSchema = z.object({
 });
 
 
+
 async function getClubMemberIds(supabase: ReturnType<typeof createServerClient>, clubId: string) {
   const { data } = await supabase
     .from("profiles")
     .select("id")
     .eq("club_id", clubId);
 
+
   const ids = (data || []).map((member) => member.id).filter(Boolean) as string[];
   return ids;
 }
+
 
 
 // GET - Récupérer tous les avis (tous les joueurs inscrits)
@@ -63,6 +69,7 @@ export async function GET(req: Request) {
       }
     );
 
+
     // Récupérer TOUS les avis de tous les joueurs inscrits (avec client admin pour bypass RLS)
     // Exclure les avis masqués (is_hidden = true)
     const { data: reviews, error } = await supabaseAdmin
@@ -72,12 +79,15 @@ export async function GET(req: Request) {
       .order("created_at", { ascending: false })
       .limit(100); // Augmenter la limite pour avoir plus d'avis
 
+
     if (error) {
-      console.error("❌ Error fetching reviews:", error);
+      logger.error({ err: error }, "Error fetching reviews");
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log(`[GET /api/reviews] Found ${reviews?.length || 0} total reviews`);
+
+    logger.info({ count: reviews?.length || 0 }, '[GET /api/reviews] Found reviews');
+
 
     // Récupérer les profils de tous les auteurs d'avis
     const userIds = (reviews || []).map(r => r.user_id).filter((id, index, self) => self.indexOf(id) === index);
@@ -88,6 +98,7 @@ export async function GET(req: Request) {
       .select("id, display_name")
       .in("id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]); // Fallback si pas d'IDs
 
+
     const profilesMap = new Map<string, { display_name: string }>();
     (profilesData || []).forEach((p) => {
       if (p.id) {
@@ -95,29 +106,34 @@ export async function GET(req: Request) {
       }
     });
 
+
     let enrichedReviews = (reviews || []).map((review) => ({
       ...review,
       profiles: profilesMap.get(review.user_id) || null,
     }));
 
+
     // Filtrer par note minimale si spécifié
     if (minRating !== undefined && !isNaN(minRating)) {
       const beforeFilter = enrichedReviews.length;
       enrichedReviews = enrichedReviews.filter(review => review.rating >= minRating);
-      console.log(`[GET /api/reviews] Filtered reviews with minRating=${minRating}: ${beforeFilter} → ${enrichedReviews.length}`);
+      logger.info({ minRating, beforeFilter, afterFilter: enrichedReviews.length }, '[GET /api/reviews] Filtered reviews');
     }
+
 
     const averageRating = enrichedReviews.length > 0
       ? Math.round((enrichedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / enrichedReviews.length) * 10) / 10
       : 0;
     
-    console.log(`[GET /api/reviews] Returning ${enrichedReviews.length} reviews (average rating: ${averageRating})`);
+    logger.info({ count: enrichedReviews.length, averageRating }, '[GET /api/reviews] Returning reviews');
+
 
     // Calculer le taux de satisfaction (avis >= 4 étoiles)
     const positiveReviewsCount = enrichedReviews.filter(r => r.rating >= 4).length;
     const satisfactionRate = enrichedReviews.length > 0
       ? Math.round((positiveReviewsCount / enrichedReviews.length) * 100)
       : 0;
+
 
     return NextResponse.json({
       reviews: enrichedReviews,
@@ -127,10 +143,11 @@ export async function GET(req: Request) {
       satisfactionRate,
     });
   } catch (error) {
-    console.error("❌ Unexpected error in GET /api/reviews:", error);
+    logger.error({ err: error }, "Unexpected error in GET /api/reviews");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
 
 
 // POST - Créer un nouvel avis (tous les joueurs inscrits)
@@ -153,12 +170,15 @@ export async function POST(req: Request) {
     }
   );
 
+
   const { data: { user } } = await supabase.auth.getUser();
 
+
   if (!user) {
-    console.error("❌ Unauthorized: No user found");
+    logger.error("Unauthorized: No user found");
     return NextResponse.json({ error: "Vous devez être connecté pour laisser un avis" }, { status: 401 });
   }
+
 
   // Utiliser un client admin pour récupérer le profil (bypass RLS) et mettre à jour les points
   const { createClient: createAdminClient } = await import("@supabase/supabase-js");
@@ -170,6 +190,7 @@ export async function POST(req: Request) {
     }
   );
 
+
   // Récupérer le profil de l'utilisateur avec le client admin (bypass RLS)
   const { data: profile, error: profileError } = await supabaseAdmin
     .from('profiles')
@@ -177,15 +198,18 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .maybeSingle();
 
+
   if (profileError) {
-    console.error('❌ Error fetching profile:', profileError);
+    logger.error({ err: profileError }, 'Error fetching profile');
     return NextResponse.json({ error: "Erreur lors de la récupération du profil" }, { status: 500 });
   }
 
+
   if (!profile) {
-    console.error(`❌ Profile not found for user ${user.id}`);
+    logger.error({ userId: user.id }, 'Profile not found');
     return NextResponse.json({ error: "Profil non trouvé. Veuillez contacter le support." }, { status: 404 });
   }
+
 
   // Récupérer l'email de l'utilisateur depuis auth.users
   let playerEmail = profile.email || user.email || '';
@@ -193,6 +217,7 @@ export async function POST(req: Request) {
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
     playerEmail = authUser?.user?.email || '';
   }
+
 
   try {
     // === MODIFICATION ICI : Validation Zod avec safeParse ===
@@ -203,6 +228,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Format de requête invalide" }, { status: 400 });
     }
 
+
     const parsed = reviewSchema.safeParse(body);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
@@ -210,8 +236,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
     }
 
+
     const { rating, comment } = parsed.data;
     // === FIN DE LA MODIFICATION ===
+
 
 // Sanitizer le commentaire pour bloquer XSS
 const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
@@ -220,6 +248,7 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
   KEEP_CONTENT: true // Garde le texte mais retire les tags
 }).trim() : null;
 
+
     // Vérifier si c'est le premier avis de l'utilisateur
     // Utiliser supabaseAdmin pour bypass RLS et voir TOUS les avis (même masqués)
     const { count: userReviewsCount } = await supabaseAdmin
@@ -227,15 +256,19 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id);
 
+
     const isFirstReviewForUser = (userReviewsCount || 0) === 0;
     
-    console.log(`[POST /api/reviews] First review check: userReviewsCount=${userReviewsCount}, isFirstReviewForUser=${isFirstReviewForUser}`);
+    logger.info({ userReviewsCount, isFirstReviewForUser }, '[POST /api/reviews] First review check');
+
 
     // Vérifier si l'avis doit être modéré (3 étoiles ou moins ET 6 mots ou moins)
     const wordCount = countWords(sanitizedComment);
     const shouldModerate = rating <= 3 && wordCount <= 6;
 
-    console.log(`[POST /api/reviews] Review moderation check: rating=${rating}, wordCount=${wordCount}, shouldModerate=${shouldModerate}`);
+
+    logger.info({ rating, wordCount, shouldModerate }, '[POST /api/reviews] Review moderation check');
+
 
     // Insérer l'avis (avec is_hidden si besoin)
     const { data: insertedReview, error } = await supabaseAdmin
@@ -249,16 +282,18 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
       .select('id, rating, comment, created_at, updated_at, user_id, is_hidden')
       .single();
 
+
     if (error) {
-      console.error('❌ Error inserting review:', error);
+      logger.error({ err: error }, 'Error inserting review');
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
 
     // Si l'avis doit être modéré, créer une conversation et envoyer un email à l'administrateur
     if (shouldModerate && insertedReview) {
       const adminEmail = process.env.ADMIN_EMAIL || process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
       
-      console.log(`[POST /api/reviews] Creating conversation and sending moderation email for review ${insertedReview.id}`);
+      logger.info({ reviewId: insertedReview.id }, '[POST /api/reviews] Creating conversation and sending moderation email');
       
       try {
         // Créer une conversation pour cet avis modéré
@@ -275,11 +310,12 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
           .select('id')
           .single();
 
+
         if (convError) {
-          console.error('❌ Error creating review conversation:', convError);
+          logger.error({ err: convError }, 'Error creating review conversation');
           // Continuer quand même pour envoyer l'email
         } else if (conversation) {
-          console.log(`[POST /api/reviews] Created conversation ${conversation.id} for review ${insertedReview.id}`);
+          logger.info({ conversationId: conversation.id, reviewId: insertedReview.id }, '[POST /api/reviews] Created conversation');
           
           // Enregistrer le message initial du joueur (l'avis)
           const messageText = `Note: ${rating}/5\n${comment ? `Commentaire: ${comment}` : 'Aucun commentaire'}`;
@@ -295,10 +331,11 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
               html_content: `<p><strong>Note:</strong> ${rating}/5</p>${comment ? `<p><strong>Commentaire:</strong> ${comment}</p>` : '<p>Aucun commentaire</p>'}`,
             });
 
+
           if (messageError) {
-            console.error('❌ Error creating review message:', messageError);
+            logger.error({ err: messageError }, 'Error creating review message');
           } else {
-            console.log(`[POST /api/reviews] Created initial message for conversation ${conversation.id}`);
+            logger.info({ conversationId: conversation.id }, '[POST /api/reviews] Created initial message');
           }
           
           // Envoyer l'email avec la conversationId dans les headers
@@ -313,24 +350,27 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
           );
         }
       } catch (emailError) {
-        console.error('❌ Error in moderation flow (non-blocking):', emailError);
+        logger.error({ err: emailError }, 'Error in moderation flow (non-blocking)');
         // Ne pas bloquer la soumission de l'avis si l'email échoue
       }
     }
+
 
     // Les 10 points pour le premier avis sont calculés dynamiquement dans le leaderboard et PlayerSummary
     // via le paramètre bonus (reviewsBonus), pas besoin de créditer dans la colonne points du profil
     // pour éviter un double crédit (10 points dans la colonne + 10 points calculés dynamiquement = 20 points)
     if (isFirstReviewForUser) {
-      console.log(`[POST /api/reviews] First review detected for user ${user.id}. Points will be calculated dynamically in leaderboard/PlayerSummary (10 points bonus).`);
+      logger.info({ userId: user.id }, '[POST /api/reviews] First review detected - points will be calculated dynamically');
     } else {
-      console.log(`[POST /api/reviews] Not first review (user has ${userReviewsCount} reviews), no bonus points`);
+      logger.info({ userId: user.id, userReviewsCount }, '[POST /api/reviews] Not first review, no bonus points');
     }
+
 
     const enrichedReview = {
       ...insertedReview,
       profiles: profile?.display_name ? { display_name: profile.display_name } : null,
     };
+
 
     // Vérifier si l'avis soumis est valide pour les points/badge
     // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
@@ -362,6 +402,7 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
     // OU si ce n'est pas le premier avis mais qu'il n'avait pas d'avis valide avant ET que celui-ci est valide
     const isFirstValidReview = (isFirstReviewForUser && isReviewValid) || (!hadValidReviewBefore && isReviewValid);
 
+
     return NextResponse.json({
       review: enrichedReview,
       updated: false,
@@ -371,7 +412,7 @@ const sanitizedComment = comment ? DOMPurify.sanitize(comment, {
     });
   } catch (error) {
     // === SUPPRESSION DU CATCH ZOD (déjà géré avec safeParse) ===
-    console.error("❌ Unexpected error in POST /api/reviews:", error);
+    logger.error({ err: error }, "Unexpected error in POST /api/reviews");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
