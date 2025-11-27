@@ -6,7 +6,7 @@ import { getClubSubscription } from '@/lib/utils/subscription-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
 });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Vérifier l'authentification
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -110,12 +110,31 @@ export async function POST(req: NextRequest) {
     }
 
     // Réactiver l'abonnement Stripe (annuler l'annulation)
-    const stripeSubscription = await stripe.subscriptions.update(
-      subscription.stripe_subscription_id,
-      {
-        cancel_at_period_end: false,
+    let stripeSubscription: Stripe.Subscription | null = null;
+    try {
+      stripeSubscription = (await stripe.subscriptions.update(
+        subscription.stripe_subscription_id,
+        {
+          cancel_at_period_end: false,
+        }
+      )) as Stripe.Subscription;
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : String(err);
+
+      // Cas particulier : l'abonnement est déjà entièrement annulé côté Stripe
+      if (message.includes('A canceled subscription can only update its cancellation_details')) {
+        console.warn(
+          '[reactivate-subscription] Subscription already fully cancelled on Stripe, cannot reactivate.',
+        );
+        return NextResponse.json(
+          { error: "L'abonnement a déjà été entièrement annulé sur Stripe et ne peut plus être réactivé." },
+          { status: 400 }
+        );
       }
-    );
+
+      console.error('[reactivate-subscription] Stripe update error:', message);
+      throw err;
+    }
 
     // Mettre à jour la base de données
     const { error: updateError } = await supabaseAdmin
@@ -153,8 +172,8 @@ export async function POST(req: NextRequest) {
       triggered_by_user_id: user.id,
       metadata: {
         cancel_at_period_end: false,
-        current_period_end: stripeSubscription.current_period_end
-          ? new Date(stripeSubscription.current_period_end * 1000).toISOString()
+        current_period_end: stripeSubscription && (stripeSubscription as any).current_period_end
+          ? new Date((stripeSubscription as any).current_period_end * 1000).toISOString()
           : null,
       },
     });
@@ -163,8 +182,8 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'Subscription reactivated successfully',
       cancel_at_period_end: false,
-      current_period_end: stripeSubscription.current_period_end
-        ? new Date(stripeSubscription.current_period_end * 1000).toISOString()
+      current_period_end: stripeSubscription && (stripeSubscription as any).current_period_end
+        ? new Date((stripeSubscription as any).current_period_end * 1000).toISOString()
         : null,
     });
   } catch (error) {

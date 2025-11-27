@@ -6,7 +6,7 @@ import { getClubSubscription } from '@/lib/utils/subscription-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
 });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Vérifier l'authentification
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -82,29 +82,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Vérifier que l'abonnement est actif
-    if (subscription.status !== 'active' && subscription.status !== 'trialing') {
+    // Vérifier que l'abonnement n'est pas déjà totalement annulé
+    if (subscription.status === 'canceled') {
       return NextResponse.json(
-        { error: 'Subscription is not active' },
+        { error: 'Subscription is already cancelled' },
         { status: 400 }
       );
     }
 
-    // Vérifier que l'abonnement Stripe existe
-    if (!subscription.stripe_subscription_id) {
-      return NextResponse.json(
-        { error: 'Stripe subscription ID not found' },
-        { status: 400 }
-      );
-    }
+    let stripeSubscription: Stripe.Subscription | null = null;
 
-    // Annuler l'abonnement Stripe à la fin de la période
-    const stripeSubscription = await stripe.subscriptions.update(
-      subscription.stripe_subscription_id,
-      {
-        cancel_at_period_end: true,
+    // Si un abonnement Stripe existe, programmer l'annulation à fin de période côté Stripe.
+    // Si aucune subscription Stripe n'existe (ancien flux), on se contente de marquer l'annulation en base.
+    if (subscription.stripe_subscription_id) {
+      try {
+        stripeSubscription = await stripe.subscriptions.update(
+          subscription.stripe_subscription_id,
+          {
+            cancel_at_period_end: true,
+          }
+        );
+      } catch (err: any) {
+        const message = err instanceof Error ? err.message : String(err);
+
+        // Si l'abonnement est déjà annulé côté Stripe, on ne considère pas cela comme une erreur bloquante :
+        // on continue en mettant à jour la base de données pour refléter l'annulation.
+        if (message.includes('A canceled subscription can only update its cancellation_details')) {
+          console.warn(
+            '[cancel-subscription] Subscription already cancelled on Stripe, continuing with local cancel_at_period_end update.'
+          );
+          stripeSubscription = null;
+        } else {
+          console.error('[cancel-subscription] Stripe update error:', message);
+          throw err;
+        }
       }
-    );
+    }
 
     // Mettre à jour la base de données
     const { error: updateError } = await supabaseAdmin
@@ -116,14 +129,16 @@ export async function POST(req: NextRequest) {
 
     if (updateError) {
       console.error('[cancel-subscription] Database update error:', updateError);
-      // Essayer de revenir en arrière côté Stripe
-      try {
-        await stripe.subscriptions.update(
-          subscription.stripe_subscription_id,
-          { cancel_at_period_end: false }
-        );
-      } catch (stripeError) {
-        console.error('[cancel-subscription] Failed to revert Stripe:', stripeError);
+      // Essayer de revenir en arrière côté Stripe uniquement si on avait mis à jour Stripe
+      if (subscription.stripe_subscription_id && stripeSubscription) {
+        try {
+          await stripe.subscriptions.update(
+            subscription.stripe_subscription_id,
+            { cancel_at_period_end: false }
+          );
+        } catch (stripeError) {
+          console.error('[cancel-subscription] Failed to revert Stripe:', stripeError);
+        }
       }
 
       return NextResponse.json(
@@ -142,8 +157,8 @@ export async function POST(req: NextRequest) {
       triggered_by_user_id: user.id,
       metadata: {
         cancel_at_period_end: true,
-        current_period_end: stripeSubscription.current_period_end
-          ? new Date(stripeSubscription.current_period_end * 1000).toISOString()
+        current_period_end: stripeSubscription && (stripeSubscription as any).current_period_end
+          ? new Date((stripeSubscription as any).current_period_end * 1000).toISOString()
           : null,
       },
     });
@@ -152,9 +167,9 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'Subscription will be canceled at the end of the current period',
       cancel_at_period_end: true,
-      current_period_end: stripeSubscription.current_period_end
-        ? new Date(stripeSubscription.current_period_end * 1000).toISOString()
-        : null,
+        current_period_end: stripeSubscription && (stripeSubscription as any).current_period_end
+          ? new Date((stripeSubscription as any).current_period_end * 1000).toISOString()
+          : null,
     });
   } catch (error) {
     console.error('[cancel-subscription] Error:', error instanceof Error ? error.message : 'Unknown error');
