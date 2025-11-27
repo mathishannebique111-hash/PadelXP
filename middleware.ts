@@ -27,6 +27,10 @@ const matchSubmitRatelimit = new Ratelimit({
 });
 
 export async function middleware(req: NextRequest) {
+  // Exclure les webhooks Stripe du middleware
+  if (req.nextUrl.pathname === '/api/stripe/webhook') {
+    return NextResponse.next();
+  }
   // 1) Si la requête vient de Vercel Cron, on la laisse passer (pas de rate limiting)
   if (req.headers.get("x-vercel-cron") === "1") {
     return NextResponse.next();
