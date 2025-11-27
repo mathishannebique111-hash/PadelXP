@@ -72,26 +72,48 @@ export async function POST(req: NextRequest) {
           
           if (clubId) {
             const subscription = await getClubSubscription(clubId);
-            
-            // Si le club a une période d'essai qui n'est pas encore terminée
-            if (subscription?.trial_end_at) {
+            const now = new Date();
+
+            // 1) Si le club a une période d'essai PadelXP qui n'est pas encore terminée
+            if (!trialEndTimestamp && subscription?.trial_end_at) {
               const trialEndDate = new Date(subscription.trial_end_at);
-              const now = new Date();
-              
-              // Si l'essai n'est pas encore terminé
+
               if (trialEndDate > now) {
                 // Calculer le lendemain de la fin de l'essai à minuit (00:00:00)
                 const nextDay = new Date(trialEndDate);
                 nextDay.setDate(nextDay.getDate() + 1);
                 nextDay.setHours(0, 0, 0, 0);
-                
+
                 // Convertir en timestamp Unix (secondes)
                 trialEndTimestamp = Math.floor(nextDay.getTime() / 1000);
-                
-                console.log('[checkout] Trial end date found:', {
+
+                console.log('[checkout] Trial end date found (PadelXP trial):', {
                   trialEndAt: subscription.trial_end_at,
                   trialEndDate: trialEndDate.toISOString(),
                   nextDay: nextDay.toISOString(),
+                  trialEndTimestamp,
+                });
+              }
+            }
+
+            // 2) Si le club n'est plus en essai mais dispose encore d'un cycle d'abonnement en cours
+            // (par exemple abonnement mensuel annulé sur Stripe mais encore actif jusqu'à current_period_end),
+            // on décale le début du nouveau plan au lendemain de la fin de ce cycle pour éviter toute double facturation.
+            if (!trialEndTimestamp && subscription?.current_period_end) {
+              const currentPeriodEnd = new Date(subscription.current_period_end);
+
+              if (currentPeriodEnd > now) {
+                const nextDayAfterPeriod = new Date(currentPeriodEnd);
+                nextDayAfterPeriod.setDate(nextDayAfterPeriod.getDate() + 1);
+                nextDayAfterPeriod.setHours(0, 0, 0, 0);
+
+                trialEndTimestamp = Math.floor(nextDayAfterPeriod.getTime() / 1000);
+
+                console.log('[checkout] Trial end date derived from existing subscription period:', {
+                  status: subscription.status,
+                  cancel_at_period_end: subscription.cancel_at_period_end,
+                  current_period_end: subscription.current_period_end,
+                  nextDayAfterPeriod: nextDayAfterPeriod.toISOString(),
                   trialEndTimestamp,
                 });
               }

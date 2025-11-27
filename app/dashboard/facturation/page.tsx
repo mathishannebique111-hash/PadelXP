@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
-import { getClubSubscription, Subscription } from "@/lib/utils/subscription-utils";
+import { getClubSubscription, Subscription, getCycleDays } from "@/lib/utils/subscription-utils";
 import BillingInfoSection from "@/components/billing/BillingInfoSection";
 import StripeCheckoutButton from "@/components/billing/StripeCheckoutButton";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
@@ -8,6 +8,8 @@ import ParallaxHalos from "@/components/ParallaxHalos";
 import PageTitle from "../PageTitle";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import CancelSubscriptionButton from "@/components/billing/CancelSubscriptionButton";
+import ReactivateSubscriptionButton from "@/components/billing/ReactivateSubscriptionButton";
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
 type PlanType = "monthly" | "quarterly" | "annual" | null;
@@ -88,37 +90,83 @@ export default async function BillingPage() {
       })()
     : null;
 
-  // Déterminer le statut de l'abonnement à partir de l'essai et de la souscription
+  // Déterminer le statut de l'abonnement à partir de l'essai et de la souscription.
+  // Règle importante : si la période d'essai est encore active, on affiche toujours "Essai actif"
+  // même si Stripe considère déjà l'abonnement comme "active".
   let subscriptionStatus: SubscriptionStatus = "none";
-  if (subscription) {
-    if (subscription.status === "trialing" && subscription.auto_activate_at_trial_end && subscription.plan_cycle) {
-      // Anciennes données : essai en cours mais activation auto programmée
-      subscriptionStatus = "payment_pending";
-    } else if (subscription.status === "trialing" && isTrialActive) {
-      subscriptionStatus = "trial_active";
-    } else if (subscription.status === "trialing" && isTrialExpired) {
-      subscriptionStatus = "trial_expired";
-    } else if (subscription.status === "scheduled_activation") {
+
+  if (isTrialActive) {
+    subscriptionStatus = "trial_active";
+  } else if (isTrialExpired && !subscription) {
+    // Essai terminé, aucun abonnement pris
+    subscriptionStatus = "trial_expired";
+  } else if (subscription) {
+    if (subscription.status === "scheduled_activation") {
       subscriptionStatus = "payment_pending";
     } else if (subscription.status === "active") {
       subscriptionStatus = "active";
     } else if (subscription.status === "canceled") {
       subscriptionStatus = "cancelled";
+    } else if (subscription.status === "trialing" && isTrialExpired) {
+      subscriptionStatus = "trial_expired";
     }
-  } else if (isTrialActive) {
-    subscriptionStatus = "trial_active";
-  } else if (isTrialExpired) {
-    subscriptionStatus = "trial_expired";
   }
 
   const currentPlan: PlanType = (subscription?.plan_cycle as PlanType) ?? null;
   const autoRenewal = subscription?.cancel_at_period_end === false;
-  const nextBillingDate = subscription?.next_renewal_at
-    ? new Date(subscription.next_renewal_at)
-    : null;
-  const cancelledUntil = subscription?.cancel_at_period_end && subscription?.current_period_end
-    ? new Date(subscription.current_period_end)
-    : null;
+
+  // Date de fin d'essai (référence pour premier prélèvement si un plan est choisi pendant l’essai)
+  const effectiveTrialEnd = trialEndDate;
+
+  // Si le club est encore en essai et a déjà choisi un plan, le premier prélèvement doit être
+  // le lendemain de la fin de l’essai. Ensuite seulement, Stripe enchaîne les cycles.
+  const hasChosenPlanDuringTrial =
+    isTrialActive &&
+    !!subscription &&
+    subscription.status !== "canceled" &&
+    (subscription.status === "trialing" || subscription.status === "scheduled_activation" || subscription.status === "active") &&
+    !!subscription.plan_cycle;
+
+  const firstBillingDateDuringTrial =
+    hasChosenPlanDuringTrial && effectiveTrialEnd
+      ? new Date(
+          effectiveTrialEnd.getFullYear(),
+          effectiveTrialEnd.getMonth(),
+          effectiveTrialEnd.getDate() + 1
+        )
+      : null;
+
+  // Date de fin logique du premier cycle payé lorsque le club est encore en essai :
+  // on part du lendemain de la fin de l'essai, puis on applique la durée du cycle choisi.
+  const logicalCycleEndAfterTrial =
+    hasChosenPlanDuringTrial && firstBillingDateDuringTrial && subscription?.plan_cycle
+      ? (() => {
+          const days = getCycleDays(subscription.plan_cycle as "monthly" | "quarterly" | "annual");
+          const end = new Date(firstBillingDateDuringTrial);
+          end.setDate(end.getDate() + days);
+          return end;
+        })()
+      : null;
+
+  // Prochaine date de facturation affichée quand l’abonnement est déjà en cours
+  const nextBillingDate =
+    !isTrialActive && subscription?.current_period_end
+      ? new Date(subscription.current_period_end)
+      : subscription?.next_renewal_at
+      ? new Date(subscription.next_renewal_at)
+      : null;
+
+  const cancelledUntil =
+    subscription?.cancel_at_period_end && subscription?.current_period_end
+      ? new Date(subscription.current_period_end)
+      : null;
+
+  // Date de fin d'abonnement à afficher quand il est annulé :
+  // - si annulation à fin de période pendant l'essai : on privilégie logicalCycleEndAfterTrial
+  // - sinon, on tombe sur current_period_end (fin du dernier cycle payé)
+  const effectiveCancellationEndDate =
+    logicalCycleEndAfterTrial ||
+    (subscription?.current_period_end ? new Date(subscription.current_period_end) : null);
   const paymentMethod = subscription?.has_payment_method && subscription?.payment_method_last4
     ? {
         type: subscription.payment_method_brand || subscription.payment_method_type || "Carte",
@@ -219,7 +267,7 @@ export default async function BillingPage() {
             <p className="text-xs sm:text-sm text-white/80">
               {showWarning
                 ? `Votre essai se termine dans ${daysRemaining} jour${daysRemaining > 1 ? "s" : ""}. Choisissez une offre pour continuer à utiliser la plateforme après le ${formatDate(trialEndDate)}.`
-                : `Votre essai gratuit se termine le ${formatDate(trialEndDate)}. Vous pouvez activer votre abonnement maintenant ou choisir une offre ci-dessous.`}
+                : `Votre essai gratuit se termine le ${formatDate(trialEndDate)}.`}
             </p>
 
             {hasScheduledActivation && scheduledStartDate && (
@@ -280,14 +328,16 @@ export default async function BillingPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           {/* Mensuel */}
-          <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
-            currentPlan === "monthly"
-              ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
-              : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
-          }`}>
+          <div
+            className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
+              currentPlan === "monthly"
+                ? "border-white/70 bg-gradient-to-br from-white/20 via-slate-100/10 to-white/20 shadow-[0_10px_35px_rgba(255,255,255,0.25)]"
+                : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
+            }`}
+          >
             {currentPlan === "monthly" && (
               <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
+                <span className="rounded-full border-2 border-white/80 bg-gradient-to-r from-white to-slate-200 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-slate-800 shadow-lg">
                   ✓ Plan actuel
                 </span>
               </div>
@@ -427,53 +477,90 @@ export default async function BillingPage() {
         <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Statut de l'abonnement</h2>
 
         <div className="space-y-4">
-          {/* Statut */}
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-xs text-white/60 mb-1">Statut</div>
-            <div className="flex items-center gap-2">
-              {subscriptionStatus === "trial_active" && (
-                <>
+          {/* Statut + action principale (réactivation) */}
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <div className="text-xs text-white/60 mb-1">Statut</div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {subscriptionStatus === "trial_active" && (
                   <span className="rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-300">
                     Essai actif
                   </span>
-                </>
+                )}
+                {subscriptionStatus === "trial_expired" && (
+                  <span className="rounded-full border border-rose-400/50 bg-rose-500/20 px-3 py-1 text-sm font-semibold text-rose-300">
+                    Essai expiré
+                  </span>
+                )}
+                {subscriptionStatus === "active" && !subscription?.cancel_at_period_end && (
+                  <span className="rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-300">
+                    Abonnement actif
+                  </span>
+                )}
+                {subscriptionStatus === "active" && subscription?.cancel_at_period_end && cancelledUntil && (
+                  <span className="rounded-full border border-orange-400/50 bg-orange-500/20 px-3 py-1 text-sm font-semibold text-orange-300">
+                    Abonnement annulé — fin de l'abonnement le {formatDate(cancelledUntil)}
+                  </span>
+                )}
+                {subscriptionStatus === "cancelled" && effectiveCancellationEndDate && (
+                  <span className="rounded-full border border-orange-400/50 bg-orange-500/20 px-3 py-1 text-sm font-semibold text-orange-300">
+                    Abonnement annulé — fin de l'abonnement le {formatDate(effectiveCancellationEndDate)}
+                  </span>
+                )}
+                {subscriptionStatus === "payment_pending" && (
+                  <span className="rounded-full border border-yellow-400/50 bg-yellow-500/20 px-3 py-1 text-sm font-semibold text-yellow-300">
+                    Paiement en attente
+                  </span>
+                )}
+                {/* statut payment_failed non utilisé dans l'état actuel */}
+                {subscriptionStatus === "none" && (
+                  <span className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-sm font-semibold text-white/60">
+                    Aucun abonnement
+                  </span>
+                )}
+              </div>
+
+              {/* Message explicatif sous le statut */}
+              {subscriptionStatus === "active" && !subscription?.cancel_at_period_end && (
+                <p className="mt-2 text-xs text-white/60">
+                  Votre abonnement est <span className="font-semibold text-emerald-200">en cours</span>. Il se renouvellera
+                  automatiquement à chaque échéance tant que vous ne l&apos;annulez pas.
+                </p>
               )}
-              {subscriptionStatus === "trial_expired" && (
-                <span className="rounded-full border border-rose-400/50 bg-rose-500/20 px-3 py-1 text-sm font-semibold text-rose-300">
-                  Essai expiré
-                </span>
+              {subscription && subscription.cancel_at_period_end && (logicalCycleEndAfterTrial || cancelledUntil) && (
+                <p className="mt-2 text-xs text-white/60">
+                  Votre abonnement a été <span className="font-semibold text-orange-200">annulé</span>. Vous conservez l&apos;accès
+                  jusqu&apos;au{" "}
+                  <span className="font-semibold">
+                    {formatDate(logicalCycleEndAfterTrial || cancelledUntil!)}
+                  </span>
+                  , puis il ne sera pas renouvelé. Le dernier cycle déjà payé reste entièrement utilisable.
+                </p>
               )}
-              {subscriptionStatus === "active" && (
-                <span className="rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-300">
-                  Abonnement actif
-                </span>
-              )}
-              {subscriptionStatus === "cancelled" && cancelledUntil && (
-                <span className="rounded-full border border-orange-400/50 bg-orange-500/20 px-3 py-1 text-sm font-semibold text-orange-300">
-                  Annulé (jusqu'au {formatDate(cancelledUntil)})
-                </span>
-              )}
-              {subscriptionStatus === "payment_pending" && (
-                <span className="rounded-full border border-yellow-400/50 bg-yellow-500/20 px-3 py-1 text-sm font-semibold text-yellow-300">
-                  Paiement en attente
-                </span>
-              )}
-              {subscriptionStatus === "payment_failed" && (
-                <span className="rounded-full border border-rose-400/50 bg-rose-500/20 px-3 py-1 text-sm font-semibold text-rose-300">
-                  Échec de paiement
-                </span>
-              )}
-              {subscriptionStatus === "none" && (
-                <span className="rounded-full border border-white/20 bg-white/5 px-3 py-1 text-sm font-semibold text-white/60">
-                  Aucun abonnement
-                </span>
+              {subscriptionStatus === "cancelled" && !subscription?.cancel_at_period_end && effectiveCancellationEndDate && (
+                <p className="mt-2 text-xs text-white/60">
+                  Votre abonnement a été <span className="font-semibold text-orange-200">annulé sur Stripe</span>. Vous conservez
+                  l&apos;accès jusqu&apos;au{" "}
+                  <span className="font-semibold">{formatDate(effectiveCancellationEndDate)}</span>, puis il ne sera plus actf.
+                </p>
               )}
             </div>
+
+            {/* Bouton de réactivation visible dès qu'une annulation à fin de période est programmée */}
+            {subscription && subscription.cancel_at_period_end && (
+              <ReactivateSubscriptionButton
+                className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-extrabold text-white bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 border border-emerald-300/70 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_26px_rgba(16,185,129,0.55)] hover:scale-105 active:scale-100 transition-all duration-300"
+              >
+                Réactiver mon abonnement
+              </ReactivateSubscriptionButton>
+            )}
           </div>
 
           {/* Échéance / Expiration */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="text-xs text-white/60 mb-1">Votre abonnement expire dans</div>
+            <div className="text-xs text-white/60 mb-1">
+              {subscriptionStatus === "trial_active" ? "Votre essai expire dans" : "Votre abonnement expire dans"}
+            </div>
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 {subscriptionStatus === "trial_active" && daysRemaining !== null ? (
@@ -486,37 +573,59 @@ export default async function BillingPage() {
                     <p className="text-xs text-white/60">
                       Vous êtes en période d’essai. À l’issue de l’essai, l’accès sera interrompu sauf activation d’un abonnement.
                     </p>
+                    {hasChosenPlanDuringTrial && firstBillingDateDuringTrial && (
+                      <p className="text-xs text-emerald-200 mt-1">
+                        Vous avez déjà payé votre premier cycle d’abonnement. Le premier prélèvement effectif aura lieu le{" "}
+                        <span className="font-semibold">{formatDate(firstBillingDateDuringTrial)}</span>, au lendemain de la fin
+                        de votre période d’essai. La durée de ce cycle commence à partir de ce jour, après la fin complète de
+                        votre période d’essai. Ce paiement ne peut pas être annulé, même si vous annulez l’abonnement avant
+                        cette date. En cas d’annulation, vous ne serez simplement pas prélevé pour le cycle suivant.
+                      </p>
+                    )}
                   </div>
-                ) : subscriptionStatus === "active" ? (
+                ) : subscriptionStatus === "active" || subscriptionStatus === "cancelled" ? (
                   (() => {
                     const msPerDay = 1000 * 60 * 60 * 24;
                     const toMidnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
                     const today = toMidnight(new Date());
-                    const target = cancelledUntil
-                      ? toMidnight(cancelledUntil)
-                      : nextBillingDate
-                      ? toMidnight(nextBillingDate)
-                      : null;
+                    const target =
+                      subscriptionStatus === "cancelled" && effectiveCancellationEndDate
+                        ? toMidnight(effectiveCancellationEndDate)
+                        : cancelledUntil
+                        ? toMidnight(cancelledUntil)
+                        : nextBillingDate
+                        ? toMidnight(nextBillingDate)
+                        : null;
                     const remaining =
                       target ? Math.max(0, Math.ceil((target.getTime() - today.getTime()) / msPerDay)) : null;
                     return (
                       <div className="space-y-2">
                         <div className="text-sm text-white">
                           {remaining !== null ? (
-                            <span className={`rounded-full border px-2 py-0.5 ${
-                              cancelledUntil
-                                ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
-                                : "border-blue-400/50 bg-blue-500/20 text-blue-300"
-                            }`}>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 ${
+                                subscriptionStatus === "cancelled" || cancelledUntil
+                                  ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
+                                  : "border-blue-400/50 bg-blue-500/20 text-blue-300"
+                              }`}
+                            >
                               {remaining} jour{remaining > 1 ? "s" : ""}
                             </span>
                           ) : (
                             <span className="text-white/60">—</span>
                           )}
                         </div>
-                        {cancelledUntil ? (
+                        {subscriptionStatus === "cancelled" && effectiveCancellationEndDate ? (
                           <p className="text-xs text-white/60">
-                            L’abonnement a été annulé et restera actif jusqu’à la fin de la période en cours.
+                            L’abonnement a été annulé et restera actif jusqu’à la fin du cycle choisi, c’est-à-dire jusqu&apos;au{" "}
+                            <span className="font-semibold">{formatDate(effectiveCancellationEndDate)}</span>. Aucun nouveau cycle
+                            ne sera démarré après cette date.
+                          </p>
+                        ) : cancelledUntil ? (
+                          <p className="text-xs text-white/60">
+                            L’abonnement a été annulé et restera actif jusqu’à la fin du cycle choisi, c’est-à-dire après la
+                            fin de la période en cours puis l’intégralité du cycle déjà payé. Aucun nouveau cycle ne sera
+                            démarré après cette date.
                           </p>
                         ) : nextBillingDate ? (
                           <>
@@ -524,7 +633,9 @@ export default async function BillingPage() {
                               Prochain prélèvement le {formatDate(nextBillingDate)}.
                             </p>
                             <p className="text-xs text-white/60">
-                              L’abonnement se renouvellera automatiquement.
+                              Chaque cycle d’abonnement commence à la fin de la période en cours (essai ou cycle actuel) puis
+                              dure la totalité du nombre de jours du cycle choisi. L’abonnement se renouvellera automatiquement,
+                              en démarrant un nouveau cycle uniquement après la fin du précédent.
                             </p>
                           </>
                         ) : (
@@ -540,43 +651,19 @@ export default async function BillingPage() {
             </div>
           </div>
 
-          {/* Prochaine échéance */}
-          {subscriptionStatus === "active" && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="text-xs text-white/60 mb-1">Prochaine échéance</div>
-              {nextBillingDate ? (
-                <div className="text-sm text-white">
-                  {formatDate(nextBillingDate)} — {currentPlan === "monthly" ? "Mensuel" : currentPlan === "quarterly" ? "Trimestriel" : "Annuel"}
-                </div>
-              ) : (
-                <div className="text-sm text-white/60">—</div>
-              )}
+          {/* Bouton d'annulation en bas du cadre Statut : visible dès qu'un abonnement existe, n'est pas déjà annulé
+              et n'est pas déjà marqué comme complètement canceled côté Stripe */}
+          {subscription && !subscription.cancel_at_period_end && subscription.status !== "canceled" && (
+            <div className="pt-2 flex justify-end">
+              <CancelSubscriptionButton
+                cancelAtPeriodEnd={!!subscription.cancel_at_period_end}
+                currentPeriodEnd={subscription.current_period_end}
+                className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold text-white/80 bg-white/10 border border-white/20 hover:bg-white/15 hover:text-white transition-all"
+              >
+                Annuler mon abonnement
+              </CancelSubscriptionButton>
             </div>
           )}
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-3">
-            {subscriptionStatus === "active" && (
-              <>
-                <button className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-white/10 border border-white/10 hover:bg-white/15 transition-colors">
-                  Gérer l'offre
-                </button>
-                <button className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-white/10 border border-white/10 hover:bg-white/15 transition-colors">
-                  Annuler à fin de période
-                </button>
-              </>
-            )}
-            {subscriptionStatus === "payment_failed" && (
-              <button className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-rose-500 to-red-600 border border-rose-400/50 hover:shadow-[0_6px_20px_rgba(239,68,68,0.3)] transition-all">
-                Relancer le paiement
-              </button>
-            )}
-            {subscriptionStatus === "cancelled" && cancelledUntil && (
-              <button className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-green-600 border border-emerald-400/50 hover:shadow-[0_6px_20px_rgba(16,185,129,0.3)] transition-all">
-                Réactiver avant l'échéance
-              </button>
-            )}
-          </div>
         </div>
       </section>
 
@@ -633,17 +720,15 @@ export default async function BillingPage() {
         <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Annulation & Renouvellement</h2>
 
         <div className="space-y-4">
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <h3 className="text-sm font-semibold text-white mb-2">Politique d'annulation</h3>
-            <p className="text-xs text-white/70 leading-relaxed mb-3">
-              Annulation possible à tout moment, avec prise d'effet à la fin de la période en cours. 
-              Votre accès est conservé jusqu'à la date d'échéance. Aucune reconduction au-delà de cette date si l'annulation est effective.
+            <p className="text-xs text-white/70 leading-relaxed mb-1">
+              Vous pouvez annuler votre abonnement à tout moment. L'annulation prendra effet à la fin du cycle en cours et
+              vous conserverez l'accès jusqu'à cette date.
             </p>
-            {subscriptionStatus === "active" && (
-              <button className="text-xs text-rose-400 hover:text-rose-300 underline">
-                Annuler l'abonnement
-              </button>
-            )}
+            <p className="text-[11px] text-white/50">
+              Le prochain prélèvement automatique est annulé, mais le cycle déjà payé reste entièrement disponible.
+            </p>
           </div>
 
           {subscriptionStatus === "active" && (
@@ -651,7 +736,7 @@ export default async function BillingPage() {
               <div className="text-xs text-blue-200 mb-1">ℹ️ Renouvellement automatique</div>
               <p className="text-xs text-blue-200/80 leading-relaxed">
                 {autoRenewal
-                  ? "Votre abonnement sera reconduit automatiquement à chaque échéance. Vous pouvez désactiver cette option ci-dessus à tout moment."
+                  ? "Votre abonnement sera reconduit automatiquement à chaque échéance tant que vous ne l’annulez pas."
                   : "La reconduction automatique est désactivée. Votre abonnement prendra fin à la prochaine échéance."}
               </p>
             </div>
