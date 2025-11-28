@@ -1,136 +1,378 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient as createAdminClient } from '@supabase/supabase-js';
-import { extractReplyContent } from "@/lib/utils/email-utils";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 // Initialisation conditionnelle de Resend
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-const FORWARD_TO = process.env.FORWARD_TO_EMAIL!; // contactpadelxp@gmail.com
-const INBOUND_EMAIL = process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
+const FORWARD_TO = process.env.FORWARD_TO_EMAIL!;
+const INBOUND_EMAIL =
+  process.env.RESEND_INBOUND_EMAIL || "contact@updates.padelxp.eu";
 
 // Client Supabase admin pour enregistrer les messages dans la DB
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+// ⚠️ Créé de façon défensive pour éviter les erreurs au chargement du module
+const supabaseAdmin =
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
+      )
+    : null;
 
 export async function POST(req: NextRequest) {
-  console.log("🚀🚀🚀 WEBHOOK RESEND-INBOUND CALLED 🚀🚀🚀");
-  console.log("📥 Request received at:", new Date().toISOString());
-  console.log("📍 URL:", req.url);
-  console.log("🔗 Method:", req.method);
-  
+  console.log("[resend-inbound] Webhook called");
+
   try {
     // Vérifier les variables d'environnement
     if (!process.env.RESEND_API_KEY || !resend) {
-      console.error("❌ RESEND_API_KEY is not configured");
-      return NextResponse.json({ error: "RESEND_API_KEY not configured" }, { status: 500 });
+      console.error("[resend-inbound] RESEND_API_KEY is not configured");
+      return NextResponse.json(
+        { error: "RESEND_API_KEY not configured" },
+        { status: 500 }
+      );
     }
 
     if (!FORWARD_TO) {
-      console.error("❌ FORWARD_TO_EMAIL is not configured");
-      return NextResponse.json({ error: "FORWARD_TO_EMAIL not configured" }, { status: 500 });
+      console.error("[resend-inbound] FORWARD_TO_EMAIL is not configured");
+      return NextResponse.json(
+        { error: "FORWARD_TO_EMAIL not configured" },
+        { status: 500 }
+      );
     }
 
-    console.log("✅ Environment variables OK");
-    console.log("📧 INBOUND_EMAIL:", INBOUND_EMAIL);
-    console.log("📧 FORWARD_TO:", FORWARD_TO);
+    console.log("[resend-inbound] Environment OK", {
+      inboundEmailConfigured: !!INBOUND_EMAIL,
+      hasForwardTo: !!FORWARD_TO,
+    });
 
-    // Essayer de parser le JSON, avec fallback sur texte brut pour debug
-    let event: any;
+    // Essayer de parser le JSON
+    let event: any | null = null;
     try {
       event = await req.json();
-      console.log("✅ JSON parsed successfully");
+      console.log("[resend-inbound] JSON payload parsed successfully");
     } catch (jsonError) {
-      console.error("❌ Failed to parse JSON, trying text:", jsonError);
-      const rawBody = await req.text();
-      console.log("📄 Raw body received:", rawBody.substring(0, 500));
-      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+      console.error("[resend-inbound] Failed to parse JSON payload", {
+        message: (jsonError as any)?.message,
+        name: (jsonError as any)?.name,
+      });
+      // Ne pas logger le corps brut pour éviter de stocker du contenu d'email
+      return NextResponse.json(
+        { error: "Invalid JSON payload" },
+        { status: 400 }
+      );
     }
 
-    console.log("📨 Resend inbound event type:", event?.type);
-    console.log("📨 Resend inbound event (full):", JSON.stringify(event, null, 2).substring(0, 1000));
+    const eventType = event?.type;
+    console.log("[resend-inbound] Inbound event received", { eventType });
 
     // On ne traite que les évènements email.received
-    if (event?.type !== "email.received") {
-      console.log("⚠️ Ignoring event type:", event?.type);
-      return NextResponse.json({ ignored: true, type: event?.type });
+    if (eventType !== "email.received") {
+      console.log("[resend-inbound] Ignoring non-email event", { eventType });
+      return NextResponse.json({ ignored: true, type: eventType });
     }
-    
-    console.log("✅ Event type is email.received, processing...");
+
+    console.log("[resend-inbound] Processing email.received event");
 
     const emailData = event.data;
     if (!emailData) {
-      console.error("❌ No email data in event:", event);
+      console.error("[resend-inbound] No email data in event");
       return NextResponse.json({ error: "No email data" }, { status: 400 });
     }
 
-    console.log("✅ Email data found");
-    console.log("📧 Full inbound email data keys:", Object.keys(emailData));
+    console.log("[resend-inbound] Email data found", {
+      keys: Object.keys(emailData || {}),
+    });
 
-    const subject = emailData.subject ?? emailData.headers?.["subject"] ?? emailData.headers?.["Subject"] ?? "(Sans sujet)";
-    const from = emailData.from ?? emailData.headers?.["from"] ?? emailData.headers?.["From"] ?? emailData.sender_email ?? "Expéditeur inconnu";
-    const to = emailData.to ?? emailData.headers?.["to"] ?? emailData.headers?.["To"] ?? emailData.recipient_email ?? "";
+    const subject =
+      emailData.subject ??
+      emailData.headers?.["subject"] ??
+      emailData.headers?.["Subject"] ??
+      "(Sans sujet)";
+    const from =
+      emailData.from ??
+      emailData.headers?.["from"] ??
+      emailData.headers?.["From"] ??
+      emailData.sender_email ??
+      "Expéditeur inconnu";
+    const to =
+      emailData.to ??
+      emailData.headers?.["to"] ??
+      emailData.headers?.["To"] ??
+      emailData.recipient_email ??
+      "";
     const emailId = emailData.email_id;
-    
-    const senderType = emailData.headers?.["X-Sender-Type"] ?? emailData.headers?.["x-sender-type"];
-    let conversationId = emailData.headers?.["X-Conversation-ID"] ?? emailData.headers?.["x-conversation-id"];
-    const clubId = emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
-    
-    const reviewId = emailData.headers?.["X-Review-ID"] ?? emailData.headers?.["x-review-id"];
-    const playerEmail = emailData.headers?.["X-Player-Email"] ?? emailData.headers?.["x-player-email"];
-    const playerName = emailData.headers?.["X-Player-Name"] ?? emailData.headers?.["x-player-name"];
-    
-    const inReplyTo = emailData.headers?.["In-Reply-To"] ?? emailData.headers?.["in-reply-to"] ?? emailData.in_reply_to;
-    const references = emailData.headers?.["References"] ?? emailData.headers?.["references"] ?? emailData.references;
-    const isReply = !!(inReplyTo || references || (subject && (subject.toLowerCase().includes('re:') || subject.toLowerCase().includes('ré:'))));
-    
-    const isFromInbound = to && (to.includes(INBOUND_EMAIL) || to.includes('contact@updates.padelxp.eu'));
-    
-    console.log("📧 Email metadata:", {
+
+    const senderType =
+      emailData.headers?.["X-Sender-Type"] ??
+      emailData.headers?.["x-sender-type"];
+    let conversationId =
+      emailData.headers?.["X-Conversation-ID"] ??
+      emailData.headers?.["x-conversation-id"];
+    const clubId =
+      emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
+
+    const reviewId =
+      emailData.headers?.["X-Review-ID"] ??
+      emailData.headers?.["x-review-id"];
+    const playerEmail =
+      emailData.headers?.["X-Player-Email"] ??
+      emailData.headers?.["x-player-email"];
+    const playerName =
+      emailData.headers?.["X-Player-Name"] ??
+      emailData.headers?.["x-player-name"];
+
+    const inReplyTo =
+      emailData.headers?.["In-Reply-To"] ??
+      emailData.headers?.["in-reply-to"] ??
+      emailData.in_reply_to;
+    const references =
+      emailData.headers?.["References"] ??
+      emailData.headers?.["references"] ??
+      emailData.references;
+    const isReply = !!(
+      inReplyTo ||
+      references ||
+      (subject &&
+        (subject.toLowerCase().includes("re:") ||
+          subject.toLowerCase().includes("ré:")))
+    );
+
+    const isFromInbound =
+      to &&
+      (to.includes(INBOUND_EMAIL) || to.includes("contact@updates.padelxp.eu"));
+
+    console.log("[resend-inbound] Email metadata (anonymized)", {
       senderType,
-      conversationId,
-      clubId,
-      from,
-      to,
-      subject,
-      inReplyTo,
-      references,
+      hasConversationId: !!conversationId,
+      hasClubId: !!clubId,
+      hasReviewId: !!reviewId,
+      hasPlayerEmail: !!playerEmail,
+      hasPlayerName: !!playerName,
       isReply,
-      isFromInbound: isFromInbound
+      isFromInbound,
+      hasEmailId: !!emailId,
+      // On tronque les champs potentiellement sensibles
+      subjectPreview: subject ? subject.substring(0, 30) : null,
+      fromPreview: from ? from.substring(0, 8) + "…" : null,
+      toPreview: to ? to.substring(0, 8) + "…" : null,
     });
 
-    // ---- À partir d’ici, tout le reste de ton code reste identique ----
-    // (aucun autre changement nécessaire pour Resend, tu peux garder le reste
-    //  exactement comme dans ta version actuelle, y compris tous les traitements,
-    //  accès Supabase, extractions de contenu, envois d'emails avec resend.emails.send, etc.)
-    // ------------------------------------------------------------------
+    // Récupérer le contenu de l'email (texte + HTML) de manière défensive
+    const rawText: string =
+      emailData.text ??
+      emailData.text_body ??
+      emailData.textBody ??
+      "";
+    const rawHtml: string | undefined =
+      emailData.html ??
+      emailData.html_body ??
+      emailData.htmlBody ??
+      undefined;
 
-    // ... COLLE ICI TOUT LE RESTE DE TON FICHIER À L’IDENTIQUE ...
-    // (à partir du bloc "Si on a un email_id, récupérer le contenu via l'API Resend"
-    //  jusqu'à la fin du try/catch/finally)
+      const replyText = (rawText || "").trim();
 
+    // Préparer un petit résumé anonymisé pour les logs
+    const replyPreview =
+      replyText.length > 0
+        ? replyText.substring(0, 30).replace(/\s+/g, " ")
+        : null;
+
+    console.log("[resend-inbound] Parsed reply content (anonymized)", {
+      hasReplyText: replyText.length > 0,
+      replyPreview,
+    });
+
+    // --------- CAS 1 : Réponse d'admin dans une conversation de support ---------
+    // - Identifiée par la présence de conversationId
+    // - L'admin répond depuis Gmail, l'email arrive sur l'inbound
+    // - On enregistre le message dans support_messages, mais on NE le renvoie PAS vers Gmail
+    if (conversationId) {
+      // Éviter les doublons si emailId déjà traité
+      if (emailId) {
+        const { data: existingMessage, error: existingError } = await supabaseAdmin
+          .from("support_messages")
+          .select("id")
+          .eq("email_message_id", emailId)
+          .maybeSingle();
+
+        if (existingError) {
+          console.error(
+            "[resend-inbound] Error checking existing support message",
+            {
+              code: existingError.code,
+            }
+          );
+        }
+
+        if (existingMessage) {
+          console.log(
+            "[resend-inbound] Support message already stored for this emailId"
+          );
+          return NextResponse.json({ success: true, deduplicated: true });
+        }
+      }
+
+      const safeConversationId =
+        typeof conversationId === "string"
+          ? conversationId
+          : Array.isArray(conversationId)
+          ? conversationId[0]
+          : String(conversationId);
+
+      const senderEmailPreview = from ? from.substring(0, 8) + "…" : null;
+
+      const messageTextToStore =
+        replyText ||
+        (rawText ? rawText.substring(0, 2000) : "(message vide)");
+
+      const { error: insertError } = await supabaseAdmin
+        .from("support_messages")
+        .insert({
+          conversation_id: safeConversationId,
+          sender_type: "admin",
+          sender_id: null,
+          sender_email: from || "unknown",
+          message_text: messageTextToStore,
+          html_content:
+            rawHtml && rawHtml.length > 0
+              ? rawHtml.substring(0, 4000)
+              : null,
+          email_message_id: emailId || null,
+        });
+
+      if (insertError) {
+        console.error("[resend-inbound] Error inserting support message", {
+          code: insertError.code,
+        });
+        return NextResponse.json(
+          { error: "Failed to store support message" },
+          { status: 500 }
+        );
+      }
+
+      console.log("[resend-inbound] Support message stored from admin reply", {
+        conversationIdPreview: safeConversationId.substring(0, 8) + "…",
+        senderEmailPreview,
+      });
+
+      return NextResponse.json({ success: true, storedSupportReply: true });
+    }
+
+    // --------- CAS 2 : Avis joueur modéré (réponse admin) ---------
+    // - Identifié par headers X-Review-ID et X-Player-Email
+    // - L'admin répond à l'email de modération, sa réponse doit être envoyée au joueur
+    if (reviewId && playerEmail && replyText.length > 0) {
+      const subjectForPlayer =
+        subject && subject.toLowerCase().includes("avis modéré")
+          ? subject.replace(/⚠️\s*/g, "").substring(0, 120)
+          : `Réponse à votre avis (${reviewId.substring(0, 8)}…)`;
+
+      // Ne pas logger l'email complet ni le nom complet
+      const playerEmailPreview = playerEmail.substring(0, 5) + "…";
+      const playerNamePreview = playerName
+        ? String(playerName).substring(0, 10) + "…"
+        : null;
+
+      console.log(
+        "[resend-inbound] Forwarding moderated review reply to player",
+        {
+          reviewIdPreview: reviewId.substring(0, 8) + "…",
+          playerEmailPreview,
+          hasPlayerName: !!playerName,
+        }
+      );
+
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          "PadelXP <noreply@padelleague.com>",
+        to: playerEmail,
+        replyTo: INBOUND_EMAIL,
+        subject: subjectForPlayer,
+        text: replyText,
+      });
+
+      return NextResponse.json({
+        success: true,
+        forwardedToPlayer: true,
+      });
+    }
+
+    // --------- CAS 3 : Message initial vers l'inbound (contact club ou avis) ---------
+    // - Email envoyé par PadelXP vers INBOUND_EMAIL
+    // - On le transfère vers FORWARD_TO (Gmail) si ce n'est pas déjà un reply
+    if (!isReply && isFromInbound) {
+      const subjectForForward =
+        subject && subject.length > 0
+          ? subject.substring(0, 200)
+          : "(Sans sujet)";
+
+      console.log(
+        "[resend-inbound] Forwarding inbound email to FORWARD_TO (admin)",
+        {
+          subjectPreview: subjectForForward.substring(0, 30),
+        }
+      );
+
+      await resend.emails.send({
+        from:
+          process.env.RESEND_FROM_EMAIL ||
+          "PadelXP Support <support@updates.padelxp.eu>",
+        to: FORWARD_TO,
+        replyTo: INBOUND_EMAIL,
+        subject: subjectForForward,
+        // Ne pas inclure tout l'historique, mais au moins le début du message
+        text:
+          (replyText && replyText.length > 0
+            ? replyText
+            : rawText.substring(0, 2000)) ||
+          "(message vide)",
+      });
+
+      return NextResponse.json({
+        success: true,
+        forwardedToAdmin: true,
+      });
+    }
+
+    // --------- CAS 4 : Autres emails (logs minimaux, aucune action métier) ---------
+    console.log(
+      "[resend-inbound] Email received but no specific handler matched",
+      {
+        hasConversationId: !!conversationId,
+        hasReviewId: !!reviewId,
+        hasPlayerEmail: !!playerEmail,
+        isReply,
+        isFromInbound,
+      }
+    );
+
+    return NextResponse.json({ success: true, handled: false });
   } catch (error: any) {
-    console.error("❌❌❌ UNEXPECTED ERROR IN RESEND-INBOUND WEBHOOK ❌❌❌");
-    console.error("Error details:", {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      fullError: JSON.stringify(error, null, 2)
-    });
+    // Important : ne jamais renvoyer 500 au webhook Resend pour éviter les retries incessants.
+    // On logge l'erreur de façon anonymisée mais on renvoie un 200 au webhook.
+    console.error(
+      "[resend-inbound] Unexpected error in inbound webhook handler",
+      {
+        message: error?.message,
+        name: error?.name,
+      }
+    );
     return NextResponse.json(
-      { error: "Internal server error", message: error?.message },
-      { status: 500 }
+      { success: false, error: "Internal server error (logged server-side)" },
+      { status: 200 }
     );
   } finally {
-    console.log("🏁 WEBHOOK RESEND-INBOUND FINISHED 🏁");
+    console.log("[resend-inbound] Webhook finished");
   }
 }
+
+
