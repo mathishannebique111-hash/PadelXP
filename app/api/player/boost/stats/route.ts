@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getPlayerBoostStats, getPlayerBoostCreditsAvailable, getPlayerBoostsUsedThisMonth } from '@/lib/utils/boost-utils';
+import { getPlayerBoostStats } from '@/lib/utils/boost-utils';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { MAX_BOOSTS_PER_MONTH } from '@/lib/utils/boost-utils';
 
@@ -21,151 +21,147 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error('[boost/stats] Unauthorized:', authError);
+      console.error('[boost/stats] Unauthorized', { hasAuthError: !!authError });
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    console.log('[boost/stats] Getting stats for user:', user.id);
+    const shortUserId = user.id.substring(0, 8) + '...';
+    console.log('[boost/stats] Getting stats for user', { userId: shortUserId });
 
-    // VÉRIFICATION DIRECTE DANS LA BASE DE DONNÉES EN PREMIER (PRIORITAIRE)
-    // Les boosts sont liés à user_id, pas au profil, donc on vérifie directement
     let directCheckCredits = 0;
+
+    // Vérification directe dans la base (prioritaire)
     if (supabaseAdmin) {
       try {
-        console.log('[boost/stats] ===== DIRECT DB CHECK START =====');
-        console.log('[boost/stats] User ID:', user.id);
-        
+        console.log('[boost/stats] Direct DB check start', { userId: shortUserId });
+
         const { data: creditsData, error: creditsError } = await supabaseAdmin
-          .from("player_boost_credits")
-          .select("id, user_id, consumed_at, created_at")
-          .eq("user_id", user.id);
-        
-        console.log('[boost/stats] Query result - Error:', creditsError);
-        console.log('[boost/stats] Query result - Data count:', creditsData?.length || 0);
-        console.log('[boost/stats] Query result - Data:', JSON.stringify(creditsData, null, 2));
-        
-        if (!creditsError && creditsData) {
-          // Filtrer les boosts disponibles (consumed_at est null ou undefined)
-          const availableCredits = creditsData.filter(c => 
-            c.consumed_at === null || 
-            c.consumed_at === undefined || 
+          .from('player_boost_credits')
+          .select('id, consumed_at, created_at')
+          .eq('user_id', user.id);
+
+        if (creditsError) {
+          console.error('[boost/stats] Direct DB check error', {
+            userId: shortUserId,
+            message: creditsError.message,
+            code: creditsError.code,
+          });
+        }
+
+        const totalCredits = creditsData?.length || 0;
+
+        if (creditsData && creditsData.length > 0) {
+          const availableCredits = creditsData.filter(c =>
+            c.consumed_at === null ||
+            c.consumed_at === undefined ||
             c.consumed_at === ''
           );
-          // Filtrer les boosts consommés (consumed_at n'est pas null/undefined/vide)
-          const consumedCredits = creditsData.filter(c => 
-            c.consumed_at !== null && 
-            c.consumed_at !== undefined && 
-            c.consumed_at !== ''
-          );
+          const consumedCredits = totalCredits - availableCredits.length;
           directCheckCredits = availableCredits.length;
-          
-          console.log('[boost/stats] Direct DB check - Total credits:', creditsData.length);
-          console.log('[boost/stats] Direct DB check - Available credits:', directCheckCredits);
-          console.log('[boost/stats] Direct DB check - Consumed credits:', consumedCredits.length);
-          console.log('[boost/stats] Available credits details:', availableCredits.map(c => ({
-            id: c.id,
-            consumed_at: c.consumed_at,
-            created_at: c.created_at
-          })));
-          console.log('[boost/stats] Consumed credits details:', consumedCredits.map(c => ({
-            id: c.id,
-            consumed_at: c.consumed_at,
-            created_at: c.created_at
-          })));
-          
-          // Vérification supplémentaire : vérifier tous les boosts pour debug
-          console.log('[boost/stats] All credits raw data:', creditsData.map(c => ({
-            id: c.id,
-            user_id: c.user_id?.substring(0, 8),
-            consumed_at: c.consumed_at,
-            consumed_at_type: typeof c.consumed_at,
-            consumed_at_null: c.consumed_at === null,
-            consumed_at_undefined: c.consumed_at === undefined,
-            created_at: c.created_at
-          })));
+
+          console.log('[boost/stats] Direct DB check summary', {
+            userId: shortUserId,
+            totalCredits,
+            availableCredits: availableCredits.length,
+            consumedCredits,
+          });
         } else {
-          console.error('[boost/stats] ❌ Error in direct DB check:', creditsError);
+          console.log('[boost/stats] Direct DB check: no credits found', {
+            userId: shortUserId,
+          });
         }
-        console.log('[boost/stats] ===== DIRECT DB CHECK END =====');
+
+        console.log('[boost/stats] Direct DB check end', {
+          userId: shortUserId,
+          directCheckCredits,
+        });
       } catch (error) {
-        console.error('[boost/stats] ❌ Exception in direct DB check:', error);
+        console.error('[boost/stats] Exception in direct DB check', {
+          userId: shortUserId,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     } else {
-      console.error('[boost/stats] ❌ supabaseAdmin is null - cannot do direct check');
+      console.error('[boost/stats] supabaseAdmin is null - cannot do direct check');
     }
 
-      // Si on a trouvé des boosts directement, les utiliser même sans profil
-      if (directCheckCredits > 0) {
-        console.log('[boost/stats] ✅ Found', directCheckCredits, 'boosts via direct check - using them');
-      
-      // Compter les boosts utilisés ce mois-ci
+    // Si on a trouvé des boosts directement, les utiliser même sans profil
+    if (directCheckCredits > 0) {
+      console.log('[boost/stats] Using credits from direct check', {
+        userId: shortUserId,
+        credits: directCheckCredits,
+      });
+
       let usedThisMonth = 0;
+
       if (supabaseAdmin) {
         try {
           const now = new Date();
-          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+          const monthStart = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            1,
+            0,
+            0,
+            0,
+            0
+          );
           const monthStartISO = monthStart.toISOString();
-          
-          // D'abord récupérer tous les boosts utilisés ce mois-ci pour debug
-          const { data: usedBoostsData, error: usedDataError } = await supabaseAdmin
-            .from("player_boost_uses")
-            .select("id, user_id, match_id, applied_at, points_after_boost")
-            .eq("user_id", user.id)
-            .gte("applied_at", monthStartISO);
-
-          console.log('[boost/stats] Used boosts data:', {
-            count: usedBoostsData?.length || 0,
-            error: usedDataError,
-            data: usedBoostsData?.map(b => ({
-              id: b.id?.substring(0, 8),
-              match_id: b.match_id?.substring(0, 8),
-              applied_at: b.applied_at,
-              points_after_boost: b.points_after_boost
-            })) || []
-          });
 
           const { count: usedCount, error: usedError } = await supabaseAdmin
-            .from("player_boost_uses")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .gte("applied_at", monthStartISO);
+            .from('player_boost_uses')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .gte('applied_at', monthStartISO);
 
           if (!usedError) {
             usedThisMonth = usedCount || 0;
-            console.log('[boost/stats] Direct used count:', usedThisMonth);
+            console.log('[boost/stats] Direct used count', {
+              userId: shortUserId,
+              usedThisMonth,
+            });
           } else {
-            console.error('[boost/stats] Error counting used boosts:', usedError);
+            console.error('[boost/stats] Error counting used boosts', {
+              userId: shortUserId,
+              message: usedError.message,
+              code: usedError.code,
+            });
           }
         } catch (error) {
-          console.error('[boost/stats] Error counting used boosts:', error);
+          console.error('[boost/stats] Exception counting used boosts', {
+            userId: shortUserId,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       }
-      
+
       const remainingThisMonth = Math.max(0, MAX_BOOSTS_PER_MONTH - usedThisMonth);
       const canUse = directCheckCredits > 0 && usedThisMonth < MAX_BOOSTS_PER_MONTH;
 
       const response = {
         creditsAvailable: directCheckCredits,
-        usedThisMonth: usedThisMonth,
-        remainingThisMonth: remainingThisMonth,
-        canUse: canUse,
+        usedThisMonth,
+        remainingThisMonth,
+        canUse,
       };
 
-      console.log('[boost/stats] ===== RESPONSE FROM DIRECT CHECK =====');
-      console.log('[boost/stats] Response:', JSON.stringify(response, null, 2));
+      console.log('[boost/stats] Response from direct check', {
+        userId: shortUserId,
+        ...response,
+      });
 
       return NextResponse.json(response, {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          Pragma: 'no-cache',
+          Expires: '0',
         },
       });
     }
-    
+
     // Sinon, vérifier si l'utilisateur a un profil (les comptes club n'ont pas de profil)
     const { data: profile } = await supabase
       .from('profiles')
@@ -173,9 +169,10 @@ export async function GET() {
       .eq('id', user.id)
       .maybeSingle();
 
-    // Si l'utilisateur n'a pas de profil (compte club), retourner des stats par défaut
     if (!profile) {
-      console.log('[boost/stats] No profile found for user (club account) and no boosts found');
+      console.log('[boost/stats] No profile found for user (club account) and no boosts found', {
+        userId: shortUserId,
+      });
       return NextResponse.json({
         creditsAvailable: 0,
         usedThisMonth: 0,
@@ -184,48 +181,47 @@ export async function GET() {
       });
     }
 
-    // UTILISER EXACTEMENT LA MÊME FONCTION QUE LA PAGE BOOST
-    console.log('[boost/stats] ===== CALLING getPlayerBoostStats =====');
-    console.log('[boost/stats] Calling getPlayerBoostStats for user:', user.id);
+    // Utiliser la fonction partagée
+    console.log('[boost/stats] Calling getPlayerBoostStats', { userId: shortUserId });
     const stats = await getPlayerBoostStats(user.id);
-    console.log('[boost/stats] Stats from getPlayerBoostStats:', JSON.stringify(stats, null, 2));
-    console.log('[boost/stats] ===== getPlayerBoostStats END =====');
+    console.log('[boost/stats] Stats from getPlayerBoostStats', {
+      userId: shortUserId,
+      creditsAvailable: stats.creditsAvailable,
+      usedThisMonth: stats.usedThisMonth,
+    });
 
-    // UTILISER LA VALEUR LA PLUS ÉLEVÉE ENTRE LA FONCTION ET LA VÉRIFICATION DIRECTE
-    // Si la vérification directe trouve des boosts, l'utiliser en priorité
-    const creditsAvailable = directCheckCredits > 0 ? directCheckCredits : (Number(stats.creditsAvailable) || 0);
-    
-    console.log('[boost/stats] ===== FINAL CALCULATION =====');
-    console.log('[boost/stats] From getPlayerBoostStats:', stats.creditsAvailable);
-    console.log('[boost/stats] From direct DB check:', directCheckCredits);
-    console.log('[boost/stats] Using maximum:', creditsAvailable);
-    
-    // Recalculer les autres valeurs si nécessaire
+    const creditsAvailable =
+      directCheckCredits > 0
+        ? directCheckCredits
+        : Number(stats.creditsAvailable) || 0;
+
     const usedThisMonth = Number(stats.usedThisMonth) || 0;
     const remainingThisMonth = Math.max(0, MAX_BOOSTS_PER_MONTH - usedThisMonth);
     const canUse = creditsAvailable > 0 && usedThisMonth < MAX_BOOSTS_PER_MONTH;
 
     const response = {
-      creditsAvailable: creditsAvailable,
-      usedThisMonth: usedThisMonth,
-      remainingThisMonth: remainingThisMonth,
-      canUse: canUse,
+      creditsAvailable,
+      usedThisMonth,
+      remainingThisMonth,
+      canUse,
     };
 
-    console.log('[boost/stats] ===== FINAL RESPONSE =====');
-    console.log('[boost/stats] Response being sent:', JSON.stringify(response, null, 2));
-    console.log('[boost/stats] creditsAvailable:', response.creditsAvailable, 'type:', typeof response.creditsAvailable);
+    console.log('[boost/stats] Final response', {
+      userId: shortUserId,
+      ...response,
+    });
 
     return NextResponse.json(response, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        Pragma: 'no-cache',
+        Expires: '0',
       },
     });
   } catch (error) {
-    console.error('[boost/stats] Error:', error);
-    // En cas d'erreur, retourner des stats par défaut au lieu d'une erreur HTTP
+    console.error('[boost/stats] Error in handler', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({
       creditsAvailable: 0,
       usedThisMonth: 0,
@@ -234,5 +230,3 @@ export async function GET() {
     });
   }
 }
-
-
