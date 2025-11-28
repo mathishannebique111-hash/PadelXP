@@ -1,23 +1,13 @@
-/**
- * Rate limiting utilities pour protéger l'application contre DDoS et brute force
- * Utilise Upstash Redis pour le rate limiting distribué
- */
-
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-
-// Note: Pour utiliser ce module, vous devez :
-// 1. Créer un compte Upstash (https://upstash.com)
-// 2. Créer une base Redis
-// 3. Ajouter les variables d'environnement :
-//    - UPSTASH_REDIS_REST_URL
-//    - UPSTASH_REDIS_REST_TOKEN
 
 let redisClient: Redis | null = null;
 try {
   redisClient = Redis.fromEnv();
 } catch (error) {
-  console.warn('[rate-limit] Upstash Redis not configured. Rate limiting will not work.');
+  console.warn(
+    "[rate-limit] Upstash Redis not configured. Rate limiting will not work."
+  );
 }
 
 // Rate limiter pour les tentatives de connexion
@@ -44,9 +34,10 @@ export const matchSubmissionRateLimit = redisClient
 export const reviewSubmissionRateLimit = redisClient
   ? new Ratelimit({
       redis: redisClient,
-      limiter: Ratelimit.slidingWindow(1, "1 h"), // 1 review / heure (max 1 à vie géré par API)
+      limiter: Ratelimit.slidingWindow(1, "1 h"), // 1 review / heure par joueur (clé = review-user:<userId>)
       analytics: true,
-      prefix: "@upstash/ratelimit/review",
+      // nouveau préfixe pour repartir sur des compteurs neufs (évite les anciennes clés IP)
+      prefix: "@upstash/ratelimit/review-v2",
     })
   : null;
 
@@ -76,17 +67,17 @@ export const apiRateLimit = redisClient
  * Obtient l'IP du client depuis une requête Next.js
  */
 export function getClientIP(req: Request): string {
-  const forwardedFor = req.headers.get('x-forwarded-for');
+  const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
+    return forwardedFor.split(",")[0].trim();
   }
-  
-  const realIP = req.headers.get('x-real-ip');
+
+  const realIP = req.headers.get("x-real-ip");
   if (realIP) {
     return realIP;
   }
-  
-  return 'unknown';
+
+  return "unknown";
 }
 
 /**
@@ -95,11 +86,18 @@ export function getClientIP(req: Request): string {
 export async function checkRateLimit(
   ratelimiter: Ratelimit | null,
   identifier: string
-): Promise<{ success: boolean; limit?: number; remaining?: number; reset?: number }> {
+): Promise<{
+  success: boolean;
+  limit?: number;
+  remaining?: number;
+  reset?: number;
+}> {
   if (!ratelimiter) {
     // Si le rate limiting n'est pas configuré, autoriser la requête
     // En production, vous devriez logger un avertissement
-    console.warn('[rate-limit] Rate limiter not configured, allowing request');
+    console.warn(
+      "[rate-limit] Rate limiter not configured, allowing request"
+    );
     return { success: true };
   }
 
@@ -112,9 +110,8 @@ export async function checkRateLimit(
       reset: result.reset,
     };
   } catch (error) {
-    console.error('[rate-limit] Error checking rate limit:', error);
+    console.error("[rate-limit] Error checking rate limit:", error);
     // En cas d'erreur, autoriser la requête pour ne pas bloquer les utilisateurs légitimes
     return { success: true };
   }
 }
-
