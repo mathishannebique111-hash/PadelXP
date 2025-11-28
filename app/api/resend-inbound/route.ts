@@ -203,26 +203,51 @@ export async function POST(req: NextRequest) {
     });
 
   // Récupérer le contenu de l'email (texte + HTML) de manière défensive
-    const rawText: string =
-      emailData.text ??
-      emailData.text_body ??
-      emailData.textBody ??
-      "";
-    const rawHtml: string | undefined =
-      emailData.html ??
-      emailData.html_body ??
-      emailData.htmlBody ??
-      undefined;
+  let rawText: string =
+    emailData.text ??
+    emailData.text_body ??
+    emailData.textBody ??
+    "";
+  let rawHtml: string | undefined =
+    emailData.html ??
+    emailData.html_body ??
+    emailData.htmlBody ??
+    undefined;
 
-    // Construire un texte brut correct même si l'email est uniquement HTML
-  let baseText = (rawText || "").trim();
-    if (!baseText && rawHtml) {
-      // Remplacer les <br> par des retours à la ligne puis enlever les balises
-      baseText = rawHtml
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<[^>]*>/g, "")
-        .trim();
+  // Si le corps n'est pas présent dans le payload, essayer de le récupérer
+  // via l'API Resend en utilisant emailId.
+  if (!rawText && !rawHtml && emailId && resend) {
+    try {
+      const fetched = await resend.emails.get(emailId);
+      if (fetched?.text) {
+        rawText = fetched.text;
+      }
+      if (!rawText && fetched?.html) {
+        rawHtml = fetched.html;
+      }
+      console.log("[resend-inbound] Fetched email body from Resend API", {
+        hasText: !!rawText,
+        hasHtml: !!rawHtml,
+      });
+    } catch (e: any) {
+      console.error(
+        "[resend-inbound] Failed to fetch email body from Resend API",
+        {
+          message: e?.message,
+        }
+      );
     }
+  }
+
+  // Construire un texte brut correct même si l'email est uniquement HTML
+  let baseText = (rawText || "").trim();
+  if (!baseText && rawHtml) {
+    // Remplacer les <br> par des retours à la ligne puis enlever les balises
+    baseText = rawHtml
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]*>/g, "")
+      .trim();
+  }
 
   const replyText = baseText;
 
