@@ -1,10 +1,22 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+// Initialisation conditionnelle de Resend
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
 const FORWARD_TO = process.env.FORWARD_TO_EMAIL!; // contactpadelxp@gmail.com
 
 export async function POST(req: NextRequest) {
+  // Vérifier la config Resend avant d'aller plus loin
+  if (!resendApiKey || !resend) {
+    console.error("❌ RESEND_API_KEY not configured for send-trial-reminder");
+    return NextResponse.json(
+      { error: "RESEND_API_KEY not configured" },
+      { status: 500 }
+    );
+  }
+
   const event = await req.json();
   console.log("Resend inbound event:", event);
 
@@ -18,7 +30,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Récupérer le mail complet
-  const { data: email, error } = await resend.emails.receiving.get(emailId);
+  const resendEmails = resend.emails as any;
+const { data: email, error } = await resendEmails.receiving?.get(emailId);
   if (error || !email) {
     console.error("Error fetching received email:", error);
     return NextResponse.json({ error: "fetch_failed" }, { status: 500 });
@@ -42,7 +55,7 @@ export async function POST(req: NextRequest) {
       <p><strong>Objet original :</strong> ${subject}</p>
       <hr style="margin:16px 0" />
       ${bodyHtml}
-                </div>
+    </div>
   `;
 
   const { error: sendError } = await resend.emails.send({
@@ -50,7 +63,7 @@ export async function POST(req: NextRequest) {
     to: [FORWARD_TO],
     subject: `Nouveau message de ${from} : ${subject}`,
     html: forwardHtml,
-    reply_to: from,
+    replyTo: from,
   });
 
   if (sendError) {
