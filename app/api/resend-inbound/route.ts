@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
     const clubId =
       emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
 
-    const reviewId =
+    let reviewId =
       emailData.headers?.["X-Review-ID"] ??
       emailData.headers?.["x-review-id"];
     const playerEmail =
@@ -149,6 +149,10 @@ export async function POST(req: NextRequest) {
       to &&
       (to.includes(INBOUND_EMAIL) || to.includes("contact@updates.padelxp.eu"));
 
+  // Détecter si c'est un avis modéré via le sujet
+  const isModeratedReview = typeof subject === "string" && 
+    (subject.toLowerCase().includes("avis modéré") || subject.includes("⚠️"));
+
   // Si aucun conversationId explicite dans les headers, essayer de l'extraire du sujet
   if (!conversationId && typeof subject === "string") {
     console.log(
@@ -156,6 +160,7 @@ export async function POST(req: NextRequest) {
       {
         subjectFull:
           subject.length > 120 ? subject.substring(0, 120) + "…" : subject,
+        isModeratedReview,
       }
     );
     // 1) Essayer de trouver un UUID complet entre crochets
@@ -175,10 +180,22 @@ export async function POST(req: NextRequest) {
     });
 
     if (match && match[1]) {
-      conversationId = match[1];
-      console.log("[resend-inbound] Conversation ID extracted from subject", {
-        hasConversationId: true,
-      });
+      const extractedId = match[1];
+      
+      // Si c'est un avis modéré et qu'on n'a pas de reviewId dans les headers,
+      // l'ID extrait peut être soit conversationId soit reviewId
+      // On va d'abord essayer comme reviewId si c'est un avis modéré
+      if (isModeratedReview && !reviewId) {
+        reviewId = extractedId;
+        console.log("[resend-inbound] Review ID extracted from subject (moderated review)", {
+          hasReviewId: true,
+        });
+      } else {
+        conversationId = extractedId;
+        console.log("[resend-inbound] Conversation ID extracted from subject", {
+          hasConversationId: true,
+        });
+      }
     }
   }
 
@@ -219,11 +236,13 @@ export async function POST(req: NextRequest) {
   if (!rawText && !rawHtml && emailId && resend) {
     try {
       const fetched = await resend.emails.get(emailId);
-      if (fetched?.text) {
-        rawText = fetched.text;
-      }
-      if (!rawText && fetched?.html) {
-        rawHtml = fetched.html;
+      if (fetched?.data && !fetched.error) {
+        if (fetched.data.text) {
+          rawText = fetched.data.text;
+        }
+        if (!rawText && fetched.data.html) {
+          rawHtml = fetched.data.html;
+        }
       }
       console.log("[resend-inbound] Fetched email body from Resend API", {
         hasText: !!rawText,
@@ -262,10 +281,11 @@ export async function POST(req: NextRequest) {
       replyPreview,
     });
   // --------- CAS 1 : Réponse d'admin dans une conversation de support ---------
-    // - Identifiée par la présence de conversationId
-    // - L'admin répond depuis Gmail, l'email arrive sur l'inbound
-    // - On enregistre le message dans support_messages, mais on NE le renvoie PAS vers Gmail
-    if (conversationId) {
+  // - Identifiée par la présence de conversationId ET le fait que ce soit une réponse (isReply === true)
+  // - ET que ce ne soit PAS un email d'avis modéré (isModeratedReview === false)
+  // - L'admin répond depuis Gmail, l'email arrive sur l'inbound
+  // - On enregistre le message dans support_messages, mais on NE le renvoie PAS vers Gmail
+  if (conversationId && isReply && !isModeratedReview && supabaseAdmin) {
       // Éviter les doublons si emailId déjà traité
       if (emailId) {
         const { data: existingMessage, error: existingError } = await supabaseAdmin
@@ -303,6 +323,14 @@ export async function POST(req: NextRequest) {
       const messageTextToStore =
         replyText ||
         (rawText ? rawText.substring(0, 2000) : "(message vide)");
+
+      if (!supabaseAdmin) {
+        console.error("[resend-inbound] supabaseAdmin is null, cannot store support message");
+        return NextResponse.json(
+          { error: "Database client not available" },
+          { status: 500 }
+        );
+      }
 
       const { error: insertError } = await supabaseAdmin
         .from("support_messages")
@@ -388,9 +416,89 @@ export async function POST(req: NextRequest) {
 
       // Corps du message à envoyer à l'admin :
       // 1) On essaie d'utiliser le texte brut (replyText / baseText)
-      // 2) Si c'est vide, on va chercher le dernier message texte dans support_messages
+      // 2) Si c'est vide et qu'on a un reviewId, chercher dans review_messages
+      // 3) Si c'est vide et qu'on a un conversationId, chercher dans support_messages
+      // 4) Si c'est vide et qu'on a reviewId/playerName, construire un message basique
       let forwardBody = replyText;
 
+      // Pour les avis modérés : chercher dans review_messages
+      // On utilise reviewId (dans les headers ou extrait du sujet) pour trouver la conversation, puis le message
+      if ((!forwardBody || forwardBody.trim().length === 0) && (reviewId || isModeratedReview) && supabaseAdmin) {
+        // Si on n'a pas de reviewId mais qu'on a un conversationId et que c'est un avis modéré,
+        // le conversationId peut être en fait le reviewId
+        let actualReviewId = reviewId;
+        if (!actualReviewId && conversationId && isModeratedReview) {
+          actualReviewId = typeof conversationId === "string" ? conversationId : String(conversationId);
+        }
+        
+        if (!actualReviewId) {
+          console.log("[resend-inbound] Cannot fetch review message: no reviewId available");
+        } else {
+        try {
+          // D'abord, trouver la conversation via reviewId
+          let reviewConversationId: string | null = null;
+          
+          // Si on a déjà un conversationId extrait du sujet, l'utiliser directement
+          // (mais seulement si ce n'est pas le reviewId lui-même)
+          if (conversationId && conversationId !== actualReviewId) {
+            reviewConversationId =
+              typeof conversationId === "string"
+                ? conversationId
+                : Array.isArray(conversationId)
+                ? conversationId[0]
+                : String(conversationId);
+          } else {
+            // Sinon, chercher la conversation via review_id
+            const { data: reviewConv, error: reviewConvError } = await supabaseAdmin
+              .from("review_conversations")
+              .select("id")
+              .eq("review_id", actualReviewId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (reviewConvError) {
+              console.error("[resend-inbound] Error fetching review conversation", {
+                code: reviewConvError.code,
+              });
+            } else if (reviewConv?.id) {
+              reviewConversationId = reviewConv.id;
+            }
+          }
+
+          // Si on a trouvé une conversation, chercher le message
+          if (reviewConversationId) {
+            const { data: reviewMessage, error: reviewMessageError } = await supabaseAdmin
+              .from("review_messages")
+              .select("message_text, html_content")
+              .eq("conversation_id", reviewConversationId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (reviewMessageError) {
+              console.error("[resend-inbound] Error fetching review message for forward", {
+                code: reviewMessageError.code,
+              });
+            } else if (reviewMessage?.message_text) {
+              forwardBody = String(reviewMessage.message_text);
+            } else if (reviewMessage?.html_content) {
+              // Extraire le texte du HTML si on n'a que le HTML
+              forwardBody = reviewMessage.html_content
+                .replace(/<br\s*\/?>/gi, "\n")
+                .replace(/<[^>]*>/g, "")
+                .trim();
+            }
+          }
+        } catch (e: any) {
+          console.error("[resend-inbound] Exception fetching review message for forward", {
+            message: e?.message,
+          });
+        }
+        }
+      }
+
+      // Pour les messages de support : chercher dans support_messages
       if ((!forwardBody || forwardBody.trim().length === 0) && conversationId && supabaseAdmin) {
         const safeConversationId =
           typeof conversationId === "string"
@@ -422,7 +530,23 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Toujours prévoir un fallback texte
+      // Fallback : construire un message basique pour les avis modérés si on a les infos
+      if ((!forwardBody || forwardBody.trim().length === 0) && isModeratedReview) {
+        // Extraire le nom du joueur depuis le sujet si on ne l'a pas dans les headers
+        let extractedPlayerName = playerName;
+        if (!extractedPlayerName && typeof subject === "string") {
+          const nameMatch = subject.match(/⚠️\s*Avis modéré\s*-\s*([^(]+)/i);
+          if (nameMatch && nameMatch[1]) {
+            extractedPlayerName = nameMatch[1].trim();
+          }
+        }
+        
+        if (extractedPlayerName || reviewId) {
+          forwardBody = `Avis modéré reçu${extractedPlayerName ? ` de ${extractedPlayerName}` : ""}${playerEmail ? ` (${playerEmail})` : ""}.\n\nVoir les détails dans le sujet de l'email.`;
+        }
+      }
+
+      // Dernier fallback : texte brut ou message vide
       if (!forwardBody || forwardBody.trim().length === 0) {
         forwardBody =
           (rawText && rawText.trim().length > 0
@@ -435,6 +559,8 @@ export async function POST(req: NextRequest) {
         {
           subjectPreview: subjectForForward.substring(0, 30),
           hasForwardBody: !!forwardBody && forwardBody.trim().length > 0,
+          hasReviewId: !!reviewId,
+          hasConversationId: !!conversationId,
         }
       );
 
@@ -445,7 +571,7 @@ export async function POST(req: NextRequest) {
         to: FORWARD_TO,
         replyTo: INBOUND_EMAIL,
         subject: subjectForForward,
-        // Corps du message : le texte complet saisi par le club
+        // Corps du message : le texte complet saisi par le club ou l'avis
         text: forwardBody,
       });
 
