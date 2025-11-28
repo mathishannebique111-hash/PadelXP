@@ -234,12 +234,29 @@ export async function POST(req: NextRequest) {
   // Si le corps n'est pas présent dans le payload, essayer de le récupérer
   // via l'API Resend Received Emails en utilisant emailId.
   // Note: Utilisation de l'API REST directement car le SDK peut ne pas exposer receiving.get()
+  console.log("[resend-inbound] Checking if we need to fetch email body", {
+    hasRawText: !!rawText && rawText.length > 0,
+    hasRawHtml: !!rawHtml && rawHtml.length > 0,
+    hasEmailId: !!emailId,
+    hasResend: !!resend,
+    willFetch: !rawText && !rawHtml && emailId && resend,
+  });
+
   if (!rawText && !rawHtml && emailId && resend) {
+    console.log("[resend-inbound] Attempting to fetch email body from Resend API");
     try {
       // Essayer d'abord avec le SDK si la méthode receiving existe (même non typée)
       try {
         const resendAny = resend as any;
-        if (resendAny.emails?.receiving?.get) {
+        const hasReceivingGet = !!resendAny.emails?.receiving?.get;
+        console.log("[resend-inbound] Checking SDK receiving.get()", {
+          hasReceivingGet,
+          hasEmails: !!resendAny.emails,
+          hasReceiving: !!resendAny.emails?.receiving,
+        });
+        
+        if (hasReceivingGet) {
+          console.log("[resend-inbound] Trying SDK receiving.get()");
           const fetched = await resendAny.emails.receiving.get(emailId);
           if (fetched?.data) {
             if (fetched.data.text) {
@@ -252,23 +269,31 @@ export async function POST(req: NextRequest) {
               hasText: !!rawText,
               hasHtml: !!rawHtml,
             });
+          } else {
+            console.log("[resend-inbound] SDK receiving.get() returned no data");
           }
+        } else {
+          console.log("[resend-inbound] SDK receiving.get() method not available");
         }
       } catch (sdkError: any) {
         // Si le SDK ne fonctionne pas, utiliser l'API REST
-        console.log("[resend-inbound] SDK receiving.get() not available, trying REST API");
+        console.log("[resend-inbound] SDK receiving.get() threw error, trying REST API", {
+          error: sdkError?.message,
+        });
         
         if (resendApiKey) {
           // Essayer plusieurs endpoints possibles pour les emails reçus
+          // L'endpoint officiel selon la doc Resend est /emails/receiving/{email_id}
           const endpoints = [
-            `https://api.resend.com/receiving/emails/${emailId}`,
             `https://api.resend.com/emails/receiving/${emailId}`,
+            `https://api.resend.com/receiving/emails/${emailId}`,
             `https://api.resend.com/emails/${emailId}`,
           ];
 
           let fetched: any = null;
           for (const endpoint of endpoints) {
             try {
+              console.log("[resend-inbound] Trying endpoint", { endpoint });
               const response = await fetch(endpoint, {
                 method: "GET",
                 headers: {
@@ -277,26 +302,38 @@ export async function POST(req: NextRequest) {
                 },
               });
 
+              console.log("[resend-inbound] Endpoint response", {
+                endpoint,
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok,
+              });
+
               if (response.ok) {
                 fetched = await response.json();
                 console.log("[resend-inbound] Successfully fetched from endpoint", {
                   endpoint,
                   hasData: !!fetched,
+                  fetchedKeys: Object.keys(fetched || {}),
+                  hasDataField: !!fetched?.data,
+                  dataKeys: fetched?.data ? Object.keys(fetched.data) : [],
                 });
                 break;
-              } else if (response.status !== 404) {
-                // Si c'est une autre erreur que 404, logger mais continuer
+              } else {
+                // Logger toutes les erreurs pour diagnostic
                 const errorText = await response.text().catch(() => "");
                 console.log("[resend-inbound] Endpoint returned error", {
                   endpoint,
                   status: response.status,
-                  errorPreview: errorText.substring(0, 100),
+                  statusText: response.statusText,
+                  errorPreview: errorText.substring(0, 200),
                 });
               }
             } catch (fetchError: any) {
               console.log("[resend-inbound] Error trying endpoint", {
                 endpoint,
                 error: fetchError?.message,
+                errorName: fetchError?.name,
               });
             }
           }
@@ -304,6 +341,15 @@ export async function POST(req: NextRequest) {
           if (fetched) {
             // L'API peut retourner les données dans data ou directement
             const emailData = fetched?.data || fetched;
+            console.log("[resend-inbound] Processing fetched email data", {
+              hasEmailData: !!emailData,
+              emailDataKeys: Object.keys(emailData || {}),
+              hasText: !!emailData?.text,
+              hasHtml: !!emailData?.html,
+              textLength: emailData?.text?.length || 0,
+              htmlLength: emailData?.html?.length || 0,
+            });
+            
             if (emailData?.text) {
               rawText = emailData.text;
             }
@@ -313,16 +359,20 @@ export async function POST(req: NextRequest) {
             console.log("[resend-inbound] Fetched email body from Resend REST API", {
               hasText: !!rawText,
               hasHtml: !!rawHtml,
-              responseKeys: Object.keys(emailData || {}),
+              rawTextLength: rawText?.length || 0,
+              rawHtmlLength: rawHtml?.length || 0,
             });
           } else {
             console.error(
               "[resend-inbound] All Resend REST API endpoints failed",
               {
                 emailId,
+                triedEndpoints: endpoints.length,
               }
             );
           }
+        } else {
+          console.error("[resend-inbound] resendApiKey is not available for REST API call");
         }
       }
     } catch (e: any) {
