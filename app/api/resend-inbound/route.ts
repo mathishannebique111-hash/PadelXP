@@ -258,19 +258,30 @@ export async function POST(req: NextRequest) {
         if (hasReceivingGet) {
           console.log("[resend-inbound] Trying SDK receiving.get()");
           const fetched = await resendAny.emails.receiving.get(emailId);
-          if (fetched?.data) {
-            if (fetched.data.text) {
-              rawText = fetched.data.text;
+          console.log("[resend-inbound] SDK receiving.get() response structure", {
+            hasFetched: !!fetched,
+            hasData: !!fetched?.data,
+            fetchedKeys: fetched ? Object.keys(fetched) : [],
+            dataKeys: fetched?.data ? Object.keys(fetched.data) : [],
+          });
+          
+          // Le SDK peut retourner { data: { html, text } } ou directement { html, text }
+          const emailData = fetched?.data || fetched;
+          if (emailData) {
+            if (emailData.text) {
+              rawText = emailData.text;
             }
-            if (fetched.data.html) {
-              rawHtml = fetched.data.html;
+            if (emailData.html) {
+              rawHtml = emailData.html;
             }
             console.log("[resend-inbound] Fetched email body via SDK receiving.get()", {
               hasText: !!rawText,
               hasHtml: !!rawHtml,
+              textLength: rawText?.length || 0,
+              htmlLength: rawHtml?.length || 0,
             });
           } else {
-            console.log("[resend-inbound] SDK receiving.get() returned no data");
+            console.log("[resend-inbound] SDK receiving.get() returned no data or emailData");
           }
         } else {
           console.log("[resend-inbound] SDK receiving.get() method not available");
@@ -339,21 +350,25 @@ export async function POST(req: NextRequest) {
           }
 
           if (fetched) {
-            // L'API peut retourner les données dans data ou directement
+            // L'API REST retourne directement { html, text, ... } selon la doc Resend
+            // Mais peut aussi être wrappé dans { data: { html, text } }
             const emailData = fetched?.data || fetched;
             console.log("[resend-inbound] Processing fetched email data", {
               hasEmailData: !!emailData,
               emailDataKeys: Object.keys(emailData || {}),
               hasText: !!emailData?.text,
               hasHtml: !!emailData?.html,
+              textValue: emailData?.text ? (emailData.text.length > 0 ? `${emailData.text.substring(0, 50)}...` : "empty string") : "undefined/null",
+              htmlValue: emailData?.html ? (emailData.html.length > 0 ? `${emailData.html.substring(0, 50)}...` : "empty string") : "undefined/null",
               textLength: emailData?.text?.length || 0,
               htmlLength: emailData?.html?.length || 0,
             });
             
-            if (emailData?.text) {
+            // Selon la doc Resend, les champs peuvent être null ou des strings vides
+            if (emailData?.text && typeof emailData.text === "string" && emailData.text.length > 0) {
               rawText = emailData.text;
             }
-            if (emailData?.html) {
+            if (emailData?.html && typeof emailData.html === "string" && emailData.html.length > 0) {
               rawHtml = emailData.html;
             }
             console.log("[resend-inbound] Fetched email body from Resend REST API", {
