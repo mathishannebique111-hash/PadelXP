@@ -416,13 +416,13 @@ export async function POST(req: NextRequest) {
 
       // Corps du message à envoyer à l'admin :
       // 1) On essaie d'utiliser le texte brut (replyText / baseText)
-      // 2) Si c'est vide et qu'on a un reviewId, chercher dans review_messages
+      // 2) Si c'est vide et qu'on a un reviewId, chercher dans review_messages et reconstruire le HTML
       // 3) Si c'est vide et qu'on a un conversationId, chercher dans support_messages
       // 4) Si c'est vide et qu'on a reviewId/playerName, construire un message basique
       let forwardBody = replyText;
+      let forwardHtml: string | undefined = undefined;
 
-      // Pour les avis modérés : chercher dans review_messages
-      // On utilise reviewId (dans les headers ou extrait du sujet) pour trouver la conversation, puis le message
+      // Pour les avis modérés : récupérer toutes les infos et reconstruire le HTML complet
       if ((!forwardBody || forwardBody.trim().length === 0) && (reviewId || isModeratedReview) && supabaseAdmin) {
         // Si on n'a pas de reviewId mais qu'on a un conversationId et que c'est un avis modéré,
         // le conversationId peut être en fait le reviewId
@@ -435,63 +435,122 @@ export async function POST(req: NextRequest) {
           console.log("[resend-inbound] Cannot fetch review message: no reviewId available");
         } else {
         try {
-          // D'abord, trouver la conversation via reviewId
-          let reviewConversationId: string | null = null;
-          
-          // Si on a déjà un conversationId extrait du sujet, l'utiliser directement
-          // (mais seulement si ce n'est pas le reviewId lui-même)
-          if (conversationId && conversationId !== actualReviewId) {
-            reviewConversationId =
-              typeof conversationId === "string"
-                ? conversationId
-                : Array.isArray(conversationId)
-                ? conversationId[0]
-                : String(conversationId);
-          } else {
-            // Sinon, chercher la conversation via review_id
-            const { data: reviewConv, error: reviewConvError } = await supabaseAdmin
-              .from("review_conversations")
-              .select("id")
-              .eq("review_id", actualReviewId)
-              .order("created_at", { ascending: false })
-              .limit(1)
+          // Récupérer la conversation avec toutes les infos
+          const { data: reviewConv, error: reviewConvError } = await supabaseAdmin
+            .from("review_conversations")
+            .select("id, user_name, user_email, subject")
+            .eq("review_id", actualReviewId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (reviewConvError) {
+            console.error("[resend-inbound] Error fetching review conversation", {
+              code: reviewConvError.code,
+            });
+          } else if (reviewConv?.id) {
+            // Récupérer l'avis pour avoir rating et comment
+            const { data: review, error: reviewError } = await supabaseAdmin
+              .from("reviews")
+              .select("rating, comment")
+              .eq("id", actualReviewId)
               .maybeSingle();
 
-            if (reviewConvError) {
-              console.error("[resend-inbound] Error fetching review conversation", {
-                code: reviewConvError.code,
+            if (reviewError) {
+              console.error("[resend-inbound] Error fetching review", {
+                code: reviewError.code,
               });
-            } else if (reviewConv?.id) {
-              reviewConversationId = reviewConv.id;
             }
-          }
 
-          // Si on a trouvé une conversation, chercher le message
-          if (reviewConversationId) {
-            const { data: reviewMessage, error: reviewMessageError } = await supabaseAdmin
-              .from("review_messages")
-              .select("message_text, html_content")
-              .eq("conversation_id", reviewConversationId)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
+            const playerName = reviewConv.user_name || "Joueur";
+            const playerEmail = reviewConv.user_email || "";
+            const rating = review?.rating || 0;
+            const comment = review?.comment || null;
+            const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
 
-            if (reviewMessageError) {
-              console.error("[resend-inbound] Error fetching review message for forward", {
-                code: reviewMessageError.code,
-              });
-            } else if (reviewMessage?.message_text) {
-              forwardBody = String(reviewMessage.message_text);
-            } else if (reviewMessage?.html_content) {
-              // Extraire le texte du HTML si on n'a que le HTML
-              forwardBody = reviewMessage.html_content
-                .replace(/<br\s*\/?>/gi, "\n")
-                .replace(/<[^>]*>/g, "")
-                .trim();
-            }
+            // Reconstruire le HTML complet avec le même design que lib/email.ts
+            forwardHtml = `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="utf-8">
+                  <style>
+                    body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #FF6B6B, #EE5A6F); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .review-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF6B6B; }
+                    .info-row { margin: 10px 0; }
+                    .info-label { font-weight: bold; color: #666; }
+                    .info-value { color: #333; }
+                    .stars { color: #FFD700; font-size: 18px; }
+                    .comment-box { background: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0; font-style: italic; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <div class="header">
+                      <h1>⚠️ Avis modéré détecté</h1>
+                    </div>
+                    <div class="content">
+                      <p>Bonjour,</p>
+                      <p>Un avis a été soumis avec une note faible (3 étoiles ou moins) et un texte court (6 mots ou moins). Cet avis a été automatiquement masqué du site et nécessite votre attention.</p>
+                      
+                      <div class="review-box">
+                        <div class="info-row">
+                          <span class="info-label">Joueur :</span>
+                          <span class="info-value">${playerName}</span>
+                        </div>
+                        <div class="info-row">
+                          <span class="info-label">Email :</span>
+                          <span class="info-value">${playerEmail}</span>
+                        </div>
+                        <div class="info-row">
+                          <span class="info-label">Note :</span>
+                          <span class="stars">${stars}</span>
+                          <span class="info-value">${rating}/5</span>
+                        </div>
+                        ${comment ? `
+                          <div class="info-row">
+                            <span class="info-label">Commentaire :</span>
+                          </div>
+                          <div class="comment-box">
+                            "${comment}"
+                          </div>
+                        ` : '<div class="info-row"><span class="info-label">Commentaire :</span> <span class="info-value">Aucun commentaire</span></div>'}
+                        <div class="info-row">
+                          <span class="info-label">ID de l'avis :</span>
+                          <span class="info-value">${actualReviewId}</span>
+                        </div>
+                      </div>
+                      
+                      <p><strong>Action recommandée :</strong></p>
+                      <ul style="margin: 10px 0 0 20px;">
+                        <li>Contactez le joueur pour comprendre son problème</li>
+                        <li>Résolvez le problème s'il y en a un</li>
+                        <li>Si l'avis est justifié, vous pouvez le laisser masqué ou le supprimer</li>
+                      </ul>
+                      
+                      <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #2196F3;">
+                        <p style="margin: 0; font-size: 14px; color: #1976D2;">
+                          <strong>💡 Astuce :</strong> Vous pouvez répondre directement à cet email pour contacter le joueur. Votre réponse lui sera envoyée automatiquement à <strong>${playerEmail}</strong>.
+                        </p>
+                      </div>
+                      
+                      <p style="margin-top: 30px; font-size: 12px; color: #666;">
+                        Cet avis n'est pas visible sur le site public tant qu'il n'a pas été modéré.
+                      </p>
+                    </div>
+                  </div>
+                </body>
+              </html>
+            `;
+
+            // Extraire aussi le texte brut pour le fallback
+            forwardBody = `Note: ${rating}/5\n${comment ? `Commentaire: ${comment}` : "Aucun commentaire"}\n\nJoueur: ${playerName}\nEmail: ${playerEmail}`;
           }
         } catch (e: any) {
-          console.error("[resend-inbound] Exception fetching review message for forward", {
+          console.error("[resend-inbound] Exception fetching review data for forward", {
             message: e?.message,
           });
         }
@@ -571,7 +630,8 @@ export async function POST(req: NextRequest) {
         to: FORWARD_TO,
         replyTo: INBOUND_EMAIL,
         subject: subjectForForward,
-        // Corps du message : le texte complet saisi par le club ou l'avis
+        // Corps du message : HTML si disponible (avis modérés), sinon texte brut
+        html: forwardHtml || undefined,
         text: forwardBody,
       });
 
