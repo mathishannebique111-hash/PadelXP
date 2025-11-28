@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { sendModeratedReviewEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
-import { reviewSubmissionRateLimit, getClientIP, checkRateLimit } from "@/lib/rate-limit";
+import { reviewSubmissionRateLimit, checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * Compte le nombre de mots dans un texte
@@ -156,33 +156,6 @@ export async function GET(req: Request) {
 
 // POST - Créer un nouvel avis (tous les joueurs inscrits)
 export async function POST(req: Request) {
-  // 🔒 Rate limiting par IP (1 review / heure)
-  const ip = getClientIP(req);
-  const rl = await checkRateLimit(reviewSubmissionRateLimit, `review:${ip}`);
-
-  if (!rl.success) {
-    return NextResponse.json(
-      {
-        error:
-          "Vous avez déjà soumis un avis récemment. Merci de patienter avant de soumettre un nouvel avis.",
-      },
-      {
-        status: 429,
-        headers: {
-          ...(rl.limit !== undefined
-            ? { "X-RateLimit-Limit": String(rl.limit) }
-            : {}),
-          ...(rl.remaining !== undefined
-            ? { "X-RateLimit-Remaining": String(rl.remaining) }
-            : {}),
-          ...(rl.reset !== undefined
-            ? { "X-RateLimit-Reset": String(rl.reset) }
-            : {}),
-        },
-      }
-    );
-  }
-
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -212,6 +185,37 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "Vous devez être connecté pour laisser un avis" },
       { status: 401 }
+    );
+  }
+
+  console.log("[reviews] rate-limit key", `review-user:${user.id}`);
+
+  // 🔒 Rate limiting par joueur (1 review / heure)
+  const rl = await checkRateLimit(
+    reviewSubmissionRateLimit,
+    `review-user:${user.id}`
+  );
+
+  if (!rl.success) {
+    return NextResponse.json(
+      {
+        error:
+          "Vous avez déjà soumis un avis récemment. Merci de patienter avant de soumettre un nouvel avis.",
+      },
+      {
+        status: 429,
+        headers: {
+          ...(rl.limit !== undefined
+            ? { "X-RateLimit-Limit": String(rl.limit) }
+            : {}),
+          ...(rl.remaining !== undefined
+            ? { "X-RateLimit-Remaining": String(rl.remaining) }
+            : {}),
+          ...(rl.reset !== undefined
+            ? { "X-RateLimit-Reset": String(rl.reset) }
+            : {}),
+        },
+      }
     );
   }
 
