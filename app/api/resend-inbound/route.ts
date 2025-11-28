@@ -329,10 +329,55 @@ export async function POST(req: NextRequest) {
           ? subject.substring(0, 200)
           : "(Sans sujet)";
 
+      // Corps du message à envoyer à l'admin :
+      // 1) On essaie d'utiliser le texte brut (replyText / baseText)
+      // 2) Si c'est vide, on va chercher le dernier message texte dans support_messages
+      let forwardBody = replyText;
+
+      if ((!forwardBody || forwardBody.trim().length === 0) && conversationId && supabaseAdmin) {
+        const safeConversationId =
+          typeof conversationId === "string"
+            ? conversationId
+            : Array.isArray(conversationId)
+            ? conversationId[0]
+            : String(conversationId);
+
+        try {
+          const { data: lastMessage, error: lastMessageError } = await supabaseAdmin
+            .from("support_messages")
+            .select("message_text")
+            .eq("conversation_id", safeConversationId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (lastMessageError) {
+            console.error("[resend-inbound] Error fetching last support message for forward", {
+              code: lastMessageError.code,
+            });
+          } else if (lastMessage?.message_text) {
+            forwardBody = String(lastMessage.message_text);
+          }
+        } catch (e: any) {
+          console.error("[resend-inbound] Exception fetching last support message for forward", {
+            message: e?.message,
+          });
+        }
+      }
+
+      // Toujours prévoir un fallback texte
+      if (!forwardBody || forwardBody.trim().length === 0) {
+        forwardBody =
+          (rawText && rawText.trim().length > 0
+            ? rawText.substring(0, 2000)
+            : "") || "(message vide)";
+      }
+
       console.log(
         "[resend-inbound] Forwarding inbound email to FORWARD_TO (admin)",
         {
           subjectPreview: subjectForForward.substring(0, 30),
+          hasForwardBody: !!forwardBody && forwardBody.trim().length > 0,
         }
       );
 
@@ -343,12 +388,8 @@ export async function POST(req: NextRequest) {
         to: FORWARD_TO,
         replyTo: INBOUND_EMAIL,
         subject: subjectForForward,
-        // Ne pas inclure tout l'historique, mais au moins le début du message
-        text:
-          (replyText && replyText.length > 0
-            ? replyText
-            : rawText.substring(0, 2000)) ||
-          "(message vide)",
+        // Corps du message : le texte complet saisi par le club
+        text: forwardBody,
       });
 
       return NextResponse.json({
