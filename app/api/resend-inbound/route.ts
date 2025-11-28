@@ -18,18 +18,18 @@ const supabaseAdmin =
     ? createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        }
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
       )
     : null;
 
 export async function POST(req: NextRequest) {
   console.log("[resend-inbound] Webhook called");
-
+  
   try {
     // Vérifier les variables d'environnement
     if (!process.env.RESEND_API_KEY || !resend) {
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       emailData.recipient_email ??
       "";
     const emailId = emailData.email_id;
-
+    
   const senderType =
     emailData.headers?.["X-Sender-Type"] ??
     emailData.headers?.["x-sender-type"];
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
         console.log("[resend-inbound] Review ID extracted from subject (moderated review)", {
           hasReviewId: true,
         });
-      } else {
+    } else {
         conversationId = extractedId;
         console.log("[resend-inbound] Conversation ID extracted from subject", {
           hasConversationId: true,
@@ -232,25 +232,48 @@ export async function POST(req: NextRequest) {
     undefined;
 
   // Si le corps n'est pas présent dans le payload, essayer de le récupérer
-  // via l'API Resend en utilisant emailId.
-  if (!rawText && !rawHtml && emailId && resend) {
+  // via l'API Resend Received Emails en utilisant emailId.
+  // Note: Utilisation de l'API REST directement car le SDK peut ne pas exposer receiving.get()
+  if (!rawText && !rawHtml && emailId && resendApiKey) {
     try {
-      const fetched = await resend.emails.get(emailId);
-      if (fetched?.data && !fetched.error) {
-        if (fetched.data.text) {
-          rawText = fetched.data.text;
+      // Utiliser l'endpoint Receiving Emails API de Resend
+      const response = await fetch(
+        `https://api.resend.com/emails/${emailId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+          },
         }
-        if (!rawText && fetched.data.html) {
-          rawHtml = fetched.data.html;
+      );
+
+      if (response.ok) {
+        const fetched = await response.json();
+        // L'API peut retourner les données dans data ou directement
+        const emailData = fetched?.data || fetched;
+        if (emailData?.text) {
+          rawText = emailData.text;
         }
+        if (emailData?.html) {
+          rawHtml = emailData.html;
+        }
+      } else {
+        console.error(
+          "[resend-inbound] Resend API returned error",
+          {
+            status: response.status,
+            statusText: response.statusText,
+          }
+        );
       }
-      console.log("[resend-inbound] Fetched email body from Resend API", {
+      console.log("[resend-inbound] Fetched email body from Resend Receiving API", {
         hasText: !!rawText,
         hasHtml: !!rawHtml,
       });
     } catch (e: any) {
       console.error(
-        "[resend-inbound] Failed to fetch email body from Resend API",
+        "[resend-inbound] Failed to fetch email body from Resend Receiving API",
         {
           message: e?.message,
         }
@@ -424,31 +447,49 @@ export async function POST(req: NextRequest) {
 
       // Pour les avis modérés : récupérer toutes les infos et reconstruire le HTML complet
       if ((!forwardBody || forwardBody.trim().length === 0) && (reviewId || isModeratedReview) && supabaseAdmin) {
-        // Si on n'a pas de reviewId mais qu'on a un conversationId et que c'est un avis modéré,
-        // le conversationId peut être en fait le reviewId
-        let actualReviewId = reviewId;
-        if (!actualReviewId && conversationId && isModeratedReview) {
-          actualReviewId = typeof conversationId === "string" ? conversationId : String(conversationId);
-        }
-        
-        if (!actualReviewId) {
-          console.log("[resend-inbound] Cannot fetch review message: no reviewId available");
-        } else {
         try {
-          // Récupérer la conversation avec toutes les infos
-          const { data: reviewConv, error: reviewConvError } = await supabaseAdmin
-            .from("review_conversations")
-            .select("id, user_name, user_email, subject")
-            .eq("review_id", actualReviewId)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          let reviewConv: any = null;
+          let actualReviewId: string | null = reviewId || null;
 
-          if (reviewConvError) {
-            console.error("[resend-inbound] Error fetching review conversation", {
-              code: reviewConvError.code,
-            });
-          } else if (reviewConv?.id) {
+          // D'abord, essayer de trouver la conversation avec l'ID extrait du sujet
+          // (qui peut être soit conversationId soit reviewId selon comment l'email a été envoyé)
+          if (conversationId && isModeratedReview) {
+            const safeConversationId =
+              typeof conversationId === "string"
+                ? conversationId
+                : Array.isArray(conversationId)
+                ? conversationId[0]
+                : String(conversationId);
+
+            // Chercher la conversation par son ID
+            const { data: convById, error: convByIdError } = await supabaseAdmin
+              .from("review_conversations")
+              .select("id, review_id, user_name, user_email, subject")
+              .eq("id", safeConversationId)
+        .maybeSingle();
+
+            if (!convByIdError && convById) {
+              reviewConv = convById;
+              actualReviewId = convById.review_id;
+            }
+          }
+
+          // Si on n'a pas trouvé par conversationId, essayer par reviewId
+          if (!reviewConv && actualReviewId) {
+            const { data: convByReviewId, error: convByReviewIdError } = await supabaseAdmin
+              .from("review_conversations")
+              .select("id, review_id, user_name, user_email, subject")
+              .eq("review_id", actualReviewId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (!convByReviewIdError && convByReviewId) {
+              reviewConv = convByReviewId;
+            }
+          }
+
+          if (reviewConv && actualReviewId) {
             // Récupérer l'avis pour avoir rating et comment
             const { data: review, error: reviewError } = await supabaseAdmin
               .from("reviews")
@@ -548,12 +589,13 @@ export async function POST(req: NextRequest) {
 
             // Extraire aussi le texte brut pour le fallback
             forwardBody = `Note: ${rating}/5\n${comment ? `Commentaire: ${comment}` : "Aucun commentaire"}\n\nJoueur: ${playerName}\nEmail: ${playerEmail}`;
+          } else {
+            console.log("[resend-inbound] Could not find review conversation or review data");
           }
         } catch (e: any) {
           console.error("[resend-inbound] Exception fetching review data for forward", {
             message: e?.message,
           });
-        }
         }
       }
 
@@ -618,8 +660,10 @@ export async function POST(req: NextRequest) {
         {
           subjectPreview: subjectForForward.substring(0, 30),
           hasForwardBody: !!forwardBody && forwardBody.trim().length > 0,
+          hasForwardHtml: !!forwardHtml && forwardHtml.trim().length > 0,
           hasReviewId: !!reviewId,
           hasConversationId: !!conversationId,
+          isModeratedReview,
         }
       );
 
@@ -660,8 +704,8 @@ export async function POST(req: NextRequest) {
     console.error(
       "[resend-inbound] Unexpected error in inbound webhook handler",
       {
-        message: error?.message,
-        name: error?.name,
+      message: error?.message,
+      name: error?.name,
       }
     );
     return NextResponse.json(
