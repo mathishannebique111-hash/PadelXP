@@ -149,6 +149,10 @@ export async function POST(req: NextRequest) {
       to &&
       (to.includes(INBOUND_EMAIL) || to.includes("contact@updates.padelxp.eu"));
 
+    // Normaliser les champs potentiellement non-string pour éviter les erreurs de substring
+    const fromStr = typeof from === "string" ? from : "";
+    const toStr = typeof to === "string" ? to : "";
+
     console.log("[resend-inbound] Email metadata (anonymized)", {
       senderType,
       hasConversationId: !!conversationId,
@@ -161,8 +165,8 @@ export async function POST(req: NextRequest) {
       hasEmailId: !!emailId,
       // On tronque les champs potentiellement sensibles
       subjectPreview: subject ? subject.substring(0, 30) : null,
-      fromPreview: from ? from.substring(0, 8) + "…" : null,
-      toPreview: to ? to.substring(0, 8) + "…" : null,
+      fromPreview: fromStr ? fromStr.substring(0, 8) + "…" : null,
+      toPreview: toStr ? toStr.substring(0, 8) + "…" : null,
     });
 
     // Récupérer le contenu de l'email (texte + HTML) de manière défensive
