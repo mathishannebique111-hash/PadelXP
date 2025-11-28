@@ -243,152 +243,140 @@ export async function POST(req: NextRequest) {
   });
 
   if (!rawText && !rawHtml && emailId && resend) {
-    console.log("[resend-inbound] Attempting to fetch email body from Resend API");
-    try {
-      // Essayer d'abord avec le SDK si la méthode receiving existe (même non typée)
-      try {
-        const resendAny = resend as any;
-        const hasReceivingGet = !!resendAny.emails?.receiving?.get;
-        console.log("[resend-inbound] Checking SDK receiving.get()", {
-          hasReceivingGet,
-          hasEmails: !!resendAny.emails,
-          hasReceiving: !!resendAny.emails?.receiving,
-        });
-        
-        if (hasReceivingGet) {
-          console.log("[resend-inbound] Trying SDK receiving.get()");
-          const fetched = await resendAny.emails.receiving.get(emailId);
-          console.log("[resend-inbound] SDK receiving.get() response structure", {
-            hasFetched: !!fetched,
-            hasData: !!fetched?.data,
-            fetchedKeys: fetched ? Object.keys(fetched) : [],
-            dataKeys: fetched?.data ? Object.keys(fetched.data) : [],
-          });
+    console.log("[resend-inbound] Attempting to fetch email body from Resend API", {
+      emailId,
+    });
+    
+    // Fonction helper pour récupérer le contenu avec retry (le contenu peut ne pas être immédiatement disponible)
+    const fetchEmailContent = async (retries = 3, delayMs = 1500): Promise<{ text?: string; html?: string } | null> => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          // Essayer d'abord avec le SDK si la méthode receiving existe
+          const resendAny = resend as any;
+          const hasReceivingGet = !!resendAny.emails?.receiving?.get;
           
-          // Le SDK peut retourner { data: { html, text } } ou directement { html, text }
-          const emailData = fetched?.data || fetched;
-          if (emailData) {
-            if (emailData.text) {
-              rawText = emailData.text;
-            }
-            if (emailData.html) {
-              rawHtml = emailData.html;
-            }
-            console.log("[resend-inbound] Fetched email body via SDK receiving.get()", {
-              hasText: !!rawText,
-              hasHtml: !!rawHtml,
-              textLength: rawText?.length || 0,
-              htmlLength: rawHtml?.length || 0,
+          if (hasReceivingGet) {
+            console.log(`[resend-inbound] Attempt ${attempt}/${retries}: Trying SDK receiving.get()`, {
+              emailId,
             });
-          } else {
-            console.log("[resend-inbound] SDK receiving.get() returned no data or emailData");
-          }
-        } else {
-          console.log("[resend-inbound] SDK receiving.get() method not available");
-        }
-      } catch (sdkError: any) {
-        // Si le SDK ne fonctionne pas, utiliser l'API REST
-        console.log("[resend-inbound] SDK receiving.get() threw error, trying REST API", {
-          error: sdkError?.message,
-        });
-        
-        if (resendApiKey) {
-          // Essayer plusieurs endpoints possibles pour les emails reçus
-          // L'endpoint officiel selon la doc Resend est /emails/receiving/{email_id}
-          const endpoints = [
-            `https://api.resend.com/emails/receiving/${emailId}`,
-            `https://api.resend.com/receiving/emails/${emailId}`,
-            `https://api.resend.com/emails/${emailId}`,
-          ];
-
-          let fetched: any = null;
-          for (const endpoint of endpoints) {
-            try {
-              console.log("[resend-inbound] Trying endpoint", { endpoint });
-              const response = await fetch(endpoint, {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${resendApiKey}`,
-                  "Content-Type": "application/json",
-                },
-              });
-
-              console.log("[resend-inbound] Endpoint response", {
-                endpoint,
-                status: response.status,
-                statusText: response.statusText,
-                ok: response.ok,
-              });
-
-              if (response.ok) {
-                fetched = await response.json();
-                console.log("[resend-inbound] Successfully fetched from endpoint", {
-                  endpoint,
-                  hasData: !!fetched,
-                  fetchedKeys: Object.keys(fetched || {}),
-                  hasDataField: !!fetched?.data,
-                  dataKeys: fetched?.data ? Object.keys(fetched.data) : [],
-                });
-                break;
-              } else {
-                // Logger toutes les erreurs pour diagnostic
-                const errorText = await response.text().catch(() => "");
-                console.log("[resend-inbound] Endpoint returned error", {
-                  endpoint,
-                  status: response.status,
-                  statusText: response.statusText,
-                  errorPreview: errorText.substring(0, 200),
-                });
-              }
-            } catch (fetchError: any) {
-              console.log("[resend-inbound] Error trying endpoint", {
-                endpoint,
-                error: fetchError?.message,
-                errorName: fetchError?.name,
-              });
-            }
-          }
-
-          if (fetched) {
-            // L'API REST retourne directement { html, text, ... } selon la doc Resend
-            // Mais peut aussi être wrappé dans { data: { html, text } }
-            const emailData = fetched?.data || fetched;
-            console.log("[resend-inbound] Processing fetched email data", {
-              hasEmailData: !!emailData,
-              emailDataKeys: Object.keys(emailData || {}),
-              hasText: !!emailData?.text,
-              hasHtml: !!emailData?.html,
-              textValue: emailData?.text ? (emailData.text.length > 0 ? `${emailData.text.substring(0, 50)}...` : "empty string") : "undefined/null",
-              htmlValue: emailData?.html ? (emailData.html.length > 0 ? `${emailData.html.substring(0, 50)}...` : "empty string") : "undefined/null",
-              textLength: emailData?.text?.length || 0,
-              htmlLength: emailData?.html?.length || 0,
+            const fetched = await resendAny.emails.receiving.get(emailId);
+            console.log("[resend-inbound] SDK receiving.get() response structure", {
+              hasFetched: !!fetched,
+              hasData: !!fetched?.data,
+              fetchedKeys: fetched ? Object.keys(fetched) : [],
+              dataKeys: fetched?.data ? Object.keys(fetched.data) : [],
             });
             
-            // Selon la doc Resend, les champs peuvent être null ou des strings vides
-            if (emailData?.text && typeof emailData.text === "string" && emailData.text.length > 0) {
-              rawText = emailData.text;
-            }
-            if (emailData?.html && typeof emailData.html === "string" && emailData.html.length > 0) {
-              rawHtml = emailData.html;
-            }
-            console.log("[resend-inbound] Fetched email body from Resend REST API", {
-              hasText: !!rawText,
-              hasHtml: !!rawHtml,
-              rawTextLength: rawText?.length || 0,
-              rawHtmlLength: rawHtml?.length || 0,
-            });
-          } else {
-            console.error(
-              "[resend-inbound] All Resend REST API endpoints failed",
-              {
-                emailId,
-                triedEndpoints: endpoints.length,
+            // Le SDK peut retourner { data: { html, text } } ou directement { html, text }
+            const emailData = fetched?.data || fetched;
+            if (emailData) {
+              const hasText = emailData.text && typeof emailData.text === "string" && emailData.text.length > 0;
+              const hasHtml = emailData.html && typeof emailData.html === "string" && emailData.html.length > 0;
+              
+              if (hasText || hasHtml) {
+                console.log("[resend-inbound] Successfully fetched email body via SDK", {
+                  hasText,
+                  hasHtml,
+                  textLength: emailData.text?.length || 0,
+                  htmlLength: emailData.html?.length || 0,
+                });
+                return {
+                  text: hasText ? emailData.text : undefined,
+                  html: hasHtml ? emailData.html : undefined,
+                };
+              } else {
+                console.log(`[resend-inbound] Attempt ${attempt}: Email body empty, will retry...`);
               }
-            );
+            }
           }
-        } else {
-          console.error("[resend-inbound] resendApiKey is not available for REST API call");
+          
+          // Si le SDK ne fonctionne pas ou n'a pas de contenu, essayer l'API REST
+          if (resendApiKey) {
+            const endpoints = [
+              `https://api.resend.com/emails/receiving/${emailId}`,
+              `https://api.resend.com/receiving/emails/${emailId}`,
+            ];
+
+            for (const endpoint of endpoints) {
+              try {
+                console.log(`[resend-inbound] Attempt ${attempt}: Trying REST endpoint`, { endpoint });
+                const response = await fetch(endpoint, {
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${resendApiKey}`,
+                    "Content-Type": "application/json",
+                  },
+                });
+
+                if (response.ok) {
+                  const fetched = await response.json();
+                  const emailData = fetched?.data || fetched;
+                  
+                  const hasText = emailData?.text && typeof emailData.text === "string" && emailData.text.length > 0;
+                  const hasHtml = emailData?.html && typeof emailData.html === "string" && emailData.html.length > 0;
+                  
+                  if (hasText || hasHtml) {
+                    console.log("[resend-inbound] Successfully fetched email body via REST API", {
+                      endpoint,
+                      hasText,
+                      hasHtml,
+                      textLength: emailData.text?.length || 0,
+                      htmlLength: emailData.html?.length || 0,
+                    });
+                    return {
+                      text: hasText ? emailData.text : undefined,
+                      html: hasHtml ? emailData.html : undefined,
+                    };
+                  }
+                } else if (response.status !== 404) {
+                  const errorText = await response.text().catch(() => "");
+                  console.log("[resend-inbound] Endpoint returned error", {
+                    endpoint,
+                    status: response.status,
+                    errorPreview: errorText.substring(0, 100),
+                  });
+                }
+              } catch (fetchError: any) {
+                console.log("[resend-inbound] Error trying endpoint", {
+                  endpoint,
+                  error: fetchError?.message,
+                });
+              }
+            }
+          }
+          
+          // Si on n'a pas réussi et qu'il reste des tentatives, attendre avant de réessayer
+          if (attempt < retries) {
+            console.log(`[resend-inbound] Waiting ${delayMs}ms before retry ${attempt + 1}/${retries}...`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+          }
+        } catch (e: any) {
+          console.error(`[resend-inbound] Error in attempt ${attempt}`, {
+            message: e?.message,
+            name: e?.name,
+          });
+          if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+          }
         }
+      }
+      
+      return null;
+    };
+    
+    try {
+      const content = await fetchEmailContent(3, 1500);
+      if (content) {
+        if (content.text) {
+          rawText = content.text;
+        }
+        if (content.html) {
+          rawHtml = content.html;
+        }
+      } else {
+        console.error("[resend-inbound] Failed to fetch email body after all retries", {
+          emailId,
+        });
       }
     } catch (e: any) {
       console.error(
