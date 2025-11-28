@@ -158,9 +158,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   // 🔒 Rate limiting par IP (1 review / heure)
   const ip = getClientIP(req);
-  console.log("[reviews rate-limit] IP:", ip);
   const rl = await checkRateLimit(reviewSubmissionRateLimit, `review:${ip}`);
-  console.log("[reviews rate-limit] result:", rl);
 
   if (!rl.success) {
     return NextResponse.json(
