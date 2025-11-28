@@ -127,8 +127,8 @@ export async function POST(request: NextRequest) {
 
     console.log('[contact] Attempting to send email:', {
       from: fromEmail,
-      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound pour que le webhook resend-inbound le transfère vers Gmail
-      replyTo: userEmail,
+      to: FORWARD_TO_EMAIL, // Envoyer directement vers l'email administrateur
+      replyTo: INBOUND_EMAIL, // Les réponses iront vers l'inbound pour être capturées par le webhook
       clubName,
       hasResendKey: !!process.env.RESEND_API_KEY,
       resendKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) + '...' : 'none',
@@ -300,12 +300,12 @@ export async function POST(request: NextRequest) {
     console.log('[contact] Calling resend.emails.send...');
     const emailSubject = `[${conversationId}] Message de contact - ${clubName}`;
     
-    // Essayer d'abord d'envoyer vers l'inbound email
-    // Si ça échoue avec une erreur de test, envoyer directement à Gmail
+    // Envoyer en priorité directement à l'email administrateur.
+    // Les réponses iront vers l'adresse inbound (via replyTo) et seront traitées par le webhook resend-inbound.
     let emailResult = await resend.emails.send({
       from: fromEmail,
-      to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound de Resend (sera capturé par le webhook resend-inbound et transféré vers Gmail)
-      replyTo: userEmail, // Réponses envoyées à l'email du club, mais Resend webhook les capturera
+      to: FORWARD_TO_EMAIL, // Envoyer directement à Gmail (administrateur)
+      replyTo: INBOUND_EMAIL, // Les réponses iront à l'inbound pour être capturées par le webhook
       subject: emailSubject,
       headers: {
         'X-Conversation-ID': conversationId,
@@ -365,16 +365,16 @@ export async function POST(request: NextRequest) {
       dataDetails: emailResult.data ? JSON.stringify(emailResult.data, null, 2) : null,
     });
 
-    // Si l'envoi vers l'inbound échoue, essayer d'envoyer directement à Gmail
+    // Si l'envoi direct à Gmail échoue, essayer d'envoyer vers l'adresse inbound comme secours
     if (emailResult.error && INBOUND_EMAIL !== FORWARD_TO_EMAIL) {
       const errorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
-      console.error('[contact] Resend API error when sending to inbound:', JSON.stringify(emailResult.error, null, 2));
-      console.log('[contact] Trying to send directly to Gmail as fallback...');
+      console.error('[contact] Resend API error when sending to Gmail (FORWARD_TO_EMAIL):', JSON.stringify(emailResult.error, null, 2));
+      console.log('[contact] Trying to send to inbound email as fallback...');
       
       emailResult = await resend.emails.send({
         from: fromEmail,
-        to: FORWARD_TO_EMAIL, // Envoyer directement à Gmail
-        replyTo: INBOUND_EMAIL, // Les réponses iront à l'inbound pour être capturées par le webhook
+        to: INBOUND_EMAIL, // Envoyer vers l'adresse inbound en secours
+        replyTo: userEmail, // Dans ce cas de secours, les réponses iront directement au club
         subject: emailSubject,
         headers: {
           'X-Conversation-ID': conversationId,
@@ -429,9 +429,9 @@ export async function POST(request: NextRequest) {
       });
       
       if (!emailResult.error) {
-        console.log('[contact] Email sent successfully to Gmail (fallback):', {
+        console.log('[contact] Email sent successfully to inbound (fallback):', {
           id: emailResult.data?.id,
-          to: FORWARD_TO_EMAIL,
+          to: INBOUND_EMAIL,
           conversationId,
         });
       } else {
@@ -444,7 +444,7 @@ export async function POST(request: NextRequest) {
     if (!emailResult.error && emailResult.data?.id) {
       console.log('[contact] Email sent successfully:', {
         id: emailResult.data.id,
-        to: INBOUND_EMAIL,
+        to: FORWARD_TO_EMAIL,
         conversationId,
       });
     }

@@ -110,12 +110,12 @@ export async function POST(req: NextRequest) {
       "";
     const emailId = emailData.email_id;
 
-    const senderType =
-      emailData.headers?.["X-Sender-Type"] ??
-      emailData.headers?.["x-sender-type"];
-    let conversationId =
-      emailData.headers?.["X-Conversation-ID"] ??
-      emailData.headers?.["x-conversation-id"];
+  const senderType =
+    emailData.headers?.["X-Sender-Type"] ??
+    emailData.headers?.["x-sender-type"];
+  let conversationId =
+    emailData.headers?.["X-Conversation-ID"] ??
+    emailData.headers?.["x-conversation-id"];
     const clubId =
       emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
 
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
       emailData.headers?.["References"] ??
       emailData.headers?.["references"] ??
       emailData.references;
-    const isReply = !!(
+  const isReply = !!(
       inReplyTo ||
       references ||
       (subject &&
@@ -145,9 +145,42 @@ export async function POST(req: NextRequest) {
           subject.toLowerCase().includes("ré:")))
     );
 
-    const isFromInbound =
+  const isFromInbound =
       to &&
       (to.includes(INBOUND_EMAIL) || to.includes("contact@updates.padelxp.eu"));
+
+  // Si aucun conversationId explicite dans les headers, essayer de l'extraire du sujet
+  if (!conversationId && typeof subject === "string") {
+    console.log(
+      "[resend-inbound] Trying to extract conversationId from subject",
+      {
+        subjectFull:
+          subject.length > 120 ? subject.substring(0, 120) + "…" : subject,
+      }
+    );
+    // 1) Essayer de trouver un UUID complet entre crochets
+    let match = subject.match(/\[([0-9a-fA-F-]{36})\]/);
+
+    // 2) Si pas trouvé, prendre simplement le contenu des premiers crochets
+    if (!match) {
+      const genericMatch = subject.match(/\[([^\]]+)\]/);
+      if (genericMatch && genericMatch[1]) {
+        match = genericMatch as RegExpMatchArray;
+      }
+    }
+
+    console.log("[resend-inbound] Subject regex match result", {
+      hasMatch: !!match,
+      extractedPreview: match && match[1] ? match[1].substring(0, 40) + "…" : null,
+    });
+
+    if (match && match[1]) {
+      conversationId = match[1];
+      console.log("[resend-inbound] Conversation ID extracted from subject", {
+        hasConversationId: true,
+      });
+    }
+  }
 
     // Normaliser les champs potentiellement non-string pour éviter les erreurs de substring
     const fromStr = typeof from === "string" ? from : "";
@@ -169,7 +202,7 @@ export async function POST(req: NextRequest) {
       toPreview: toStr ? toStr.substring(0, 8) + "…" : null,
     });
 
-    // Récupérer le contenu de l'email (texte + HTML) de manière défensive
+  // Récupérer le contenu de l'email (texte + HTML) de manière défensive
     const rawText: string =
       emailData.text ??
       emailData.text_body ??
@@ -182,7 +215,7 @@ export async function POST(req: NextRequest) {
       undefined;
 
     // Construire un texte brut correct même si l'email est uniquement HTML
-    let baseText = (rawText || "").trim();
+  let baseText = (rawText || "").trim();
     if (!baseText && rawHtml) {
       // Remplacer les <br> par des retours à la ligne puis enlever les balises
       baseText = rawHtml
@@ -191,7 +224,7 @@ export async function POST(req: NextRequest) {
         .trim();
     }
 
-    const replyText = baseText;
+  const replyText = baseText;
 
     // Préparer un petit résumé anonymisé pour les logs
     const replyPreview =
@@ -199,12 +232,11 @@ export async function POST(req: NextRequest) {
         ? replyText.substring(0, 30).replace(/\s+/g, " ")
         : null;
 
-    console.log("[resend-inbound] Parsed reply content (anonymized)", {
+  console.log("[resend-inbound] Parsed reply content (anonymized)", {
       hasReplyText: replyText.length > 0,
       replyPreview,
     });
-
-    // --------- CAS 1 : Réponse d'admin dans une conversation de support ---------
+  // --------- CAS 1 : Réponse d'admin dans une conversation de support ---------
     // - Identifiée par la présence de conversationId
     // - L'admin répond depuis Gmail, l'email arrive sur l'inbound
     // - On enregistre le message dans support_messages, mais on NE le renvoie PAS vers Gmail
