@@ -389,6 +389,99 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Fonction pour extraire uniquement la nouvelle réponse en enlevant les parties citées
+  const extractReplyContent = (text: string, html?: string): string => {
+    // Si on a du HTML, on l'utilise d'abord pour extraire le texte
+    if (html) {
+      // Enlever les blockquotes et divs de citation (Gmail, Outlook, etc.)
+      let cleanHtml = html
+        // Enlever les blockquotes
+        .replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, "")
+        // Enlever les divs de citation Gmail
+        .replace(/<div[^>]*class="gmail_quote"[^>]*>[\s\S]*?<\/div>/gi, "")
+        // Enlever les divs de citation Outlook
+        .replace(/<div[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
+        // Enlever les divs avec style de citation
+        .replace(/<div[^>]*style="[^"]*border-left[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
+        // Enlever les tables de citation
+        .replace(/<table[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/table>/gi, "");
+      
+      // Convertir le HTML nettoyé en texte
+      let cleanText = cleanHtml
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>/gi, "\n")
+        .replace(/<\/div>/gi, "\n")
+        .replace(/<[^>]*>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .trim();
+      
+      // Si on a du texte après nettoyage, l'utiliser
+      if (cleanText.length > 0) {
+        text = cleanText;
+      }
+    }
+    
+    // Nettoyer le texte brut : enlever les lignes citées
+    const lines = text.split("\n");
+    const cleanLines: string[] = [];
+    let inQuotedSection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Détecter le début d'une section citée
+      if (
+        line.startsWith(">") ||
+        /^On .+ wrote:?$/i.test(line) ||
+        /^Le .+ a écrit:?$/i.test(line) ||
+        /^From: .+$/i.test(line) ||
+        /^Date: .+$/i.test(line) ||
+        /^Subject: .+$/i.test(line) ||
+        /^De : .+$/i.test(line) ||
+        /^Date : .+$/i.test(line) ||
+        /^Objet : .+$/i.test(line) ||
+        line.match(/^[-_]{3,}/) // Séparateurs comme "---" ou "___"
+      ) {
+        inQuotedSection = true;
+        continue;
+      }
+      
+      // Si on est dans une section citée et qu'on trouve une ligne vide suivie d'une ligne normale,
+      // on peut considérer qu'on est sorti de la citation (mais c'est risqué)
+      if (inQuotedSection && line.length === 0 && i + 1 < lines.length) {
+        const nextLine = lines[i + 1]?.trim() || "";
+        if (nextLine.length > 0 && !nextLine.startsWith(">")) {
+          // Vérifier si la ligne suivante ne ressemble pas à une citation
+          if (
+            !/^On .+ wrote:?$/i.test(nextLine) &&
+            !/^Le .+ a écrit:?$/i.test(nextLine) &&
+            !nextLine.match(/^[-_]{3,}/)
+          ) {
+            inQuotedSection = false;
+            cleanLines.push("");
+            continue;
+          }
+        }
+      }
+      
+      // Si on n'est pas dans une section citée, garder la ligne
+      if (!inQuotedSection) {
+        cleanLines.push(lines[i]);
+      }
+    }
+    
+    let result = cleanLines.join("\n").trim();
+    
+    // Enlever les lignes vides multiples en début/fin
+    result = result.replace(/^\n+|\n+$/g, "");
+    
+    return result;
+  };
+
   // Construire un texte brut correct même si l'email est uniquement HTML
   let baseText = (rawText || "").trim();
   if (!baseText && rawHtml) {
@@ -399,7 +492,8 @@ export async function POST(req: NextRequest) {
       .trim();
   }
 
-  const replyText = baseText;
+  // Extraire uniquement la nouvelle réponse (sans les parties citées)
+  const replyText = extractReplyContent(baseText, rawHtml);
 
     // Préparer un petit résumé anonymisé pour les logs
     const replyPreview =
@@ -458,6 +552,26 @@ export async function POST(req: NextRequest) {
         replyText ||
         (rawText ? rawText.substring(0, 2000) : "(message vide)");
 
+      // Nettoyer aussi le HTML pour enlever les parties citées
+      let cleanHtml: string | null = null;
+      if (rawHtml && rawHtml.length > 0) {
+        // Enlever les blockquotes et divs de citation
+        cleanHtml = rawHtml
+          .replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, "")
+          .replace(/<div[^>]*class="gmail_quote"[^>]*>[\s\S]*?<\/div>/gi, "")
+          .replace(/<div[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
+          .replace(/<div[^>]*style="[^"]*border-left[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
+          .replace(/<table[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/table>/gi, "")
+          .trim();
+        
+        // Si après nettoyage il ne reste rien ou presque, ne pas stocker de HTML
+        if (cleanHtml.length < 50) {
+          cleanHtml = null;
+        } else {
+          cleanHtml = cleanHtml.substring(0, 4000);
+        }
+      }
+
       if (!supabaseAdmin) {
         console.error("[resend-inbound] supabaseAdmin is null, cannot store support message");
         return NextResponse.json(
@@ -474,10 +588,7 @@ export async function POST(req: NextRequest) {
           sender_id: null,
           sender_email: from || "unknown",
           message_text: messageTextToStore,
-          html_content:
-            rawHtml && rawHtml.length > 0
-              ? rawHtml.substring(0, 4000)
-              : null,
+          html_content: cleanHtml,
           email_message_id: emailId || null,
         });
 
