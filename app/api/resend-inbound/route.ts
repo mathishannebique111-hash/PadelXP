@@ -181,7 +181,17 @@ export async function POST(req: NextRequest) {
       emailData.htmlBody ??
       undefined;
 
-      const replyText = (rawText || "").trim();
+    // Construire un texte brut correct même si l'email est uniquement HTML
+    let baseText = (rawText || "").trim();
+    if (!baseText && rawHtml) {
+      // Remplacer les <br> par des retours à la ligne puis enlever les balises
+      baseText = rawHtml
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]*>/g, "")
+        .trim();
+    }
+
+    const replyText = baseText;
 
     // Préparer un petit résumé anonymisé pour les logs
     const replyPreview =
