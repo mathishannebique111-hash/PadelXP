@@ -154,8 +154,9 @@ export async function POST(req: Request) {
     );
   }
 
-    console.log(`[claim-reward] User ${user.id} claiming reward for challenge ${challengeId}`);
-
+  const userIdPreview = user.id.substring(0, 8) + "…";
+  console.log(`[claim-reward] User ${userIdPreview} claiming reward...`);
+  
     // 1) Vérifier que le challenge existe et n'est pas expiré
     const clubId = await resolveClubId(user.id);
     if (!clubId) {

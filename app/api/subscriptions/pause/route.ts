@@ -18,9 +18,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
+    const userIdPreview = user.id.substring(0, 8) + "…";
+
     const { clubId } = await getUserClubInfo();
     if (!clubId) {
-      console.warn("[pause subscription] Refus : club introuvable pour user", user.id);
+      console.warn("[pause subscription] Refus : club introuvable pour user", userIdPreview);
       return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
     }
 
@@ -43,12 +45,12 @@ export async function POST(req: Request) {
     }
 
     // LOG avant l'action
-    console.log("[pause subscription] Tentative user", user.id, "club", clubId, "subs", subscription.id);
+    console.log("[pause subscription] Tentative user", userIdPreview, "club", clubId, "subs", subscription.id);
 
     const success = await pauseSubscription(subscription.id, user.id);
 
     if (!success) {
-      console.error("[pause subscription] Échec mise en pause", subscription.id, user.id);
+      console.error("[pause subscription] Échec mise en pause", subscription.id, userIdPreview);
       return NextResponse.json(
         { error: "Erreur lors de la mise en pause" },
         { status: 500 }
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
     const updatedSubscription = await getClubSubscription(clubId);
 
     // LOG après l'action
-    console.log("[pause subscription] Succès user", user.id, "club", clubId, "subs", subscription.id);
+    console.log("[pause subscription] Succès user", userIdPreview, "club", clubId, "subs", subscription.id);
 
     return NextResponse.json({
       success: true,

@@ -18,9 +18,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
+    const userIdPreview = user.id.substring(0, 8) + "…";
+
     const { clubId } = await getUserClubInfo();
     if (!clubId) {
-      console.warn("[resume subscription] Refus : club introuvable pour user", user.id);
+      console.warn("[resume subscription] Refus : club introuvable pour user", userIdPreview);
       return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
     }
 
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
 
     // Vérifier si un moyen de paiement est présent
     if (!subscription.has_payment_method) {
-      console.warn("[resume subscription] Refus : pas de moyen de paiement enregistré", subscription.id, user.id);
+      console.warn("[resume subscription] Refus : pas de moyen de paiement enregistré", subscription.id, userIdPreview);
       return NextResponse.json(
         {
           error: "Aucun moyen de paiement enregistré",
@@ -54,12 +56,12 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("[resume subscription] Tentative de reprise sub", subscription.id, "par user", user.id, "club", clubId);
+    console.log("[resume subscription] Tentative de reprise sub", subscription.id, "par user", userIdPreview, "club", clubId);
 
     const success = await resumeSubscription(subscription.id, user.id);
 
     if (!success) {
-      console.error("[resume subscription] Échec de la reprise", subscription.id, user.id);
+      console.error("[resume subscription] Échec de la reprise", subscription.id, userIdPreview);
       return NextResponse.json(
         { error: "Erreur lors de la reprise" },
         { status: 500 }
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
 
     const updatedSubscription = await getClubSubscription(clubId);
 
-    console.log("[resume subscription] Succès de la reprise sub", subscription.id, "par user", user.id, "club", clubId);
+    console.log("[resume subscription] Succès de la reprise sub", subscription.id, "par user", userIdPreview, "club", clubId);
 
     return NextResponse.json({
       success: true,

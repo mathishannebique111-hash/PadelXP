@@ -11,7 +11,7 @@ function getEnvVar(key: string): string | undefined {
 
 // Initialiser Stripe avec la clé secrète
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-10-29.clover',
 });
 
 export const dynamic = 'force-dynamic';
@@ -110,8 +110,9 @@ export async function POST(req: NextRequest) {
 
     // Vérifier que l'utilisateur a un ID valide
     if (!user.id || typeof user.id !== 'string') {
-      console.error('[checkout-boost] Invalid user ID:', user.id);
-      return NextResponse.json(
+      const userIdPreview = user.id.substring(0, 8) + "…";
+      console.error('[checkout-boost] Invalid user ID:', userIdPreview);
+            return NextResponse.json(
         { error: 'Informations utilisateur invalides. Veuillez vous reconnecter.' },
         { status: 401 }
       );

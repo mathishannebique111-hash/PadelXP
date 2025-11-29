@@ -111,8 +111,9 @@ export async function GET(req: Request) {
     }
 
     if (!userClubId) {
-      console.warn('[Search API] User without club attempting search', { userId: user.id });
-      return NextResponse.json({ players: [] }, { status: 403 });
+      const userIdPreview = user.id.substring(0, 8) + "…";
+      console.warn('[Search API] User without club attempting search', { userId: userIdPreview });
+            return NextResponse.json({ players: [] }, { status: 403 });
     }
     console.log('[Search API] User club_id:', userClubId, 'User profile:', userProfile);
 

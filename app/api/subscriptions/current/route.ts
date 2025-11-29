@@ -16,7 +16,7 @@ const ClubIdSchema = z.object({
  */
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -38,8 +38,9 @@ export async function GET() {
     const { clubId } = checkClub.data;
 
     // Log entrée
-    console.log("[subscriptions/current] user:", user.id, "club:", clubId);
-
+    const userIdPreview = user.id.substring(0, 8) + "…";
+    console.log("[subscriptions/current] user:", userIdPreview, "club:", clubId);
+    
     // Check droits métier (selon logique, ajoute ici si admin/membre seulement !)
 
     // Récupérer ou initialiser l'abonnement

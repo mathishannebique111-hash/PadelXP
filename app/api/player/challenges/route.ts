@@ -381,17 +381,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
+  const userIdPreview = user.id.substring(0, 8) + "…";
+
   const clubId = await resolveClubId(user.id);
-  console.log(`[api/player/challenges] Resolved clubId for user ${user.id}:`, clubId);
+  console.log(`[api/player/challenges] Resolved clubId for user ${userIdPreview}:`, clubId);
   if (!clubId) {
-    console.warn(`[api/player/challenges] No clubId found for user ${user.id}, returning empty challenges`);
+    console.warn(`[api/player/challenges] No clubId found for user ${userIdPreview}, returning empty challenges`);
     return NextResponse.json({ challenges: [] });
   }
 
   const records = await loadChallenges(clubId);
   console.log(`[api/player/challenges] Loaded ${records.length} challenges for club ${clubId}`);
   if (records.length > 0) {
-    console.log(`[Player ${user.id}] Challenges:`, records.map(r => ({
+    console.log(`[Player ${userIdPreview}] Challenges:`, records.map(r => ({
       id: r.id.substring(0, 8),
       title: r.title,
       start_date: r.start_date,
@@ -404,9 +406,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ challenges: [] });
   }
 
-  console.log(`[api/player/challenges] About to load player history for user ${user.id}`);
+  console.log(`[api/player/challenges] About to load player history for user ${userIdPreview}`);
   const history = await loadPlayerHistory(user.id);
-  console.log(`[api/player/challenges] Player ${user.id} - Loaded ${history.length} matches from history`);
+  console.log(`[api/player/challenges] Player ${userIdPreview} - Loaded ${history.length} matches from history`);
   
   if (history.length > 0) {
     console.log(`[api/player/challenges] Recent matches:`, history.slice(-5).map(h => ({
@@ -415,7 +417,7 @@ export async function GET(request: Request) {
       isWinner: h.isWinner
     })));
   } else {
-    console.warn(`[api/player/challenges] ⚠️ NO MATCHES FOUND for user ${user.id} - this will cause progress to be 0`);
+    console.warn(`[api/player/challenges] ⚠️ NO MATCHES FOUND for user ${userIdPreview} - this will cause progress to be 0`);
   }
 
   // Récupérer les récompenses déjà réclamées

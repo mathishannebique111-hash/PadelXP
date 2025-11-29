@@ -85,8 +85,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (!clubId) {
-      console.error('[support-conversation] ❌ No club_id found for user:', user.id);
-      return NextResponse.json({ 
+      const userIdPreview = user.id.substring(0, 8) + "…";
+      console.error('[support-conversation] ❌ No club_id found for user:', userIdPreview);
+            return NextResponse.json({ 
         error: 'Vous devez être rattaché à un club',
         conversation: null,
         messages: []

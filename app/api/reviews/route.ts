@@ -44,7 +44,7 @@ async function getClubMemberIds(
     .select("id")
     .eq("club_id", clubId);
 
-  const ids = (data || []).map((member) => member.id).filter(Boolean) as string[];
+  const ids = (data || []).map((member: { id: string }) => member.id).filter(Boolean) as string[];
   return ids;
 }
 
@@ -188,8 +188,9 @@ export async function POST(req: Request) {
     );
   }
 
-  console.log("[reviews] rate-limit key", `review-user:${user.id}`);
-
+  const userIdPreview = user.id.substring(0, 8) + "…";
+  console.log("[reviews] rate-limit key", `review-user:${userIdPreview}`);
+  
   // 🔒 Rate limiting par joueur (1 review / heure)
   const rl = await checkRateLimit(
     reviewSubmissionRateLimit,
