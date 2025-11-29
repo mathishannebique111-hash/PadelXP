@@ -37,8 +37,13 @@ const { data: email, error } = await resendEmails.receiving?.get(emailId);
     return NextResponse.json({ error: "fetch_failed" }, { status: 500 });
   }
 
-  console.log("Full inbound email:", email);
-
+  console.log("Email received:", {
+    hasEmail: !!email,
+    subjectPreview: email?.subject?.substring(0, 30) || null,
+    fromPreview: email?.from?.substring(0, 8) + "…" || null,
+    toCount: email?.to?.length || 0,
+  });
+  
   const subject = email.subject ?? "(Sans sujet)";
   const from = email.from ?? "Expéditeur inconnu";
 

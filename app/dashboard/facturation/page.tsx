@@ -114,6 +114,8 @@ export default async function BillingPage() {
 
   const currentPlan: PlanType = (subscription?.plan_cycle as PlanType) ?? null;
   const autoRenewal = subscription?.cancel_at_period_end === false;
+  // Vérifier si l'abonnement est annulé sur Stripe
+  const isSubscriptionCanceled = subscription?.status === "canceled";
 
   // Date de fin d'essai (référence pour premier prélèvement si un plan est choisi pendant l’essai)
   const effectiveTrialEnd = trialEndDate;
@@ -330,12 +332,12 @@ export default async function BillingPage() {
           {/* Mensuel */}
           <div
             className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
-              currentPlan === "monthly"
+              currentPlan === "monthly" && !isSubscriptionCanceled
                 ? "border-white/70 bg-gradient-to-br from-white/20 via-slate-100/10 to-white/20 shadow-[0_10px_35px_rgba(255,255,255,0.25)]"
                 : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
             }`}
           >
-            {currentPlan === "monthly" && (
+            {currentPlan === "monthly" && !isSubscriptionCanceled && (
               <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
                 <span className="rounded-full border-2 border-white/80 bg-gradient-to-r from-white to-slate-200 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-slate-800 shadow-lg">
                   ✓ Plan actuel
@@ -360,24 +362,24 @@ export default async function BillingPage() {
             <StripeCheckoutButton
               priceId={PRICE_MONTHLY}
               mode="subscription"
-              disabled={currentPlan === "monthly" || !PRICE_MONTHLY}
+              disabled={(currentPlan === "monthly" && !isSubscriptionCanceled) || !PRICE_MONTHLY}
               className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${
-                currentPlan === "monthly" || !PRICE_MONTHLY
+                (currentPlan === "monthly" && !isSubscriptionCanceled) || !PRICE_MONTHLY
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
               }`}
             >
-              {currentPlan === "monthly" ? "Plan actuel" : "Sélectionner ce plan"}
+              {currentPlan === "monthly" && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
             </StripeCheckoutButton>
           </div>
 
           {/* Trimestriel */}
           <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
-            currentPlan === "quarterly"
+            currentPlan === "quarterly" && !isSubscriptionCanceled
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-emerald-400/60 bg-gradient-to-br from-emerald-500/15 via-green-600/10 to-emerald-500/15 shadow-[0_12px_40px_rgba(16,185,129,0.3)]"
           }`}>
-            {currentPlan === "quarterly" && (
+            {currentPlan === "quarterly" && !isSubscriptionCanceled && (
               <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
                 <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   ✓ Plan actuel
@@ -406,24 +408,24 @@ export default async function BillingPage() {
             <StripeCheckoutButton
               priceId={PRICE_QUARTERLY}
               mode="subscription"
-              disabled={currentPlan === "quarterly" || !PRICE_QUARTERLY}
+              disabled={(currentPlan === "quarterly" && !isSubscriptionCanceled) || !PRICE_QUARTERLY}
               className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${
-                currentPlan === "quarterly" || !PRICE_QUARTERLY
+                (currentPlan === "quarterly" && !isSubscriptionCanceled) || !PRICE_QUARTERLY
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-2 border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_28px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-100"
               }`}
             >
-              {currentPlan === "quarterly" ? "Plan actuel" : "Sélectionner ce plan"}
+              {currentPlan === "quarterly" && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
             </StripeCheckoutButton>
           </div>
 
           {/* Annuel */}
           <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${
-            currentPlan === "annual"
+            currentPlan === "annual" && !isSubscriptionCanceled
               ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
               : "border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]"
           }`}>
-            {currentPlan === "annual" && (
+            {currentPlan === "annual" && !isSubscriptionCanceled && (
               <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
                 <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
                   ✓ Plan actuel
@@ -459,14 +461,14 @@ export default async function BillingPage() {
             <StripeCheckoutButton
               priceId={PRICE_ANNUAL}
               mode="subscription"
-              disabled={currentPlan === "annual" || !PRICE_ANNUAL}
+              disabled={(currentPlan === "annual" && !isSubscriptionCanceled) || !PRICE_ANNUAL}
               className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${
-                currentPlan === "annual" || !PRICE_ANNUAL
+                (currentPlan === "annual" && !isSubscriptionCanceled) || !PRICE_ANNUAL
                   ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
                   : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
               }`}
             >
-              {currentPlan === "annual" ? "Plan actuel" : "Sélectionner ce plan"}
+              {currentPlan === "annual" && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
             </StripeCheckoutButton>
           </div>
         </div>
@@ -546,8 +548,8 @@ export default async function BillingPage() {
               )}
             </div>
 
-            {/* Bouton de réactivation visible dès qu'une annulation à fin de période est programmée et qu'un plan a été choisi */}
-            {subscription && subscription.cancel_at_period_end && subscription.plan_cycle && (
+            {/* Bouton de réactivation : affiché pour tous les clubs avec une subscription annulée */}
+            {clubId && subscription && subscription.cancel_at_period_end === true && (
               <ReactivateSubscriptionButton
                 className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-extrabold text-white bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 border border-emerald-300/70 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_26px_rgba(16,185,129,0.55)] hover:scale-105 active:scale-100 transition-all duration-300"
               >
@@ -651,9 +653,8 @@ export default async function BillingPage() {
             </div>
           </div>
 
-          {/* Bouton d'annulation en bas du cadre Statut : visible dès qu'un abonnement existe, qu'un plan a été choisi,
-              n'est pas déjà annulé et n'est pas déjà marqué comme complètement canceled côté Stripe */}
-          {subscription && subscription.plan_cycle && !subscription.cancel_at_period_end && subscription.status !== "canceled" && (
+          {/* Bouton d'annulation : affiché pour tous les clubs avec une subscription, même en essai */}
+          {subscription && subscription.cancel_at_period_end !== true && (
             <div className="pt-2 flex justify-end">
               <CancelSubscriptionButton
                 cancelAtPeriodEnd={!!subscription.cancel_at_period_end}

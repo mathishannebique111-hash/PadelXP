@@ -1,4 +1,3 @@
-console.log("[CRON] - ENV secret actuel :", process.env.SUBSCRIPTION_CRON_SECRET);
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -32,10 +31,6 @@ export async function GET(req: Request) {
     const expectedSecret = process.env.SUBSCRIPTION_CRON_SECRET;
 
     // DEBUG LOG pour voir ce qui est chargé
-    console.log(
-      "[CRON] Secret attendu:", expectedSecret,
-      "| Secret reçu:", secret
-    );
 
     if (!expectedSecret || secret !== expectedSecret) {
       console.warn("[cron] Unauthorized access attempt");
