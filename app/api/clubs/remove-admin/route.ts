@@ -142,6 +142,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // 🔒 ICI : anonymisation de l'email pour les logs
+    const emailPreview = adminToRemove.email?.substring(0, 5) + "…" || "unknown";
+
     if (adminUserId) {
       const { data: otherAdminRoles } = await supabaseAdmin
         .from("club_admins")
@@ -154,13 +157,12 @@ export async function POST(request: Request) {
         if (deleteUserError) {
           console.warn("[remove-admin] Impossible de supprimer l'utilisateur de auth.users:", deleteUserError);
         } else {
-          console.log(`[remove-admin] Utilisateur ${adminToRemove.email} supprimé de auth.users`);
+          console.log(`[remove-admin] Utilisateur ${emailPreview} supprimé de auth.users`);
         }
       }
     }
 
-    console.log(`[remove-admin] Admin ${adminToRemove.email} supprimé du club ${currentUserAdmin.club_id}`);
-
+    console.log(`[remove-admin] Admin ${emailPreview} supprimé du club ${currentUserAdmin.club_id}`);
     return NextResponse.json({
       success: true,
       message: `${adminToRemove.email} a été retiré des administrateurs`,
@@ -173,4 +175,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

@@ -222,7 +222,7 @@ export async function POST(request: Request) {
           // Construire l'URL avec le token
           const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
           invitationUrl = `${baseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(token)}`;
-          console.log(`[invite-admin] Lien construit avec token: ${invitationUrl.substring(0, 100)}...`);
+          console.log(`[invite-admin] Lien d'invitation généré (longueur: ${invitationUrl.length})`);
         } else {
           // Fallback sur le lien de base (sans token, mais avec email)
           invitationUrl = inviteLink;
@@ -235,7 +235,7 @@ export async function POST(request: Request) {
       console.log(`[invite-admin] Aucune donnée Supabase, utilisation du lien de base: ${inviteLink}`);
     }
 
-    console.log(`[invite-admin] Lien d'invitation généré: ${invitationUrl ? invitationUrl.substring(0, 100) : 'null'}...`);
+    console.log(`[invite-admin] Lien d'invitation généré (longueur: ${invitationUrl?.length || 0})`);
 
     // TOUJOURS envoyer l'email d'invitation via Resend
     // Même si Supabase a envoyé un email, on envoie aussi via Resend pour garantir la réception
@@ -254,8 +254,9 @@ export async function POST(request: Request) {
           inviterName || null,
           invitationUrl
         );
-        console.log(`[invite-admin] ✅ Email d'invitation envoyé à ${normalizedEmail} via Resend avec le lien: ${invitationUrl.substring(0, 80)}...`);
-      }
+        const emailPreview = normalizedEmail.substring(0, 5) + "…";
+        console.log(`[invite-admin] ✅ Email d'invitation envoyé à ${emailPreview} via Resend`);
+              }
     } catch (emailError: any) {
       console.error("[invite-admin] ❌ Erreur lors de l'envoi de l'email via Resend:", emailError);
       // On ne bloque pas l'invitation si l'email échoue, mais on log l'erreur
@@ -309,8 +310,10 @@ export async function POST(request: Request) {
     }
 
     // Logger l'invitation
-    console.log(`[invite-admin] Invitation envoyée à ${normalizedEmail} pour le club ${clubName} (${clubId})`);
-
+    const emailPreview2 = normalizedEmail.substring(0, 5) + "…";
+    const clubIdPreview = clubId.substring(0, 8) + "…";
+    console.log(`[invite-admin] Invitation envoyée à ${emailPreview2} pour le club ${clubName} (${clubIdPreview})`);
+    
     return NextResponse.json({
       success: true,
       message: responseMessage,

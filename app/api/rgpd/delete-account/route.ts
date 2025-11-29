@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 
 const supabaseAdmin = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createServiceClient(
@@ -55,8 +56,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('[RGPD Delete] Début suppression pour utilisateur:', user.id);
-
+    const userIdPreview = user.id.substring(0, 8) + "…";
+    console.log('[RGPD Delete] Début suppression pour utilisateur:', userIdPreview);
+    
     // Récupérer le profil pour identifier le club_id
     const { data: profile } = await supabaseAdmin
       .from('profiles')
@@ -68,7 +70,8 @@ export async function POST(req: NextRequest) {
 
     // 1. Supprimer/anonymiser les données personnelles du profil
     // On anonymise plutôt que supprimer pour garder l'intégrité référentielle
-    const anonymizedEmail = `deleted-${user.id}-${Date.now()}@deleted.local`;
+    const randomId = randomUUID();
+    const anonymizedEmail = `deleted-${randomId}@deleted.local`;
     const anonymizedName = 'Utilisateur supprimé';
 
     const { error: profileUpdateError } = await supabaseAdmin
@@ -140,7 +143,7 @@ export async function POST(req: NextRequest) {
       // Continuer même en cas d'erreur pour supprimer les autres données
     }
 
-    console.log('[RGPD Delete] Suppression terminée pour utilisateur:', user.id);
+    console.log('[RGPD Delete] Suppression terminée pour utilisateur:', userIdPreview);
 
     return NextResponse.json({
       success: true,

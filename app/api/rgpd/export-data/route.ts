@@ -40,7 +40,9 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    console.log('[RGPD Export] Début export pour utilisateur:', user.id);
+    const userIdPreview = user.id.substring(0, 8) + "…";
+    console.log('[RGPD Export] Début export pour utilisateur:', userIdPreview);
+    
 
     // Récupérer toutes les données de l'utilisateur
     const userData: any = {
