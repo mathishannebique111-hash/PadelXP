@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { logger } from "@/lib/logger";
 
 // Créer un client admin avec la Service Role Key pour bypass RLS
 const supabaseAdmin = createClient(
@@ -112,10 +113,12 @@ export async function GET(req: Request) {
 
     if (!userClubId) {
       const userIdPreview = user.id.substring(0, 8) + "…";
-      console.warn('[Search API] User without club attempting search', { userId: userIdPreview });
-            return NextResponse.json({ players: [] }, { status: 403 });
-    }
-    console.log('[Search API] User club_id:', userClubId, 'User profile:', userProfile);
+      logger.warn(
+        { userId: userIdPreview },
+        "[Search API] User without club attempting search"
+      );
+      return NextResponse.json({ players: [] }, { status: 403 });
+    }    
 
     const results: Array<{
       id: string;

@@ -189,7 +189,10 @@ export async function POST(req: Request) {
   }
 
   const userIdPreview = user.id.substring(0, 8) + "…";
-  console.log("[reviews] rate-limit key", `review-user:${userIdPreview}`);
+logger.info(
+  { userId: userIdPreview, key: `review-user:${userIdPreview}` },
+  "[reviews] rate-limit key"
+);
   
   // 🔒 Rate limiting par joueur (1 review / heure)
   const rl = await checkRateLimit(

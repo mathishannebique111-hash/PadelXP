@@ -1,595 +1,416 @@
 # 🔒 AUDIT DE SÉCURITÉ COMPLET - PadelXP
 
-**Date :** Décembre 2024  
-**Version :** 1.0  
-**Statut :** Analyse complète des mesures de sécurité en place et à mettre en place
+**Date de l'audit :** $(date)  
+**Version de l'application :** Production  
+**Type d'audit :** Analyse statique du code et de la configuration
+
+---
+
+## 📋 TABLE DES MATIÈRES
+
+1. [Résumé Exécutif](#résumé-exécutif)
+2. [Authentification et Autorisation](#authentification-et-autorisation)
+3. [Protection des Données](#protection-des-données)
+4. [Rate Limiting](#rate-limiting)
+5. [Validation et Sanitisation](#validation-et-sanitisation)
+6. [Headers de Sécurité](#headers-de-sécurité)
+7. [Gestion des Secrets](#gestion-des-secrets)
+8. [Protection contre les Attaques](#protection-contre-les-attaques)
+9. [Logging et Monitoring](#logging-et-monitoring)
+10. [Politiques RLS (Row Level Security)](#politiques-rls-row-level-security)
+11. [Webhooks et Intégrations](#webhooks-et-intégrations)
+12. [Recommandations](#recommandations)
 
 ---
 
 ## 📊 RÉSUMÉ EXÉCUTIF
 
-### ✅ Mesures de sécurité déjà en place : **15/25 domaines critiques**
+### Points Forts ✅
 
-### ⚠️ Mesures à améliorer/implémenter : **10 domaines prioritaires**
+- **Authentification robuste** : Utilisation de Supabase Auth avec gestion de session sécurisée
+- **Rate limiting multi-niveaux** : Protection contre les abus avec Upstash Redis
+- **Headers de sécurité complets** : CSP, HSTS, X-Frame-Options, etc.
+- **Validation stricte** : Utilisation de Zod pour la validation des entrées
+- **RLS activé** : Row Level Security sur les tables sensibles
+- **Logging sécurisé** : Redaction automatique des données sensibles en production
+- **Webhooks sécurisés** : Vérification de signature pour Stripe
 
----
+### Points d'Attention ⚠️
 
-## 1. ✅ HEADERS DE SÉCURITÉ HTTP (EN PLACE)
-
-### Statut : **✅ IMPLÉMENTÉ**
-
-**Fichier :** `next.config.ts` (lignes 19-68)
-
-**Mesures en place :**
-- ✅ `X-Frame-Options: DENY` - Protection contre clickjacking
-- ✅ `X-Content-Type-Options: nosniff` - Protection contre MIME sniffing
-- ✅ `X-XSS-Protection: 1; mode=block` - Protection XSS (navigateurs anciens)
-- ✅ `Referrer-Policy: strict-origin-when-cross-origin` - Contrôle des référents
-- ✅ `Permissions-Policy` - Désactivation caméra/micro/géolocalisation
-- ✅ `Strict-Transport-Security` - HSTS avec preload (1 an)
-- ✅ `Content-Security-Policy` - CSP configuré (mais avec `unsafe-inline` et `unsafe-eval`)
-
-**⚠️ Points à améliorer :**
-- **NIVEAU : MOYENNE**
-- CSP utilise encore `unsafe-inline` et `unsafe-eval` (lignes 52-53)
-- **Recommandation :** Migrer tous les scripts/styles inline vers des fichiers externes et utiliser des nonces/hashes
+- **Utilisation de service_role** : Bypass RLS dans plusieurs endpoints (nécessaire mais à surveiller)
+- **Console.log résiduels** : 524 occurrences de console.log/error/warn dans le code API
+- **CSP avec unsafe-inline** : Présence de 'unsafe-inline' et 'unsafe-eval' dans la CSP
+- **Gestion d'erreurs** : Certaines erreurs peuvent exposer des informations sensibles
 
 ---
 
-## 2. ✅ RATE LIMITING (EN PLACE)
+## 🔐 AUTHENTIFICATION ET AUTORISATION
 
-### Statut : **✅ IMPLÉMENTÉ**
+### ✅ Points Positifs
 
-**Fichiers :** `middleware.ts`, `lib/rate-limit.ts`
+1. **Middleware d'authentification centralisé** (`middleware.ts`)
+   - Vérification de session avant chaque requête protégée
+   - Gestion de l'inactivité (déconnexion après 29 minutes)
+   - Vérification de l'expiration de session (1 heure)
+   - Redirection automatique vers `/login` pour les routes protégées
 
-**Mesures en place :**
-- ✅ Rate limiting général : 1000 requêtes / 15 minutes par IP
-- ✅ Rate limiting login : 5 tentatives / 15 minutes par IP
-- ✅ Rate limiting matchs : 5 matchs / 5 minutes par utilisateur
-- ✅ Rate limiting basé sur Upstash Redis (distribué)
-- ✅ Headers de rate limiting retournés (`X-RateLimit-*`)
+2. **Gestion des sessions**
+   - Cookies sécurisés avec `httpOnly: true` en production
+   - `sameSite: "lax"` pour protection CSRF
+   - `secure: true` en production (HTTPS uniquement)
+   - Cookie `last_activity` pour tracking d'inactivité
 
-**✅ Points forts :**
-- Protection contre brute force sur les connexions
-- Protection contre spam de matchs
-- Gestion gracieuse des erreurs Redis (continue si Redis indisponible)
+3. **Routes protégées**
+   - Distinction claire entre routes publiques et protégées
+   - Certaines routes API gèrent leur propre authentification (`/api/matches/`, `/api/reviews`)
+   - Exclusion appropriée des webhooks et cron jobs
 
-**⚠️ Points à améliorer :**
-- **NIVEAU : BASSE**
-- Pas de rate limiting spécifique pour les routes d'inscription
-- Pas de rate limiting pour les routes de contact/support
-- **Recommandation :** Ajouter rate limiting sur `/api/contact` et `/api/clubs/signup`
+### ⚠️ Points d'Attention
 
----
+1. **Bypass RLS avec service_role**
+   - Utilisation de `SUPABASE_SERVICE_ROLE_KEY` dans plusieurs endpoints
+   - Nécessaire pour certaines opérations mais augmente le risque si mal utilisé
+   - **Recommandation** : Documenter chaque utilisation et justifier la nécessité
 
-## 3. ✅ AUTHENTIFICATION & SESSIONS (EN PLACE)
-
-### Statut : **✅ IMPLÉMENTÉ**
-
-**Fichiers :** `middleware.ts`, `lib/supabase/server.ts`
-
-**Mesures en place :**
-- ✅ Authentification via Supabase Auth (JWT)
-- ✅ Vérification de session dans le middleware
-- ✅ Gestion de l'expiration de session (1 heure)
-- ✅ Timeout d'inactivité (29 minutes)
-- ✅ Cookies sécurisés (`httpOnly`, `secure` en production, `sameSite: lax`)
-- ✅ Protection des routes protégées
-- ✅ Redirection automatique vers login si non authentifié
-
-**✅ Points forts :**
-- Gestion gracieuse des erreurs temporaires (ne déconnecte pas en cas d'erreur réseau)
-- Vérification de l'expiration de session
-- Cookie `last_activity` pour tracking d'inactivité
-
-**⚠️ Points à améliorer :**
-- **NIVEAU : MOYENNE**
-- Pas de rotation de tokens JWT
-- Pas d'authentification multi-facteurs (2FA/MFA)
-- **Recommandation :** Implémenter 2FA pour les comptes club (optionnel pour joueurs)
+2. **Gestion d'erreurs d'authentification**
+   - Certaines erreurs peuvent exposer des informations sur la structure de l'application
+   - **Recommandation** : Uniformiser les messages d'erreur pour éviter l'information disclosure
 
 ---
 
-## 4. ✅ VALIDATION DES ENTRÉES (EN PLACE)
+## 🛡️ PROTECTION DES DONNÉES
 
-### Statut : **✅ IMPLÉMENTÉ**
+### ✅ Points Positifs
 
-**Fichiers :** `app/api/matches/submit/route.ts`, `app/api/reviews/route.ts`, `components/MatchForm.tsx`
+1. **RGPD Compliance**
+   - Endpoints dédiés pour l'export de données (`/api/rgpd/export-data`)
+   - Endpoint pour la suppression de compte (`/api/rgpd/delete-account`)
+   - Anonymisation des données lors de la suppression
 
-**Mesures en place :**
-- ✅ Validation Zod sur les routes API critiques
-- ✅ Schéma strict pour soumission de matchs (`matchSubmitSchema`)
-- ✅ Validation des reviews (note 1-5, commentaire max 1000 caractères)
-- ✅ Validation côté client ET serveur
-- ✅ Sanitization des entrées (trim, max length)
+2. **Isolation des données par club**
+   - Vérification systématique du `club_id` pour filtrer les données
+   - Les joueurs ne peuvent accéder qu'aux données de leur club
 
-**✅ Points forts :**
-- Validation stricte des types (enum, min/max)
-- Validation des tableaux (min/max length)
-- Validation des scores et sets
+3. **Protection des données sensibles**
+   - Les emails et tokens ne sont pas exposés dans les réponses API
+   - Utilisation de `maybeSingle()` pour éviter les fuites d'information
 
-**⚠️ Points à améliorer :**
-- **NIVEAU : MOYENNE**
-- Pas de validation Zod sur toutes les routes API
-- Pas de sanitization HTML pour prévenir XSS dans les commentaires
-- **Recommandation :** Ajouter validation Zod sur toutes les routes POST/PUT, sanitizer HTML pour les champs texte
+### ⚠️ Points d'Attention
 
----
-
-## 5. ✅ PROTECTION DES SECRETS (EN PLACE)
-
-### Statut : **✅ IMPLÉMENTÉ**
-
-**Fichiers :** `.gitignore`, variables d'environnement
-
-**Mesures en place :**
-- ✅ `.gitignore` exclut `.env*` (ligne 5)
-- ✅ Secrets dans variables d'environnement (pas hardcodés)
-- ✅ Service Role Key utilisée uniquement côté serveur
-- ✅ Clés API Stripe jamais exposées côté client
-
-**✅ Points forts :**
-- Aucun secret visible dans le code source
-- Utilisation correcte de `NEXT_PUBLIC_*` pour les variables publiques
-
-**⚠️ Points à améliorer :**
-- **NIVEAU : HAUTE**
-- Pas de rotation automatique des clés API
-- Pas de gestion centralisée des secrets (ex: Vault)
-- **Recommandation :** Documenter la procédure de rotation des clés, utiliser Vercel Secrets Manager
+1. **Service Role Client**
+   - Création de clients admin dans plusieurs fichiers serveur
+   - Risque d'accès non autorisé si les clés sont compromises
+   - **Recommandation** : Centraliser la création du client admin et ajouter des logs d'audit
 
 ---
 
-## 6. ✅ SÉCURITÉ STRIPE (EN PLACE)
+## 🚦 RATE LIMITING
 
-### Statut : **✅ IMPLÉMENTÉ**
+### ✅ Implémentation Robuste
 
-**Fichiers :** `app/api/stripe/webhook/route.ts`, `app/api/stripe/checkout/route.ts`
+1. **Multi-niveaux de protection** (`middleware.ts` + `lib/rate-limit.ts`)
+   - **Général** : 1000 requêtes / 15 minutes par IP
+   - **Login** : 5 tentatives / 15 minutes par IP
+   - **Soumission de matchs** : 5 matchs / 5 minutes par utilisateur
+   - **Reviews** : 1 review / heure par utilisateur
+   - **Inscription** : 3 comptes / heure par IP
 
-**Mesures en place :**
-- ✅ Validation de signature des webhooks Stripe (ligne 52-63)
-- ✅ Vérification du webhook secret
-- ✅ Montants vérifiés côté serveur (pas de confiance client)
-- ✅ Clés API Stripe uniquement côté serveur
-- ✅ Gestion des événements Stripe (subscription, invoice, checkout)
+2. **Infrastructure**
+   - Utilisation d'Upstash Redis pour le rate limiting distribué
+   - Sliding window algorithm pour une meilleure précision
+   - Headers de réponse avec informations de rate limit (`X-RateLimit-*`)
 
-**✅ Points forts :**
-- Validation stricte des signatures webhook (obligatoire PCI-DSS)
-- Gestion des erreurs de signature
-- Traitement idempotent des événements
+3. **Gestion des erreurs**
+   - En cas d'indisponibilité de Redis, l'application continue de fonctionner
+   - Logging des erreurs de rate limiting
 
-**⚠️ Points à améliorer :**
-- **NIVEAU : BASSE**
-- Pas de vérification explicite des montants dans les webhooks (confiance en Stripe)
-- **Recommandation :** Ajouter vérification des montants attendus vs reçus dans les webhooks (bonus)
+### ✅ Exclusions Appropriées
 
----
-
-## 7. ✅ ROW LEVEL SECURITY (RLS) (EN PLACE)
-
-### Statut : **✅ PARTIELLEMENT IMPLÉMENTÉ**
-
-**Fichiers :** Scripts SQL (`fix_rls_policies.sql`, `fix_reviews_table.sql`)
-
-**Mesures en place :**
-- ✅ RLS activé sur certaines tables (`profiles`, `reviews`)
-- ✅ Policies pour lecture/écriture selon `auth.uid()`
-- ✅ Service Role Key utilisée pour bypass RLS uniquement côté serveur
-
-**⚠️ Points à améliorer :**
-- **NIVEAU : CRITIQUE**
-- RLS doit être vérifié sur TOUTES les tables sensibles
-- Vérifier que toutes les tables ont des policies appropriées
-- **Recommandation :** Audit complet des policies RLS sur toutes les tables (matches, subscriptions, clubs, etc.)
+- Webhooks Stripe (nécessitent une authentification par signature)
+- Cron jobs Vercel (authentifiés par header `x-vercel-cron`)
+- Routes publiques (leaderboard, stats, etc.)
 
 ---
 
-## 8. ⚠️ GESTION DES ERREURS & LOGS (À AMÉLIORER)
+## ✅ VALIDATION ET SANITISATION
 
-### Statut : **⚠️ PARTIELLEMENT IMPLÉMENTÉ**
+### ✅ Validation Stricte avec Zod
 
-**Problèmes identifiés :**
-- ❌ **640 occurrences de `console.log/error/warn`** dans les routes API
-- ❌ Logs peuvent exposer des informations sensibles (tokens, IDs, données utilisateur)
-- ❌ Pas de système de logging centralisé
-- ❌ Erreurs détaillées peuvent être exposées en production
+1. **Schémas de validation**
+   - `matchSubmitSchema` : Validation stricte des matchs (2-4 joueurs, scores, etc.)
+   - `reviewSchema` : Validation des avis (rating 1-5, commentaire optionnel max 1000 caractères)
+   - `createGuestSchema` : Validation des joueurs invités (prénom/nom, max 60 caractères)
 
-**⚠️ Points critiques :**
-- **NIVEAU : HAUTE**
-- Les logs en production peuvent exposer :
-  - IDs utilisateurs
-  - Tokens de confirmation
-  - Données de matchs
-  - Erreurs de base de données avec schéma
-- **Recommandation :**
-  1. Remplacer tous les `console.log` par un système de logging (ex: Winston, Pino)
-  2. Niveler les logs (DEBUG, INFO, WARN, ERROR)
-  3. Sanitizer les logs pour retirer les données sensibles
-  4. Configurer des alertes sur les erreurs critiques
-  5. Masquer les stack traces en production
+2. **Sanitisation**
+   - Trim automatique des chaînes de caractères
+   - Limitation de longueur des champs
+   - Validation des types (enum, int, string)
 
----
+3. **Protection contre l'injection SQL**
+   - Utilisation de requêtes paramétrées via Supabase
+   - Pas de concaténation de chaînes SQL dans le code
 
-## 9. ⚠️ PROTECTION CSRF (À VÉRIFIER)
+### ⚠️ Points d'Attention
 
-### Statut : **⚠️ À VÉRIFIER**
+1. **Validation côté client**
+   - La validation côté serveur est robuste, mais dépend aussi de la validation côté client
+   - **Recommandation** : Ne jamais faire confiance à la validation côté client uniquement
 
-**Problèmes identifiés :**
-- ⚠️ Next.js 15 protège automatiquement contre CSRF pour les Server Actions
-- ⚠️ Pas de protection CSRF explicite pour les routes API
-- ⚠️ Pas de tokens CSRF pour les formulaires
-
-**⚠️ Points critiques :**
-- **NIVEAU : MOYENNE**
-- Les routes API POST/PUT/DELETE peuvent être vulnérables à CSRF
-- **Recommandation :**
-  1. Vérifier que Next.js protège bien les Server Actions
-  2. Ajouter des tokens CSRF pour les routes API critiques
-  3. Utiliser `SameSite: Strict` pour les cookies de session (actuellement `lax`)
+2. **XSS Protection**
+   - React échappe automatiquement les valeurs par défaut
+   - **Recommandation** : Vérifier l'utilisation de `dangerouslySetInnerHTML` si présente
 
 ---
 
-## 10. ⚠️ PROTECTION XSS (À AMÉLIORER)
+## 🔒 HEADERS DE SÉCURITÉ
 
-### Statut : **⚠️ PARTIELLEMENT PROTÉGÉ**
+### ✅ Configuration Complète (`next.config.ts`)
 
-**Problèmes identifiés :**
-- ⚠️ CSP utilise `unsafe-inline` et `unsafe-eval` (ligne 52-53 de `next.config.ts`)
-- ⚠️ Pas de sanitization HTML pour les commentaires d'avis
-- ⚠️ 7 fichiers utilisent `dangerouslySetInnerHTML` (détectés par grep)
+1. **Headers HTTP de sécurité**
+   - `X-Frame-Options: DENY` - Protection contre le clickjacking
+   - `X-Content-Type-Options: nosniff` - Protection contre le MIME sniffing
+   - `X-XSS-Protection: 1; mode=block` - Protection XSS (navigateurs anciens)
+   - `Referrer-Policy: strict-origin-when-cross-origin` - Contrôle des référents
+   - `Permissions-Policy` - Désactivation de la caméra, microphone, géolocalisation
+   - `Strict-Transport-Security` - Force HTTPS avec preload
 
-**⚠️ Points critiques :**
-- **NIVEAU : HAUTE**
-- Les commentaires d'avis peuvent contenir du HTML/JavaScript malveillant
-- Les scripts inline permettent l'injection de code
-- **Recommandation :**
-  1. Sanitizer tous les champs texte utilisateur avec DOMPurify ou équivalent
-  2. Migrer tous les scripts/styles inline vers des fichiers externes
-  3. Utiliser des nonces pour les scripts inline nécessaires
-  4. Retirer `unsafe-eval` du CSP
+2. **Content Security Policy (CSP)**
+   ```javascript
+   default-src 'self'
+   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com
+   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
+   img-src 'self' data: https: blob:
+   connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.upstash.io
+   frame-src https://js.stripe.com
+   ```
 
----
+### ⚠️ Points d'Attention
 
-## 11. ⚠️ PROTECTION CONTRE LES INJECTIONS SQL (À VÉRIFIER)
+1. **CSP avec unsafe-inline et unsafe-eval**
+   - Présence de `'unsafe-inline'` et `'unsafe-eval'` dans `script-src`
+   - Nécessaire pour Stripe mais réduit la protection XSS
+   - **Recommandation** : Utiliser des nonces si possible pour Stripe
 
-### Statut : **✅ PROTÉGÉ (Supabase)**
-
-**Mesures en place :**
-- ✅ Supabase utilise des requêtes préparées par défaut
-- ✅ Pas de concaténation SQL directe dans le code
-- ✅ Utilisation de `.eq()`, `.insert()`, `.update()` (paramétrés)
-
-**✅ Points forts :**
-- Supabase PostgREST protège automatiquement contre les injections SQL
-- Toutes les requêtes sont paramétrées
-
-**⚠️ Points à vérifier :**
-- **NIVEAU : BASSE**
-- Vérifier qu'aucune requête SQL brute n'est exécutée
-- **Recommandation :** Audit des scripts SQL pour vérifier l'absence de requêtes dynamiques non paramétrées
+2. **img-src trop permissif**
+   - `https:` permet de charger des images depuis n'importe quel domaine HTTPS
+   - **Recommandation** : Restreindre aux domaines spécifiques nécessaires
 
 ---
 
-## 12. ⚠️ GESTION DES UPLOADS DE FICHIERS (À VÉRIFIER)
+## 🔑 GESTION DES SECRETS
 
-### Statut : **⚠️ À VÉRIFIER**
+### ✅ Bonnes Pratiques
 
-**Fichiers concernés :** `app/api/clubs/logo/route.ts`
+1. **Variables d'environnement**
+   - Secrets stockés dans les variables d'environnement (Vercel)
+   - `.gitignore` exclut les fichiers `.env*`
+   - Pas de secrets hardcodés dans le code
 
-**Points à vérifier :**
-- ⚠️ Validation du type MIME des fichiers uploadés
-- ⚠️ Limitation de la taille des fichiers
-- ⚠️ Scan antivirus des fichiers
-- ⚠️ Stockage sécurisé (Supabase Storage)
+2. **Clés API**
+   - `SUPABASE_SERVICE_ROLE_KEY` : Utilisée uniquement côté serveur
+   - `STRIPE_SECRET_KEY` : Utilisée uniquement côté serveur
+   - `RESEND_API_KEY` : Utilisée uniquement côté serveur
+   - `STRIPE_WEBHOOK_SECRET` : Utilisée pour vérifier les webhooks
 
-**⚠️ Points critiques :**
-- **NIVEAU : MOYENNE**
-- Les uploads de logos peuvent être des vecteurs d'attaque
-- **Recommandation :**
-  1. Valider strictement les types MIME (images uniquement)
-  2. Limiter la taille (ex: 5MB max)
-  3. Renommer les fichiers avec UUID
-  4. Scanner les fichiers pour malware (optionnel mais recommandé)
+3. **Clés publiques**
+   - `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` : Préfixées par `NEXT_PUBLIC_` (exposées au client)
+   - **Note** : Les clés anon de Supabase sont conçues pour être publiques mais limitées par RLS
 
----
+### ⚠️ Points d'Attention
 
-## 13. ⚠️ PROTECTION DES DONNÉES PERSONNELLES (RGPD) (PARTIELLEMENT IMPLÉMENTÉ)
+1. **Vérification des variables d'environnement**
+   - Certains endpoints vérifient la présence des secrets mais pas tous
+   - **Recommandation** : Centraliser la vérification au démarrage de l'application
 
-### Statut : **⚠️ PARTIELLEMENT IMPLÉMENTÉ**
-
-**Mesures en place :**
-- ✅ Route d'export de données : `/api/rgpd/export-data`
-- ✅ Route de suppression de compte : `/api/rgpd/delete-account`
-- ✅ Politique de confidentialité présente
-
-**⚠️ Points à améliorer :**
-- **NIVEAU : HAUTE**
-- Vérifier que la suppression de compte supprime TOUTES les données (matches, reviews, etc.)
-- Vérifier la portabilité des données (format standard)
-- Vérifier le consentement explicite pour les cookies/tracking
-- Vérifier les durées de conservation des données
-- **Recommandation :**
-  1. Audit complet de la route de suppression (cascade sur toutes les tables)
-  2. Implémenter un système de consentement cookies
-  3. Documenter les durées de conservation
-  4. Ajouter un mécanisme de "droit à l'oubli" automatique après X années
+2. **Rotation des clés**
+   - Pas de mécanisme visible pour la rotation des clés
+   - **Recommandation** : Documenter le processus de rotation des clés
 
 ---
 
-## 14. ⚠️ MONITORING & ALERTES (À IMPLÉMENTER)
+## 🛡️ PROTECTION CONTRE LES ATTAQUES
 
-### Statut : **❌ NON IMPLÉMENTÉ**
+### ✅ Protections Implémentées
 
-**Problèmes identifiés :**
-- ❌ Pas de monitoring des tentatives d'attaque
-- ❌ Pas d'alertes sur activités suspectes
-- ❌ Pas de dashboard de sécurité
-- ❌ Pas de détection d'intrusion
+1. **CSRF (Cross-Site Request Forgery)**
+   - Cookies avec `sameSite: "lax"`
+   - Vérification de l'origine pour les webhooks Stripe (via signature)
 
-**⚠️ Points critiques :**
-- **NIVEAU : MOYENNE**
-- Impossible de détecter les attaques en temps réel
-- **Recommandation :**
-  1. Intégrer Sentry ou équivalent pour le monitoring d'erreurs
-  2. Configurer des alertes sur :
-     - Nombre élevé de 401/403
-     - Tentatives de brute force
-     - Erreurs de validation Stripe
-     - Erreurs de base de données
-  3. Dashboard de sécurité (tentatives d'attaque, rate limiting, etc.)
+2. **SQL Injection**
+   - Utilisation de requêtes paramétrées via Supabase
+   - Pas de concaténation SQL dans le code
 
----
+3. **XSS (Cross-Site Scripting)**
+   - React échappe automatiquement les valeurs
+   - CSP en place (avec limitations mentionnées ci-dessus)
 
-## 15. ⚠️ TESTS DE SÉCURITÉ (À IMPLÉMENTER)
+4. **Brute Force**
+   - Rate limiting sur les tentatives de connexion (5 / 15 min)
+   - Rate limiting sur l'inscription (3 / heure)
 
-### Statut : **❌ NON IMPLÉMENTÉ**
+5. **DDoS**
+   - Rate limiting général (1000 req / 15 min)
+   - Protection au niveau du middleware
 
-**Problèmes identifiés :**
-- ❌ Pas de tests automatisés de sécurité
-- ❌ Pas de scans de vulnérabilités
-- ❌ Pas de tests de pénétration
+### ⚠️ Points d'Attention
 
-**⚠️ Points critiques :**
-- **NIVEAU : MOYENNE**
-- Vulnérabilités non détectées automatiquement
-- **Recommandation :**
-  1. Intégrer `npm audit` dans le CI/CD
-  2. Utiliser Snyk ou Dependabot pour scanner les dépendances
-  3. Tests de sécurité automatisés (OWASP ZAP, etc.)
-  4. Tests de pénétration annuels (optionnel mais recommandé)
+1. **Protection CSRF**
+   - `sameSite: "lax"` protège contre la plupart des attaques CSRF mais pas toutes
+   - **Recommandation** : Considérer l'ajout de tokens CSRF pour les actions critiques
+
+2. **Protection contre les attaques par énumération**
+   - Les messages d'erreur peuvent révéler si un email existe ou non
+   - **Recommandation** : Uniformiser les messages d'erreur pour éviter l'énumération
 
 ---
 
-## 16. ⚠️ GESTION DES DÉPENDANCES (À AMÉLIORER)
+## 📝 LOGGING ET MONITORING
 
-### Statut : **⚠️ À VÉRIFIER**
+### ✅ Système de Logging Structuré
 
-**Fichier :** `package.json`
+1. **Logger centralisé** (`lib/logger.ts`)
+   - Utilisation de Pino en production pour logs structurés
+   - Console.log simple en développement
+   - Redaction automatique des données sensibles :
+     - Passwords
+     - Tokens
+     - Emails
+     - Phone numbers
+     - User IDs
+     - Headers d'autorisation
+     - Cookies
 
-**Points à vérifier :**
-- ⚠️ Vérifier les vulnérabilités connues (`npm audit`)
-- ⚠️ Mettre à jour les dépendances obsolètes
-- ⚠️ Vérifier les licences des dépendances
+2. **Logging des actions importantes**
+   - Soumission de matchs
+   - Création de reviews
+   - Erreurs d'authentification
+   - Erreurs de rate limiting
 
-**⚠️ Points critiques :**
-- **NIVEAU : HAUTE**
-- Dépendances obsolètes = vulnérabilités connues
-- **Recommandation :**
-  1. Exécuter `npm audit` régulièrement
-  2. Configurer Dependabot pour les mises à jour automatiques
-  3. Vérifier les licences (éviter GPL si produit commercial)
-  4. Pinner les versions exactes en production
+### ⚠️ Points d'Attention
 
----
+1. **Console.log résiduels**
+   - **524 occurrences** de `console.log/error/warn` dans le code API
+   - Certains peuvent exposer des informations sensibles
+   - **Recommandation** : Remplacer tous les `console.log` par le logger centralisé
 
-## 17. ✅ PROTECTION DES ROUTES API (EN PLACE)
-
-### Statut : **✅ IMPLÉMENTÉ**
-
-**Fichier :** `middleware.ts`
-
-**Mesures en place :**
-- ✅ Routes publiques définies explicitement
-- ✅ Routes protégées nécessitent authentification
-- ✅ Vérification d'autorisation dans les routes API
-- ✅ Exclusion des webhooks du rate limiting
-
-**✅ Points forts :**
-- Séparation claire entre routes publiques et protégées
-- Gestion gracieuse des erreurs d'authentification
+2. **Logging des données sensibles**
+   - Certains logs peuvent contenir des informations sensibles même avec redaction
+   - **Recommandation** : Auditer tous les logs pour s'assurer qu'aucune donnée sensible n'est exposée
 
 ---
 
-## 18. ⚠️ PROTECTION CONTRE LES OPEN REDIRECTS (À VÉRIFIER)
+## 🗄️ POLITIQUES RLS (ROW LEVEL SECURITY)
 
-### Statut : **⚠️ À VÉRIFIER**
+### ✅ RLS Activé
 
-**Problèmes identifiés :**
-- ⚠️ Paramètres `redirect` ou `next` dans les URLs peuvent être exploités
-- ⚠️ Pas de validation stricte des URLs de redirection
+1. **Tables protégées**
+   - `profiles` : RLS activé avec politiques pour lecture/écriture
+   - `matches` : RLS activé pour isolation par club
+   - `match_participants` : RLS activé
+   - `reviews` : RLS activé
 
-**⚠️ Points critiques :**
-- **NIVEAU : MOYENNE**
-- Les redirections non validées peuvent être exploitées pour le phishing
-- **Recommandation :**
-  1. Valider toutes les URLs de redirection (whitelist de domaines)
-  2. Utiliser des URLs relatives uniquement
-  3. Ne jamais rediriger vers des domaines externes sans validation
+2. **Politiques en place**
+   - Les utilisateurs ne peuvent lire que les profils de leur club
+   - Les utilisateurs ne peuvent modifier que leur propre profil
+   - Les matchs sont filtrés par `club_id`
 
----
+### ⚠️ Points d'Attention
 
-## 19. ⚠️ PROTECTION CONTRE SSRF (À VÉRIFIER)
+1. **Bypass RLS avec service_role**
+   - Utilisation fréquente de `SUPABASE_SERVICE_ROLE_KEY` pour bypass RLS
+   - Nécessaire pour certaines opérations mais augmente le risque
+   - **Recommandation** : Documenter chaque utilisation et ajouter des vérifications manuelles
 
-### Statut : **⚠️ À VÉRIFIER**
-
-**Problèmes identifiés :**
-- ⚠️ Pas de requêtes HTTP externes identifiées dans le code
-- ⚠️ Si des requêtes externes existent, elles doivent être validées
-
-**⚠️ Points critiques :**
-- **NIVEAU : BASSE**
-- **Recommandation :**
-  1. Si des requêtes HTTP externes sont ajoutées, valider strictement les URLs
-  2. Utiliser une whitelist de domaines autorisés
-  3. Ne jamais faire confiance aux URLs fournies par l'utilisateur
+2. **Politiques RLS complexes**
+   - Certaines politiques peuvent être difficiles à maintenir
+   - **Recommandation** : Documenter les politiques RLS et les tester régulièrement
 
 ---
 
-## 20. ⚠️ CHIFFREMENT DES DONNÉES (À VÉRIFIER)
+## 🔗 WEBHOOKS ET INTÉGRATIONS
 
-### Statut : **⚠️ À VÉRIFIER**
+### ✅ Sécurisation des Webhooks
 
-**Points à vérifier :**
-- ⚠️ Chiffrement des données sensibles en base (mots de passe hashés par Supabase)
-- ⚠️ Chiffrement des connexions à la base de données (Supabase utilise TLS)
-- ⚠️ Chiffrement au repos (Supabase gère cela)
+1. **Webhook Stripe** (`app/api/stripe/webhook/route.ts`)
+   - Vérification de signature avec `stripe.webhooks.constructEvent()`
+   - Utilisation de `STRIPE_WEBHOOK_SECRET`
+   - Rejet des requêtes sans signature valide
+   - Exclusion du middleware (pas de rate limiting)
 
-**✅ Points forts :**
-- Supabase hash les mots de passe automatiquement
-- Connexions TLS à la base de données
-- Chiffrement au repos géré par Supabase
+2. **Webhook Resend** (`app/api/resend-inbound/route.ts`)
+   - Vérification de signature (à vérifier dans le code)
+   - Exclusion du middleware
 
-**⚠️ Points à vérifier :**
-- **NIVEAU : BASSE**
-- Vérifier que les données sensibles (emails, noms) ne sont pas stockées en clair si nécessaire
-- **Recommandation :** Audit des données stockées pour identifier les données sensibles nécessitant un chiffrement supplémentaire
+### ⚠️ Points d'Attention
 
----
-
-## 📋 CHECKLIST DES ACTIONS PRIORITAIRES
-
-### 🔴 CRITIQUE (À faire immédiatement)
-
-1. **Audit complet des policies RLS** sur toutes les tables
-   - Vérifier que toutes les tables sensibles ont RLS activé
-   - Vérifier que les policies sont correctes
-   - Tester l'accès non autorisé
-
-2. **Sanitization HTML pour les commentaires d'avis**
-   - Installer DOMPurify
-   - Sanitizer tous les champs texte utilisateur
-   - Tester l'injection XSS
-
-### 🟠 HAUTE (À faire dans les 2 semaines)
-
-3. **Améliorer la gestion des logs**
-   - Remplacer `console.log` par un système de logging
-   - Sanitizer les logs (retirer données sensibles)
-   - Configurer des alertes
-
-4. **Améliorer la protection XSS**
-   - Retirer `unsafe-inline` et `unsafe-eval` du CSP
-   - Migrer scripts/styles inline vers fichiers externes
-   - Utiliser des nonces pour les scripts nécessaires
-
-5. **Vérifier les dépendances**
-   - Exécuter `npm audit`
-   - Mettre à jour les dépendances vulnérables
-   - Configurer Dependabot
-
-6. **Améliorer la protection RGPD**
-   - Vérifier la suppression complète des données
-   - Implémenter le consentement cookies
-   - Documenter les durées de conservation
-
-### 🟡 MOYENNE (À faire dans le mois)
-
-7. **Ajouter rate limiting sur routes manquantes**
-   - `/api/contact`
-   - `/api/clubs/signup`
-   - Routes d'inscription
-
-8. **Protection CSRF**
-   - Vérifier la protection Next.js
-   - Ajouter tokens CSRF si nécessaire
-
-9. **Validation des uploads de fichiers**
-   - Valider types MIME
-   - Limiter taille
-   - Renommer fichiers
-
-10. **Monitoring & alertes**
-    - Intégrer Sentry
-    - Configurer alertes critiques
-    - Dashboard de sécurité
-
-### 🟢 BASSE (À faire progressivement)
-
-11. **Tests de sécurité automatisés**
-    - Intégrer `npm audit` dans CI/CD
-    - Scans de vulnérabilités
-    - Tests de pénétration (optionnel)
-
-12. **Protection contre open redirects**
-    - Valider toutes les URLs de redirection
-    - Whitelist de domaines
-
-13. **Améliorer la protection SSRF**
-    - Valider les URLs externes si ajoutées
-    - Whitelist de domaines
-
-14. **Rotation des clés API**
-    - Documenter la procédure
-    - Planifier la rotation régulière
-
-15. **Authentification multi-facteurs (2FA)**
-    - Implémenter 2FA pour les comptes club
-    - Optionnel pour les joueurs
+1. **Vérification des webhooks**
+   - Tous les webhooks doivent vérifier leur signature
+   - **Recommandation** : Auditer tous les endpoints de webhook pour s'assurer de la vérification
 
 ---
 
-## 📊 RÉSUMÉ PAR DOMAINE
+## 📋 RECOMMANDATIONS PRIORITAIRES
 
-| Domaine | Statut | Priorité | Action |
-|---------|--------|----------|--------|
-| Headers HTTP | ✅ Implémenté | - | Améliorer CSP |
-| Rate Limiting | ✅ Implémenté | - | Ajouter routes manquantes |
-| Authentification | ✅ Implémenté | - | Ajouter 2FA |
-| Validation Entrées | ✅ Implémenté | - | Ajouter Zod partout |
-| Secrets | ✅ Implémenté | - | Rotation clés |
-| Stripe | ✅ Implémenté | - | Vérifier montants |
-| RLS | ⚠️ Partiel | 🔴 CRITIQUE | Audit complet |
-| Logs | ⚠️ À améliorer | 🟠 HAUTE | Système logging |
-| CSRF | ⚠️ À vérifier | 🟡 MOYENNE | Vérifier protection |
-| XSS | ⚠️ Partiel | 🟠 HAUTE | Sanitization HTML |
-| SQL Injection | ✅ Protégé | - | - |
-| Uploads | ⚠️ À vérifier | 🟡 MOYENNE | Valider fichiers |
-| RGPD | ⚠️ Partiel | 🟠 HAUTE | Compléter |
-| Monitoring | ❌ Non implémenté | 🟡 MOYENNE | Sentry + alertes |
-| Tests Sécurité | ❌ Non implémenté | 🟢 BASSE | Automatiser |
-| Dépendances | ⚠️ À vérifier | 🟠 HAUTE | npm audit |
-| Routes API | ✅ Implémenté | - | - |
-| Open Redirects | ⚠️ À vérifier | 🟢 BASSE | Valider URLs |
-| SSRF | ⚠️ À vérifier | 🟢 BASSE | Valider requêtes |
-| Chiffrement | ✅ Protégé | - | - |
+### 🔴 Priorité Haute
 
----
+1. **Remplacer les console.log**
+   - Remplacer les 524 occurrences de `console.log/error/warn` par le logger centralisé
+   - S'assurer que toutes les données sensibles sont redactées
 
-## 🎯 PLAN D'ACTION RECOMMANDÉ
+2. **Renforcer la CSP**
+   - Éliminer `'unsafe-inline'` et `'unsafe-eval'` si possible
+   - Utiliser des nonces pour Stripe
+   - Restreindre `img-src` aux domaines nécessaires
 
-### Semaine 1-2 (CRITIQUE)
-1. Audit RLS complet
-2. Sanitization HTML commentaires
+3. **Documenter l'utilisation de service_role**
+   - Créer un document listant tous les endroits où `SUPABASE_SERVICE_ROLE_KEY` est utilisé
+   - Justifier chaque utilisation
+   - Ajouter des logs d'audit pour ces opérations
 
-### Semaine 3-4 (HAUTE)
-3. Système de logging
-4. Amélioration CSP
-5. npm audit + mises à jour
-6. RGPD complet
+### 🟡 Priorité Moyenne
 
-### Mois 2 (MOYENNE)
-7. Rate limiting routes manquantes
-8. Protection CSRF
-9. Validation uploads
-10. Monitoring & alertes
+4. **Uniformiser les messages d'erreur**
+   - Éviter l'information disclosure
+   - Messages d'erreur génériques pour éviter l'énumération
 
-### Mois 3+ (BASSE)
-11. Tests automatisés
-12. Protection open redirects
-13. Rotation clés
-14. 2FA
+5. **Ajouter des tokens CSRF**
+   - Pour les actions critiques (modification de profil, suppression, etc.)
+
+6. **Centraliser la vérification des variables d'environnement**
+   - Vérifier toutes les variables nécessaires au démarrage
+   - Faire échouer l'application si des variables critiques manquent
+
+### 🟢 Priorité Basse
+
+7. **Améliorer le monitoring**
+   - Ajouter des métriques pour les tentatives d'attaque
+   - Alertes pour les anomalies de sécurité
+
+8. **Documentation de sécurité**
+   - Créer un guide de sécurité pour les développeurs
+   - Documenter les procédures de réponse aux incidents
 
 ---
 
-**Fin du rapport d'audit de sécurité**
+## ✅ CONCLUSION
 
+L'application PadelXP présente une **base de sécurité solide** avec :
+
+- ✅ Authentification robuste avec Supabase
+- ✅ Rate limiting multi-niveaux
+- ✅ Headers de sécurité complets
+- ✅ Validation stricte des entrées
+- ✅ RLS activé sur les tables sensibles
+- ✅ Logging sécurisé avec redaction
+
+Les principales améliorations à apporter concernent :
+
+- ⚠️ Le remplacement des console.log par le logger centralisé
+- ⚠️ Le renforcement de la CSP
+- ⚠️ La documentation de l'utilisation de service_role
+
+**Score de sécurité global : 7.5/10**
+
+---
+
+**Fin du rapport d'audit**

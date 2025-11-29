@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getClubSubscription, initializeSubscription } from "@/lib/utils/subscription-utils";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 /**
  * Zod : valider clubId (doit être une string UUID ou au moins string non vide)
@@ -22,14 +23,14 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      console.warn("[subscriptions/current] Accès refusé : non authentifié");
+      logger.warn("[subscriptions/current] Accès refusé : non authentifié");
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const clubInfo = await getUserClubInfo();
     const checkClub = ClubIdSchema.safeParse(clubInfo);
     if (!checkClub.success) {
-      console.warn(
+      logger.warn(
         "[subscriptions/current] clubId invalide ou manquant",
         clubInfo
       );
@@ -39,7 +40,7 @@ export async function GET() {
 
     // Log entrée
     const userIdPreview = user.id.substring(0, 8) + "…";
-    console.log("[subscriptions/current] user:", userIdPreview, "club:", clubId);
+    logger.info("[subscriptions/current] user:", userIdPreview, "club:", clubId);
     
     // Check droits métier (selon logique, ajoute ici si admin/membre seulement !)
 
@@ -47,7 +48,7 @@ export async function GET() {
     let subscription = await getClubSubscription(clubId);
 
     if (!subscription) {
-      console.log(
+      logger.info(
         "[subscriptions/current] Abonnement absent, init essai clubId:",
         clubId
       );
@@ -55,7 +56,7 @@ export async function GET() {
     }
 
     if (!subscription) {
-      console.error("[subscriptions/current] Erreur init clubId:", clubId);
+      logger.error("[subscriptions/current] Erreur init clubId:", clubId);
       return NextResponse.json(
         { error: "Erreur lors de l'initialisation de l'abonnement" },
         { status: 500 }
@@ -64,7 +65,7 @@ export async function GET() {
 
     return NextResponse.json({ subscription });
   } catch (error: any) {
-    console.error("[subscriptions/current] Erreur:", error);
+    logger.error("[subscriptions/current] Erreur:", error);
     return NextResponse.json(
       { error: error?.message || "Erreur serveur" },
       { status: 500 }
