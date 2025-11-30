@@ -68,10 +68,7 @@ export async function GET(req: Request) {
     // Si une session existe mais getUser() échoue temporairement, logger un avertissement
     // et retourner un tableau vide plutôt qu'un 401 pour éviter de casser l'UI
     if (session && !user && authError) {
-      console.warn("[Search API] Session exists but getUser() failed (temporary error?):", {
-        errorCode: authError?.code,
-        errorMessage: authError?.message,
-      });
+      logger.warn({ errorCode: authError?.code, errorMessage: authError?.message }, "[Search API] Session exists but getUser() failed (temporary error?)");
       // Retourner un tableau vide sans erreur 401 pour ne pas bloquer l'UI
       return NextResponse.json({ players: [] });
     }
@@ -90,7 +87,7 @@ export async function GET(req: Request) {
       .maybeSingle();
 
     if (userProfileError) {
-      console.error('[Search API] Error fetching user profile (client):', userProfileError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", error: userProfileError }, '[Search API] Error fetching user profile (client)');
     }
 
     if (userProfile?.club_id) {
@@ -103,7 +100,7 @@ export async function GET(req: Request) {
         .maybeSingle();
 
       if (adminProfileError) {
-        console.error('[Search API] Error fetching user profile (admin):', adminProfileError);
+        logger.error({ userId: user.id.substring(0, 8) + "…", error: adminProfileError }, '[Search API] Error fetching user profile (admin)');
       }
 
       if (adminProfile?.club_id) {
@@ -136,7 +133,7 @@ export async function GET(req: Request) {
 
     // Recherche simple avec ilike sur display_name, first_name et last_name
     const queryLower = query.toLowerCase().trim();
-    console.log('[Search API] Search query:', queryLower);
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", query: queryLower }, '[Search API] Search query');
     
     // Recherche sur plusieurs colonnes
     profilesQuery = profilesQuery.or(
@@ -144,16 +141,11 @@ export async function GET(req: Request) {
     );
 
     // Exécuter la requête
-    console.log('[Search API] Executing profiles query...');
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…" }, '[Search API] Executing profiles query');
     const { data: profiles, error: profilesError } = await profilesQuery.limit(50);
 
     if (profilesError) {
-      console.error('[Search API] Error fetching profiles:', {
-        message: profilesError.message,
-        details: profilesError.details,
-        hint: profilesError.hint,
-        code: profilesError.code
-      });
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", error: { message: profilesError.message, details: profilesError.details, hint: profilesError.hint, code: profilesError.code } }, '[Search API] Error fetching profiles');
       return NextResponse.json({ 
         players: [], 
         error: 'Database error',
@@ -162,13 +154,13 @@ export async function GET(req: Request) {
       }, { status: 500 });
     }
 
-    console.log('[Search API] Found profiles:', profiles?.length || 0);
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", profilesCount: profiles?.length || 0 }, '[Search API] Found profiles');
     if (profiles && profiles.length > 0) {
-      console.log('[Search API] Sample profiles:', profiles.slice(0, 3).map((p: any) => ({
-        id: p.id,
+      logger.info({ userId: user.id.substring(0, 8) + "…", sampleProfiles: profiles.slice(0, 3).map((p: any) => ({
+        id: p.id.substring(0, 8) + "…",
         display_name: p.display_name,
-        club_id: p.club_id
-      })));
+        club_id: p.club_id?.substring(0, 8) + "…" || null
+      })) }, '[Search API] Sample profiles');
     }
 
     const { data: clubRecord, error: clubError } = await supabaseAdmin
@@ -178,7 +170,7 @@ export async function GET(req: Request) {
       .maybeSingle();
 
     if (clubError) {
-      console.error('[Search API] Error fetching club record:', clubError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", error: clubError }, '[Search API] Error fetching club record');
     }
 
     const normalizedClubName = clubRecord?.name
@@ -215,9 +207,9 @@ export async function GET(req: Request) {
           display_name: displayName,
         });
       });
-      console.log('[Search API] Added', results.length, 'user profiles to results');
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", resultsCount: results.length }, '[Search API] Added user profiles to results');
     } else {
-      console.log('[Search API] No profiles returned from query');
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…" }, '[Search API] No profiles returned from query');
     }
 
     // Ne pas retourner les joueurs invités ici : création gérée côté formulaire
@@ -229,16 +221,16 @@ export async function GET(req: Request) {
 
     const finalResults = sortedResults.slice(0, 10);
     
-    console.log('[Search API] Final results count:', finalResults.length);
-    console.log('[Search API] Returning results:', finalResults.map(p => ({
-      id: p.id,
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", finalResultsCount: finalResults.length }, '[Search API] Final results count');
+    logger.info({ userId: user.id.substring(0, 8) + "…", results: finalResults.map(p => ({
+      id: p.id.substring(0, 8) + "…",
       display_name: p.display_name,
       type: p.type
-    })));
+    })) }, '[Search API] Returning results');
     
     return NextResponse.json({ players: finalResults });
   } catch (error: any) {
-    console.error("Error in search API:", error);
+    logger.error({ error }, "Error in search API");
     return NextResponse.json({ 
       error: "Internal server error", 
       message: error?.message || "Unknown error"

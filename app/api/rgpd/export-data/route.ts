@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const supabaseAdmin = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createServiceClient(
@@ -22,7 +23,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Vérifier l'authentification
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -41,8 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     const userIdPreview = user.id.substring(0, 8) + "…";
-    console.log('[RGPD Export] Début export pour utilisateur:', userIdPreview);
-    
+    logger.info({ userId: userIdPreview }, '[RGPD Export] Début export pour utilisateur');
 
     // Récupérer toutes les données de l'utilisateur
     const userData: any = {
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
     
     if (profileError) {
-      console.error('[RGPD Export] Erreur récupération profil:', profileError);
+      logger.error({ err: profileError }, '[RGPD Export] Erreur récupération profil');
     } else {
       userData.profile = profile;
     }
@@ -144,11 +144,10 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[RGPD Export] Erreur:', error);
+    logger.error({ err: error }, '[RGPD Export] Erreur');
     return NextResponse.json(
       { error: `Erreur lors de l'export: ${error.message}` },
       { status: 500 }
     );
   }
 }
-

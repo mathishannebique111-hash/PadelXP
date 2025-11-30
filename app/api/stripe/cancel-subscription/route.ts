@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { getClubSubscription } from '@/lib/utils/subscription-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     // Vérifier que la clé Stripe est configurée
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY is not configured');
+      logger.error({}, 'STRIPE_SECRET_KEY is not configured');
       return NextResponse.json(
         { error: 'Stripe configuration missing' },
         { status: 500 }
@@ -108,12 +109,10 @@ export async function POST(req: NextRequest) {
         // Si l'abonnement est déjà annulé côté Stripe, on ne considère pas cela comme une erreur bloquante :
         // on continue en mettant à jour la base de données pour refléter l'annulation.
         if (message.includes('A canceled subscription can only update its cancellation_details')) {
-          console.warn(
-            '[cancel-subscription] Subscription already cancelled on Stripe, continuing with local cancel_at_period_end update.'
-          );
+          logger.warn({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…" }, '[cancel-subscription] Subscription already cancelled on Stripe, continuing with local cancel_at_period_end update.');
           stripeSubscription = null;
         } else {
-          console.error('[cancel-subscription] Stripe update error:', message);
+          logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: message }, '[cancel-subscription] Stripe update error');
           throw err;
         }
       }
@@ -128,7 +127,7 @@ export async function POST(req: NextRequest) {
       .eq('id', subscription.id);
 
     if (updateError) {
-      console.error('[cancel-subscription] Database update error:', updateError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: updateError }, '[cancel-subscription] Database update error');
       // Essayer de revenir en arrière côté Stripe uniquement si on avait mis à jour Stripe
       if (subscription.stripe_subscription_id && stripeSubscription) {
         try {
@@ -137,7 +136,7 @@ export async function POST(req: NextRequest) {
             { cancel_at_period_end: false }
           );
         } catch (stripeError) {
-          console.error('[cancel-subscription] Failed to revert Stripe:', stripeError);
+          logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: stripeError }, '[cancel-subscription] Failed to revert Stripe');
         }
       }
 
@@ -172,7 +171,7 @@ export async function POST(req: NextRequest) {
           : null,
     });
   } catch (error) {
-    console.error('[cancel-subscription] Error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, '[cancel-subscription] Error');
     
     return NextResponse.json(
       { error: 'Failed to cancel subscription' },

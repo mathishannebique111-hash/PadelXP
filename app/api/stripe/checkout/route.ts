@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { getClubSubscription } from '@/lib/utils/subscription-utils';
+import { logger } from '@/lib/logger';
 
 // Initialiser Stripe avec la clé secrète
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
   try {
     // Vérifier que la clé Stripe est configurée
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY is not configured');
+      logger.error({}, 'STRIPE_SECRET_KEY is not configured');
       return NextResponse.json(
         { error: 'Stripe configuration missing' },
         { status: 500 }
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     // Vérifier que l'URL du site est configurée
     if (!process.env.NEXT_PUBLIC_SITE_URL) {
-      console.error('NEXT_PUBLIC_SITE_URL is not configured');
+      logger.error({}, 'NEXT_PUBLIC_SITE_URL is not configured');
       return NextResponse.json(
         { error: 'Site URL configuration missing' },
         { status: 500 }
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsedBody = stripeCheckoutSchema.safeParse(body);
     if (!parsedBody.success) {
-      console.error('[checkout] Invalid payload', parsedBody.error.flatten().fieldErrors);
+      logger.error({ validationErrors: parsedBody.error.flatten().fieldErrors }, '[checkout] Invalid payload');
       return NextResponse.json(
         { error: 'Invalid checkout payload', details: parsedBody.error.flatten().fieldErrors },
         { status: 400 }
@@ -87,12 +88,7 @@ export async function POST(req: NextRequest) {
                 // Convertir en timestamp Unix (secondes)
                 trialEndTimestamp = Math.floor(nextDay.getTime() / 1000);
 
-                console.log('[checkout] Trial end date found (PadelXP trial):', {
-                  trialEndAt: subscription.trial_end_at,
-                  trialEndDate: trialEndDate.toISOString(),
-                  nextDay: nextDay.toISOString(),
-                  trialEndTimestamp,
-                });
+                logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", trialEndAt: subscription.trial_end_at, trialEndTimestamp }, '[checkout] Trial end date found (PadelXP trial)');
               }
             }
 
@@ -109,28 +105,18 @@ export async function POST(req: NextRequest) {
 
                 trialEndTimestamp = Math.floor(nextDayAfterPeriod.getTime() / 1000);
 
-                console.log('[checkout] Trial end date derived from existing subscription period:', {
-                  status: subscription.status,
-                  cancel_at_period_end: subscription.cancel_at_period_end,
-                  current_period_end: subscription.current_period_end,
-                  nextDayAfterPeriod: nextDayAfterPeriod.toISOString(),
-                  trialEndTimestamp,
-                });
+                logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", status: subscription.status, cancel_at_period_end: subscription.cancel_at_period_end, current_period_end: subscription.current_period_end, trialEndTimestamp }, '[checkout] Trial end date derived from existing subscription period');
               }
             }
           }
         }
       } catch (error) {
-        console.error('[checkout] Error fetching trial info:', error);
+        logger.error({ error }, '[checkout] Error fetching trial info');
         // On continue même si on ne peut pas récupérer l'info d'essai
       }
     }
 
-    console.log('[checkout] Creating session:', { 
-      priceId, 
-      mode: checkoutMode,
-      trialEndTimestamp: trialEndTimestamp || undefined,
-    });
+    logger.info({ priceId: priceId.substring(0, 10) + "…", mode: checkoutMode, hasTrialEnd: !!trialEndTimestamp }, '[checkout] Creating session');
 
     // Préparer les paramètres de la session
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -196,11 +182,7 @@ export async function POST(req: NextRequest) {
       errorDetails = { raw: String(error) };
     }
 
-    console.error('[checkout] Stripe checkout error:', {
-      error: errorMessage,
-      details: errorDetails,
-      priceId: priceId || 'unknown',
-    });
+    logger.error({ error: errorMessage, details: errorDetails, priceId: priceId ? priceId.substring(0, 10) + "…" : 'unknown' }, '[checkout] Stripe checkout error');
     
     return NextResponse.json(
       { 

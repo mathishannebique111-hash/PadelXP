@@ -5,6 +5,7 @@ import { Resend } from 'resend';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
+import { logger } from '@/lib/logger';
 
 // Schéma de validation Zod pour le formulaire de contact
 const ContactSchema = z.object({
@@ -22,12 +23,12 @@ let resend: Resend | null = null;
 try {
   if (process.env.RESEND_API_KEY) {
     resend = new Resend(process.env.RESEND_API_KEY);
-    console.log('[contact] Resend initialized with API key');
+    logger.info({}, '[contact] Resend initialized with API key');
   } else {
-    console.warn('[contact] RESEND_API_KEY not found in environment variables');
+    logger.warn({}, '[contact] RESEND_API_KEY not found in environment variables');
   }
 } catch (error) {
-  console.error('[contact] Failed to initialize Resend:', error);
+  logger.error({ error }, '[contact] Failed to initialize Resend');
 }
 
 export async function POST(request: NextRequest) {
@@ -82,11 +83,7 @@ export async function POST(request: NextRequest) {
     const clubInfo = await getUserClubInfo();
     
     if (!clubInfo.clubId) {
-      console.error('[contact] No club found for user:', {
-        userId: user.id,
-        userEmail,
-        clubInfo,
-      });
+      logger.error({ userId: user.id.substring(0, 8) + "…", userEmail: userEmail.substring(0, 5) + "…" }, '[contact] No club found for user');
       return NextResponse.json({ 
         error: 'Impossible de trouver votre club. Veuillez vérifier que votre compte est bien configuré.' 
       }, { status: 400 });
@@ -95,11 +92,7 @@ export async function POST(request: NextRequest) {
     const clubId = clubInfo.clubId;
     let clubName = clubInfo.clubName || 'Un club';
     
-    console.log('[contact] Found club:', {
-      clubId,
-      clubName,
-      userId: user.id,
-    });
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", clubName }, '[contact] Found club');
 
     // Utiliser le client admin pour les opérations sur support_conversations et support_messages
     const supabaseAdmin = createAdminClient(
@@ -115,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     // Envoyer l'email
     if (!resend || !process.env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY not configured in environment variables');
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, 'RESEND_API_KEY not configured in environment variables');
       return NextResponse.json({ 
         error: 'Service d\'envoi d\'email non configuré. Veuillez configurer RESEND_API_KEY dans les variables d\'environnement.' 
       }, { status: 500 });
@@ -125,18 +118,10 @@ export async function POST(request: NextRequest) {
     // Si RESEND_FROM_EMAIL est configuré, l'utiliser, sinon utiliser le domaine vérifié
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'PadelXP Support <support@updates.padelxp.eu>';
 
-    console.log('[contact] Attempting to send email:', {
-      from: fromEmail,
-      to: FORWARD_TO_EMAIL, // Envoyer directement vers l'email administrateur
-      replyTo: INBOUND_EMAIL, // Les réponses iront vers l'inbound pour être capturées par le webhook
-      clubName,
-      hasResendKey: !!process.env.RESEND_API_KEY,
-      resendKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) + '...' : 'none',
-      resendInitialized: !!resend,
-    });
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", clubName, hasResendKey: !!process.env.RESEND_API_KEY, resendInitialized: !!resend }, '[contact] Attempting to send email');
 
     if (!resend) {
-      console.error('[contact] Resend is not initialized!');
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[contact] Resend is not initialized!');
       return NextResponse.json({ 
         error: 'Service d\'envoi d\'email non initialisé' 
       }, { status: 500 });
@@ -168,14 +153,14 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (convCheckError || !existingConversation) {
-        console.error('[contact] Error checking conversation:', convCheckError);
+        logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: providedConversationId.substring(0, 8) + "…", error: convCheckError }, '[contact] Error checking conversation');
         return NextResponse.json({ 
           error: 'Conversation introuvable ou vous n\'avez pas accès à cette conversation' 
         }, { status: 404 });
       }
 
       conversationId = providedConversationId;
-      console.log('[contact] Using provided conversationId:', conversationId);
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…" }, '[contact] Using provided conversationId');
     } else {
       // Sinon, chercher une conversation ouverte existante pour ce club
       const { data: existingConversation } = await supabaseAdmin
@@ -190,7 +175,7 @@ export async function POST(request: NextRequest) {
 
       if (existingConversation) {
         conversationId = existingConversation.id;
-        console.log('[contact] Using existing conversation:', conversationId);
+        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…" }, '[contact] Using existing conversation');
       } else {
       // Créer une nouvelle conversation
       // Ne pas spécifier created_at et last_message_at car ils ont des valeurs par défaut dans la table
@@ -208,18 +193,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (convError) {
-        console.error('[contact] Error creating conversation:', {
-          error: convError,
-          errorMessage: convError.message,
-          errorDetails: convError.details,
-          errorHint: convError.hint,
-          errorCode: convError.code,
-          clubId,
-          userId: user.id,
-          userEmail,
-          clubName,
-          fullError: JSON.stringify(convError, null, 2),
-        });
+        logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", error: { message: convError.message, details: convError.details, hint: convError.hint, code: convError.code } }, '[contact] Error creating conversation');
         
         // Gérer les différents types d'erreurs
         let errorMessage = convError.message || 'Erreur inconnue';
@@ -240,20 +214,20 @@ export async function POST(request: NextRequest) {
       }
 
       if (!newConversation || !newConversation.id) {
-        console.error('[contact] Conversation created but no data returned');
+        logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[contact] Conversation created but no data returned');
         return NextResponse.json({ 
           error: 'Erreur lors de la création de la conversation: aucune donnée retournée' 
         }, { status: 500 });
       }
 
       conversationId = newConversation.id;
-      console.log('[contact] Created new conversation:', conversationId);
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…" }, '[contact] Created new conversation');
       }
     }
 
     // IMPORTANT: Enregistrer le message dans la DB AVANT d'essayer d'envoyer l'email
     // Comme ça, le message apparaîtra toujours dans le chat, même si l'envoi d'email échoue
-    console.log('[contact] Saving message to database first...');
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…" }, '[contact] Saving message to database first');
     const { error: messageError, data: savedMessage } = await supabaseAdmin
       .from('support_messages')
       .insert({
@@ -269,7 +243,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (messageError) {
-      console.error('[contact] Error saving message to database:', messageError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", error: messageError }, '[contact] Error saving message to database');
       // Si la table n'existe pas, retourner un message explicite
       if (messageError.code === '42P01' || messageError.message?.includes('does not exist')) {
         return NextResponse.json({ 
@@ -280,7 +254,7 @@ export async function POST(request: NextRequest) {
       }
       // Sinon, continuer quand même (l'envoi d'email peut toujours fonctionner)
     } else {
-      console.log('[contact] Message saved to database:', savedMessage?.id);
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", messageId: savedMessage?.id?.substring(0, 8) + "…" || null }, '[contact] Message saved to database');
       
       // Mettre à jour last_message_at de la conversation
       await supabaseAdmin
@@ -297,7 +271,7 @@ export async function POST(request: NextRequest) {
     
     // Utiliser userEmail comme replyTo pour que les réponses arrivent à l'email du club
     // Les headers X-Conversation-ID permettront d'identifier la conversation dans le webhook
-    console.log('[contact] Calling resend.emails.send...');
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…" }, '[contact] Calling resend.emails.send');
     const emailSubject = `[${conversationId}] Message de contact - ${clubName}`;
     
     // Envoyer en priorité directement à l'email administrateur.
@@ -358,18 +332,13 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    console.log('[contact] Email result received:', {
-      hasError: !!emailResult.error,
-      hasData: !!emailResult.data,
-      errorDetails: emailResult.error ? JSON.stringify(emailResult.error, null, 2) : null,
-      dataDetails: emailResult.data ? JSON.stringify(emailResult.data, null, 2) : null,
-    });
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", hasError: !!emailResult.error, hasData: !!emailResult.data }, '[contact] Email result received');
 
     // Si l'envoi direct à Gmail échoue, essayer d'envoyer vers l'adresse inbound comme secours
     if (emailResult.error && INBOUND_EMAIL !== FORWARD_TO_EMAIL) {
       const errorMessage = emailResult.error.message || emailResult.error.toString() || 'Erreur inconnue';
-      console.error('[contact] Resend API error when sending to Gmail (FORWARD_TO_EMAIL):', JSON.stringify(emailResult.error, null, 2));
-      console.log('[contact] Trying to send to inbound email as fallback...');
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", error: emailResult.error }, '[contact] Resend API error when sending to Gmail (FORWARD_TO_EMAIL)');
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…" }, '[contact] Trying to send to inbound email as fallback');
       
       emailResult = await resend.emails.send({
         from: fromEmail,
@@ -429,24 +398,16 @@ export async function POST(request: NextRequest) {
       });
       
       if (!emailResult.error) {
-        console.log('[contact] Email sent successfully to inbound (fallback):', {
-          id: emailResult.data?.id,
-          to: INBOUND_EMAIL,
-          conversationId,
-        });
+        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", emailId: emailResult.data?.id?.substring(0, 8) + "…" || null }, '[contact] Email sent successfully to inbound (fallback)');
       } else {
         // Si même l'envoi direct à Gmail échoue, logger l'erreur mais ne pas bloquer (le message est déjà dans la DB)
-        console.error('[contact] Failed to send email even to Gmail (fallback):', JSON.stringify(emailResult.error, null, 2));
+        logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", error: emailResult.error }, '[contact] Failed to send email even to Gmail (fallback)');
       }
     }
 
     // Si l'email a été envoyé avec succès, logger l'info
     if (!emailResult.error && emailResult.data?.id) {
-      console.log('[contact] Email sent successfully:', {
-        id: emailResult.data.id,
-        to: FORWARD_TO_EMAIL,
-        conversationId,
-      });
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", emailId: emailResult.data.id.substring(0, 8) + "…" }, '[contact] Email sent successfully');
     }
 
     // Mettre à jour email_message_id si l'email a été envoyé avec succès
@@ -456,14 +417,10 @@ export async function POST(request: NextRequest) {
         .update({ email_message_id: emailResult.data.id })
         .eq('id', savedMessage.id);
       
-      console.log('[contact] Message email_message_id updated:', emailResult.data.id);
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", messageId: savedMessage.id.substring(0, 8) + "…", emailId: emailResult.data.id.substring(0, 8) + "…" }, '[contact] Message email_message_id updated');
     }
 
-    console.log('[contact] ✅ Success! Message sent and saved:', {
-      conversationId,
-      messageId: savedMessage?.id,
-      emailSent: !!emailResult.data?.id
-    });
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", conversationId: conversationId.substring(0, 8) + "…", messageId: savedMessage?.id?.substring(0, 8) + "…" || null, emailSent: !!emailResult.data?.id }, '[contact] ✅ Success! Message sent and saved');
 
     return NextResponse.json({ 
       success: true, 
@@ -472,8 +429,8 @@ export async function POST(request: NextRequest) {
       messageId: savedMessage?.id
     });
   } catch (error) {
-    console.error('[contact] Unexpected error:', error);
-    console.error('[contact] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    logger.error({ error }, '[contact] Unexpected error');
+    logger.error({ error: error instanceof Error ? error.stack : 'No stack' }, '[contact] Error stack');
     return NextResponse.json({ 
       error: 'Erreur lors de l\'envoi du message',
       details: error instanceof Error ? error.message : String(error)

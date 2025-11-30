@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { logger } from '@/lib/logger';
 
 const supabaseAdmin = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createServiceClient(
@@ -29,7 +30,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Vérifier l'authentification
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -57,8 +58,8 @@ export async function POST(req: NextRequest) {
     }
 
     const userIdPreview = user.id.substring(0, 8) + "…";
-    console.log('[RGPD Delete] Début suppression pour utilisateur:', userIdPreview);
-    
+    logger.info({ userId: userIdPreview }, '[RGPD Delete] Début suppression pour utilisateur');
+
     // Récupérer le profil pour identifier le club_id
     const { data: profile } = await supabaseAdmin
       .from('profiles')
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       .eq('id', user.id);
 
     if (profileUpdateError) {
-      console.error('[RGPD Delete] Erreur anonymisation profil:', profileUpdateError);
+      logger.error({ err: profileUpdateError }, '[RGPD Delete] Erreur anonymisation profil');
     }
 
     // 2. Supprimer les participations aux matchs (mais garder les matchs pour l'intégrité)
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id);
 
     if (matchParticipantsError) {
-      console.error('[RGPD Delete] Erreur suppression participations:', matchParticipantsError);
+      logger.error({ err: matchParticipantsError }, '[RGPD Delete] Erreur suppression participations');
     }
 
     // 3. Supprimer les confirmations de matchs
@@ -139,11 +140,11 @@ export async function POST(req: NextRequest) {
     // Note : Cela supprime complètement le compte utilisateur
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
     if (authDeleteError) {
-      console.error('[RGPD Delete] Erreur suppression compte auth:', authDeleteError);
+      logger.error({ err: authDeleteError }, '[RGPD Delete] Erreur suppression compte auth');
       // Continuer même en cas d'erreur pour supprimer les autres données
     }
 
-    console.log('[RGPD Delete] Suppression terminée pour utilisateur:', userIdPreview);
+    logger.info({ userId: userIdPreview }, '[RGPD Delete] Suppression terminée pour utilisateur');
 
     return NextResponse.json({
       success: true,
@@ -152,11 +153,10 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[RGPD Delete] Erreur:', error);
+    logger.error({ err: error }, '[RGPD Delete] Erreur');
     return NextResponse.json(
       { error: `Erreur lors de la suppression: ${error.message}` },
       { status: 500 }
     );
   }
 }
-

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { getClubSubscription } from '@/lib/utils/subscription-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     // Vérifier que la clé Stripe est configurée
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY is not configured');
+      logger.error({}, 'STRIPE_SECRET_KEY is not configured');
       return NextResponse.json(
         { error: 'Stripe configuration missing' },
         { status: 500 }
@@ -123,16 +124,14 @@ export async function POST(req: NextRequest) {
 
       // Cas particulier : l'abonnement est déjà entièrement annulé côté Stripe
       if (message.includes('A canceled subscription can only update its cancellation_details')) {
-        console.warn(
-          '[reactivate-subscription] Subscription already fully cancelled on Stripe, cannot reactivate.',
-        );
+        logger.warn({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…" }, '[reactivate-subscription] Subscription already fully cancelled on Stripe, cannot reactivate.');
         return NextResponse.json(
           { error: "L'abonnement a déjà été entièrement annulé sur Stripe et ne peut plus être réactivé." },
           { status: 400 }
         );
       }
 
-      console.error('[reactivate-subscription] Stripe update error:', message);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: message }, '[reactivate-subscription] Stripe update error');
       throw err;
     }
 
@@ -145,7 +144,7 @@ export async function POST(req: NextRequest) {
       .eq('id', subscription.id);
 
     if (updateError) {
-      console.error('[reactivate-subscription] Database update error:', updateError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: updateError }, '[reactivate-subscription] Database update error');
       // Essayer de revenir en arrière côté Stripe
       try {
         await stripe.subscriptions.update(
@@ -153,7 +152,7 @@ export async function POST(req: NextRequest) {
           { cancel_at_period_end: true }
         );
       } catch (stripeError) {
-        console.error('[reactivate-subscription] Failed to revert Stripe:', stripeError);
+        logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: stripeError }, '[reactivate-subscription] Failed to revert Stripe');
       }
 
       return NextResponse.json(
@@ -187,7 +186,7 @@ export async function POST(req: NextRequest) {
         : null,
     });
   } catch (error) {
-    console.error('[reactivate-subscription] Error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, '[reactivate-subscription] Error');
     
     return NextResponse.json(
       { error: 'Failed to reactivate subscription' },

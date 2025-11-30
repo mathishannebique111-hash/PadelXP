@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
           userIdFromToken = data.user.id ?? null;
         }
       } catch (decodeError) {
-        console.warn("[admin-invite/reissue] Unable to decode token", decodeError);
+        logger.warn({ error: decodeError }, "[admin-invite/reissue] Unable to decode token");
       }
     }
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (inviteLookupError) {
-      console.error("[admin-invite/reissue] lookup error", inviteLookupError);
+      logger.error({ email: normalizedEmail.substring(0, 5) + "…", error: inviteLookupError }, "[admin-invite/reissue] lookup error");
       return NextResponse.json({ error: "Impossible de vérifier l'invitation" }, { status: 500 });
     }
 
@@ -142,18 +143,13 @@ export async function POST(request: Request) {
     }
 
     if (linkResult.error) {
-      console.error("[admin-invite/reissue] generate link error", linkResult.error);
+      logger.error({ email: normalizedEmail.substring(0, 5) + "…", error: linkResult.error }, "[admin-invite/reissue] generate link error");
       return NextResponse.json({ error: "Impossible de régénérer le lien" }, { status: 500 });
     }
 
     // Étendre le typage de linkData pour accéder aux propriétés spécifiques (email_otp, hashed_token, action_link, etc.)
     const linkData: any = linkResult.data;
-    console.log("[admin-invite/reissue] link generated", {
-      linkType,
-      email: normalizedEmail,
-      hasAction: !!linkData?.properties?.action_link,
-      hasOtp: !!linkData?.properties?.email_otp || !!linkData?.properties?.hashed_token,
-    });
+    logger.info({ email: normalizedEmail.substring(0, 5) + "…", linkType, hasAction: !!linkData?.properties?.action_link, hasOtp: !!linkData?.properties?.email_otp || !!linkData?.properties?.hashed_token }, "[admin-invite/reissue] link generated");
 
     const otpToken =
       linkData?.properties?.email_otp ||
@@ -186,7 +182,7 @@ export async function POST(request: Request) {
       linkType,
     });
   } catch (error: any) {
-    console.error("[admin-invite/reissue] Unexpected error", error);
+    logger.error({ error }, "[admin-invite/reissue] Unexpected error");
     return NextResponse.json({ error: error?.message || "Erreur serveur" }, { status: 500 });
   }
 }

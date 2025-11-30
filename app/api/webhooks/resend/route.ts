@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { logger } from '@/lib/logger';
 
 // Initialiser Resend pour vérifier les signatures (optionnel mais recommandé)
 let resend: Resend | null = null;
@@ -9,7 +10,7 @@ try {
     resend = new Resend(process.env.RESEND_API_KEY);
   }
 } catch (error) {
-  console.error('[webhook-resend] Failed to initialize Resend:', error);
+  logger.error({ error }, '[webhook-resend] Failed to initialize Resend');
 }
 
 // Initialiser Supabase Admin pour écrire dans la base de données
@@ -32,7 +33,7 @@ const supabaseAdmin = createAdminClient(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('[webhook-resend] Received webhook:', JSON.stringify(body, null, 2));
+    logger.info({ eventType: body.type || body['event-type'] }, '[webhook-resend] Received webhook');
 
     // Resend envoie différents types d'événements
     // Pour les emails entrants (Inbound Email), la structure est différente
@@ -54,19 +55,19 @@ export async function POST(request: NextRequest) {
       // Si on a un email_id et pas de contenu, récupérer via l'API Resend
       if (emailId && (!textContent && !htmlContent)) {
         try {
-          console.log('[webhook-resend] Fetching email content for email_id:', emailId);
+          logger.info({ emailId: emailId.substring(0, 8) + "…" }, '[webhook-resend] Fetching email content for email_id');
           const resendEmails = resend?.emails as any;
           const { data: emailContent, error: emailError } = await resendEmails?.receiving?.get(emailId) ?? { data: null, error: null };
           
           if (emailError) {
-            console.error('[webhook-resend] Error fetching email content:', emailError);
+            logger.error({ emailId: emailId.substring(0, 8) + "…", error: emailError }, '[webhook-resend] Error fetching email content');
           } else if (emailContent) {
             textContent = emailContent.text || textContent;
             htmlContent = emailContent.html || htmlContent;
-            console.log('[webhook-resend] Email content fetched:', { hasText: !!textContent, hasHtml: !!htmlContent });
+            logger.info({ emailId: emailId.substring(0, 8) + "…", hasText: !!textContent, hasHtml: !!htmlContent }, '[webhook-resend] Email content fetched');
           }
         } catch (fetchError) {
-          console.error('[webhook-resend] Error fetching email content:', fetchError);
+          logger.error({ emailId: emailId.substring(0, 8) + "…", error: fetchError }, '[webhook-resend] Error fetching email content');
         }
       }
       
@@ -75,14 +76,7 @@ export async function POST(request: NextRequest) {
       const references = emailData.references || emailData.headers?.['References'] || [];
       const conversationIdHeader = emailData.headers?.['X-Conversation-ID'] || emailData.headers?.['x-conversation-id'];
       
-      console.log('[webhook-resend] Email received:', {
-        from: fromEmail,
-        to: toEmail,
-        subject,
-        messageId,
-        inReplyTo,
-        conversationIdHeader,
-      });
+      logger.info({ emailId: emailId?.substring(0, 8) + "…" || null, fromEmail: fromEmail?.substring(0, 5) + "…" || null, toEmail: toEmail?.substring(0, 5) + "…" || null, subject: subject?.substring(0, 30) || null, hasConversationIdHeader: !!conversationIdHeader }, '[webhook-resend] Email received');
 
       // Extraire l'ID de conversation depuis le Reply-To header ou le To header
       let conversationId: string | null = null;
@@ -130,18 +124,14 @@ export async function POST(request: NextRequest) {
             
             if (matchingConversation) {
               conversationId = matchingConversation.id;
-              console.log('[webhook-resend] Found conversation by short ID:', shortId, '->', conversationId);
+              logger.info({ shortId, conversationId: conversationId.substring(0, 8) + "…" }, '[webhook-resend] Found conversation by short ID');
             }
           }
         }
       }
 
       if (!conversationId) {
-        console.error('[webhook-resend] Could not find conversation ID from email:', {
-          to: toEmail,
-          subject,
-          headers: emailData.headers,
-        });
+        logger.error({ toEmail: toEmail?.substring(0, 5) + "…" || null, subject: subject?.substring(0, 30) || null }, '[webhook-resend] Could not find conversation ID from email');
         // Si on ne trouve pas de conversation ID, on ne peut pas lier le message
         return NextResponse.json({ 
           error: 'Conversation ID not found',
@@ -157,7 +147,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (convError || !conversation) {
-        console.error('[webhook-resend] Conversation not found:', conversationId, convError);
+        logger.error({ conversationId: conversationId.substring(0, 8) + "…", error: convError }, '[webhook-resend] Conversation not found');
         return NextResponse.json({ 
           error: 'Conversation not found',
           conversationId 
@@ -173,7 +163,7 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         if (existingMessage) {
-          console.log('[webhook-resend] Message already exists, skipping:', messageId);
+          logger.info({ conversationId: conversationId.substring(0, 8) + "…", messageId: messageId.substring(0, 8) + "…" || null }, '[webhook-resend] Message already exists, skipping');
           return NextResponse.json({ 
             success: true,
             message: 'Message already processed',
@@ -186,7 +176,7 @@ export async function POST(request: NextRequest) {
       const messageText = textContent.trim() || (htmlContent ? htmlContent.replace(/<[^>]*>/g, '').trim() : '');
       
       if (!messageText) {
-        console.warn('[webhook-resend] Empty message content, skipping');
+        logger.warn({ conversationId: conversationId.substring(0, 8) + "…" }, '[webhook-resend] Empty message content, skipping');
         return NextResponse.json({ 
           error: 'Empty message content' 
         }, { status: 400 });
@@ -207,7 +197,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (messageError || !newMessage) {
-        console.error('[webhook-resend] Error saving message:', messageError);
+        logger.error({ conversationId: conversationId.substring(0, 8) + "…", error: messageError }, '[webhook-resend] Error saving message');
         return NextResponse.json({ 
           error: 'Error saving message',
           details: messageError 
@@ -222,10 +212,7 @@ export async function POST(request: NextRequest) {
           .eq('id', conversationId);
       }
 
-      console.log('[webhook-resend] Message saved successfully:', {
-        messageId: newMessage.id,
-        conversationId,
-      });
+      logger.info({ conversationId: conversationId.substring(0, 8) + "…", messageId: newMessage.id.substring(0, 8) + "…" }, '[webhook-resend] Message saved successfully');
 
       return NextResponse.json({ 
         success: true,
@@ -235,13 +222,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Autres types d'événements (email.sent, email.delivered, etc.)
-    console.log('[webhook-resend] Event type not handled:', eventType);
+    logger.info({ eventType }, '[webhook-resend] Event type not handled');
     return NextResponse.json({ 
       received: true,
       eventType 
     });
   } catch (error) {
-    console.error('[webhook-resend] Error processing webhook:', error);
+    logger.error({ error }, '[webhook-resend] Error processing webhook');
     return NextResponse.json({ 
       error: 'Error processing webhook',
       details: error instanceof Error ? error.message : String(error)

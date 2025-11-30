@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { sendAdminInvitationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
 
     if (inviteByEmailError) {
       // Si inviteUserByEmail échoue (par exemple "already registered"), utiliser generateLink
-      console.log(`[invite-admin] inviteUserByEmail échoué, utilisation de generateLink:`, inviteByEmailError.message);
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: inviteByEmailError.message }, `[invite-admin] inviteUserByEmail échoué, utilisation de generateLink`);
       
       let linkData: any = null;
       let linkError: any = null;
@@ -187,7 +188,7 @@ export async function POST(request: Request) {
     }
 
     if (inviteError) {
-      console.error("[invite-admin] Erreur Supabase:", inviteError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: inviteError }, "[invite-admin] Erreur Supabase");
       return NextResponse.json(
         { error: "Erreur lors de l'envoi de l'invitation" },
         { status: 500 }
@@ -208,7 +209,7 @@ export async function POST(request: Request) {
       if (actionLink) {
         // Si on a un action_link complet, l'utiliser directement
         invitationUrl = actionLink;
-        console.log(`[invite-admin] Action link trouvé: ${actionLink.substring(0, 100)}...`);
+        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", actionLinkPreview: actionLink.substring(0, 20) + "…" }, `[invite-admin] Action link trouvé`);
       } else {
         // Sinon, construire le lien avec le token si disponible
         const token =
@@ -222,20 +223,20 @@ export async function POST(request: Request) {
           // Construire l'URL avec le token
           const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
           invitationUrl = `${baseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(token)}`;
-          console.log(`[invite-admin] Lien d'invitation généré (longueur: ${invitationUrl.length})`);
+          logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl.length }, `[invite-admin] Lien d'invitation généré`);
         } else {
           // Fallback sur le lien de base (sans token, mais avec email)
           invitationUrl = inviteLink;
-          console.log(`[invite-admin] Utilisation du lien de base (fallback): ${inviteLink}`);
+          logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, `[invite-admin] Utilisation du lien de base (fallback)`);
         }
       }
     } else {
       // Aucune donnée Supabase, utiliser le lien de base
       invitationUrl = inviteLink;
-      console.log(`[invite-admin] Aucune donnée Supabase, utilisation du lien de base: ${inviteLink}`);
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, `[invite-admin] Aucune donnée Supabase, utilisation du lien de base`);
     }
 
-    console.log(`[invite-admin] Lien d'invitation généré (longueur: ${invitationUrl?.length || 0})`);
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl?.length || 0 }, `[invite-admin] Lien d'invitation généré`);
 
     // TOUJOURS envoyer l'email d'invitation via Resend
     // Même si Supabase a envoyé un email, on envoie aussi via Resend pour garantir la réception
@@ -246,7 +247,7 @@ export async function POST(request: Request) {
         : user.email;
       
       if (!invitationUrl) {
-        console.error("[invite-admin] Aucun lien d'invitation généré, impossible d'envoyer l'email");
+        logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Aucun lien d'invitation généré, impossible d'envoyer l'email");
       } else {
         await sendAdminInvitationEmail(
           normalizedEmail,
@@ -255,10 +256,10 @@ export async function POST(request: Request) {
           invitationUrl
         );
         const emailPreview = normalizedEmail.substring(0, 5) + "…";
-        console.log(`[invite-admin] ✅ Email d'invitation envoyé à ${emailPreview} via Resend`);
+        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: emailPreview }, `[invite-admin] ✅ Email d'invitation envoyé via Resend`);
               }
     } catch (emailError: any) {
-      console.error("[invite-admin] ❌ Erreur lors de l'envoi de l'email via Resend:", emailError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: emailError }, "[invite-admin] ❌ Erreur lors de l'envoi de l'email via Resend");
       // On ne bloque pas l'invitation si l'email échoue, mais on log l'erreur
       // L'utilisateur pourra toujours utiliser le lien généré par Supabase
     }
@@ -287,7 +288,7 @@ export async function POST(request: Request) {
           .eq("id", existingEntry.id);
 
         if (updateError) {
-          console.error("[invite-admin] Erreur lors de la mise à jour dans club_admins:", updateError);
+          logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", invitedUserId: invitedUserId.substring(0, 8) + "…", error: updateError }, "[invite-admin] Erreur lors de la mise à jour dans club_admins");
         }
       } else {
         // Créer une nouvelle invitation en attente
@@ -303,7 +304,7 @@ export async function POST(request: Request) {
           });
 
         if (insertError && insertError.code !== "23505") {
-          console.error("[invite-admin] Erreur lors de l'ajout dans club_admins:", insertError);
+          logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", invitedUserId: invitedUserId.substring(0, 8) + "…", error: insertError }, "[invite-admin] Erreur lors de l'ajout dans club_admins");
           // On ne bloque pas l'invitation même si l'ajout échoue
         }
       }
@@ -312,14 +313,14 @@ export async function POST(request: Request) {
     // Logger l'invitation
     const emailPreview2 = normalizedEmail.substring(0, 5) + "…";
     const clubIdPreview = clubId.substring(0, 8) + "…";
-    console.log(`[invite-admin] Invitation envoyée à ${emailPreview2} pour le club ${clubName} (${clubIdPreview})`);
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubIdPreview, email: emailPreview2, clubName }, `[invite-admin] Invitation envoyée pour le club`);
     
     return NextResponse.json({
       success: true,
       message: responseMessage,
     });
   } catch (error: any) {
-    console.error("[invite-admin] Erreur:", error);
+    logger.error({ error }, "[invite-admin] Erreur");
     return NextResponse.json(
       { error: error.message || "Erreur serveur" },
       { status: 500 }

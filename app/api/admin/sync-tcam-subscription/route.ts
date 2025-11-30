@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       .ilike('name', '%tcam%');
 
     if (clubError) {
-      console.error('[sync-tcam] Error finding club:', clubError);
+      logger.error({ error: clubError }, '[sync-tcam] Error finding club');
       return NextResponse.json(
         { error: 'Error finding club' },
         { status: 500 }
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
     }
 
     const club = clubs[0];
-    console.log('[sync-tcam] Found club:', club.name, 'ID:', club.id);
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", clubName: club.name }, '[sync-tcam] Found club');
 
     // Récupérer l'abonnement du club
     const { data: subscription, error: subError } = await supabaseAdmin
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (subError) {
-      console.error('[sync-tcam] Error fetching subscription:', subError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: subError }, '[sync-tcam] Error fetching subscription');
       return NextResponse.json(
         { error: 'Error fetching subscription' },
         { status: 500 }
@@ -136,7 +137,7 @@ export async function POST(req: NextRequest) {
       .eq('id', subscription.id);
 
     if (updateError) {
-      console.error('[sync-tcam] Error updating subscription:', updateError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: updateError }, '[sync-tcam] Error updating subscription');
       return NextResponse.json(
         { error: 'Failed to update subscription' },
         { status: 500 }
@@ -154,7 +155,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[sync-tcam] Error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, '[sync-tcam] Error');
     return NextResponse.json(
       { error: 'Failed to sync subscription dates' },
       { status: 500 }

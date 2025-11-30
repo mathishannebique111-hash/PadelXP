@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { signupRateLimit, getClientIP, checkRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
           { status: 409 }
         );
       }
-      console.error("[clubs/signup] createUser error", error);
+      logger.error({ email: email.substring(0, 5) + "…", error }, "[clubs/signup] createUser error");
       return NextResponse.json(
         { error: error.message || "Impossible de créer le compte" },
         { status: 500 }
@@ -108,7 +109,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    console.error("[clubs/signup] unexpected error", err);
+    logger.error({ error: err }, "[clubs/signup] unexpected error");
     return NextResponse.json(
       { error: err?.message || "Erreur serveur" },
       { status: 500 }

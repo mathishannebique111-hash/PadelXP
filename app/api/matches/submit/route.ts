@@ -9,7 +9,9 @@ import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { consumeBoostForMatch, canPlayerUseBoost, getPlayerBoostCreditsAvailable } from "@/lib/utils/boost-utils";
 import { logger } from "@/lib/logger"; // ✅ AJOUTÉ
 
+
 const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
+
 
 /**
  * Schéma strict de soumission d'un match :
@@ -52,6 +54,7 @@ const matchSubmitSchema = z.object({
   useBoost: z.boolean().optional(),
 });
 
+
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -62,6 +65,7 @@ const supabaseAdmin = createAdminClient(
     },
   }
 );
+
 
 export async function POST(req: Request) {
   try {
@@ -90,6 +94,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Données invalides", details: parsedBody.error.flatten().fieldErrors }, { status: 400 });
     }
 
+
     const { players, winner, sets, tieBreak, useBoost } = parsedBody.data;
     
     const cookieStore = await cookies();
@@ -116,6 +121,7 @@ export async function POST(req: Request) {
       }
     );
 
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     logger.info("User auth check", { 
       authenticated: !!user, 
@@ -126,6 +132,7 @@ export async function POST(req: Request) {
       logger.warn("Unauthorized access attempt"); // ✅ REMPLACÉ
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
 
     // Valider que nous avons 2 ou 4 joueurs (simple ou double)
     logger.info("Validating players", { 
@@ -141,6 +148,7 @@ export async function POST(req: Request) {
     
     const isDouble = players.length === 4;
 
+
     // Vérifier que tous les joueurs users sont uniques
     const userPlayers = players
       .filter((p) => p.player_type === "user")
@@ -153,6 +161,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Les joueurs doivent être uniques" }, { status: 400 });
     }
 
+
     // Validation : Vérifier que tous les joueurs users appartiennent au même club
     if (userPlayers.length > 0) {
       const { data: currentUserProfile } = await supabase
@@ -161,7 +170,9 @@ export async function POST(req: Request) {
         .eq("id", user.id)
         .maybeSingle();
 
+
       let userClubId = currentUserProfile?.club_id || null;
+
 
       if (!userClubId) {
         const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
@@ -179,15 +190,18 @@ export async function POST(req: Request) {
         }
       }
 
+
       if (!userClubId) {
         logger.error("User without club trying to create match"); // ✅ REMPLACÉ
         return NextResponse.json({ error: "Vous devez être rattaché à un club pour enregistrer un match" }, { status: 403 });
       }
 
+
       const { data: playerProfiles, error: profilesError } = await supabaseAdmin
         .from("profiles")
         .select("id, club_id")
         .in("id", userPlayers);
+
 
       if (profilesError || !playerProfiles || playerProfiles.length !== userPlayers.length) {
         logger.error("Error fetching player profiles", { 
@@ -198,7 +212,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Impossible de vérifier les clubs des joueurs" }, { status: 500 });
       }
 
+
       const allSameClub = playerProfiles.every((profile: any) => profile.club_id === userClubId);
+
 
       if (!allSameClub) {
         logger.error("Players from different clubs detected"); // ✅ REMPLACÉ
@@ -207,6 +223,7 @@ export async function POST(req: Request) {
         }, { status: 403 });
       }
     }
+
 
     // Vérifier que tous les joueurs guests sont uniques
     const guestPlayers = players
@@ -220,6 +237,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Les joueurs invités doivent être uniques" }, { status: 400 });
     }
 
+
     // Valider les sets
     logger.info("Validating sets", { 
       setsCount: sets?.length 
@@ -231,6 +249,7 @@ export async function POST(req: Request) {
       }); // ✅ REMPLACÉ
       return NextResponse.json({ error: `Au moins 2 sets requis, reçu: ${sets?.length || 0}` }, { status: 400 });
     }
+
 
     // Générer des UUIDs pour les équipes (basés sur les IDs des joueurs pour l'unicité)
     // Match simple (2 joueurs) : Équipe 1 = joueur 0, Équipe 2 = joueur 1
@@ -279,6 +298,7 @@ export async function POST(req: Request) {
     // Déterminer si le match a été décidé au tie-break
     const decided_by_tiebreak = !!(tieBreak && tieBreak.team1Score && tieBreak.team2Score && parseInt(tieBreak.team1Score) !== parseInt(tieBreak.team2Score));
 
+
     // Vérifier la limite de 3 matchs par jour et par joueur
     // Ne pas bloquer l'enregistrement, mais identifier les joueurs qui ont atteint la limite
     const playersOverLimit: string[] = [];
@@ -295,6 +315,7 @@ export async function POST(req: Request) {
       today.setUTCHours(23, 59, 59, 999);
       const todayEnd = today.toISOString();
 
+
       // Pour chaque joueur user, compter les matchs d'aujourd'hui
       for (const playerUserId of userPlayers) {
         // Étape 1: Récupérer tous les match_ids du joueur depuis match_participants
@@ -304,6 +325,7 @@ export async function POST(req: Request) {
           .eq("user_id", playerUserId)
           .eq("player_type", "user");
 
+
         if (participantsError) {
           logger.error("Error fetching participants", { 
             playerId: playerUserId.slice(0, 8) + "...",
@@ -312,12 +334,15 @@ export async function POST(req: Request) {
           continue;
         }
 
+
         if (!participants || participants.length === 0) {
           logger.debug("No participants found for player"); // ✅ REMPLACÉ
           continue;
         }
 
+
         const matchIds = participants.map((p: any) => p.match_id);
+
 
         // Étape 2: Récupérer les matchs correspondants et filtrer par date d'aujourd'hui
         const { data: todayMatches, error: matchesError } = await supabaseAdmin
@@ -327,6 +352,7 @@ export async function POST(req: Request) {
           .gte("played_at", todayStart)
           .lte("played_at", todayEnd);
 
+
         if (matchesError) {
           logger.error("Error counting today matches", { 
             playerId: playerUserId.slice(0, 8) + "...",
@@ -335,8 +361,10 @@ export async function POST(req: Request) {
           continue;
         }
 
+
         const matchCount = todayMatches?.length || 0;
         logger.debug(`Player ${playerUserId.slice(0, 8)}...: ${matchCount} matches today`); // ✅ REMPLACÉ + tronqué
+
 
         if (matchCount >= MAX_MATCHES_PER_DAY) {
           logger.warn("Player reached daily limit", { 
@@ -352,6 +380,7 @@ export async function POST(req: Request) {
         logger.info("Daily match limit respected for all players"); // ✅ REMPLACÉ
       }
     }
+
 
     // Préparer les données d'insertion selon le schéma Supabase
     const matchData = { 
@@ -386,6 +415,7 @@ export async function POST(req: Request) {
       matchId: match.id 
     }); // ✅ REMPLACÉ
 
+
     // Créer les participants avec le nouveau format
     const participants = players.map((player, index) => ({
       match_id: match.id,
@@ -399,6 +429,7 @@ export async function POST(req: Request) {
       participantCount: participants.length 
     }); // ✅ REMPLACÉ
 
+
     const { error: e2 } = await supabase.from("match_participants").insert(participants);
     if (e2) {
       logger.error("Error creating participants", { 
@@ -407,10 +438,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: e2.message }, { status: 400 });
     }
 
+
     // Gérer l'application d'un boost si demandé
     let boostApplied = false;
     let boostError: string | null = null;
     let boostPointsInfo: { before: number; after: number } | null = null;
+
 
     logger.info("Boost check", { 
       useBoost, 
@@ -495,6 +528,7 @@ export async function POST(req: Request) {
       }
     }
 
+
     // Si un boost a été appliqué, attendre un peu et vérifier qu'il est bien visible dans la base de données
     if (boostApplied && match?.id) {
       logger.debug("Waiting for boost DB commit"); // ✅ REMPLACÉ
@@ -536,6 +570,7 @@ export async function POST(req: Request) {
       }
     }
 
+
     try {
       logger.info("Revalidating paths"); // ✅ REMPLACÉ
       revalidatePath("/dashboard");
@@ -552,6 +587,7 @@ export async function POST(req: Request) {
         error: (revalidateError as Error).message 
       }); // ✅ REMPLACÉ
     }
+
 
     logger.info("Match submission completed successfully", { 
       matchId: match.id 

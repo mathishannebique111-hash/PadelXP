@@ -4,6 +4,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import type { Database } from "@/lib/types_db";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -125,7 +126,7 @@ export async function POST(request: Request) {
           adminUserId = foundUser.id;
         }
       } catch (lookupError) {
-        console.warn("[remove-admin] Unable to list users for fallback lookup", lookupError);
+        logger.warn({ adminId: admin_id.substring(0, 8) + "…", error: lookupError }, "[remove-admin] Unable to list users for fallback lookup");
       }
     }
 
@@ -135,7 +136,7 @@ export async function POST(request: Request) {
       .eq("id", admin_id);
 
     if (deleteError) {
-      console.error("[remove-admin] Error deleting admin:", deleteError);
+      logger.error({ adminId: admin_id.substring(0, 8) + "…", error: deleteError }, "[remove-admin] Error deleting admin");
       return NextResponse.json(
         { error: "Erreur lors de la suppression" },
         { status: 500 }
@@ -155,20 +156,20 @@ export async function POST(request: Request) {
         const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(adminUserId);
 
         if (deleteUserError) {
-          console.warn("[remove-admin] Impossible de supprimer l'utilisateur de auth.users:", deleteUserError);
+          logger.warn({ adminId: admin_id.substring(0, 8) + "…", userId: adminUserId.substring(0, 8) + "…", error: deleteUserError }, "[remove-admin] Impossible de supprimer l'utilisateur de auth.users");
         } else {
-          console.log(`[remove-admin] Utilisateur ${emailPreview} supprimé de auth.users`);
+          logger.info({ adminId: admin_id.substring(0, 8) + "…", emailPreview }, "[remove-admin] Utilisateur supprimé de auth.users");
         }
       }
     }
 
-    console.log(`[remove-admin] Admin ${emailPreview} supprimé du club ${currentUserAdmin.club_id}`);
+    logger.info({ adminId: admin_id.substring(0, 8) + "…", emailPreview, clubId: currentUserAdmin.club_id.substring(0, 8) + "…" }, "[remove-admin] Admin supprimé du club");
     return NextResponse.json({
       success: true,
       message: `${adminToRemove.email} a été retiré des administrateurs`,
     });
   } catch (error: any) {
-    console.error("[remove-admin] Erreur:", error);
+    logger.error({ error }, "[remove-admin] Erreur");
     return NextResponse.json(
       { error: error.message || "Erreur serveur" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getPlayerBoostStats } from '@/lib/utils/boost-utils';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { MAX_BOOSTS_PER_MONTH } from '@/lib/utils/boost-utils';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error('[boost/stats] Unauthorized', { hasAuthError: !!authError });
+      logger.error({ hasAuthError: !!authError }, '[boost/stats] Unauthorized');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -29,14 +30,14 @@ export async function GET() {
     }
 
     const shortUserId = user.id.substring(0, 8) + '...';
-    console.log('[boost/stats] Getting stats for user', { userId: shortUserId });
+    logger.info({ userId: shortUserId }, '[boost/stats] Getting stats for user');
 
     let directCheckCredits = 0;
 
     // Vérification directe dans la base (prioritaire)
     if (supabaseAdmin) {
       try {
-        console.log('[boost/stats] Direct DB check start', { userId: shortUserId });
+        logger.info({ userId: shortUserId }, '[boost/stats] Direct DB check start');
 
         const { data: creditsData, error: creditsError } = await supabaseAdmin
           .from('player_boost_credits')
@@ -44,11 +45,7 @@ export async function GET() {
           .eq('user_id', user.id);
 
         if (creditsError) {
-          console.error('[boost/stats] Direct DB check error', {
-            userId: shortUserId,
-            message: creditsError.message,
-            code: creditsError.code,
-          });
+          logger.error({ userId: shortUserId, error: { message: creditsError.message, code: creditsError.code } }, '[boost/stats] Direct DB check error');
         }
 
         const totalCredits = creditsData?.length || 0;
@@ -62,38 +59,22 @@ export async function GET() {
           const consumedCredits = totalCredits - availableCredits.length;
           directCheckCredits = availableCredits.length;
 
-          console.log('[boost/stats] Direct DB check summary', {
-            userId: shortUserId,
-            totalCredits,
-            availableCredits: availableCredits.length,
-            consumedCredits,
-          });
+          logger.info({ userId: shortUserId, totalCredits, availableCredits: availableCredits.length, consumedCredits }, '[boost/stats] Direct DB check summary');
         } else {
-          console.log('[boost/stats] Direct DB check: no credits found', {
-            userId: shortUserId,
-          });
+          logger.info({ userId: shortUserId }, '[boost/stats] Direct DB check: no credits found');
         }
 
-        console.log('[boost/stats] Direct DB check end', {
-          userId: shortUserId,
-          directCheckCredits,
-        });
+        logger.info({ userId: shortUserId, directCheckCredits }, '[boost/stats] Direct DB check end');
       } catch (error) {
-        console.error('[boost/stats] Exception in direct DB check', {
-          userId: shortUserId,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        logger.error({ userId: shortUserId, error: error instanceof Error ? error.message : String(error) }, '[boost/stats] Exception in direct DB check');
       }
     } else {
-      console.error('[boost/stats] supabaseAdmin is null - cannot do direct check');
+      logger.error({}, '[boost/stats] supabaseAdmin is null - cannot do direct check');
     }
 
     // Si on a trouvé des boosts directement, les utiliser même sans profil
     if (directCheckCredits > 0) {
-      console.log('[boost/stats] Using credits from direct check', {
-        userId: shortUserId,
-        credits: directCheckCredits,
-      });
+      logger.info({ userId: shortUserId, credits: directCheckCredits }, '[boost/stats] Using credits from direct check');
 
       let usedThisMonth = 0;
 
@@ -119,22 +100,12 @@ export async function GET() {
 
           if (!usedError) {
             usedThisMonth = usedCount || 0;
-            console.log('[boost/stats] Direct used count', {
-              userId: shortUserId,
-              usedThisMonth,
-            });
+            logger.info({ userId: shortUserId, usedThisMonth }, '[boost/stats] Direct used count');
           } else {
-            console.error('[boost/stats] Error counting used boosts', {
-              userId: shortUserId,
-              message: usedError.message,
-              code: usedError.code,
-            });
+            logger.error({ userId: shortUserId, error: { message: usedError.message, code: usedError.code } }, '[boost/stats] Error counting used boosts');
           }
         } catch (error) {
-          console.error('[boost/stats] Exception counting used boosts', {
-            userId: shortUserId,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logger.error({ userId: shortUserId, error: error instanceof Error ? error.message : String(error) }, '[boost/stats] Exception counting used boosts');
         }
       }
 
@@ -148,10 +119,7 @@ export async function GET() {
         canUse,
       };
 
-      console.log('[boost/stats] Response from direct check', {
-        userId: shortUserId,
-        ...response,
-      });
+      logger.info({ userId: shortUserId, ...response }, '[boost/stats] Response from direct check');
 
       return NextResponse.json(response, {
         headers: {
@@ -170,9 +138,7 @@ export async function GET() {
       .maybeSingle();
 
     if (!profile) {
-      console.log('[boost/stats] No profile found for user (club account) and no boosts found', {
-        userId: shortUserId,
-      });
+      logger.info({ userId: shortUserId }, '[boost/stats] No profile found for user (club account) and no boosts found');
       return NextResponse.json({
         creditsAvailable: 0,
         usedThisMonth: 0,
@@ -182,13 +148,9 @@ export async function GET() {
     }
 
     // Utiliser la fonction partagée
-    console.log('[boost/stats] Calling getPlayerBoostStats', { userId: shortUserId });
+    logger.info({ userId: shortUserId }, '[boost/stats] Calling getPlayerBoostStats');
     const stats = await getPlayerBoostStats(user.id);
-    console.log('[boost/stats] Stats from getPlayerBoostStats', {
-      userId: shortUserId,
-      creditsAvailable: stats.creditsAvailable,
-      usedThisMonth: stats.usedThisMonth,
-    });
+    logger.info({ userId: shortUserId, creditsAvailable: stats.creditsAvailable, usedThisMonth: stats.usedThisMonth }, '[boost/stats] Stats from getPlayerBoostStats');
 
     const creditsAvailable =
       directCheckCredits > 0
@@ -206,10 +168,7 @@ export async function GET() {
       canUse,
     };
 
-    console.log('[boost/stats] Final response', {
-      userId: shortUserId,
-      ...response,
-    });
+    logger.info({ userId: shortUserId, ...response }, '[boost/stats] Final response');
 
     return NextResponse.json(response, {
       headers: {
@@ -219,9 +178,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('[boost/stats] Error in handler', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, '[boost/stats] Error in handler');
     return NextResponse.json({
       creditsAvailable: 0,
       usedThisMonth: 0,

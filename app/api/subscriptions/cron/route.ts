@@ -6,6 +6,7 @@ import {
   getClubSubscriptionById,
 } from "@/lib/utils/subscription-utils";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 /**
  * Validation Zod du paramètre secret en query
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const validation = querySchema.safeParse(Object.fromEntries(url.searchParams));
     if (!validation.success) {
-      console.error("[cron] Validation query failed:", validation.error.format());
+      logger.error({ validationErrors: validation.error.format() }, "[cron] Validation query failed");
       return NextResponse.json({ error: "Paramètre secret invalide" }, { status: 400 });
     }
 
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
     // DEBUG LOG pour voir ce qui est chargé
 
     if (!expectedSecret || secret !== expectedSecret) {
-      console.warn("[cron] Unauthorized access attempt");
+      logger.warn({}, "[cron] Unauthorized access attempt");
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
       ...results,
     });
   } catch (error: any) {
-    console.error("[cron] Error:", error);
+    logger.error({ error }, "[cron] Error");
     return NextResponse.json({ error: error?.message || "Erreur serveur" }, { status: 500 });
   }
 }

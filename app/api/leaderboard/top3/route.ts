@@ -4,6 +4,7 @@ import { createClient as createServerClient } from '@/lib/supabase/server';
 import { filterMatchesByDailyLimit } from '@/lib/utils/match-limit-utils';
 import { MAX_MATCHES_PER_DAY } from '@/lib/match-constants';
 import { calculatePointsForMultiplePlayers } from '@/lib/utils/boost-points-utils';
+import { logger } from '@/lib/logger';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +19,7 @@ const supabaseAdmin = createClient(
 
 export async function GET() {
   try {
-    console.log('🔍 Fetching top 3 leaderboard (calcul direct depuis matchs)');
+    logger.info({}, '🔍 Fetching top 3 leaderboard (calcul direct depuis matchs)');
     
     // Récupérer le club_id de l'utilisateur authentifié
     const supabase = await createServerClient();
@@ -38,7 +39,7 @@ export async function GET() {
     // NE PLUS bloquer si pas de club_id - retourner un top3 vide au lieu de 403
     // Cela permet aux nouveaux joueurs d'accéder à l'interface même sans club_id
     if (!userClubId) {
-      console.log('ℹ️ User without club fetching top3 - returning empty array');
+      logger.info({ userId: user.id.substring(0, 8) + "…" }, 'ℹ️ User without club fetching top3 - returning empty array');
       return NextResponse.json({ top3: [] }, { status: 200 });
     }
     
@@ -50,7 +51,7 @@ export async function GET() {
       .eq("player_type", "user");
 
     if (participantsError) {
-      console.error('❌ Error fetching participants:', participantsError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", error: participantsError }, '❌ Error fetching participants');
       return NextResponse.json({ error: participantsError.message }, { status: 500 });
     }
 
@@ -73,7 +74,7 @@ export async function GET() {
       .in("id", uniqueMatchIds);
 
     if (matchesError) {
-      console.error('❌ Error fetching matches:', matchesError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", error: matchesError }, '❌ Error fetching matches');
       return NextResponse.json({ error: matchesError.message }, { status: 500 });
     }
 
@@ -253,7 +254,7 @@ export async function GET() {
       .sort((a, b) => b.points - a.points || b.wins - a.wins || a.matches - b.matches)
       .slice(0, 3);
 
-    console.log('✅ Top 3 calculated:', top3.map(p => ({ name: p.name, points: p.points, wins: p.wins, losses: p.losses })));
+    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", top3: top3.map(p => ({ name: p.name, points: p.points, wins: p.wins, losses: p.losses })) }, '✅ Top 3 calculated');
 
     // Désactiver le cache pour garantir des données à jour
     return NextResponse.json({ top3: top3 }, {
@@ -264,7 +265,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('❌ Unexpected error:', error);
+    logger.error({ error }, '❌ Unexpected error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

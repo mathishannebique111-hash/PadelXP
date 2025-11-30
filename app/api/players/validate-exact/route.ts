@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,11 +66,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (profileError) {
-      console.error('[validate-exact] Error fetching profile with client', {
-        userId: shortUserId,
-        message: profileError.message,
-        code: profileError.code,
-      });
+      logger.error({ userId: shortUserId, error: { message: profileError.message, code: profileError.code } }, '[validate-exact] Error fetching profile with client');
     } else {
       profile = profileData;
     }
@@ -84,23 +81,15 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (adminError) {
-        console.error('[validate-exact] Error fetching profile with admin', {
-          userId: shortUserId,
-          message: adminError.message,
-          code: adminError.code,
-        });
+        logger.error({ userId: shortUserId, error: { message: adminError.message, code: adminError.code } }, '[validate-exact] Error fetching profile with admin');
       } else if (adminProfile?.club_id) {
         clubId = adminProfile.club_id;
-        console.log('[validate-exact] Found club_id with admin client', {
-          userId: shortUserId,
-        });
+        logger.info({ userId: shortUserId }, '[validate-exact] Found club_id with admin client');
       }
     }
 
     if (!clubId) {
-      console.error('[validate-exact] No club_id found for user', {
-        userId: shortUserId,
-      });
+      logger.error({ userId: shortUserId }, '[validate-exact] No club_id found for user');
       return NextResponse.json(
         {
           valid: false,
@@ -110,10 +99,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[validate-exact] Validating player name for club', {
-      userId: shortUserId,
-      clubId,
-    });
+    logger.info({ userId: shortUserId, clubId: clubId.substring(0, 8) + "…" }, '[validate-exact] Validating player name for club');
 
     const normalizedInput = normalizeForComparison(playerName);
 
@@ -124,11 +110,7 @@ export async function POST(request: NextRequest) {
       .eq('club_id', clubId);
 
     if (membersError) {
-      console.error('[validate-exact] Error fetching club members', {
-        clubId,
-        message: membersError.message,
-        code: membersError.code,
-      });
+      logger.error({ userId: shortUserId, clubId: clubId.substring(0, 8) + "…", error: { message: membersError.message, code: membersError.code } }, '[validate-exact] Error fetching club members');
       return NextResponse.json(
         {
           valid: false,
@@ -156,10 +138,7 @@ export async function POST(request: NextRequest) {
       );
     });
 
-    console.log('[validate-exact] Club members matching search', {
-      clubId,
-      count: clubMembers.length,
-    });
+    logger.info({ userId: shortUserId, clubId: clubId.substring(0, 8) + "…", count: clubMembers.length }, '[validate-exact] Club members matching search');
 
     if (clubMembers && clubMembers.length > 0) {
       // Trouver le meilleur match exact parmi les résultats
@@ -174,12 +153,7 @@ export async function POST(request: NextRequest) {
         );
         const normalizedFirstName = normalizeForComparison(member.first_name || '');
 
-        console.log('[validate-exact] Comparing candidate', {
-          input: normalizedInput,
-          displayName: normalizedDisplayName,
-          fullName: normalizedFullName,
-          firstName: normalizedFirstName,
-        });
+        logger.info({ userId: shortUserId, memberId: member.id.substring(0, 8) + "…" }, '[validate-exact] Comparing candidate');
 
         // Accepter UNIQUEMENT un match exact sur "first_name last_name"
         if (normalizedInput === normalizedFullName) {
@@ -190,10 +164,7 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          console.log('[validate-exact] Match found on full name (user)', {
-            memberId: member.id,
-            clubId,
-          });
+          logger.info({ userId: shortUserId, memberId: member.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[validate-exact] Match found on full name (user)');
 
           const fullName = `${first_name} ${last_name}`.trim();
 
@@ -212,9 +183,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
-      console.log('[validate-exact] No club members matched search', {
-        clubId,
-      });
+      logger.info({ userId: shortUserId, clubId: clubId.substring(0, 8) + "…" }, '[validate-exact] No club members matched search');
     }
 
     // Rechercher dans les joueurs invités
@@ -224,10 +193,7 @@ export async function POST(request: NextRequest) {
       .limit(1000);
 
     if (guestsError) {
-      console.error('[validate-exact] Error fetching guest players', {
-        message: guestsError.message,
-        code: guestsError.code,
-      });
+      logger.error({ userId: shortUserId, error: { message: guestsError.message, code: guestsError.code } }, '[validate-exact] Error fetching guest players');
     }
 
     const guestPlayers = (allGuestPlayers || []).filter((guest: any) => {
@@ -245,9 +211,7 @@ export async function POST(request: NextRequest) {
       );
     });
 
-    console.log('[validate-exact] Guest players matching search', {
-      count: guestPlayers.length,
-    });
+    logger.info({ userId: shortUserId, count: guestPlayers.length }, '[validate-exact] Guest players matching search');
 
     if (guestPlayers && guestPlayers.length > 0) {
       for (const guest of guestPlayers) {
@@ -262,9 +226,7 @@ export async function POST(request: NextRequest) {
         const normalizedGuestName = normalizeForComparison(guestFullName);
 
         if (normalizedInput === normalizedGuestName) {
-          console.log('[validate-exact] Match found on full name (guest)', {
-            guestId: guest.id,
-          });
+          logger.info({ userId: shortUserId, guestId: guest.id.substring(0, 8) + "…" }, '[validate-exact] Match found on full name (guest)');
 
           return NextResponse.json({
             valid: true,
@@ -288,9 +250,7 @@ export async function POST(request: NextRequest) {
       error: `Aucun joueur trouvé avec le nom exact "${playerName}". Vérifiez l'orthographe (lettres, espaces, accents).`,
     });
   } catch (error) {
-    console.error('❌ Unexpected error in validate-exact API', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, '❌ Unexpected error in validate-exact API');
     return NextResponse.json(
       {
         valid: false,

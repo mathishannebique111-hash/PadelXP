@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { creditPlayerBoosts, getPlayerBoostStats } from '@/lib/utils/boost-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -136,7 +137,7 @@ export async function POST(req: NextRequest) {
           );
         }
       } catch (stripeError) {
-        console.error('[admin/credit-boosts] Stripe error:', stripeError);
+        logger.error({ userId: user.id.substring(0, 8) + "…", sessionId: sessionId.substring(0, 10) + "…", error: stripeError }, '[admin/credit-boosts] Stripe error');
         return NextResponse.json(
           { error: `Erreur Stripe: ${stripeError instanceof Error ? stripeError.message : 'Erreur inconnue'}` },
           { status: 500 }
@@ -174,7 +175,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        console.log('[admin/credit-boosts] Found sessions:', allSessions.length);
+        logger.info({ userId: user.id.substring(0, 8) + "…", sessionsCount: allSessions.length }, '[admin/credit-boosts] Found sessions');
 
         let totalCredited = 0;
         const errors: string[] = [];
@@ -202,7 +203,7 @@ export async function POST(req: NextRequest) {
 
             if (result.success) {
               totalCredited += result.credited;
-              console.log('[admin/credit-boosts] Credited boosts for session:', session.id, result.credited);
+              logger.info({ userId: user.id.substring(0, 8) + "…", sessionId: session.id.substring(0, 10) + "…", credited: result.credited }, '[admin/credit-boosts] Credited boosts for session');
             } else {
               errors.push(`Session ${session.id}: ${result.error || 'Erreur inconnue'}`);
             }
@@ -220,7 +221,7 @@ export async function POST(req: NextRequest) {
           boostStats: newStats,
         });
       } catch (checkError) {
-        console.error('[admin/credit-boosts] Error checking all sessions:', checkError);
+        logger.error({ userId: user.id.substring(0, 8) + "…", error: checkError }, '[admin/credit-boosts] Error checking all sessions');
         return NextResponse.json(
           { error: `Erreur lors de la vérification: ${checkError instanceof Error ? checkError.message : 'Erreur inconnue'}` },
           { status: 500 }
@@ -252,7 +253,7 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('[admin/credit-boosts] Error:', error);
+    logger.error({ error }, '[admin/credit-boosts] Error');
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

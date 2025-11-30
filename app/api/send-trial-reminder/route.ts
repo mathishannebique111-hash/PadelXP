@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 // Initialisation conditionnelle de Resend
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -10,7 +11,7 @@ const FORWARD_TO = process.env.FORWARD_TO_EMAIL!; // contactpadelxp@gmail.com
 export async function POST(req: NextRequest) {
   // Vérifier la config Resend avant d'aller plus loin
   if (!resendApiKey || !resend) {
-    console.error("❌ RESEND_API_KEY not configured for send-trial-reminder");
+    logger.error({}, "❌ RESEND_API_KEY not configured for send-trial-reminder");
     return NextResponse.json(
       { error: "RESEND_API_KEY not configured" },
       { status: 500 }
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   const event = await req.json();
-  console.log("Resend inbound event:", event);
+  logger.info({ eventType: event?.type, emailId: event?.data?.email_id?.substring(0, 8) + "…" || null }, "Resend inbound event");
 
   if (event.type !== "email.received") {
     return NextResponse.json({ ignored: true });
@@ -33,16 +34,11 @@ export async function POST(req: NextRequest) {
   const resendEmails = resend.emails as any;
 const { data: email, error } = await resendEmails.receiving?.get(emailId);
   if (error || !email) {
-    console.error("Error fetching received email:", error);
+    logger.error({ emailId: emailId.substring(0, 8) + "…", error }, "Error fetching received email");
     return NextResponse.json({ error: "fetch_failed" }, { status: 500 });
   }
 
-  console.log("Email received:", {
-    hasEmail: !!email,
-    subjectPreview: email?.subject?.substring(0, 30) || null,
-    fromPreview: email?.from?.substring(0, 8) + "…" || null,
-    toCount: email?.to?.length || 0,
-  });
+  logger.info({ emailId: emailId.substring(0, 8) + "…", hasEmail: !!email, subjectPreview: email?.subject?.substring(0, 30) || null, fromPreview: email?.from?.substring(0, 8) + "…" || null, toCount: email?.to?.length || 0 }, "Email received");
   
   const subject = email.subject ?? "(Sans sujet)";
   const from = email.from ?? "Expéditeur inconnu";
@@ -72,7 +68,7 @@ const { data: email, error } = await resendEmails.receiving?.get(emailId);
   });
 
   if (sendError) {
-    console.error("Error forwarding to Gmail:", sendError);
+    logger.error({ emailId: emailId.substring(0, 8) + "…", error: sendError }, "Error forwarding to Gmail");
     return NextResponse.json({ error: "forward_failed" }, { status: 500 });
   }
 

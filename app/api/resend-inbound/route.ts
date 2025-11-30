@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 // Initialisation conditionnelle de Resend
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -18,22 +19,22 @@ const supabaseAdmin =
     ? createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
       )
     : null;
 
 export async function POST(req: NextRequest) {
-  console.log("[resend-inbound] Webhook called");
+  logger.info("[resend-inbound] Webhook called");
   
   try {
     // Vérifier les variables d'environnement
     if (!process.env.RESEND_API_KEY || !resend) {
-      console.error("[resend-inbound] RESEND_API_KEY is not configured");
+      logger.error("[resend-inbound] RESEND_API_KEY is not configured");
       return NextResponse.json(
         { error: "RESEND_API_KEY not configured" },
         { status: 500 }
@@ -41,14 +42,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (!FORWARD_TO) {
-      console.error("[resend-inbound] FORWARD_TO_EMAIL is not configured");
+      logger.error("[resend-inbound] FORWARD_TO_EMAIL is not configured");
       return NextResponse.json(
         { error: "FORWARD_TO_EMAIL not configured" },
         { status: 500 }
       );
     }
 
-    console.log("[resend-inbound] Environment OK", {
+    logger.info("[resend-inbound] Environment OK", {
       inboundEmailConfigured: !!INBOUND_EMAIL,
       hasForwardTo: !!FORWARD_TO,
     });
@@ -57,9 +58,9 @@ export async function POST(req: NextRequest) {
     let event: any | null = null;
     try {
       event = await req.json();
-      console.log("[resend-inbound] JSON payload parsed successfully");
+      logger.info("[resend-inbound] JSON payload parsed successfully");
     } catch (jsonError) {
-      console.error("[resend-inbound] Failed to parse JSON payload", {
+      logger.error("[resend-inbound] Failed to parse JSON payload", {
         message: (jsonError as any)?.message,
         name: (jsonError as any)?.name,
       });
@@ -71,23 +72,23 @@ export async function POST(req: NextRequest) {
     }
 
     const eventType = event?.type;
-    console.log("[resend-inbound] Inbound event received", { eventType });
+    logger.info("[resend-inbound] Inbound event received", { eventType });
 
     // On ne traite que les évènements email.received
     if (eventType !== "email.received") {
-      console.log("[resend-inbound] Ignoring non-email event", { eventType });
+      logger.info("[resend-inbound] Ignoring non-email event", { eventType });
       return NextResponse.json({ ignored: true, type: eventType });
     }
 
-    console.log("[resend-inbound] Processing email.received event");
+    logger.info("[resend-inbound] Processing email.received event");
 
     const emailData = event.data;
     if (!emailData) {
-      console.error("[resend-inbound] No email data in event");
+      logger.error("[resend-inbound] No email data in event");
       return NextResponse.json({ error: "No email data" }, { status: 400 });
     }
 
-    console.log("[resend-inbound] Email data found", {
+    logger.info("[resend-inbound] Email data found", {
       keys: Object.keys(emailData || {}),
     });
 
@@ -110,12 +111,12 @@ export async function POST(req: NextRequest) {
       "";
     const emailId = emailData.email_id;
     
-  const senderType =
-    emailData.headers?.["X-Sender-Type"] ??
-    emailData.headers?.["x-sender-type"];
-  let conversationId =
-    emailData.headers?.["X-Conversation-ID"] ??
-    emailData.headers?.["x-conversation-id"];
+    const senderType =
+      emailData.headers?.["X-Sender-Type"] ??
+      emailData.headers?.["x-sender-type"];
+    let conversationId =
+      emailData.headers?.["X-Conversation-ID"] ??
+      emailData.headers?.["x-conversation-id"];
     const clubId =
       emailData.headers?.["X-Club-ID"] ?? emailData.headers?.["x-club-id"];
 
@@ -137,7 +138,7 @@ export async function POST(req: NextRequest) {
       emailData.headers?.["References"] ??
       emailData.headers?.["references"] ??
       emailData.references;
-  const isReply = !!(
+    const isReply = !!(
       inReplyTo ||
       references ||
       (subject &&
@@ -145,65 +146,65 @@ export async function POST(req: NextRequest) {
           subject.toLowerCase().includes("ré:")))
     );
 
-  const isFromInbound =
+    const isFromInbound =
       to &&
       (to.includes(INBOUND_EMAIL) || to.includes("contact@updates.padelxp.eu"));
 
-  // Détecter si c'est un avis modéré via le sujet
-  const isModeratedReview = typeof subject === "string" && 
-    (subject.toLowerCase().includes("avis modéré") || subject.includes("⚠️"));
+    // Détecter si c'est un avis modéré via le sujet
+    const isModeratedReview = typeof subject === "string" && 
+      (subject.toLowerCase().includes("avis modéré") || subject.includes("⚠️"));
 
-  // Si aucun conversationId explicite dans les headers, essayer de l'extraire du sujet
-  if (!conversationId && typeof subject === "string") {
-    console.log(
-      "[resend-inbound] Trying to extract conversationId from subject",
-      {
-        subjectFull:
-          subject.length > 120 ? subject.substring(0, 120) + "…" : subject,
-        isModeratedReview,
+    // Si aucun conversationId explicite dans les headers, essayer de l'extraire du sujet
+    if (!conversationId && typeof subject === "string") {
+      logger.info(
+        "[resend-inbound] Trying to extract conversationId from subject",
+        {
+          subjectFull:
+            subject.length > 120 ? subject.substring(0, 120) + "…" : subject,
+          isModeratedReview,
+        }
+      );
+      // 1) Essayer de trouver un UUID complet entre crochets
+      let match = subject.match(/\[([0-9a-fA-F-]{36})\]/);
+
+      // 2) Si pas trouvé, prendre simplement le contenu des premiers crochets
+      if (!match) {
+        const genericMatch = subject.match(/\[([^\]]+)\]/);
+        if (genericMatch && genericMatch[1]) {
+          match = genericMatch as RegExpMatchArray;
+        }
       }
-    );
-    // 1) Essayer de trouver un UUID complet entre crochets
-    let match = subject.match(/\[([0-9a-fA-F-]{36})\]/);
 
-    // 2) Si pas trouvé, prendre simplement le contenu des premiers crochets
-    if (!match) {
-      const genericMatch = subject.match(/\[([^\]]+)\]/);
-      if (genericMatch && genericMatch[1]) {
-        match = genericMatch as RegExpMatchArray;
+      logger.info("[resend-inbound] Subject regex match result", {
+        hasMatch: !!match,
+        extractedPreview: match && match[1] ? match[1].substring(0, 40) + "…" : null,
+      });
+
+      if (match && match[1]) {
+        const extractedId = match[1];
+        
+        // Si c'est un avis modéré et qu'on n'a pas de reviewId dans les headers,
+        // l'ID extrait peut être soit conversationId soit reviewId
+        // On va d'abord essayer comme reviewId si c'est un avis modéré
+        if (isModeratedReview && !reviewId) {
+          reviewId = extractedId;
+          logger.info("[resend-inbound] Review ID extracted from subject (moderated review)", {
+            hasReviewId: true,
+          });
+        } else {
+          conversationId = extractedId;
+          logger.info("[resend-inbound] Conversation ID extracted from subject", {
+            hasConversationId: true,
+          });
+        }
       }
     }
-
-    console.log("[resend-inbound] Subject regex match result", {
-      hasMatch: !!match,
-      extractedPreview: match && match[1] ? match[1].substring(0, 40) + "…" : null,
-    });
-
-    if (match && match[1]) {
-      const extractedId = match[1];
-      
-      // Si c'est un avis modéré et qu'on n'a pas de reviewId dans les headers,
-      // l'ID extrait peut être soit conversationId soit reviewId
-      // On va d'abord essayer comme reviewId si c'est un avis modéré
-      if (isModeratedReview && !reviewId) {
-        reviewId = extractedId;
-        console.log("[resend-inbound] Review ID extracted from subject (moderated review)", {
-          hasReviewId: true,
-        });
-    } else {
-        conversationId = extractedId;
-        console.log("[resend-inbound] Conversation ID extracted from subject", {
-          hasConversationId: true,
-        });
-      }
-    }
-  }
 
     // Normaliser les champs potentiellement non-string pour éviter les erreurs de substring
     const fromStr = typeof from === "string" ? from : "";
     const toStr = typeof to === "string" ? to : "";
 
-    console.log("[resend-inbound] Email metadata (anonymized)", {
+    logger.info("[resend-inbound] Email metadata (anonymized)", {
       senderType,
       hasConversationId: !!conversationId,
       hasClubId: !!clubId,
@@ -219,281 +220,281 @@ export async function POST(req: NextRequest) {
       toPreview: toStr ? toStr.substring(0, 8) + "…" : null,
     });
 
-  // Récupérer le contenu de l'email (texte + HTML) de manière défensive
-  let rawText: string =
-    emailData.text ??
-    emailData.text_body ??
-    emailData.textBody ??
-    "";
-  let rawHtml: string | undefined =
-    emailData.html ??
-    emailData.html_body ??
-    emailData.htmlBody ??
-    undefined;
+    // Récupérer le contenu de l'email (texte + HTML) de manière défensive
+    let rawText: string =
+      emailData.text ??
+      emailData.text_body ??
+      emailData.textBody ??
+      "";
+    let rawHtml: string | undefined =
+      emailData.html ??
+      emailData.html_body ??
+      emailData.htmlBody ??
+      undefined;
 
-  // Si le corps n'est pas présent dans le payload, essayer de le récupérer
-  // via l'API Resend Received Emails en utilisant emailId.
-  // Note: Utilisation de l'API REST directement car le SDK peut ne pas exposer receiving.get()
-  console.log("[resend-inbound] Checking if we need to fetch email body", {
-    hasRawText: !!rawText && rawText.length > 0,
-    hasRawHtml: !!rawHtml && rawHtml.length > 0,
-    hasEmailId: !!emailId,
-    hasResend: !!resend,
-    willFetch: !rawText && !rawHtml && emailId && resend,
-  });
-
-  if (!rawText && !rawHtml && emailId && resend) {
-    console.log("[resend-inbound] Attempting to fetch email body from Resend API", {
-      emailId,
+    // Si le corps n'est pas présent dans le payload, essayer de le récupérer
+    // via l'API Resend Received Emails en utilisant emailId.
+    // Note: Utilisation de l'API REST directement car le SDK peut ne pas exposer receiving.get()
+    logger.info("[resend-inbound] Checking if we need to fetch email body", {
+      hasRawText: !!rawText && rawText.length > 0,
+      hasRawHtml: !!rawHtml && rawHtml.length > 0,
+      hasEmailId: !!emailId,
+      hasResend: !!resend,
+      willFetch: !rawText && !rawHtml && emailId && resend,
     });
-    
-    // Fonction helper pour récupérer le contenu avec retry (le contenu peut ne pas être immédiatement disponible)
-    const fetchEmailContent = async (retries = 3, delayMs = 1500): Promise<{ text?: string; html?: string } | null> => {
-      for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-          // Essayer d'abord avec le SDK si la méthode receiving existe
-          const resendAny = resend as any;
-          const hasReceivingGet = !!resendAny.emails?.receiving?.get;
-          
-          if (hasReceivingGet) {
-            console.log(`[resend-inbound] Attempt ${attempt}/${retries}: Trying SDK receiving.get()`, {
-              emailId,
-            });
-            const fetched = await resendAny.emails.receiving.get(emailId);
-            console.log("[resend-inbound] SDK receiving.get() response structure", {
-              hasFetched: !!fetched,
-              hasData: !!fetched?.data,
-              fetchedKeys: fetched ? Object.keys(fetched) : [],
-              dataKeys: fetched?.data ? Object.keys(fetched.data) : [],
-            });
+
+    if (!rawText && !rawHtml && emailId && resend) {
+      logger.info("[resend-inbound] Attempting to fetch email body from Resend API", {
+        emailId,
+      });
+      
+      // Fonction helper pour récupérer le contenu avec retry (le contenu peut ne pas être immédiatement disponible)
+      const fetchEmailContent = async (retries = 3, delayMs = 1500): Promise<{ text?: string; html?: string } | null> => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            // Essayer d'abord avec le SDK si la méthode receiving existe
+            const resendAny = resend as any;
+            const hasReceivingGet = !!resendAny.emails?.receiving?.get;
             
-            // Le SDK peut retourner { data: { html, text } } ou directement { html, text }
-            const emailData = fetched?.data || fetched;
-            if (emailData) {
-              const hasText = emailData.text && typeof emailData.text === "string" && emailData.text.length > 0;
-              const hasHtml = emailData.html && typeof emailData.html === "string" && emailData.html.length > 0;
+            if (hasReceivingGet) {
+              logger.info(`[resend-inbound] Attempt ${attempt}/${retries}: Trying SDK receiving.get()`, {
+                emailId,
+              });
+              const fetched = await resendAny.emails.receiving.get(emailId);
+              logger.info("[resend-inbound] SDK receiving.get() response structure", {
+                hasFetched: !!fetched,
+                hasData: !!fetched?.data,
+                fetchedKeys: fetched ? Object.keys(fetched) : [],
+                dataKeys: fetched?.data ? Object.keys(fetched.data) : [],
+              });
               
-              if (hasText || hasHtml) {
-                console.log("[resend-inbound] Successfully fetched email body via SDK", {
-                  hasText,
-                  hasHtml,
-                  textLength: emailData.text?.length || 0,
-                  htmlLength: emailData.html?.length || 0,
-                });
-                return {
-                  text: hasText ? emailData.text : undefined,
-                  html: hasHtml ? emailData.html : undefined,
-                };
-              } else {
-                console.log(`[resend-inbound] Attempt ${attempt}: Email body empty, will retry...`);
+              // Le SDK peut retourner { data: { html, text } } ou directement { html, text }
+              const emailData = fetched?.data || fetched;
+              if (emailData) {
+                const hasText = emailData.text && typeof emailData.text === "string" && emailData.text.length > 0;
+                const hasHtml = emailData.html && typeof emailData.html === "string" && emailData.html.length > 0;
+                
+                if (hasText || hasHtml) {
+                  logger.info("[resend-inbound] Successfully fetched email body via SDK", {
+                    hasText,
+                    hasHtml,
+                    textLength: emailData.text?.length || 0,
+                    htmlLength: emailData.html?.length || 0,
+                  });
+                  return {
+                    text: hasText ? emailData.text : undefined,
+                    html: hasHtml ? emailData.html : undefined,
+                  };
+                } else {
+                  logger.info(`[resend-inbound] Attempt ${attempt}: Email body empty, will retry...`);
+                }
               }
             }
-          }
-          
-          // Si le SDK ne fonctionne pas ou n'a pas de contenu, essayer l'API REST
-          if (resendApiKey) {
-            const endpoints = [
-              `https://api.resend.com/emails/receiving/${emailId}`,
-              `https://api.resend.com/receiving/emails/${emailId}`,
-            ];
+            
+            // Si le SDK ne fonctionne pas ou n'a pas de contenu, essayer l'API REST
+            if (resendApiKey) {
+              const endpoints = [
+                `https://api.resend.com/emails/receiving/${emailId}`,
+                `https://api.resend.com/receiving/emails/${emailId}`,
+              ];
 
-            for (const endpoint of endpoints) {
-              try {
-                console.log(`[resend-inbound] Attempt ${attempt}: Trying REST endpoint`, { endpoint });
-                const response = await fetch(endpoint, {
-                  method: "GET",
-                  headers: {
-                    Authorization: `Bearer ${resendApiKey}`,
-                    "Content-Type": "application/json",
-                  },
-                });
+              for (const endpoint of endpoints) {
+                try {
+                  logger.info(`[resend-inbound] Attempt ${attempt}: Trying REST endpoint`, { endpoint });
+                  const response = await fetch(endpoint, {
+                    method: "GET",
+                    headers: {
+                      Authorization: `Bearer ${resendApiKey}`,
+                      "Content-Type": "application/json",
+                    },
+                  });
 
-                if (response.ok) {
-                  const fetched = await response.json();
-                  const emailData = fetched?.data || fetched;
-                  
-                  const hasText = emailData?.text && typeof emailData.text === "string" && emailData.text.length > 0;
-                  const hasHtml = emailData?.html && typeof emailData.html === "string" && emailData.html.length > 0;
-                  
-                  if (hasText || hasHtml) {
-                    console.log("[resend-inbound] Successfully fetched email body via REST API", {
+                  if (response.ok) {
+                    const fetched = await response.json();
+                    const emailData = fetched?.data || fetched;
+                    
+                    const hasText = emailData?.text && typeof emailData.text === "string" && emailData.text.length > 0;
+                    const hasHtml = emailData?.html && typeof emailData.html === "string" && emailData.html.length > 0;
+                    
+                    if (hasText || hasHtml) {
+                      logger.info("[resend-inbound] Successfully fetched email body via REST API", {
+                        endpoint,
+                        hasText,
+                        hasHtml,
+                        textLength: emailData.text?.length || 0,
+                        htmlLength: emailData.html?.length || 0,
+                      });
+                      return {
+                        text: hasText ? emailData.text : undefined,
+                        html: hasHtml ? emailData.html : undefined,
+                      };
+                    }
+                  } else if (response.status !== 404) {
+                    const errorText = await response.text().catch(() => "");
+                    logger.info("[resend-inbound] Endpoint returned error", {
                       endpoint,
-                      hasText,
-                      hasHtml,
-                      textLength: emailData.text?.length || 0,
-                      htmlLength: emailData.html?.length || 0,
+                      status: response.status,
+                      errorPreview: errorText.substring(0, 100),
                     });
-                    return {
-                      text: hasText ? emailData.text : undefined,
-                      html: hasHtml ? emailData.html : undefined,
-                    };
                   }
-                } else if (response.status !== 404) {
-                  const errorText = await response.text().catch(() => "");
-                  console.log("[resend-inbound] Endpoint returned error", {
+                } catch (fetchError: any) {
+                  logger.info("[resend-inbound] Error trying endpoint", {
                     endpoint,
-                    status: response.status,
-                    errorPreview: errorText.substring(0, 100),
+                    error: fetchError?.message,
                   });
                 }
-              } catch (fetchError: any) {
-                console.log("[resend-inbound] Error trying endpoint", {
-                  endpoint,
-                  error: fetchError?.message,
-                });
               }
             }
+            
+            // Si on n'a pas réussi et qu'il reste des tentatives, attendre avant de réessayer
+            if (attempt < retries) {
+              logger.info(`[resend-inbound] Waiting ${delayMs}ms before retry ${attempt + 1}/${retries}...`);
+              await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+          } catch (e: any) {
+            logger.error(`[resend-inbound] Error in attempt ${attempt}`, {
+              message: e?.message,
+              name: e?.name,
+            });
+            if (attempt < retries) {
+              await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
           }
-          
-          // Si on n'a pas réussi et qu'il reste des tentatives, attendre avant de réessayer
-          if (attempt < retries) {
-            console.log(`[resend-inbound] Waiting ${delayMs}ms before retry ${attempt + 1}/${retries}...`);
-            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        
+        return null;
+      };
+      
+      try {
+        const content = await fetchEmailContent(3, 1500);
+        if (content) {
+          if (content.text) {
+            rawText = content.text;
           }
-        } catch (e: any) {
-          console.error(`[resend-inbound] Error in attempt ${attempt}`, {
+          if (content.html) {
+            rawHtml = content.html;
+          }
+        } else {
+          logger.error("[resend-inbound] Failed to fetch email body after all retries", {
+            emailId,
+          });
+        }
+      } catch (e: any) {
+        logger.error(
+          "[resend-inbound] Failed to fetch email body from Resend API",
+          {
             message: e?.message,
             name: e?.name,
-          });
-          if (attempt < retries) {
-            await new Promise(resolve => setTimeout(resolve, delayMs));
           }
+        );
+      }
+    }
+
+    // Fonction pour extraire uniquement la nouvelle réponse en enlevant les parties citées
+    const extractReplyContent = (text: string, html?: string): string => {
+      // Si on a du HTML, on l'utilise d'abord pour extraire le texte
+      if (html) {
+        // Enlever les blockquotes et divs de citation (Gmail, Outlook, etc.)
+        let cleanHtml = html
+          // Enlever les blockquotes
+          .replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, "")
+          // Enlever les divs de citation Gmail
+          .replace(/<div[^>]*class="gmail_quote"[^>]*>[\s\S]*?<\/div>/gi, "")
+          // Enlever les divs de citation Outlook
+          .replace(/<div[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
+          // Enlever les divs avec style de citation
+          .replace(/<div[^>]*style="[^"]*border-left[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
+          // Enlever les tables de citation
+          .replace(/<table[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/table>/gi, "");
+        
+        // Convertir le HTML nettoyé en texte
+        let cleanText = cleanHtml
+          .replace(/<br\s*\/?>/gi, "\n")
+          .replace(/<\/p>/gi, "\n")
+          .replace(/<\/div>/gi, "\n")
+          .replace(/<[^>]*>/g, "")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .trim();
+        
+        // Si on a du texte après nettoyage, l'utiliser
+        if (cleanText.length > 0) {
+          text = cleanText;
         }
       }
       
-      return null;
+      // Nettoyer le texte brut : enlever les lignes citées
+      const lines = text.split("\n");
+      const cleanLines: string[] = [];
+      let inQuotedSection = false;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Détecter le début d'une section citée
+        if (
+          line.startsWith(">") ||
+          /^On .+ wrote:?$/i.test(line) ||
+          /^Le .+ a écrit:?$/i.test(line) ||
+          /^From: .+$/i.test(line) ||
+          /^Date: .+$/i.test(line) ||
+          /^Subject: .+$/i.test(line) ||
+          /^De : .+$/i.test(line) ||
+          /^Date : .+$/i.test(line) ||
+          /^Objet : .+$/i.test(line) ||
+          line.match(/^[-_]{3,}/) // Séparateurs comme "---" ou "___"
+        ) {
+          inQuotedSection = true;
+          continue;
+        }
+        
+        // Si on est dans une section citée et qu'on trouve une ligne vide suivie d'une ligne normale,
+        // on peut considérer qu'on est sorti de la citation (mais c'est risqué)
+        if (inQuotedSection && line.length === 0 && i + 1 < lines.length) {
+          const nextLine = lines[i + 1]?.trim() || "";
+          if (nextLine.length > 0 && !nextLine.startsWith(">")) {
+            // Vérifier si la ligne suivante ne ressemble pas à une citation
+            if (
+              !/^On .+ wrote:?$/i.test(nextLine) &&
+              !/^Le .+ a écrit:?$/i.test(nextLine) &&
+              !nextLine.match(/^[-_]{3,}/)
+            ) {
+              inQuotedSection = false;
+              cleanLines.push("");
+              continue;
+            }
+          }
+        }
+        
+        // Si on n'est pas dans une section citée, garder la ligne
+        if (!inQuotedSection) {
+          cleanLines.push(lines[i]);
+        }
+      }
+      
+      let result = cleanLines.join("\n").trim();
+      
+      // Enlever les lignes vides multiples en début/fin
+      result = result.replace(/^\n+|\n+$/g, "");
+      
+      return result;
     };
-    
-    try {
-      const content = await fetchEmailContent(3, 1500);
-      if (content) {
-        if (content.text) {
-          rawText = content.text;
-        }
-        if (content.html) {
-          rawHtml = content.html;
-        }
-      } else {
-        console.error("[resend-inbound] Failed to fetch email body after all retries", {
-          emailId,
-        });
-      }
-    } catch (e: any) {
-      console.error(
-        "[resend-inbound] Failed to fetch email body from Resend API",
-        {
-          message: e?.message,
-          name: e?.name,
-        }
-      );
-    }
-  }
 
-  // Fonction pour extraire uniquement la nouvelle réponse en enlevant les parties citées
-  const extractReplyContent = (text: string, html?: string): string => {
-    // Si on a du HTML, on l'utilise d'abord pour extraire le texte
-    if (html) {
-      // Enlever les blockquotes et divs de citation (Gmail, Outlook, etc.)
-      let cleanHtml = html
-        // Enlever les blockquotes
-        .replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, "")
-        // Enlever les divs de citation Gmail
-        .replace(/<div[^>]*class="gmail_quote"[^>]*>[\s\S]*?<\/div>/gi, "")
-        // Enlever les divs de citation Outlook
-        .replace(/<div[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
-        // Enlever les divs avec style de citation
-        .replace(/<div[^>]*style="[^"]*border-left[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "")
-        // Enlever les tables de citation
-        .replace(/<table[^>]*class="[^"]*quote[^"]*"[^>]*>[\s\S]*?<\/table>/gi, "");
-      
-      // Convertir le HTML nettoyé en texte
-      let cleanText = cleanHtml
+    // Construire un texte brut correct même si l'email est uniquement HTML
+    let baseText = (rawText || "").trim();
+    if (!baseText && rawHtml) {
+      // Remplacer les <br> par des retours à la ligne puis enlever les balises
+      baseText = rawHtml
         .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<\/p>/gi, "\n")
-        .replace(/<\/div>/gi, "\n")
         .replace(/<[^>]*>/g, "")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
         .trim();
-      
-      // Si on a du texte après nettoyage, l'utiliser
-      if (cleanText.length > 0) {
-        text = cleanText;
-      }
     }
-    
-    // Nettoyer le texte brut : enlever les lignes citées
-    const lines = text.split("\n");
-    const cleanLines: string[] = [];
-    let inQuotedSection = false;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      // Détecter le début d'une section citée
-      if (
-        line.startsWith(">") ||
-        /^On .+ wrote:?$/i.test(line) ||
-        /^Le .+ a écrit:?$/i.test(line) ||
-        /^From: .+$/i.test(line) ||
-        /^Date: .+$/i.test(line) ||
-        /^Subject: .+$/i.test(line) ||
-        /^De : .+$/i.test(line) ||
-        /^Date : .+$/i.test(line) ||
-        /^Objet : .+$/i.test(line) ||
-        line.match(/^[-_]{3,}/) // Séparateurs comme "---" ou "___"
-      ) {
-        inQuotedSection = true;
-        continue;
-      }
-      
-      // Si on est dans une section citée et qu'on trouve une ligne vide suivie d'une ligne normale,
-      // on peut considérer qu'on est sorti de la citation (mais c'est risqué)
-      if (inQuotedSection && line.length === 0 && i + 1 < lines.length) {
-        const nextLine = lines[i + 1]?.trim() || "";
-        if (nextLine.length > 0 && !nextLine.startsWith(">")) {
-          // Vérifier si la ligne suivante ne ressemble pas à une citation
-          if (
-            !/^On .+ wrote:?$/i.test(nextLine) &&
-            !/^Le .+ a écrit:?$/i.test(nextLine) &&
-            !nextLine.match(/^[-_]{3,}/)
-          ) {
-            inQuotedSection = false;
-            cleanLines.push("");
-            continue;
-          }
-        }
-      }
-      
-      // Si on n'est pas dans une section citée, garder la ligne
-      if (!inQuotedSection) {
-        cleanLines.push(lines[i]);
-      }
-    }
-    
-    let result = cleanLines.join("\n").trim();
-    
-    // Enlever les lignes vides multiples en début/fin
-    result = result.replace(/^\n+|\n+$/g, "");
-    
-    return result;
-  };
 
-  // Construire un texte brut correct même si l'email est uniquement HTML
-  let baseText = (rawText || "").trim();
-  if (!baseText && rawHtml) {
-    // Remplacer les <br> par des retours à la ligne puis enlever les balises
-    baseText = rawHtml
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<[^>]*>/g, "")
-      .trim();
-  }
-
-  // Extraire uniquement la nouvelle réponse (sans les parties citées)
-  const replyText = extractReplyContent(baseText, rawHtml);
+    // Extraire uniquement la nouvelle réponse (sans les parties citées)
+    const replyText = extractReplyContent(baseText, rawHtml);
 
     // Préparer un petit résumé anonymisé pour les logs
     const replyPreview =
@@ -501,19 +502,20 @@ export async function POST(req: NextRequest) {
         ? replyText.substring(0, 30).replace(/\s+/g, " ")
         : null;
 
-  console.log("[resend-inbound] Parsed reply content (anonymized)", {
+    logger.info("[resend-inbound] Parsed reply content (anonymized)", {
       hasReplyText: replyText.length > 0,
       replyPreview,
       rawTextLength: rawText?.length || 0,
       rawHtmlLength: rawHtml?.length || 0,
       baseTextLength: baseText.length,
     });
-  // --------- CAS 1 : Réponse d'admin dans une conversation de support ---------
-  // - Identifiée par la présence de conversationId ET le fait que ce soit une réponse (isReply === true)
-  // - ET que ce ne soit PAS un email d'avis modéré (isModeratedReview === false)
-  // - L'admin répond depuis Gmail, l'email arrive sur l'inbound
-  // - On enregistre le message dans support_messages, mais on NE le renvoie PAS vers Gmail
-  if (conversationId && isReply && !isModeratedReview && supabaseAdmin) {
+
+    // --------- CAS 1 : Réponse d'admin dans une conversation de support ---------
+    // - Identifiée par la présence de conversationId ET le fait que ce soit une réponse (isReply === true)
+    // - ET que ce ne soit PAS un email d'avis modéré (isModeratedReview === false)
+    // - L'admin répond depuis Gmail, l'email arrive sur l'inbound
+    // - On enregistre le message dans support_messages, mais on NE le renvoie PAS vers Gmail
+    if (conversationId && isReply && !isModeratedReview && supabaseAdmin) {
       // Éviter les doublons si emailId déjà traité
       if (emailId) {
         const { data: existingMessage, error: existingError } = await supabaseAdmin
@@ -523,7 +525,7 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
 
         if (existingError) {
-          console.error(
+          logger.error(
             "[resend-inbound] Error checking existing support message",
             {
               code: existingError.code,
@@ -532,7 +534,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (existingMessage) {
-          console.log(
+          logger.info(
             "[resend-inbound] Support message already stored for this emailId"
           );
           return NextResponse.json({ success: true, deduplicated: true });
@@ -573,7 +575,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!supabaseAdmin) {
-        console.error("[resend-inbound] supabaseAdmin is null, cannot store support message");
+        logger.error("[resend-inbound] supabaseAdmin is null, cannot store support message");
         return NextResponse.json(
           { error: "Database client not available" },
           { status: 500 }
@@ -593,7 +595,7 @@ export async function POST(req: NextRequest) {
         });
 
       if (insertError) {
-        console.error("[resend-inbound] Error inserting support message", {
+        logger.error("[resend-inbound] Error inserting support message", {
           code: insertError.code,
         });
         return NextResponse.json(
@@ -602,7 +604,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      console.log("[resend-inbound] Support message stored from admin reply", {
+      logger.info("[resend-inbound] Support message stored from admin reply", {
         conversationIdPreview: safeConversationId.substring(0, 8) + "…",
         senderEmailPreview,
       });
@@ -625,7 +627,7 @@ export async function POST(req: NextRequest) {
         ? String(playerName).substring(0, 10) + "…"
         : null;
 
-      console.log(
+      logger.info(
         "[resend-inbound] Forwarding moderated review reply to player",
         {
           reviewIdPreview: reviewId.substring(0, 8) + "…",
@@ -688,7 +690,7 @@ export async function POST(req: NextRequest) {
               .from("review_conversations")
               .select("id, review_id, user_name, user_email, subject")
               .eq("id", safeConversationId)
-        .maybeSingle();
+              .maybeSingle();
 
             if (!convByIdError && convById) {
               reviewConv = convById;
@@ -720,7 +722,7 @@ export async function POST(req: NextRequest) {
               .maybeSingle();
 
             if (reviewError) {
-              console.error("[resend-inbound] Error fetching review", {
+              logger.error("[resend-inbound] Error fetching review", {
                 code: reviewError.code,
               });
             }
@@ -812,10 +814,10 @@ export async function POST(req: NextRequest) {
             // Extraire aussi le texte brut pour le fallback
             forwardBody = `Note: ${rating}/5\n${comment ? `Commentaire: ${comment}` : "Aucun commentaire"}\n\nJoueur: ${playerName}\nEmail: ${playerEmail}`;
           } else {
-            console.log("[resend-inbound] Could not find review conversation or review data");
+            logger.info("[resend-inbound] Could not find review conversation or review data");
           }
         } catch (e: any) {
-          console.error("[resend-inbound] Exception fetching review data for forward", {
+          logger.error("[resend-inbound] Exception fetching review data for forward", {
             message: e?.message,
           });
         }
@@ -840,14 +842,14 @@ export async function POST(req: NextRequest) {
             .maybeSingle();
 
           if (lastMessageError) {
-            console.error("[resend-inbound] Error fetching last support message for forward", {
+            logger.error("[resend-inbound] Error fetching last support message for forward", {
               code: lastMessageError.code,
             });
           } else if (lastMessage?.message_text) {
             forwardBody = String(lastMessage.message_text);
           }
         } catch (e: any) {
-          console.error("[resend-inbound] Exception fetching last support message for forward", {
+          logger.error("[resend-inbound] Exception fetching last support message for forward", {
             message: e?.message,
           });
         }
@@ -877,7 +879,7 @@ export async function POST(req: NextRequest) {
             : "") || "(message vide)";
       }
 
-      console.log(
+      logger.info(
         "[resend-inbound] Forwarding inbound email to FORWARD_TO (admin)",
         {
           subjectPreview: subjectForForward.substring(0, 30),
@@ -908,7 +910,7 @@ export async function POST(req: NextRequest) {
     }
 
     // --------- CAS 4 : Autres emails (logs minimaux, aucune action métier) ---------
-    console.log(
+    logger.info(
       "[resend-inbound] Email received but no specific handler matched",
       {
         hasConversationId: !!conversationId,
@@ -923,11 +925,11 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     // Important : ne jamais renvoyer 500 au webhook Resend pour éviter les retries incessants.
     // On logge l'erreur de façon anonymisée mais on renvoie un 200 au webhook.
-    console.error(
+    logger.error(
       "[resend-inbound] Unexpected error in inbound webhook handler",
       {
-      message: error?.message,
-      name: error?.name,
+        message: error?.message,
+        name: error?.name,
       }
     );
     return NextResponse.json(
@@ -935,8 +937,6 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } finally {
-    console.log("[resend-inbound] Webhook finished");
+    logger.info("[resend-inbound] Webhook finished");
   }
 }
-
-
