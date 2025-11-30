@@ -78,25 +78,13 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
           let cs = 0;
           let best = 0;
           data.forEach((p: any) => {
-              // Déterminer winner_team (1 ou 2) à partir de winner_team_id
-              const winner_team = p.matches?.winner_team_id === p.matches?.team1_id ? 1 : 2;
-              const w = winner_team === p.team;
-              cs = w ? cs + 1 : 0;
-              if (cs > best) best = cs;
-            });
-            next[r.user_id] = best;
-          } else if (data && isGuest) {
-            // Pour les guests, on peut garder tous les matchs (ou les filtrer si nécessaire)
-            let cs = 0;
-            let best = 0;
-            data.forEach((p: any) => {
-              const winner_team = p.matches?.winner_team_id === p.matches?.team1_id ? 1 : 2;
-              const w = winner_team === p.team;
-              cs = w ? cs + 1 : 0;
-              if (cs > best) best = cs;
-            });
-            next[r.user_id] = best;
-          }
+            // Déterminer winner_team (1 ou 2) à partir de winner_team_id
+            const winner_team = p.matches?.winner_team_id === p.matches?.team1_id ? 1 : 2;
+            const w = winner_team === p.team;
+            cs = w ? cs + 1 : 0;
+            if (cs > best) best = cs;
+          });
+          next[r.user_id] = best;
         })
       );
       if (!cancelled) setStreak(next);
