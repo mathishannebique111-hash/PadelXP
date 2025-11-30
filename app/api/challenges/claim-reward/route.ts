@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 const ClaimRewardSchema = z.object({
   challengeId: z.string().uuid("challengeId doit être un UUID valide"),
 });
@@ -62,7 +64,7 @@ async function resolveClubId(userId: string) {
     return profile.club_id;
   }
   
-  console.warn("[claim-reward] resolveClubId: aucun club trouvé pour userId", userId);
+  logger.warn({ userId }, "[claim-reward] resolveClubId: aucun club trouvé pour userId");
   return null;
 }
 
@@ -70,7 +72,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   const { data, error } = await supabaseAdmin.storage.from(BUCKET_NAME).download(`${clubId}.json`);
   if (error || !data) {
     if (error && !error.message?.toLowerCase().includes("not found")) {
-      console.warn("[claim-reward] load error", error);
+      logger.warn({ err: error }, "[claim-reward] load error");
     }
     return [];
   }
@@ -81,7 +83,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
       return parsed as ChallengeRecord[];
     }
   } catch (err) {
-    console.warn("[claim-reward] invalid JSON", err);
+    logger.warn({ err }, "[claim-reward] invalid JSON");
   }
   return [];
 }
@@ -117,46 +119,46 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      console.error("[claim-reward] ❌ Unauthorized: No user found");
+      logger.error("[claim-reward] ❌ Unauthorized: No user found");
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-      // Lecture du JSON brut
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { error: "JSON invalide" },
-      { status: 400 }
-    );
-  }
+    // Lecture du JSON brut
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "JSON invalide" },
+        { status: 400 }
+      );
+    }
 
-  // Validation avec Zod pour challengeId
-  const parsed = ClaimRewardSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: "Validation échouée",
-        details: parsed.error.flatten().fieldErrors,
-      },
-      { status: 400 }
-    );
-  }
+    // Validation avec Zod pour challengeId
+    const parsed = ClaimRewardSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "Validation échouée",
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
 
-  const { challengeId } = parsed.data;
-  const { rewardType, rewardValue } = body;
+    const { challengeId } = parsed.data;
+    const { rewardType, rewardValue } = body;
 
-  if (!rewardType || !rewardValue) {
-    return NextResponse.json(
-      { error: "Données manquantes" },
-      { status: 400 }
-    );
-  }
+    if (!rewardType || !rewardValue) {
+      return NextResponse.json(
+        { error: "Données manquantes" },
+        { status: 400 }
+      );
+    }
 
-  const userIdPreview = user.id.substring(0, 8) + "…";
-  console.log(`[claim-reward] User ${userIdPreview} claiming reward...`);
-  
+    const userIdPreview = user.id.substring(0, 8) + "…";
+    logger.info({ userId: userIdPreview, challengeId }, "[claim-reward] User claiming reward");
+    
     // 1) Vérifier que le challenge existe et n'est pas expiré
     const clubId = await resolveClubId(user.id);
     if (!clubId) {
@@ -179,7 +181,7 @@ export async function POST(req: Request) {
     const now = new Date();
     const endDate = new Date(challenge.end_date);
     if (now > endDate) {
-      console.log(`[claim-reward] ❌ Challenge expired (end: ${challenge.end_date})`);
+      logger.info({ challengeId, endDate: challenge.end_date }, "[claim-reward] ❌ Challenge expired");
       return NextResponse.json(
         { error: "Ce challenge est terminé et ne peut plus être réclamé" },
         { status: 403 }
@@ -195,7 +197,7 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     if (checkError) {
-      console.error(`[claim-reward] ❌ Error checking existing reward:`, checkError);
+      logger.error({ err: checkError, challengeId }, "[claim-reward] ❌ Error checking existing reward");
       return NextResponse.json(
         { error: `Erreur: ${checkError.message}. Avez-vous exécuté le script SQL pour créer la table challenge_rewards ?` },
         { status: 500 }
@@ -203,7 +205,7 @@ export async function POST(req: Request) {
     }
 
     if (existing) {
-      console.log(`[claim-reward] ⚠️ Reward already claimed for challenge ${challengeId}`);
+      logger.info({ challengeId }, "[claim-reward] ⚠️ Reward already claimed");
       return NextResponse.json(
         { error: "Récompense déjà réclamée", alreadyClaimed: true },
         { status: 409 }
@@ -228,7 +230,7 @@ export async function POST(req: Request) {
         .single();
 
       if (profileError || !profile) {
-        console.error("[claim-reward] Error fetching profile:", profileError);
+        logger.error({ err: profileError }, "[claim-reward] Error fetching profile");
         return NextResponse.json(
           { error: "Profil introuvable" },
           { status: 404 }
@@ -238,7 +240,7 @@ export async function POST(req: Request) {
       const currentPoints = profile.points || 0;
       const newPoints = currentPoints + points;
 
-      console.log(`[claim-reward] Adding ${points} points: ${currentPoints} → ${newPoints}`);
+      logger.info({ points, currentPoints, newPoints }, "[claim-reward] Adding points");
 
       // Mettre à jour les points
       const { error: updateError } = await supabaseAdmin
@@ -247,14 +249,14 @@ export async function POST(req: Request) {
         .eq("id", user.id);
 
       if (updateError) {
-        console.error("[claim-reward] ❌ Error updating points:", updateError);
+        logger.error({ err: updateError }, "[claim-reward] ❌ Error updating points");
         return NextResponse.json(
           { error: "Erreur lors de l'ajout des points" },
           { status: 500 }
         );
       }
 
-      console.log(`[claim-reward] ✅ Points updated successfully: ${currentPoints} → ${newPoints}`);
+      logger.info({ currentPoints, newPoints }, "[claim-reward] ✅ Points updated successfully");
       
       // Vérifier que l'update a bien fonctionné
       const { data: verifyProfile } = await supabaseAdmin
@@ -263,7 +265,7 @@ export async function POST(req: Request) {
         .eq("id", user.id)
         .single();
       
-      console.log(`[claim-reward] 🔍 Verification - Points in DB after update:`, verifyProfile?.points);
+      logger.info({ pointsInDB: verifyProfile?.points }, "[claim-reward] 🔍 Verification - Points in DB after update");
     }
 
     // 4) Si la récompense est un badge, créer le badge
@@ -271,7 +273,7 @@ export async function POST(req: Request) {
       const badgeName = rewardValue;
       const badgeEmoji = getEmojiForChallenge(challengeId);
       
-      console.log(`[claim-reward] Creating challenge badge: ${badgeEmoji} ${badgeName}`);
+      logger.info({ badgeEmoji, badgeName }, "[claim-reward] Creating challenge badge");
       
       // Créer le badge dans la table challenge_badges
       const { error: badgeError } = await supabaseAdmin
@@ -284,14 +286,14 @@ export async function POST(req: Request) {
         });
       
       if (badgeError) {
-        console.error("[claim-reward] ❌ Error creating badge:", badgeError);
+        logger.error({ err: badgeError }, "[claim-reward] ❌ Error creating badge");
         return NextResponse.json(
           { error: `Erreur lors de la création du badge: ${badgeError.message}. Avez-vous exécuté le script SQL pour créer la table challenge_badges ?` },
           { status: 500 }
         );
       }
       
-      console.log(`[claim-reward] ✅ Challenge badge created successfully: ${badgeEmoji} ${badgeName}`);
+      logger.info({ badgeEmoji, badgeName }, "[claim-reward] ✅ Challenge badge created successfully");
     }
 
     // 5) Enregistrer la récompense comme attribuée
@@ -305,14 +307,14 @@ export async function POST(req: Request) {
       });
 
     if (insertError) {
-      console.error("[claim-reward] Error recording reward:", insertError);
+      logger.error({ err: insertError }, "[claim-reward] Error recording reward");
       return NextResponse.json(
         { error: "Erreur lors de l'enregistrement de la récompense" },
         { status: 500 }
       );
     }
 
-    console.log(`[claim-reward] ✅ Reward claimed successfully for challenge ${challengeId}`);
+    logger.info({ challengeId }, "[claim-reward] ✅ Reward claimed successfully");
 
     // Revalider les pages qui affichent les points
     revalidatePath("/home");
@@ -326,11 +328,10 @@ export async function POST(req: Request) {
       message: "Récompense attribuée avec succès !",
     });
   } catch (error) {
-    console.error("[claim-reward] Exception:", error);
+    logger.error({ err: error }, "[claim-reward] Exception");
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
     );
   }
 }
-

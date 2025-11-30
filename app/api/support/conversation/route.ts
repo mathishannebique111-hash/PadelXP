@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 // GET: Récupérer la conversation active et ses messages
 export async function GET(request: NextRequest) {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!supabaseAdmin) {
-      console.error('[support-conversation] ❌ Supabase admin client not initialized');
+      logger.error('[support-conversation] ❌ Supabase admin client not initialized');
       return NextResponse.json({ 
         error: 'Erreur de configuration serveur',
         conversation: null,
@@ -60,14 +61,14 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (profileError) {
-      console.error('[support-conversation] ❌ Error fetching profile:', profileError);
+      logger.error({ err: profileError }, '[support-conversation] ❌ Error fetching profile');
     }
 
     let clubId = profile?.club_id;
 
     // Fallback: vérifier dans club_admins si l'utilisateur est admin d'un club
     if (!clubId) {
-      console.log('[support-conversation] ℹ️ No club_id in profile, checking club_admins...');
+      logger.info('[support-conversation] ℹ️ No club_id in profile, checking club_admins...');
       const { data: adminEntry, error: adminError } = await supabaseAdmin
         .from('club_admins')
         .select('club_id')
@@ -75,26 +76,26 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (adminError) {
-        console.error('[support-conversation] ❌ Error fetching club_admins:', adminError);
+        logger.error({ err: adminError }, '[support-conversation] ❌ Error fetching club_admins');
       }
 
       if (adminEntry?.club_id) {
         clubId = adminEntry.club_id as string;
-        console.log('[support-conversation] ✅ Found club_id in club_admins:', clubId);
+        logger.info({ clubId }, '[support-conversation] ✅ Found club_id in club_admins');
       }
     }
 
     if (!clubId) {
       const userIdPreview = user.id.substring(0, 8) + "…";
-      console.error('[support-conversation] ❌ No club_id found for user:', userIdPreview);
-            return NextResponse.json({ 
+      logger.error({ userId: userIdPreview }, '[support-conversation] ❌ No club_id found for user');
+      return NextResponse.json({ 
         error: 'Vous devez être rattaché à un club',
         conversation: null,
         messages: []
       });
     }
 
-    console.log('[support-conversation] ✅ Found club_id:', clubId);
+    logger.info({ clubId }, '[support-conversation] ✅ Found club_id');
 
     // Récupérer TOUTES les conversations (ouvertes et fermées) pour ce club
     const { data: conversations, error: convError } = await supabaseAdmin
@@ -104,11 +105,11 @@ export async function GET(request: NextRequest) {
       .order('last_message_at', { ascending: false });
 
     if (convError) {
-      console.error('[support-conversation] ❌ Error fetching conversations:', convError);
+      logger.error({ err: convError }, '[support-conversation] ❌ Error fetching conversations');
       
       // Si la table n'existe pas, retourner un message explicite
       if (convError.code === '42P01' || convError.message?.includes('does not exist') || convError.message?.includes('schema cache')) {
-        console.warn('[support-conversation] ⚠️ Table support_conversations does not exist. Please run create_support_chat_system.sql');
+        logger.warn('[support-conversation] ⚠️ Table support_conversations does not exist. Please run create_support_chat_system.sql');
         return NextResponse.json({ 
           error: 'Système de chat non configuré',
           hint: 'Veuillez exécuter le script create_support_chat_system.sql dans Supabase SQL Editor',
@@ -123,10 +124,10 @@ export async function GET(request: NextRequest) {
     }
 
     const conversationsList = conversations || [];
-    console.log('[support-conversation] ✅ Found conversations:', {
+    logger.info({
       count: conversationsList.length,
       conversationIds: conversationsList.map(c => c.id)
-    });
+    }, '[support-conversation] ✅ Found conversations');
 
     // Pour chaque conversation, récupérer ses messages
     const conversationsWithMessages = await Promise.all(
@@ -138,7 +139,7 @@ export async function GET(request: NextRequest) {
           .order('created_at', { ascending: true });
 
         if (messagesError) {
-          console.error(`[support-conversation] ❌ Error fetching messages for conversation ${conv.id}:`, messagesError);
+          logger.error({ err: messagesError, conversationId: conv.id }, `[support-conversation] ❌ Error fetching messages for conversation`);
           return {
             ...conv,
             messages: []
@@ -152,16 +153,16 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    console.log('[support-conversation] ✅ Conversations with messages:', {
+    logger.info({
       count: conversationsWithMessages.length,
       totalMessages: conversationsWithMessages.reduce((sum, c) => sum + (c.messages?.length || 0), 0)
-    });
+    }, '[support-conversation] ✅ Conversations with messages');
 
     return NextResponse.json({
       conversations: conversationsWithMessages || [],
     });
   } catch (error) {
-    console.error('[support-conversation] Unexpected error:', error);
+    logger.error({ err: error }, '[support-conversation] Unexpected error');
     return NextResponse.json({ 
       error: 'Erreur serveur',
       conversation: null,
@@ -169,4 +170,3 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
-
