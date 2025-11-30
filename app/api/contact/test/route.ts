@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -15,11 +16,7 @@ export async function GET() {
 
     const resend = new Resend(apiKey);
 
-    console.log('[contact-test] Testing Resend:', {
-      hasApiKey: !!apiKey,
-      apiKeyPrefix: apiKey.substring(0, 10) + '...',
-      fromEmail,
-    });
+    logger.info({ hasApiKey: !!apiKey, apiKeyPrefix: apiKey.substring(0, 10) + '...', fromEmail }, '[contact-test] Testing Resend:');
 
     // Test simple d'envoi
     const testResult = await resend.emails.send({
@@ -30,7 +27,7 @@ export async function GET() {
     });
 
     if (testResult.error) {
-      console.error('[contact-test] Resend error:', testResult.error);
+      logger.error({ error: testResult.error }, '[contact-test] Resend error:');
       return NextResponse.json({ 
         error: 'Resend API error',
         details: testResult.error,
@@ -38,7 +35,7 @@ export async function GET() {
       }, { status: 500 });
     }
 
-    console.log('[contact-test] Email sent successfully:', testResult.data);
+    logger.info({ emailId: testResult.data?.id }, '[contact-test] Email sent successfully:');
 
     return NextResponse.json({ 
       success: true,
@@ -47,7 +44,7 @@ export async function GET() {
       fromEmail 
     });
   } catch (error) {
-    console.error('[contact-test] Unexpected error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined }, '[contact-test] Unexpected error:');
     return NextResponse.json({ 
       error: 'Unexpected error',
       details: error instanceof Error ? error.message : String(error)

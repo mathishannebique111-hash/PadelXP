@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { creditUserFreeBoost, isReviewsGoalReached, hasUserReviewedBeforeGoal, hasUserClaimedFreeBoost } from "@/lib/utils/reviews-reward-utils";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export async function POST() {
       message: "Boost gratuit attribué avec succès !",
     });
   } catch (error) {
-    console.error("[POST /api/reviews/claim-free-boost] Error:", error);
+    logger.error({ error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined, userId: user?.id?.substring(0, 8) + "…" }, "[POST /api/reviews/claim-free-boost] Error:");
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

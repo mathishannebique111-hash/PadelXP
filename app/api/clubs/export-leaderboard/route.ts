@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getClubDashboardData } from "@/lib/utils/club-utils";
+import { logger } from "@/lib/logger";
 
 function stringifyCsvValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "";
@@ -87,7 +88,7 @@ export async function GET() {
       },
     });
   } catch (error: any) {
-    console.error("[export-leaderboard] Unexpected error:", error);
+    logger.error({ error: error?.message || String(error), stack: error?.stack, userId: user?.id?.substring(0, 8) + "…", clubId: finalClubId?.substring(0, 8) + "…" }, "[export-leaderboard] Unexpected error:");
     return NextResponse.json(
       { error: error?.message || "Erreur serveur inattendue" },
       { status: 500 }

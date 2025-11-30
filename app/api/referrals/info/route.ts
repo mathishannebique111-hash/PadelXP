@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserReferralInfo } from "@/lib/utils/referral-utils";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export async function GET() {
 
     return NextResponse.json(referralInfo);
   } catch (error) {
-    console.error("[GET /api/referrals/info] Error:", error);
+    logger.error({ error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined, userId: user?.id?.substring(0, 8) + "…" }, "[GET /api/referrals/info] Error:");
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -85,7 +86,7 @@ export async function GET(req: Request) {
       .eq("id", confirmation.matches.id);
 
     if (matchUpdateError) {
-      console.error("Error updating match status:", matchUpdateError);
+      logger.error({ error: matchUpdateError, userId: user.id.substring(0, 8) + "…", matchId: confirmation.matches.id.substring(0, 8) + "…" }, "Error updating match status:");
     }
   }
 

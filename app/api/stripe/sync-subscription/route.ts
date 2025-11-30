@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (fetchError) {
-      console.error('[sync-subscription] Error fetching subscription:', fetchError);
+      logger.error({ error: fetchError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[sync-subscription] Error fetching subscription:');
       return NextResponse.json(
         { error: 'Failed to fetch subscription' },
         { status: 500 }
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
           .eq('id', existingSubscription.id);
 
         if (updateError) {
-          console.error('[sync-subscription] Update error:', updateError);
+          logger.error({ error: updateError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: existingSubscription.stripe_subscription_id?.substring(0, 8) + "…" }, '[sync-subscription] Update error:');
           return NextResponse.json(
             { error: 'Failed to update subscription' },
             { status: 500 }
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
           message: 'Subscription synced successfully',
         });
       } catch (error) {
-        console.error('[sync-subscription] Error retrieving Stripe subscription:', error);
+        logger.error({ error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: existingSubscription.stripe_subscription_id?.substring(0, 8) + "…" }, '[sync-subscription] Error retrieving Stripe subscription:');
         return NextResponse.json(
           { error: 'Failed to retrieve Stripe subscription' },
           { status: 500 }
@@ -193,7 +194,7 @@ export async function POST(req: NextRequest) {
                 // Si on trouve un abonnement actif récent, on l'utilise
                 foundSubscription = sub;
                 foundCustomerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-                console.log('[sync-subscription] Found subscription in recent checkout session:', subscriptionId);
+                logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscriptionId.substring(0, 8) + "…" }, '[sync-subscription] Found subscription in recent checkout session:');
                 break;
               }
             } catch (err) {
@@ -204,7 +205,7 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (error) {
-      console.error('[sync-subscription] Error searching checkout sessions:', error);
+      logger.error({ error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[sync-subscription] Error searching checkout sessions:');
     }
 
     // Si on n'a pas trouvé dans les sessions checkout, chercher par email
@@ -232,12 +233,12 @@ export async function POST(req: NextRequest) {
           if (activeSubs.length > 0) {
             foundSubscription = activeSubs[0];
             foundCustomerId = customer.id;
-            console.log('[sync-subscription] Found subscription by email:', foundSubscription.id);
+            logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: foundSubscription.id.substring(0, 8) + "…", email: clubEmail?.substring(0, 8) + "…" }, '[sync-subscription] Found subscription by email:');
             break;
           }
         }
       } catch (error) {
-        console.error('[sync-subscription] Error searching by email:', error);
+        logger.error({ error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: clubEmail?.substring(0, 8) + "…" }, '[sync-subscription] Error searching by email:');
       }
     }
 
@@ -320,7 +321,7 @@ export async function POST(req: NextRequest) {
       .eq('id', existingSubscription.id);
 
     if (updateError) {
-      console.error('[sync-subscription] Update error:', updateError);
+      logger.error({ error: updateError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: latestSubscription.id.substring(0, 8) + "…" }, '[sync-subscription] Update error:');
       return NextResponse.json(
         { error: 'Failed to update subscription' },
         { status: 500 }
@@ -333,7 +334,7 @@ export async function POST(req: NextRequest) {
       subscriptionId: latestSubscription.id,
     });
   } catch (error) {
-    console.error('[sync-subscription] Error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, '[sync-subscription] Error:');
     return NextResponse.json(
       { error: 'Failed to sync subscription' },
       { status: 500 }

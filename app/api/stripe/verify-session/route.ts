@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
           .eq('id', existingSubscription.id);
 
         if (updateError) {
-          console.error('[verify-session] Update error:', updateError);
+          logger.error({ error: updateError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscriptionId?.substring(0, 8) + "…" }, '[verify-session] Update error:');
           return NextResponse.json(
             { error: 'Failed to update subscription' },
             { status: 500 }
@@ -173,7 +174,7 @@ export async function POST(req: NextRequest) {
           });
 
         if (insertError) {
-          console.error('[verify-session] Insert error:', insertError);
+          logger.error({ error: insertError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscriptionId?.substring(0, 8) + "…" }, '[verify-session] Insert error:');
           return NextResponse.json(
             { error: 'Failed to create subscription' },
             { status: 500 }
@@ -189,7 +190,7 @@ export async function POST(req: NextRequest) {
       planCycle,
     });
   } catch (error) {
-    console.error('[verify-session] Error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, '[verify-session] Error:');
     return NextResponse.json(
       { error: 'Failed to verify session' },
       { status: 500 }

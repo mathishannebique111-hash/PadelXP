@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -109,7 +110,7 @@ export async function GET(req: NextRequest) {
       try {
         stripeInvoice = await stripe.invoices.retrieve(stripeInvoiceId);
       } catch (error) {
-        console.error('[Invoice] Erreur récupération facture Stripe:', error);
+        logger.error({ error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", stripeInvoiceId: stripeInvoiceId?.substring(0, 8) + "…" }, '[Invoice] Erreur récupération facture Stripe:');
       }
     }
 
@@ -288,7 +289,7 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[Invoice] Erreur génération PDF:', error);
+    logger.error({ error: error?.message || String(error), stack: error?.stack, userId: user?.id?.substring(0, 8) + "…" }, '[Invoice] Erreur génération PDF:');
     return NextResponse.json(
       { error: `Erreur lors de la génération de la facture: ${error.message}` },
       { status: 500 }

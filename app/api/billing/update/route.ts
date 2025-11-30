@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     if (subError && subError.code !== 'PGRST116') {
-      console.error("[update-billing] Error fetching subscription:", subError);
+      logger.error({ error: subError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, "[update-billing] Error fetching subscription:");
       return NextResponse.json({ error: "Erreur lors de la récupération de l'abonnement" }, { status: 500 });
     }
 
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
     }
 
     if (updateResult.error) {
-      console.error("[update-billing] Error updating billing info:", updateResult.error);
+      logger.error({ error: updateResult.error, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, "[update-billing] Error updating billing info:");
       return NextResponse.json(
         { error: "Erreur lors de la mise à jour des informations de facturation" },
         { status: 500 }
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("[update-billing] Unexpected error:", error);
+    logger.error({ error: error?.message || String(error), stack: error?.stack, userId: user?.id?.substring(0, 8) + "…" }, "[update-billing] Unexpected error:");
     return NextResponse.json(
       { error: error.message || "Erreur inattendue" },
       { status: 500 }

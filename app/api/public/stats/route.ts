@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,14 +31,14 @@ export async function GET() {
       .not("id", "is", null);
 
     if (authUsersError) {
-      console.error("[public/stats] auth users count error:", authUsersError);
+      logger.error({ error: authUsersError }, "[public/stats] auth users count error:");
     }
 
     // Vérifier combien de profils correspondent à des utilisateurs auth réels
     const { data: authUsers, error: authCheckError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (authCheckError) {
-      console.error("[public/stats] auth check error:", authCheckError);
+      logger.error({ error: authCheckError }, "[public/stats] auth check error:");
     }
 
     const realPlayerCount = authUsers?.users?.length || 0;
@@ -62,10 +63,10 @@ export async function GET() {
     ]);
 
     if (matchesError) {
-      console.error("[public/stats] matches count error:", matchesError);
+      logger.error({ error: matchesError }, "[public/stats] matches count error:");
     }
     if (participantsError) {
-      console.error("[public/stats] participants error:", participantsError);
+      logger.error({ error: participantsError }, "[public/stats] participants error:");
     }
 
     const uniqueActivePlayers = new Set(
@@ -89,7 +90,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("[public/stats] unexpected error:", error);
+    logger.error({ error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined }, "[public/stats] unexpected error:");
     return NextResponse.json(
       { error: "Erreur lors du calcul des statistiques" },
       { status: 500 }

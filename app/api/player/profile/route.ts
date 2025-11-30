@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,7 +14,7 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error('[player/profile] Unauthorized:', authError);
+      logger.error({ error: authError }, '[player/profile] Unauthorized:');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -29,7 +30,7 @@ export async function GET() {
       .maybeSingle();
 
     if (profileError) {
-      console.error('[player/profile] Error fetching profile with client:', profileError);
+      logger.error({ error: profileError, userId: user.id.substring(0, 8) + "…" }, '[player/profile] Error fetching profile with client:');
     } else {
       profile = profileData;
     }
@@ -47,7 +48,7 @@ export async function GET() {
         .maybeSingle();
 
       if (adminError) {
-        console.error('[player/profile] Error fetching profile with admin:', adminError);
+        logger.error({ error: adminError, userId: user.id.substring(0, 8) + "…" }, '[player/profile] Error fetching profile with admin:');
       } else if (adminProfile) {
         profile = adminProfile;
       }
@@ -75,7 +76,7 @@ export async function GET() {
       hasCompleteName: !!(first_name && first_name.trim() && last_name && last_name.trim()),
     });
   } catch (error) {
-    console.error('[player/profile] Error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined }, '[player/profile] Error:');
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

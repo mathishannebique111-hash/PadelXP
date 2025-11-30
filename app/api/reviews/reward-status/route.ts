@@ -6,6 +6,7 @@ import {
   hasUserClaimedFreeBoost,
   getTotalReviewsCount 
 } from "@/lib/utils/reviews-reward-utils";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export async function GET() {
       canClaim: goalReached && isEligible && !hasClaimed,
     });
   } catch (error) {
-    console.error("[GET /api/reviews/reward-status] Error:", error);
+    logger.error({ error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined, userId: user?.id?.substring(0, 8) + "…" }, "[GET /api/reviews/reward-status] Error:");
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

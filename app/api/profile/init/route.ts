@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.warn("[api/profile/init] Missing Supabase service configuration");
+  logger.warn({}, "[api/profile/init] Missing Supabase service configuration");
 }
 
 export async function POST(request: Request) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     const token = authHeader.slice(7);
     const { data, error } = await serviceClient.auth.getUser(token);
     if (error || !data?.user) {
-      console.error("[api/profile/init] bearer auth error", error);
+      logger.error({ error: error, tokenPreview: token.substring(0, 8) + "…" }, "[api/profile/init] bearer auth error");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     user = data.user;
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (error) {
-    console.error("[api/profile/init] fetch error", error);
+    logger.error({ error: error, userId: user.id.substring(0, 8) + "…" }, "[api/profile/init] fetch error");
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (activationError) {
-      console.error("[api/profile/init] activation update error", activationError);
+      logger.error({ error: activationError, userId: user.id.substring(0, 8) + "…", clubId: clubAdmin.club_id.substring(0, 8) + "…" }, "[api/profile/init] activation update error");
       return NextResponse.json(
         {
           error:
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
           clubSlugForUser = ownerMeta.club_slug;
         }
       } catch (ownerMetaError) {
-        console.warn("[api/profile/init] owner metadata lookup warning", ownerMetaError);
+        logger.warn({ error: ownerMetaError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…", ownerId: ownerId.substring(0, 8) + "…" }, "[api/profile/init] owner metadata lookup warning");
       }
     }
   }
@@ -180,7 +181,7 @@ export async function POST(request: Request) {
               user_metadata: mergedMetadata,
             });
           } catch (metadataError) {
-            console.warn("[api/profile/init] metadata update warning (updated profile)", metadataError);
+            logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (updated profile)");
           }
         }
 
@@ -190,7 +191,7 @@ export async function POST(request: Request) {
         });
       }
       if (updateError) {
-        console.warn("[api/profile/init] update warning", updateError);
+        logger.warn({ error: updateError, userId: user.id.substring(0, 8) + "…" }, "[api/profile/init] update warning");
       }
     }
 
@@ -214,7 +215,7 @@ export async function POST(request: Request) {
           user_metadata: mergedMetadata,
         });
       } catch (metadataError) {
-        console.warn("[api/profile/init] metadata update warning", metadataError);
+        logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning");
       }
     }
 
@@ -245,7 +246,7 @@ export async function POST(request: Request) {
         user_metadata: mergedMetadata,
       });
     } catch (metadataError) {
-      console.warn("[api/profile/init] metadata update warning (admin without profile)", metadataError);
+      logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (admin without profile)");
     }
     
     return NextResponse.json({

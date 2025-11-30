@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
           try {
             conversationId = Buffer.from(match[1], 'base64url').toString('utf-8');
           } catch (e) {
-            console.error('[webhook-resend] Error decoding conversation ID from To header:', e);
+            logger.error({ error: e instanceof Error ? e.message : String(e), toEmail: toEmail?.substring(0, 20) + "…" }, '[webhook-resend] Error decoding conversation ID from To header:');
           }
         }
       }
