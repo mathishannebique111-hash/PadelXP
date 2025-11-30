@@ -1,6 +1,3 @@
-Tu as raison, le message a été coupé. Voici le fichier complet corrigé avec `logger`, sans aucun autre changement.
-
-```ts
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getClubSubscription, resumeSubscription } from "@/lib/utils/subscription-utils";
@@ -118,4 +115,3 @@ export async function POST(req: Request) {
     );
   }
 }
-```
