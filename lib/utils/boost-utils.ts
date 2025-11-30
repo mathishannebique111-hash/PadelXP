@@ -3,6 +3,7 @@
  */
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -26,12 +27,9 @@ function logSupabaseError(context: string, error: any) {
   if (Object.keys(errorDetails).length === 0) {
     const errorType = typeof error;
     const errorString = String(error);
-    console.error(`[boost-utils] ${context} (empty error object)`, {
-      type: errorType,
-      stringRepresentation: errorString !== "[object Object]" ? errorString : undefined,
-    });
+    logger.error({ type: errorType, stringRepresentation: errorString !== "[object Object]" ? errorString : undefined }, `[boost-utils] ${context} (empty error object)`);
   } else {
-    console.error(`[boost-utils] ${context}`, errorDetails);
+    logger.error({ ...errorDetails }, `[boost-utils] ${context}`);
   }
 }
 
@@ -46,13 +44,13 @@ export const MAX_BOOSTS_PER_MONTH = 10; // Limite de 10 boosts utilisés par moi
  */
 export async function getPlayerBoostCreditsAvailable(userId: string): Promise<number> {
   if (!supabaseAdmin) {
-    console.warn("[boost-utils] Supabase admin client not available");
+    logger.warn({}, "[boost-utils] Supabase admin client not available");
     return 0;
   }
 
   try {
     const shortUserId = userId.substring(0, 8) + "...";
-    console.log("[boost-utils] Counting boost credits", { userId: shortUserId });
+    logger.info({ userId: shortUserId }, "[boost-utils] Counting boost credits");
 
     const { data: allCreditsData, error: allCreditsError } = await supabaseAdmin
       .from("player_boost_credits")
@@ -78,10 +76,7 @@ export async function getPlayerBoostCreditsAvailable(userId: string): Promise<nu
 
       if (!fetchErrorAlt && creditsDataAlt) {
         const availableCount = creditsDataAlt.filter(c => !c.consumed_at).length;
-        console.log("[boost-utils] Available credits (alt method)", {
-          userId: shortUserId,
-          count: availableCount,
-        });
+        logger.info({ userId: shortUserId, count: availableCount }, "[boost-utils] Available credits (alt method)");
         return availableCount;
       }
       return 0;
@@ -97,10 +92,7 @@ export async function getPlayerBoostCreditsAvailable(userId: string): Promise<nu
 
     if (countError) {
       logSupabaseError("Error counting boost credits", countError);
-      console.log("[boost-utils] Using method 1 count", {
-        userId: shortUserId,
-        count: countMethod1,
-      });
+      logger.info({ userId: shortUserId, count: countMethod1 }, "[boost-utils] Using method 1 count");
       return countMethod1;
     }
 
@@ -127,19 +119,12 @@ export async function getPlayerBoostCreditsAvailable(userId: string): Promise<nu
       ).length;
 
       if (manualCount !== finalCount) {
-        console.warn("[boost-utils] Boost credits count mismatch", {
-          userId: shortUserId,
-          finalCount,
-          manualCount,
-        });
+        logger.warn({ userId: shortUserId, finalCount, manualCount }, "[boost-utils] Boost credits count mismatch");
         finalCount = manualCount;
       }
     }
 
-    console.log("[boost-utils] Final boost credits count", {
-      userId: shortUserId,
-      count: finalCount,
-    });
+    logger.info({ userId: shortUserId, count: finalCount }, "[boost-utils] Final boost credits count");
 
     return finalCount;
   } catch (error) {
@@ -153,7 +138,7 @@ export async function getPlayerBoostCreditsAvailable(userId: string): Promise<nu
  */
 export async function getPlayerBoostsUsedThisMonth(userId: string): Promise<number> {
   if (!supabaseAdmin) {
-    console.warn("[boost-utils] Supabase admin client not available");
+    logger.warn({}, "[boost-utils] Supabase admin client not available");
     return 0;
   }
 
@@ -174,10 +159,7 @@ export async function getPlayerBoostsUsedThisMonth(userId: string): Promise<numb
     }
 
     const used = count || 0;
-    console.log("[boost-utils] Boosts used this month", {
-      userId: userId.substring(0, 8) + "...",
-      used,
-    });
+    logger.info({ userId: userId.substring(0, 8) + "...", used }, "[boost-utils] Boosts used this month");
 
     return used;
   } catch (error) {
@@ -274,13 +256,7 @@ export async function consumeBoostForMatch(
 
     const pointsAfterBoost = Math.round(pointsBeforeBoost * (1 + BOOST_PERCENTAGE));
 
-    console.log("[consumeBoostForMatch] Calculating boosted points", {
-      userId: userId.substring(0, 8) + "...",
-      matchId: matchId.substring(0, 8) + "...",
-      pointsBeforeBoost,
-      pointsAfterBoost,
-      percentage: BOOST_PERCENTAGE,
-    });
+    logger.info({ userId: userId.substring(0, 8) + "...", matchId: matchId.substring(0, 8) + "...", pointsBeforeBoost, pointsAfterBoost, percentage: BOOST_PERCENTAGE }, "[consumeBoostForMatch] Calculating boosted points");
 
     const consumedAt = new Date().toISOString();
     const { error: consumeError } = await supabaseAdmin
@@ -337,13 +313,7 @@ export async function consumeBoostForMatch(
       };
     }
 
-    console.log("[consumeBoostForMatch] Boost use recorded", {
-      boostUseId: boostUse.id,
-      userId: userId.substring(0, 8) + "...",
-      matchId: matchId.substring(0, 8) + "...",
-      pointsBeforeBoost: boostUse.points_before_boost,
-      pointsAfterBoost: boostUse.points_after_boost,
-    });
+    logger.info({ boostUseId: boostUse.id.substring(0, 8) + "...", userId: userId.substring(0, 8) + "...", matchId: matchId.substring(0, 8) + "...", pointsBeforeBoost: boostUse.points_before_boost, pointsAfterBoost: boostUse.points_after_boost }, "[consumeBoostForMatch] Boost use recorded");
 
     return {
       success: true,
@@ -409,10 +379,7 @@ export async function creditPlayerBoosts(
       };
     }
 
-    console.log("[boost-utils] Boosts credited", {
-      userId: userId.substring(0, 8) + "...",
-      credited: insertedCredits.length,
-    });
+    logger.info({ userId: userId.substring(0, 8) + "...", credited: insertedCredits.length }, "[boost-utils] Boosts credited");
 
     return {
       success: true,
@@ -438,7 +405,7 @@ export async function getPlayerBoostStats(userId: string): Promise<{
   canUse: boolean;
 }> {
   const shortUserId = userId.substring(0, 8) + "...";
-  console.log("[boost-utils] Getting boost stats", { userId: shortUserId });
+  logger.info({ userId: shortUserId }, "[boost-utils] Getting boost stats");
 
   const [creditsAvailable, usedThisMonth] = await Promise.all([
     getPlayerBoostCreditsAvailable(userId),
@@ -455,10 +422,7 @@ export async function getPlayerBoostStats(userId: string): Promise<{
     canUse,
   };
 
-  console.log("[boost-utils] Boost stats", {
-    userId: shortUserId,
-    ...stats,
-  });
+  logger.info({ userId: shortUserId, ...stats }, "[boost-utils] Boost stats");
 
   return stats;
 }

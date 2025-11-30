@@ -1,13 +1,12 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { logger } from "@/lib/logger";
 
 let redisClient: Redis | null = null;
 try {
   redisClient = Redis.fromEnv();
 } catch (error) {
-  console.warn(
-    "[rate-limit] Upstash Redis not configured. Rate limiting will not work."
-  );
+  logger.warn({ error }, "[rate-limit] Upstash Redis not configured. Rate limiting will not work.");
 }
 
 // Rate limiter pour les tentatives de connexion
@@ -95,9 +94,7 @@ export async function checkRateLimit(
   if (!ratelimiter) {
     // Si le rate limiting n'est pas configuré, autoriser la requête
     // En production, vous devriez logger un avertissement
-    console.warn(
-      "[rate-limit] Rate limiter not configured, allowing request"
-    );
+    logger.warn({ identifier: identifier.substring(0, 20) + "…" }, "[rate-limit] Rate limiter not configured, allowing request");
     return { success: true };
   }
 
@@ -110,7 +107,7 @@ export async function checkRateLimit(
       reset: result.reset,
     };
   } catch (error) {
-    console.error("[rate-limit] Error checking rate limit:", error);
+    logger.error({ identifier: identifier.substring(0, 20) + "…", error }, "[rate-limit] Error checking rate limit");
     // En cas d'erreur, autoriser la requête pour ne pas bloquer les utilisateurs légitimes
     return { success: true };
   }

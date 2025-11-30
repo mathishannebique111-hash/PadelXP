@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getClubLogoPublicUrl } from "./club-logo-utils";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -46,7 +47,7 @@ export async function getClubPublicExtras(clubId: string): Promise<ClubPublicExt
     const { data, error } = await supabaseAdmin.storage.from(PUBLIC_INFO_BUCKET).download(`${clubId}.json`);
     if (error || !data) {
       if (error && !error.message?.toLowerCase().includes("not found")) {
-        console.warn("[club-utils] getClubPublicExtras storage error", error);
+        logger.warn({ clubId: clubId.substring(0, 8) + "…", error }, "[club-utils] getClubPublicExtras storage error");
       }
       return {
         address: null,
@@ -82,7 +83,7 @@ export async function getClubPublicExtras(clubId: string): Promise<ClubPublicExt
       opening_hours: typeof parsed?.opening_hours === "object" ? parsed.opening_hours as ClubOpeningHours : null,
     };
   } catch (error) {
-    console.warn("[club-utils] getClubPublicExtras unexpected error", error);
+    logger.warn({ clubId: clubId.substring(0, 8) + "…", error }, "[club-utils] getClubPublicExtras unexpected error");
     return {
       address: null,
       postal_code: null,
@@ -135,11 +136,11 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError) {
-    console.error("[club-utils] getUserClubInfo: auth error", userError);
+    logger.error({ error: userError }, "[club-utils] getUserClubInfo: auth error");
   }
 
   if (!user) {
-    console.warn("[club-utils] getUserClubInfo: no authenticated user");
+    logger.warn({}, "[club-utils] getUserClubInfo: no authenticated user");
     return { clubId: null, clubSlug: null, userId: null, clubName: null, clubLogoUrl: null };
   }
 
@@ -158,12 +159,7 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
     clubId = profile.club_id ?? null;
     clubSlug = profile.club_slug ?? null;
   } else if (profileError) {
-    console.warn("[club-utils] getUserClubInfo: profile fetch error (ignored)", {
-      message: profileError.message,
-      details: profileError.details,
-      hint: profileError.hint,
-      code: profileError.code,
-    });
+    logger.warn({ userId: user.id.substring(0, 8) + "…", error: { message: profileError.message, details: profileError.details, hint: profileError.hint, code: profileError.code } }, "[club-utils] getUserClubInfo: profile fetch error (ignored)");
   }
 
   const metadata = user.user_metadata || {};
@@ -192,9 +188,9 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
 
       if (clubAdminData?.club_id) {
         clubId = clubAdminData.club_id;
-        console.log("[club-utils] Found club via club_admins", { userId: user.id, clubId });
+        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, "[club-utils] Found club via club_admins");
       } else if (clubAdminError) {
-        console.warn("[club-utils] getUserClubInfo: club_admins lookup failed", clubAdminError.message ?? clubAdminError);
+        logger.warn({ userId: user.id.substring(0, 8) + "…", error: clubAdminError.message ?? clubAdminError }, "[club-utils] getUserClubInfo: club_admins lookup failed");
       }
     }
 
@@ -212,7 +208,7 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
         clubLogoUrl = clubLogoUrl ?? (adminProfile.clubs as any).logo_url ?? null;
       }
     } else if (adminError) {
-      console.warn("[club-utils] getUserClubInfo: admin profile lookup failed", adminError.message ?? adminError);
+      logger.warn({ userId: user.id.substring(0, 8) + "…", error: adminError.message ?? adminError }, "[club-utils] getUserClubInfo: admin profile lookup failed");
     }
 
     if ((!clubName || !clubLogoUrl) && (clubId || clubSlug)) {
@@ -239,13 +235,7 @@ export async function getUserClubInfo(): Promise<ClubInfo> {
   // Convertir le logo en URL publique (gère tous les cas: URL déjà publique ou chemin de stockage)
   const finalClubLogoUrl = getClubLogoPublicUrl(clubLogoUrl);
 
-  console.log("[club-utils] getUserClubInfo", {
-    userId: user.id,
-    clubId,
-    clubSlug,
-    clubName,
-    logoUrlConverted: finalClubLogoUrl !== clubLogoUrl,
-  });
+  logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId?.substring(0, 8) + "…" || null, clubSlug, clubName, logoUrlConverted: finalClubLogoUrl !== clubLogoUrl }, "[club-utils] getUserClubInfo");
 
   return {
     clubId: clubId ?? null,
@@ -264,7 +254,7 @@ export async function getUserClubId(): Promise<string | null> {
 export async function getClubDashboardData(clubId: string | null, clubSlug?: string | null): Promise<{ members: ClubMember[]; leaderboard: ClubLeaderboardRow[] }> {
   if (!clubId || !supabaseAdmin) {
     if (!supabaseAdmin) {
-      console.warn("[getClubDashboardData] Supabase admin client not configured");
+      logger.warn({}, "[getClubDashboardData] Supabase admin client not configured");
     }
     return { members: [], leaderboard: [] };
   }
@@ -278,7 +268,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
       .maybeSingle();
 
     if (clubError) {
-      console.warn("[getClubDashboardData] Unable to fetch club slug", clubError);
+      logger.warn({ clubId: clubId.substring(0, 8) + "…", error: clubError }, "[getClubDashboardData] Unable to fetch club slug");
     }
 
     if (clubRecord?.slug) {
@@ -293,7 +283,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     .eq("club_id", clubId);
 
   if (adminsError) {
-    console.warn("[getClubDashboardData] Failed to load club admins", adminsError);
+    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: adminsError }, "[getClubDashboardData] Failed to load club admins");
   }
 
   const adminUserIds = new Set<string>(
@@ -311,7 +301,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     .order("display_name", { ascending: true });
 
   if (profilesError) {
-    console.error("[getClubDashboardData] Failed to load club members", profilesError);
+    logger.error({ clubId: clubId.substring(0, 8) + "…", error: profilesError }, "[getClubDashboardData] Failed to load club members");
     return { members: [], leaderboard: [] };
   }
 
@@ -513,7 +503,7 @@ export type ClubMatchHistory = {
 export async function getClubMatchHistory(clubId: string | null, clubSlug?: string | null): Promise<ClubMatchHistory> {
   if (!clubId || !supabaseAdmin) {
     if (!supabaseAdmin) {
-      console.warn("[getClubMatchHistory] Supabase admin client not configured");
+      logger.warn({}, "[getClubMatchHistory] Supabase admin client not configured");
     }
     return { matches: [], totalMatches: 0, wins: 0, losses: 0, internalMatches: 0 };
   }
@@ -527,7 +517,7 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
       .maybeSingle();
 
     if (clubError) {
-      console.warn("[getClubMatchHistory] Unable to fetch club slug", clubError);
+      logger.warn({ clubId: clubId.substring(0, 8) + "…", error: clubError }, "[getClubMatchHistory] Unable to fetch club slug");
     }
 
     if (clubRecord?.slug) {
@@ -545,7 +535,7 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
     );
 
   if (profilesError) {
-    console.error("[getClubMatchHistory] Failed to load club members", profilesError);
+    logger.error({ clubId: clubId.substring(0, 8) + "…", error: profilesError }, "[getClubMatchHistory] Failed to load club members");
     return { matches: [], totalMatches: 0, wins: 0, losses: 0, internalMatches: 0 };
   }
 
@@ -564,7 +554,7 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
     .in("user_id", memberIds);
 
   if (participantsError) {
-    console.warn("[getClubMatchHistory] Failed to load club participants", participantsError);
+    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: participantsError }, "[getClubMatchHistory] Failed to load club participants");
   }
 
   const clubParticipants = (clubParticipantsRaw || []).filter((p) => p.user_id && memberIdSet.has(p.user_id));
@@ -581,7 +571,7 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
     .order("created_at", { ascending: false });
 
   if (matchesError) {
-    console.error("[getClubMatchHistory] Failed to load matches", matchesError);
+    logger.error({ clubId: clubId.substring(0, 8) + "…", error: matchesError }, "[getClubMatchHistory] Failed to load matches");
     return { matches: [], totalMatches: 0, wins: 0, losses: 0, internalMatches: 0 };
   }
 
@@ -610,7 +600,7 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
     .in("match_id", matchIds);
 
   if (participantsDetailsError) {
-    console.error("[getClubMatchHistory] Failed to load all participants", participantsDetailsError);
+    logger.error({ clubId: clubId.substring(0, 8) + "…", matchIdsCount: matchIds.length, error: participantsDetailsError }, "[getClubMatchHistory] Failed to load all participants");
     return { matches: [], totalMatches: 0, wins: 0, losses: 0, internalMatches: 0 };
   }
 
@@ -626,7 +616,7 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
       .in("id", userIds);
 
     if (participantProfilesError) {
-      console.error("[getClubMatchHistory] Failed to load participant profiles", participantProfilesError);
+      logger.error({ clubId: clubId.substring(0, 8) + "…", userIdsCount: userIds.length, error: participantProfilesError }, "[getClubMatchHistory] Failed to load participant profiles");
     } else {
       (participantProfiles || []).forEach((profile) => {
         profilesMap.set(profile.id, {
@@ -646,7 +636,7 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
       .in("id", guestIds);
 
     if (guestProfilesError) {
-      console.error("[getClubMatchHistory] Failed to load guest players", guestProfilesError);
+      logger.error({ clubId: clubId.substring(0, 8) + "…", guestIdsCount: guestIds.length, error: guestProfilesError }, "[getClubMatchHistory] Failed to load guest players");
     } else {
       (guestProfiles || []).forEach((guest) => {
         guestsMap.set(guest.id, {

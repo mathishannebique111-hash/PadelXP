@@ -3,6 +3,7 @@
  */
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -31,15 +32,9 @@ function logSupabaseError(context: string, error: any) {
     const errorString = String(error);
     const errorJson = JSON.stringify(error);
     
-    console.error(`[boost-points-utils] ${context} (no standard properties):`, {
-      type: errorType,
-      keys: allKeys,
-      stringRepresentation: errorString !== "[object Object]" ? errorString : undefined,
-      jsonRepresentation: errorJson !== "{}" ? errorJson : undefined,
-      rawError: allKeys.length > 0 ? error : undefined
-    });
+    logger.error({ type: errorType, keys: allKeys, stringRepresentation: errorString !== "[object Object]" ? errorString : undefined, jsonRepresentation: errorJson !== "{}" ? errorJson : undefined, rawError: allKeys.length > 0 ? error : undefined }, `[boost-points-utils] ${context} (no standard properties)`);
   } else {
-    console.error(`[boost-points-utils] ${context}:`, errorDetails);
+    logger.error({ ...errorDetails }, `[boost-points-utils] ${context}`);
   }
 }
 
@@ -59,13 +54,12 @@ export async function getBoostedPointsForMatches(
 
   try {
     // Récupérer les utilisations de boost pour ce joueur et ces matchs
-    console.log(`[boost-points-utils] Fetching boost uses for user ${userId.substring(0, 8)} and ${matchIds.length} matches`);
-    console.log(`[boost-points-utils] Match IDs to check:`, matchIds.slice(0, 5).map(id => id.substring(0, 8)), matchIds.length > 5 ? '...' : '');
+    logger.info({ userId: userId.substring(0, 8) + "…", matchIdsCount: matchIds.length, matchIdsPreview: matchIds.slice(0, 5).map(id => id.substring(0, 8)) }, `[boost-points-utils] Fetching boost uses for user`);
     
     // IMPORTANT: Utiliser .in() avec la liste complète des match IDs
     // Si la liste est vide, retourner une map vide
     if (matchIds.length === 0) {
-      console.log(`[boost-points-utils] No match IDs provided, returning empty map`);
+      logger.info({ userId: userId.substring(0, 8) + "…" }, `[boost-points-utils] No match IDs provided, returning empty map`);
       return boostedPointsMap;
     }
     
@@ -77,13 +71,9 @@ export async function getBoostedPointsForMatches(
       .order("applied_at", { ascending: false });
     
     if (allBoostsError) {
-      console.error(`[boost-points-utils] Error fetching all boosts for user:`, allBoostsError);
+      logger.error({ userId: userId.substring(0, 8) + "…", error: allBoostsError }, `[boost-points-utils] Error fetching all boosts for user`);
     } else {
-      console.log(`[boost-points-utils] All boosts for user ${userId.substring(0, 8)}:`, allUserBoosts?.length || 0, allUserBoosts?.slice(0, 5).map(b => ({
-        match_id: b.match_id?.substring(0, 8),
-        points_after: b.points_after_boost,
-        applied_at: b.applied_at
-      })) || []);
+      logger.info({ userId: userId.substring(0, 8) + "…", boostsCount: allUserBoosts?.length || 0, boostsPreview: allUserBoosts?.slice(0, 5).map(b => ({ match_id: b.match_id?.substring(0, 8), points_after: b.points_after_boost, applied_at: b.applied_at })) || [] }, `[boost-points-utils] All boosts for user`);
     }
     
     // Récupérer les boosts pour les matchs spécifiques
@@ -95,18 +85,18 @@ export async function getBoostedPointsForMatches(
       .eq("user_id", userId);
     
     if (allBoostsError2) {
-      console.error(`[boost-points-utils] Error fetching all user boosts:`, allBoostsError2);
+      logger.error({ userId: userId.substring(0, 8) + "…", error: allBoostsError2 }, `[boost-points-utils] Error fetching all user boosts`);
     }
     
     // Filtrer côté client pour ne garder que les boosts des matchs recherchés
     const matchIdsSet = new Set(matchIds);
     const boostUses = (allUserBoostsForMatches || []).filter((b: any) => matchIdsSet.has(b.match_id));
     
-    console.log(`[boost-points-utils] Filtered ${boostUses.length} boosts from ${allUserBoostsForMatches?.length || 0} total user boosts for ${matchIds.length} match IDs`);
+    logger.info({ userId: userId.substring(0, 8) + "…", filteredCount: boostUses.length, totalCount: allUserBoostsForMatches?.length || 0, matchIdsCount: matchIds.length }, `[boost-points-utils] Filtered boosts`);
     
     // Si aucun boost trouvé, essayer une requête .in() classique en fallback
     if (boostUses.length === 0 && matchIds.length > 0) {
-      console.log(`[boost-points-utils] ⚠️ No boosts found with filtered query, trying .in() query as fallback...`);
+      logger.info({ userId: userId.substring(0, 8) + "…" }, `[boost-points-utils] ⚠️ No boosts found with filtered query, trying .in() query as fallback...`);
       const { data: boostUsesIn, error } = await supabaseAdmin
         .from("player_boost_uses")
         .select("match_id, points_after_boost, points_before_boost, applied_at")
@@ -114,12 +104,12 @@ export async function getBoostedPointsForMatches(
         .in("match_id", matchIds);
       
       if (error) {
-        console.error(`[boost-points-utils] Error with .in() query:`, error);
+        logger.error({ userId: userId.substring(0, 8) + "…", error }, `[boost-points-utils] Error with .in() query`);
       } else if (boostUsesIn && boostUsesIn.length > 0) {
-        console.log(`[boost-points-utils] ✅ Found ${boostUsesIn.length} boosts with .in() query`);
+        logger.info({ userId: userId.substring(0, 8) + "…", foundCount: boostUsesIn.length }, `[boost-points-utils] ✅ Found boosts with .in() query`);
         boostUses.push(...boostUsesIn);
       } else {
-        console.log(`[boost-points-utils] ❌ No boosts found with .in() query either`);
+        logger.info({ userId: userId.substring(0, 8) + "…" }, `[boost-points-utils] ❌ No boosts found with .in() query either`);
         
         // Dernière tentative : vérifier individuellement chaque match
         for (const matchId of matchIds.slice(0, 3)) {
@@ -131,12 +121,12 @@ export async function getBoostedPointsForMatches(
             .maybeSingle();
           
           if (singleError) {
-            console.error(`[boost-points-utils] Error checking match ${matchId.substring(0, 8)}:`, singleError);
+            logger.error({ userId: userId.substring(0, 8) + "…", matchId: matchId.substring(0, 8) + "…", error: singleError }, `[boost-points-utils] Error checking match`);
           } else if (singleBoost) {
-            console.log(`[boost-points-utils] ✅ Found boost for match ${matchId.substring(0, 8)} with individual query:`, singleBoost);
+            logger.info({ userId: userId.substring(0, 8) + "…", matchId: matchId.substring(0, 8) + "…", boost: singleBoost }, `[boost-points-utils] ✅ Found boost for match with individual query`);
             boostUses.push(singleBoost);
           } else {
-            console.log(`[boost-points-utils] ❌ No boost found for match ${matchId.substring(0, 8)} with individual query`);
+            logger.info({ userId: userId.substring(0, 8) + "…", matchId: matchId.substring(0, 8) + "…" }, `[boost-points-utils] ❌ No boost found for match with individual query`);
           }
         }
       }
@@ -150,12 +140,7 @@ export async function getBoostedPointsForMatches(
     }
 
     if (boostUses && boostUses.length > 0) {
-      console.log(`[boost-points-utils] ✅ Found ${boostUses.length} boost uses:`, boostUses.map(b => ({
-        match_id: b.match_id?.substring(0, 8),
-        points_before: b.points_before_boost,
-        points_after: b.points_after_boost,
-        applied_at: b.applied_at
-      })));
+      logger.info({ userId: userId.substring(0, 8) + "…", foundCount: boostUses.length, boosts: boostUses.map(b => ({ match_id: b.match_id?.substring(0, 8), points_before: b.points_before_boost, points_after: b.points_after_boost, applied_at: b.applied_at })) }, `[boost-points-utils] ✅ Found boost uses`);
       boostUses.forEach((boostUse: any) => {
         // S'assurer que points_after_boost est bien un nombre
         const pointsAfterBoost = typeof boostUse.points_after_boost === 'number' 
@@ -164,14 +149,13 @@ export async function getBoostedPointsForMatches(
         
         if (pointsAfterBoost !== null && !isNaN(pointsAfterBoost)) {
           boostedPointsMap.set(boostUse.match_id, pointsAfterBoost);
-          console.log(`[boost-points-utils] ✅ Added boost for match ${boostUse.match_id?.substring(0, 8)}: ${pointsAfterBoost} points`);
+          logger.info({ userId: userId.substring(0, 8) + "…", matchId: boostUse.match_id?.substring(0, 8) + "…", pointsAfterBoost }, `[boost-points-utils] ✅ Added boost for match`);
         } else {
-          console.warn(`[boost-points-utils] ⚠️ Invalid points_after_boost for match ${boostUse.match_id?.substring(0, 8)}:`, boostUse.points_after_boost);
+          logger.warn({ userId: userId.substring(0, 8) + "…", matchId: boostUse.match_id?.substring(0, 8) + "…", points_after_boost: boostUse.points_after_boost }, `[boost-points-utils] ⚠️ Invalid points_after_boost for match`);
         }
       });
     } else {
-      console.log(`[boost-points-utils] ❌ No boost uses found for user ${userId.substring(0, 8)} and ${matchIds.length} matches`);
-      console.log(`[boost-points-utils] Match IDs searched:`, matchIds.map(id => id.substring(0, 8)));
+      logger.info({ userId: userId.substring(0, 8) + "…", matchIdsCount: matchIds.length, matchIdsSearched: matchIds.map(id => id.substring(0, 8)) }, `[boost-points-utils] ❌ No boost uses found for user`);
       
       // Vérifier si le boost existe mais avec un match_id différent
       if (allUserBoosts && allUserBoosts.length > 0) {
@@ -182,15 +166,15 @@ export async function getBoostedPointsForMatches(
         const extraMatches = allMatchIds.filter(id => !searchedMatchIds.has(id));
         
         if (missingMatches.length > 0) {
-          console.warn(`[boost-points-utils] ⚠️ Match IDs in search but not in boosts:`, missingMatches.map(id => id.substring(0, 8)));
+          logger.warn({ userId: userId.substring(0, 8) + "…", missingMatches: missingMatches.map(id => id.substring(0, 8)) }, `[boost-points-utils] ⚠️ Match IDs in search but not in boosts`);
         }
         if (extraMatches.length > 0) {
-          console.warn(`[boost-points-utils] ⚠️ Match IDs in boosts but not in search:`, extraMatches.map(id => id.substring(0, 8)));
+          logger.warn({ userId: userId.substring(0, 8) + "…", extraMatches: extraMatches.map(id => id.substring(0, 8)) }, `[boost-points-utils] ⚠️ Match IDs in boosts but not in search`);
         }
       }
     }
   } catch (error) {
-    console.error("[boost-points-utils] Exception fetching boost uses:", error);
+    logger.error({ userId: userId.substring(0, 8) + "…", error }, "[boost-points-utils] Exception fetching boost uses");
   }
 
   return boostedPointsMap;
@@ -227,7 +211,7 @@ export async function calculatePointsWithBoosts(
   let basePoints = winsNum * 10 + lossesNum * 3;
 
   // Récupérer les points boostés pour les matchs gagnés
-  console.log(`[boost-points-utils] calculatePointsWithBoosts: userId=${userId.substring(0, 8)}, wins=${winsNum}, losses=${lossesNum}, winMatches=${winMatches.size}`);
+  logger.info({ userId: userId.substring(0, 8) + "…", wins: winsNum, losses: lossesNum, winMatchesCount: winMatches.size }, `[boost-points-utils] calculatePointsWithBoosts`);
   const boostedPointsMap = await getBoostedPointsForMatches(
     Array.from(winMatches),
     userId
@@ -237,11 +221,7 @@ export async function calculatePointsWithBoosts(
   // Pour chaque match boosté, on remplace les 10 points de base par les points boostés (13)
   // Donc bonus = (points_after_boost - 10) pour chaque match boosté
   let boostBonus = 0;
-  console.log(`[boost-points-utils] Calculating boost bonus from ${boostedPointsMap.size} boosted matches out of ${winMatches.size} total win matches`);
-  
-  if (boostedPointsMap.size > 0) {
-    console.log(`[boost-points-utils] Boosted match IDs:`, Array.from(boostedPointsMap.keys()).map(id => id.substring(0, 8)));
-  }
+  logger.info({ userId: userId.substring(0, 8) + "…", boostedMatchesCount: boostedPointsMap.size, totalWinMatches: winMatches.size, boostedMatchIds: boostedPointsMap.size > 0 ? Array.from(boostedPointsMap.keys()).map(id => id.substring(0, 8)) : [] }, `[boost-points-utils] Calculating boost bonus`);
   
   boostedPointsMap.forEach((pointsAfterBoost, matchId) => {
     // Points normaux pour une victoire : 10
@@ -249,21 +229,21 @@ export async function calculatePointsWithBoosts(
     // Bonus = points_after_boost - 10
     const matchBoostBonus = typeof pointsAfterBoost === 'number' ? (pointsAfterBoost - 10) : 0;
     if (matchBoostBonus > 0) {
-      console.log(`[boost-points-utils] ✅ Match ${matchId.substring(0, 8)}: ${pointsAfterBoost} points (bonus: +${matchBoostBonus})`);
+      logger.info({ userId: userId.substring(0, 8) + "…", matchId: matchId.substring(0, 8) + "…", pointsAfterBoost, matchBoostBonus }, `[boost-points-utils] ✅ Match boost applied`);
       boostBonus += matchBoostBonus;
     } else {
-      console.warn(`[boost-points-utils] ⚠️ Match ${matchId.substring(0, 8)}: Invalid boost bonus (pointsAfterBoost=${pointsAfterBoost})`);
+      logger.warn({ userId: userId.substring(0, 8) + "…", matchId: matchId.substring(0, 8) + "…", pointsAfterBoost }, `[boost-points-utils] ⚠️ Match: Invalid boost bonus`);
     }
   });
 
   // Points totaux = points de base + bonus de boosts + bonus + challengePoints
   const totalPoints = basePoints + boostBonus + bonusNum + challengePointsNum;
-  console.log(`[boost-points-utils] calculatePointsWithBoosts for ${userId.substring(0, 8)}: basePoints=${basePoints} (${winsNum} wins * 10 + ${lossesNum} losses * 3), boostBonus=${boostBonus} (from ${boostedPointsMap.size} boosted matches), bonus=${bonusNum}, challengePoints=${challengePointsNum}, total=${totalPoints}`);
+  logger.info({ userId: userId.substring(0, 8) + "…", basePoints, winsNum, lossesNum, boostBonus, boostedMatchesCount: boostedPointsMap.size, bonus: bonusNum, challengePoints: challengePointsNum, total: totalPoints }, `[boost-points-utils] calculatePointsWithBoosts result`);
   
   if (boostBonus > 0) {
-    console.log(`[boost-points-utils] ✅ BOOST APPLIED: User ${userId.substring(0, 8)} has ${boostBonus} bonus points from boosts`);
+    logger.info({ userId: userId.substring(0, 8) + "…", boostBonus }, `[boost-points-utils] ✅ BOOST APPLIED`);
   } else if (winMatches.size > 0) {
-    console.log(`[boost-points-utils] ⚠️ NO BOOST: User ${userId.substring(0, 8)} has ${winMatches.size} win matches but no boosts found`);
+    logger.info({ userId: userId.substring(0, 8) + "…", winMatchesCount: winMatches.size }, `[boost-points-utils] ⚠️ NO BOOST`);
   }
   
   return totalPoints;
@@ -328,7 +308,7 @@ export async function calculatePointsForMultiplePlayers(
 
     // Récupérer TOUS les boosts pour les joueurs concernés (sans filtrer par match_id)
     // Cela garantit que même les boosts sur des matchs récemment créés sont trouvés
-    console.log(`[boost-points-utils] Fetching boosts for ${userIds.length} users and ${allMatchIds.size} match IDs`);
+    logger.info({ usersCount: userIds.length, matchIdsCount: allMatchIds.size }, `[boost-points-utils] Fetching boosts for multiple users`);
     const { data: allBoostUses, error } = await supabaseAdmin
       .from("player_boost_uses")
       .select("user_id, match_id, points_after_boost, applied_at")
@@ -356,22 +336,17 @@ export async function calculatePointsForMultiplePlayers(
     const filteredBoostUses = allBoostUses?.filter(boostUse => {
       const hasMatch = allMatchIds.has(boostUse.match_id);
       if (!hasMatch && boostUse.match_id) {
-        console.log(`[boost-points-utils] ⚠️ Boost found for match ${boostUse.match_id?.substring(0, 8)} but match not in allMatchIds (${allMatchIds.size} matches)`);
+        logger.info({ matchId: boostUse.match_id?.substring(0, 8) + "…", allMatchIdsCount: allMatchIds.size }, `[boost-points-utils] ⚠️ Boost found for match but match not in allMatchIds`);
       }
       return hasMatch;
     }) || [];
 
-    console.log(`[boost-points-utils] Found ${allBoostUses?.length || 0} total boosts, ${filteredBoostUses.length} for win matches`);
+    logger.info({ totalBoosts: allBoostUses?.length || 0, filteredBoosts: filteredBoostUses.length }, `[boost-points-utils] Found boosts for win matches`);
 
     // Organiser les boosts par utilisateur et par match (seulement ceux sur des matchs gagnés)
     const boostsByUser = new Map<string, Map<string, number>>();
     if (filteredBoostUses && filteredBoostUses.length > 0) {
-      console.log(`[boost-points-utils] Found ${filteredBoostUses.length} boost uses in database for win matches:`, filteredBoostUses.map(b => ({
-        user_id: b.user_id?.substring(0, 8),
-        match_id: b.match_id?.substring(0, 8),
-        points_after_boost: b.points_after_boost,
-        applied_at: b.applied_at
-      })));
+      logger.info({ foundCount: filteredBoostUses.length, boosts: filteredBoostUses.map(b => ({ user_id: b.user_id?.substring(0, 8), match_id: b.match_id?.substring(0, 8), points_after_boost: b.points_after_boost, applied_at: b.applied_at })) }, `[boost-points-utils] Found boost uses in database for win matches`);
       filteredBoostUses.forEach((boostUse: any) => {
         if (!boostsByUser.has(boostUse.user_id)) {
           boostsByUser.set(boostUse.user_id, new Map());
@@ -384,21 +359,11 @@ export async function calculatePointsForMultiplePlayers(
         if (pointsAfterBoost !== null && !isNaN(pointsAfterBoost)) {
           boostsByUser.get(boostUse.user_id)!.set(boostUse.match_id, pointsAfterBoost);
         } else {
-          console.warn(`[boost-points-utils] Invalid points_after_boost in filteredBoostUses:`, boostUse);
+          logger.warn({ boostUse }, `[boost-points-utils] Invalid points_after_boost in filteredBoostUses`);
         }
       });
     } else {
-      console.log(`[boost-points-utils] No boost uses found in database for ${userIds.length} users and ${allMatchIds.size} win matches`);
-      if (allBoostUses && allBoostUses.length > 0) {
-        console.log(`[boost-points-utils] ⚠️ Found ${allBoostUses.length} boosts total, but none match win matches:`, allBoostUses.map(b => ({
-          user_id: b.user_id?.substring(0, 8),
-          match_id: b.match_id?.substring(0, 8),
-          points_after_boost: b.points_after_boost,
-          applied_at: b.applied_at
-        })));
-        console.log(`[boost-points-utils] Win match IDs (${allMatchIds.size}):`, Array.from(allMatchIds).slice(0, 10).map(id => id.substring(0, 8)), allMatchIds.size > 10 ? '...' : '');
-        console.log(`[boost-points-utils] Boost match IDs (${allBoostUses.length}):`, allBoostUses.slice(0, 10).map(b => b.match_id?.substring(0, 8)), allBoostUses.length > 10 ? '...' : '');
-      }
+      logger.info({ usersCount: userIds.length, matchIdsCount: allMatchIds.size, totalBoosts: allBoostUses?.length || 0, winMatchIdsPreview: allMatchIds.size > 0 ? Array.from(allMatchIds).slice(0, 10).map(id => id.substring(0, 8)) : [], boostMatchIdsPreview: allBoostUses && allBoostUses.length > 0 ? allBoostUses.slice(0, 10).map(b => b.match_id?.substring(0, 8)) : [] }, `[boost-points-utils] No boost uses found in database`);
     }
 
     // Calculer les points pour chaque joueur
@@ -415,7 +380,7 @@ export async function calculatePointsForMultiplePlayers(
       let boostBonus = 0;
       const userBoosts = boostsByUser.get(userId);
       if (userBoosts && userBoosts.size > 0) {
-        console.log(`[boost-points-utils] Found ${userBoosts.size} boosts for user ${userId.substring(0, 8)}`);
+        logger.info({ userId: userId.substring(0, 8) + "…", boostsCount: userBoosts.size }, `[boost-points-utils] Found boosts for user`);
         winMatches.forEach(matchId => {
           const pointsAfterBoost = userBoosts.get(matchId);
           if (pointsAfterBoost && typeof pointsAfterBoost === 'number') {
@@ -424,24 +389,23 @@ export async function calculatePointsForMultiplePlayers(
             // Bonus = points_after_boost - 10
             const matchBoost = pointsAfterBoost - 10;
             boostBonus += matchBoost;
-            console.log(`[boost-points-utils] Boost found for user ${userId.substring(0, 8)} match ${matchId.substring(0, 8)}: ${pointsAfterBoost} points (bonus: +${matchBoost})`);
+            logger.info({ userId: userId.substring(0, 8) + "…", matchId: matchId.substring(0, 8) + "…", pointsAfterBoost, matchBoost }, `[boost-points-utils] Boost found for user match`);
           } else {
-            console.log(`[boost-points-utils] No boost found for user ${userId.substring(0, 8)} match ${matchId.substring(0, 8)} (pointsAfterBoost: ${pointsAfterBoost})`);
+            logger.info({ userId: userId.substring(0, 8) + "…", matchId: matchId.substring(0, 8) + "…", pointsAfterBoost }, `[boost-points-utils] No boost found for user match`);
           }
         });
       } else {
         if (winMatches.size > 0) {
-          console.log(`[boost-points-utils] No boosts found for user ${userId.substring(0, 8)} with ${winMatches.size} win matches`);
-          console.log(`[boost-points-utils] Win match IDs for this user:`, Array.from(winMatches).map(id => id.substring(0, 8)));
+          logger.info({ userId: userId.substring(0, 8) + "…", winMatchesCount: winMatches.size, winMatchIds: Array.from(winMatches).map(id => id.substring(0, 8)) }, `[boost-points-utils] No boosts found for user`);
         }
       }
 
       const totalPoints = basePoints + boostBonus + bonusNum + challengePointsNum;
-      console.log(`[boost-points-utils] Total points for user ${userId.substring(0, 8)}: basePoints=${basePoints}, boostBonus=${boostBonus}, bonus=${bonusNum}, challengePoints=${challengePointsNum}, total=${totalPoints}`);
+      logger.info({ userId: userId.substring(0, 8) + "…", basePoints, boostBonus, bonus: bonusNum, challengePoints: challengePointsNum, total: totalPoints }, `[boost-points-utils] Total points for user`);
       results.set(userId, totalPoints);
     });
   } catch (error) {
-    console.error("[boost-points-utils] Exception calculating points:", error);
+    logger.error({ error }, "[boost-points-utils] Exception calculating points");
     // Fallback : calculer sans boost
     playersData.forEach(({ userId, wins, losses, ties = 0, bonus, challengePoints }) => {
       // S'assurer que tous les paramètres sont des nombres

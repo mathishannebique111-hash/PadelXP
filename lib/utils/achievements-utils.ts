@@ -4,6 +4,7 @@
  */
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -25,7 +26,7 @@ export async function hasUserSeenAchievement(
   achievementKey: string
 ): Promise<boolean> {
   if (!supabaseAdmin) {
-    console.error('[achievements] Supabase admin client not available');
+    logger.error({}, '[achievements] Supabase admin client not available');
     return false;
   }
 
@@ -38,7 +39,7 @@ export async function hasUserSeenAchievement(
     .maybeSingle();
 
   if (error) {
-    console.error('[achievements] Error checking achievement:', error);
+    logger.error({ userId: userId.substring(0, 8) + "…", achievementType, achievementKey, error }, '[achievements] Error checking achievement');
     return false;
   }
 
@@ -53,7 +54,7 @@ export async function getUserSeenAchievements(
   achievementType?: AchievementType
 ): Promise<string[]> {
   if (!supabaseAdmin) {
-    console.error('[achievements] Supabase admin client not available');
+    logger.error({}, '[achievements] Supabase admin client not available');
     return [];
   }
 
@@ -69,7 +70,7 @@ export async function getUserSeenAchievements(
   const { data, error } = await query;
 
   if (error) {
-    console.error('[achievements] Error fetching achievements:', error);
+    logger.error({ userId: userId.substring(0, 8) + "…", achievementType, error }, '[achievements] Error fetching achievements');
     return [];
   }
 
@@ -102,7 +103,7 @@ export async function markAchievementSeen(
     });
 
   if (error) {
-    console.error('[achievements] Error marking achievement as seen:', error);
+    logger.error({ userId: userId.substring(0, 8) + "…", achievementType, achievementKey, error }, '[achievements] Error marking achievement as seen');
     return { success: false, error: error.message };
   }
 
@@ -139,7 +140,7 @@ export async function markAchievementsSeen(
     });
 
   if (error) {
-    console.error('[achievements] Error marking achievements as seen:', error);
+    logger.error({ userId: userId.substring(0, 8) + "…", achievementsCount: achievements.length, error }, '[achievements] Error marking achievements as seen');
     return { success: false, error: error.message };
   }
 

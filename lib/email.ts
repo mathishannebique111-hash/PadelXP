@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { logger } from "@/lib/logger";
 
 let resend: Resend | null = null;
 
@@ -14,7 +15,7 @@ export async function sendMatchConfirmationEmail(
   confirmationUrl: string
 ): Promise<void> {
   if (!resend || !process.env.RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY not configured. Email not sent. In production, configure Resend to send confirmation emails.");
+    logger.warn({ to: to.substring(0, 5) + "…" }, "RESEND_API_KEY not configured. Email not sent. In production, configure Resend to send confirmation emails.");
     return;
   }
 
@@ -62,7 +63,7 @@ export async function sendMatchConfirmationEmail(
       `,
     });
   } catch (error) {
-    console.error("Error sending confirmation email:", error);
+    logger.error({ to: to.substring(0, 5) + "…", error }, "Error sending confirmation email");
     throw error;
   }
 }
@@ -74,7 +75,7 @@ export async function sendAdminInvitationEmail(
   invitationUrl: string
 ): Promise<void> {
   if (!resend || !process.env.RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY not configured. Email not sent. In production, configure Resend to send invitation emails.");
+    logger.warn({ to: to.substring(0, 5) + "…", clubName }, "RESEND_API_KEY not configured. Email not sent. In production, configure Resend to send invitation emails.");
     return;
   }
 
@@ -131,7 +132,7 @@ export async function sendAdminInvitationEmail(
       `,
     });
   } catch (error) {
-    console.error("Error sending admin invitation email:", error);
+    logger.error({ to: to.substring(0, 5) + "…", clubName, error }, "Error sending admin invitation email");
     throw error;
   }
 }
@@ -150,7 +151,7 @@ export async function sendModeratedReviewEmail(
   conversationId?: string // Optionnel: ID de la conversation si elle existe déjà
 ): Promise<void> {
   if (!resend || !process.env.RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY not configured. Email not sent for moderated review.");
+    logger.warn({ reviewId: reviewId.substring(0, 8) + "…", playerEmail: playerEmail.substring(0, 5) + "…" }, "RESEND_API_KEY not configured. Email not sent for moderated review.");
     return;
   }
 
@@ -258,9 +259,9 @@ export async function sendModeratedReviewEmail(
     // Envoyer à l'inbound email pour être capturé par le webhook et transféré à Gmail
     await resend.emails.send(emailOptions);
     
-    console.log(`✅ Moderated review email sent via inbound email for review ${reviewId} (player: ${playerEmail})`);
+    logger.info({ reviewId: reviewId.substring(0, 8) + "…", playerEmail: playerEmail.substring(0, 5) + "…", conversationId: conversationId?.substring(0, 8) + "…" || null }, "✅ Moderated review email sent via inbound email");
   } catch (error) {
-    console.error("❌ Error sending moderated review email:", error);
+    logger.error({ reviewId: reviewId.substring(0, 8) + "…", playerEmail: playerEmail.substring(0, 5) + "…", error }, "❌ Error sending moderated review email");
     // Ne pas throw l'erreur pour ne pas bloquer la soumission de l'avis
   }
 }

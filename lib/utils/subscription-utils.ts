@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types_db";
+import { logger } from "@/lib/logger";
 
 /**
  * Types d'états d'abonnement
@@ -166,20 +167,20 @@ export async function getClubSubscription(clubId: string): Promise<Subscription 
         errorDetails.fullError = String(error);
       }
       
-      console.error("[getClubSubscription] Error details:", errorDetails);
+      logger.error({ clubId: clubId.substring(0, 8) + "…", errorDetails }, "[getClubSubscription] Error details");
       
       // Si c'est juste qu'aucun abonnement n'existe, ce n'est pas une vraie erreur
       if (error?.code === 'PGRST116' || error?.message?.includes('No rows found') || error?.code === '42P01') {
         // PGRST116 = No rows returned, 42P01 = relation does not exist (table doesn't exist)
         if (error?.code === '42P01') {
-          console.error("[getClubSubscription] Table 'subscriptions' does not exist. Please run the migration SQL.");
+          logger.error({ clubId: clubId.substring(0, 8) + "…" }, "[getClubSubscription] Table 'subscriptions' does not exist. Please run the migration SQL.");
         }
         return null;
       }
       
       // Si la table n'existe pas (code 42P01)
       if (error?.code === '42P01') {
-        console.error("[getClubSubscription] Table 'subscriptions' does not exist. Please run the migration SQL in Supabase.");
+        logger.error({ clubId: clubId.substring(0, 8) + "…" }, "[getClubSubscription] Table 'subscriptions' does not exist. Please run the migration SQL in Supabase.");
       }
       
       return null;
@@ -188,11 +189,7 @@ export async function getClubSubscription(clubId: string): Promise<Subscription 
     return data as Subscription | null;
   } catch (err) {
     // Gérer les erreurs inattendues
-    console.error("[getClubSubscription] Unexpected error:", {
-      error: err instanceof Error ? err.message : String(err),
-      clubId,
-      stack: err instanceof Error ? err.stack : undefined,
-    });
+    logger.error({ clubId: clubId.substring(0, 8) + "…", error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }, "[getClubSubscription] Unexpected error");
     return null;
   }
 }
@@ -217,18 +214,11 @@ export async function initializeSubscription(clubId: string): Promise<Subscripti
 
     if (error) {
       // Logger l'erreur complète, y compris les propriétés non-énumérables
-      console.error("[initializeSubscription] Error details:", {
-        message: error?.message || 'No message',
-        details: error?.details || 'No details',
-        hint: error?.hint || 'No hint',
-        code: error?.code || 'No code',
-        error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
-        clubId,
-      });
+      logger.error({ clubId: clubId.substring(0, 8) + "…", message: error?.message || 'No message', details: error?.details || 'No details', hint: error?.hint || 'No hint', code: error?.code || 'No code', error: JSON.stringify(error, Object.getOwnPropertyNames(error)) }, "[initializeSubscription] Error details");
       
       // Si la fonction RPC n'existe pas, c'est probablement que la migration n'a pas été exécutée
       if (error?.code === '42883' || error?.message?.includes('function') || error?.message?.includes('does not exist')) {
-        console.error("[initializeSubscription] Function 'initialize_club_subscription' may not exist. Please run the migration SQL.");
+        logger.error({ clubId: clubId.substring(0, 8) + "…" }, "[initializeSubscription] Function 'initialize_club_subscription' may not exist. Please run the migration SQL.");
       }
       
       return null;
@@ -238,12 +228,7 @@ export async function initializeSubscription(clubId: string): Promise<Subscripti
     return await getClubSubscription(clubId);
   } catch (err) {
     // Gérer les erreurs inattendues
-    console.error("[initializeSubscription] Unexpected error:", {
-      error: err instanceof Error ? err.message : String(err),
-      clubId,
-      stack: err instanceof Error ? err.stack : undefined,
-      fullError: JSON.stringify(err, Object.getOwnPropertyNames(err)),
-    });
+    logger.error({ clubId: clubId.substring(0, 8) + "…", error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined, fullError: JSON.stringify(err, Object.getOwnPropertyNames(err)) }, "[initializeSubscription] Unexpected error");
     return null;
   }
 }
@@ -276,7 +261,7 @@ export async function updatePaymentMethod(
     .eq("id", subscriptionId);
 
   if (error) {
-    console.error("[updatePaymentMethod] Error:", error);
+    logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", error }, "[updatePaymentMethod] Error");
     return false;
   }
 
@@ -297,7 +282,7 @@ export async function setAutoActivateConsent(subscriptionId: string, consent: bo
     .eq("id", subscriptionId);
 
   if (error) {
-    console.error("[setAutoActivateConsent] Error:", error);
+    logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", error }, "[setAutoActivateConsent] Error");
     return false;
   }
 
@@ -337,7 +322,7 @@ export async function scheduleActivation(
     .eq("id", subscriptionId);
 
   if (error) {
-    console.error("[scheduleActivation] Error:", error);
+    logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", error }, "[scheduleActivation] Error");
     return false;
   }
 
@@ -387,7 +372,7 @@ export async function activateSubscription(
     .eq("id", subscriptionId);
 
   if (error) {
-    console.error("[activateSubscription] Error:", error);
+    logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", error }, "[activateSubscription] Error");
     return false;
   }
 
@@ -427,7 +412,7 @@ export async function cancelSubscription(
       .eq("id", subscriptionId);
 
     if (error) {
-      console.error("[cancelSubscription] Error:", error);
+      logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", error }, "[cancelSubscription] Error");
       return false;
     }
 
@@ -470,7 +455,7 @@ export async function transitionSubscriptionStatus(
   });
 
   if (error) {
-    console.error("[transitionSubscriptionStatus] Error:", error);
+    logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", newStatus, triggeredBy, error }, "[transitionSubscriptionStatus] Error");
     return false;
   }
 
@@ -490,7 +475,7 @@ export async function getClubSubscriptionById(subscriptionId: string): Promise<S
     .maybeSingle();
 
   if (error) {
-    console.error("[getClubSubscriptionById] Error:", error);
+    logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", error }, "[getClubSubscriptionById] Error");
     return null;
   }
 
@@ -518,7 +503,7 @@ export async function logSubscriptionEvent(
   });
 
   if (error) {
-    console.error("[logSubscriptionEvent] Error:", error);
+    logger.error({ subscriptionId: subscriptionId.substring(0, 8) + "…", eventType, error }, "[logSubscriptionEvent] Error");
     return false;
   }
 
