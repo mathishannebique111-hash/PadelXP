@@ -4,6 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   images: { domains: [] },
   outputFileTracingRoot: path.join(process.cwd()),
+  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium"],
   eslint: {
     ignoreDuringBuilds: true,
   },

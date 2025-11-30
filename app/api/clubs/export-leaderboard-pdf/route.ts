@@ -764,7 +764,6 @@ export async function GET() {
     
     if (isVercel) {
       // Sur Vercel, utiliser @sparticuz/chromium
-      chromium.setGraphicsMode(false);
       logger.info({}, '[export-leaderboard-pdf] Using @sparticuz/chromium for Vercel');
       browser = await puppeteer.launch({
         args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
