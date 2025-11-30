@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { logger } from "@/lib/logger";
 
 const generalRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
@@ -90,7 +91,7 @@ export async function middleware(req: NextRequest) {
   } catch (error) {
     // En cas d'erreur de rate limiting (Redis indisponible par exemple), on continue
     // pour ne pas bloquer l'application, mais on log l'erreur
-    console.error("[Middleware] Rate limiting error:", error);
+    logger.error({ error: error instanceof Error ? error.message : String(error), context: 'rate-limiting', pathname: pathnameForRateLimit }, "[Middleware] Rate limiting error:");
     // Continuer avec le reste de la logique
   }
 
@@ -292,11 +293,7 @@ export async function middleware(req: NextRequest) {
   // Cela permet d'éviter les déconnexions inattendues dues à des problèmes réseau temporaires
   if (session && !user && userError) {
     // Erreur temporaire probable : loguer mais ne pas déconnecter
-    console.warn("[Middleware] Session exists but getUser() failed (temporary error?):", {
-      errorCode: userError?.code,
-      errorMessage: userError?.message,
-      path: normalizedPathname,
-    });
+    logger.warn({ errorCode: userError?.code, errorMessage: userError?.message, path: normalizedPathname?.substring(0, 30) + "…" || 'unknown' }, "[Middleware] Session exists but getUser() failed (temporary error?):");
     // Laisser passer la requête si une session existe et mettre à jour last_activity
     // pour éviter que l'inactivité soit comptée pendant une erreur temporaire
     if (isProtected) {

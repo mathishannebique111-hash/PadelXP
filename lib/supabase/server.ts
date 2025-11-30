@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/types_db";
+import { logger } from "@/lib/logger";
 
 export async function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -23,7 +24,7 @@ export async function createClient() {
           // Cookies can only be modified in Server Actions or Route Handlers
           // This is expected behavior in Next.js 15
           if (process.env.NODE_ENV === 'development') {
-            console.warn('[Supabase] Cannot modify cookie in this context:', name);
+            logger.warn({ cookieName: name?.substring(0, 20) + "…" || 'unknown' }, '[Supabase] Cannot modify cookie in this context:');
           }
         }
       },
@@ -35,7 +36,7 @@ export async function createClient() {
           // Cookies can only be modified in Server Actions or Route Handlers
           // This is expected behavior in Next.js 15
           if (process.env.NODE_ENV === 'development') {
-            console.warn('[Supabase] Cannot remove cookie in this context:', name);
+            logger.warn({ cookieName: name?.substring(0, 20) + "…" || 'unknown' }, '[Supabase] Cannot remove cookie in this context:');
           }
         }
       },
