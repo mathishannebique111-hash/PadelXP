@@ -2,5 +2,10 @@
   "crons": [{
     "path": "/api/cron/trial-check",
     "schedule": "0 6 * * *"
-  }]
+  }],
+  "functions": {
+    "app/api/clubs/export-leaderboard-pdf/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo, getClubDashboardData, getClubMatchHistory } from "@/lib/utils/club-utils";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import path from "path";
+import { logger } from "@/lib/logger";
 
 function tierForPoints(points: number): "Bronze" | "Argent" | "Or" | "Diamant" | "Champion" {
   if (points >= 500) return "Champion";
@@ -757,10 +759,28 @@ export async function GET() {
 </html>
     `;
 
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    // Configuration pour Vercel (serverless) vs local
+    const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    
+    if (isVercel) {
+      // Sur Vercel, utiliser @sparticuz/chromium
+      chromium.setGraphicsMode(false);
+      logger.info({}, '[export-leaderboard-pdf] Using @sparticuz/chromium for Vercel');
+      browser = await puppeteer.launch({
+        args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+    } else {
+      // En local, utiliser le Chrome/Chromium installé
+      logger.info({}, '[export-leaderboard-pdf] Using local Chrome/Chromium');
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+    }
+    
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
     
@@ -793,7 +813,7 @@ export async function GET() {
     if (browser) {
       await browser.close();
     }
-    console.error('[export-leaderboard-pdf] Unexpected error:', error);
+    logger.error({ error: error?.message || String(error), stack: error?.stack }, '[export-leaderboard-pdf] Unexpected error');
     return NextResponse.json(
       { error: error?.message || 'Erreur serveur inattendue' },
       { status: 500 }
