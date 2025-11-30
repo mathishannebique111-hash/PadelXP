@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { Buffer } from "buffer";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ async function ensureLogoBucket() {
   } catch (error: any) {
     const message = String(error?.message || "");
     if (!message.toLowerCase().includes("already exists")) {
-      console.warn("[clubs/logo] createBucket warning:", message);
+      logger.warn({ message }, "[clubs/logo] createBucket warning");
     }
   }
 }
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
       });
 
     if (uploadError) {
-      console.error("[clubs/logo] upload error", uploadError);
+      logger.error({ clubId: clubId?.substring(0, 8) + "…" || null, clubSlug, error: uploadError }, "[clubs/logo] upload error");
       return NextResponse.json({ error: "Échec de l'import du logo" }, { status: 500 });
     }
 
@@ -135,17 +136,7 @@ export async function POST(req: Request) {
       .select("logo_url")
       .maybeSingle();
     
-    console.log("[clubs/logo] Update clubs table result:", {
-      clubId: clubRecord.id,
-      logoUrl,
-      updateData,
-      error: updateError ? {
-        message: updateError.message,
-        code: updateError.code,
-        details: updateError.details,
-        hint: updateError.hint,
-      } : null,
-    });
+    logger.info({ clubId: clubRecord.id.substring(0, 8) + "…", logoUrl, updateData: updateData ? { logo_url: updateData.logo_url } : null, error: updateError ? { message: updateError.message, code: updateError.code, details: updateError.details, hint: updateError.hint } : null }, "[clubs/logo] Update clubs table result");
     
     if (updateError) {
       const message = updateError.message || "";
@@ -153,19 +144,14 @@ export async function POST(req: Request) {
       
       // Si la colonne n'existe pas (erreur 42703 ou message contenant "column")
       if (code === "42703" || /column.*does not exist/i.test(message) || /logo_url/i.test(message)) {
-        console.error("[clubs/logo] ⚠️ Colonne logo_url n'existe pas dans clubs. Erreur:", {
-          message,
-          code,
-          details: updateError.details,
-          hint: updateError.hint,
-        });
-        console.warn("[clubs/logo] Le logo sera stocké uniquement dans les métadonnées utilisateur jusqu'à ce que la migration soit exécutée");
+        logger.error({ clubId: clubRecord.id.substring(0, 8) + "…", message, code, details: updateError.details, hint: updateError.hint }, "[clubs/logo] ⚠️ Colonne logo_url n'existe pas dans clubs. Erreur");
+        logger.warn({ clubId: clubRecord.id.substring(0, 8) + "…" }, "[clubs/logo] Le logo sera stocké uniquement dans les métadonnées utilisateur jusqu'à ce que la migration soit exécutée");
       } else {
-        console.error("[clubs/logo] update club error", updateError);
+        logger.error({ clubId: clubRecord.id.substring(0, 8) + "…", error: updateError }, "[clubs/logo] update club error");
         return NextResponse.json({ error: "Mise à jour du club impossible" }, { status: 500 });
       }
     } else if (updateData) {
-      console.log("[clubs/logo] ✅ Logo URL mis à jour dans clubs table:", updateData.logo_url);
+      logger.info({ clubId: clubRecord.id.substring(0, 8) + "…", logoUrl: updateData.logo_url }, "[clubs/logo] ✅ Logo URL mis à jour dans clubs table");
     }
 
     const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
@@ -176,13 +162,13 @@ export async function POST(req: Request) {
     });
 
     if (metadataError) {
-      console.error("[clubs/logo] update metadata error", metadataError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubRecord.id.substring(0, 8) + "…", error: metadataError }, "[clubs/logo] update metadata error");
       return NextResponse.json({ error: "Logo enregistré mais impossible de synchroniser le compte" }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, logo_url: logoUrl });
   } catch (error: any) {
-    console.error("[clubs/logo] unexpected error", error);
+    logger.error({ error: error?.message || String(error) }, "[clubs/logo] unexpected error");
     return NextResponse.json({ error: error?.message || "Erreur serveur" }, { status: 500 });
   }
 }

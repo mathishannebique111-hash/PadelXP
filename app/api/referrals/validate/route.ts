@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { validateReferralCode } from "@/lib/utils/referral-utils";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 const ReferralValidateSchema = z.object({
   code: z.string().trim().min(1, "Code requis").max(50, "Code trop long"),
 });
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(validation);
   } catch (error) {
-    console.error("[POST /api/referrals/validate] Error:", error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, "[POST /api/referrals/validate] Error");
     return NextResponse.json(
       { valid: false, error: "Erreur serveur" },
       { status: 500 }

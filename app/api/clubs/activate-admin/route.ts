@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -59,7 +60,7 @@ export async function POST() {
       .eq("id", adminRow.id);
 
     if (updateError) {
-      console.error("[activate-admin] update error", updateError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", adminId: adminRow.id.substring(0, 8) + "…", error: updateError }, "[activate-admin] update error");
       return NextResponse.json(
         { error: "Impossible d'activer l'invitation" },
         { status: 500 }
@@ -94,7 +95,7 @@ export async function POST() {
           },
         });
       } catch (metadataError) {
-        console.warn("[activate-admin] metadata update warning", metadataError);
+        logger.warn({ userId: user.id.substring(0, 8) + "…", clubId: adminRow.club_id?.substring(0, 8) + "…" || null, error: metadataError }, "[activate-admin] metadata update warning");
       }
     }
 
@@ -108,7 +109,7 @@ export async function POST() {
       },
     });
   } catch (error: any) {
-    console.error("[activate-admin] Unexpected error:", error);
+    logger.error({ error: error?.message || String(error) }, "[activate-admin] Unexpected error");
     return NextResponse.json(
       { error: error?.message || "Erreur serveur inattendue" },
       { status: 500 }

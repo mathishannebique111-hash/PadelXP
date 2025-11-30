@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,7 +15,7 @@ export async function GET() {
     // Si disponible, utiliser le service role key pour contourner RLS
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (serviceRoleKey && process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log("[API /clubs/list] Using service role key to bypass RLS");
+      logger.info({}, "[API /clubs/list] Using service role key to bypass RLS");
       supabase = createServiceClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         serviceRoleKey,
@@ -22,7 +23,7 @@ export async function GET() {
       ) as any;
     }
     
-    console.log("[API /clubs/list] Fetching clubs...");
+    logger.info({}, "[API /clubs/list] Fetching clubs...");
     
     // Essayer d'abord avec toutes les colonnes
     let { data, error } = await supabase
@@ -30,27 +31,22 @@ export async function GET() {
       .select("*")
       .order("name", { ascending: true });
 
-    console.log("[API /clubs/list] First attempt:", { dataCount: data?.length, error });
+    logger.info({ dataCount: data?.length, error: error ? { message: error.message, code: error.code } : null }, "[API /clubs/list] First attempt");
 
     // Si erreur ou pas de données, essayer avec des colonnes spécifiques
     if (error || !data || data.length === 0) {
-      console.log("[API /clubs/list] Trying with specific columns...");
+      logger.info({}, "[API /clubs/list] Trying with specific columns...");
       const result = await supabase
         .from("clubs")
         .select("id, name, slug, code_invitation, status, club_name, club_slug")
         .order("name", { ascending: true });
       data = result.data;
       error = result.error;
-      console.log("[API /clubs/list] Second attempt:", { dataCount: data?.length, error });
+      logger.info({ dataCount: data?.length, error: error ? { message: error.message, code: error.code } : null }, "[API /clubs/list] Second attempt");
     }
 
     if (error) {
-      console.error("[API /clubs/list] Error:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
+      logger.error({ message: error.message, details: error.details, hint: error.hint, code: error.code }, "[API /clubs/list] Error");
       return NextResponse.json({ 
         error: error.message || "Failed to fetch clubs",
         details: error.details,
@@ -59,11 +55,11 @@ export async function GET() {
     }
 
     if (!data || data.length === 0) {
-      console.warn("[API /clubs/list] No clubs found in database");
+      logger.warn({}, "[API /clubs/list] No clubs found in database");
       return NextResponse.json({ clubs: [] });
     }
 
-    console.log("[API /clubs/list] Raw data received:", data.length, "clubs");
+    logger.info({ clubsCount: data.length }, "[API /clubs/list] Raw data received");
 
     // Filtrer les clubs supprimés/désactivés
     const activeClubs = (data || []).filter((club: any) => {
@@ -85,10 +81,10 @@ export async function GET() {
       };
     }).filter((club: any) => club.name && club.slug && club.name !== "Club sans nom");
 
-    console.log("[API /clubs/list] Normalized clubs:", normalizedClubs.length, normalizedClubs.map(c => c.name));
+    logger.info({ normalizedCount: normalizedClubs.length, clubNames: normalizedClubs.map(c => c.name) }, "[API /clubs/list] Normalized clubs");
 
     if (normalizedClubs.length === 0) {
-      console.warn("[API /clubs/list] No valid clubs after normalization");
+      logger.warn({}, "[API /clubs/list] No valid clubs after normalization");
       return NextResponse.json({ clubs: [] });
     }
 
@@ -98,7 +94,7 @@ export async function GET() {
       },
     });
   } catch (e: any) {
-    console.error("[API /clubs/list] Exception:", e);
+    logger.error({ error: e?.message || String(e) }, "[API /clubs/list] Exception");
     return NextResponse.json({ 
       error: "Server error",
       message: e?.message || "Unknown error"

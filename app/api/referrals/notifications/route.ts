@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPendingReferralNotifications, hasUserUsedReferralCode } from "@/lib/utils/referral-utils";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export async function GET() {
 
     return NextResponse.json({ hasNotification: false });
   } catch (error) {
-    console.error("[GET /api/referrals/notifications] Error:", error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, "[GET /api/referrals/notifications] Error");
     return NextResponse.json(
       { hasNotification: false },
       { status: 200 }

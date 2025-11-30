@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { creditPlayerBoosts } from '@/lib/utils/boost-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error('[verify-boost-session] Unauthorized:', authError);
+      logger.error({ error: authError }, '[verify-boost-session] Unauthorized');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     try {
       session = await stripe.checkout.sessions.retrieve(sessionId);
     } catch (stripeError) {
-      console.error('[verify-boost-session] Error retrieving session:', stripeError);
+      logger.error({ sessionId: sessionId.substring(0, 8) + "…", error: stripeError }, '[verify-boost-session] Error retrieving session');
       return NextResponse.json(
         { error: 'Session Stripe introuvable' },
         { status: 404 }
@@ -100,12 +101,12 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (checkError) {
-      console.error('[verify-boost-session] Error checking existing credits:', checkError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", sessionId: sessionId.substring(0, 8) + "…", error: checkError }, '[verify-boost-session] Error checking existing credits');
     }
 
     // Si des crédits existent déjà pour cette session, les boosts ont déjà été crédités
     if (existingCredits && existingCredits.length > 0) {
-      console.log('[verify-boost-session] Boosts already credited for this session:', sessionId);
+      logger.info({ userId: user.id.substring(0, 8) + "…", sessionId: sessionId.substring(0, 8) + "…", quantity }, '[verify-boost-session] Boosts already credited for this session');
       return NextResponse.json({
         success: true,
         alreadyCredited: true,
@@ -122,24 +123,20 @@ export async function POST(req: NextRequest) {
     );
 
     if (result.success) {
-      console.log('[verify-boost-session] Boosts credited successfully:', {
-        userId: user.id,
-        quantity: result.credited,
-        sessionId,
-      });
+      logger.info({ userId: user.id.substring(0, 8) + "…", quantity: result.credited, sessionId: sessionId.substring(0, 8) + "…" }, '[verify-boost-session] Boosts credited successfully');
       return NextResponse.json({
         success: true,
         credited: result.credited,
       });
     } else {
-      console.error('[verify-boost-session] Failed to credit boosts:', result.error);
+      logger.error({ userId: user.id.substring(0, 8) + "…", sessionId: sessionId.substring(0, 8) + "…", error: result.error }, '[verify-boost-session] Failed to credit boosts');
       return NextResponse.json(
         { error: result.error || 'Erreur lors du crédit des boosts' },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('[verify-boost-session] Error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, '[verify-boost-session] Error');
     return NextResponse.json(
       { error: 'Erreur serveur lors de la vérification de la session' },
       { status: 500 }

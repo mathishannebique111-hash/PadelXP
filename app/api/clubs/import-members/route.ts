@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -193,7 +194,7 @@ export async function POST(request: Request) {
       .in("email_normalized", uniqueEmails);
 
     if (existingError) {
-      console.error("[import-members] existing lookup error:", existingError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", error: existingError }, "[import-members] existing lookup error");
       return NextResponse.json(
         { error: "Erreur lors de la vérification des membres existants." },
         { status: 500 }
@@ -207,7 +208,7 @@ export async function POST(request: Request) {
       .upsert(validRecords, { onConflict: "club_id,email_normalized" });
 
     if (upsertError) {
-      console.error("[import-members] upsert error:", upsertError);
+      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", recordsCount: validRecords.length, error: upsertError }, "[import-members] upsert error");
       return NextResponse.json(
         { error: "Erreur lors de l'enregistrement des membres importés." },
         { status: 500 }
@@ -230,7 +231,7 @@ export async function POST(request: Request) {
       errors: errorMessages,
     });
   } catch (error: any) {
-    console.error("[import-members] Unexpected error:", error);
+    logger.error({ error: error?.message || String(error) }, "[import-members] Unexpected error");
     return NextResponse.json(
       { error: error?.message || "Erreur serveur inattendue" },
       { status: 500 }

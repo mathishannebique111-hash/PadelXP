@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
 import { getClubSubscription } from '@/lib/utils/subscription-utils';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     // Vérifier que la clé Stripe est configurée
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY is not configured');
+      logger.error({}, 'STRIPE_SECRET_KEY is not configured');
       return NextResponse.json(
         { error: 'Stripe configuration missing' },
         { status: 500 }
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
-    console.error('[customer-portal] Error:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, '[customer-portal] Error');
     
     return NextResponse.json(
       { error: 'Failed to create customer portal session' },

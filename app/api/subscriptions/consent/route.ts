@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getClubSubscription, setAutoActivateConsent } from "@/lib/utils/subscription-utils";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 /**
  * Met à jour le consentement d'activation automatique à la fin de l'essai
@@ -82,7 +83,7 @@ export async function POST(req: Request) {
         : "Activation automatique désactivée",
     });
   } catch (error: any) {
-    console.error("[update consent] Error:", error);
+    logger.error({ error: error?.message || String(error) }, "[update consent] Error");
     return NextResponse.json(
       { error: error?.message || "Erreur serveur" },
       { status: 500 }

@@ -8,6 +8,7 @@ import {
 } from "@/lib/utils/subscription-utils";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // === AJOUT : Schéma Zod ===
 const activateBodySchema = z.object({
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
         : "Activation programmée à la fin de l'essai",
     });
   } catch (error: any) {
-    console.error("[activate subscription] Error:", error);
+    logger.error({ error: error?.message || String(error) }, "[activate subscription] Error");
     return NextResponse.json(
       { error: error?.message || "Erreur serveur" },
       { status: 500 }

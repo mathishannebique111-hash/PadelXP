@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { capitalizeFullName } from '@/lib/utils/name-utils';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (guestError || !guest) {
-      console.error('❌ Error inserting guest player:', guestError);
+      logger.error({ clubId: clubId.substring(0, 8) + "…", playerName, error: guestError }, '❌ Error inserting guest player');
       return NextResponse.json({ error: 'Unable to create guest player' }, { status: 500 });
     }
 
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('❌ Unexpected error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, '❌ Unexpected error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

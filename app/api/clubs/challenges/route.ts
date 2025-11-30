@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -72,7 +73,7 @@ async function ensureBucket() {
   } catch (error: any) {
     const message = String(error?.message || "");
     if (!message.toLowerCase().includes("exists")) {
-      console.warn("[api/clubs/challenges] ensureBucket warning", message);
+      logger.warn({ message }, "[api/clubs/challenges] ensureBucket warning");
     }
   }
 }
@@ -85,7 +86,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   const { data, error } = await storage.download(path);
   if (error || !data) {
     if (error && error.message && !error.message.toLowerCase().includes("not found")) {
-      console.warn("[api/clubs/challenges] loadChallenges error", error);
+      logger.warn({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] loadChallenges error");
     }
     return [];
   }
@@ -96,7 +97,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
       return parsed as ChallengeRecord[];
     }
   } catch (err) {
-    console.warn("[api/clubs/challenges] invalid JSON", err);
+    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: err }, "[api/clubs/challenges] invalid JSON");
   }
   return [];
 }
@@ -157,7 +158,7 @@ async function resolveClubId(userId: string) {
     }
   }
   
-  console.warn("[api/clubs/challenges] resolveClubId: aucun club trouvé pour userId", userId);
+  logger.warn({ userId: userId.substring(0, 8) + "…" }, "[api/clubs/challenges] resolveClubId: aucun club trouvé pour userId");
   return null;
 }
 
@@ -204,9 +205,9 @@ export async function GET(request: Request) {
   if (filteredRecords.length < records.length) {
     try {
       await saveChallenges(clubId, filteredRecords);
-      console.log(`[api/clubs/challenges] Supprimé ${records.length - filteredRecords.length} challenge(s) terminé(s) depuis plus d'un jour`);
+      logger.info({ clubId: clubId.substring(0, 8) + "…", removedCount: records.length - filteredRecords.length }, `[api/clubs/challenges] Supprimé challenge(s) terminé(s) depuis plus d'un jour`);
     } catch (error) {
-      console.error("[api/clubs/challenges] Erreur lors de la sauvegarde après nettoyage", error);
+      logger.error({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] Erreur lors de la sauvegarde après nettoyage");
     }
   }
   
@@ -286,7 +287,7 @@ export async function POST(request: Request) {
   try {
     await saveChallenges(clubId, updated);
   } catch (error) {
-    console.error("[api/clubs/challenges] save error", error);
+    logger.error({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] save error");
     return NextResponse.json({ error: "Impossible d'enregistrer le challenge" }, { status: 500 });
   }
 

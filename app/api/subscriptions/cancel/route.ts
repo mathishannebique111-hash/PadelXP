@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getClubSubscription, cancelSubscription } from "@/lib/utils/subscription-utils";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // === AJOUT : Schéma Zod ===
 const cancelSubscriptionSchema = z.object({
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
         : "Abonnement annulé immédiatement",
     });
   } catch (error: any) {
-    console.error("[cancel subscription] Error:", error);
+    logger.error({ error: error?.message || String(error) }, "[cancel subscription] Error");
     return NextResponse.json(
       { error: error?.message || "Erreur serveur" },
       { status: 500 }
