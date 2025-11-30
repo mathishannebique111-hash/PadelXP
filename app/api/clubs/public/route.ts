@@ -2,15 +2,16 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL) {
-  console.warn("[api/clubs/public] NEXT_PUBLIC_SUPABASE_URL indisponible");
+  logger.warn({}, "[api/clubs/public] NEXT_PUBLIC_SUPABASE_URL indisponible");
 }
 if (!SERVICE_ROLE_KEY) {
-  console.warn("[api/clubs/public] SUPABASE_SERVICE_ROLE_KEY indisponible");
+  logger.warn({}, "[api/clubs/public] SUPABASE_SERVICE_ROLE_KEY indisponible");
 }
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
@@ -59,30 +60,30 @@ async function ensureBucket() {
   } catch (error: any) {
     const message = String(error?.message || "");
     if (!message.toLowerCase().includes("exists")) {
-      console.warn("[api/clubs/public] ensureBucket warning", message);
+      logger.warn({ error: message }, "[api/clubs/public] ensureBucket warning");
     }
   }
 }
 
 async function loadExtras(clubId: string): Promise<ExtrasPayload | null> {
   if (!supabaseAdmin) {
-    console.warn("[api/clubs/public] loadExtras: supabaseAdmin not available");
+    logger.warn({ clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] loadExtras: supabaseAdmin not available");
     return null;
   }
   const storage = supabaseAdmin.storage.from(BUCKET_NAME);
   const { data, error } = await storage.download(`${clubId}.json`);
   if (error || !data) {
     if (error && !error.message?.toLowerCase().includes("not found")) {
-      console.warn("[api/clubs/public] loadExtras error", error);
+      logger.warn({ error: error, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] loadExtras error");
     } else {
-      console.log("[api/clubs/public] loadExtras: No existing file found for clubId:", clubId);
+      logger.info({ clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] loadExtras: No existing file found for clubId:");
     }
     return null;
   }
   try {
     const text = await data.text();
     const parsed = JSON.parse(text);
-    console.log("[api/clubs/public] loadExtras: Loaded data for clubId:", clubId, "opening_hours:", JSON.stringify(parsed?.opening_hours, null, 2));
+    logger.info({ clubId: clubId.substring(0, 8) + "…", openingHoursKeys: parsed?.opening_hours ? Object.keys(parsed.opening_hours).length : 0 }, "[api/clubs/public] loadExtras: Loaded data for clubId: opening_hours:");
     return {
       address: typeof parsed?.address === "string" ? parsed.address : null,
       postal_code: typeof parsed?.postal_code === "string" ? parsed.postal_code : null,
@@ -95,27 +96,27 @@ async function loadExtras(clubId: string): Promise<ExtrasPayload | null> {
       opening_hours: parsed?.opening_hours && typeof parsed.opening_hours === "object" && !Array.isArray(parsed.opening_hours) ? parsed.opening_hours as OpeningHoursPayload : null,
     };
   } catch (err) {
-    console.error("[api/clubs/public] loadExtras parse error", err);
+    logger.error({ error: err instanceof Error ? err.message : String(err), clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] loadExtras parse error");
     return null;
   }
 }
 
 async function saveExtras(clubId: string, extras: ExtrasPayload) {
   if (!supabaseAdmin) {
-    console.warn("[api/clubs/public] saveExtras: supabaseAdmin not available");
+    logger.warn({ clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] saveExtras: supabaseAdmin not available");
     return;
   }
   try {
     await ensureBucket();
     const storage = supabaseAdmin.storage.from(BUCKET_NAME);
     const payload = JSON.stringify(extras, null, 2);
-    console.log("[api/clubs/public] saveExtras: Uploading payload for clubId:", clubId, "Size:", payload.length);
+    logger.info({ clubId: clubId.substring(0, 8) + "…", payloadSize: payload.length }, "[api/clubs/public] saveExtras: Uploading payload for clubId: Size:");
     const { data, error } = await storage.upload(`${clubId}.json`, payload, { upsert: true, contentType: "application/json" });
     if (error) {
-      console.error("[api/clubs/public] saveExtras: Upload error:", error);
+      logger.error({ error: error, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] saveExtras: Upload error:");
       throw error;
     }
-    console.log("[api/clubs/public] saveExtras: Upload successful:", data);
+    logger.info({ clubId: clubId.substring(0, 8) + "…", path: data?.path }, "[api/clubs/public] saveExtras: Upload successful:");
     
     // Attendre un peu pour s'assurer que le fichier est bien écrit
     // et vérifier que le fichier a bien été sauvegardé
@@ -124,13 +125,13 @@ async function saveExtras(clubId: string, extras: ExtrasPayload) {
     // Vérifier que le fichier a bien été sauvegardé en le relisant
     const { data: verifyData, error: verifyError } = await storage.download(`${clubId}.json`);
     if (verifyError || !verifyData) {
-      console.error("[api/clubs/public] saveExtras: Verification failed after upload:", verifyError);
+      logger.error({ error: verifyError, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] saveExtras: Verification failed after upload:");
       // Ne pas throw ici car le upload a réussi, c'est juste une vérification
     } else {
-      console.log("[api/clubs/public] saveExtras: Verification successful, file exists");
+      logger.info({ clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] saveExtras: Verification successful, file exists");
     }
   } catch (err) {
-    console.error("[api/clubs/public] saveExtras: Exception:", err);
+    logger.error({ error: err instanceof Error ? err.message : String(err), clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] saveExtras: Exception:");
     throw err;
   }
 }
@@ -146,7 +147,7 @@ async function resolveClubId(userId: string, metadata?: Record<string, any>): Pr
     .eq("id", userId)
     .maybeSingle();
   if (error) {
-    console.error("[api/clubs/public] resolveClubId error", error);
+    logger.error({ error: error, userId: userId.substring(0, 8) + "…" }, "[api/clubs/public] resolveClubId error");
   } else {
     clubId = data?.club_id ?? null;
     clubSlug = data?.club_slug ?? null;
@@ -157,11 +158,11 @@ async function resolveClubId(userId: string, metadata?: Record<string, any>): Pr
     try {
       const { data: userData, error: adminUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
       if (adminUserError) {
-        console.warn("[api/clubs/public] admin getUserById warning", adminUserError);
+        logger.warn({ error: adminUserError, userId: userId.substring(0, 8) + "…" }, "[api/clubs/public] admin getUserById warning");
       }
       userMetadata = (userData?.user?.user_metadata || {}) as Record<string, any>;
     } catch (adminError) {
-      console.warn("[api/clubs/public] admin getUserById exception", adminError);
+      logger.warn({ error: adminError instanceof Error ? adminError.message : String(adminError), userId: userId.substring(0, 8) + "…" }, "[api/clubs/public] admin getUserById exception");
     }
   }
 
@@ -181,7 +182,7 @@ async function resolveClubId(userId: string, metadata?: Record<string, any>): Pr
       .eq("slug", clubSlug)
       .maybeSingle();
     if (slugError) {
-      console.error("[api/clubs/public] resolveClubId slug error", slugError);
+      logger.error({ error: slugError, userId: userId.substring(0, 8) + "…", clubSlug: clubSlug?.substring(0, 8) + "…" }, "[api/clubs/public] resolveClubId slug error");
     } else {
       clubId = clubBySlug?.id ?? null;
     }
@@ -228,14 +229,14 @@ function buildExtras(payload: SanitisedPayload, body: any): ExtrasPayload {
     if (typeof body.opening_hours === "object" && !Array.isArray(body.opening_hours)) {
       // Accepter l'objet tel quel, même s'il a des valeurs null pour certains jours
       openingHours = body.opening_hours as OpeningHoursPayload;
-      console.log("[api/clubs/public] buildExtras - ACCEPTED opening_hours from body:", JSON.stringify(openingHours, null, 2));
-      console.log("[api/clubs/public] buildExtras - opening_hours has", Object.keys(openingHours).length, "keys");
+      logger.info({ openingHoursKeys: Object.keys(openingHours).length }, "[api/clubs/public] buildExtras - ACCEPTED opening_hours from body:");
+      logger.info({ openingHoursKeys: Object.keys(openingHours).length }, "[api/clubs/public] buildExtras - opening_hours has keys");
     } else {
-      console.error("[api/clubs/public] buildExtras - opening_hours is not a valid object (type:", typeof body.opening_hours, "isArray:", Array.isArray(body.opening_hours), "), setting to null");
+      logger.error({ type: typeof body.opening_hours, isArray: Array.isArray(body.opening_hours) }, "[api/clubs/public] buildExtras - opening_hours is not a valid object (type: isArray:), setting to null");
       openingHours = null;
     }
   } else {
-    console.log("[api/clubs/public] buildExtras - No opening_hours in body (undefined or null), setting to null");
+    logger.info({}, "[api/clubs/public] buildExtras - No opening_hours in body (undefined or null), setting to null");
     openingHours = null;
   }
   
@@ -352,44 +353,44 @@ export async function POST(request: Request) {
   let body: any;
   try {
     body = await request.json();
-    console.log("[api/clubs/public] POST request body keys:", Object.keys(body));
-    console.log("[api/clubs/public] POST request body opening_hours TYPE:", typeof body.opening_hours);
-    console.log("[api/clubs/public] POST request body opening_hours:", JSON.stringify(body.opening_hours, null, 2));
-    console.log("[api/clubs/public] POST request body opening_hours is array?", Array.isArray(body.opening_hours));
-    console.log("[api/clubs/public] POST request body opening_hours keys:", body.opening_hours ? Object.keys(body.opening_hours) : "null/undefined");
+    logger.info({ bodyKeys: Object.keys(body), clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] POST request body keys:");
+    logger.info({ openingHoursType: typeof body.opening_hours, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] POST request body opening_hours TYPE:");
+    logger.info({ openingHoursKeys: body.opening_hours ? Object.keys(body.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] POST request body opening_hours:");
+    logger.info({ isArray: Array.isArray(body.opening_hours), clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] POST request body opening_hours is array?");
+    logger.info({ openingHoursKeys: body.opening_hours ? Object.keys(body.opening_hours) : null, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] POST request body opening_hours keys:");
   } catch {
     return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   }
 
   // CRITICAL: Vérifier si opening_hours est présent dans le body AVANT de construire extrasPayload
   const hasOpeningHoursInBody = body.opening_hours !== undefined && body.opening_hours !== null;
-  console.log("[api/clubs/public] hasOpeningHoursInBody:", hasOpeningHoursInBody);
-  console.log("[api/clubs/public] body.opening_hours:", JSON.stringify(body.opening_hours, null, 2));
+  logger.info({ hasOpeningHoursInBody, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] hasOpeningHoursInBody:");
+  logger.info({ openingHoursKeys: body.opening_hours ? Object.keys(body.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] body.opening_hours:");
   
   const updatePayload = buildTablePayload(body);
   const extrasPayload = buildExtras(updatePayload, body);
   
-  console.log("[api/clubs/public] Built extrasPayload opening_hours:", JSON.stringify(extrasPayload.opening_hours, null, 2));
-  console.log("[api/clubs/public] extrasPayload.opening_hours is null?", extrasPayload.opening_hours === null);
-  console.log("[api/clubs/public] extrasPayload.opening_hours is undefined?", extrasPayload.opening_hours === undefined);
+  logger.info({ openingHoursKeys: extrasPayload.opening_hours ? Object.keys(extrasPayload.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Built extrasPayload opening_hours:");
+  logger.info({ isNull: extrasPayload.opening_hours === null, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] extrasPayload.opening_hours is null?");
+  logger.info({ isUndefined: extrasPayload.opening_hours === undefined, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] extrasPayload.opening_hours is undefined?");
   
   // CRITICAL: Si opening_hours était présent dans le body mais est devenu null dans extrasPayload,
   // il y a un problème dans buildExtras - on doit le corriger
   if (hasOpeningHoursInBody && extrasPayload.opening_hours === null) {
-    console.error("[api/clubs/public] ERROR: opening_hours was in body but became null in extrasPayload!");
-    console.error("[api/clubs/public] Body opening_hours type:", typeof body.opening_hours);
-    console.error("[api/clubs/public] Body opening_hours keys:", Object.keys(body.opening_hours || {}));
+    logger.error({ type: typeof body.opening_hours, openingHoursKeys: Object.keys(body.opening_hours || {}).length, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] ERROR: opening_hours was in body but became null in extrasPayload!");
+    logger.error({ type: typeof body.opening_hours, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Body opening_hours type:");
+    logger.error({ openingHoursKeys: Object.keys(body.opening_hours || {}), clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Body opening_hours keys:");
     // Forcer l'inclusion des horaires du body même si buildExtras les a rejetés
     if (typeof body.opening_hours === "object" && !Array.isArray(body.opening_hours)) {
       extrasPayload.opening_hours = body.opening_hours as OpeningHoursPayload;
-      console.log("[api/clubs/public] FORCED extrasPayload.opening_hours from body:", JSON.stringify(extrasPayload.opening_hours, null, 2));
+      logger.info({ openingHoursKeys: Object.keys(extrasPayload.opening_hours).length, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] FORCED extrasPayload.opening_hours from body:");
     }
   }
 
   const updateKeys = Object.keys(updatePayload);
 
   if (updateKeys.length > 0) {
-    console.log("[api/clubs/public] updating club", { clubId, payload: updatePayload });
+    logger.info({ clubId: clubId.substring(0, 8) + "…", updateKeys: updateKeys }, "[api/clubs/public] updating club");
 
     if (supabaseAdmin) {
       const { error } = await supabaseAdmin
@@ -398,7 +399,7 @@ export async function POST(request: Request) {
         .eq("id", clubId);
 
       if (error) {
-        console.error("[api/clubs/public] update error", error);
+        logger.error({ error: error, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] update error");
         return NextResponse.json({ error: error.message || "Impossible d'enregistrer les informations" }, { status: 500 });
       }
     } else {
@@ -408,25 +409,25 @@ export async function POST(request: Request) {
         .eq("id", clubId);
 
       if (error) {
-        console.error("[api/clubs/public] update error (cookie fallback)", error);
+        logger.error({ error: error, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] update error (cookie fallback)");
         return NextResponse.json({ error: error.message || "Impossible d'enregistrer les informations" }, { status: 500 });
       }
     }
   }
 
   if (supabaseAdmin) {
-    console.log("[api/clubs/public] Saving extras with opening_hours:", JSON.stringify(extrasPayload.opening_hours, null, 2));
+    logger.info({ openingHoursKeys: extrasPayload.opening_hours ? Object.keys(extrasPayload.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Saving extras with opening_hours:");
     try {
       await saveExtras(clubId, extrasPayload);
-      console.log("[api/clubs/public] Extras saved successfully");
+      logger.info({ clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Extras saved successfully");
     } catch (saveError: any) {
-      console.error("[api/clubs/public] Error saving extras:", saveError);
+      logger.error({ error: saveError?.message || String(saveError), clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Error saving extras:");
       return NextResponse.json({ 
         error: saveError?.message || "Impossible d'enregistrer les horaires d'ouverture" 
       }, { status: 500 });
     }
   } else {
-    console.warn("[api/clubs/public] supabaseAdmin not available, cannot save extras");
+    logger.warn({ clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] supabaseAdmin not available, cannot save extras");
   }
 
   let refreshedClub: any = null;
@@ -458,7 +459,7 @@ export async function POST(request: Request) {
   }
   
   const extrasRefreshed = supabaseAdmin ? await loadExtras(clubId) : null;
-  console.log("[api/clubs/public] Loaded extras after save - opening_hours:", JSON.stringify(extrasRefreshed?.opening_hours, null, 2));
+  logger.info({ openingHoursKeys: extrasRefreshed?.opening_hours ? Object.keys(extrasRefreshed.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Loaded extras after save - opening_hours:");
   
   // CRITICAL: Utiliser TOUJOURS les horaires qu'on vient de sauvegarder (extrasPayload.opening_hours)
   // car le rechargement peut ne pas être à jour immédiatement
@@ -482,10 +483,10 @@ export async function POST(request: Request) {
       : (extrasRefreshed?.opening_hours ?? extrasPayload.opening_hours ?? null),
   };
   
-  console.log("[api/clubs/public] hasOpeningHoursInRequest:", hasOpeningHoursInRequest);
-  console.log("[api/clubs/public] Final extras opening_hours:", JSON.stringify(finalExtras.opening_hours, null, 2));
-  console.log("[api/clubs/public] extrasPayload.opening_hours was:", JSON.stringify(extrasPayload.opening_hours, null, 2));
-  console.log("[api/clubs/public] extrasRefreshed?.opening_hours was:", JSON.stringify(extrasRefreshed?.opening_hours, null, 2));
+  logger.info({ hasOpeningHoursInRequest, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] hasOpeningHoursInRequest:");
+  logger.info({ openingHoursKeys: finalExtras.opening_hours ? Object.keys(finalExtras.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Final extras opening_hours:");
+  logger.info({ openingHoursKeys: extrasPayload.opening_hours ? Object.keys(extrasPayload.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] extrasPayload.opening_hours was:");
+  logger.info({ openingHoursKeys: extrasRefreshed?.opening_hours ? Object.keys(extrasRefreshed.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] extrasRefreshed?.opening_hours was:");
   const response = refreshedClub
     ? {
         ...refreshedClub,
@@ -520,7 +521,7 @@ export async function POST(request: Request) {
   revalidatePath("/dashboard");
   revalidatePath("/club");
 
-  console.log("[api/clubs/public] Returning response with opening_hours:", JSON.stringify(response?.opening_hours ?? finalExtras?.opening_hours, null, 2));
+  logger.info({ openingHoursKeys: (response?.opening_hours ?? finalExtras?.opening_hours) ? Object.keys(response?.opening_hours ?? finalExtras?.opening_hours ?? {}).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Returning response with opening_hours:");
 
   return NextResponse.json({ ok: true, club: response, extras: finalExtras });
 }
