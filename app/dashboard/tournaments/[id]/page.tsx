@@ -6,6 +6,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Tournament } from "@/lib/types/tournaments";
 import { TournamentDetailsForm } from "./TournamentDetailsForm";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import TournamentRegistrations from "./TournamentRegistrations";
 
 export default async function TournamentDetailsPage({
   params,
@@ -57,10 +59,23 @@ export default async function TournamentDetailsPage({
 
       <Card className="bg-black/40 border-white/10">
         <CardHeader>
-          <CardTitle className="text-white">Détails du tournoi</CardTitle>
+          <CardTitle className="text-white">Gestion du tournoi</CardTitle>
         </CardHeader>
         <CardContent>
-          <TournamentDetailsForm tournament={tournament as Tournament} />
+          <Tabs defaultValue="infos" className="w-full">
+            <TabsList className="mb-4 bg-black/60 border border-white/10">
+              <TabsTrigger value="infos">Infos</TabsTrigger>
+              <TabsTrigger value="inscriptions">Inscriptions</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="infos" className="mt-0">
+              <TournamentDetailsForm tournament={tournament as Tournament} />
+            </TabsContent>
+
+            <TabsContent value="inscriptions" className="mt-0">
+              <TournamentRegistrations tournamentId={tournament.id as string} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

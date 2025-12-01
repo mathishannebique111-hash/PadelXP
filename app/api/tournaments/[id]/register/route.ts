@@ -221,19 +221,52 @@ export async function POST(
     }
 
     // Création de l'entrée dans tournament_participants
-    const { data: participant, error: insertError } = await supabaseAdmin
+    // Tentative complète avec les colonnes optionnelles, puis fallback
+    // minimal si la base ne contient pas encore ces colonnes.
+    let participant = null;
+    let insertError: any = null;
+
+    const firstInsert = await supabaseAdmin
       .from("tournament_participants")
       .insert({
         tournament_id: id,
         player_id: profile.id,
-        // Colonnes supplémentaires à ajouter via migration si non présentes:
-        // player_license TEXT, partner_name TEXT, partner_license TEXT
+        // Colonnes optionnelles à ajouter via migration si besoin :
+        // player_license TEXT, partner_name TEXT, partner_license TEXT, status TEXT
         player_license,
         partner_name,
         partner_license,
+        status: "pending",
       })
       .select()
-      .single();
+      .maybeSingle();
+
+    participant = firstInsert.data;
+    insertError = firstInsert.error;
+
+    if ((!participant || insertError) && insertError?.code === "42703") {
+      // Colonnes manquantes (undefined_column) : retenter un insert minimal
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          error: insertError.message,
+        },
+        "[tournaments/register] Optional columns missing on tournament_participants, retrying minimal insert"
+      );
+
+      const fallback = await supabaseAdmin
+        .from("tournament_participants")
+        .insert({
+          tournament_id: id,
+          player_id: profile.id,
+        })
+        .select()
+        .maybeSingle();
+
+      participant = fallback.data;
+      insertError = fallback.error;
+    }
 
     if (insertError || !participant) {
       logger.error(
@@ -241,11 +274,22 @@ export async function POST(
           userId: user.id.substring(0, 8) + "…",
           tournamentId: id.substring(0, 8) + "…",
           error: insertError?.message,
+          code: insertError?.code,
         },
         "[tournaments/register] Error creating participant"
       );
+
+      // Gestion explicite des cas fréquents
+      if (insertError?.code === "23505") {
+        // Contrainte d'unicité violée: joueur déjà inscrit
+        return NextResponse.json(
+          { error: "Already registered" },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
-        { error: "Error creating registration" },
+        { error: insertError?.message || "Error creating registration" },
         { status: 500 }
       );
     }
@@ -266,7 +310,12 @@ export async function POST(
       "[tournaments/register] Unexpected error"
     );
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error:
+          error instanceof Error
+            ? error.message || "Internal server error"
+            : "Internal server error",
+      },
       { status: 500 }
     );
   }
