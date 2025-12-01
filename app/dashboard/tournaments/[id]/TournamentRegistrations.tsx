@@ -18,9 +18,13 @@ type Registration = {
   id: string;
   player_id: string;
   player_name: string;
+  player_rank: number | null;
   player_license: string | null;
   partner_name: string | null;
+  partner_rank: number | null;
   partner_license: string | null;
+  pair_total_rank: number | null;
+  seed_number: number | null;
   status: RegistrationStatus;
   created_at: string;
 };
@@ -94,9 +98,10 @@ export default function TournamentRegistrations({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            player_license: reg.player_license || "",
+            player_name: reg.player_name || "",
+            player_rank: reg.player_rank ? parseInt(reg.player_rank.toString(), 10) : undefined,
             partner_name: reg.partner_name || "",
-            partner_license: reg.partner_license || "",
+            partner_rank: reg.partner_rank ? parseInt(reg.partner_rank.toString(), 10) : undefined,
           }),
         }
       );
@@ -142,19 +147,25 @@ export default function TournamentRegistrations({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-white/70 w-[220px]">
+                <TableHead className="text-white/70 w-[180px]">
                   Joueur 1
                 </TableHead>
-                <TableHead className="text-white/70 w-[120px]">
-                  Licence 1
+                <TableHead className="text-white/70 w-[100px]">
+                  Rang 1
                 </TableHead>
-                <TableHead className="text-white/70 w-[260px]">
+                <TableHead className="text-white/70 w-[200px]">
                   Joueur 2
                 </TableHead>
-                <TableHead className="text-white/70 w-[120px]">
-                  Licence 2
+                <TableHead className="text-white/70 w-[100px]">
+                  Rang 2
                 </TableHead>
-                <TableHead className="text-white/70 w-[120px]">Statut</TableHead>
+                <TableHead className="text-white/70 w-[100px]">
+                  Total
+                </TableHead>
+                <TableHead className="text-white/70 w-[80px]">
+                  TS
+                </TableHead>
+                <TableHead className="text-white/70 w-[100px]">Statut</TableHead>
                 <TableHead className="text-white/70 w-[160px]">
                   Actions
                 </TableHead>
@@ -182,18 +193,29 @@ export default function TournamentRegistrations({
                   </TableCell>
                   <TableCell className="text-white/80">
                     <Input
-                      value={reg.player_license ?? ""}
-                      placeholder="Licence 1"
-                      className="bg-black/40 border-white/10 text-white h-8 w-[110px]"
-                      onChange={(e) =>
+                      type="number"
+                      value={reg.player_rank ?? ""}
+                      placeholder="Rang"
+                      className="bg-black/40 border-white/10 text-white h-8 w-[90px]"
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setRegistrations((prev) =>
-                          prev.map((r) =>
-                            r.id === reg.id
-                              ? { ...r, player_license: e.target.value }
-                              : r
-                          )
-                        )
-                      }
+                          prev.map((r) => {
+                            if (r.id === reg.id) {
+                              const newPlayerRank = val ? parseInt(val, 10) : null;
+                              const newTotal = newPlayerRank && r.partner_rank
+                                ? newPlayerRank + r.partner_rank
+                                : null;
+                              return {
+                                ...r,
+                                player_rank: newPlayerRank,
+                                pair_total_rank: newTotal,
+                              };
+                            }
+                            return r;
+                          })
+                        );
+                      }}
                       onBlur={() => handleSaveDetails(reg)}
                     />
                   </TableCell>
@@ -216,20 +238,45 @@ export default function TournamentRegistrations({
                   </TableCell>
                   <TableCell className="text-white/80">
                     <Input
-                      value={reg.partner_license ?? ""}
-                      placeholder="Licence 2"
-                      className="bg-black/40 border-white/10 text-white h-8 w-[110px]"
-                      onChange={(e) =>
+                      type="number"
+                      value={reg.partner_rank ?? ""}
+                      placeholder="Rang"
+                      className="bg-black/40 border-white/10 text-white h-8 w-[90px]"
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setRegistrations((prev) =>
-                          prev.map((r) =>
-                            r.id === reg.id
-                              ? { ...r, partner_license: e.target.value }
-                              : r
-                          )
-                        )
-                      }
+                          prev.map((r) => {
+                            if (r.id === reg.id) {
+                              const newPartnerRank = val ? parseInt(val, 10) : null;
+                              const newTotal = r.player_rank && newPartnerRank
+                                ? r.player_rank + newPartnerRank
+                                : null;
+                              return {
+                                ...r,
+                                partner_rank: newPartnerRank,
+                                pair_total_rank: newTotal,
+                              };
+                            }
+                            return r;
+                          })
+                        );
+                      }}
                       onBlur={() => handleSaveDetails(reg)}
                     />
+                  </TableCell>
+                  <TableCell className="text-white/80">
+                    <span className="text-sm font-medium">
+                      {reg.pair_total_rank ?? "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-white/80">
+                    {reg.seed_number ? (
+                      <span className="text-sm font-bold text-yellow-400">
+                        TS{reg.seed_number}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-500">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-white/80">
                     <span

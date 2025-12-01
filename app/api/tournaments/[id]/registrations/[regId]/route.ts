@@ -17,8 +17,11 @@ const supabaseAdmin =
 
 const updateRegistrationSchema = z.object({
   action: z.enum(["validate", "reject"]).optional(),
-  player_license: z.string().optional(),
+  player_name: z.string().optional(),
+  player_rank: z.number().int().positive().optional(),
   partner_name: z.string().optional(),
+  partner_rank: z.number().int().positive().optional(),
+  player_license: z.string().optional(),
   partner_license: z.string().optional(),
 });
 
@@ -118,19 +121,37 @@ export async function PATCH(
 
     const data = result.data;
 
+    // Récupérer l'inscription actuelle pour recalculer pair_total_rank si nécessaire
+    const { data: currentRegistration } = await supabaseAdmin
+      .from("tournament_registrations")
+      .select("player1_rank, player2_rank, pair_total_rank")
+      .eq("id", regId)
+      .single();
+
     // Construire les données d'update
     const updateData: any = {};
-    if (data.player_license !== undefined) {
-      updateData.player_license = data.player_license;
+    if (data.player_name !== undefined) {
+      updateData.player1_name = data.player_name;
+    }
+    if (data.player_rank !== undefined) {
+      updateData.player1_rank = data.player_rank;
     }
     if (data.partner_name !== undefined) {
-      updateData.partner_name = data.partner_name;
+      updateData.player2_name = data.partner_name;
     }
-    if (data.partner_license !== undefined) {
-      updateData.partner_license = data.partner_license;
+    if (data.partner_rank !== undefined) {
+      updateData.player2_rank = data.partner_rank;
     }
     if (data.action) {
-      updateData.status = data.action === "validate" ? "validated" : "rejected";
+      updateData.status = data.action === "validate" ? "confirmed" : "rejected";
+    }
+
+    // Recalculer pair_total_rank si un des classements a changé
+    const newPlayer1Rank = data.player_rank ?? currentRegistration?.player1_rank;
+    const newPlayer2Rank = data.partner_rank ?? currentRegistration?.player2_rank;
+    if (newPlayer1Rank && newPlayer2Rank) {
+      updateData.pair_total_rank = newPlayer1Rank + newPlayer2Rank;
+      updateData.pair_weight = newPlayer1Rank + newPlayer2Rank; // Mettre à jour aussi pair_weight
     }
 
     if (!supabaseAdmin) {
@@ -141,7 +162,7 @@ export async function PATCH(
     }
 
     const { data: updated, error: updateError } = await supabaseAdmin
-      .from("tournament_participants")
+      .from("tournament_registrations")
       .update(updateData)
       .eq("id", regId)
       .eq("tournament_id", id)

@@ -24,6 +24,7 @@ export function CreateTournamentForm() {
     start_date: "",
     end_date: "",
     inscription_fee: 10,
+    max_teams: 16,
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -65,6 +66,7 @@ export function CreateTournamentForm() {
         available_courts: [1, 2],
         match_duration_minutes: 90,
         inscription_fee: Number(form.inscription_fee) || 0,
+        max_teams: Number(form.max_teams) || 16,
         prize_money: null,
       };
 
@@ -240,6 +242,25 @@ export function CreateTournamentForm() {
             className="bg-black/40 border-white/10 text-white"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="max_teams" className="text-white">Nombre maximum d'équipes *</Label>
+        <Input
+          id="max_teams"
+          type="number"
+          min={4}
+          max={64}
+          step={4}
+          value={form.max_teams}
+          onChange={(e) => setForm({ ...form, max_teams: Number(e.target.value) })}
+          required
+          disabled={pending}
+          className="bg-black/40 border-white/10 text-white"
+        />
+        <p className="text-xs text-gray-400">
+          Doit être une puissance de 2 (4, 8, 16, 32, 64) pour un tableau éliminatoire
+        </p>
       </div>
 
       <div className="flex justify-end gap-2 pt-4">

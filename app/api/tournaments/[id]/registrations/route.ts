@@ -103,61 +103,28 @@ export async function GET(
     // Choisir le client le plus permissif pour lire les inscriptions
     const client = supabaseAdmin || supabase;
 
-    // IMPORTANT : les inscriptions joueur actuelles sont stockées dans
-    // tournament_participants (un joueur par tournoi). On lit donc cette table.
-    // On tente d'abord avec les colonnes optionnelles (licences, statut),
-    // puis on retombe sur une forme minimale si ces colonnes n'existent pas.
-    let registrations: any[] | null = null;
-    let error: any = null;
-
-    const firstSelect = await client
-      .from("tournament_participants")
+    // Lire les inscriptions depuis tournament_registrations (paires)
+    const { data: registrations, error } = await client
+      .from("tournament_registrations")
       .select(
         `
         id,
         tournament_id,
-        player_id,
-        created_at,
+        player1_id,
+        player2_id,
+        player1_name,
+        player1_rank,
+        player2_name,
+        player2_rank,
+        pair_total_rank,
+        seed_number,
         status,
-        player_license,
-        partner_name,
-        partner_license,
-        player:profiles!tournament_participants_player_id_fkey(id, first_name, last_name, display_name)
+        registration_order,
+        created_at
       `
       )
       .eq("tournament_id", id)
-      .order("created_at", { ascending: true });
-
-    registrations = firstSelect.data;
-    error = firstSelect.error;
-
-    if (error && error.code === "42703") {
-      // Colonnes manquantes : relancer une requête minimale
-      logger.warn(
-        {
-          tournamentId: id.substring(0, 8) + "…",
-          error: error.message,
-        },
-        "[dashboard/registrations] Optional columns missing on tournament_participants, falling back to minimal select"
-      );
-
-      const fallback = await client
-        .from("tournament_participants")
-        .select(
-          `
-          id,
-          tournament_id,
-          player_id,
-          created_at,
-          player:profiles!tournament_participants_player_id_fkey(id, first_name, last_name, display_name)
-        `
-        )
-        .eq("tournament_id", id)
-        .order("created_at", { ascending: true });
-
-      registrations = fallback.data;
-      error = fallback.error;
-    }
+      .order("registration_order", { ascending: true });
 
     if (error) {
       logger.error(
@@ -177,28 +144,27 @@ export async function GET(
 
     const enriched =
       registrations?.map((r: any) => {
-        const p = r.player || {};
-        const player_name =
-          p.display_name ||
-          [p.first_name, p.last_name].filter(Boolean).join(" ") ||
-          "Inconnu";
-
-        const rawStatus = (r.status as string | undefined) || "validated";
+        const rawStatus = (r.status as string | undefined) || "pending";
         const status =
           rawStatus === "pending" ||
+          rawStatus === "confirmed" ||
           rawStatus === "validated" ||
           rawStatus === "rejected"
-            ? rawStatus
-            : "validated";
+            ? rawStatus === "confirmed" ? "validated" : rawStatus
+            : "pending";
 
         return {
           id: r.id,
-          player_id: r.player_id,
-          player_name,
-          player_license: r.player_license ?? null,
-          partner_name: r.partner_name ?? null,
-          partner_license: r.partner_license ?? null,
-          status,
+          player_id: r.player1_id,
+          player_name: r.player1_name || "Inconnu",
+          player_rank: r.player1_rank ?? null,
+          player_license: null, // Pas stocké dans tournament_registrations
+          partner_name: r.player2_name || null,
+          partner_rank: r.player2_rank ?? null,
+          partner_license: null, // Pas stocké dans tournament_registrations
+          pair_total_rank: r.pair_total_rank ?? null,
+          seed_number: r.seed_number ?? null,
+          status: status as "pending" | "validated" | "rejected",
           created_at: r.created_at,
         };
       }) || [];

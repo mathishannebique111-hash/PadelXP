@@ -74,6 +74,7 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
   const canClose = tournament.status === "open";
   const canGenerate = tournament.status === "registration_closed";
   const canSchedule = tournament.status === "draw_published" || tournament.status === "in_progress";
+  const canDelete = tournament.status !== "in_progress" && tournament.status !== "completed";
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -180,6 +181,37 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
     } catch (err: any) {
       setError(err.message || "Erreur lors de la planification des matchs");
     } finally {
+      setActionPending(null);
+    }
+  }
+
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      `Êtes-vous sûr de vouloir supprimer le tournoi "${tournament.name}" ?\n\nCette action est irréversible et supprimera toutes les inscriptions et données associées.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionPending("delete");
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/tournaments/${tournament.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || `HTTP ${res.status}`);
+      }
+
+      // Rediriger vers la liste des tournois après suppression réussie
+      router.push("/dashboard/tournaments");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la suppression du tournoi");
       setActionPending(null);
     }
   }
@@ -355,7 +387,16 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
           </div>
 
           <CardFooter className="flex flex-col gap-4 px-0">
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-between items-center gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={!canDelete || actionPending === "delete" || pending}
+                onClick={handleDelete}
+              >
+                {actionPending === "delete" ? "Suppression..." : "Supprimer le tournoi"}
+              </Button>
               <Button type="submit" disabled={pending}>
                 {pending ? "Enregistrement..." : "Enregistrer les modifications"}
               </Button>

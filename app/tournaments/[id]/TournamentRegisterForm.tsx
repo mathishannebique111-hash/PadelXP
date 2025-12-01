@@ -19,8 +19,10 @@ export function TournamentRegisterForm({
 }: TournamentRegisterFormProps) {
   const [form, setForm] = useState({
     playerLicense: initialPlayerLicense || "",
+    playerRank: "",
     partnerName: "",
     partnerLicense: "",
+    partnerRank: "",
     acceptTerms: false,
   });
 
@@ -41,8 +43,8 @@ export function TournamentRegisterForm({
     setError(null);
     setSuccess(false);
 
-    if (!form.playerLicense || !form.partnerName || !form.partnerLicense) {
-      setError("Merci de remplir toutes les informations obligatoires.");
+    if (!form.playerLicense || !form.playerRank || !form.partnerName || !form.partnerLicense || !form.partnerRank) {
+      setError("Merci de remplir toutes les informations obligatoires, y compris les classements nationaux.");
       return;
     }
     if (!form.acceptTerms) {
@@ -57,8 +59,10 @@ export function TournamentRegisterForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           player_license: form.playerLicense,
+          player_rank: parseInt(form.playerRank, 10),
           partner_name: form.partnerName,
           partner_license: form.partnerLicense,
+          partner_rank: parseInt(form.partnerRank, 10),
         }),
       });
 
@@ -109,6 +113,17 @@ export function TournamentRegisterForm({
           className="bg-black/40 border-white/10 text-white"
           disabled={pending}
         />
+        <Input
+          type="number"
+          placeholder="Mon classement national (ex: 50000)"
+          value={form.playerRank}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, playerRank: e.target.value }))
+          }
+          className="bg-black/40 border-white/10 text-white"
+          disabled={pending}
+          min="1"
+        />
       </div>
 
       <div className="space-y-2">
@@ -130,6 +145,17 @@ export function TournamentRegisterForm({
           }
           className="bg-black/40 border-white/10 text-white"
           disabled={pending}
+        />
+        <Input
+          type="number"
+          placeholder="Classement national du partenaire (ex: 40000)"
+          value={form.partnerRank}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, partnerRank: e.target.value }))
+          }
+          className="bg-black/40 border-white/10 text-white"
+          disabled={pending}
+          min="1"
         />
       </div>
 
