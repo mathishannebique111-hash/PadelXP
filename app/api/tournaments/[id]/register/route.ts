@@ -1,163 +1,274 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
-import { calculatePairWeight } from "@/lib/tournaments/tournament-engine";
-import { z } from 'zod';
 
-const registerSchema = z.object({
-  player2_id: z.string().uuid(),
-  player1_classification: z.string().optional(),
-  player2_classification: z.string().optional(),
-});
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin =
+  SUPABASE_URL && SERVICE_ROLE_KEY
+    ? createAdminClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+    : null;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    // 1. Auth
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
-    // 2. Valider body
-    const body = await request.json();
-    const result = registerSchema.safeParse(body);
-
-    if (!result.success) {
-      logger.warn({ 
-        userId: user.id.substring(0, 8) + "…",
-        errors: result.error.errors 
-      }, "Invalid registration data");
-      
-      return NextResponse.json({ error: result.error.errors }, { status: 400 });
+    // Lire et valider rapidement le body
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      // Body facultatif, mais on forcera les champs obligatoires ci-dessous
     }
 
-    // 3. Vérifier tournoi existe et inscriptions ouvertes
+    const player_license = (body?.player_license ?? "").toString().trim();
+    const partner_name = (body?.partner_name ?? "").toString().trim();
+    const partner_license = (body?.partner_license ?? "").toString().trim();
+
+    if (!player_license || !partner_name || !partner_license) {
+      return NextResponse.json(
+        { error: "Merci de remplir toutes les informations obligatoires." },
+        { status: 400 }
+      );
+    }
+
+    // Récupérer le profil joueur (d'abord avec le client utilisateur)
+    let profile: { id: string } | null = null;
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          error: profileError?.message,
+        },
+        "[tournaments/register] Error fetching profile with user client (ignored, will try admin)"
+      );
+    } else if (profileData) {
+      profile = profileData;
+    }
+
+    // Si pas de profil trouvé, essayer avec le client admin (bypass RLS)
+    if (!profile && supabaseAdmin) {
+      const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (adminProfileError) {
+        logger.warn(
+          {
+            userId: user.id.substring(0, 8) + "…",
+            error: adminProfileError?.message,
+          },
+          "[tournaments/register] Error fetching profile with admin client"
+        );
+      } else if (adminProfile) {
+        profile = adminProfile;
+      }
+    }
+
+    if (!profile) {
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+        },
+        "[tournaments/register] User profile not found"
+      );
+      return NextResponse.json(
+        { error: "User profile not found" },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier tournoi + statut
     const { data: tournament, error: tournamentError } = await supabase
-      .from('tournaments')
-      .select('*')
-      .eq('id', id)
+      .from("tournaments")
+      .select("id, status, registration_open_date, registration_close_date")
+      .eq("id", id)
       .single();
 
     if (tournamentError || !tournament) {
-      logger.warn({ 
-        userId: user.id.substring(0, 8) + "…",
-        tournamentId: id.substring(0, 8) + "…"
-      }, "Tournament not found");
-      
-      return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          error: tournamentError?.message,
+        },
+        "[tournaments/register] Tournament not found"
+      );
+      return NextResponse.json(
+        { error: "Tournament not found" },
+        { status: 404 }
+      );
     }
 
-    if (tournament.status !== 'open') {
-      logger.warn({ 
-        userId: user.id.substring(0, 8) + "…",
-        tournamentId: id.substring(0, 8) + "…",
-        status: tournament.status
-      }, "Registrations closed");
-      
-      return NextResponse.json({ error: 'Registrations are closed' }, { status: 400 });
+    if (tournament.status !== "open") {
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          status: tournament.status,
+        },
+        "[tournaments/register] Tournament is not open for registration"
+      );
+      return NextResponse.json(
+        { error: "Tournament is not open for registration" },
+        { status: 400 }
+      );
     }
 
-    // Vérifier que les dates d'inscription sont valides
     const now = new Date();
     const openDate = new Date(tournament.registration_open_date);
     const closeDate = new Date(tournament.registration_close_date);
 
     if (now < openDate || now > closeDate) {
-      logger.warn({ 
-        userId: user.id.substring(0, 8) + "…",
-        tournamentId: id.substring(0, 8) + "…",
-        now: now.toISOString(),
-        openDate: openDate.toISOString(),
-        closeDate: closeDate.toISOString()
-      }, "Registration period not open");
-      
-      return NextResponse.json({ 
-        error: 'Registration period is not open' 
-      }, { status: 400 });
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          now: now.toISOString(),
+          openDate: openDate.toISOString(),
+          closeDate: closeDate.toISOString(),
+        },
+        "[tournaments/register] Registration period not open"
+      );
+      return NextResponse.json(
+        { error: "Registration period is not open" },
+        { status: 400 }
+      );
     }
 
-    // Vérifier que les deux joueurs sont différents
-    if (user.id === result.data.player2_id) {
-      return NextResponse.json({ 
-        error: 'Cannot register with yourself' 
-      }, { status: 400 });
-    }
-
-    // Vérifier qu'il n'y a pas déjà une inscription pour cette paire
-    const { data: existingRegistration } = await supabase
-      .from('tournament_registrations')
-      .select('id')
-      .eq('tournament_id', id)
-      .or(`and(player1_id.eq.${user.id},player2_id.eq.${result.data.player2_id}),and(player1_id.eq.${result.data.player2_id},player2_id.eq.${user.id})`)
+    // Vérifier inscription existante (un joueur par tournoi)
+    const { data: existing, error: existingError } = await supabase
+      .from("tournament_participants")
+      .select("id")
+      .eq("tournament_id", id)
+      .eq("player_id", profile.id)
       .maybeSingle();
 
-    if (existingRegistration) {
-      logger.warn({ 
-        userId: user.id.substring(0, 8) + "…",
-        player2Id: result.data.player2_id.substring(0, 8) + "…",
-        tournamentId: id.substring(0, 8) + "…"
-      }, "Pair already registered");
-      
-      return NextResponse.json({ 
-        error: 'This pair is already registered' 
-      }, { status: 400 });
+    if (existingError) {
+      logger.error(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          error: existingError.message,
+        },
+        "[tournaments/register] Error checking existing registration"
+      );
+      return NextResponse.json(
+        { error: "Unable to check existing registration" },
+        { status: 500 }
+      );
     }
 
-    // 4. Calculer poids de paire
-    const pairWeight = await calculatePairWeight(user.id, result.data.player2_id);
+    if (existing) {
+      return NextResponse.json(
+        { error: "Already registered" },
+        { status: 400 }
+      );
+    }
 
-    // 5. Compter les inscriptions existantes pour order
-    const { count } = await supabase
-      .from('tournament_registrations')
-      .select('*', { count: 'exact', head: true })
-      .eq('tournament_id', id);
+    if (!supabaseAdmin) {
+      logger.error(
+        {},
+        "[tournaments/register] Supabase admin client not configured"
+      );
+      return NextResponse.json(
+        { error: "Registration service not available" },
+        { status: 500 }
+      );
+    }
 
-    // 6. Créer inscription
-    const { data: registration, error } = await supabase
-      .from('tournament_registrations')
+    // Création de l'entrée dans tournament_participants
+    const { data: participant, error: insertError } = await supabaseAdmin
+      .from("tournament_participants")
       .insert({
         tournament_id: id,
-        player1_id: user.id,
-        player2_id: result.data.player2_id,
-        player1_classification: result.data.player1_classification,
-        player2_classification: result.data.player2_classification,
-        pair_weight: pairWeight,
-        registration_order: (count || 0) + 1,
-        status: 'pending', // Statut initial : pending, l'admin validera
-        payment_status: 'pending'
+        player_id: profile.id,
+        // Colonnes supplémentaires à ajouter via migration si non présentes:
+        // player_license TEXT, partner_name TEXT, partner_license TEXT
+        player_license,
+        partner_name,
+        partner_license,
       })
       .select()
       .single();
 
-    if (error) {
-      logger.error({ 
-        userId: user.id.substring(0, 8) + "…",
-        tournamentId: id.substring(0, 8) + "…",
-        error: error.message 
-      }, "Error creating registration");
-      
-      return NextResponse.json({ error: 'Error creating registration' }, { status: 500 });
+    if (insertError || !participant) {
+      logger.error(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          error: insertError?.message,
+        },
+        "[tournaments/register] Error creating participant"
+      );
+      return NextResponse.json(
+        { error: "Error creating registration" },
+        { status: 500 }
+      );
     }
 
-    logger.info({ 
-      userId: user.id.substring(0, 8) + "…",
-      tournamentId: id.substring(0, 8) + "…",
-      registrationId: registration.id.substring(0, 8) + "…",
-      pairWeight
-    }, "Registration created");
+    logger.info(
+      {
+        userId: user.id.substring(0, 8) + "…",
+        tournamentId: id.substring(0, 8) + "…",
+        participantId: participant.id.substring(0, 8) + "…",
+      },
+      "[tournaments/register] Registration created"
+    );
 
-    return NextResponse.json({ registration }, { status: 201 });
-
+    return NextResponse.json({ registration: participant }, { status: 201 });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, "Unexpected error");
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "[tournaments/register] Unexpected error"
+    );
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 

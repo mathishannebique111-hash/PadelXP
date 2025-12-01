@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 import { z } from 'zod';
+import { getUserClubInfo } from "@/lib/utils/club-utils";
 
 const updateTournamentSchema = z.object({
   name: z.string().min(3).max(255).optional(),
@@ -33,17 +34,17 @@ const updateTournamentSchema = z.object({
 // GET /api/tournaments/[id]
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
     // Récupérer le tournoi
     const { data: tournament, error } = await supabase
@@ -62,17 +63,24 @@ export async function GET(
       return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
     }
 
-    // Vérifier que l'utilisateur est admin du club du tournoi
-    const { data: clubAdmin } = await supabase
-      .from('club_admins')
-      .select('club_id')
-      .eq('user_id', user.id)
-      .eq('club_id', tournament.club_id)
-      .not('activated_at', 'is', null)
-      .single();
+    // Vérifier que l'utilisateur appartient bien au club du tournoi (via getUserClubInfo qui utilise supabaseAdmin)
+    const clubInfo = await getUserClubInfo();
 
-    if (!clubAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!clubInfo.clubId || clubInfo.clubId !== tournament.club_id) {
+      logger.error(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          userClubId: clubInfo.clubId,
+          tournamentClubId: tournament.club_id,
+        },
+        "Forbidden GET tournament: user is not admin/owner of this tournament's club"
+      );
+
+      return NextResponse.json(
+        { error: "User is not admin of this tournament's club" },
+        { status: 403 }
+      );
     }
 
     logger.info({ 
@@ -91,19 +99,19 @@ export async function GET(
 // PATCH /api/tournaments/[id]
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
-    // Vérifier que le tournoi existe et que l'utilisateur est admin
+    // Vérifier que le tournoi existe
     const { data: tournament, error: tournamentError } = await supabase
       .from('tournaments')
       .select('club_id, status')
@@ -111,19 +119,36 @@ export async function PATCH(
       .single();
 
     if (tournamentError || !tournament) {
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          error: tournamentError?.message,
+        },
+        "Tournament not found in PATCH"
+      );
+
       return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
     }
 
-    const { data: clubAdmin } = await supabase
-      .from('club_admins')
-      .select('club_id')
-      .eq('user_id', user.id)
-      .eq('club_id', tournament.club_id)
-      .not('activated_at', 'is', null)
-      .single();
+    // Vérifier appartenance au club via getUserClubInfo (bypass RLS club_admins)
+    const clubInfo = await getUserClubInfo();
 
-    if (!clubAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!clubInfo.clubId || clubInfo.clubId !== tournament.club_id) {
+      logger.error(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          userClubId: clubInfo.clubId,
+          tournamentClubId: tournament.club_id,
+        },
+        "Forbidden PATCH tournament: user is not admin of this tournament's club"
+      );
+
+      return NextResponse.json(
+        { error: "User is not admin of this tournament's club" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -172,19 +197,19 @@ export async function PATCH(
 // DELETE /api/tournaments/[id]
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
-    // Vérifier que le tournoi existe et que l'utilisateur est admin
+    // Vérifier que le tournoi existe
     const { data: tournament, error: tournamentError } = await supabase
       .from('tournaments')
       .select('club_id, status')
@@ -192,19 +217,36 @@ export async function DELETE(
       .single();
 
     if (tournamentError || !tournament) {
+      logger.warn(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          error: tournamentError?.message,
+        },
+        "Tournament not found in DELETE"
+      );
+
       return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
     }
 
-    const { data: clubAdmin } = await supabase
-      .from('club_admins')
-      .select('club_id')
-      .eq('user_id', user.id)
-      .eq('club_id', tournament.club_id)
-      .not('activated_at', 'is', null)
-      .single();
+    // Vérifier appartenance au club via getUserClubInfo (bypass RLS club_admins)
+    const clubInfo = await getUserClubInfo();
 
-    if (!clubAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!clubInfo.clubId || clubInfo.clubId !== tournament.club_id) {
+      logger.error(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          tournamentId: id.substring(0, 8) + "…",
+          userClubId: clubInfo.clubId,
+          tournamentClubId: tournament.club_id,
+        },
+        "Forbidden DELETE tournament: user is not admin of this tournament's club"
+      );
+
+      return NextResponse.json(
+        { error: "User is not admin of this tournament's club" },
+        { status: 403 }
+      );
     }
 
     // Ne pas permettre la suppression si le tournoi est en cours ou terminé

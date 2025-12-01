@@ -4,25 +4,9 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-// Helper pour appeler l'API interne qui gère l'auth et les permissions
-async function fetchTournaments() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/tournaments`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      return { data: [], error: new Error(`HTTP ${res.status}`) };
-    }
-
-    const json = await res.json();
-    return { data: json.tournaments || [], error: null };
-  } catch (error: any) {
-    return { data: [], error };
-  }
-}
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getUserClubInfo } from "@/lib/utils/club-utils";
 
 function renderTournamentType(type: string) {
   switch (type) {
@@ -88,14 +72,47 @@ function formatDateRange(start: string, end: string) {
 }
 
 export default async function TournamentsPage() {
-  const { data: tournaments, error } = await fetchTournaments();
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-  // Logger en cas d'erreur
-  if (error) {
-    logger.error(
-      { error: error instanceof Error ? error.message : String(error) },
-      "Error fetching tournaments in dashboard page"
+  if (authError || !user) {
+    return redirect("/clubs/login?next=/dashboard/tournaments");
+  }
+
+  const clubInfo = await getUserClubInfo();
+  const clubId = clubInfo.clubId;
+
+  if (!clubId) {
+    logger.warn(
+      { userId: user.id.substring(0, 8) + "…" },
+      "[dashboard/tournaments] No clubId found for user; showing empty tournaments list"
     );
+  }
+
+  let tournaments: any[] = [];
+
+  if (clubId) {
+    const { data, error } = await supabase
+      .from("tournaments")
+      .select("*")
+      .eq("club_id", clubId)
+      .order("start_date", { ascending: false });
+
+    if (error) {
+      logger.error(
+        {
+          userId: user.id.substring(0, 8) + "…",
+          clubId: clubId.substring(0, 8) + "…",
+          error: error.message,
+        },
+        "Error fetching tournaments in dashboard page"
+      );
+    }
+
+    tournaments = data || [];
   }
 
   return (

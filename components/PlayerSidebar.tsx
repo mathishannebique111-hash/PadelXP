@@ -6,7 +6,16 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import LogoutButton from './LogoutButton';
 
-type NavKey = "home" | "match" | "history" | "badges" | "club" | "challenges" | "reviews" | "boost";
+type NavKey =
+  | "home"
+  | "match"
+  | "history"
+  | "badges"
+  | "club"
+  | "tournaments"
+  | "challenges"
+  | "reviews"
+  | "boost";
 
 interface MenuItem {
   href: string;
@@ -107,6 +116,7 @@ export default function PlayerSidebar() {
     { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 12), navKey: 'history' },
     { href: '/badges', label: 'Badges', icon: getIconPath('Badge.png', 11), navKey: 'badges' },
     { href: '/club', label: 'Mon club', icon: '/images/mon club.png', navKey: 'club' },
+    { href: '/tournaments', label: 'Tournois', icon: getIconPath('Trophée page badges.png'), navKey: 'tournaments' },
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
@@ -119,6 +129,7 @@ export default function PlayerSidebar() {
     if (pathname === '/matches/history') return 'history';
     if (pathname === '/badges') return 'badges';
     if (pathname === '/club') return 'club';
+    if (pathname === '/tournaments') return 'tournaments';
     if (pathname === '/challenges') return 'challenges';
     if (pathname === '/reviews') return 'reviews';
     if (pathname === '/boost') return 'boost';
