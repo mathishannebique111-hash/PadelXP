@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
-import { z } from 'zod';
+import { z } from "zod";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin =
+  SUPABASE_URL && SERVICE_ROLE_KEY
+    ? createAdminClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+    : null;
 
 const setScoreSchema = z.object({
   team1: z.number().int().min(0),
@@ -127,17 +138,17 @@ async function advanceWinner(
 // GET /api/tournaments/[id]/matches/[matchId]
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; matchId: string }> }
+  { params }: { params: { id: string; matchId: string } }
 ) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, matchId } = await params;
+    const { id, matchId } = params;
 
     const { data: match, error } = await supabase
       .from('tournament_matches')
@@ -187,23 +198,39 @@ export async function GET(
 // PATCH /api/tournaments/[id]/matches/[matchId]
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; matchId: string }> }
+  { params }: { params: { id: string; matchId: string } }
 ) {
   try {
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, matchId } = await params;
+    const { id, matchId } = params;
 
-    // Vérifier admin club
-    const { data: tournament, error: tournamentError } = await supabase
-      .from('tournaments')
-      .select('club_id')
-      .eq('id', id)
+    if (!supabaseAdmin) {
+      logger.error(
+        {},
+        "[matches/update] Admin client not configured (missing service role key)"
+      );
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const adminClient = supabaseAdmin;
+
+    // Vérifier admin club (en bypassant la RLS avec le client admin)
+    const { data: tournament, error: tournamentError } = await adminClient
+      .from("tournaments")
+      .select("club_id")
+      .eq("id", id)
       .single();
 
     if (tournamentError || !tournament) {
@@ -214,24 +241,24 @@ export async function PATCH(
       return NextResponse.json({ error: 'Tournament not found' }, { status: 404 });
     }
 
-    const { data: clubAdmin } = await supabase
-      .from('club_admins')
-      .select('club_id')
-      .eq('user_id', user.id)
-      .eq('club_id', tournament.club_id)
-      .not('activated_at', 'is', null)
-      .single();
+    const { data: clubAdmin } = await adminClient
+      .from("club_admins")
+      .select("club_id")
+      .eq("user_id", user.id)
+      .eq("club_id", tournament.club_id)
+      .not("activated_at", "is", null)
+      .maybeSingle();
 
-    if (!clubAdmin) {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    if (!clubAdmin || clubAdmin.club_id !== tournament.club_id) {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
     // Récupérer le match actuel
-    const { data: currentMatch, error: matchError } = await supabase
-      .from('tournament_matches')
-      .select('*')
-      .eq('id', matchId)
-      .eq('tournament_id', id)
+    const { data: currentMatch, error: matchError } = await adminClient
+      .from("tournament_matches")
+      .select("*")
+      .eq("id", matchId)
+      .eq("tournament_id", id)
       .single();
 
     if (matchError || !currentMatch) {
@@ -284,11 +311,11 @@ export async function PATCH(
       updates.actual_end_time = new Date().toISOString();
     }
 
-    const { data: match, error: updateError } = await supabase
-      .from('tournament_matches')
+    const { data: match, error: updateError } = await adminClient
+      .from("tournament_matches")
       .update(updates)
-      .eq('id', matchId)
-      .eq('tournament_id', id)
+      .eq("id", matchId)
+      .eq("tournament_id", id)
       .select()
       .single();
 
@@ -296,10 +323,15 @@ export async function PATCH(
       logger.error({ 
         tournamentId: id.substring(0, 8) + "…",
         matchId: matchId.substring(0, 8) + "…",
-        error: updateError.message 
+        error: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint
       }, "Error updating match");
       
-      return NextResponse.json({ error: 'Error updating match' }, { status: 500 });
+      return NextResponse.json(
+        { error: updateError.message || 'Error updating match' },
+        { status: 500 }
+      );
     }
 
     // Si match complété et qu'il a un next_match, avancer le vainqueur

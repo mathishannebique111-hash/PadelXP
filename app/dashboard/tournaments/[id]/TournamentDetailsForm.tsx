@@ -15,10 +15,17 @@ import type { Tournament } from "@/lib/types/tournaments";
 const CATEGORIES = ["P25", "P100", "P250", "P500", "P1000", "P1500", "P2000"] as const;
 
 const TOURNAMENT_TYPES = [
-  { value: "official_pools", label: "Poules + Tableau Final" },
-  { value: "official_knockout", label: "Élimination directe" },
-  { value: "americano", label: "Americano" },
-  { value: "mexicano", label: "Mexicano" },
+  { value: "official_knockout", label: "Élimination directe (TDL)" },
+  { value: "tmc", label: "Tournoi Multi-Chances (TMC)" },
+  { value: "double_elimination", label: "Double élimination" },
+  { value: "official_pools", label: "Poules + Tableau final" },
+  {
+    value: "pools_triple_draw",
+    label: "Poules + 3 tableaux (principal / intermédiaire / consolante)",
+  },
+  { value: "round_robin", label: "Round-robin pur" },
+  { value: "americano", label: "Americano (format social)" },
+  { value: "mexicano", label: "Mexicano (format social)" },
   { value: "custom", label: "Personnalisé" },
 ] as const;
 

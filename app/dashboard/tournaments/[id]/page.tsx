@@ -8,6 +8,7 @@ import type { Tournament } from "@/lib/types/tournaments";
 import { TournamentDetailsForm } from "./TournamentDetailsForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TournamentRegistrations from "./TournamentRegistrations";
+import TournamentBracket from "./TournamentBracket";
 
 export default async function TournamentDetailsPage({
   params,
@@ -66,6 +67,7 @@ export default async function TournamentDetailsPage({
             <TabsList className="mb-4 bg-black/60 border border-white/10">
               <TabsTrigger value="infos">Infos</TabsTrigger>
               <TabsTrigger value="inscriptions">Inscriptions</TabsTrigger>
+              <TabsTrigger value="tableau">Tableau</TabsTrigger>
             </TabsList>
 
             <TabsContent value="infos" className="mt-0">
@@ -74,6 +76,14 @@ export default async function TournamentDetailsPage({
 
             <TabsContent value="inscriptions" className="mt-0">
               <TournamentRegistrations tournamentId={tournament.id as string} />
+            </TabsContent>
+
+            <TabsContent value="tableau" className="mt-0">
+              <TournamentBracket
+                tournamentId={tournament.id as string}
+                tournamentType={tournament.tournament_type as string}
+                matchFormat={tournament.match_format as string}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

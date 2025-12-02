@@ -162,7 +162,9 @@ export async function POST(
     // Vérifier tournoi + statut
     const { data: tournament, error: tournamentError } = await supabase
       .from("tournaments")
-      .select("id, status, registration_open_date, registration_close_date")
+      .select(
+        "id, status, registration_open_date, registration_close_date, max_teams"
+      )
       .eq("id", id)
       .single();
 
@@ -215,6 +217,39 @@ export async function POST(
         { error: "Registration period is not open" },
         { status: 400 }
       );
+    }
+
+    // Vérifier la capacité maximale d'équipes (max_teams)
+    if (supabaseAdmin) {
+      const { count: activeCount, error: countError } = await supabaseAdmin
+        .from("tournament_registrations")
+        .select("*", { count: "exact", head: true })
+        .eq("tournament_id", id)
+        .in("status", ["pending", "confirmed", "validated"]);
+
+      if (countError) {
+        logger.warn(
+          {
+            tournamentId: id.substring(0, 8) + "…",
+            userId: user.id.substring(0, 8) + "…",
+            error: countError.message,
+          },
+          "[tournaments/register] Could not count active registrations"
+        );
+      } else if (
+        typeof tournament.max_teams === "number" &&
+        tournament.max_teams > 0 &&
+        typeof activeCount === "number" &&
+        activeCount >= tournament.max_teams
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Le nombre maximum d'équipes est déjà atteint pour ce tournoi.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Vérifier inscription existante (une paire par joueur dans ce tournoi)

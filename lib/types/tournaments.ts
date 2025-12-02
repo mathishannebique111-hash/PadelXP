@@ -2,12 +2,16 @@
  * Types TypeScript pour le système de tournois
  */
 
-export type TournamentType = 
-  | 'official_knockout' 
-  | 'official_pools' 
-  | 'americano' 
-  | 'mexicano' 
-  | 'custom';
+export type TournamentType =
+  | "official_knockout" // Élimination directe (TDL)
+  | "tmc" // Tournoi Multi-Chances
+  | "double_elimination"
+  | "official_pools" // Poules + tableau final
+  | "pools_triple_draw" // Poules + 3 tableaux (principal / intermédiaire / consolation)
+  | "round_robin" // Round-robin pur
+  | "americano"
+  | "mexicano"
+  | "custom";
 
 export type MatchFormat = 
   | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'D1' | 'D2' | 'E' | 'F';

@@ -14,6 +14,23 @@ const supabaseAdmin =
       })
     : null;
 
+// Types utilitaires
+type RegistrationPair = {
+  id: string;
+  tournament_id: string;
+  pair_total_rank: number | null;
+  player1_rank?: number | null;
+  player2_rank?: number | null;
+  seed_number?: number | null;
+  [key: string]: any;
+};
+
+type PreparedDraw = {
+  sortedPairs: RegistrationPair[];
+  numSeeds: number;
+  bracketSize: number;
+};
+
 // Fonction : déterminer le nombre de têtes de série
 function determineNumberOfSeeds(numPairs: number): number {
   if (numPairs <= 8) return 2;
@@ -33,72 +50,128 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-// Fonction : générer le tableau éliminatoire
-async function generateKnockoutBracket(
+// Déterminer le type de round en fonction de la taille du tableau
+function getRoundTypeFromBracketSize(bracketSize: number): string {
+  switch (bracketSize) {
+    case 64:
+      return "round_of_64";
+    case 32:
+      return "round_of_32";
+    case 16:
+      return "round_of_16";
+    case 8:
+      return "quarters";
+    case 4:
+      return "semis";
+    default:
+      return "qualifications";
+  }
+}
+
+// Préparation des paires pour le tirage (commune à tous les formats)
+function preparePairsForDraw(registrations: any[]): PreparedDraw {
+  // S'assurer que pair_total_rank est bien renseigné
+  const withComputedRank: RegistrationPair[] = registrations.map((reg) => {
+    let pair_total_rank = reg.pair_total_rank as number | null;
+    if (
+      (pair_total_rank === null || typeof pair_total_rank === "undefined") &&
+      typeof reg.player1_rank === "number" &&
+      typeof reg.player2_rank === "number"
+    ) {
+      pair_total_rank = reg.player1_rank + reg.player2_rank;
+    }
+
+    return {
+      ...reg,
+      pair_total_rank: pair_total_rank ?? Number.MAX_SAFE_INTEGER,
+    };
+  });
+
+  const sortedPairs = withComputedRank.sort(
+    (a, b) => (a.pair_total_rank || 0) - (b.pair_total_rank || 0)
+  );
+
+  const numPairs = sortedPairs.length;
+  const bracketSize = Math.pow(2, Math.ceil(Math.log2(numPairs))); // 4, 8, 16, 32, 64
+  const numSeeds = determineNumberOfSeeds(numPairs);
+
+  return { sortedPairs, numSeeds, bracketSize };
+}
+
+// Génération : élimination directe officielle
+async function generateOfficialKnockout(
   supabase: any,
   tournament: any,
-  sortedPairs: any[],
-  numSeeds: number
+  sortedPairs: RegistrationPair[],
+  numSeeds: number,
+  bracketSize: number
 ) {
   const numPairs = sortedPairs.length;
-  const bracketSize = Math.pow(2, Math.ceil(Math.log2(numPairs))); // 8, 16, 32, 64
 
   // Créer le tableau vide avec positions
-  const bracket: (any | null)[] = new Array(bracketSize).fill(null);
+  const bracket: (RegistrationPair | null)[] = new Array(bracketSize).fill(
+    null
+  );
 
-  // 1. Placer la tête de série 1 en position 1
+  // 1. TS1 en haut du tableau
   bracket[0] = sortedPairs[0];
 
-  // 2. Placer la tête de série 2 en position finale
-  bracket[bracketSize - 1] = sortedPairs[1];
-
-  // 3. Placer les têtes de série 3 et 4 (si elles existent)
-  if (numSeeds >= 4) {
-    // TS3 et TS4 sont tirées au sort entre les positions permettant de rencontrer TS1 et TS2 en demi-finale
-    const ts3_positions = [bracketSize / 2 - 1, bracketSize / 2]; // Milieu du tableau
-    const ts3_pos = ts3_positions[Math.floor(Math.random() * 2)];
-    const ts4_pos = ts3_positions.find((p) => p !== ts3_pos)!;
-
-    bracket[ts3_pos] = sortedPairs[2];
-    bracket[ts4_pos] = sortedPairs[3];
+  // 2. TS2 en bas du tableau
+  if (numSeeds >= 2 && sortedPairs[1]) {
+    bracket[bracketSize - 1] = sortedPairs[1];
   }
 
-  // 4. Placer les têtes de série 5-8 (si elles existent)
+  // 3. TS3 et TS4
+  if (numSeeds >= 4 && sortedPairs[2] && sortedPairs[3]) {
+    const ts3Positions = [bracketSize / 2 - 1, bracketSize / 2]; // Milieu du tableau
+    const ts3Pos = ts3Positions[Math.floor(Math.random() * 2)];
+    const ts4Pos = ts3Positions.find((p) => p !== ts3Pos)!;
+
+    bracket[ts3Pos] = sortedPairs[2];
+    bracket[ts4Pos] = sortedPairs[3];
+  }
+
+  // 4. TS5–8
   if (numSeeds >= 8) {
-    // Positions stratégiques pour ne rencontrer les 4 premières qu'en quarts
-    const positions_5_8 = [
+    const positions5_8 = [
       bracketSize / 4 - 1,
       bracketSize / 4,
       (3 * bracketSize) / 4 - 1,
       (3 * bracketSize) / 4,
     ];
 
-    // Tirer au sort l'ordre
-    const shuffled_5_8 = shuffleArray([4, 5, 6, 7]);
-    for (let i = 0; i < 4; i++) {
-      bracket[positions_5_8[i]] = sortedPairs[shuffled_5_8[i]];
-    }
-  }
-
-  // 5. Placer les têtes de série 9-16 (si elles existent)
-  if (numSeeds >= 16) {
-    // Positions pour rencontrer les TS 1-8 au 2ème tour
-    const positions_9_16 = [];
-    for (let i = 0; i < 8; i++) {
-      positions_9_16.push(i * (bracketSize / 8));
-    }
-
-    const shuffled_9_16 = shuffleArray([...Array(8)].map((_, i) => 8 + i));
-    for (let i = 0; i < 8; i++) {
-      const pos = positions_9_16[i];
-      if (bracket[pos] === null) {
-        bracket[pos] = sortedPairs[shuffled_9_16[i]];
+    const shuffled5_8 = shuffleArray([4, 5, 6, 7]);
+    for (let i = 0; i < 4 && i < positions5_8.length; i++) {
+      const pairIndex = shuffled5_8[i];
+      if (sortedPairs[pairIndex]) {
+        bracket[positions5_8[i]] = sortedPairs[pairIndex];
       }
     }
   }
 
-  // 6. Tirer au sort les paires restantes (non têtes de série)
-  const nonSeededPairs = sortedPairs.slice(numSeeds);
+  // 5. TS9–16
+  if (numSeeds >= 16) {
+    const positions9_16: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      positions9_16.push(i * (bracketSize / 8));
+    }
+
+    const shuffled9_16 = shuffleArray(
+      [...Array(8)].map((_, i) => 8 + i) // indices 8 à 15
+    );
+    for (let i = 0; i < 8; i++) {
+      const pos = positions9_16[i];
+      if (bracket[pos] === null) {
+        const pairIndex = shuffled9_16[i];
+        if (sortedPairs[pairIndex]) {
+          bracket[pos] = sortedPairs[pairIndex];
+        }
+      }
+    }
+  }
+
+  // 6. Paires non têtes de série
+  const nonSeededPairs = sortedPairs.slice(numSeeds, numPairs);
   const shuffledNonSeeded = shuffleArray(nonSeededPairs);
 
   let nonSeededIndex = 0;
@@ -108,20 +181,19 @@ async function generateKnockoutBracket(
     }
   }
 
-  // 7. Créer les matchs du premier tour
-  const firstRound = `round_of_${bracketSize}`;
+  const firstRound = getRoundTypeFromBracketSize(bracketSize);
   let matchNumber = 1;
 
   for (let i = 0; i < bracketSize; i += 2) {
     const pair1 = bracket[i];
     const pair2 = bracket[i + 1];
 
-    // Gérer les byes (si une position est vide)
     const isBye = !pair1 || !pair2;
 
     await supabase.from("tournament_matches").insert({
       tournament_id: tournament.id,
       round_type: firstRound,
+      round_number: 1,
       match_order: matchNumber++,
       team1_registration_id: pair1?.id || null,
       team2_registration_id: pair2?.id || null,
@@ -137,7 +209,362 @@ async function generateKnockoutBracket(
       bracketSize,
       matchesCreated: matchNumber - 1,
     },
-    "[generate] Knockout bracket generated"
+    "[generate] official_knockout bracket generated"
+  );
+}
+
+// Génération : poules + tableau final (V1 : poules uniquement)
+async function generateOfficialPoolsAndFinal(
+  supabase: any,
+  tournament: any,
+  sortedPairs: RegistrationPair[]
+) {
+  const numPairs = sortedPairs.length;
+  const numPools = numPairs / 4; // 4 équipes par poule (4, 8, 16, 32, 64 ⇒ multiple de 4)
+
+  const pools: RegistrationPair[][] = Array.from(
+    { length: numPools },
+    () => []
+  );
+
+  // Répartition en serpentin
+  for (let i = 0; i < numPairs; i++) {
+    const block = Math.floor(i / numPools);
+    const positionInBlock = i % numPools;
+    const poolIndex =
+      block % 2 === 0 ? positionInBlock : numPools - 1 - positionInBlock;
+    pools[poolIndex].push(sortedPairs[i]);
+  }
+
+  // Création des poules + matchs
+  for (let i = 0; i < pools.length; i++) {
+    const { data: pool, error: poolError } = await supabase
+      .from("tournament_pools")
+      .insert({
+        tournament_id: tournament.id,
+        pool_number: i + 1,
+        pool_type: "main_draw",
+        num_teams: pools[i].length,
+        format: tournament.pool_format || "D1",
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (poolError || !pool) {
+      logger.error(
+        {
+          tournamentId: tournament.id.substring(0, 8) + "…",
+          poolNumber: i + 1,
+          error: poolError?.message,
+        },
+        "[generate] Error creating pool"
+      );
+      continue;
+    }
+
+    // Affecter la poule aux inscriptions
+    for (const pair of pools[i]) {
+      await supabase
+        .from("tournament_registrations")
+        .update({ pool_id: pool.id, phase: "main_draw" })
+        .eq("id", pair.id);
+    }
+
+    // Générer les matchs de poule (tous contre tous)
+    const matches: { team1: RegistrationPair; team2: RegistrationPair }[] = [];
+    for (let a = 0; a < pools[i].length; a++) {
+      for (let b = a + 1; b < pools[i].length; b++) {
+        matches.push({ team1: pools[i][a], team2: pools[i][b] });
+      }
+    }
+
+    for (let m = 0; m < matches.length; m++) {
+      const { error: matchError } = await supabase
+        .from("tournament_matches")
+        .insert({
+          tournament_id: tournament.id,
+          pool_id: pool.id,
+          round_type: "pool",
+          round_number: 1,
+          match_order: m + 1,
+          team1_registration_id: matches[m].team1.id,
+          team2_registration_id: matches[m].team2.id,
+          status: "scheduled",
+        });
+
+      if (matchError) {
+        logger.error(
+          {
+            poolId: pool.id.substring(0, 8) + "…",
+            matchOrder: m + 1,
+            error: matchError.message,
+          },
+          "[generate] Error creating pool match"
+        );
+      }
+    }
+  }
+
+  logger.info(
+    {
+      tournamentId: tournament.id.substring(0, 8) + "…",
+      numPools,
+    },
+    "[generate] official_pools generated (pools only, TODO: final draw)"
+  );
+}
+
+// Génération : Americano
+async function generateAmericano(
+  supabase: any,
+  tournament: any,
+  sortedPairs: RegistrationPair[]
+) {
+  const numPairs = sortedPairs.length;
+
+  // Générer toutes les confrontations possibles (round-robin)
+  const allMatchups: { team1: RegistrationPair; team2: RegistrationPair }[] =
+    [];
+  for (let i = 0; i < numPairs; i++) {
+    for (let j = i + 1; j < numPairs; j++) {
+      allMatchups.push({ team1: sortedPairs[i], team2: sortedPairs[j] });
+    }
+  }
+
+  const shuffledMatchups = shuffleArray(allMatchups);
+
+  // Limiter le nombre de matchs par équipe (~3–4)
+  const maxMatchesPerTeam = numPairs <= 4 ? numPairs - 1 : 4;
+  const matchCount = new Map<string, number>();
+  const selected: { team1: RegistrationPair; team2: RegistrationPair }[] = [];
+
+  for (const m of shuffledMatchups) {
+    const c1 = matchCount.get(m.team1.id) ?? 0;
+    const c2 = matchCount.get(m.team2.id) ?? 0;
+    if (c1 >= maxMatchesPerTeam || c2 >= maxMatchesPerTeam) continue;
+
+    selected.push(m);
+    matchCount.set(m.team1.id, c1 + 1);
+    matchCount.set(m.team2.id, c2 + 1);
+  }
+
+  let matchOrder = 1;
+
+  for (const m of selected) {
+    const { error } = await supabase.from("tournament_matches").insert({
+      tournament_id: tournament.id,
+      // NOTE: le schéma actuel de la table limite les valeurs de round_type.
+      // On utilise 'qualifications' comme valeur générique compatible,
+      // et on se base sur tournament.tournament_type === 'americano' pour l'interprétation.
+      round_type: "qualifications",
+      round_number: 1,
+      match_order,
+      team1_registration_id: m.team1.id,
+      team2_registration_id: m.team2.id,
+      status: "scheduled",
+    });
+
+    if (error) {
+      logger.error(
+        {
+          tournamentId: tournament.id.substring(0, 8) + "…",
+          matchOrder,
+          error: error.message,
+        },
+        "[generate] Error creating americano match"
+      );
+    }
+
+    matchOrder++;
+  }
+
+  logger.info(
+    {
+      tournamentId: tournament.id.substring(0, 8) + "…",
+      numPairs,
+      matchesCreated: selected.length,
+    },
+    "[generate] Americano schedule generated"
+  );
+}
+
+// Génération : Round-robin pur (toutes les paires se rencontrent)
+async function generateRoundRobin(
+  supabase: any,
+  tournament: any,
+  sortedPairs: RegistrationPair[]
+) {
+  const numPairs = sortedPairs.length;
+  const matches: { team1: RegistrationPair; team2: RegistrationPair }[] = [];
+
+  for (let i = 0; i < numPairs; i++) {
+    for (let j = i + 1; j < numPairs; j++) {
+      matches.push({ team1: sortedPairs[i], team2: sortedPairs[j] });
+    }
+  }
+
+  let matchOrder = 1;
+
+  for (const m of matches) {
+    const { error } = await supabase.from("tournament_matches").insert({
+      tournament_id: tournament.id,
+      round_type: "pool",
+      round_number: 1,
+      match_order,
+      team1_registration_id: m.team1.id,
+      team2_registration_id: m.team2.id,
+      status: "scheduled",
+    });
+
+    if (error) {
+      logger.error(
+        {
+          tournamentId: tournament.id.substring(0, 8) + "…",
+          matchOrder,
+          error: error.message,
+        },
+        "[generate] Error creating round-robin match"
+      );
+    }
+
+    matchOrder++;
+  }
+
+  logger.info(
+    {
+      tournamentId: tournament.id.substring(0, 8) + "…",
+      numPairs,
+      matchesCreated: matches.length,
+    },
+    "[generate] Round-robin schedule generated"
+  );
+}
+
+// Génération : TMC (V1 – tableau principal + tableau de classement simple)
+async function generateTmc(
+  supabase: any,
+  tournament: any,
+  sortedPairs: RegistrationPair[],
+  bracketSize: number
+) {
+  // V1 : on crée un premier tour d'élimination directe (comme TDL)
+  // et un tableau de classement simple entre les perdants du 1er tour.
+  await generateOfficialKnockout(
+    supabase,
+    tournament,
+    sortedPairs,
+    determineNumberOfSeeds(sortedPairs.length),
+    bracketSize
+  );
+
+  // Les matchs de classement seront générés plus tard à partir des résultats :
+  // TODO: utiliser les losers du premier tour pour créer un tableau de classement complet.
+  logger.info(
+    {
+      tournamentId: tournament.id.substring(0, 8) + "…",
+    },
+    "[generate] TMC main draw generated (TODO: full multi-chance classification)"
+  );
+}
+
+// Génération : Double élimination (V1 – bracket principal + TODO losers bracket)
+async function generateDoubleElimination(
+  supabase: any,
+  tournament: any,
+  sortedPairs: RegistrationPair[],
+  bracketSize: number
+) {
+  // V1 : on génère uniquement le winners bracket (élimination directe classique).
+  await generateOfficialKnockout(
+    supabase,
+    tournament,
+    sortedPairs,
+    determineNumberOfSeeds(sortedPairs.length),
+    bracketSize
+  );
+
+  // TODO: créer le losers bracket lié aux matchs via next_match_id / positions.
+  logger.info(
+    {
+      tournamentId: tournament.id.substring(0, 8) + "…",
+    },
+    "[generate] Double elimination winners bracket generated (TODO: losers bracket)"
+  );
+}
+
+// Génération : Poules + 3 tableaux (V1 – poules uniquement)
+async function generatePoolsTripleDraw(
+  supabase: any,
+  tournament: any,
+  sortedPairs: RegistrationPair[]
+) {
+  // V1 : on réutilise la génération de poules standard.
+  await generateOfficialPoolsAndFinal(supabase, tournament, sortedPairs);
+
+  // TODO: à partir des classements de poules, répartir dans 3 tableaux (A/B/C).
+  logger.info(
+    {
+      tournamentId: tournament.id.substring(0, 8) + "…",
+    },
+    "[generate] Pools for triple-draw generated (TODO: 3 separate knockout brackets)"
+  );
+}
+
+// Génération : Mexicano (V1 simplifiée, rounds fixes)
+async function generateMexicano(
+  supabase: any,
+  tournament: any,
+  sortedPairs: RegistrationPair[]
+) {
+  const numPairs = sortedPairs.length;
+  const rounds =
+    numPairs <= 4 ? 2 : numPairs <= 8 ? 3 : 4; // heuristique simple pour V1
+
+  for (let round = 0; round < rounds; round++) {
+    // Rotation simple des indices pour varier les oppositions
+    const rotated = [...sortedPairs.slice(round), ...sortedPairs.slice(0, round)];
+
+    let matchOrder = 1;
+    for (let i = 0; i < rotated.length; i += 2) {
+      const team1 = rotated[i];
+      const team2 = rotated[i + 1];
+      if (!team1 || !team2) continue;
+
+      const { error } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournament.id,
+        // Cf. commentaire dans generateAmericano : on reste sur une valeur autorisée
+        round_type: "qualifications",
+        round_number: round + 1,
+        match_order,
+        team1_registration_id: team1.id,
+        team2_registration_id: team2.id,
+        status: "scheduled",
+      });
+
+      if (error) {
+        logger.error(
+          {
+            tournamentId: tournament.id.substring(0, 8) + "…",
+            round: round + 1,
+            matchOrder,
+            error: error.message,
+          },
+          "[generate] Error creating mexicano match"
+        );
+      }
+
+      matchOrder++;
+    }
+  }
+
+  logger.info(
+    {
+      tournamentId: tournament.id.substring(0, 8) + "…",
+      numPairs,
+      rounds,
+    },
+    "[generate] Mexicano rounds generated (V1)"
   );
 }
 
@@ -234,12 +661,12 @@ export async function POST(
       );
     }
 
-    // 4. Récupérer les inscriptions validées
+    // 4. Récupérer les inscriptions validées / confirmées
     const { data: registrations, error: regError } = await supabaseAdmin
       .from("tournament_registrations")
       .select("*")
       .eq("tournament_id", id)
-      .eq("status", "confirmed")
+      .in("status", ["confirmed", "validated"])
       .order("pair_total_rank", { ascending: true });
 
     if (regError) {
@@ -263,27 +690,27 @@ export async function POST(
       );
     }
 
-    // 5. Vérifier limite d'équipes
-    const maxTeams = tournament.max_teams || 16;
-    if (registrations.length !== maxTeams) {
+    // 5. Vérifier taille supportée pour les formats officiels
+    const numPairs = registrations.length;
+    const allowedSizes = [
+      4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64,
+    ];
+    if (!allowedSizes.includes(numPairs)) {
       return NextResponse.json(
         {
-          error: `Nombre d'équipes incorrect : ${registrations.length}/${maxTeams}. Le tableau doit être complet.`,
+          error:
+            "Nombre d'équipes invalide. Seuls 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 ou 64 équipes sont supportées pour la génération automatique.",
         },
         { status: 400 }
       );
     }
 
-    // 6. Trier les paires par classement (ordre croissant = meilleures en premier)
-    const sortedPairs = [...registrations].sort(
-      (a, b) => (a.pair_total_rank || 0) - (b.pair_total_rank || 0)
-    );
+    // 6. Préparer les paires (tri, seeds, taille de tableau)
+    const { sortedPairs, numSeeds, bracketSize } =
+      preparePairsForDraw(registrations);
 
-    // 7. Déterminer le nombre de têtes de série
-    const numSeeds = determineNumberOfSeeds(sortedPairs.length);
-
-    // 8. Attribuer les numéros de têtes de série
-    for (let i = 0; i < numSeeds; i++) {
+    // Attribuer les numéros de têtes de série
+    for (let i = 0; i < numSeeds && i < sortedPairs.length; i++) {
       await supabaseAdmin
         .from("tournament_registrations")
         .update({ seed_number: i + 1 })
@@ -292,25 +719,88 @@ export async function POST(
       sortedPairs[i].seed_number = i + 1;
     }
 
-    // 9. Générer le tableau selon le format
-    if (tournament.tournament_type === "official_knockout") {
-      await generateKnockoutBracket(
-        supabaseAdmin,
-        tournament,
-        sortedPairs,
-        numSeeds
+    // 7. Vérifier qu'aucun match n'existe déjà (éviter double génération)
+    const { data: existingMatches, error: matchesError } = await supabaseAdmin
+      .from("tournament_matches")
+      .select("id")
+      .eq("tournament_id", id)
+      .limit(1);
+
+    if (matchesError) {
+      logger.error(
+        {
+          tournamentId: id.substring(0, 8) + "…",
+          error: matchesError.message,
+        },
+        "[generate] Error checking existing matches"
       );
-    } else {
+      return NextResponse.json(
+        { error: "Erreur lors de la vérification des matchs existants" },
+        { status: 500 }
+      );
+    }
+
+    if (existingMatches && existingMatches.length > 0) {
       return NextResponse.json(
         {
           error:
-            "Type de tournoi non supporté (seul official_knockout est implémenté)",
+            "Des matchs existent déjà pour ce tournoi. Le tirage ne peut pas être regénéré.",
         },
         { status: 400 }
       );
     }
 
-    // 10. Mettre à jour le statut
+    // 8. Générer selon le type de tournoi
+    logger.info(
+      {
+        tournamentId: id.substring(0, 8) + "…",
+        type: tournament.tournament_type,
+        numPairs,
+        numSeeds,
+        bracketSize,
+      },
+      "[generate] Starting draw generation"
+    );
+
+    if (tournament.tournament_type === "official_knockout") {
+      await generateOfficialKnockout(
+        supabaseAdmin,
+        tournament,
+        sortedPairs,
+        numSeeds,
+        bracketSize
+      );
+    } else if (tournament.tournament_type === "tmc") {
+      await generateTmc(supabaseAdmin, tournament, sortedPairs, bracketSize);
+    } else if (tournament.tournament_type === "double_elimination") {
+      await generateDoubleElimination(
+        supabaseAdmin,
+        tournament,
+        sortedPairs,
+        bracketSize
+      );
+    } else if (tournament.tournament_type === "official_pools") {
+      await generateOfficialPoolsAndFinal(
+        supabaseAdmin,
+        tournament,
+        sortedPairs
+      );
+    } else if (tournament.tournament_type === "pools_triple_draw") {
+      await generatePoolsTripleDraw(supabaseAdmin, tournament, sortedPairs);
+    } else if (tournament.tournament_type === "round_robin") {
+      await generateRoundRobin(supabaseAdmin, tournament, sortedPairs);
+    } else if (tournament.tournament_type === "americano") {
+      await generateAmericano(supabaseAdmin, tournament, sortedPairs);
+    } else if (tournament.tournament_type === "mexicano") {
+      await generateMexicano(supabaseAdmin, tournament, sortedPairs);
+    } else {
+      return NextResponse.json(
+        { error: "Type de tournoi non supporté" },
+        { status: 400 }
+      );
+    }
+
+    // 9. Mettre à jour le statut
     await supabaseAdmin
       .from("tournaments")
       .update({ status: "draw_published" })
@@ -319,10 +809,10 @@ export async function POST(
     logger.info(
       {
         tournamentId: id.substring(0, 8) + "…",
-        numPairs: sortedPairs.length,
+        numPairs,
         numSeeds,
       },
-      "[generate] Tournament bracket generated successfully"
+      "[generate] Tournament draw generated successfully"
     );
 
     return NextResponse.json({

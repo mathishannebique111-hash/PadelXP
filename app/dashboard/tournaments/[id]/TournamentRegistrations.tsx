@@ -37,6 +37,22 @@ export default function TournamentRegistrations({
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creatingManual, setCreatingManual] = useState(false);
+  const [manualForm, setManualForm] = useState<{
+    player_name: string;
+    player_rank: string;
+    partner_name: string;
+    partner_rank: string;
+  }>({
+    player_name: "",
+    player_rank: "",
+    partner_name: "",
+    partner_rank: "",
+  });
+  const [manualError, setManualError] = useState<string | null>(null);
+  const [manualPending, setManualPending] = useState(false);
+  const [maxTeams, setMaxTeams] = useState<number | null>(null);
+  const [currentTeams, setCurrentTeams] = useState<number>(0);
 
   useEffect(() => {
     fetchRegistrations(true);
@@ -60,6 +76,16 @@ export default function TournamentRegistrations({
         throw new Error(data.error || "Erreur lors du chargement des inscriptions");
       }
       setRegistrations(data.registrations || []);
+      if (typeof data.maxTeams === "number") {
+        setMaxTeams(data.maxTeams);
+      } else {
+        setMaxTeams(null);
+      }
+      if (typeof data.currentTeams === "number") {
+        setCurrentTeams(data.currentTeams);
+      } else {
+        setCurrentTeams(Array.isArray(data.registrations) ? data.registrations.length : 0);
+      }
     } catch (err: any) {
       setError(err.message || "Erreur lors du chargement des inscriptions");
     } finally {
@@ -123,20 +149,200 @@ export default function TournamentRegistrations({
     return <p className="text-sm text-red-400">{error}</p>;
   }
 
+  const isFull =
+    maxTeams !== null && typeof maxTeams === "number"
+      ? currentTeams >= maxTeams
+      : false;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Inscriptions</h2>
         <Button
           type="button"
-          variant="outline"
+          variant={creatingManual ? "secondary" : "outline"}
           size="sm"
-          disabled
-          title="À implémenter : ajout manuel d'une paire"
+          disabled={isFull}
+          title={
+            isFull
+              ? "Le nombre maximum d'équipes est atteint pour ce tournoi."
+              : undefined
+          }
+          onClick={() => {
+            setCreatingManual((prev) => !prev);
+            setManualError(null);
+          }}
         >
-          Ajouter une inscription manuelle
+          {creatingManual ? "Annuler" : "Ajouter une inscription manuelle"}
         </Button>
       </div>
+
+      {maxTeams !== null && (
+        <div className="rounded-md bg-white/5 border border-white/10 px-3 py-2 inline-flex items-center gap-2">
+          <span className="text-sm font-semibold text-white">
+            {currentTeams}/{maxTeams} équipes inscrites
+          </span>
+          {isFull && (
+            <span className="text-xs font-medium text-red-300 uppercase tracking-wide">
+              Complet
+            </span>
+          )}
+        </div>
+      )}
+
+      {creatingManual && (
+        <div className="rounded-lg border border-white/10 bg-black/40 p-4 space-y-3">
+          <p className="text-sm text-white/80">
+            Ajouter une paire manuellement pour ce tournoi (mêmes informations que côté joueur).
+          </p>
+
+          {manualError && (
+            <p className="text-sm text-red-400">{manualError}</p>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-white/70">Joueur 1</p>
+              <Input
+                placeholder="Nom Prénom joueur 1"
+                className="bg-black/40 border-white/10 text-white h-8"
+                value={manualForm.player_name}
+                onChange={(e) =>
+                  setManualForm((prev) => ({
+                    ...prev,
+                    player_name: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-white/70">Classement joueur 1</p>
+              <Input
+                type="number"
+                placeholder="Rang national (ex : 50000)"
+                className="bg-black/40 border-white/10 text-white h-8"
+                value={manualForm.player_rank}
+                onChange={(e) =>
+                  setManualForm((prev) => ({
+                    ...prev,
+                    player_rank: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-white/70">Joueur 2 (partenaire)</p>
+              <Input
+                placeholder="Nom Prénom partenaire"
+                className="bg-black/40 border-white/10 text-white h-8"
+                value={manualForm.partner_name}
+                onChange={(e) =>
+                  setManualForm((prev) => ({
+                    ...prev,
+                    partner_name: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-white/70">
+                Classement joueur 2 (partenaire)
+              </p>
+              <Input
+                type="number"
+                placeholder="Rang national partenaire (ex : 40000)"
+                className="bg-black/40 border-white/10 text-white h-8"
+                value={manualForm.partner_rank}
+                onChange={(e) =>
+                  setManualForm((prev) => ({
+                    ...prev,
+                    partner_rank: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              onClick={async () => {
+                setManualError(null);
+                if (
+                  !manualForm.player_name.trim() ||
+                  !manualForm.partner_name.trim() ||
+                  !manualForm.player_rank.trim() ||
+                  !manualForm.partner_rank.trim()
+                ) {
+                  setManualError(
+                    "Merci de renseigner les noms et classements des deux joueurs."
+                  );
+                  return;
+                }
+
+                const playerRank = parseInt(manualForm.player_rank, 10);
+                const partnerRank = parseInt(manualForm.partner_rank, 10);
+                if (
+                  Number.isNaN(playerRank) ||
+                  Number.isNaN(partnerRank) ||
+                  playerRank <= 0 ||
+                  partnerRank <= 0
+                ) {
+                  setManualError(
+                    "Les classements doivent être des nombres entiers positifs."
+                  );
+                  return;
+                }
+
+                setManualPending(true);
+                try {
+                  const res = await fetch(
+                    `/api/tournaments/${tournamentId}/registrations`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        player_name: manualForm.player_name.trim(),
+                        player_rank: playerRank,
+                        partner_name: manualForm.partner_name.trim(),
+                        partner_rank: partnerRank,
+                      }),
+                    }
+                  );
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    throw new Error(
+                      data.error || "Erreur lors de la création de l'inscription"
+                    );
+                  }
+
+                  setManualForm({
+                    player_name: "",
+                    player_rank: "",
+                    partner_name: "",
+                    partner_rank: "",
+                  });
+                  setCreatingManual(false);
+                  await fetchRegistrations(false);
+                } catch (err: any) {
+                  setManualError(
+                    err.message ||
+                      "Erreur inattendue lors de la création de l'inscription."
+                  );
+                } finally {
+                  setManualPending(false);
+                }
+              }}
+              disabled={manualPending}
+            >
+              {manualPending
+                ? "Création de l'inscription..."
+                : "Créer l'inscription"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {registrations.length === 0 ? (
         <p className="text-sm text-gray-300">

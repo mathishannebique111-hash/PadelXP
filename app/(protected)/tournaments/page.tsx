@@ -13,6 +13,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin =
+  SUPABASE_URL && SERVICE_ROLE_KEY
+    ? createAdminClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+    : null;
 
 function renderTournamentType(type: string) {
   switch (type) {
@@ -72,7 +83,7 @@ export default async function PublicTournamentsPage() {
   const query = supabase
     .from("tournaments")
     .select(
-      "id, name, category, tournament_type, start_date, end_date, status, clubs(name)"
+      "id, name, category, tournament_type, start_date, end_date, status, max_teams, clubs(name)"
     )
     .eq("status", "open")
     .order("start_date", { ascending: true });
@@ -90,7 +101,63 @@ export default async function PublicTournamentsPage() {
     );
   }
 
-  const tournaments = data || [];
+  const tournaments = (data || []) as Array<{
+    id: string;
+    name: string;
+    category: string;
+    tournament_type: string;
+    start_date: string;
+    end_date: string;
+    status: string;
+    max_teams?: number | null;
+    clubs?: { name?: string | null } | null;
+  }>;
+
+  // Calculer quels tournois sont complets (en utilisant l'admin client pour ignorer la RLS)
+  const fullTournamentIds = new Set<string>();
+
+  if (supabaseAdmin && tournaments.length > 0) {
+    const results = await Promise.all(
+      tournaments.map(async (tournament) => {
+        const maxTeams =
+          typeof tournament.max_teams === "number" && tournament.max_teams > 0
+            ? tournament.max_teams
+            : null;
+
+        if (!maxTeams) {
+          return { id: tournament.id, isFull: false };
+        }
+
+        const { count, error: countError } = await supabaseAdmin
+          .from("tournament_registrations")
+          .select("*", { count: "exact", head: true })
+          .eq("tournament_id", tournament.id)
+          .in("status", ["pending", "confirmed", "validated"]);
+
+        if (countError) {
+          logger.warn(
+            {
+              tournamentId: tournament.id.substring(0, 8) + "…",
+              error: countError.message,
+            },
+            "[tournaments/list] Could not count registrations for tournament"
+          );
+          return { id: tournament.id, isFull: false };
+        }
+
+        const isFull =
+          typeof count === "number" && maxTeams !== null && count >= maxTeams;
+
+        return { id: tournament.id, isFull };
+      })
+    );
+
+    results.forEach((res) => {
+      if (res.isFull) {
+        fullTournamentIds.add(res.id);
+      }
+    });
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
@@ -128,37 +195,50 @@ export default async function PublicTournamentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tournaments.map((tournament: any) => (
-                    <TableRow key={tournament.id} className="border-white/10">
-                      <TableCell className="text-white">
-                        {tournament.name}
-                      </TableCell>
-                      <TableCell className="text-white/80">
-                        {tournament.clubs?.name || "Club inconnu"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className="bg-white/10 text-white border-white/20">
-                          {tournament.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-white/80">
-                        {renderTournamentType(tournament.tournament_type)}
-                      </TableCell>
-                      <TableCell className="text-white/80">
-                        {formatDateRange(
-                          tournament.start_date,
-                          tournament.end_date
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild size="sm" variant="outline">
-                          <Link href={`/tournaments/${tournament.id}`}>
-                            Voir le tournoi
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {tournaments.map((tournament) => {
+                    const isFull = fullTournamentIds.has(tournament.id);
+
+                    return (
+                      <TableRow
+                        key={tournament.id}
+                        className="border-white/10"
+                      >
+                        <TableCell className="text-white">
+                          {tournament.name}
+                        </TableCell>
+                        <TableCell className="text-white/80">
+                          {tournament.clubs?.name || "Club inconnu"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-white/10 text-white border-white/20">
+                            {tournament.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-white/80">
+                          {renderTournamentType(tournament.tournament_type)}
+                        </TableCell>
+                        <TableCell className="text-white/80">
+                          {formatDateRange(
+                            tournament.start_date,
+                            tournament.end_date
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isFull ? (
+                            <span className="inline-flex items-center rounded-md bg-red-600/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-red-300">
+                              COMPLET
+                            </span>
+                          ) : (
+                            <Button asChild size="sm" variant="outline">
+                              <Link href={`/tournaments/${tournament.id}`}>
+                                Voir le tournoi
+                              </Link>
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

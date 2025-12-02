@@ -19,12 +19,12 @@ const supabaseAdmin =
     ? createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        }
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
       )
     : null;
 
@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
                     text: hasText ? emailData.text : undefined,
                     html: hasHtml ? emailData.html : undefined,
                   };
-                } else {
+        } else {
                   logger.info(`[resend-inbound] Attempt ${attempt}: Email body empty, will retry...`);
                 }
               }
@@ -302,14 +302,14 @@ export async function POST(req: NextRequest) {
                 try {
                   logger.info(`[resend-inbound] Attempt ${attempt}: Trying REST endpoint`, { endpoint });
                   const response = await fetch(endpoint, {
-                    method: "GET",
-                    headers: {
+            method: "GET",
+            headers: {
                       Authorization: `Bearer ${resendApiKey}`,
-                      "Content-Type": "application/json",
-                    },
-                  });
+              "Content-Type": "application/json",
+            },
+          });
 
-                  if (response.ok) {
+          if (response.ok) {
                     const fetched = await response.json();
                     const emailData = fetched?.data || fetched;
                     
@@ -336,8 +336,8 @@ export async function POST(req: NextRequest) {
                       status: response.status,
                       errorPreview: errorText.substring(0, 100),
                     });
-                  }
-                } catch (fetchError: any) {
+        }
+      } catch (fetchError: any) {
                   logger.info("[resend-inbound] Error trying endpoint", {
                     endpoint,
                     error: fetchError?.message,
@@ -690,7 +690,7 @@ export async function POST(req: NextRequest) {
               .from("review_conversations")
               .select("id, review_id, user_name, user_email, subject")
               .eq("id", safeConversationId)
-              .maybeSingle();
+        .maybeSingle();
 
             if (!convByIdError && convById) {
               reviewConv = convById;
@@ -839,7 +839,7 @@ export async function POST(req: NextRequest) {
             .eq("conversation_id", safeConversationId)
             .order("created_at", { ascending: false })
             .limit(1)
-            .maybeSingle();
+        .maybeSingle();
 
           if (lastMessageError) {
             logger.error("[resend-inbound] Error fetching last support message for forward", {
@@ -928,8 +928,8 @@ export async function POST(req: NextRequest) {
     logger.error(
       "[resend-inbound] Unexpected error in inbound webhook handler",
       {
-        message: error?.message,
-        name: error?.name,
+      message: error?.message,
+      name: error?.name,
       }
     );
     return NextResponse.json(

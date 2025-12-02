@@ -8,8 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { MATCH_FORMATS } from "@/lib/types/tournaments";
+import { MATCH_FORMATS, type Tournament } from "@/lib/types/tournaments";
 import Link from "next/link";
+
+const TOURNAMENT_TYPES = [
+  { value: "official_knockout", label: "Élimination directe (TDL)" },
+  { value: "tmc", label: "Tournoi Multi-Chances (TMC)" },
+  { value: "double_elimination", label: "Double élimination" },
+  { value: "official_pools", label: "Poules + Tableau final" },
+  {
+    value: "pools_triple_draw",
+    label: "Poules + 3 tableaux (principal / intermédiaire / consolante)",
+  },
+] as const;
 
 export function CreateTournamentForm() {
   const router = useRouter();
@@ -19,8 +30,8 @@ export function CreateTournamentForm() {
     name: "",
     description: "",
     category: "P100",
-    tournament_type: "official_pools" as "official_knockout" | "official_pools" | "americano" | "mexicano" | "custom",
-    match_format: "B1" as "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "D1" | "D2" | "E" | "F",
+    tournament_type: "official_pools" as Tournament["tournament_type"],
+    match_format: "B1" as Tournament["match_format"],
     start_date: "",
     end_date: "",
     inscription_fee: 10,
@@ -159,30 +170,33 @@ export function CreateTournamentForm() {
           <Label className="text-white">Type de tournoi *</Label>
           <RadioGroup
             value={form.tournament_type}
-            onValueChange={(value: any) => setForm({ ...form, tournament_type: value })}
-            className="space-y-2"
+            onValueChange={(value) =>
+              setForm({
+                ...form,
+                tournament_type: value as Tournament["tournament_type"],
+              })
+            }
+            className="grid gap-2"
             disabled={pending}
           >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="official_pools" id="type-pools" />
-              <Label htmlFor="type-pools" className="text-white/90 cursor-pointer">Poules + Tableau Final</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="official_knockout" id="type-ko" />
-              <Label htmlFor="type-ko" className="text-white/90 cursor-pointer">Élimination directe</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="americano" id="type-americano" />
-              <Label htmlFor="type-americano" className="text-white/90 cursor-pointer">Americano</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="mexicano" id="type-mexicano" />
-              <Label htmlFor="type-mexicano" className="text-white/90 cursor-pointer">Mexicano</Label>
-            </div>
+            {TOURNAMENT_TYPES.map((type) => (
+              <Label
+                key={type.value}
+                className="flex items-center space-x-2 rounded-md border border-white/10 bg-black/40 px-3 py-2 text-white"
+              >
+                <RadioGroupItem
+                  value={type.value}
+                  className="border-white/40"
+                />
+                <span>{type.label}</span>
+              </Label>
+            ))}
           </RadioGroup>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="match_format" className="text-white">Format des matchs *</Label>
+          <Label htmlFor="match_format" className="text-white">
+            Format de match *
+          </Label>
           <Select
             value={form.match_format}
             onValueChange={(value: any) => setForm({ ...form, match_format: value })}
