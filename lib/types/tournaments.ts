@@ -13,8 +13,7 @@ export type TournamentType =
   | "mexicano"
   | "custom";
 
-export type MatchFormat = 
-  | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'D1' | 'D2' | 'E' | 'F';
+export type MatchFormat = 'A1' | 'B1' | 'C1' | 'D1';
 
 export type TournamentStatus = 
   | 'draft' | 'open' | 'registration_closed' | 'draw_published' 
@@ -213,16 +212,10 @@ export interface BracketMatch {
 
 // Format descriptions constants
 export const MATCH_FORMATS = {
-  A1: { description: '3 sets à 6 jeux, tie-break à 6-6, avec avantage', sets: 3, games: 6 },
-  A2: { description: '3 sets à 6 jeux, tie-break à 6-6, PUNTO DE ORO', sets: 3, games: 6 },
-  B1: { description: '2 sets à 6 jeux + super tie-break 10pts, avec avantage', sets: 2, games: 6 },
-  B2: { description: '2 sets à 6 jeux + super tie-break 10pts, PUNTO DE ORO', sets: 2, games: 6 },
-  C1: { description: '2 sets à 4 jeux, tie-break à 4-4 + super tie-break 10pts, avec avantage', sets: 2, games: 4 },
-  C2: { description: '2 sets à 4 jeux, tie-break à 4-4 + super tie-break 10pts, PUNTO DE ORO', sets: 2, games: 4 },
-  D1: { description: '1 set à 9 jeux, tie-break à 8-8, avec avantage', sets: 1, games: 9 },
-  D2: { description: '1 set à 9 jeux, tie-break à 8-8, PUNTO DE ORO', sets: 1, games: 9 },
-  E: { description: '1 super tie-break à 10 points', sets: 1, games: 0 },
-  F: { description: '1 set à 4 jeux, PUNTO DE ORO, tie-break à 3-3', sets: 1, games: 4 },
+  A1: { description: '3 sets à 6 jeux', sets: 3, games: 6 },
+  B1: { description: '2 sets à 6 jeux + super tie-break 10pts', sets: 2, games: 6 },
+  C1: { description: '2 sets à 4 jeux + super tie-break 10pts', sets: 2, games: 4 },
+  D1: { description: '1 set à 9 jeux', sets: 1, games: 9 },
 } as const;
 
 export const TOURNAMENT_CATEGORIES = [

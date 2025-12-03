@@ -61,7 +61,6 @@ export default function TournamentBracket({
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [scoreInputs, setScoreInputs] = useState<Record<string, string>>({});
   const [setInputs, setSetInputs] = useState<
     Record<string, { set1: string; set2: string; set3: string }>
   >({});
@@ -88,29 +87,69 @@ export default function TournamentBracket({
       const loadedMatches: Match[] = data.matches || [];
       setMatches(loadedMatches);
 
-      // Initialiser les champs de score visibles à partir des données retournées
-      const initialScores: Record<string, string> = {};
-      const initialSets: Record<string, { set1: string; set2: string; set3: string }> =
-        {};
+      // Initialiser les champs "Set 1", "Set 2", "Set 3" à partir du score structuré
+      const initialSets: Record<
+        string,
+        { set1: string; set2: string; set3: string }
+      > = {};
 
       for (const m of loadedMatches) {
-        if (matchFormat === "A1" && Array.isArray(m.score?.sets)) {
-          const setsArr = m.score.sets as Array<{ team1: number; team2: number }>;
-          initialSets[m.id] = {
-            set1: setsArr[0] ? `${setsArr[0].team1}/${setsArr[0].team2}` : "",
-            set2: setsArr[1] ? `${setsArr[1].team1}/${setsArr[1].team2}` : "",
-            set3: setsArr[2] ? `${setsArr[2].team1}/${setsArr[2].team2}` : "",
-          };
-        } else if (m.score?.final_score) {
-          initialScores[m.id] = String(m.score.final_score);
+        let set1 = "";
+        let set2 = "";
+        let set3 = "";
+
+        if (Array.isArray(m.score?.sets)) {
+          const setsArr = m.score
+            .sets as Array<{ team1: number; team2: number }>;
+
+          // Pour tous les formats avec sets classiques, on remplit Set 1 / Set 2
+          if (setsArr[0]) {
+            set1 = `${setsArr[0].team1}/${setsArr[0].team2}`;
+          }
+          if (setsArr[1]) {
+            set2 = `${setsArr[1].team1}/${setsArr[1].team2}`;
+          }
+
+          // Pour A1/A2 : 3ème set classique
+          if (
+            (matchFormat === "A1" || matchFormat === "A2") &&
+            setsArr[2]
+          ) {
+            set3 = `${setsArr[2].team1}/${setsArr[2].team2}`;
+          }
+        }
+
+        // Super tie-break en Set 3 pour B1/B2/C1/C2/E
+        if (
+          m.score?.super_tiebreak &&
+          (matchFormat === "B1" ||
+            matchFormat === "B2" ||
+            matchFormat === "C1" ||
+            matchFormat === "C2" ||
+            matchFormat === "E")
+        ) {
+          const st = m.score
+            .super_tiebreak as { team1: number; team2: number };
+          set3 = `${st.team1}/${st.team2}`;
+        }
+
+        // Fallback : si pas de score structuré mais un final_score texte
+        if (!set1 && m.score?.final_score) {
+          const tokens = String(m.score.final_score)
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
+          if (tokens[0]) set1 = tokens[0];
+          if (tokens[1]) set2 = tokens[1];
+          if (tokens[2]) set3 = tokens[2];
+        }
+
+        if (set1 || set2 || set3) {
+          initialSets[m.id] = { set1, set2, set3 };
         }
       }
 
-      if (matchFormat === "A1") {
-        setSetInputs(initialSets);
-      } else {
-        setScoreInputs(initialScores);
-      }
+      setSetInputs(initialSets);
     } catch (err: any) {
       setError(err.message || "Erreur lors du chargement du tableau");
     } finally {
@@ -170,8 +209,7 @@ export default function TournamentBracket({
     let superToken: { team1: number; team2: number } | null = null;
 
     switch (format) {
-      case "A1":
-      case "A2": {
+      case "A1": {
         if (parsed.length < 2 || parsed.length > 3) {
           throw new Error(
             "Pour le format A1/A2, entre 2 ou 3 sets (ex: 6/3 4/6 6/4)."
@@ -193,12 +231,11 @@ export default function TournamentBracket({
         }
         break;
       }
-      case "B2":
-      case "C1":
-      case "C2": {
+      case "C1": {
+        // Format C1 : 2 sets à 4 jeux + super tie-break 10 points en cas d'égalité 1-1
         if (parsed.length < 2 || parsed.length > 3) {
           throw new Error(
-            "Pour ce format, entre 2 sets puis éventuellement un super tie-break (ex: 6/3 4/6 10/6)."
+            "Format C1 : entre 2 sets puis éventuellement un super tie-break (ex: 4/1 3/5 10/6)."
           );
         }
         setTokens = parsed.slice(0, 2);
@@ -207,25 +244,13 @@ export default function TournamentBracket({
         }
         break;
       }
-      case "D1":
-      case "D2":
-      case "F": {
+      case "D1": {
         if (parsed.length !== 1) {
           throw new Error(
-            "Pour ce format, un seul set est attendu (ex: 9/7 ou 4/2)."
+            "Format D1 : un seul set est attendu (ex: 9/7)."
           );
         }
         setTokens = parsed;
-        break;
-      }
-      case "E": {
-        if (parsed.length !== 1) {
-          throw new Error(
-            "Pour le format E, un seul super tie-break est attendu (ex: 10/8)."
-          );
-        }
-        superToken = parsed[0];
-        setTokens = [{ team1: 0, team2: 0 }];
         break;
       }
       default: {
@@ -234,12 +259,7 @@ export default function TournamentBracket({
       }
     }
 
-    const puntoDeOro =
-      format === "A2" ||
-      format === "B2" ||
-      format === "C2" ||
-      format === "D2" ||
-      format === "F";
+    const puntoDeOro = false;
 
     const payload: any = {
       sets: setTokens.map((s) => ({ team1: s.team1, team2: s.team2 })),
@@ -253,22 +273,28 @@ export default function TournamentBracket({
       };
     }
 
-    const formatsAvecJeuxClassiques = [
-      "A1",
-      "A2",
-      "B1",
-      "B2",
-      "C1",
-      "C2",
-      "D1",
-      "D2",
-      "F",
-    ];
-    if (formatsAvecJeuxClassiques.includes(format)) {
+    // Règles de validation des sets pour les formats à 6 jeux (A1/B1)
+    if (format === "A1" || format === "B1") {
       for (const s of payload.sets as Array<{ team1: number; team2: number }>) {
         const maxGames = Math.max(s.team1, s.team2);
         const minGames = Math.min(s.team1, s.team2);
-        if (maxGames === 7) {
+
+        // Une manche doit être gagnée à 6 jeux (ou 7 en cas de 7/5 ou 7/6)
+        if (maxGames < 6) {
+          throw new Error(
+            "Score invalide : un set doit être gagné avec au moins 6 jeux."
+          );
+        }
+
+        if (maxGames === 6) {
+          // Si une équipe a 6 jeux, l'autre doit avoir 4 ou moins
+          if (minGames > 4) {
+            throw new Error(
+              "Score invalide : si une équipe a 6 jeux, l'autre doit avoir 4 jeux ou moins (6/0 à 6/4)."
+            );
+          }
+        } else if (maxGames === 7) {
+          // Si une équipe a 7 jeux, l'autre doit avoir 5 ou 6
           if (minGames < 5 || minGames > 6) {
             throw new Error(
               "Score invalide : lorsqu'une équipe a 7 jeux, l'autre doit avoir 5 ou 6 (7/5 ou 7/6 uniquement)."
@@ -287,7 +313,7 @@ export default function TournamentBracket({
       }
       if (wins1 === 1 && wins2 === 1) {
         throw new Error(
-          "Match en 1-1 : le 3ème set est obligatoire pour le format A1."
+          "Match en 1-1 : le 3ème set est obligatoire pour ce format."
         );
       }
     }
@@ -327,7 +353,132 @@ export default function TournamentBracket({
       }
     }
 
+    if (format === "D1") {
+      // D1 : 1 set à 9 jeux minimum
+      for (const s of payload.sets as Array<{ team1: number; team2: number }>) {
+        const maxGames = Math.max(s.team1, s.team2);
+        const minGames = Math.min(s.team1, s.team2);
+
+        if (maxGames < 9) {
+          throw new Error(
+            "Score invalide en D1 : un set doit être gagné avec au moins 9 jeux."
+          );
+        }
+
+        if (maxGames === 9) {
+          // L'autre équipe peut avoir de 0 à 8 jeux, mais pas 9
+          if (minGames > 8) {
+            throw new Error(
+              "Score invalide en D1 : si une équipe a 9 jeux, l'autre doit avoir au maximum 8 jeux (9/0 à 9/8)."
+            );
+          }
+        } else if (maxGames > 9) {
+          throw new Error(
+            "Score invalide en D1 : le nombre de jeux gagnés ne peut pas dépasser 9."
+          );
+        }
+      }
+    }
+
+    if (format === "C1") {
+      // C1 : 2 sets à 4 jeux, super tie-break obligatoire en cas de 1-1
+      if (payload.sets.length !== 2) {
+        throw new Error(
+          "Format C1 : exactement 2 sets sont attendus dans le score principal."
+        );
+      }
+
+      // Règles spécifiques sur les scores des sets :
+      // - une équipe gagne le set avec 4 jeux si l'autre a 2 ou moins (4/0, 4/1, 4/2)
+      // - si une équipe a 3 jeux, l'autre doit avoir 5 (3/5 ou 5/3)
+      // - le score peut être 5 si l'autre a 4 (5/4 ou 4/5)
+      for (const s of payload.sets as Array<{ team1: number; team2: number }>) {
+        const maxGames = Math.max(s.team1, s.team2);
+        const minGames = Math.min(s.team1, s.team2);
+
+        if (maxGames < 4) {
+          throw new Error(
+            "Score invalide : un set C1 doit être gagné avec au moins 4 jeux."
+          );
+        }
+
+        if (maxGames === 4) {
+          if (minGames > 2) {
+            throw new Error(
+              "Score invalide en C1 : si une équipe a 4 jeux, l'autre doit avoir 2 jeux ou moins (4/0 à 4/2)."
+            );
+          }
+        } else if (maxGames === 5) {
+          if (!(minGames === 3 || minGames === 4)) {
+            throw new Error(
+              "Score invalide en C1 : un set gagné à 5 jeux doit être 5/3 ou 5/4 (ou l'inverse)."
+            );
+          }
+        } else {
+          throw new Error(
+            "Score invalide en C1 : un set ne peut pas dépasser 5 jeux gagnés."
+          );
+        }
+      }
+
+      // Gestion du 1-1 : super tie-break obligatoire
+      let wins1 = 0;
+      let wins2 = 0;
+      for (const s of payload.sets as Array<{ team1: number; team2: number }>) {
+        if (s.team1 > s.team2) wins1++;
+        else if (s.team2 > s.team1) wins2++;
+      }
+
+      const isOneSetAll = wins1 === 1 && wins2 === 1;
+
+      if (isOneSetAll && !payload.super_tiebreak) {
+        throw new Error(
+          "Format C1 : en cas de 1 set partout, un super tie-break (3ème manche) est obligatoire."
+        );
+      }
+
+      if (payload.super_tiebreak) {
+        const st = payload.super_tiebreak as { team1: number; team2: number };
+        const maxPts = Math.max(st.team1, st.team2);
+        const minPts = Math.min(st.team1, st.team2);
+        if (maxPts < 10 || maxPts - minPts < 2) {
+          throw new Error(
+            "Super tie-break C1 invalide : il faut au moins 10 points et 2 points d'écart (ex : 10/8, 11/9…)."
+          );
+        }
+      }
+    }
+
     return payload;
+  }
+
+  function getVisibleSetSlots(format: string): number {
+    switch (format) {
+      case "A1":
+        return 3; // jusqu'à 3 sets
+      case "B1":
+      case "C1":
+        return 3; // 2 sets + éventuel super tie-break
+      case "D1":
+        return 1; // 1 manche unique
+      default:
+        return 3;
+    }
+  }
+
+  function getSetPlaceholder(format: string, index: number): string {
+    // index = 0 ⇒ première case, index = 1 ⇒ deuxième, index = 2 ⇒ troisième
+    if (format === "B1" && index === 2) {
+      return "Super tie-break";
+    }
+    return `Set ${index + 1}`;
+  }
+
+  function isValidSetScoreFormat(value: string): boolean {
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    const match = trimmed.match(/^(\d+)[\/-](\d+)$/);
+    return !!match;
   }
 
   async function handleUpdateScore(matchId: string, rawScore: string) {
@@ -351,43 +502,105 @@ export default function TournamentBracket({
                   status: data.match.status ?? m.status,
                   score: data.match.score ?? m.score,
                   winner_registration_id:
-                    data.match.winner_registration_id ?? m.winner_registration_id,
+                    data.match.winner_registration_id ??
+                    m.winner_registration_id,
                 }
               : m
           )
         );
 
-        if (matchFormat === "A1" && Array.isArray(data.match.score?.sets)) {
+        // Mettre à jour les champs "Set 1", "Set 2", "Set 3" à partir du nouveau score
+        let set1 = "";
+        let set2 = "";
+        let set3 = "";
+
+        if (Array.isArray(data.match.score?.sets)) {
           const setsArr = data.match.score
             .sets as Array<{ team1: number; team2: number }>;
-          setSetInputs((prev) => ({
-            ...prev,
-            [matchId]: {
-              set1: setsArr[0] ? `${setsArr[0].team1}/${setsArr[0].team2}` : "",
-              set2: setsArr[1] ? `${setsArr[1].team1}/${setsArr[1].team2}` : "",
-              set3: setsArr[2] ? `${setsArr[2].team1}/${setsArr[2].team2}` : "",
-            },
-          }));
-        } else if (data.match.score?.final_score) {
-          setScoreInputs((prev) => ({
-            ...prev,
-            [matchId]: String(data.match.score.final_score),
-          }));
+          if (setsArr[0]) {
+            set1 = `${setsArr[0].team1}/${setsArr[0].team2}`;
+          }
+          if (setsArr[1]) {
+            set2 = `${setsArr[1].team1}/${setsArr[1].team2}`;
+          }
+          if (
+            (matchFormat === "A1" || matchFormat === "A2") &&
+            setsArr[2]
+          ) {
+            set3 = `${setsArr[2].team1}/${setsArr[2].team2}`;
+          }
         }
+
+        if (
+          data.match.score?.super_tiebreak &&
+          (matchFormat === "B1" ||
+            matchFormat === "B2" ||
+            matchFormat === "C1" ||
+            matchFormat === "C2" ||
+            matchFormat === "E")
+        ) {
+          const st = data.match.score
+            .super_tiebreak as { team1: number; team2: number };
+          set3 = `${st.team1}/${st.team2}`;
+        }
+
+        setSetInputs((prev) => ({
+          ...prev,
+          [matchId]: { set1, set2, set3 },
+        }));
       }
     } catch (err: any) {
       alert(err.message || "Erreur lors de la mise à jour du score. Vérifie le format du score.");
     }
   }
 
-  function handleA1Blur(matchId: string) {
+  function handleSetsBlur(matchId: string) {
     const sets = setInputs[matchId] || { set1: "", set2: "", set3: "" };
     const s1 = sets.set1.trim();
     const s2 = sets.set2.trim();
     const s3 = sets.set3.trim();
 
-    if (!s1 || !s2) {
-      return;
+    // Règles spécifiques selon le format de match
+    if (matchFormat === "B1") {
+      // B1 : 2 sets obligatoires + super tie-break obligatoire en cas de 1 set partout
+      if (!s1 || !s2) {
+        // On ne tente rien tant que les 2 premiers sets ne sont pas remplis
+        return;
+      }
+
+      // Essayer de parser les 2 premiers sets pour détecter un éventuel 1-1
+      const parsePair = (token: string) => {
+        const m = token.match(/^(\d+)[\/-](\d+)$/);
+        if (!m) return null;
+        return { a: Number(m[1]), b: Number(m[2]) };
+      };
+
+      const p1 = parsePair(s1);
+      const p2 = parsePair(s2);
+
+      if (!p1 || !p2) {
+        // Le parseur détaillé remontera l'erreur, on envoie tel quel
+      } else {
+        let wins1 = 0;
+        let wins2 = 0;
+        if (p1.a > p1.b) wins1++;
+        else if (p1.b > p1.a) wins2++;
+        if (p2.a > p2.b) wins1++;
+        else if (p2.b > p2.a) wins2++;
+
+        const isOneSetAll = wins1 === 1 && wins2 === 1;
+        if (isOneSetAll && !s3) {
+          alert(
+            "Format B1 : en cas de 1 set partout, le super tie-break est obligatoire."
+          );
+          return;
+        }
+      }
+    } else {
+      // Pour les autres formats, au minimum Set 1 doit être rempli
+      if (!s1) {
+        return;
+      }
     }
 
     const rawScore = [s1, s2, s3].filter(Boolean).join(" ");
@@ -607,7 +820,7 @@ export default function TournamentBracket({
         const isFinalRound = roundKey === "final";
 
         columns.push(
-          <div key={roundKey} className="w-[280px] flex-none">
+          <div key={roundKey} className="flex-none min-w-[280px]">
             <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide">
               {formatRoundLabel(roundKey)}
             </p>
@@ -632,6 +845,9 @@ export default function TournamentBracket({
                   : "";
 
                 const isCompleted = match.status === "completed";
+                const hasScore =
+                  !match.is_bye &&
+                  (match.score?.sets?.length > 0 || !!match.score?.final_score);
 
                 // Pour la finale, déterminer quelle équipe est gagnante pour l'affichage
                 const isWinnerTeam1 =
@@ -659,10 +875,11 @@ export default function TournamentBracket({
                 return (
                   <div
                     key={match.id}
-                    className={`rounded-md px-3 py-2.5 space-y-1 min-h-[104px] flex flex-col justify-between ${
-                      isFinalRound && isCompleted
+                    className={`rounded-md px-3 py-2.5 space-y-1 min-h-[104px] min-w-[260px] flex flex-col justify-between ${
+                      // Bordure "verte" uniquement si un score a vraiment été saisi par le club
+                      isFinalRound && isCompleted && hasScore
                         ? "border border-amber-400/90 bg-amber-500/10"
-                        : isCompleted
+                        : hasScore
                         ? "border border-emerald-400/80 bg-emerald-500/10"
                         : "border border-white/15 bg-black/50"
                     }`}
@@ -676,7 +893,18 @@ export default function TournamentBracket({
                       </span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      {isFinalRound && isCompleted && winnerName && loserName ? (
+                      {match.is_bye ? (
+                        <>
+                          <div className="rounded-sm bg-white/5 px-1 py-0.5">
+                            <p className="text-[11px] font-medium text-white leading-tight break-words">
+                              {match.team1_name || "À définir"}
+                            </p>
+                          </div>
+                          <p className="text-[10px] text-emerald-300 italic">
+                            Directement qualifié pour le tour suivant
+                          </p>
+                        </>
+                      ) : isFinalRound && isCompleted && winnerName && loserName ? (
                         <>
                           <div className="rounded-sm bg-amber-500/20 px-1 py-0.5">
                             <p className="text-[11px] font-semibold text-amber-100 leading-tight break-words">
@@ -707,79 +935,68 @@ export default function TournamentBracket({
                           </div>
                         </>
                       )}
-                      {matchFormat === "A1" ? (
+                      {!match.is_bye && (
                         <div className="flex gap-1">
-                          <Input
-                            value={setInputs[match.id]?.set1 ?? ""}
-                            placeholder="Set 1"
-                            className="bg-black/40 border-white/20 text-white h-7 text-[11px] w-[64px]"
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setSetInputs((prev) => ({
-                                ...prev,
-                                [match.id]: {
-                                  set1: value,
-                                  set2: prev[match.id]?.set2 ?? "",
-                                  set3: prev[match.id]?.set3 ?? "",
-                                },
-                              }));
-                            }}
-                            onBlur={() => handleA1Blur(match.id)}
-                          />
-                          <Input
-                            value={setInputs[match.id]?.set2 ?? ""}
-                            placeholder="Set 2"
-                            className="bg-black/40 border-white/20 text-white h-7 text-[11px] w-[64px]"
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setSetInputs((prev) => ({
-                                ...prev,
-                                [match.id]: {
-                                  set1: prev[match.id]?.set1 ?? "",
-                                  set2: value,
-                                  set3: prev[match.id]?.set3 ?? "",
-                                },
-                              }));
-                            }}
-                            onBlur={() => handleA1Blur(match.id)}
-                          />
-                          <Input
-                            value={setInputs[match.id]?.set3 ?? ""}
-                            placeholder="Set 3"
-                            className="bg-black/40 border-white/20 text-white h-7 text-[11px] w-[64px]"
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setSetInputs((prev) => ({
-                                ...prev,
-                                [match.id]: {
-                                  set1: prev[match.id]?.set1 ?? "",
-                                  set2: prev[match.id]?.set2 ?? "",
-                                  set3: value,
-                                },
-                              }));
-                            }}
-                            onBlur={() => handleA1Blur(match.id)}
-                          />
+                          {Array.from({
+                            length: getVisibleSetSlots(matchFormat),
+                          }).map((_, idx) => {
+                            const key = `set${idx + 1}` as
+                              | "set1"
+                              | "set2"
+                              | "set3";
+                            const isSuperTiebreakSlot =
+                              matchFormat === "B1" && idx === 2;
+                            const widthClass = isSuperTiebreakSlot
+                              ? "w-[136px]"
+                              : "w-[64px]";
+                            const alignClass = isSuperTiebreakSlot
+                              ? "text-center"
+                              : "";
+
+                            return (
+                              <Input
+                                key={key}
+                                value={setInputs[match.id]?.[key] ?? ""}
+                                placeholder={getSetPlaceholder(
+                                  matchFormat,
+                                  idx
+                                )}
+                                className={`bg-black/40 border-white/20 text-white h-7 text-[11px] ${widthClass} ${alignClass}`}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setSetInputs((prev) => ({
+                                    ...prev,
+                                    [match.id]: {
+                                      set1: prev[match.id]?.set1 ?? "",
+                                      set2: prev[match.id]?.set2 ?? "",
+                                      set3: prev[match.id]?.set3 ?? "",
+                                      [key]: value,
+                                    },
+                                  }));
+
+                                  // Si on est sur Set 1 et que le format est valide, passer au champ suivant immédiatement
+                                  if (
+                                    idx === 0 &&
+                                    isValidSetScoreFormat(value) &&
+                                    getVisibleSetSlots(matchFormat) > 1
+                                  ) {
+                                    const nextId = `set-input-${match.id}-2`;
+                                    // léger délai pour laisser React appliquer le setState
+                                    setTimeout(() => {
+                                      const nextEl =
+                                        document.getElementById(nextId);
+                                      if (nextEl) {
+                                        (nextEl as HTMLInputElement).focus();
+                                      }
+                                    }, 0);
+                                  }
+                                }}
+                                onBlur={() => handleSetsBlur(match.id)}
+                                id={`set-input-${match.id}-${idx + 1}`}
+                              />
+                            );
+                          })}
                         </div>
-                      ) : (
-                        <Input
-                          value={scoreInputs[match.id] ?? ""}
-                          placeholder="Score (ex : 6/3 4/6 10/6)"
-                          className="bg-black/40 border-white/20 text-white h-7 text-[11px]"
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setScoreInputs((prev) => ({
-                              ...prev,
-                              [match.id]: value,
-                            }));
-                          }}
-                          onBlur={() => {
-                            const value = (scoreInputs[match.id] ?? "").trim();
-                            if (value) {
-                              void handleUpdateScore(match.id, value);
-                            }
-                          }}
-                        />
                       )}
                     </div>
                   </div>
@@ -814,7 +1031,7 @@ export default function TournamentBracket({
         );
 
         columns.push(
-          <div key={roundKey} className="w-[280px] flex-none space-y-3">
+          <div key={roundKey} className="flex-none min-w-[280px] space-y-3">
             <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide">
               {formatRoundLabel(roundKey)}
             </p>
@@ -1024,82 +1241,65 @@ export default function TournamentBracket({
                                   (match.is_bye ? "Bye" : "À définir")}
                               </p>
                             </div>
-                            {matchFormat === "A1" ? (
-                              <div className="flex gap-1">
-                                <Input
-                                  value={setInputs[match.id]?.set1 ?? ""}
-                                  placeholder="Set 1"
-                                  className="bg-black/40 border-white/20 text-white h-7 text-[11px] w-[64px]"
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    setSetInputs((prev) => ({
-                                      ...prev,
-                                      [match.id]: {
-                                        set1: value,
-                                        set2: prev[match.id]?.set2 ?? "",
-                                        set3: prev[match.id]?.set3 ?? "",
-                                      },
-                                    }));
-                                  }}
-                                  onBlur={() => handleA1Blur(match.id)}
-                                />
-                                <Input
-                                  value={setInputs[match.id]?.set2 ?? ""}
-                                  placeholder="Set 2"
-                                  className="bg-black/40 border-white/20 text-white h-7 text-[11px] w-[64px]"
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    setSetInputs((prev) => ({
-                                      ...prev,
-                                      [match.id]: {
-                                        set1: prev[match.id]?.set1 ?? "",
-                                        set2: value,
-                                        set3: prev[match.id]?.set3 ?? "",
-                                      },
-                                    }));
-                                  }}
-                                  onBlur={() => handleA1Blur(match.id)}
-                                />
-                                <Input
-                                  value={setInputs[match.id]?.set3 ?? ""}
-                                  placeholder="Set 3"
-                                  className="bg-black/40 border-white/20 text-white h-7 text-[11px] w-[64px]"
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    setSetInputs((prev) => ({
-                                      ...prev,
-                                      [match.id]: {
-                                        set1: prev[match.id]?.set1 ?? "",
-                                        set2: prev[match.id]?.set2 ?? "",
-                                        set3: value,
-                                      },
-                                    }));
-                                  }}
-                                  onBlur={() => handleA1Blur(match.id)}
-                                />
-                              </div>
-                            ) : (
-                              <Input
-                                value={scoreInputs[match.id] ?? ""}
-                                placeholder="Score (ex : 6/3 4/6 10/6)"
-                                className="bg-black/40 border-white/20 text-white h-7 text-[11px]"
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setScoreInputs((prev) => ({
-                                    ...prev,
-                                    [match.id]: value,
-                                  }));
-                                }}
-                                onBlur={() => {
-                                  const value = (
-                                    scoreInputs[match.id] ?? ""
-                                  ).trim();
-                                  if (value) {
-                                    void handleUpdateScore(match.id, value);
-                                  }
-                                }}
-                              />
-                            )}
+                            <div className="flex gap-1">
+                              {Array.from({
+                                length: getVisibleSetSlots(matchFormat),
+                              }).map((_, idx) => {
+                                const key = `set${idx + 1}` as
+                                  | "set1"
+                                  | "set2"
+                                  | "set3";
+                                const isSuperTiebreakSlot =
+                                  matchFormat === "B1" && idx === 2;
+                                const widthClass = isSuperTiebreakSlot
+                                  ? "w-[136px]"
+                                  : "w-[64px]";
+                                const alignClass = isSuperTiebreakSlot
+                                  ? "text-center"
+                                  : "";
+
+                                return (
+                                  <Input
+                                    key={key}
+                                    value={setInputs[match.id]?.[key] ?? ""}
+                                    placeholder={getSetPlaceholder(
+                                      matchFormat,
+                                      idx
+                                    )}
+                                    className={`bg-black/40 border-white/20 text-white h-7 text-[11px] ${widthClass} ${alignClass}`}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      setSetInputs((prev) => ({
+                                        ...prev,
+                                        [match.id]: {
+                                          set1: prev[match.id]?.set1 ?? "",
+                                          set2: prev[match.id]?.set2 ?? "",
+                                          set3: prev[match.id]?.set3 ?? "",
+                                          [key]: value,
+                                        },
+                                      }));
+
+                                      if (
+                                        idx === 0 &&
+                                        isValidSetScoreFormat(value) &&
+                                        getVisibleSetSlots(matchFormat) > 1
+                                      ) {
+                                        const nextId = `set-input-${match.id}-2`;
+                                        setTimeout(() => {
+                                          const nextEl =
+                                            document.getElementById(nextId);
+                                          if (nextEl) {
+                                            (nextEl as HTMLInputElement).focus();
+                                          }
+                                        }, 0);
+                                      }
+                                    }}
+                                    onBlur={() => handleSetsBlur(match.id)}
+                                    id={`set-input-${match.id}-${idx + 1}`}
+                                  />
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
                       );

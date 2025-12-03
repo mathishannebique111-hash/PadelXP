@@ -220,20 +220,94 @@ async function generateOfficialPoolsAndFinal(
   sortedPairs: RegistrationPair[]
 ) {
   const numPairs = sortedPairs.length;
-  const numPools = numPairs / 4; // 4 équipes par poule (4, 8, 16, 32, 64 ⇒ multiple de 4)
+  const numPools = numPairs / 4; // 4 équipes par poule (4, 8, 12, 16, …, 64 ⇒ multiple de 4)
+
+  if (!Number.isInteger(numPools)) {
+    throw new Error(
+      "Erreur : nombre d'équipes invalide pour une répartition en poules de 4"
+    );
+  }
+
+  // Règle : il faut au moins 2 têtes de série par poule
+  const requiredSeeds = numPools * 2;
+  if (numPairs < requiredSeeds) {
+    throw new Error(
+      "Erreur : nombre d'équipes insuffisant pour garantir 2 têtes de série par poule"
+    );
+  }
+
+  // Les équipes sont déjà triées par classement/poids via preparePairsForDraw.
+  // On identifie les têtes de série à partir du champ seed_number.
+  const seeds = sortedPairs
+    .filter((p) => typeof p.seed_number === "number")
+    .sort((a, b) => (a.seed_number! || 0) - (b.seed_number! || 0));
+
+  if (seeds.length < requiredSeeds) {
+    throw new Error("Erreur : répartition invalide des têtes de série");
+  }
 
   const pools: RegistrationPair[][] = Array.from(
     { length: numPools },
     () => []
   );
 
-  // Répartition en serpentin
-  for (let i = 0; i < numPairs; i++) {
-    const block = Math.floor(i / numPools);
-    const positionInBlock = i % numPools;
-    const poolIndex =
-      block % 2 === 0 ? positionInBlock : numPools - 1 - positionInBlock;
-    pools[poolIndex].push(sortedPairs[i]);
+  // 1) Répartition des têtes de série en SERPENTIN
+  let direction = 1;
+  let poolIndex = 0;
+
+  for (let i = 0; i < requiredSeeds; i++) {
+    const team = seeds[i];
+    pools[poolIndex].push(team);
+
+    poolIndex += direction;
+
+    // Changement de direction en bout de tableau
+    if (poolIndex >= numPools) {
+      direction = -1;
+      poolIndex = numPools - 1;
+    } else if (poolIndex < 0) {
+      direction = 1;
+      poolIndex = 0;
+    }
+  }
+
+  // 2) Répartition des autres équipes (non têtes de série)
+  const nonSeedTeams = sortedPairs.filter(
+    (p) =>
+      typeof p.seed_number !== "number" ||
+      (typeof p.seed_number === "number" && p.seed_number! > requiredSeeds)
+  );
+
+  // On complète chaque poule jusqu'à 4 équipes, en boucle simple
+  let nonSeedIndex = 0;
+  let currentPool = 0;
+
+  while (nonSeedIndex < nonSeedTeams.length) {
+    if (pools[currentPool].length < 4) {
+      pools[currentPool].push(nonSeedTeams[nonSeedIndex]);
+      nonSeedIndex++;
+    }
+    currentPool = (currentPool + 1) % numPools;
+  }
+
+  // 3) Validations après répartition
+  for (let i = 0; i < pools.length; i++) {
+    const poolTeams = pools[i];
+    if (poolTeams.length !== 4) {
+      throw new Error(
+        `Erreur : la poule ${i + 1} ne respecte pas la taille maximale (4 équipes)`
+      );
+    }
+
+    const seedCount = poolTeams.filter(
+      (p) => typeof p.seed_number === "number" && p.seed_number! <= requiredSeeds
+    ).length;
+
+    if (seedCount !== 2) {
+      throw new Error(
+        `Erreur : la poule ${i + 1} contient ${seedCount} têtes de série au lieu de 2`
+      );
+    }
   }
 
   // Création des poules + matchs
@@ -271,11 +345,49 @@ async function generateOfficialPoolsAndFinal(
         .eq("id", pair.id);
     }
 
-    // Générer les matchs de poule (tous contre tous)
+    // Générer les matchs de poule en round-robin avec ordre "tours"
+    const poolTeams = pools[i];
+    const n = poolTeams.length;
     const matches: { team1: RegistrationPair; team2: RegistrationPair }[] = [];
-    for (let a = 0; a < pools[i].length; a++) {
-      for (let b = a + 1; b < pools[i].length; b++) {
-        matches.push({ team1: pools[i][a], team2: pools[i][b] });
+
+    if (n === 4) {
+      // Ordre recommandé :
+      // Tour 1 : A-B, C-D
+      // Tour 2 : A-C, B-D
+      // Tour 3 : A-D, B-C
+      const indicesOrder: [number, number][] = [
+        [0, 1],
+        [2, 3],
+        [0, 2],
+        [1, 3],
+        [0, 3],
+        [1, 2],
+      ];
+      for (const [a, b] of indicesOrder) {
+        if (poolTeams[a] && poolTeams[b]) {
+          matches.push({ team1: poolTeams[a], team2: poolTeams[b] });
+        }
+      }
+    } else if (n === 3) {
+      // Tour 1 : A-B
+      // Tour 2 : A-C
+      // Tour 3 : B-C
+      const indicesOrder: [number, number][] = [
+        [0, 1],
+        [0, 2],
+        [1, 2],
+      ];
+      for (const [a, b] of indicesOrder) {
+        if (poolTeams[a] && poolTeams[b]) {
+          matches.push({ team1: poolTeams[a], team2: poolTeams[b] });
+        }
+      }
+    } else {
+      // Fallback générique tous-contre-tous
+      for (let a = 0; a < n; a++) {
+        for (let b = a + 1; b < n; b++) {
+          matches.push({ team1: poolTeams[a], team2: poolTeams[b] });
+        }
       }
     }
 
@@ -709,8 +821,43 @@ export async function POST(
     const { sortedPairs, numSeeds, bracketSize } =
       preparePairsForDraw(registrations);
 
-    // Attribuer les numéros de têtes de série
-    for (let i = 0; i < numSeeds && i < sortedPairs.length; i++) {
+    // Pour les tournois avec poules, on calcule les têtes de série selon :
+    // nb_tetes_de_serie = nb_poules × 2
+    const isPoolTournament =
+      tournament.tournament_type === "official_pools" ||
+      tournament.tournament_type === "pools_triple_draw";
+
+    const numPoolsForSeeding = isPoolTournament ? numPairs / 4 : 0;
+    const requiredSeedsForPools = isPoolTournament
+      ? numPoolsForSeeding * 2
+      : 0;
+
+    if (isPoolTournament && !Number.isInteger(numPoolsForSeeding)) {
+      return NextResponse.json(
+        {
+          error:
+            "Erreur : nombre d'équipes invalide pour une répartition en poules de 4",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (isPoolTournament && numPairs < requiredSeedsForPools) {
+      return NextResponse.json(
+        {
+          error:
+            "Erreur : nombre d'équipes insuffisant pour garantir 2 têtes de série par poule",
+        },
+        { status: 400 }
+      );
+    }
+
+    const effectiveNumSeeds = isPoolTournament
+      ? Math.min(requiredSeedsForPools, sortedPairs.length)
+      : numSeeds;
+
+    // Attribuer les numéros de têtes de série selon le nombre calculé
+    for (let i = 0; i < effectiveNumSeeds && i < sortedPairs.length; i++) {
       await supabaseAdmin
         .from("tournament_registrations")
         .update({ seed_number: i + 1 })
@@ -756,7 +903,7 @@ export async function POST(
         tournamentId: id.substring(0, 8) + "…",
         type: tournament.tournament_type,
         numPairs,
-        numSeeds,
+        numSeeds: effectiveNumSeeds,
         bracketSize,
       },
       "[generate] Starting draw generation"
@@ -767,7 +914,7 @@ export async function POST(
         supabaseAdmin,
         tournament,
         sortedPairs,
-        numSeeds,
+        effectiveNumSeeds,
         bracketSize
       );
     } else if (tournament.tournament_type === "tmc") {
@@ -810,7 +957,7 @@ export async function POST(
       {
         tournamentId: id.substring(0, 8) + "…",
         numPairs,
-        numSeeds,
+        numSeeds: effectiveNumSeeds,
       },
       "[generate] Tournament draw generated successfully"
     );
@@ -818,13 +965,20 @@ export async function POST(
     return NextResponse.json({
       success: true,
       numPairs: sortedPairs.length,
-      numSeeds,
+      numSeeds: effectiveNumSeeds,
     });
   } catch (error: any) {
     logger.error(
       { error: error.message, stack: error.stack },
       "[generate] Error generating tournament bracket"
     );
+
+    // Si l'erreur est une validation fonctionnelle (message explicite),
+    // on la renvoie telle quelle au client avec un statut 400.
+    if (typeof error?.message === "string" && error.message.startsWith("Erreur")) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
