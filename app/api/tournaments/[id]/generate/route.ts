@@ -553,30 +553,272 @@ async function generateRoundRobin(
   );
 }
 
-// Génération : TMC (V1 – tableau principal + tableau de classement simple)
+// Génération : TMC (Tournoi Multi-Chances)
+// Objectif : garantir 3 matchs par équipe, avec tableaux de classement.
+// Note : V1 supporte 8 et 16 équipes. Pour d'autres tailles, on retournera une erreur explicite.
 async function generateTmc(
   supabase: any,
   tournament: any,
   sortedPairs: RegistrationPair[],
   bracketSize: number
 ) {
-  // V1 : on crée un premier tour d'élimination directe (comme TDL)
-  // et un tableau de classement simple entre les perdants du 1er tour.
-  await generateOfficialKnockout(
-    supabase,
-    tournament,
-    sortedPairs,
-    determineNumberOfSeeds(sortedPairs.length),
-    bracketSize
-  );
+  const numPairs = sortedPairs.length;
 
-  // Les matchs de classement seront générés plus tard à partir des résultats :
-  // TODO: utiliser les losers du premier tour pour créer un tableau de classement complet.
+  if (numPairs !== 8 && numPairs !== 16) {
+    throw new Error(
+      "Erreur : pour l'instant, le format TMC est uniquement supporté pour 8 ou 16 équipes."
+    );
+  }
+
+  // 1) Créer le bracket principal avec placement standard pour TMC
+  const mainBracketSize = bracketSize; // 8 ou 16
+
+  // Pour TMC 16 équipes : placement standard selon le guide
+  // [0,15], [7,8], [3,12], [4,11], [1,14], [6,9], [2,13], [5,10]
+  let bracket: (RegistrationPair | null)[] = [];
+  
+  if (numPairs === 16) {
+    // Placement standard TMC 16 équipes
+    const pairs = [
+      [0, 15],  // TS1 vs 16ème
+      [7, 8],   // TS8 vs 9ème
+      [3, 12],  // TS4 vs 13ème
+      [4, 11],  // TS5 vs 12ème
+      [1, 14],  // TS2 vs 15ème
+      [6, 9],   // TS7 vs 10ème
+      [2, 13],  // TS3 vs 14ème
+      [5, 10]   // TS6 vs 11ème
+    ];
+    
+    for (const [idx1, idx2] of pairs) {
+      bracket.push(sortedPairs[idx1]);
+      bracket.push(sortedPairs[idx2]);
+    }
+  } else {
+    // TMC 8 équipes : placement standard avec têtes de série
+    const numSeeds = determineNumberOfSeeds(numPairs);
+    bracket = new Array(mainBracketSize).fill(null);
+
+    // TS1 et TS2
+    bracket[0] = sortedPairs[0];
+    if (numSeeds >= 2 && sortedPairs[1]) {
+      bracket[mainBracketSize - 1] = sortedPairs[1];
+    }
+
+    // TS3 et TS4
+    if (numSeeds >= 4 && sortedPairs[2] && sortedPairs[3]) {
+      const ts3Positions = [mainBracketSize / 2 - 1, mainBracketSize / 2];
+      const ts3Pos = ts3Positions[Math.floor(Math.random() * 2)];
+      const ts4Pos = ts3Positions.find((p) => p !== ts3Pos)!;
+      bracket[ts3Pos] = sortedPairs[2];
+      bracket[ts4Pos] = sortedPairs[3];
+    }
+
+    // Paires non têtes de série
+    const nonSeededPairs = sortedPairs.slice(numSeeds, numPairs);
+    const shuffledNonSeeded = shuffleArray(nonSeededPairs);
+    let nonSeededIndex = 0;
+    for (let i = 0; i < mainBracketSize; i++) {
+      if (bracket[i] === null && nonSeededIndex < shuffledNonSeeded.length) {
+        bracket[i] = shuffledNonSeeded[nonSeededIndex++];
+      }
+    }
+  }
+
+  // 2) Créer les matchs du premier tour (quarts pour 8, 1/8 pour 16)
+  const firstRound = getRoundTypeFromBracketSize(mainBracketSize);
+  const createdMatches: {
+    id: string;
+    order: number;
+  }[] = [];
+
+  let matchOrder = 1;
+  for (let i = 0; i < mainBracketSize; i += 2) {
+    const pair1 = bracket[i];
+    const pair2 = bracket[i + 1];
+    const isBye = !pair1 || !pair2;
+
+    // Préparer les données d'insertion
+    const insertData: any = {
+      tournament_id: tournament.id,
+      round_type: firstRound,
+      round_number: 1,
+      match_order: matchOrder,
+      team1_registration_id: pair1?.id || null,
+      team2_registration_id: pair2?.id || null,
+      is_bye: isBye,
+      status: isBye ? "completed" : "scheduled",
+      winner_registration_id: isBye ? (pair1?.id || pair2?.id) : null,
+    };
+
+    // Ajouter le champ tableau seulement pour TMC 16 (si la colonne existe)
+    if (numPairs === 16) {
+      insertData.tableau = "principal";
+    }
+
+    let { data, error } = await supabase
+      .from("tournament_matches")
+      .insert(insertData)
+      .select("id")
+      .single();
+
+    // Si l'erreur indique que la colonne tableau n'existe pas, réessayer sans
+    if (error && error.message?.includes("tableau")) {
+      delete insertData.tableau;
+      const retry = await supabase
+        .from("tournament_matches")
+        .insert(insertData)
+        .select("id")
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
+
+    if (error || !data) {
+      logger.error(
+        {
+          tournamentId: tournament.id.substring(0, 8) + "…",
+          roundType: firstRound,
+          matchOrder,
+          error: error?.message,
+          errorDetails: error,
+        },
+        "[generate] Error creating TMC first-round match"
+      );
+      throw new Error(
+        `Erreur lors de la génération du premier tour TMC: ${error?.message || "Erreur inconnue"}`
+      );
+    }
+
+    createdMatches.push({ id: data.id, order: matchOrder });
+    matchOrder++;
+  }
+
+  // 3) Générer la structure de classement en fonction du nombre d'équipes
+  if (numPairs === 8) {
+    // TMC 8 équipes : 3 tours garantis (quarts → demi + 5-8 → finales de classement)
+
+    // Demi-finales principales (Gagnants des quarts)
+    const semisMatches: { id: string }[] = [];
+    for (let i = 0; i < 2; i++) {
+      const { data, error } = await supabase
+        .from("tournament_matches")
+        .insert({
+          tournament_id: tournament.id,
+          round_type: "semis",
+          round_number: 2,
+          match_order: i + 1,
+          is_bye: false,
+          status: "scheduled",
+        })
+        .select("id")
+        .single();
+
+      if (error || !data) {
+        logger.error(
+          {
+            tournamentId: tournament.id.substring(0, 8) + "…",
+            error: error?.message,
+          },
+          "[generate] Error creating TMC semi-final match"
+        );
+        throw new Error("Erreur lors de la génération des demi-finales TMC.");
+      }
+      semisMatches.push({ id: data.id });
+    }
+
+    // Lier les quarts aux demi-finales (winners only)
+    // Quart 1 & 2 → Demi 1, Quart 3 & 4 → Demi 2
+    const updatePromises: Promise<any>[] = [];
+    updatePromises.push(
+      supabase
+        .from("tournament_matches")
+        .update({
+          next_match_id: semisMatches[0].id,
+          next_match_position: "team1",
+        })
+        .eq("id", createdMatches[0].id)
+    );
+    updatePromises.push(
+      supabase
+        .from("tournament_matches")
+        .update({
+          next_match_id: semisMatches[0].id,
+          next_match_position: "team2",
+        })
+        .eq("id", createdMatches[1].id)
+    );
+    updatePromises.push(
+      supabase
+        .from("tournament_matches")
+        .update({
+          next_match_id: semisMatches[1].id,
+          next_match_position: "team1",
+        })
+        .eq("id", createdMatches[2].id)
+    );
+    updatePromises.push(
+      supabase
+        .from("tournament_matches")
+        .update({
+          next_match_id: semisMatches[1].id,
+          next_match_position: "team2",
+        })
+        .eq("id", createdMatches[3].id)
+    );
+
+    await Promise.all(updatePromises);
+
+    // Finales de classement (créées vides pour l'instant, elles seront remplies manuellement à partir des résultats)
+    // On utilise uniquement des valeurs de round_type autorisées par le schéma :
+    // - "final" pour la finale (1-2)
+    // - "third_place" pour la petite finale (3-4)
+    // - "qualifications" pour les matchs de classement 5-6 et 7-8
+    const classificationRounds = [
+      { round_type: "final" },
+      { round_type: "third_place" },
+      { round_type: "qualifications" },
+      { round_type: "qualifications" },
+    ] as const;
+
+    let classOrder = 1;
+    for (const round of classificationRounds) {
+      const { error } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournament.id,
+        round_type: round.round_type,
+        round_number: 3,
+        match_order: classOrder++,
+        is_bye: false,
+        status: "scheduled",
+      });
+
+      if (error) {
+        logger.error(
+          {
+            tournamentId: tournament.id.substring(0, 8) + "…",
+            roundType: round.round_type,
+            error: error.message,
+          },
+          "[generate] Error creating TMC classification match (8 teams)"
+        );
+        throw new Error(
+          "Erreur lors de la génération des matchs de classement TMC."
+        );
+      }
+    }
+  } else if (numPairs === 16) {
+    // TMC 16 équipes : on génère uniquement le Tour 1 (8èmes de finale)
+    // Les tours suivants seront générés progressivement via la route /advance/tmc-next-round
+    // Pas de matchs de classement créés ici, ils seront générés au Tour 4
+  }
+
   logger.info(
     {
       tournamentId: tournament.id.substring(0, 8) + "…",
+      numPairs,
+      mainBracketSize,
     },
-    "[generate] TMC main draw generated (TODO: full multi-chance classification)"
+    "[generate] TMC bracket generated (V1 – main draw + classification skeleton)"
   );
 }
 

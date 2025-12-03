@@ -16,10 +16,6 @@ const TOURNAMENT_TYPES = [
   { value: "tmc", label: "Tournoi Multi-Chances (TMC)" },
   { value: "double_elimination", label: "Double élimination" },
   { value: "official_pools", label: "Poules + Tableau final" },
-  {
-    value: "pools_triple_draw",
-    label: "Poules + 3 tableaux (principal / intermédiaire / consolante)",
-  },
 ] as const;
 
 export function CreateTournamentForm() {
