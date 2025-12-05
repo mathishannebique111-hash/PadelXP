@@ -564,14 +564,14 @@ async function generateTmc(
 ) {
   const numPairs = sortedPairs.length;
 
-  if (numPairs !== 8 && numPairs !== 16) {
+  if (numPairs !== 8 && numPairs !== 12 && numPairs !== 16) {
     throw new Error(
-      "Erreur : pour l'instant, le format TMC est uniquement supporté pour 8 ou 16 équipes."
+      "Erreur : le format TMC est uniquement supporté pour 8, 12 ou 16 équipes."
     );
   }
 
   // 1) Créer le bracket principal avec placement standard pour TMC
-  const mainBracketSize = bracketSize; // 8 ou 16
+  const mainBracketSize = bracketSize; // 8, 12 ou 16
 
   // Pour TMC 16 équipes : placement standard selon le guide
   // [0,15], [7,8], [3,12], [4,11], [1,14], [6,9], [2,13], [5,10]
@@ -594,6 +594,37 @@ async function generateTmc(
       bracket.push(sortedPairs[idx1]);
       bracket.push(sortedPairs[idx2]);
     }
+  } else if (numPairs === 12) {
+    // TMC 12 équipes : Tour 1 = 6 matchs, AUCUN bye
+    // Toutes les 12 équipes jouent au premier tour
+    bracket = new Array(mainBracketSize).fill(null);
+    
+    // Placement des 12 équipes pour créer 6 matchs sans byes
+    // On utilise seulement les 12 premières positions (0-11) pour créer 6 matchs
+    // Structure : [0,1], [2,3], [4,5], [6,7], [8,9], [10,11]
+    // Les positions 12-15 restent vides (non utilisées)
+    
+    // Placement standard : TS1, TS2, TS3, TS4 aux positions clés
+    // TS1 en position 0
+    bracket[0] = sortedPairs[0];
+    // TS2 en position 11 (dernière position utilisée)
+    bracket[11] = sortedPairs[1];
+    // TS3 en position 5 (milieu)
+    bracket[5] = sortedPairs[2];
+    // TS4 en position 6 (milieu)
+    bracket[6] = sortedPairs[3];
+    
+    // TS5 à TS12 : placer dans les positions restantes
+    // Positions disponibles : 1, 2, 3, 4, 7, 8, 9, 10
+    const availablePositions = [1, 2, 3, 4, 7, 8, 9, 10];
+    let pairIndex = 4; // Commencer à TS5 (index 4)
+    for (const pos of availablePositions) {
+      if (pairIndex < numPairs) {
+        bracket[pos] = sortedPairs[pairIndex++];
+      }
+    }
+    
+    // Vérification : 12 équipes placées dans les positions 0-11 = 6 matchs sans byes
   } else {
     // TMC 8 équipes : placement standard avec têtes de série
     const numSeeds = determineNumberOfSeeds(numPairs);
@@ -625,7 +656,10 @@ async function generateTmc(
     }
   }
 
-  // 2) Créer les matchs du premier tour (quarts pour 8, 1/8 pour 16)
+  // 2) Créer les matchs du premier tour
+  // Pour TMC 12 : 6 matchs (12 équipes / 2), AUCUN bye
+  // Pour TMC 8 : 4 matchs (8 équipes / 2)
+  // Pour TMC 16 : 8 matchs (16 équipes / 2)
   const firstRound = getRoundTypeFromBracketSize(mainBracketSize);
   const createdMatches: {
     id: string;
@@ -633,10 +667,13 @@ async function generateTmc(
   }[] = [];
 
   let matchOrder = 1;
-  for (let i = 0; i < mainBracketSize; i += 2) {
+  // Pour TMC 12, on crée seulement 6 matchs (positions 0-11), AUCUN bye
+  const maxPosition = numPairs === 12 ? 12 : mainBracketSize;
+  for (let i = 0; i < maxPosition; i += 2) {
     const pair1 = bracket[i];
     const pair2 = bracket[i + 1];
-    const isBye = !pair1 || !pair2;
+    // Pour TMC 12, il ne doit jamais y avoir de bye au Tour 1
+    const isBye = numPairs === 12 ? false : (!pair1 || !pair2);
 
     // Préparer les données d'insertion
     const insertData: any = {
@@ -651,8 +688,8 @@ async function generateTmc(
       winner_registration_id: isBye ? (pair1?.id || pair2?.id) : null,
     };
 
-    // Ajouter le champ tableau seulement pour TMC 16 (si la colonne existe)
-    if (numPairs === 16) {
+    // Ajouter le champ tableau pour TMC 12 et 16 (si la colonne existe)
+    if (numPairs === 12 || numPairs === 16) {
       insertData.tableau = "principal";
     }
 
@@ -806,8 +843,8 @@ async function generateTmc(
         );
       }
     }
-  } else if (numPairs === 16) {
-    // TMC 16 équipes : on génère uniquement le Tour 1 (8èmes de finale)
+  } else if (numPairs === 12 || numPairs === 16) {
+    // TMC 12 et 16 équipes : on génère uniquement le Tour 1 (8èmes de finale pour 16, 1/8 avec byes pour 12)
     // Les tours suivants seront générés progressivement via la route /advance/tmc-next-round
     // Pas de matchs de classement créés ici, ils seront générés au Tour 4
   }
@@ -1098,8 +1135,12 @@ export async function POST(
       ? Math.min(requiredSeedsForPools, sortedPairs.length)
       : numSeeds;
 
+    // Pour TMC 12 équipes, toutes les équipes sont têtes de série (TS1 à TS12)
+    const isTmc12 = tournament.tournament_type === "tmc" && numPairs === 12;
+    const numSeedsToAssign = isTmc12 ? numPairs : effectiveNumSeeds;
+
     // Attribuer les numéros de têtes de série selon le nombre calculé
-    for (let i = 0; i < effectiveNumSeeds && i < sortedPairs.length; i++) {
+    for (let i = 0; i < numSeedsToAssign && i < sortedPairs.length; i++) {
       await supabaseAdmin
         .from("tournament_registrations")
         .update({ seed_number: i + 1 })

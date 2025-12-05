@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -53,6 +53,8 @@ export default function TournamentRegistrations({
   const [manualPending, setManualPending] = useState(false);
   const [maxTeams, setMaxTeams] = useState<number | null>(null);
   const [currentTeams, setCurrentTeams] = useState<number>(0);
+  const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
+  const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchRegistrations(true);
@@ -97,6 +99,13 @@ export default function TournamentRegistrations({
     registrationId: string,
     action: "validate" | "reject"
   ) {
+    // Nettoyer l'erreur précédente pour cette inscription
+    setActionErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[registrationId];
+      return updated;
+    });
+
     try {
       const res = await fetch(
         `/api/tournaments/${tournamentId}/registrations/${registrationId}`,
@@ -112,11 +121,21 @@ export default function TournamentRegistrations({
       }
       await fetchRegistrations(false);
     } catch (err: any) {
-      alert(err.message || "Erreur lors de la mise à jour de l'inscription");
+      setActionErrors((prev) => ({
+        ...prev,
+        [registrationId]: err.message || "Erreur lors de la mise à jour de l'inscription",
+      }));
     }
   }
 
   async function handleSaveDetails(reg: Registration) {
+    // Nettoyer l'erreur précédente pour cette inscription
+    setSaveErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[reg.id];
+      return updated;
+    });
+
     try {
       const res = await fetch(
         `/api/tournaments/${tournamentId}/registrations/${reg.id}`,
@@ -137,7 +156,10 @@ export default function TournamentRegistrations({
       }
       await fetchRegistrations(false);
     } catch (err: any) {
-      alert(err.message || "Erreur lors de l'enregistrement de l'inscription");
+      setSaveErrors((prev) => ({
+        ...prev,
+        [reg.id]: err.message || "Erreur lors de l'enregistrement de l'inscription",
+      }));
     }
   }
 
@@ -379,7 +401,8 @@ export default function TournamentRegistrations({
             </TableHeader>
             <TableBody>
               {registrations.map((reg) => (
-                <TableRow key={reg.id}>
+                <React.Fragment key={reg.id}>
+                  <TableRow>
                   <TableCell className="text-white">
                     <Input
                       value={reg.player_name ?? ""}
@@ -421,6 +444,14 @@ export default function TournamentRegistrations({
                             return r;
                           })
                         );
+                        // Nettoyer l'erreur quand l'utilisateur modifie le champ
+                        if (saveErrors[reg.id]) {
+                          setSaveErrors((prev) => {
+                            const updated = { ...prev };
+                            delete updated[reg.id];
+                            return updated;
+                          });
+                        }
                       }}
                       onBlur={() => handleSaveDetails(reg)}
                     />
@@ -430,15 +461,23 @@ export default function TournamentRegistrations({
                       value={reg.partner_name ?? ""}
                       placeholder="Nom Prénom partenaire"
                       className="bg-black/40 border-white/10 text-white h-8"
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setRegistrations((prev) =>
                           prev.map((r) =>
                             r.id === reg.id
                               ? { ...r, partner_name: e.target.value }
                               : r
                           )
-                        )
-                      }
+                        );
+                        // Nettoyer l'erreur quand l'utilisateur modifie le champ
+                        if (saveErrors[reg.id]) {
+                          setSaveErrors((prev) => {
+                            const updated = { ...prev };
+                            delete updated[reg.id];
+                            return updated;
+                          });
+                        }
+                      }}
                       onBlur={() => handleSaveDetails(reg)}
                     />
                   </TableCell>
@@ -466,6 +505,14 @@ export default function TournamentRegistrations({
                             return r;
                           })
                         );
+                        // Nettoyer l'erreur quand l'utilisateur modifie le champ
+                        if (saveErrors[reg.id]) {
+                          setSaveErrors((prev) => {
+                            const updated = { ...prev };
+                            delete updated[reg.id];
+                            return updated;
+                          });
+                        }
                       }}
                       onBlur={() => handleSaveDetails(reg)}
                     />
@@ -500,28 +547,45 @@ export default function TournamentRegistrations({
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      {reg.status !== "validated" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAction(reg.id, "validate")}
-                        >
-                          Valider
-                        </Button>
-                      )}
-                      {reg.status !== "rejected" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAction(reg.id, "reject")}
-                        >
-                          Refuser
-                        </Button>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        {reg.status !== "validated" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAction(reg.id, "validate")}
+                          >
+                            Valider
+                          </Button>
+                        )}
+                        {reg.status !== "rejected" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAction(reg.id, "reject")}
+                          >
+                            Refuser
+                          </Button>
+                        )}
+                      </div>
+                      {actionErrors[reg.id] && (
+                        <p className="text-[10px] text-red-400">
+                          {actionErrors[reg.id]}
+                        </p>
                       )}
                     </div>
                   </TableCell>
                 </TableRow>
+                {saveErrors[reg.id] && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="p-2">
+                      <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-2 py-1">
+                        {saveErrors[reg.id]}
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>

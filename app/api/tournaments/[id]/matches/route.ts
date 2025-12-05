@@ -86,7 +86,7 @@ export async function GET(
     if (registrationIds.length > 0) {
       const { data: registrations, error: regError } = await supabase
         .from("tournament_registrations")
-        .select("id, player1_name, player2_name")
+        .select("id, player1_name, player2_name, seed_number")
         .in("id", registrationIds);
 
       if (regError) {
@@ -99,12 +99,12 @@ export async function GET(
         );
       } else if (registrations) {
         registrationsMap = registrations.reduce(
-          (acc: Record<string, { teamName: string }>, reg: any) => {
+          (acc: Record<string, { teamName: string; seedNumber?: number | null }>, reg: any) => {
             const name =
               reg.player1_name && reg.player2_name
                 ? `${reg.player1_name} / ${reg.player2_name}`
                 : reg.player1_name || reg.player2_name || "Équipe";
-            acc[reg.id] = { teamName: name };
+            acc[reg.id] = { teamName: name, seedNumber: reg.seed_number ?? null };
             return acc;
           },
           {}
@@ -122,6 +122,14 @@ export async function GET(
         (m.team2_registration_id &&
           registrationsMap[m.team2_registration_id]?.teamName) ||
         null,
+      team1_seed_number:
+        m.team1_registration_id
+          ? registrationsMap[m.team1_registration_id]?.seedNumber ?? null
+          : null,
+      team2_seed_number:
+        m.team2_registration_id
+          ? registrationsMap[m.team2_registration_id]?.seedNumber ?? null
+          : null,
     }));
 
     logger.info(

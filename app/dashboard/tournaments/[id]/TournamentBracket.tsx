@@ -19,6 +19,8 @@ type Match = {
   team2_registration_id: string | null;
   team1_name: string | null;
   team2_name: string | null;
+  team1_seed_number?: number | null;
+  team2_seed_number?: number | null;
   is_bye: boolean;
   status: MatchStatus;
   winner_registration_id: string | null;
@@ -64,6 +66,25 @@ function getRoundLabelForTmc(roundNum: number, tableau: string, match: Match): s
       if (match.round_type === "third_place") return "Petite finale [3-4]";
       return "Matchs de classement";
     }
+  } else if (tableau === "places_4_6") {
+    if (roundNum === 3) return "Tour 3";
+    if (roundNum === 4) {
+      if (match.match_order === 3) return "Match 5ème place [5-6]";
+      return "Matchs de classement";
+    }
+  } else if (tableau === "places_7_9") {
+    if (roundNum === 3) return "Tour 3";
+    if (roundNum === 4) {
+      if (match.match_order === 4) return "Match 7ème place [7-8]";
+      if (match.match_order === 5) return "Match 9ème place [9-10]";
+      return "Matchs de classement";
+    }
+  } else if (tableau === "places_10_12") {
+    if (roundNum === 3) return "Tour 3";
+    if (roundNum === 4) {
+      if (match.match_order === 6) return "Match 11ème place [11-12]";
+      return "Matchs de classement";
+    }
   } else if (tableau === "places_5_8") {
     if (roundNum === 3) return "Tour 3";
     if (roundNum === 4) {
@@ -72,12 +93,15 @@ function getRoundLabelForTmc(roundNum: number, tableau: string, match: Match): s
       return "Matchs de classement";
     }
   } else if (tableau === "places_9_12") {
+    if (roundNum === 2) return "Tour 2";
     if (roundNum === 3) return "Tour 3";
     if (roundNum === 4) {
       if (match.match_order === 1) return "Match 9ème place [9-10]";
       if (match.match_order === 2) return "Match 11ème place [11-12]";
       return "Matchs de classement";
     }
+  } else if (tableau === "places_7_12") {
+    if (roundNum === 2) return "Tour 2";
   } else if (tableau === "places_13_16") {
     if (roundNum === 3) return "Tour 3";
     if (roundNum === 4) {
@@ -102,12 +126,13 @@ export default function TournamentBracket({
   const [setInputs, setSetInputs] = useState<
     Record<string, { set1: string; set2: string; set3: string }>
   >({});
+  const [scoreErrors, setScoreErrors] = useState<Record<string, string>>({});
   const [calculating, setCalculating] = useState(false);
   const [advancingFinal, setAdvancingFinal] = useState(false);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [calculatingRanking, setCalculatingRanking] = useState(false);
   const [finalRankings, setFinalRankings] = useState<
-    Array<{ registrationId: string; rank: number; teamName: string }>
+    Array<{ registrationId: string; rank: number; teamName: string; seedNumber?: number | null }>
   >([]);
 
   useEffect(() => {
@@ -206,11 +231,34 @@ export default function TournamentBracket({
 
   async function fetchFinalRankings() {
     try {
-      // Récupérer les matchs du Tour 4 pour construire le classement
+      // Récupérer les classements depuis la base de données
+      const res = await fetch(
+        `/api/tournaments/${tournamentId}/final-rankings`,
+        {
+          cache: "no-store",
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.rankings && Array.isArray(data.rankings)) {
+          setFinalRankings(data.rankings);
+          return;
+        }
+      }
+      
+      // Fallback : construire le classement à partir des matchs si l'API n'est pas disponible
       const tour4Matches = matches.filter((m) => m.round_number === 4);
       if (tour4Matches.length === 0) return;
 
-      const ranking: Array<{ registrationId: string; rank: number; teamName: string }> = [];
+      const ranking: Array<{ registrationId: string; rank: number; teamName: string; seedNumber?: number | null }> = [];
+
+      // Helper function pour obtenir le seed_number d'une équipe dans un match
+      const getSeedNumber = (match: Match, registrationId: string | null): number | null => {
+        if (!registrationId) return null;
+        if (match.team1_registration_id === registrationId) return match.team1_seed_number ?? null;
+        if (match.team2_registration_id === registrationId) return match.team2_seed_number ?? null;
+        return null;
+      };
 
       // Construire le classement à partir des matchs du Tour 4
       const finalMatch = tour4Matches.find(
@@ -223,6 +271,7 @@ export default function TournamentBracket({
           teamName: finalMatch.winner_registration_id === finalMatch.team1_registration_id
             ? finalMatch.team1_name || "Équipe 1"
             : finalMatch.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(finalMatch, finalMatch.winner_registration_id),
         });
         const loserId =
           finalMatch.team1_registration_id === finalMatch.winner_registration_id
@@ -235,6 +284,7 @@ export default function TournamentBracket({
             teamName: loserId === finalMatch.team1_registration_id
               ? finalMatch.team1_name || "Équipe 1"
               : finalMatch.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(finalMatch, loserId),
           });
         }
       }
@@ -249,6 +299,7 @@ export default function TournamentBracket({
           teamName: thirdPlaceMatch.winner_registration_id === thirdPlaceMatch.team1_registration_id
             ? thirdPlaceMatch.team1_name || "Équipe 1"
             : thirdPlaceMatch.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(thirdPlaceMatch, thirdPlaceMatch.winner_registration_id),
         });
         const loserId =
           thirdPlaceMatch.team1_registration_id === thirdPlaceMatch.winner_registration_id
@@ -261,6 +312,7 @@ export default function TournamentBracket({
             teamName: loserId === thirdPlaceMatch.team1_registration_id
               ? thirdPlaceMatch.team1_name || "Équipe 1"
               : thirdPlaceMatch.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(thirdPlaceMatch, loserId),
           });
         }
       }
@@ -276,6 +328,7 @@ export default function TournamentBracket({
           teamName: place5Match.winner_registration_id === place5Match.team1_registration_id
             ? place5Match.team1_name || "Équipe 1"
             : place5Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place5Match, place5Match.winner_registration_id),
         });
         const loserId =
           place5Match.team1_registration_id === place5Match.winner_registration_id
@@ -288,6 +341,7 @@ export default function TournamentBracket({
             teamName: loserId === place5Match.team1_registration_id
               ? place5Match.team1_name || "Équipe 1"
               : place5Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place5Match, loserId),
           });
         }
       }
@@ -298,6 +352,7 @@ export default function TournamentBracket({
           teamName: place7Match.winner_registration_id === place7Match.team1_registration_id
             ? place7Match.team1_name || "Équipe 1"
             : place7Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place7Match, place7Match.winner_registration_id),
         });
         const loserId =
           place7Match.team1_registration_id === place7Match.winner_registration_id
@@ -310,6 +365,7 @@ export default function TournamentBracket({
             teamName: loserId === place7Match.team1_registration_id
               ? place7Match.team1_name || "Équipe 1"
               : place7Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place7Match, loserId),
           });
         }
       }
@@ -325,6 +381,7 @@ export default function TournamentBracket({
           teamName: place9Match.winner_registration_id === place9Match.team1_registration_id
             ? place9Match.team1_name || "Équipe 1"
             : place9Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place9Match, place9Match.winner_registration_id),
         });
         const loserId =
           place9Match.team1_registration_id === place9Match.winner_registration_id
@@ -337,6 +394,7 @@ export default function TournamentBracket({
             teamName: loserId === place9Match.team1_registration_id
               ? place9Match.team1_name || "Équipe 1"
               : place9Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place9Match, loserId),
           });
         }
       }
@@ -347,6 +405,7 @@ export default function TournamentBracket({
           teamName: place11Match.winner_registration_id === place11Match.team1_registration_id
             ? place11Match.team1_name || "Équipe 1"
             : place11Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place11Match, place11Match.winner_registration_id),
         });
         const loserId =
           place11Match.team1_registration_id === place11Match.winner_registration_id
@@ -359,6 +418,7 @@ export default function TournamentBracket({
             teamName: loserId === place11Match.team1_registration_id
               ? place11Match.team1_name || "Équipe 1"
               : place11Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place11Match, loserId),
           });
         }
       }
@@ -374,6 +434,7 @@ export default function TournamentBracket({
           teamName: place13Match.winner_registration_id === place13Match.team1_registration_id
             ? place13Match.team1_name || "Équipe 1"
             : place13Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place13Match, place13Match.winner_registration_id),
         });
         const loserId =
           place13Match.team1_registration_id === place13Match.winner_registration_id
@@ -386,6 +447,7 @@ export default function TournamentBracket({
             teamName: loserId === place13Match.team1_registration_id
               ? place13Match.team1_name || "Équipe 1"
               : place13Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place13Match, loserId),
           });
         }
       }
@@ -396,6 +458,7 @@ export default function TournamentBracket({
           teamName: place15Match.winner_registration_id === place15Match.team1_registration_id
             ? place15Match.team1_name || "Équipe 1"
             : place15Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place15Match, place15Match.winner_registration_id),
         });
         const loserId =
           place15Match.team1_registration_id === place15Match.winner_registration_id
@@ -408,8 +471,128 @@ export default function TournamentBracket({
             teamName: loserId === place15Match.team1_registration_id
               ? place15Match.team1_name || "Équipe 1"
               : place15Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place15Match, loserId),
           });
         }
+      }
+
+      // Pour TMC 12 équipes, ajouter les tableaux places_4_6, places_7_9, places_10_12
+      const places4_6Matches = tour4Matches.filter((m) => m.tableau === "places_4_6");
+      const places7_9Matches = tour4Matches.filter((m) => m.tableau === "places_7_9");
+      const places10_12Matches = tour4Matches.filter((m) => m.tableau === "places_10_12");
+
+      // Places 4-6
+      const place4Match = places4_6Matches.find((m) => m.match_order === 1);
+      const place6Match = places4_6Matches.find((m) => m.match_order === 2);
+      if (place4Match && place4Match.winner_registration_id) {
+        ranking.push({
+          registrationId: place4Match.winner_registration_id,
+          rank: 4,
+          teamName: place4Match.winner_registration_id === place4Match.team1_registration_id
+            ? place4Match.team1_name || "Équipe 1"
+            : place4Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place4Match, place4Match.winner_registration_id),
+        });
+        const loserId =
+          place4Match.team1_registration_id === place4Match.winner_registration_id
+            ? place4Match.team2_registration_id
+            : place4Match.team1_registration_id;
+        if (loserId) {
+          ranking.push({
+            registrationId: loserId,
+            rank: 5,
+            teamName: loserId === place4Match.team1_registration_id
+              ? place4Match.team1_name || "Équipe 1"
+              : place4Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place4Match, loserId),
+          });
+        }
+      }
+      if (place6Match && place6Match.winner_registration_id) {
+        ranking.push({
+          registrationId: place6Match.winner_registration_id,
+          rank: 6,
+          teamName: place6Match.winner_registration_id === place6Match.team1_registration_id
+            ? place6Match.team1_name || "Équipe 1"
+            : place6Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place6Match, place6Match.winner_registration_id),
+        });
+      }
+
+      // Places 7-9
+      const place7_8Match = places7_9Matches.find((m) => m.match_order === 1);
+      const place9Match_7_9 = places7_9Matches.find((m) => m.match_order === 2);
+      if (place7_8Match && place7_8Match.winner_registration_id) {
+        ranking.push({
+          registrationId: place7_8Match.winner_registration_id,
+          rank: 7,
+          teamName: place7_8Match.winner_registration_id === place7_8Match.team1_registration_id
+            ? place7_8Match.team1_name || "Équipe 1"
+            : place7_8Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place7_8Match, place7_8Match.winner_registration_id),
+        });
+        const loserId =
+          place7_8Match.team1_registration_id === place7_8Match.winner_registration_id
+            ? place7_8Match.team2_registration_id
+            : place7_8Match.team1_registration_id;
+        if (loserId) {
+          ranking.push({
+            registrationId: loserId,
+            rank: 8,
+            teamName: loserId === place7_8Match.team1_registration_id
+              ? place7_8Match.team1_name || "Équipe 1"
+              : place7_8Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place7_8Match, loserId),
+          });
+        }
+      }
+      if (place9Match_7_9 && place9Match_7_9.winner_registration_id) {
+        ranking.push({
+          registrationId: place9Match_7_9.winner_registration_id,
+          rank: 9,
+          teamName: place9Match_7_9.winner_registration_id === place9Match_7_9.team1_registration_id
+            ? place9Match_7_9.team1_name || "Équipe 1"
+            : place9Match_7_9.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place9Match_7_9, place9Match_7_9.winner_registration_id),
+        });
+      }
+
+      // Places 10-12
+      const place11_12Match = places10_12Matches.find((m) => m.match_order === 1);
+      const place10Match = places10_12Matches.find((m) => m.match_order === 2);
+      if (place11_12Match && place11_12Match.winner_registration_id) {
+        ranking.push({
+          registrationId: place11_12Match.winner_registration_id,
+          rank: 11,
+          teamName: place11_12Match.winner_registration_id === place11_12Match.team1_registration_id
+            ? place11_12Match.team1_name || "Équipe 1"
+            : place11_12Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place11_12Match, place11_12Match.winner_registration_id),
+        });
+        const loserId =
+          place11_12Match.team1_registration_id === place11_12Match.winner_registration_id
+            ? place11_12Match.team2_registration_id
+            : place11_12Match.team1_registration_id;
+        if (loserId) {
+          ranking.push({
+            registrationId: loserId,
+            rank: 12,
+            teamName: loserId === place11_12Match.team1_registration_id
+              ? place11_12Match.team1_name || "Équipe 1"
+              : place11_12Match.team2_name || "Équipe 2",
+            seedNumber: getSeedNumber(place11_12Match, loserId),
+          });
+        }
+      }
+      if (place10Match && place10Match.winner_registration_id) {
+        ranking.push({
+          registrationId: place10Match.winner_registration_id,
+          rank: 10,
+          teamName: place10Match.winner_registration_id === place10Match.team1_registration_id
+            ? place10Match.team1_name || "Équipe 1"
+            : place10Match.team2_name || "Équipe 2",
+          seedNumber: getSeedNumber(place10Match, place10Match.winner_registration_id),
+        });
       }
 
       ranking.sort((a, b) => a.rank - b.rank);
@@ -437,8 +620,10 @@ export default function TournamentBracket({
         );
       }
       setInfoMessage("Le classement final a été calculé avec succès.");
-      await fetchFinalRankings();
+      // Rafraîchir les matchs pour avoir les dernières données
       await fetchMatches();
+      // Puis récupérer les classements depuis la base de données
+      await fetchFinalRankings();
     } catch (err: any) {
       setInfoMessage(
         err.message || "Erreur lors du calcul du classement final."
@@ -800,6 +985,13 @@ export default function TournamentBracket({
   }
 
   async function handleUpdateScore(matchId: string, rawScore: string) {
+    // Nettoyer l'erreur précédente pour ce match
+    setScoreErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[matchId];
+      return updated;
+    });
+
     try {
       const scorePayload = parseScoreString(rawScore, matchFormat);
       const res = await fetch(`/api/tournaments/${tournamentId}/matches/${matchId}`, {
@@ -868,7 +1060,11 @@ export default function TournamentBracket({
         }));
       }
     } catch (err: any) {
-      alert(err.message || "Erreur lors de la mise à jour du score. Vérifie le format du score.");
+      // Stocker l'erreur au lieu d'afficher une alerte
+      setScoreErrors((prev) => ({
+        ...prev,
+        [matchId]: err.message || "Erreur lors de la mise à jour du score. Vérifie le format du score.",
+      }));
     }
   }
 
@@ -908,9 +1104,10 @@ export default function TournamentBracket({
 
         const isOneSetAll = wins1 === 1 && wins2 === 1;
         if (isOneSetAll && !s3) {
-          alert(
-            `Format ${matchFormat} : en cas de 1 set partout, le super tie-break est obligatoire.`
-          );
+          setScoreErrors((prev) => ({
+            ...prev,
+            [matchId]: `Format ${matchFormat} : en cas de 1 set partout, le super tie-break est obligatoire.`,
+          }));
           return;
         }
       }
@@ -1087,6 +1284,55 @@ export default function TournamentBracket({
     }
   }
 
+  // Fonction pour calculer la position verticale d'un match dans un bracket
+  // Pour aligner les matchs entre les rounds : un match doit être au milieu des deux matchs du round précédent
+  // Format en entonnoir : chaque round est centré par rapport au round précédent
+  function calculateMatchPosition(
+    matchIndex: number,
+    roundIndex: number,
+    matchesInRound: number,
+    matchesInFirstRound: number
+  ): number {
+    // Hauteur d'un cadre de match (réduite)
+    const matchHeight = 90;
+    // Espacement entre matchs dans le premier round (adapté)
+    const firstRoundSpacing = 110;
+    
+    if (roundIndex === 0) {
+      // Premier round : positions équidistantes
+      return matchIndex * firstRoundSpacing;
+    }
+
+    // Pour les rounds suivants, calculer récursivement la position au milieu des deux matchs parents
+    // Le match à l'index i dans le round actuel est entre les matchs 2*i et 2*i+1 du round précédent
+    
+    // Calculer récursivement les positions des matchs parents
+    const parentMatch1Index = matchIndex * 2;
+    const parentMatch2Index = matchIndex * 2 + 1;
+    
+    // Obtenir les positions (top) des matchs parents dans le round précédent
+    const parent1Top = calculateMatchPosition(
+      parentMatch1Index,
+      roundIndex - 1,
+      matchesInRound * 2,
+      matchesInFirstRound
+    );
+    const parent2Top = calculateMatchPosition(
+      parentMatch2Index,
+      roundIndex - 1,
+      matchesInRound * 2,
+      matchesInFirstRound
+    );
+    
+    // Calculer le centre de chaque match parent (haut + moitié de la hauteur)
+    const parent1Center = parent1Top + matchHeight / 2;
+    const parent2Center = parent2Top + matchHeight / 2;
+    
+    // Position au milieu (centré verticalement) - soustraire la moitié de la hauteur pour obtenir le top
+    const centerPosition = (parent1Center + parent2Center) / 2;
+    return centerPosition - matchHeight / 2;
+  }
+
   function renderFinalBracket() {
     const shouldShowFinal =
       knockoutRoundKeys.length > 0 ||
@@ -1123,8 +1369,10 @@ export default function TournamentBracket({
           (m) => m.status === "completed" && m.winner_registration_id
         );
 
-        // Pour TMC 16, on peut avancer jusqu'au Tour 4 (maxRound < 4)
-        // Pour TMC 8, on peut avancer jusqu'au Tour 3 (maxRound < 3)
+        // Pour TMC, on détermine le nombre maximum de tours selon le nombre d'équipes :
+        // - TMC 8 : 3 tours (maxRound < 3)
+        // - TMC 12 : 4 tours (maxRound < 4)
+        // - TMC 16 : 4 tours (maxRound < 4)
         // On détermine le nombre d'équipes en comptant les inscriptions uniques dans les matchs du Tour 1
         const tour1Matches = matches.filter((m) => m.round_number === 1);
         const uniqueTeams = new Set<string>();
@@ -1133,7 +1381,8 @@ export default function TournamentBracket({
           if (m.team2_registration_id) uniqueTeams.add(m.team2_registration_id);
         });
         const numTeams = uniqueTeams.size;
-        const maxAllowedRound = numTeams >= 16 ? 4 : 3;
+        // TMC 8 a 3 tours, TMC 12 et 16 ont 4 tours
+        const maxAllowedRound = numTeams === 8 ? 3 : 4;
         
         if (roundCompleted && nextRoundMatches.length === 0 && maxRound < maxAllowedRound) {
           canAdvanceFinal = true;
@@ -1176,7 +1425,7 @@ export default function TournamentBracket({
     if (tournamentType === "tmc") {
       const tmcMatches = matches.filter((m) => m.round_number !== null);
       
-      // Définir les 4 tableaux avec leurs couleurs et labels
+      // Définir les tableaux avec leurs couleurs et labels
       const tableaux = [
         {
           id: "principal",
@@ -1185,7 +1434,34 @@ export default function TournamentBracket({
           bgColor: "bg-yellow-500/10",
           borderColor: "border-yellow-400/80",
           textColor: "text-yellow-200",
-          places: "Places 1 à 4",
+          places: "Places 1 à 3",
+        },
+        {
+          id: "places_4_6",
+          label: "🥈 Places 4-6",
+          color: "#C0C0C0", // Argent
+          bgColor: "bg-gray-300/10",
+          borderColor: "border-gray-300/80",
+          textColor: "text-gray-200",
+          places: "Places 4 à 6",
+        },
+        {
+          id: "places_7_9",
+          label: "🥉 Places 7-9",
+          color: "#CD7F32", // Bronze
+          bgColor: "bg-amber-700/10",
+          borderColor: "border-amber-600/80",
+          textColor: "text-amber-200",
+          places: "Places 7 à 9",
+        },
+        {
+          id: "places_10_12",
+          label: "⚪ Places 10-12",
+          color: "#A9A9A9", // Gris
+          bgColor: "bg-gray-500/10",
+          borderColor: "border-gray-400/80",
+          textColor: "text-gray-300",
+          places: "Places 10 à 12",
         },
         {
           id: "places_5_8",
@@ -1204,6 +1480,15 @@ export default function TournamentBracket({
           borderColor: "border-amber-600/80",
           textColor: "text-amber-200",
           places: "Places 9 à 12",
+        },
+        {
+          id: "places_7_12",
+          label: "Places 7-12",
+          color: "#A9A9A9",
+          bgColor: "bg-gray-500/10",
+          borderColor: "border-gray-400/80",
+          textColor: "text-gray-300",
+          places: "Places 7 à 12",
         },
         {
           id: "places_13_16",
@@ -1272,88 +1557,212 @@ export default function TournamentBracket({
           const roundLabel = showColumnLabel
             ? getRoundLabelForTmc(roundNum, tableau.id, roundMatches[0])
             : null;
-          const isFirstRoundInTableau = rounds.indexOf(roundNum) === 0;
-          const isLastRoundInTableau = rounds.indexOf(roundNum) === rounds.length - 1;
+          const roundIndexInTableau = rounds.indexOf(roundNum);
+          const firstRoundMatches = tableauMatches.filter((m) => m.round_number === rounds[0]);
+          const matchesInFirstRound = firstRoundMatches.length;
+
+          // Calculer la hauteur minimale nécessaire basée sur le nombre de matchs dans le premier round
+          const minHeight = matchesInFirstRound > 0 ? matchesInFirstRound * 110 + 100 : 800;
+
+          // Détecter si c'est un TMC 12 équipes (3 matchs au Tour 2, 2 matchs au Tour 3) dans le tableau principal
+          const isTmc12 = tableau.id === "principal" && matchesInFirstRound === 6;
+          const isQuartersRound = roundNum === 2 && roundMatches.length === 3 && isTmc12;
+          const isSemisRound = roundNum === 3 && roundMatches.length === 2 && isTmc12;
+          const isFinalRound = roundNum === 4 && roundMatches.length === 1 && isTmc12;
+
+          // Calculer toutes les positions des matchs d'abord
+          // Pour le Tour 3 TMC 12, on doit calculer les positions du Tour 2 d'abord pour centrer le 2e match
+          let round2Positions: number[] = [];
+          if (isSemisRound) {
+            const round2Matches = tableauMatches.filter((m) => m.round_number === 2);
+            if (round2Matches.length === 3) {
+              round2Positions = round2Matches.map((_, idx) =>
+                calculateMatchPosition(idx, rounds.indexOf(2), 3, matchesInFirstRound)
+              );
+            }
+          }
+
+          const matchPositions = roundMatches.map((_, matchIndex) => {
+            // Pour le Tour 3 TMC 12, centrer le 2e match par rapport aux 2e et 3e matchs du Tour 2
+            if (isSemisRound && matchIndex === 1 && round2Positions.length === 3) {
+              // Centrer le 2e match des demi-finales entre les 2e et 3e matchs des quarts
+              const match2Bottom = round2Positions[1] + 90; // match 2 (index 1) du Tour 2
+              const match3Top = round2Positions[2]; // match 3 (index 2) du Tour 2
+              const centerPosition = (match2Bottom + match3Top) / 2;
+              return centerPosition - 45 + 8; // Moitié de la hauteur du match (90/2) + léger décalage vers le bas
+            }
+            return calculateMatchPosition(
+              matchIndex,
+              roundIndexInTableau,
+              roundMatches.length,
+              matchesInFirstRound
+            );
+          });
+
+          // Calculer les positions des labels pour les quarts et demi-finales TMC 12
+          const matchHeight = 90;
+          let quartersLabel1Position = 0;
+          let quartersLabel2Position = 0;
+          let semisLabelPosition = 0;
+
+          if (isQuartersRound && matchPositions.length >= 3) {
+            // Label entre match 0 et 1
+            const match0Bottom = matchPositions[0] + matchHeight;
+            const match1Top = matchPositions[1];
+            quartersLabel1Position = (match0Bottom + match1Top) / 2 + 6;
+            
+            // Label entre match 1 et 2
+            const match1Bottom = matchPositions[1] + matchHeight;
+            const match2Top = matchPositions[2];
+            quartersLabel2Position = (match1Bottom + match2Top) / 2 + 6;
+          }
+
+          if (isSemisRound && matchPositions.length >= 2) {
+            // Label entre match 0 et 1
+            const match0Bottom = matchPositions[0] + matchHeight;
+            const match1Top = matchPositions[1];
+            semisLabelPosition = (match0Bottom + match1Top) / 2;
+          }
 
           tableauColumns.push(
-            <div key={`${tableau.id}-round-${roundNum}`} className="flex-none min-w-[280px]">
+            <div key={`${tableau.id}-round-${roundNum}`} className="flex-none min-w-[280px] relative">
               {showColumnLabel && (
-                <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide">
+                <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide mb-4">
                   {roundLabel}
                 </p>
               )}
-              <div
-                className={
-                  isFirstRoundInTableau
-                    ? "mt-4 space-y-3"
-                    : isLastRoundInTableau
-                    ? "mt-12 flex flex-col justify-center gap-8"
-                    : "mt-24 flex flex-col gap-[72px]"
-                }
-              >
-                {roundMatches.map((match) => {
+              <div className="relative" style={{ minHeight: `${minHeight}px` }}>
+                {/* Labels pour les quarts de finale TMC 12 */}
+                {isQuartersRound && (
+                  <>
+                    <div
+                      className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                      style={{ 
+                        top: `${quartersLabel1Position}px`,
+                        transform: 'translateY(-50%)',
+                      }}
+                    >
+                      <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/20">
+                        <p className="text-lg font-semibold text-white/90 text-center tracking-wide">
+                          Quarts de finale
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                      style={{ 
+                        top: `${quartersLabel2Position}px`,
+                        transform: 'translateY(-50%)',
+                      }}
+                    >
+                      <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/20">
+                        <p className="text-lg font-semibold text-white/90 text-center tracking-wide">
+                          Quarts de finale
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Label pour les demi-finales TMC 12 */}
+                {isSemisRound && (
+                  <div
+                    className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                    style={{ 
+                      top: `${semisLabelPosition}px`,
+                      transform: 'translateY(-50%)',
+                    }}
+                  >
+                    <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
+                      <p className="text-xl font-semibold text-white text-center tracking-wide">
+                        Demi-finale
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {roundMatches.map((match, matchIndex) => {
+                  // Utiliser la position pré-calculée pour TMC 12, sinon utiliser flex
+                  const verticalPosition = isTmc12 ? matchPositions[matchIndex] : undefined;
                   // Pour le Tour 4, afficher le label de chaque match
                   const matchLabel = roundNum === 4
                     ? getRoundLabelForTmc(roundNum, tableau.id, match)
                     : null;
-                const timeLabel = match.scheduled_time
-                  ? new Date(match.scheduled_time).toLocaleTimeString(
-                      "fr-FR",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    )
-                  : "";
+                  const timeLabel = match.scheduled_time
+                    ? new Date(match.scheduled_time).toLocaleTimeString(
+                        "fr-FR",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )
+                    : "";
 
-                const isCompleted = match.status === "completed";
-                const hasScore =
-                  !match.is_bye &&
-                  (match.score?.sets?.length > 0 || !!match.score?.final_score);
+                  const isCompleted = match.status === "completed";
+                  const hasScore =
+                    !match.is_bye &&
+                    (match.score?.sets?.length > 0 || !!match.score?.final_score);
 
-                // Pour la finale (round 4, match_order 1), déterminer quelle équipe est gagnante
-                const isFinalMatch =
-                  roundNum === 4 &&
-                  match.match_order === 1 &&
-                  match.round_type === "final";
-                const isWinnerTeam1 =
-                  isFinalMatch &&
-                  isCompleted &&
-                  match.winner_registration_id &&
-                  match.winner_registration_id === match.team1_registration_id;
-                const isWinnerTeam2 =
-                  isFinalMatch &&
-                  isCompleted &&
-                  match.winner_registration_id &&
-                  match.winner_registration_id === match.team2_registration_id;
+                  // Pour la finale (round 4, match_order 1), déterminer quelle équipe est gagnante
+                  const isFinalMatch =
+                    roundNum === 4 &&
+                    match.match_order === 1 &&
+                    match.round_type === "final";
+                  const isWinnerTeam1 =
+                    isFinalMatch &&
+                    isCompleted &&
+                    match.winner_registration_id &&
+                    match.winner_registration_id === match.team1_registration_id;
+                  const isWinnerTeam2 =
+                    isFinalMatch &&
+                    isCompleted &&
+                    match.winner_registration_id &&
+                    match.winner_registration_id === match.team2_registration_id;
 
-                const winnerName = isWinnerTeam1
-                  ? match.team1_name
-                  : isWinnerTeam2
-                  ? match.team2_name
-                  : null;
-                const loserName = isWinnerTeam1
-                  ? match.team2_name
-                  : isWinnerTeam2
-                  ? match.team1_name
-                  : null;
+                  const winnerName = isWinnerTeam1
+                    ? match.team1_name
+                    : isWinnerTeam2
+                    ? match.team2_name
+                    : null;
+                  const loserName = isWinnerTeam1
+                    ? match.team2_name
+                    : isWinnerTeam2
+                    ? match.team1_name
+                    : null;
 
-                return (
-                  <div key={match.id} className="space-y-1">
-                    {matchLabel && (
-                      <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide mb-2">
-                        {matchLabel}
-                      </p>
-                    )}
+                  // Afficher "Finale" au-dessus du premier (et seul) match de la finale pour TMC 12
+                  const showFinalLabel = isFinalRound && matchIndex === 0;
+
+                  return (
                     <div
-                      className={`rounded-md px-3 py-2.5 space-y-1 min-h-[104px] min-w-[260px] flex flex-col justify-between ${
-                        isFinalMatch && isCompleted && hasScore
-                          ? `border ${tableau.borderColor} ${tableau.bgColor}`
-                          : hasScore
-                          ? "border border-emerald-400/80 bg-emerald-500/10"
-                          : `border ${tableau.borderColor} ${tableau.bgColor}`
-                      }`}
+                      key={match.id}
+                      className={isTmc12 ? "absolute left-0 right-0 space-y-1" : "space-y-1"}
+                      style={isTmc12 ? { top: `${verticalPosition}px` } : undefined}
                     >
+                      {/* Label "Finale" au-dessus du cadre pour TMC 12 */}
+                      {showFinalLabel && (
+                        <div className="flex items-center justify-center mb-3">
+                          <div className="bg-black/70 backdrop-blur-sm px-6 py-2 rounded-lg border border-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.2)]">
+                            <p className="text-2xl font-bold text-amber-300 text-center tracking-wide">
+                              Finale
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {matchLabel && (
+                        <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide mb-2">
+                          {matchLabel}
+                        </p>
+                      )}
+                      <div
+                        className={`rounded-md px-2 py-1.5 space-y-1 min-h-[90px] min-w-[240px] flex flex-col justify-between ${
+                          isFinalMatch && isCompleted && hasScore
+                            ? `border ${tableau.borderColor} ${tableau.bgColor}`
+                            : hasScore
+                            ? "border border-emerald-400/80 bg-emerald-500/10"
+                            : `border ${tableau.borderColor} ${tableau.bgColor}`
+                        }`}
+                      >
                       <div className="flex items-centered justify-between">
                         <span className="text-[10px] text-gray-400">
                           {timeLabel || "\u00A0"}
@@ -1366,8 +1775,13 @@ export default function TournamentBracket({
                       {match.is_bye ? (
                         <>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
-                            <p className="text-[11px] font-medium text-white leading-tight break-words">
-                              {match.team1_name || "À définir"}
+                            <p className="text-[11px] font-medium text-white leading-tight break-words flex items-center gap-1">
+                              {match.team1_seed_number && (
+                                <span className="text-[12px] text-yellow-400 font-bold">
+                                  TS{match.team1_seed_number}
+                                </span>
+                              )}
+                              <span>{match.team1_name || "À définir"}</span>
                             </p>
                           </div>
                           <p className="text-[10px] text-emerald-300 italic">
@@ -1380,16 +1794,36 @@ export default function TournamentBracket({
                         loserName ? (
                         <>
                           <div className="rounded-sm bg-amber-500/20 px-1 py-0.5">
-                            <p className="text-[11px] font-semibold text-amber-100 leading-tight break-words">
-                              {winnerName}
+                            <p className="text-[11px] font-semibold text-amber-100 leading-tight break-words flex items-center gap-1 flex-wrap">
+                              {match.winner_registration_id === match.team1_registration_id && match.team1_seed_number && (
+                                <span className="text-[12px] text-yellow-400 font-bold">
+                                  TS{match.team1_seed_number}
+                                </span>
+                              )}
+                              {match.winner_registration_id === match.team2_registration_id && match.team2_seed_number && (
+                                <span className="text-[12px] text-yellow-400 font-bold">
+                                  TS{match.team2_seed_number}
+                                </span>
+                              )}
+                              <span>{winnerName}</span>
                               <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-200/80">
                                 (Vainqueurs)
                               </span>
                             </p>
                           </div>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
-                            <p className="text-[11px] font-medium text-white/80 leading-tight break-words">
-                              {loserName}
+                            <p className="text-[11px] font-medium text-white/80 leading-tight break-words flex items-center gap-1">
+                              {match.winner_registration_id === match.team1_registration_id && match.team2_seed_number && (
+                                <span className="text-[12px] text-yellow-400 font-bold">
+                                  TS{match.team2_seed_number}
+                                </span>
+                              )}
+                              {match.winner_registration_id === match.team2_registration_id && match.team1_seed_number && (
+                                <span className="text-[12px] text-yellow-400 font-bold">
+                                  TS{match.team1_seed_number}
+                                </span>
+                              )}
+                              <span>{loserName}</span>
                             </p>
                           </div>
                         </>
@@ -1398,76 +1832,100 @@ export default function TournamentBracket({
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
                             <p className="text-[11px] font-medium text-white leading-tight break-words">
                               {match.team1_name || "À définir"}
+                              {match.team1_seed_number && (
+                                <span className="ml-1 text-[10px] text-yellow-300 font-semibold">
+                                  (TS{match.team1_seed_number})
+                                </span>
+                              )}
                             </p>
                           </div>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
-                            <p className="text-[11px] font-medium text-white leading-tight break-words">
-                              {match.team2_name ||
-                                (match.is_bye ? "Bye" : "À définir")}
+                            <p className="text-[11px] font-medium text-white leading-tight break-words flex items-center gap-1">
+                              {match.team2_seed_number && (
+                                <span className="text-[12px] text-yellow-400 font-bold">
+                                  TS{match.team2_seed_number}
+                                </span>
+                              )}
+                              <span>{match.team2_name || (match.is_bye ? "Bye" : "À définir")}</span>
                             </p>
                           </div>
                         </>
                       )}
                       {!match.is_bye && (
-                        <div className="flex gap-1">
-                          {Array.from({
-                            length: getVisibleSetSlots(matchFormat),
-                          }).map((_, idx) => {
-                            const key = `set${idx + 1}` as
-                              | "set1"
-                              | "set2"
-                              | "set3";
-                            const isSuperTiebreakSlot =
-                              (matchFormat === "B1" || matchFormat === "C1") && idx === 2;
-                            const widthClass = isSuperTiebreakSlot
-                              ? "w-[136px]"
-                              : "w-[64px]";
-                            const alignClass = isSuperTiebreakSlot
-                              ? "text-center"
-                              : "";
+                        <>
+                          <div className="flex gap-1">
+                            {Array.from({
+                              length: getVisibleSetSlots(matchFormat),
+                            }).map((_, idx) => {
+                              const key = `set${idx + 1}` as
+                                | "set1"
+                                | "set2"
+                                | "set3";
+                              const isSuperTiebreakSlot =
+                                (matchFormat === "B1" || matchFormat === "C1") && idx === 2;
+                              const widthClass = isSuperTiebreakSlot
+                                ? "w-[136px]"
+                                : "w-[64px]";
+                              const alignClass = isSuperTiebreakSlot
+                                ? "text-center"
+                                : "";
 
-                            return (
-                              <Input
-                                key={key}
-                                value={setInputs[match.id]?.[key] ?? ""}
-                                placeholder={getSetPlaceholder(
-                                  matchFormat,
-                                  idx
-                                )}
-                                className={`bg-black/40 border-white/20 text-white h-7 text-[11px] ${widthClass} ${alignClass}`}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setSetInputs((prev) => ({
-                                    ...prev,
-                                    [match.id]: {
-                                      set1: prev[match.id]?.set1 ?? "",
-                                      set2: prev[match.id]?.set2 ?? "",
-                                      set3: prev[match.id]?.set3 ?? "",
-                                      [key]: value,
-                                    },
-                                  }));
-
-                                  if (
-                                    idx === 0 &&
-                                    isValidSetScoreFormat(value) &&
-                                    getVisibleSetSlots(matchFormat) > 1
-                                  ) {
-                                    const nextId = `set-input-${match.id}-2`;
-                                    setTimeout(() => {
-                                      const nextEl =
-                                        document.getElementById(nextId);
-                                      if (nextEl) {
-                                        (nextEl as HTMLInputElement).focus();
-                                      }
-                                    }, 0);
-                                  }
-                                }}
-                                onBlur={() => handleSetsBlur(match.id)}
-                                id={`set-input-${match.id}-${idx + 1}`}
-                              />
-                            );
-                          })}
-                        </div>
+                              return (
+                                <Input
+                                  key={key}
+                                  value={setInputs[match.id]?.[key] ?? ""}
+                                  placeholder={getSetPlaceholder(
+                                    matchFormat,
+                                    idx
+                                  )}
+                                  className={`bg-black/40 border-white/20 text-white h-7 text-[11px] ${widthClass} ${alignClass}`}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setSetInputs((prev) => ({
+                                      ...prev,
+                                      [match.id]: {
+                                        set1: prev[match.id]?.set1 ?? "",
+                                        set2: prev[match.id]?.set2 ?? "",
+                                        set3: prev[match.id]?.set3 ?? "",
+                                        [key]: value,
+                                      },
+                                    }));
+                                    // Nettoyer l'erreur quand l'utilisateur modifie le score
+                                    if (scoreErrors[match.id]) {
+                                      setScoreErrors((prev) => {
+                                        const updated = { ...prev };
+                                        delete updated[match.id];
+                                        return updated;
+                                      });
+                                    }
+                                    
+                                    if (
+                                      idx === 0 &&
+                                      isValidSetScoreFormat(value) &&
+                                      getVisibleSetSlots(matchFormat) > 1
+                                    ) {
+                                      const nextId = `set-input-${match.id}-2`;
+                                      setTimeout(() => {
+                                        const nextEl =
+                                          document.getElementById(nextId);
+                                        if (nextEl) {
+                                          (nextEl as HTMLInputElement).focus();
+                                        }
+                                      }, 0);
+                                    }
+                                  }}
+                                  onBlur={() => handleSetsBlur(match.id)}
+                                  id={`set-input-${match.id}-${idx + 1}`}
+                                />
+                              );
+                            })}
+                          </div>
+                          {scoreErrors[match.id] && (
+                            <p className="text-[10px] text-red-400 mt-1">
+                              {scoreErrors[match.id]}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                     </div>
@@ -1630,67 +2088,82 @@ export default function TournamentBracket({
                         </>
                       )}
                       {!match.is_bye && (
-                        <div className="flex gap-1">
-                          {Array.from({
-                            length: getVisibleSetSlots(matchFormat),
-                          }).map((_, idx) => {
-                            const key = `set${idx + 1}` as
-                              | "set1"
-                              | "set2"
-                              | "set3";
-                            const isSuperTiebreakSlot =
-                              (matchFormat === "B1" || matchFormat === "C1") && idx === 2;
-                            const widthClass = isSuperTiebreakSlot
-                              ? "w-[136px]"
-                              : "w-[64px]";
-                            const alignClass = isSuperTiebreakSlot
-                              ? "text-center"
-                              : "";
+                        <>
+                          <div className="flex gap-1">
+                            {Array.from({
+                              length: getVisibleSetSlots(matchFormat),
+                            }).map((_, idx) => {
+                              const key = `set${idx + 1}` as
+                                | "set1"
+                                | "set2"
+                                | "set3";
+                              const isSuperTiebreakSlot =
+                                (matchFormat === "B1" || matchFormat === "C1") && idx === 2;
+                              const widthClass = isSuperTiebreakSlot
+                                ? "w-[136px]"
+                                : "w-[64px]";
+                              const alignClass = isSuperTiebreakSlot
+                                ? "text-center"
+                                : "";
 
-                            return (
-                              <Input
-                                key={key}
-                                value={setInputs[match.id]?.[key] ?? ""}
-                                placeholder={getSetPlaceholder(
-                                  matchFormat,
-                                  idx
-                                )}
-                                className={`bg-black/40 border-white/20 text-white h-7 text-[11px] ${widthClass} ${alignClass}`}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setSetInputs((prev) => ({
-                                    ...prev,
-                                    [match.id]: {
-                                      set1: prev[match.id]?.set1 ?? "",
-                                      set2: prev[match.id]?.set2 ?? "",
-                                      set3: prev[match.id]?.set3 ?? "",
-                                      [key]: value,
-                                    },
-                                  }));
+                              return (
+                                <Input
+                                  key={key}
+                                  value={setInputs[match.id]?.[key] ?? ""}
+                                  placeholder={getSetPlaceholder(
+                                    matchFormat,
+                                    idx
+                                  )}
+                                  className={`bg-black/40 border-white/20 text-white h-7 text-[11px] ${widthClass} ${alignClass}`}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setSetInputs((prev) => ({
+                                      ...prev,
+                                      [match.id]: {
+                                        set1: prev[match.id]?.set1 ?? "",
+                                        set2: prev[match.id]?.set2 ?? "",
+                                        set3: prev[match.id]?.set3 ?? "",
+                                        [key]: value,
+                                      },
+                                    }));
+                                    // Nettoyer l'erreur quand l'utilisateur modifie le score
+                                    if (scoreErrors[match.id]) {
+                                      setScoreErrors((prev) => {
+                                        const updated = { ...prev };
+                                        delete updated[match.id];
+                                        return updated;
+                                      });
+                                    }
 
-                                  // Si on est sur Set 1 et que le format est valide, passer au champ suivant immédiatement
-                                  if (
-                                    idx === 0 &&
-                                    isValidSetScoreFormat(value) &&
-                                    getVisibleSetSlots(matchFormat) > 1
-                                  ) {
-                                    const nextId = `set-input-${match.id}-2`;
-                                    // léger délai pour laisser React appliquer le setState
-                                    setTimeout(() => {
-                                      const nextEl =
-                                        document.getElementById(nextId);
-                                      if (nextEl) {
-                                        (nextEl as HTMLInputElement).focus();
-                                      }
-                                    }, 0);
-                                  }
-                                }}
-                                onBlur={() => handleSetsBlur(match.id)}
-                                id={`set-input-${match.id}-${idx + 1}`}
-                              />
-                            );
-                          })}
-                        </div>
+                                    // Si on est sur Set 1 et que le format est valide, passer au champ suivant immédiatement
+                                    if (
+                                      idx === 0 &&
+                                      isValidSetScoreFormat(value) &&
+                                      getVisibleSetSlots(matchFormat) > 1
+                                    ) {
+                                      const nextId = `set-input-${match.id}-2`;
+                                      // léger délai pour laisser React appliquer le setState
+                                      setTimeout(() => {
+                                        const nextEl =
+                                          document.getElementById(nextId);
+                                        if (nextEl) {
+                                          (nextEl as HTMLInputElement).focus();
+                                        }
+                                      }, 0);
+                                    }
+                                  }}
+                                  onBlur={() => handleSetsBlur(match.id)}
+                                  id={`set-input-${match.id}-${idx + 1}`}
+                                />
+                              );
+                            })}
+                          </div>
+                          {scoreErrors[match.id] && (
+                            <p className="text-[10px] text-red-400 mt-1">
+                              {scoreErrors[match.id]}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -1818,6 +2291,11 @@ export default function TournamentBracket({
                   <span className="text-lg font-bold text-yellow-200 min-w-[30px]">
                     {ranking.rank}
                   </span>
+                  {ranking.seedNumber && (
+                    <span className="text-sm text-yellow-400 font-bold">
+                      TS{ranking.seedNumber}
+                    </span>
+                  )}
                   <span className="text-sm text-white truncate">
                     {ranking.teamName}
                   </span>

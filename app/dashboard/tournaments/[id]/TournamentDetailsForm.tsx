@@ -23,10 +23,6 @@ const TOURNAMENT_TYPES = [
     value: "pools_triple_draw",
     label: "Poules + 3 tableaux (principal / intermédiaire / consolante)",
   },
-  { value: "round_robin", label: "Round-robin pur" },
-  { value: "americano", label: "Americano (format social)" },
-  { value: "mexicano", label: "Mexicano (format social)" },
-  { value: "custom", label: "Personnalisé" },
 ] as const;
 
 function renderStatusLabel(status: string) {
@@ -65,6 +61,7 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
   const [pending, setPending] = useState(false);
   const [actionPending, setActionPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [form, setForm] = useState({
     name: tournament.name || "",
@@ -193,16 +190,9 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
   }
 
   async function handleDelete() {
-    const confirmed = window.confirm(
-      `Êtes-vous sûr de vouloir supprimer le tournoi "${tournament.name}" ?\n\nCette action est irréversible et supprimera toutes les inscriptions et données associées.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setActionPending("delete");
     setError(null);
+    setShowDeleteConfirm(false);
 
     try {
       const res = await fetch(`/api/tournaments/${tournament.id}`, {
@@ -394,16 +384,51 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
           </div>
 
           <CardFooter className="flex flex-col gap-4 px-0">
+            {showDeleteConfirm && (
+              <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 space-y-3">
+                <p className="text-sm text-white">
+                  Êtes-vous sûr de vouloir supprimer le tournoi <strong>"{tournament.name}"</strong> ?
+                </p>
+                <p className="text-xs text-red-300">
+                  Cette action est irréversible et supprimera toutes les inscriptions et données associées.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={actionPending === "delete"}
+                    onClick={handleDelete}
+                  >
+                    {actionPending === "delete" ? "Suppression..." : "Confirmer la suppression"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={actionPending === "delete"}
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setError(null);
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex justify-between items-center gap-2">
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={!canDelete || actionPending === "delete" || pending}
-                onClick={handleDelete}
-              >
-                {actionPending === "delete" ? "Suppression..." : "Supprimer le tournoi"}
-              </Button>
+              {!showDeleteConfirm && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={!canDelete || actionPending === "delete" || pending}
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Supprimer le tournoi
+                </Button>
+              )}
               <Button type="submit" disabled={pending}>
                 {pending ? "Enregistrement..." : "Enregistrer les modifications"}
               </Button>
