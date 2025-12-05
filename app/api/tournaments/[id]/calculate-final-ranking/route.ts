@@ -28,10 +28,10 @@ type Match = {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tournamentId = params.id;
+    const { id: tournamentId } = await params;
 
     if (!supabaseAdmin) {
       return NextResponse.json(
@@ -211,13 +211,10 @@ export async function POST(
       }
 
       // 2) Place 3 : L'équipe qui était en demi-finale (Tour 3, tableau principal) et qui n'est pas allé en finale
-      // C'est le perdant du match 2 du tableau principal (Tour 3), ou si le match 2 est un bye, le perdant du match 1
+      // C'est le perdant du match 1 du tableau principal (Tour 3) - c'est lui qui est 3ème
       if (tour3Matches && tour3Matches.length > 0) {
         const principalMatches = tour3Matches.filter((m: Match) => m.tableau === "principal");
         const principalMatch1 = principalMatches.find((m: Match) => m.match_order === 1 && !m.is_bye);
-        const principalMatch2 = principalMatches.find((m: Match) => m.match_order === 2 && !m.is_bye);
-        const principalMatch2Bye = principalMatches.find((m: Match) => (m.match_order === 2 || !m.match_order) && m.is_bye);
-        const principalBye = principalMatches.find((m: Match) => m.is_bye); // Le bye peut avoir n'importe quel match_order
         
         logger.info(
           {
@@ -227,81 +224,39 @@ export async function POST(
               team1: principalMatch1.team1_registration_id?.substring(0, 8) + "…",
               team2: principalMatch1.team2_registration_id?.substring(0, 8) + "…",
             } : null,
-            principalMatch2: principalMatch2 ? { 
-              status: principalMatch2.status, 
-              winner: principalMatch2.winner_registration_id?.substring(0, 8) + "…",
-              team1: principalMatch2.team1_registration_id?.substring(0, 8) + "…",
-              team2: principalMatch2.team2_registration_id?.substring(0, 8) + "…",
-            } : null,
-            principalMatch2Bye: principalMatch2Bye ? { 
-              winner: principalMatch2Bye.winner_registration_id?.substring(0, 8) + "…",
-              team1: principalMatch2Bye.team1_registration_id?.substring(0, 8) + "…",
-            } : null,
-            principalBye: principalBye ? { 
-              winner: principalBye.winner_registration_id?.substring(0, 8) + "…",
-            } : null,
             finalists: Array.from(finalists).map((id: string) => id.substring(0, 8) + "…"),
           },
           "[calculate-final-ranking] Place 3 calculation details"
         );
         
-        // Le perdant du match 2 (ou du match 1 si match 2 est un bye) qui n'est pas en finale
-        if (principalMatch2 && principalMatch2.status === "completed" && principalMatch2.winner_registration_id) {
-          // Match 2 normal : utiliser le perdant
-          const principalMatch2Loser =
-            principalMatch2.team1_registration_id === principalMatch2.winner_registration_id
-              ? principalMatch2.team2_registration_id
-              : principalMatch2.team1_registration_id;
-          if (principalMatch2Loser && !finalists.has(principalMatch2Loser)) {
-            ranking[principalMatch2Loser] = 3;
-            logger.info({ registrationId: principalMatch2Loser.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 3 assigned from principalMatch2");
-          } else {
-            logger.warn(
-              {
-                loser: principalMatch2Loser?.substring(0, 8) + "…",
-                isFinalist: principalMatch2Loser ? finalists.has(principalMatch2Loser) : false,
-              },
-              "[calculate-final-ranking] Place 3 not assigned from principalMatch2"
-            );
-          }
-        } else if ((principalMatch2Bye || principalBye) && principalMatch1 && principalMatch1.status === "completed" && principalMatch1.winner_registration_id) {
-          // Match 2 est un bye (ou il y a un bye) : le perdant est le perdant du Match 1
-          const principalMatch1Loser =
+        // Le perdant du match 1 est la place 3
+        if (principalMatch1 && principalMatch1.status === "completed" && principalMatch1.winner_registration_id) {
+          const place3CandidateId =
             principalMatch1.team1_registration_id === principalMatch1.winner_registration_id
               ? principalMatch1.team2_registration_id
               : principalMatch1.team1_registration_id;
-          if (principalMatch1Loser && !finalists.has(principalMatch1Loser)) {
-            ranking[principalMatch1Loser] = 3;
-            logger.info({ registrationId: principalMatch1Loser.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 3 assigned from principalMatch1 (bye)");
-          } else {
+          
+          // Assigner la place 3 si on a trouvé un candidat et qu'il n'est pas en finale
+          if (place3CandidateId && !finalists.has(place3CandidateId)) {
+            ranking[place3CandidateId] = 3;
+            logger.info({ registrationId: place3CandidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 3 assigned from principalMatch1 loser");
+          } else if (place3CandidateId) {
             logger.warn(
               {
-                loser: principalMatch1Loser?.substring(0, 8) + "…",
-                isFinalist: principalMatch1Loser ? finalists.has(principalMatch1Loser) : false,
+                candidate: place3CandidateId.substring(0, 8) + "…",
+                isFinalist: finalists.has(place3CandidateId),
               },
-              "[calculate-final-ranking] Place 3 not assigned from principalMatch1 (bye)"
+              "[calculate-final-ranking] Place 3 candidate is a finalist, cannot assign"
             );
-          }
-        } else if (!principalMatch2 && !principalMatch2Bye && !principalBye && principalMatch1 && principalMatch1.status === "completed" && principalMatch1.winner_registration_id) {
-          // Si le Match 2 n'existe pas encore (ni normal ni bye), utiliser le perdant du Match 1
-          const principalMatch1Loser =
-            principalMatch1.team1_registration_id === principalMatch1.winner_registration_id
-              ? principalMatch1.team2_registration_id
-              : principalMatch1.team1_registration_id;
-          if (principalMatch1Loser && !finalists.has(principalMatch1Loser)) {
-            ranking[principalMatch1Loser] = 3;
-            logger.info({ registrationId: principalMatch1Loser.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 3 assigned from principalMatch1 (no match 2)");
           }
         } else {
           logger.warn(
             {
-              hasPrincipalMatch2: !!principalMatch2,
-              hasPrincipalMatch2Bye: !!principalMatch2Bye,
               hasPrincipalMatch1: !!principalMatch1,
               principalMatch1Status: principalMatch1?.status,
               principalMatch1HasWinner: !!principalMatch1?.winner_registration_id,
             },
-            "[calculate-final-ranking] Place 3 not assigned - conditions not met"
+            "[calculate-final-ranking] Place 3 not assigned - match 1 not completed or no winner"
           );
         }
       }
@@ -320,13 +275,10 @@ export async function POST(
       }
 
       // 4) Place 6 : L'équipe qui était au tour 3 du tableau 4-6 et qui n'est pas allé au tour suivant
-      // C'est le perdant du match 2 du tableau 4-6 (Tour 3), ou si le match 2 est un bye, le perdant du match 1
+      // C'est le perdant du match 1 du tableau 4-6 (Tour 3) - c'est lui qui est 6ème
       if (tour3Matches && tour3Matches.length > 0) {
         const places4_6Matches = tour3Matches.filter((m: Match) => m.tableau === "places_4_6");
         const places4_6Match1 = places4_6Matches.find((m: Match) => m.match_order === 1 && !m.is_bye);
-        const places4_6Match2 = places4_6Matches.find((m: Match) => m.match_order === 2 && !m.is_bye);
-        const places4_6Match2Bye = places4_6Matches.find((m: Match) => (m.match_order === 2 || !m.match_order) && m.is_bye);
-        const places4_6Bye = places4_6Matches.find((m: Match) => m.is_bye); // Le bye peut avoir n'importe quel match_order
         
         // Identifier les équipes qui sont allées au Tour 4 (gagnants du Tour 3)
         const places4_6Tour4Match = tour4Matches.find(
@@ -338,51 +290,32 @@ export async function POST(
           if (places4_6Tour4Match.team2_registration_id) places4_6Tour4Teams.add(places4_6Tour4Match.team2_registration_id);
         }
         
-        // Le perdant du match 2 (ou du match 1 si match 2 est un bye) qui n'est pas au Tour 4
-        if (places4_6Match2 && places4_6Match2.status === "completed" && places4_6Match2.winner_registration_id) {
-          // Match 2 normal : utiliser le perdant
-          const places4_6Match2Loser =
-            places4_6Match2.team1_registration_id === places4_6Match2.winner_registration_id
-              ? places4_6Match2.team2_registration_id
-              : places4_6Match2.team1_registration_id;
-          if (places4_6Match2Loser && !places4_6Tour4Teams.has(places4_6Match2Loser)) {
-            ranking[places4_6Match2Loser] = 6;
-            logger.info({ registrationId: places4_6Match2Loser.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 6 assigned from places4_6Match2");
-          } else {
-            logger.warn(
-              {
-                loser: places4_6Match2Loser?.substring(0, 8) + "…",
-                isInTour4: places4_6Match2Loser ? places4_6Tour4Teams.has(places4_6Match2Loser) : false,
-              },
-              "[calculate-final-ranking] Place 6 not assigned from places4_6Match2"
-            );
-          }
-        } else if ((places4_6Match2Bye || places4_6Bye) && places4_6Match1 && places4_6Match1.status === "completed" && places4_6Match1.winner_registration_id) {
-          // Match 2 est un bye (ou il y a un bye) : le perdant est le perdant du Match 1
+        // Le perdant du match 1 qui n'est pas au Tour 4 est la place 6
+        if (places4_6Match1 && places4_6Match1.status === "completed" && places4_6Match1.winner_registration_id) {
           const places4_6Match1Loser =
             places4_6Match1.team1_registration_id === places4_6Match1.winner_registration_id
               ? places4_6Match1.team2_registration_id
               : places4_6Match1.team1_registration_id;
           if (places4_6Match1Loser && !places4_6Tour4Teams.has(places4_6Match1Loser)) {
             ranking[places4_6Match1Loser] = 6;
-            logger.info({ registrationId: places4_6Match1Loser.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 6 assigned from places4_6Match1 (bye)");
+            logger.info({ registrationId: places4_6Match1Loser.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 6 assigned from places4_6Match1 loser");
           } else {
             logger.warn(
               {
                 loser: places4_6Match1Loser?.substring(0, 8) + "…",
                 isInTour4: places4_6Match1Loser ? places4_6Tour4Teams.has(places4_6Match1Loser) : false,
               },
-              "[calculate-final-ranking] Place 6 not assigned from places4_6Match1 (bye)"
+              "[calculate-final-ranking] Place 6 not assigned from places4_6Match1"
             );
           }
         } else {
           logger.warn(
             {
-              hasPlaces4_6Match2: !!places4_6Match2,
-              hasPlaces4_6Match2Bye: !!places4_6Match2Bye,
               hasPlaces4_6Match1: !!places4_6Match1,
+              status: places4_6Match1?.status,
+              hasWinner: !!places4_6Match1?.winner_registration_id,
             },
-            "[calculate-final-ranking] Place 6 not assigned - conditions not met"
+            "[calculate-final-ranking] Place 6 not assigned - match 1 not completed or no winner"
           );
         }
       }
@@ -639,43 +572,59 @@ export async function POST(
           "[calculate-final-ranking] Unassigned teams found"
         );
         
-        // Essayer d'assigner les équipes non assignées aux places manquantes
+        // Essayer d'assigner les équipes aux places manquantes
         // en fonction des matchs du Tour 3 et Tour 4
-        if (unassignedTeams.length > 0 && tour3Matches && tour3Matches.length > 0) {
+        if (tour3Matches && tour3Matches.length > 0) {
           // Pour chaque place manquante, essayer de trouver l'équipe correspondante
           for (const missingRank of missingRanks.sort((a, b) => a - b)) {
-            if (unassignedTeams.length === 0) break;
-            
             // Logique spécifique selon la place manquante
             if (missingRank === 3) {
-              // Place 3 : perdant du match 2 du tableau principal (Tour 3)
+              // Place 3 : perdant du match 1 du tableau principal (Tour 3) - c'est lui qui est 3ème
               const principalMatches = tour3Matches.filter((m: Match) => m.tableau === "principal");
-              const principalMatch2 = principalMatches.find((m: Match) => m.match_order === 2 && !m.is_bye);
-              const principalMatch2Bye = principalMatches.find((m: Match) => m.is_bye);
               const principalMatch1 = principalMatches.find((m: Match) => m.match_order === 1 && !m.is_bye);
               
-              let candidateId: string | null = null;
-              
-              if (principalMatch2 && principalMatch2.status === "completed" && principalMatch2.winner_registration_id) {
-                candidateId = principalMatch2.team1_registration_id === principalMatch2.winner_registration_id
-                  ? principalMatch2.team2_registration_id
-                  : principalMatch2.team1_registration_id;
-              } else if ((principalMatch2Bye || principalMatch1) && principalMatch1 && principalMatch1.status === "completed" && principalMatch1.winner_registration_id) {
-                candidateId = principalMatch1.team1_registration_id === principalMatch1.winner_registration_id
+              // Le perdant du match 1 est la place 3
+              if (principalMatch1 && principalMatch1.status === "completed" && principalMatch1.winner_registration_id) {
+                const candidateId = principalMatch1.team1_registration_id === principalMatch1.winner_registration_id
                   ? principalMatch1.team2_registration_id
                   : principalMatch1.team1_registration_id;
-              }
-              
-              if (candidateId && unassignedTeams.includes(candidateId) && !finalists.has(candidateId)) {
-                ranking[candidateId] = 3;
-                unassignedTeams.splice(unassignedTeams.indexOf(candidateId), 1);
-                logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 3 assigned (fallback)");
+                
+                // Assigner la place 3 si on a trouvé un candidat et qu'il n'est pas en finale et n'a pas déjà de place
+                if (candidateId && !finalists.has(candidateId) && !Object.keys(ranking).includes(candidateId)) {
+                  ranking[candidateId] = 3;
+                  const index = unassignedTeams.indexOf(candidateId);
+                  if (index > -1) {
+                    unassignedTeams.splice(index, 1);
+                  }
+                  logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 3 assigned (fallback) from principalMatch1 loser");
+                } else if (candidateId) {
+                  // Si l'équipe a déjà une place, la remplacer par la place 3
+                  if (Object.keys(ranking).includes(candidateId)) {
+                    const oldRank = ranking[candidateId];
+                    delete ranking[candidateId];
+                    ranking[candidateId] = 3;
+                    logger.warn(
+                      {
+                        candidate: candidateId.substring(0, 8) + "…",
+                        oldRank,
+                        newRank: 3,
+                      },
+                      "[calculate-final-ranking] Place 3 reassigned (was rank " + oldRank + ")"
+                    );
+                  } else {
+                    logger.warn(
+                      {
+                        candidate: candidateId.substring(0, 8) + "…",
+                        isFinalist: finalists.has(candidateId),
+                      },
+                      "[calculate-final-ranking] Place 3 candidate cannot be assigned (fallback)"
+                    );
+                  }
+                }
               }
             } else if (missingRank === 6) {
-              // Place 6 : perdant du match 2 du tableau 4-6 (Tour 3)
+              // Place 6 : perdant du match 1 du tableau 4-6 (Tour 3) - c'est lui qui est 6ème
               const places4_6Matches = tour3Matches.filter((m: Match) => m.tableau === "places_4_6");
-              const places4_6Match2 = places4_6Matches.find((m: Match) => m.match_order === 2 && !m.is_bye);
-              const places4_6Match2Bye = places4_6Matches.find((m: Match) => m.is_bye);
               const places4_6Match1 = places4_6Matches.find((m: Match) => m.match_order === 1 && !m.is_bye);
               
               const places4_6Tour4Match = tour4Matches.find((m: Match) => m.tableau === "places_4_6");
@@ -685,22 +634,30 @@ export async function POST(
                 if (places4_6Tour4Match.team2_registration_id) places4_6Tour4Teams.add(places4_6Tour4Match.team2_registration_id);
               }
               
-              let candidateId: string | null = null;
-              
-              if (places4_6Match2 && places4_6Match2.status === "completed" && places4_6Match2.winner_registration_id) {
-                candidateId = places4_6Match2.team1_registration_id === places4_6Match2.winner_registration_id
-                  ? places4_6Match2.team2_registration_id
-                  : places4_6Match2.team1_registration_id;
-              } else if ((places4_6Match2Bye || places4_6Match1) && places4_6Match1 && places4_6Match1.status === "completed" && places4_6Match1.winner_registration_id) {
-                candidateId = places4_6Match1.team1_registration_id === places4_6Match1.winner_registration_id
+              // Le perdant du match 1 qui n'est pas au Tour 4 est la place 6
+              if (places4_6Match1 && places4_6Match1.status === "completed" && places4_6Match1.winner_registration_id) {
+                const candidateId = places4_6Match1.team1_registration_id === places4_6Match1.winner_registration_id
                   ? places4_6Match1.team2_registration_id
                   : places4_6Match1.team1_registration_id;
-              }
-              
-              if (candidateId && unassignedTeams.includes(candidateId) && !places4_6Tour4Teams.has(candidateId)) {
-                ranking[candidateId] = 6;
-                unassignedTeams.splice(unassignedTeams.indexOf(candidateId), 1);
-                logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 6 assigned (fallback)");
+                
+                if (candidateId && !places4_6Tour4Teams.has(candidateId)) {
+                  if (!Object.keys(ranking).includes(candidateId)) {
+                    ranking[candidateId] = 6;
+                    const index = unassignedTeams.indexOf(candidateId);
+                    if (index > -1) {
+                      unassignedTeams.splice(index, 1);
+                    }
+                    logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 6 assigned (fallback) from places4_6Match1 loser");
+                  } else {
+                    const oldRank = ranking[candidateId];
+                    delete ranking[candidateId];
+                    ranking[candidateId] = 6;
+                    logger.warn(
+                      { candidate: candidateId.substring(0, 8) + "…", oldRank, newRank: 6 },
+                      "[calculate-final-ranking] Place 6 reassigned (was rank " + oldRank + ")"
+                    );
+                  }
+                }
               }
             } else if (missingRank === 9) {
               // Place 9 : perdant du match 1 du tableau 7-9 (Tour 3)
@@ -719,10 +676,23 @@ export async function POST(
                   ? places7_9Match1.team2_registration_id
                   : places7_9Match1.team1_registration_id;
                 
-                if (candidateId && unassignedTeams.includes(candidateId) && !places7_9Tour4Teams.has(candidateId)) {
-                  ranking[candidateId] = 9;
-                  unassignedTeams.splice(unassignedTeams.indexOf(candidateId), 1);
-                  logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 9 assigned (fallback)");
+                if (candidateId && !places7_9Tour4Teams.has(candidateId)) {
+                  if (!Object.keys(ranking).includes(candidateId)) {
+                    ranking[candidateId] = 9;
+                    const index = unassignedTeams.indexOf(candidateId);
+                    if (index > -1) {
+                      unassignedTeams.splice(index, 1);
+                    }
+                    logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 9 assigned (fallback) from places7_9Match1 loser");
+                  } else {
+                    const oldRank = ranking[candidateId];
+                    delete ranking[candidateId];
+                    ranking[candidateId] = 9;
+                    logger.warn(
+                      { candidate: candidateId.substring(0, 8) + "…", oldRank, newRank: 9 },
+                      "[calculate-final-ranking] Place 9 reassigned (was rank " + oldRank + ")"
+                    );
+                  }
                 }
               }
             } else if (missingRank === 10) {
@@ -732,10 +702,23 @@ export async function POST(
               if (places10_12Match && places10_12Match.status === "completed" && places10_12Match.winner_registration_id) {
                 const candidateId = places10_12Match.winner_registration_id;
                 
-                if (candidateId && unassignedTeams.includes(candidateId)) {
-                  ranking[candidateId] = 10;
-                  unassignedTeams.splice(unassignedTeams.indexOf(candidateId), 1);
-                  logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 10 assigned (fallback)");
+                if (candidateId) {
+                  if (!Object.keys(ranking).includes(candidateId)) {
+                    ranking[candidateId] = 10;
+                    const index = unassignedTeams.indexOf(candidateId);
+                    if (index > -1) {
+                      unassignedTeams.splice(index, 1);
+                    }
+                    logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 10 assigned (fallback) from places10_12Match winner");
+                  } else {
+                    const oldRank = ranking[candidateId];
+                    delete ranking[candidateId];
+                    ranking[candidateId] = 10;
+                    logger.warn(
+                      { candidate: candidateId.substring(0, 8) + "…", oldRank, newRank: 10 },
+                      "[calculate-final-ranking] Place 10 reassigned (was rank " + oldRank + ")"
+                    );
+                  }
                 }
               }
             }
@@ -773,40 +756,110 @@ export async function POST(
         }
       }
       
-      if (unassignedTeamIds.length > 0 || missingRanks.length > 0) {
+      // Réessayer d'assigner les places manquantes avec une logique simplifiée
+      if (missingRanks.length > 0 && tour3Matches && tour3Matches.length > 0) {
+        // Réessayer la place 3
+        if (missingRanks.includes(3)) {
+          const principalMatches = tour3Matches.filter((m: Match) => m.tableau === "principal");
+          const principalMatch1 = principalMatches.find((m: Match) => m.match_order === 1 && !m.is_bye);
+          if (principalMatch1 && principalMatch1.status === "completed" && principalMatch1.winner_registration_id) {
+            const candidateId = principalMatch1.team1_registration_id === principalMatch1.winner_registration_id
+              ? principalMatch1.team2_registration_id
+              : principalMatch1.team1_registration_id;
+            if (candidateId && !Object.keys(ranking).includes(candidateId) && !finalists.has(candidateId)) {
+              ranking[candidateId] = 3;
+              logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 3 assigned (final check)");
+            }
+          }
+        }
+        
+        // Réessayer la place 6
+        if (missingRanks.includes(6)) {
+          const places4_6Matches = tour3Matches.filter((m: Match) => m.tableau === "places_4_6");
+          const places4_6Match1 = places4_6Matches.find((m: Match) => m.match_order === 1 && !m.is_bye);
+          const places4_6Tour4Match = tour4Matches.find((m: Match) => m.tableau === "places_4_6");
+          const places4_6Tour4Teams = new Set<string>();
+          if (places4_6Tour4Match) {
+            if (places4_6Tour4Match.team1_registration_id) places4_6Tour4Teams.add(places4_6Tour4Match.team1_registration_id);
+            if (places4_6Tour4Match.team2_registration_id) places4_6Tour4Teams.add(places4_6Tour4Match.team2_registration_id);
+          }
+          if (places4_6Match1 && places4_6Match1.status === "completed" && places4_6Match1.winner_registration_id) {
+            const candidateId = places4_6Match1.team1_registration_id === places4_6Match1.winner_registration_id
+              ? places4_6Match1.team2_registration_id
+              : places4_6Match1.team1_registration_id;
+            if (candidateId && !Object.keys(ranking).includes(candidateId) && !places4_6Tour4Teams.has(candidateId)) {
+              ranking[candidateId] = 6;
+              logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 6 assigned (final check)");
+            }
+          }
+        }
+        
+        // Réessayer la place 9
+        if (missingRanks.includes(9)) {
+          const places7_9Matches = tour3Matches.filter((m: Match) => m.tableau === "places_7_9");
+          const places7_9Match1 = places7_9Matches.find((m: Match) => m.match_order === 1 && !m.is_bye);
+          const places7_9Tour4Match = tour4Matches.find((m: Match) => m.tableau === "places_7_9");
+          const places7_9Tour4Teams = new Set<string>();
+          if (places7_9Tour4Match) {
+            if (places7_9Tour4Match.team1_registration_id) places7_9Tour4Teams.add(places7_9Tour4Match.team1_registration_id);
+            if (places7_9Tour4Match.team2_registration_id) places7_9Tour4Teams.add(places7_9Tour4Match.team2_registration_id);
+          }
+          if (places7_9Match1 && places7_9Match1.status === "completed" && places7_9Match1.winner_registration_id) {
+            const candidateId = places7_9Match1.team1_registration_id === places7_9Match1.winner_registration_id
+              ? places7_9Match1.team2_registration_id
+              : places7_9Match1.team1_registration_id;
+            if (candidateId && !Object.keys(ranking).includes(candidateId) && !places7_9Tour4Teams.has(candidateId)) {
+              ranking[candidateId] = 9;
+              logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 9 assigned (final check)");
+            }
+          }
+        }
+        
+        // Réessayer la place 10
+        if (missingRanks.includes(10)) {
+          const places10_12Match = tour4Matches.find((m: Match) => m.tableau === "places_10_12");
+          if (places10_12Match && places10_12Match.status === "completed" && places10_12Match.winner_registration_id) {
+            const candidateId = places10_12Match.winner_registration_id;
+            if (candidateId && !Object.keys(ranking).includes(candidateId)) {
+              ranking[candidateId] = 10;
+              logger.info({ registrationId: candidateId.substring(0, 8) + "…" }, "[calculate-final-ranking] Place 10 assigned (final check)");
+            }
+          }
+        }
+      }
+      
+      // Vérifier à nouveau après les réassignations
+      const finalAssignedRanks = new Set(Object.values(ranking));
+      const finalMissingRanks: number[] = [];
+      for (let i = 1; i <= 12; i++) {
+        if (!finalAssignedRanks.has(i)) {
+          finalMissingRanks.push(i);
+        }
+      }
+      
+      if (unassignedTeamIds.length > 0 || finalMissingRanks.length > 0) {
         logger.warn(
           {
             tournamentId: tournamentId.substring(0, 8) + "…",
             unassignedTeamIds: unassignedTeamIds.map((id: string) => id.substring(0, 8) + "…"),
-            missingRanks,
+            finalMissingRanks,
             currentRankings: Object.entries(ranking).map(([id, rank]) => ({ registrationId: id.substring(0, 8) + "…", rank })),
           },
-          "[calculate-final-ranking] Some teams or ranks are still missing after fallback"
+          "[calculate-final-ranking] Some teams or ranks are still missing after final check"
         );
         
         // Assigner les équipes restantes aux places restantes
-        for (let i = 0; i < Math.min(unassignedTeamIds.length, missingRanks.length); i++) {
-          ranking[unassignedTeamIds[i]] = missingRanks[i];
+        for (let i = 0; i < Math.min(unassignedTeamIds.length, finalMissingRanks.length); i++) {
+          ranking[unassignedTeamIds[i]] = finalMissingRanks[i];
           logger.info(
-            { registrationId: unassignedTeamIds[i].substring(0, 8) + "…", rank: missingRanks[i] },
+            { registrationId: unassignedTeamIds[i].substring(0, 8) + "…", rank: finalMissingRanks[i] },
             "[calculate-final-ranking] Final assignment of remaining teams"
           );
         }
       }
     }
 
-    // Mettre à jour les classements dans la base de données
-    const updatePromises = Object.entries(ranking).map(([registrationId, rank]) =>
-      supabaseAdmin
-        .from("tournament_registrations")
-        .update({ final_ranking: rank })
-        .eq("id", registrationId)
-        .eq("tournament_id", tournamentId)
-    );
-
-    await Promise.all(updatePromises);
-    
-    // Log final pour vérification
+    // Log AVANT sauvegarde pour vérification
     logger.info(
       {
         tournamentId: tournamentId.substring(0, 8) + "…",
@@ -814,13 +867,78 @@ export async function POST(
         finalRankings: Object.entries(ranking)
           .sort(([, a], [, b]) => (a as number) - (b as number))
           .map(([id, rank]) => ({ registrationId: id.substring(0, 8) + "…", rank })),
+        hasPlace3: Object.values(ranking).includes(3),
+        hasPlace6: Object.values(ranking).includes(6),
+        hasPlace9: Object.values(ranking).includes(9),
+        hasPlace10: Object.values(ranking).includes(10),
+      },
+      "[calculate-final-ranking] Rankings to be saved to database"
+    );
+
+    // Mettre à jour les classements dans la base de données
+    const updatePromises = Object.entries(ranking).map(([registrationId, rank]) => {
+      logger.info(
+        { registrationId: registrationId.substring(0, 8) + "…", rank },
+        "[calculate-final-ranking] Updating registration with final_ranking"
+      );
+      return supabaseAdmin
+        .from("tournament_registrations")
+        .update({ final_ranking: rank })
+        .eq("id", registrationId)
+        .eq("tournament_id", tournamentId);
+    });
+
+    const updateResults = await Promise.all(updatePromises);
+    
+    // Vérifier les erreurs de mise à jour
+    const errors = updateResults.filter((result) => result.error);
+    if (errors.length > 0) {
+      logger.error(
+        { errors: errors.map((e) => e.error), tournamentId: tournamentId.substring(0, 8) + "…" },
+        "[calculate-final-ranking] Errors updating rankings"
+      );
+    }
+    
+    // Log final pour vérification
+    logger.info(
+      {
+        tournamentId: tournamentId.substring(0, 8) + "…",
+        finalRankingsCount: Object.keys(ranking).length,
+        updateCount: updateResults.length,
+        errorCount: errors.length,
+        finalRankings: Object.entries(ranking)
+          .sort(([, a], [, b]) => (a as number) - (b as number))
+          .map(([id, rank]) => ({ registrationId: id.substring(0, 8) + "…", rank })),
       },
       "[calculate-final-ranking] Rankings saved to database"
     );
 
+    // Vérification finale avant de retourner
+    const finalCheck = new Set(Object.values(ranking));
+    const missingPlaces: number[] = [];
+    for (let i = 1; i <= 12; i++) {
+      if (!finalCheck.has(i)) {
+        missingPlaces.push(i);
+      }
+    }
+    
+    if (missingPlaces.length > 0) {
+      logger.error(
+        {
+          tournamentId: tournamentId.substring(0, 8) + "…",
+          missingPlaces,
+          currentRankings: Object.entries(ranking)
+            .sort(([, a], [, b]) => (a as number) - (b as number))
+            .map(([id, rank]) => ({ registrationId: id.substring(0, 8) + "…", rank })),
+        },
+        "[calculate-final-ranking] ERROR: Missing places after all calculations"
+      );
+    }
+
     return NextResponse.json({
       success: true,
       rankings: ranking,
+      missingPlaces: missingPlaces.length > 0 ? missingPlaces : undefined,
     });
   } catch (error: any) {
     logger.error(

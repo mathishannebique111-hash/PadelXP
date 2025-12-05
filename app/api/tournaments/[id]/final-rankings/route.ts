@@ -15,7 +15,7 @@ const supabaseAdmin =
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -35,15 +35,15 @@ export async function GET(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
-    // Récupérer les inscriptions avec leur classement final
+    // Récupérer TOUTES les inscriptions avec leur classement final (même si null)
     const { data: registrations, error: regError } = await supabaseAdmin
       .from("tournament_registrations")
       .select("id, player1_name, player2_name, seed_number, final_ranking")
       .eq("tournament_id", id)
-      .not("final_ranking", "is", null)
-      .order("final_ranking", { ascending: true });
+      .order("final_ranking", { ascending: true, nullsLast: true })
+      .order("seed_number", { ascending: true, nullsLast: true });
 
     if (regError) {
       logger.error(
@@ -56,7 +56,7 @@ export async function GET(
       );
     }
 
-    // Formater les données pour le frontend
+    // Formater les données pour le frontend - inclure toutes les équipes
     const rankings = (registrations || []).map((reg: any) => {
       const teamName =
         reg.player1_name && reg.player2_name
@@ -65,11 +65,26 @@ export async function GET(
 
       return {
         registrationId: reg.id,
-        rank: reg.final_ranking,
+        rank: reg.final_ranking || null, // null si pas encore classé
         teamName: teamName,
         seedNumber: reg.seed_number,
       };
     });
+
+    // Log pour déboguer
+    logger.info(
+      {
+        tournamentId: id.substring(0, 8) + "…",
+        totalRegistrations: registrations?.length || 0,
+        rankingsWithPlace: rankings.filter((r: any) => r.rank !== null).length,
+        rankingsWithoutPlace: rankings.filter((r: any) => r.rank === null).length,
+        places: rankings
+          .filter((r: any) => r.rank !== null)
+          .map((r: any) => r.rank)
+          .sort((a: number, b: number) => a - b),
+      },
+      "[final-rankings] Returning rankings"
+    );
 
     return NextResponse.json({ rankings });
   } catch (error: any) {

@@ -961,7 +961,7 @@ async function generateMexicano(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -991,7 +991,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // 1. Récupérer le tournoi
     const { data: tournament, error: tournamentError } = await supabase
