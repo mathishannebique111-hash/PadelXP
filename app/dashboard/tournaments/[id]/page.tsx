@@ -3,12 +3,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import type { Tournament } from "@/lib/types/tournaments";
 import { TournamentDetailsForm } from "./TournamentDetailsForm";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TournamentRegistrations from "./TournamentRegistrations";
 import TournamentBracket from "./TournamentBracket";
+import PageTitle from "../../PageTitle";
 
 export default async function TournamentDetailsPage({
   params,
@@ -46,16 +46,18 @@ export default async function TournamentDetailsPage({
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{tournament.name}</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Gérez les informations et le déroulement de votre tournoi.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/dashboard/tournaments">← Retour aux tournois</Link>
-        </Button>
+      <div className="flex items-start justify-between gap-4">
+        <PageTitle 
+          title={tournament.name}
+          subtitle="Gérez les informations et le déroulement de votre tournoi."
+          className="flex-1"
+        />
+        <Link
+          href="/dashboard/tournaments"
+          className="inline-flex items-center gap-2 rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 transition-all duration-300 mt-0"
+        >
+          ← Retour aux tournois
+        </Link>
       </div>
 
       <Card className="bg-black/40 border-white/10">

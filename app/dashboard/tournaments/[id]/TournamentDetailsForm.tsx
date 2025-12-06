@@ -19,10 +19,6 @@ const TOURNAMENT_TYPES = [
   { value: "tmc", label: "Tournoi Multi-Chances (TMC)" },
   { value: "double_elimination", label: "Double élimination" },
   { value: "official_pools", label: "Poules + Tableau final" },
-  {
-    value: "pools_triple_draw",
-    label: "Poules + 3 tableaux (principal / intermédiaire / consolante)",
-  },
 ] as const;
 
 function renderStatusLabel(status: string) {
@@ -214,7 +210,7 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
   }
 
   return (
-    <Card className="bg-black/40 border-white/10">
+    <Card className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5">
       <CardHeader>
         <CardTitle className="text-white">
           {tournament.name} — {renderStatusLabel(tournament.status)} (
@@ -223,15 +219,15 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
       </CardHeader>
       <CardContent>
         {error && (
-          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
-            <p className="text-sm text-red-400">{error}</p>
+          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 mb-4">
+            <p className="text-sm text-red-300 font-medium">{error}</p>
           </div>
         )}
 
         <form onSubmit={handleSave} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-white">
+              <Label htmlFor="name" className="text-white/90 font-medium">
                 Nom du tournoi *
               </Label>
               <Input
@@ -240,12 +236,12 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
                 disabled={pending}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category" className="text-white">
+              <Label htmlFor="category" className="text-white/90 font-medium">
                 Catégorie *
               </Label>
               <Select
@@ -255,7 +251,7 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
               >
                 <SelectTrigger
                   id="category"
-                  className="bg-black/40 border-white/10 text-white"
+                  className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -271,7 +267,7 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-white">
+            <Label htmlFor="description" className="text-white/90 font-medium">
               Description
             </Label>
             <Textarea
@@ -279,13 +275,13 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               disabled={pending}
-              className="bg-black/40 border-white/10 text-white"
+              className="bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-1 focus:ring-white/20"
             />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label className="text-white">Type de tournoi *</Label>
+            <div className="space-y-3">
+              <Label className="text-white/90 font-medium">Type de tournoi *</Label>
               <RadioGroup
                 value={form.tournament_type}
                 onValueChange={(value) =>
@@ -296,17 +292,17 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
                 {TOURNAMENT_TYPES.map((type) => (
                   <Label
                     key={type.value}
-                    className="flex items-center space-x-2 rounded-md border border-white/10 bg-black/40 px-3 py-2 text-white"
+                    className="flex items-center space-x-3 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white hover:bg-white/10 hover:border-white/30 transition-all cursor-pointer"
                   >
                     <RadioGroupItem value={type.value} className="border-white/40" />
-                    <span>{type.label}</span>
+                    <span className="text-sm">{type.label}</span>
                   </Label>
                 ))}
               </RadioGroup>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="match_format" className="text-white">
+            <div className="space-y-3">
+              <Label htmlFor="match_format" className="text-white/90 font-medium">
                 Format de match *
               </Label>
               <Select
@@ -318,7 +314,7 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
               >
                 <SelectTrigger
                   id="match_format"
-                  className="bg-black/40 border-white/10 text-white"
+                  className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 text-sm"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -335,8 +331,8 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="start_date" className="text-white">
-                Début *
+              <Label htmlFor="start_date" className="text-white/90 font-medium">
+                Date de début *
               </Label>
               <Input
                 id="start_date"
@@ -345,12 +341,12 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
                 onChange={(e) => setForm({ ...form, start_date: e.target.value })}
                 required
                 disabled={pending}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end_date" className="text-white">
-                Fin *
+              <Label htmlFor="end_date" className="text-white/90 font-medium">
+                Date de fin *
               </Label>
               <Input
                 id="end_date"
@@ -359,12 +355,12 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
                 onChange={(e) => setForm({ ...form, end_date: e.target.value })}
                 required
                 disabled={pending}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="inscription_fee" className="text-white">
-                Frais d'inscription (€) *
+              <Label htmlFor="inscription_fee" className="text-white/90 font-medium">
+                Frais d'inscription (€/paire) *
               </Label>
               <Input
                 id="inscription_fee"
@@ -378,104 +374,119 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
                 }
                 required
                 disabled={pending}
-                className="bg-black/40 border-white/10 text-white"
+                className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
               />
             </div>
           </div>
 
           <CardFooter className="flex flex-col gap-4 px-0">
-            {showDeleteConfirm && (
-              <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 space-y-3">
-                <p className="text-sm text-white">
-                  Êtes-vous sûr de vouloir supprimer le tournoi <strong>"{tournament.name}"</strong> ?
-                </p>
-                <p className="text-xs text-red-300">
-                  Cette action est irréversible et supprimera toutes les inscriptions et données associées.
-                </p>
-                <div className="flex gap-2">
+            <div className="flex items-center gap-3">
+              {showDeleteConfirm ? (
+                <>
+                  <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 space-y-3">
+                    <p className="text-sm text-white">
+                      Êtes-vous sûr de vouloir supprimer le tournoi <strong>"{tournament.name}"</strong> ?
+                    </p>
+                    <p className="text-xs text-red-300">
+                      Cette action est irréversible et supprimera toutes les inscriptions et données associées.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        disabled={actionPending === "delete"}
+                        onClick={handleDelete}
+                      >
+                        {actionPending === "delete" ? "Suppression..." : "Confirmer la suppression"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={actionPending === "delete"}
+                        onClick={() => {
+                          setShowDeleteConfirm(false);
+                          setError(null);
+                        }}
+                        className="bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white"
+                      >
+                        Annuler
+                      </Button>
+                    </div>
+                  </div>
+                  <Button 
+                    type="submit" 
+                    disabled={pending}
+                    className="bg-gradient-to-r from-[#0066FF]/80 to-[#00CC99]/80 text-white border border-white/40 hover:border-white/60 shadow-[0_4px_16px_rgba(0,102,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,102,255,0.4)] hover:scale-[1.02] active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
+                    {pending ? "Enregistrement..." : "Enregistrer les modifications"}
+                  </Button>
+                </>
+              ) : (
+                <>
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
-                    disabled={actionPending === "delete"}
-                    onClick={handleDelete}
+                    disabled={!canDelete || actionPending === "delete" || pending}
+                    onClick={() => setShowDeleteConfirm(true)}
                   >
-                    {actionPending === "delete" ? "Suppression..." : "Confirmer la suppression"}
+                    Supprimer le tournoi
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={actionPending === "delete"}
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setError(null);
-                    }}
+                  <Button 
+                    type="submit" 
+                    disabled={pending}
+                    className="bg-gradient-to-r from-[#0066FF]/80 to-[#00CC99]/80 text-white border border-white/40 hover:border-white/60 shadow-[0_4px_16px_rgba(0,102,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,102,255,0.4)] hover:scale-[1.02] active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    Annuler
+                    {pending ? "Enregistrement..." : "Enregistrer les modifications"}
                   </Button>
-                </div>
-              </div>
-            )}
-            <div className="flex justify-between items-center gap-2">
-              {!showDeleteConfirm && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  disabled={!canDelete || actionPending === "delete" || pending}
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  Supprimer le tournoi
-                </Button>
+                </>
               )}
-              <Button type="submit" disabled={pending}>
-                {pending ? "Enregistrement..." : "Enregistrer les modifications"}
-              </Button>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-4 w-full">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!canOpen || actionPending === "open" || pending}
-                  onClick={() => handleStatusChange("open")}
-                >
-                  {actionPending === "open" ? "Mise à jour..." : "Ouvrir les inscriptions"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!canClose || actionPending === "registration_closed" || pending}
-                  onClick={() => handleStatusChange("registration_closed")}
-                >
-                  {actionPending === "registration_closed"
-                    ? "Mise à jour..."
-                    : "Clore les inscriptions"}
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!canGenerate || actionPending === "generate" || pending}
-                  onClick={handleGenerate}
-                >
-                  {actionPending === "generate" ? "Génération..." : "Générer le tableau"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!canSchedule || actionPending === "schedule" || pending}
-                  onClick={handleSchedule}
-                >
-                  {actionPending === "schedule" ? "Planification..." : "Planifier les matchs"}
-                </Button>
-              </div>
+            <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-6 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canOpen || actionPending === "open" || pending}
+                onClick={() => handleStatusChange("open")}
+                className="bg-white border-white/30 text-black hover:bg-white/90 hover:border-white/40 transition-all"
+              >
+                {actionPending === "open" ? "Mise à jour..." : "Ouvrir les inscriptions"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canClose || actionPending === "registration_closed" || pending}
+                onClick={() => handleStatusChange("registration_closed")}
+                className="bg-white border-white/30 text-black hover:bg-white/90 hover:border-white/40 transition-all"
+              >
+                {actionPending === "registration_closed"
+                  ? "Mise à jour..."
+                  : "Clore les inscriptions"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canGenerate || actionPending === "generate" || pending}
+                onClick={handleGenerate}
+                className="bg-white border-white/30 text-black hover:bg-white/90 hover:border-white/40 transition-all"
+              >
+                {actionPending === "generate" ? "Génération..." : "Générer le tableau"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canSchedule || actionPending === "schedule" || pending}
+                onClick={handleSchedule}
+                className="bg-white border-white/30 text-black hover:bg-white/90 hover:border-white/40 transition-all"
+              >
+                {actionPending === "schedule" ? "Planification..." : "Planifier les matchs"}
+              </Button>
             </div>
           </CardFooter>
         </form>

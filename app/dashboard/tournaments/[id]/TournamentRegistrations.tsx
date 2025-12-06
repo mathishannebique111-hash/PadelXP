@@ -55,6 +55,7 @@ export default function TournamentRegistrations({
   const [currentTeams, setCurrentTeams] = useState<number>(0);
   const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
+  const [actionPending, setActionPending] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchRegistrations(true);
@@ -106,6 +107,17 @@ export default function TournamentRegistrations({
       return updated;
     });
 
+    // Mise à jour optimiste
+    const newStatus = action === "validate" ? "validated" : "rejected";
+    setRegistrations((prev) =>
+      prev.map((reg) =>
+        reg.id === registrationId ? { ...reg, status: newStatus as RegistrationStatus } : reg
+      )
+    );
+
+    // Marquer comme en cours
+    setActionPending((prev) => ({ ...prev, [registrationId]: action }));
+
     try {
       const res = await fetch(
         `/api/tournaments/${tournamentId}/registrations/${registrationId}`,
@@ -119,12 +131,22 @@ export default function TournamentRegistrations({
       if (!res.ok) {
         throw new Error(data.error || "Erreur lors de la mise à jour");
       }
+      // Rafraîchir pour avoir les données à jour
       await fetchRegistrations(false);
     } catch (err: any) {
+      // Revenir à l'état précédent en cas d'erreur
+      await fetchRegistrations(false);
       setActionErrors((prev) => ({
         ...prev,
         [registrationId]: err.message || "Erreur lors de la mise à jour de l'inscription",
       }));
+    } finally {
+      // Retirer le statut de chargement
+      setActionPending((prev) => {
+        const updated = { ...prev };
+        delete updated[registrationId];
+        return updated;
+      });
     }
   }
 
@@ -402,7 +424,7 @@ export default function TournamentRegistrations({
             <TableBody>
               {registrations.map((reg) => (
                 <React.Fragment key={reg.id}>
-                  <TableRow>
+                  <TableRow className="hover:bg-white/5 transition-colors">
                   <TableCell className="text-white">
                     <Input
                       value={reg.player_name ?? ""}
@@ -533,7 +555,7 @@ export default function TournamentRegistrations({
                   </TableCell>
                   <TableCell className="text-white/80">
                     <span
-                      className={`px-2 py-1 rounded text-xs ${
+                      className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
                         reg.status === "validated"
                           ? "bg-green-500/20 text-green-300"
                           : reg.status === "rejected"
@@ -554,8 +576,10 @@ export default function TournamentRegistrations({
                             size="sm"
                             variant="outline"
                             onClick={() => handleAction(reg.id, "validate")}
+                            disabled={!!actionPending[reg.id]}
+                            className="bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Valider
+                            {actionPending[reg.id] === "validate" ? "..." : "Valider"}
                           </Button>
                         )}
                         {reg.status !== "rejected" && (
@@ -563,8 +587,10 @@ export default function TournamentRegistrations({
                             size="sm"
                             variant="outline"
                             onClick={() => handleAction(reg.id, "reject")}
+                            disabled={!!actionPending[reg.id]}
+                            className="bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Refuser
+                            {actionPending[reg.id] === "reject" ? "..." : "Refuser"}
                           </Button>
                         )}
                       </div>

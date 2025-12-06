@@ -105,8 +105,8 @@ export function CreateTournamentForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-          <p className="text-sm text-red-400">
+        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+          <p className="text-sm text-red-300 font-medium">
             {error}
           </p>
         </div>
@@ -114,7 +114,7 @@ export function CreateTournamentForm() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-white">Nom du tournoi *</Label>
+          <Label htmlFor="name" className="text-white/90 font-medium">Nom du tournoi *</Label>
           <Input
             id="name"
             value={form.name}
@@ -122,17 +122,17 @@ export function CreateTournamentForm() {
             placeholder="Ex: Tournoi MD200 de janvier"
             required
             disabled={pending}
-            className="bg-black/40 border-white/10 text-white"
+            className="bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="category" className="text-white">Catégorie *</Label>
+          <Label htmlFor="category" className="text-white/90 font-medium">Catégorie *</Label>
           <Select
             value={form.category}
             onValueChange={(value) => setForm({ ...form, category: value })}
             disabled={pending}
           >
-            <SelectTrigger id="category" className="bg-black/40 border-white/10 text-white">
+            <SelectTrigger id="category" className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -149,7 +149,7 @@ export function CreateTournamentForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description" className="text-white">Description</Label>
+        <Label htmlFor="description" className="text-white/90 font-medium">Description</Label>
         <Textarea
           id="description"
           value={form.description}
@@ -157,13 +157,13 @@ export function CreateTournamentForm() {
           placeholder="Informations complémentaires sur le tournoi"
           rows={3}
           disabled={pending}
-          className="bg-black/40 border-white/10 text-white"
+          className="bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-1 focus:ring-white/20"
         />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label className="text-white">Type de tournoi *</Label>
+        <div className="space-y-3">
+          <Label className="text-white/90 font-medium">Type de tournoi *</Label>
           <RadioGroup
             value={form.tournament_type}
             onValueChange={(value) =>
@@ -178,19 +178,19 @@ export function CreateTournamentForm() {
             {TOURNAMENT_TYPES.map((type) => (
               <Label
                 key={type.value}
-                className="flex items-center space-x-2 rounded-md border border-white/10 bg-black/40 px-3 py-2 text-white"
+                className="flex items-center space-x-3 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white hover:bg-white/10 hover:border-white/30 transition-all cursor-pointer"
               >
                 <RadioGroupItem
                   value={type.value}
                   className="border-white/40"
                 />
-                <span>{type.label}</span>
+                <span className="text-sm">{type.label}</span>
               </Label>
             ))}
           </RadioGroup>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="match_format" className="text-white">
+        <div className="space-y-3">
+          <Label htmlFor="match_format" className="text-white/90 font-medium">
             Format de match *
           </Label>
           <Select
@@ -198,7 +198,7 @@ export function CreateTournamentForm() {
             onValueChange={(value: any) => setForm({ ...form, match_format: value })}
             disabled={pending}
           >
-            <SelectTrigger id="match_format" className="bg-black/40 border-white/10 text-white">
+            <SelectTrigger id="match_format" className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -214,7 +214,7 @@ export function CreateTournamentForm() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2">
-          <Label htmlFor="start_date" className="text-white">Date de début *</Label>
+          <Label htmlFor="start_date" className="text-white/90 font-medium">Date de début *</Label>
           <Input
             id="start_date"
             type="date"
@@ -222,11 +222,11 @@ export function CreateTournamentForm() {
             onChange={(e) => setForm({ ...form, start_date: e.target.value })}
             required
             disabled={pending}
-            className="bg-black/40 border-white/10 text-white"
+            className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="end_date" className="text-white">Date de fin *</Label>
+          <Label htmlFor="end_date" className="text-white/90 font-medium">Date de fin *</Label>
           <Input
             id="end_date"
             type="date"
@@ -234,11 +234,11 @@ export function CreateTournamentForm() {
             onChange={(e) => setForm({ ...form, end_date: e.target.value })}
             required
             disabled={pending}
-            className="bg-black/40 border-white/10 text-white"
+            className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="inscription_fee" className="text-white">Frais d'inscription (€/paire) *</Label>
+          <Label htmlFor="inscription_fee" className="text-white/90 font-medium">Frais d'inscription (€/paire) *</Label>
           <Input
             id="inscription_fee"
             type="number"
@@ -249,13 +249,13 @@ export function CreateTournamentForm() {
             onChange={(e) => setForm({ ...form, inscription_fee: Number(e.target.value) })}
             required
             disabled={pending}
-            className="bg-black/40 border-white/10 text-white"
+            className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20 h-11 px-4 text-base"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="max_teams" className="text-white">Nombre maximum d'équipes *</Label>
+        <Label htmlFor="max_teams" className="text-white/90 font-medium">Nombre maximum d'équipes *</Label>
         <Input
           id="max_teams"
           type="number"
@@ -266,18 +266,28 @@ export function CreateTournamentForm() {
           onChange={(e) => setForm({ ...form, max_teams: Number(e.target.value) })}
           required
           disabled={pending}
-          className="bg-black/40 border-white/10 text-white"
+          className="bg-white/5 border-white/20 text-white focus:border-white/40 focus:ring-1 focus:ring-white/20"
         />
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-white/50 mt-1">
           Doit être une puissance de 2 (4, 8, 16, 32, 64) pour un tableau éliminatoire
         </p>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" disabled={pending} asChild>
+      <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+        <Button 
+          type="button" 
+          variant="outline" 
+          disabled={pending} 
+          asChild
+          className="bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white"
+        >
           <Link href="/dashboard/tournaments">Annuler</Link>
         </Button>
-        <Button type="submit" disabled={pending}>
+        <Button 
+          type="submit" 
+          disabled={pending}
+          className="bg-gradient-to-r from-[#0066FF] to-[#00CC99] text-white border border-white/25 shadow-[0_6px_20px_rgba(0,102,255,0.35)] hover:shadow-[0_8px_24px_rgba(0,102,255,0.45)] hover:scale-105 active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
           {pending ? "Création en cours..." : "Créer le tournoi"}
         </Button>
       </div>

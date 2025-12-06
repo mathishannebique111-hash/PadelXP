@@ -7,6 +7,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
+import PageTitle from "../PageTitle";
 
 function renderTournamentType(type: string) {
   switch (type) {
@@ -117,21 +118,22 @@ export default async function TournamentsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Tournois du club</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Créez et gérez les tournois organisés par votre club.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/dashboard/tournaments/create">
-            Créer un tournoi
-          </Link>
-        </Button>
+      <div className="flex items-start justify-between gap-4">
+        <PageTitle 
+          title="Tournois du club" 
+          subtitle="Créez et gérez les tournois organisés par votre club."
+          className="flex-1"
+        />
+        <Link
+          href="/dashboard/tournaments/create"
+          className="inline-flex items-center gap-2 rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-[#0066FF]/80 to-[#00CC99]/80 border border-white/40 hover:border-white/60 shadow-[0_4px_16px_rgba(0,102,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,102,255,0.4)] hover:scale-[1.02] active:scale-100 transition-all duration-300 mt-0"
+        >
+          <span className="text-lg">+</span>
+          <span>Créer un tournoi</span>
+        </Link>
       </div>
 
-      <Card className="bg-black/40 border-white/10">
+      <Card className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5">
         <CardHeader>
           <CardTitle className="text-white">Liste des tournois</CardTitle>
         </CardHeader>
@@ -146,30 +148,45 @@ export default async function TournamentsPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-white/70">Nom</TableHead>
-                    <TableHead className="text-white/70">Catégorie</TableHead>
-                    <TableHead className="text-white/70">Type</TableHead>
-                    <TableHead className="text-white/70">Dates</TableHead>
-                    <TableHead className="text-white/70">Statut</TableHead>
-                    <TableHead className="text-right text-white/70">Actions</TableHead>
+                  <TableRow className="border-white/20">
+                    <TableHead className="text-white/70 text-left">Nom</TableHead>
+                    <TableHead className="text-white/70 text-left">Catégorie</TableHead>
+                    <TableHead className="text-white/70 text-left">Type</TableHead>
+                    <TableHead className="text-white/70 text-left">Dates</TableHead>
+                    <TableHead className="text-white/70 text-left">Statut</TableHead>
+                    <TableHead className="text-white/70 text-left">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tournaments.map((tournament: any) => (
-                    <TableRow key={tournament.id} className="border-white/10">
-                      <TableCell className="text-white">{tournament.name}</TableCell>
+                    <TableRow key={tournament.id} className="border-white/20 hover:bg-white/5">
+                      <TableCell className="text-left">
+                        <span className="font-semibold text-white text-base">{tournament.name}</span>
+                      </TableCell>
                       <TableCell className="text-white/90">{tournament.category}</TableCell>
                       <TableCell className="text-white/90">{renderTournamentType(tournament.tournament_type)}</TableCell>
                       <TableCell className="text-white/90">
                         {formatDateRange(tournament.start_date, tournament.end_date)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant(tournament.status)}>
+                        <Badge 
+                          variant={statusVariant(tournament.status)}
+                          className={
+                            tournament.status === "open" || tournament.status === "in_progress"
+                              ? "bg-green-500/20 text-green-300 border-green-500/50"
+                              : tournament.status === "completed"
+                              ? "bg-blue-500/20 text-blue-300 border-blue-500/50"
+                              : tournament.status === "draft"
+                              ? "bg-gray-500/20 text-gray-300 border-gray-500/50"
+                              : tournament.status === "cancelled"
+                              ? "bg-red-500/20 text-red-300 border-red-500/50"
+                              : "bg-white/10 text-white border-white/20"
+                          }
+                        >
                           {renderStatusLabel(tournament.status)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell>
                         <Button asChild variant="outline" size="sm">
                           <Link href={`/dashboard/tournaments/${tournament.id}`}>
                             Gérer
