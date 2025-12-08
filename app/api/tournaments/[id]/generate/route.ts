@@ -626,34 +626,16 @@ async function generateTmc(
     
     // Vérification : 12 équipes placées dans les positions 0-11 = 6 matchs sans byes
   } else {
-    // TMC 8 équipes : placement standard avec têtes de série
-    const numSeeds = determineNumberOfSeeds(numPairs);
+    // TMC 8 équipes : placement déterministe meilleur vs moins bon
+    // TS1 vs TS8, TS4 vs TS5, TS3 vs TS6, TS2 vs TS7
+    // sortedPairs est déjà trié par niveau (TS1 = index 0, TS8 = index 7)
     bracket = new Array(mainBracketSize).fill(null);
-
-    // TS1 et TS2
-    bracket[0] = sortedPairs[0];
-    if (numSeeds >= 2 && sortedPairs[1]) {
-      bracket[mainBracketSize - 1] = sortedPairs[1];
-    }
-
-    // TS3 et TS4
-    if (numSeeds >= 4 && sortedPairs[2] && sortedPairs[3]) {
-      const ts3Positions = [mainBracketSize / 2 - 1, mainBracketSize / 2];
-      const ts3Pos = ts3Positions[Math.floor(Math.random() * 2)];
-      const ts4Pos = ts3Positions.find((p) => p !== ts3Pos)!;
-      bracket[ts3Pos] = sortedPairs[2];
-      bracket[ts4Pos] = sortedPairs[3];
-    }
-
-    // Paires non têtes de série
-    const nonSeededPairs = sortedPairs.slice(numSeeds, numPairs);
-    const shuffledNonSeeded = shuffleArray(nonSeededPairs);
-    let nonSeededIndex = 0;
-    for (let i = 0; i < mainBracketSize; i++) {
-      if (bracket[i] === null && nonSeededIndex < shuffledNonSeeded.length) {
-        bracket[i] = shuffledNonSeeded[nonSeededIndex++];
+    const mapping = [0, 7, 3, 4, 2, 5, 1, 6]; // positions dans bracket
+    mapping.forEach((pairIndex, bracketPos) => {
+      if (sortedPairs[pairIndex]) {
+        bracket[bracketPos] = sortedPairs[pairIndex];
       }
-    }
+    });
   }
 
   // 2) Créer les matchs du premier tour
@@ -688,8 +670,8 @@ async function generateTmc(
       winner_registration_id: isBye ? (pair1?.id || pair2?.id) : null,
     };
 
-    // Ajouter le champ tableau pour TMC 12 et 16 (si la colonne existe)
-    if (numPairs === 12 || numPairs === 16) {
+    // Ajouter le champ tableau pour TMC 8/12/16 (si la colonne existe)
+    if (numPairs === 8 || numPairs === 12 || numPairs === 16) {
       insertData.tableau = "principal";
     }
 
@@ -732,118 +714,8 @@ async function generateTmc(
   }
 
   // 3) Générer la structure de classement en fonction du nombre d'équipes
-  if (numPairs === 8) {
-    // TMC 8 équipes : 3 tours garantis (quarts → demi + 5-8 → finales de classement)
-
-    // Demi-finales principales (Gagnants des quarts)
-    const semisMatches: { id: string }[] = [];
-    for (let i = 0; i < 2; i++) {
-      const { data, error } = await supabase
-        .from("tournament_matches")
-        .insert({
-          tournament_id: tournament.id,
-          round_type: "semis",
-          round_number: 2,
-          match_order: i + 1,
-          is_bye: false,
-          status: "scheduled",
-        })
-        .select("id")
-        .single();
-
-      if (error || !data) {
-        logger.error(
-          {
-            tournamentId: tournament.id.substring(0, 8) + "…",
-            error: error?.message,
-          },
-          "[generate] Error creating TMC semi-final match"
-        );
-        throw new Error("Erreur lors de la génération des demi-finales TMC.");
-      }
-      semisMatches.push({ id: data.id });
-    }
-
-    // Lier les quarts aux demi-finales (winners only)
-    // Quart 1 & 2 → Demi 1, Quart 3 & 4 → Demi 2
-    const updatePromises: Promise<any>[] = [];
-    updatePromises.push(
-      supabase
-        .from("tournament_matches")
-        .update({
-          next_match_id: semisMatches[0].id,
-          next_match_position: "team1",
-        })
-        .eq("id", createdMatches[0].id)
-    );
-    updatePromises.push(
-      supabase
-        .from("tournament_matches")
-        .update({
-          next_match_id: semisMatches[0].id,
-          next_match_position: "team2",
-        })
-        .eq("id", createdMatches[1].id)
-    );
-    updatePromises.push(
-      supabase
-        .from("tournament_matches")
-        .update({
-          next_match_id: semisMatches[1].id,
-          next_match_position: "team1",
-        })
-        .eq("id", createdMatches[2].id)
-    );
-    updatePromises.push(
-      supabase
-        .from("tournament_matches")
-        .update({
-          next_match_id: semisMatches[1].id,
-          next_match_position: "team2",
-        })
-        .eq("id", createdMatches[3].id)
-    );
-
-    await Promise.all(updatePromises);
-
-    // Finales de classement (créées vides pour l'instant, elles seront remplies manuellement à partir des résultats)
-    // On utilise uniquement des valeurs de round_type autorisées par le schéma :
-    // - "final" pour la finale (1-2)
-    // - "third_place" pour la petite finale (3-4)
-    // - "qualifications" pour les matchs de classement 5-6 et 7-8
-    const classificationRounds = [
-      { round_type: "final" },
-      { round_type: "third_place" },
-      { round_type: "qualifications" },
-      { round_type: "qualifications" },
-    ] as const;
-
-    let classOrder = 1;
-    for (const round of classificationRounds) {
-      const { error } = await supabase.from("tournament_matches").insert({
-        tournament_id: tournament.id,
-        round_type: round.round_type,
-        round_number: 3,
-        match_order: classOrder++,
-        is_bye: false,
-        status: "scheduled",
-      });
-
-      if (error) {
-        logger.error(
-          {
-            tournamentId: tournament.id.substring(0, 8) + "…",
-            roundType: round.round_type,
-            error: error.message,
-          },
-          "[generate] Error creating TMC classification match (8 teams)"
-        );
-        throw new Error(
-          "Erreur lors de la génération des matchs de classement TMC."
-        );
-      }
-    }
-  } else if (numPairs === 12 || numPairs === 16) {
+  // Pour TMC 8 : progression tour par tour via /advance/tmc-next-round
+  if (numPairs === 12 || numPairs === 16) {
     // TMC 12 et 16 équipes : on génère uniquement le Tour 1 (8èmes de finale pour 16, 1/8 avec byes pour 12)
     // Les tours suivants seront générés progressivement via la route /advance/tmc-next-round
     // Pas de matchs de classement créés ici, ils seront générés au Tour 4
@@ -1045,14 +917,55 @@ export async function POST(
     if (tournament.status !== "registration_closed") {
       return NextResponse.json(
         {
-          error:
-            "Le tournoi doit être en statut 'registration_closed' pour générer le tableau",
+          error: "Veuillez clore les inscriptions pour générer le tableau",
         },
         { status: 400 }
       );
     }
 
-    // 4. Récupérer les inscriptions validées / confirmées
+    // 4. Récupérer toutes les inscriptions pour vérifier qu'elles sont toutes validées
+    const { data: allRegistrations, error: allRegError } = await supabaseAdmin
+      .from("tournament_registrations")
+      .select("id, status")
+      .eq("tournament_id", id);
+
+    if (allRegError) {
+      logger.error(
+        {
+          tournamentId: id.substring(0, 8) + "…",
+          error: allRegError.message,
+        },
+        "[generate] Error fetching all registrations"
+      );
+      return NextResponse.json(
+        { error: "Erreur lors de la récupération des inscriptions" },
+        { status: 500 }
+      );
+    }
+
+    // Vérifier qu'il y a au moins une inscription
+    if (!allRegistrations || allRegistrations.length === 0) {
+      return NextResponse.json(
+        { error: "Aucune inscription trouvée. Veuillez d'abord accepter des inscriptions." },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier que toutes les inscriptions sont validées
+    const nonValidatedRegistrations = allRegistrations.filter(
+      (reg) => reg.status !== "confirmed" && reg.status !== "validated"
+    );
+
+    if (nonValidatedRegistrations.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Toutes les inscriptions doivent être validées avant de générer le tableau. ${nonValidatedRegistrations.length} inscription(s) en attente de validation.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 5. Récupérer les inscriptions validées / confirmées pour la génération
     const { data: registrations, error: regError } = await supabaseAdmin
       .from("tournament_registrations")
       .select("*")
@@ -1066,10 +979,10 @@ export async function POST(
           tournamentId: id.substring(0, 8) + "…",
           error: regError.message,
         },
-        "[generate] Error fetching registrations"
+        "[generate] Error fetching validated registrations"
       );
       return NextResponse.json(
-        { error: "Error fetching registrations" },
+        { error: "Erreur lors de la récupération des inscriptions validées" },
         { status: 500 }
       );
     }
@@ -1081,7 +994,7 @@ export async function POST(
       );
     }
 
-    // 5. Vérifier taille supportée pour les formats officiels
+    // 6. Vérifier taille supportée pour les formats officiels
     const numPairs = registrations.length;
     const allowedSizes = [
       4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64,
@@ -1090,10 +1003,24 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Nombre d'équipes invalide. Seuls 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 ou 64 équipes sont supportées pour la génération automatique.",
+            `Nombre d'inscriptions insuffisant. Le tournoi nécessite au moins 4 inscriptions validées. Actuellement : ${numPairs} inscription(s) validée(s). Seuls 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 ou 64 équipes sont supportées pour la génération automatique.`,
         },
         { status: 400 }
       );
+    }
+
+    // 5bis. Validation spécifique TMC 8 : formats autorisés
+    if (tournament.tournament_type === "tmc" && numPairs === 8) {
+      const allowedTmc8Formats = ["A1", "B1", "C1", "D1"] as const;
+      if (!allowedTmc8Formats.includes(tournament.match_format as any)) {
+        return NextResponse.json(
+          {
+            error:
+              "Format de match non autorisé pour un TMC 8 équipes. Formats acceptés : A1, B1, C1, D1.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // 6. Préparer les paires (tri, seeds, taille de tableau)
@@ -1135,9 +1062,10 @@ export async function POST(
       ? Math.min(requiredSeedsForPools, sortedPairs.length)
       : numSeeds;
 
-    // Pour TMC 12 équipes, toutes les équipes sont têtes de série (TS1 à TS12)
+    // Pour TMC 12 et TMC 8 : toutes les équipes sont têtes de série (TS1 à TSN)
     const isTmc12 = tournament.tournament_type === "tmc" && numPairs === 12;
-    const numSeedsToAssign = isTmc12 ? numPairs : effectiveNumSeeds;
+    const isTmc8 = tournament.tournament_type === "tmc" && numPairs === 8;
+    const numSeedsToAssign = (isTmc12 || isTmc8) ? numPairs : effectiveNumSeeds;
 
     // Attribuer les numéros de têtes de série selon le nombre calculé
     for (let i = 0; i < numSeedsToAssign && i < sortedPairs.length; i++) {

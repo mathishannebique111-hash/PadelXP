@@ -85,6 +85,7 @@ export default async function TournamentDetailsPage({
                 tournamentId={tournament.id as string}
                 tournamentType={tournament.tournament_type as string}
                 matchFormat={tournament.match_format as string}
+                tournamentStatus={tournament.status as string}
               />
             </TabsContent>
           </Tabs>

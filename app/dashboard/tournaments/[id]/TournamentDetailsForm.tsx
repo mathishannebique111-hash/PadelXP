@@ -72,8 +72,6 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
 
   const canOpen = tournament.status === "draft" || tournament.status === "registration_closed";
   const canClose = tournament.status === "open";
-  const canGenerate = tournament.status === "registration_closed";
-  const canSchedule = tournament.status === "draw_published" || tournament.status === "in_progress";
   const canDelete = tournament.status !== "in_progress" && tournament.status !== "completed";
 
   async function handleSave(e: React.FormEvent) {
@@ -141,49 +139,6 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
     }
   }
 
-  async function handleGenerate() {
-    setActionPending("generate");
-    setError(null);
-
-    try {
-      const res = await fetch(`/api/tournaments/${tournament.id}/generate`, {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || `HTTP ${res.status}`);
-      }
-
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la génération du tableau");
-    } finally {
-      setActionPending(null);
-    }
-  }
-
-  async function handleSchedule() {
-    setActionPending("schedule");
-    setError(null);
-
-    try {
-      const res = await fetch(`/api/tournaments/${tournament.id}/schedule`, {
-        method: "POST",
-      });
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || `HTTP ${res.status}`);
-      }
-
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la planification des matchs");
-    } finally {
-      setActionPending(null);
-    }
-  }
 
   async function handleDelete() {
     setActionPending("delete");
@@ -380,71 +335,7 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
           </div>
 
           <CardFooter className="flex flex-col gap-4 px-0">
-            <div className="flex items-center gap-3">
-              {showDeleteConfirm ? (
-                <>
-                  <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 space-y-3">
-                    <p className="text-sm text-white">
-                      Êtes-vous sûr de vouloir supprimer le tournoi <strong>"{tournament.name}"</strong> ?
-                    </p>
-                    <p className="text-xs text-red-300">
-                      Cette action est irréversible et supprimera toutes les inscriptions et données associées.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        disabled={actionPending === "delete"}
-                        onClick={handleDelete}
-                      >
-                        {actionPending === "delete" ? "Suppression..." : "Confirmer la suppression"}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={actionPending === "delete"}
-                        onClick={() => {
-                          setShowDeleteConfirm(false);
-                          setError(null);
-                        }}
-                        className="bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white"
-                      >
-                        Annuler
-                      </Button>
-                    </div>
-                  </div>
-                  <Button 
-                    type="submit" 
-                    disabled={pending}
-                    className="bg-gradient-to-r from-[#0066FF]/80 to-[#00CC99]/80 text-white border border-white/40 hover:border-white/60 shadow-[0_4px_16px_rgba(0,102,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,102,255,0.4)] hover:scale-[1.02] active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  >
-                    {pending ? "Enregistrement..." : "Enregistrer les modifications"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    disabled={!canDelete || actionPending === "delete" || pending}
-                    onClick={() => setShowDeleteConfirm(true)}
-                  >
-                    Supprimer le tournoi
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={pending}
-                    className="bg-gradient-to-r from-[#0066FF]/80 to-[#00CC99]/80 text-white border border-white/40 hover:border-white/60 shadow-[0_4px_16px_rgba(0,102,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,102,255,0.4)] hover:scale-[1.02] active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  >
-                    {pending ? "Enregistrement..." : "Enregistrer les modifications"}
-                  </Button>
-                </>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-6 w-full">
+            <div className="flex flex-wrap items-center justify-center gap-4 border-t border-white/10 pt-6 w-full">
               <Button
                 type="button"
                 variant="outline"
@@ -467,25 +358,58 @@ export function TournamentDetailsForm({ tournament }: { tournament: Tournament }
                   ? "Mise à jour..."
                   : "Clore les inscriptions"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!canGenerate || actionPending === "generate" || pending}
-                onClick={handleGenerate}
-                className="bg-white border-white/30 text-black hover:bg-white/90 hover:border-white/40 transition-all"
+            </div>
+            <div className="flex items-center justify-between w-full">
+              {showDeleteConfirm ? (
+                <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 space-y-3">
+                  <p className="text-sm text-white">
+                    Êtes-vous sûr de vouloir supprimer le tournoi <strong>"{tournament.name}"</strong> ?
+                  </p>
+                  <p className="text-xs text-red-300">
+                    Cette action est irréversible et supprimera toutes les inscriptions et données associées.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={actionPending === "delete"}
+                      onClick={handleDelete}
+                    >
+                      {actionPending === "delete" ? "Suppression..." : "Confirmer la suppression"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={actionPending === "delete"}
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setError(null);
+                      }}
+                      className="bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white"
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={!canDelete || actionPending === "delete" || pending}
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Supprimer le tournoi
+                </Button>
+              )}
+              <Button 
+                type="submit" 
+                disabled={pending}
+                className="bg-gradient-to-r from-[#0066FF]/80 to-[#00CC99]/80 text-white border border-white/40 hover:border-white/60 shadow-[0_4px_16px_rgba(0,102,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,102,255,0.4)] hover:scale-[1.02] active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {actionPending === "generate" ? "Génération..." : "Générer le tableau"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!canSchedule || actionPending === "schedule" || pending}
-                onClick={handleSchedule}
-                className="bg-white border-white/30 text-black hover:bg-white/90 hover:border-white/40 transition-all"
-              >
-                {actionPending === "schedule" ? "Planification..." : "Planifier les matchs"}
+                {pending ? "Enregistrement..." : "Enregistrer les modifications"}
               </Button>
             </div>
           </CardFooter>
