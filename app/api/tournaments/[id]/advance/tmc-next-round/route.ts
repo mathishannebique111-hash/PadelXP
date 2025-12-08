@@ -723,9 +723,171 @@ async function generateNextRound8(
   allMatches: Match[],
   currentRound: number
 ) {
-  // Pour l'instant, on garde la logique existante pour 8 équipes
-  // TODO: implémenter la génération progressive pour 8 équipes si nécessaire
-  throw new Error("Génération progressive pour TMC 8 équipes non encore implémentée");
+  if (currentRound === 1) {
+    // Tour 2 : 2 demis principales (gagnants) + 2 demis tableau 5-8 (perdants)
+    const tour1Matches = allMatches.filter(
+      (m) => m.round_number === 1 && m.tableau === "principal"
+    );
+
+    if (tour1Matches.length !== 4) {
+      throw new Error("Le Tour 1 doit contenir exactement 4 matchs");
+    }
+
+    const winners = tour1Matches.map((m) => m.winner_registration_id!);
+    const losers = tour1Matches.map((m) => {
+      return m.team1_registration_id === m.winner_registration_id
+        ? m.team2_registration_id
+        : m.team1_registration_id;
+    });
+
+    // Vérifier complétion des matchs
+    const incomplete = tour1Matches.filter(
+      (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
+    );
+    if (incomplete.length > 0) {
+      throw new Error("Tous les matchs du Tour 1 doivent être complétés");
+    }
+
+    // Demi-finales principales (2 matchs)
+    for (let i = 0; i < 2; i++) {
+      const { error } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournamentId,
+        round_type: "semis",
+        round_number: 2,
+        match_order: i + 1,
+        team1_registration_id: winners[i * 2],
+        team2_registration_id: winners[i * 2 + 1],
+        is_bye: false,
+        status: "scheduled",
+        tableau: "principal",
+      });
+      if (error) {
+        throw new Error("Erreur lors de la création des demi-finales principales");
+      }
+    }
+
+    // Demi-finales tableau 5-8 (2 matchs)
+    for (let i = 0; i < 2; i++) {
+      const { error } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournamentId,
+        round_type: "semis",
+        round_number: 2,
+        match_order: i + 1,
+        team1_registration_id: losers[i * 2],
+        team2_registration_id: losers[i * 2 + 1],
+        is_bye: false,
+        status: "scheduled",
+        tableau: "places_5_8",
+      });
+      if (error) {
+        throw new Error("Erreur lors de la création des demi-finales 5-8");
+      }
+    }
+  } else if (currentRound === 2) {
+    // Tour 3 : Finale, Petite finale, matchs 5e et 7e place
+    const semisPrincipal = allMatches.filter(
+      (m) => m.round_number === 2 && m.tableau === "principal"
+    );
+    const semis5_8 = allMatches.filter(
+      (m) => m.round_number === 2 && m.tableau === "places_5_8"
+    );
+
+    if (semisPrincipal.length !== 2 || semis5_8.length !== 2) {
+      throw new Error("Le Tour 2 doit contenir 2 demis principales et 2 demis 5-8");
+    }
+
+    const incompletePrincipal = semisPrincipal.filter(
+      (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
+    );
+    const incomplete5_8 = semis5_8.filter(
+      (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
+    );
+    if (incompletePrincipal.length > 0 || incomplete5_8.length > 0) {
+      throw new Error("Tous les matchs du Tour 2 doivent être complétés");
+    }
+
+    const principalWinners = semisPrincipal.map((m) => m.winner_registration_id!);
+    const principalLosers = semisPrincipal.map((m) => {
+      return m.team1_registration_id === m.winner_registration_id
+        ? m.team2_registration_id
+        : m.team1_registration_id;
+    });
+
+    const places5_8Winners = semis5_8.map((m) => m.winner_registration_id!);
+    const places5_8Losers = semis5_8.map((m) => {
+      return m.team1_registration_id === m.winner_registration_id
+        ? m.team2_registration_id
+        : m.team1_registration_id;
+    });
+
+    // Finale
+    const { error: finalError } = await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "final",
+      round_number: 3,
+      match_order: 1,
+      team1_registration_id: principalWinners[0],
+      team2_registration_id: principalWinners[1],
+      is_bye: false,
+      status: "scheduled",
+      tableau: "principal",
+    });
+    if (finalError) {
+      throw new Error("Erreur lors de la création de la finale");
+    }
+
+    // Petite finale (3e place)
+    const { error: thirdError } = await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "third_place",
+      round_number: 3,
+      match_order: 2,
+      team1_registration_id: principalLosers[0],
+      team2_registration_id: principalLosers[1],
+      is_bye: false,
+      status: "scheduled",
+      tableau: "principal",
+    });
+    if (thirdError) {
+      throw new Error("Erreur lors de la création de la petite finale");
+    }
+
+    // Match 5e place
+    const { error: fifthError } = await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 3,
+      match_order: 1,
+      team1_registration_id: places5_8Winners[0],
+      team2_registration_id: places5_8Winners[1],
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_5_8",
+    });
+    if (fifthError) {
+      throw new Error("Erreur lors de la création du match 5e place");
+    }
+
+    // Match 7e place
+    const { error: seventhError } = await supabase
+      .from("tournament_matches")
+      .insert({
+        tournament_id: tournamentId,
+        round_type: "qualifications",
+        round_number: 3,
+        match_order: 2,
+        team1_registration_id: places5_8Losers[0],
+        team2_registration_id: places5_8Losers[1],
+        is_bye: false,
+        status: "scheduled",
+        tableau: "places_5_8",
+      });
+    if (seventhError) {
+      throw new Error("Erreur lors de la création du match 7e place");
+    }
+  } else {
+    throw new Error("Aucun tour supplémentaire à générer pour TMC 8");
+  }
 }
 
 // Génération pour TMC 12 équipes

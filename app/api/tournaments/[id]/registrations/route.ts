@@ -151,6 +151,88 @@ export async function GET(
       );
     }
 
+    // Récupérer les IDs uniques des joueurs pour enrichir avec les profils
+    const playerIds = new Set<string>();
+    registrations?.forEach((r: any) => {
+      if (r.player1_id) playerIds.add(r.player1_id);
+      if (r.player2_id) playerIds.add(r.player2_id);
+    });
+
+    // Récupérer les profils des joueurs
+    let profilesMap = new Map<string, { first_name?: string | null; last_name?: string | null; full_name?: string | null; display_name?: string | null }>();
+    if (playerIds.size > 0 && supabaseAdmin) {
+      const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from("profiles")
+        .select("id, first_name, last_name, full_name, display_name")
+        .in("id", Array.from(playerIds));
+
+      if (!profilesError && profiles) {
+        profiles.forEach((profile: any) => {
+          profilesMap.set(profile.id, {
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            full_name: profile.full_name,
+            display_name: profile.display_name,
+          });
+        });
+      }
+    }
+
+    // Fonction helper pour capitaliser la première lettre d'un mot
+    const capitalize = (str: string | null | undefined): string => {
+      if (!str) return "";
+      const trimmed = str.trim();
+      if (!trimmed) return "";
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+    };
+
+    // Fonction helper pour formater un nom complet avec majuscules
+    const formatFullName = (name: string | null | undefined): string => {
+      if (!name) return "Inconnu";
+      // Nettoyer le nom (supprimer les espaces multiples, trim)
+      const cleaned = name.trim().replace(/\s+/g, " ");
+      if (!cleaned) return "Inconnu";
+      // Séparer le nom en mots et capitaliser chaque mot
+      return cleaned
+        .split(/\s+/)
+        .filter((word) => word.length > 0) // Filtrer les mots vides
+        .map((word) => capitalize(word))
+        .join(" ");
+    };
+
+    // Fonction helper pour construire le nom complet
+    // Priorité : utiliser le player1_name stocké (contenu exact de la case pré-remplie lors de l'inscription)
+    // Ce nom est maintenant construit avec la même logique que la page d'inscription
+    const getPlayerFullName = (profileId: string | null, storedName: string | null): string => {
+      // Priorité 1 : utiliser le nom stocké dans l'inscription (player1_name)
+      // C'est le contenu exact de la case pré-remplie lors de l'inscription
+      // Ce nom est maintenant construit avec la même logique que la page d'inscription
+      if (storedName) {
+        return formatFullName(storedName);
+      }
+      
+      // Fallback : utiliser le profil si le nom stocké n'est pas disponible
+      const profile = profileId ? profilesMap.get(profileId) : null;
+      
+      if (profile?.first_name && profile?.last_name) {
+        return `${capitalize(profile.first_name)} ${capitalize(profile.last_name)}`;
+      }
+      
+      if (profile?.full_name) {
+        return formatFullName(profile.full_name);
+      }
+      
+      if (profile?.display_name) {
+        return formatFullName(profile.display_name);
+      }
+      
+      if (profile?.first_name) {
+        return capitalize(profile.first_name);
+      }
+      
+      return "Inconnu";
+    };
+
     const enriched =
       registrations?.map((r: any) => {
         const rawStatus = (r.status as string | undefined) || "pending";
@@ -165,10 +247,12 @@ export async function GET(
         return {
           id: r.id,
           player_id: r.player1_id,
-          player_name: r.player1_name || "Inconnu",
+          // Construire le nom complet du joueur 1 comme dans la page d'inscription
+          player_name: getPlayerFullName(r.player1_id, r.player1_name),
           player_rank: r.player1_rank ?? null,
           player_license: null, // Pas stocké dans tournament_registrations
-          partner_name: r.player2_name || null,
+          // Construire le nom complet du partenaire
+          partner_name: getPlayerFullName(r.player2_id, r.player2_name),
           partner_rank: r.player2_rank ?? null,
           partner_license: null, // Pas stocké dans tournament_registrations
           pair_total_rank: r.pair_total_rank ?? null,

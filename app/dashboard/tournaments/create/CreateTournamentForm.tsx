@@ -56,9 +56,17 @@ export function CreateTournamentForm() {
         throw new Error("La date de fin doit être après la date de début");
       }
 
-      // Calculer les dates d'inscription (par défaut : ouvertes maintenant, fermées 1 jour avant le début)
+      // Calculer les dates d'inscription (ouverture 7 jours avant, fermeture 1 jour avant)
       const registrationCloseDate = new Date(startDate);
       registrationCloseDate.setDate(registrationCloseDate.getDate() - 1);
+
+      const registrationOpenDate = new Date(startDate);
+      registrationOpenDate.setDate(registrationOpenDate.getDate() - 7);
+
+      // Sécurise l'ordre des dates pour respecter la contrainte valid_dates en base
+      if (registrationOpenDate >= registrationCloseDate) {
+        registrationOpenDate.setDate(registrationCloseDate.getDate() - 1);
+      }
 
       const body = {
         name: form.name.trim(),
@@ -66,7 +74,7 @@ export function CreateTournamentForm() {
         category: form.category,
         tournament_type: form.tournament_type,
         match_format: form.match_format,
-        registration_open_date: new Date().toISOString(),
+        registration_open_date: registrationOpenDate.toISOString(),
         registration_close_date: registrationCloseDate.toISOString(),
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),

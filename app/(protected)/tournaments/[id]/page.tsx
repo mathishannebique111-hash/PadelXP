@@ -59,6 +59,7 @@ export default async function TournamentPublicPage({
   } = await supabase.auth.getUser();
 
   let alreadyRegistered = false;
+  let registrationId: string | null = null;
   let profile: {
     id: string;
     full_name?: string | null;
@@ -70,13 +71,14 @@ export default async function TournamentPublicPage({
 
   if (user) {
     const { data: existing } = await supabase
-      .from("tournament_participants")
+      .from("tournament_registrations")
       .select("id")
       .eq("tournament_id", params.id)
-      .eq("player_id", user.id)
+      .eq("player1_id", user.id)
       .maybeSingle();
 
     alreadyRegistered = !!existing;
+    registrationId = existing?.id || null;
 
     const { data: p } = await supabase
       .from("profiles")
@@ -106,7 +108,7 @@ export default async function TournamentPublicPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
       <Link
         href="/tournaments"
         className="text-sm text-gray-400 hover:text-white underline"
@@ -114,9 +116,9 @@ export default async function TournamentPublicPage({
         ← Retour aux tournois
       </Link>
 
-      <Card className="bg-black/40 border-white/10">
+      <Card className="bg-black/40 border-white/10 mx-auto">
         <CardHeader>
-          <CardTitle className="text-white flex flex-col gap-2">
+          <CardTitle className="text-white flex flex-col gap-2 text-center">
             <span>{tournament.name}</span>
             <span className="text-sm text-gray-400">
               {tournament.clubs?.name || "Club inconnu"}
@@ -124,7 +126,7 @@ export default async function TournamentPublicPage({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex flex-wrap gap-3 items-center justify-center">
             <Badge className="bg-white/10 text-white border-white/20">
               {tournament.category}
             </Badge>
@@ -140,23 +142,23 @@ export default async function TournamentPublicPage({
           </div>
 
           {tournament.description && (
-            <p className="text-sm text-gray-300 whitespace-pre-line">
+            <p className="text-sm text-gray-300 whitespace-pre-line text-center">
               {tournament.description}
             </p>
           )}
 
           <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-white">Inscriptions</h2>
+            <h2 className="text-sm font-semibold text-white text-center">Inscriptions</h2>
 
             {!isOpen && (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 text-center">
                 Les inscriptions ne sont actuellement pas ouvertes pour ce
                 tournoi.
               </p>
             )}
 
             {isOpen && !user && (
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-gray-300 text-center">
                 Connectez-vous pour vous inscrire :{" "}
                 <Link
                   href={`/login?redirect=/tournaments/${tournament.id}`}
@@ -170,9 +172,9 @@ export default async function TournamentPublicPage({
             {isOpen && user && (
               <TournamentRegisterForm
                 tournamentId={tournament.id}
-                playerName={playerName}
                 initialPlayerLicense={profile?.license_number ?? ""}
                 alreadyRegistered={alreadyRegistered}
+                registrationId={registrationId}
               />
             )}
           </div>

@@ -99,7 +99,7 @@ function formatScore(score: z.infer<typeof matchScoreSchema>): string {
 
 // Fonction helper : Avancer le vainqueur au match suivant
 async function advanceWinner(
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   nextMatchId: string,
   position: 'team1' | 'team2' | null,
   winnerId: string
@@ -229,7 +229,7 @@ export async function PATCH(
     // Vérifier admin club (en bypassant la RLS avec le client admin)
     const { data: tournament, error: tournamentError } = await adminClient
       .from("tournaments")
-      .select("club_id")
+      .select("club_id, match_format")
       .eq("id", id)
       .single();
 
@@ -281,6 +281,15 @@ export async function PATCH(
       }, "Invalid match update data");
       
       return NextResponse.json({ error: result.error.errors }, { status: 400 });
+    }
+
+    // Valider le score selon le format du tournoi
+    const scoreValidationError = validateScoreByFormat(
+      tournament.match_format as any,
+      result.data.score
+    );
+    if (scoreValidationError) {
+      return NextResponse.json({ error: scoreValidationError }, { status: 400 });
     }
 
     // Déterminer le vainqueur
@@ -356,6 +365,118 @@ export async function PATCH(
   } catch (error) {
     logger.error({ error: error instanceof Error ? error.message : String(error) }, "Unexpected error");
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// Validation des scores par format
+function validateScoreByFormat(
+  format: 'A1' | 'B1' | 'C1' | 'D1' | string,
+  score: z.infer<typeof matchScoreSchema>
+): string | null {
+  const sets = score.sets || [];
+  const superTb = score.super_tiebreak;
+
+  // Helpers
+  const checkSets = (maxGames: number) =>
+    sets.every((s) => s.team1 >= 0 && s.team2 >= 0 && s.team1 <= maxGames && s.team2 <= maxGames);
+  const countSetsWon = () => {
+    let t1 = 0;
+    let t2 = 0;
+    sets.forEach((s) => {
+      if (s.team1 > s.team2) t1++;
+      else if (s.team2 > s.team1) t2++;
+    });
+    return { t1, t2 };
+  };
+
+  switch (format) {
+    case 'A1': {
+      // 2 sets minimum, 3 sets maximum, jeux ≤7
+      if (sets.length < 2 || sets.length > 3) {
+        return "Format A1 : 2 ou 3 sets à 6 jeux sont requis.";
+      }
+      if (!checkSets(7)) {
+        return "Format A1 : chaque set doit être ≤ 7 jeux.";
+      }
+      const { t1, t2 } = countSetsWon();
+      // Super tie-break autorisé seulement si 1-1 après deux sets, sinon interdit
+      if (superTb) {
+        if (sets.length !== 2) {
+          return "Format A1 : super tie-break uniquement en troisième manche après 1-1.";
+        }
+        if (!(t1 === 1 && t2 === 1)) {
+          return "Format A1 : super tie-break seulement si chaque équipe a gagné un set (1-1).";
+        }
+        if (superTb.team1 > 15 || superTb.team2 > 15) {
+          return "Format A1 : le super tie-break doit rester raisonnable (≤ 15).";
+        }
+      } else {
+        // Sans super tie-break, on doit avoir 3 sets et un vainqueur clair
+        if (sets.length !== 3) {
+          return "Format A1 : sans super tie-break, 3 sets sont requis.";
+        }
+        if (t1 === t2) {
+          return "Format A1 : un vainqueur doit se dégager après 3 sets.";
+        }
+      }
+      return null;
+    }
+    case 'B1': {
+      if (sets.length !== 2) {
+        return "Format B1 : exactement 2 sets à 6 jeux.";
+      }
+      if (!checkSets(7)) {
+        return "Format B1 : chaque set doit être ≤ 7 jeux.";
+      }
+      const { t1, t2 } = countSetsWon();
+      if (t1 === 2 || t2 === 2) {
+        // Victoire 2-0 : pas de super tie-break
+        if (superTb) {
+          return "Format B1 : pas de super tie-break en cas de victoire 2-0.";
+        }
+      } else if (t1 === 1 && t2 === 1) {
+        // 1-1 : super tie-break obligatoire
+        if (!superTb) {
+          return "Format B1 : super tie-break obligatoire en cas de 1-1.";
+        }
+        if (superTb.team1 > 15 || superTb.team2 > 15) {
+          return "Format B1 : le super tie-break doit être raisonnable (≤ 15).";
+        }
+      } else {
+        return "Format B1 : les sets doivent déterminer un score 2-0 ou 1-1 avant super tie-break.";
+      }
+      return null;
+    }
+    case 'C1': {
+      if (sets.length !== 2) {
+        return "Format C1 : exactement 2 sets à 4 jeux.";
+      }
+      if (!checkSets(5)) {
+        return "Format C1 : chaque set doit être ≤ 5 jeux.";
+      }
+      if (!superTb) {
+        return "Format C1 : un super tie-break (10 pts) est requis.";
+      }
+      if (superTb.team1 > 15 || superTb.team2 > 15) {
+        return "Format C1 : le super tie-break doit être raisonnable (≤ 15).";
+      }
+      return null;
+    }
+    case 'D1': {
+      if (sets.length !== 1) {
+        return "Format D1 : exactement 1 set à 9 jeux.";
+      }
+      if (!checkSets(9)) {
+        return "Format D1 : le set doit être ≤ 9 jeux.";
+      }
+      if (superTb) {
+        return "Format D1 : pas de super tie-break.";
+      }
+      return null;
+    }
+    default:
+      // Ne rien bloquer pour les autres formats
+      return null;
   }
 }
 

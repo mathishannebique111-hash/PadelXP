@@ -57,18 +57,25 @@ export async function POST(
       // Body facultatif, mais on forcera les champs obligatoires ci-dessous
     }
 
+    const player_first_name = (body?.player_first_name ?? "").toString().trim();
+    const player_last_name = (body?.player_last_name ?? "").toString().trim();
     const player_license = (body?.player_license ?? "").toString().trim();
     const player_rank = body?.player_rank ? parseInt(body.player_rank, 10) : null;
-    const partner_name = (body?.partner_name ?? "").toString().trim();
+    const partner_first_name = (body?.partner_first_name ?? "").toString().trim();
+    const partner_last_name = (body?.partner_last_name ?? "").toString().trim();
     const partner_license = (body?.partner_license ?? "").toString().trim();
     const partner_rank = body?.partner_rank ? parseInt(body.partner_rank, 10) : null;
 
-    if (!player_license || !partner_name || !partner_license || !player_rank || !partner_rank) {
+    if (!player_first_name || !player_last_name || !player_license || !partner_first_name || !partner_last_name || !partner_license || !player_rank || !partner_rank) {
       return NextResponse.json(
         { error: "Merci de remplir toutes les informations obligatoires, y compris les classements nationaux." },
         { status: 400 }
       );
     }
+
+    // Construire les noms complets dès maintenant pour pouvoir les utiliser partout
+    const player1_name = `${player_first_name} ${player_last_name}`.trim();
+    const partner_name = `${partner_first_name} ${partner_last_name}`.trim();
 
     if (isNaN(player_rank) || isNaN(partner_rank) || player_rank <= 0 || partner_rank <= 0) {
       return NextResponse.json(
@@ -93,12 +100,45 @@ export async function POST(
       );
     }
 
-    // Vérifier que le profil existe (récupérer seulement l'id pour éviter les problèmes de colonnes)
-    const { data: profileCheck, error: profileCheckError } = await supabaseAdmin
+    // Vérifier que le profil existe et récupérer les informations nécessaires pour le nom
+    // Essayer d'abord avec toutes les colonnes, puis avec seulement id si certaines colonnes n'existent pas
+    let profile: { id: string; full_name?: string | null; first_name?: string | null; last_name?: string | null; display_name?: string | null } | null = null;
+    let profileCheckError: any = null;
+    
+    const { data: profileDataFromDb, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("id")
+      .select("id, full_name, first_name, last_name, display_name")
       .eq("id", user.id)
       .maybeSingle();
+
+    if (profileError) {
+      // Si erreur due à colonnes manquantes (code 42703), essayer avec seulement id
+      if (profileError.code === "42703") {
+        logger.warn(
+          {
+            userId: user.id.substring(0, 8) + "…",
+            error: profileError.message,
+          },
+          "[tournaments/register] Some profile columns missing, trying with id only"
+        );
+        
+        const { data: profileIdOnly, error: profileIdError } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("id", user.id)
+          .maybeSingle();
+        
+        if (profileIdError) {
+          profileCheckError = profileIdError;
+        } else if (profileIdOnly) {
+          profile = { id: profileIdOnly.id, full_name: null, first_name: null, last_name: null, display_name: null };
+        }
+      } else {
+        profileCheckError = profileError;
+      }
+    } else {
+      profile = profileDataFromDb;
+    }
 
     if (profileCheckError) {
       logger.error(
@@ -116,7 +156,7 @@ export async function POST(
       );
     }
 
-    if (!profileCheck) {
+    if (!profile) {
       // Si vraiment pas de profil (cas rare), créer un profil minimal
       logger.warn(
         {
@@ -136,7 +176,7 @@ export async function POST(
           id: user.id,
           display_name: displayName,
         })
-        .select("id")
+        .select("id, full_name, first_name, last_name, display_name")
         .single();
 
       if (createError || !newProfile) {
@@ -154,17 +194,23 @@ export async function POST(
           { status: 500 }
         );
       }
+      // Utiliser le nouveau profil créé
+      profile = { 
+        id: newProfile.id, 
+        full_name: newProfile.full_name || null, 
+        first_name: newProfile.first_name || null, 
+        last_name: newProfile.last_name || null, 
+        display_name: newProfile.display_name || displayName 
+      };
     }
 
-    // Le profil existe maintenant, on peut continuer avec juste l'id
-    const profile = { id: user.id };
+    // S'assurer que profile est défini avec toutes les propriétés nécessaires
+    const profileData = profile || { id: user.id, full_name: null, first_name: null, last_name: null, display_name: null };
 
     // Vérifier tournoi + statut
     const { data: tournament, error: tournamentError } = await supabase
       .from("tournaments")
-      .select(
-        "id, status, registration_open_date, registration_close_date, max_teams"
-      )
+      .select("id, status, max_teams")
       .eq("id", id)
       .single();
 
@@ -178,11 +224,13 @@ export async function POST(
         "[tournaments/register] Tournament not found"
       );
       return NextResponse.json(
-        { error: "Tournament not found" },
+        { error: "Tournoi introuvable" },
         { status: 404 }
       );
     }
 
+    // Les inscriptions sont ouvertes uniquement si le statut est "open"
+    // Elles sont fermées si le statut est "registration_closed", "draw_published", "in_progress", "completed", "cancelled", ou "draft"
     if (tournament.status !== "open") {
       logger.warn(
         {
@@ -193,28 +241,7 @@ export async function POST(
         "[tournaments/register] Tournament is not open for registration"
       );
       return NextResponse.json(
-        { error: "Tournament is not open for registration" },
-        { status: 400 }
-      );
-    }
-
-    const now = new Date();
-    const openDate = new Date(tournament.registration_open_date);
-    const closeDate = new Date(tournament.registration_close_date);
-
-    if (now < openDate || now > closeDate) {
-      logger.warn(
-        {
-          userId: user.id.substring(0, 8) + "…",
-          tournamentId: id.substring(0, 8) + "…",
-          now: now.toISOString(),
-          openDate: openDate.toISOString(),
-          closeDate: closeDate.toISOString(),
-        },
-        "[tournaments/register] Registration period not open"
-      );
-      return NextResponse.json(
-        { error: "Registration period is not open" },
+        { error: "Les inscriptions ne sont pas ouvertes pour ce tournoi" },
         { status: 400 }
       );
     }
@@ -258,7 +285,7 @@ export async function POST(
       .from("tournament_registrations")
       .select("id")
       .eq("tournament_id", id)
-      .eq("player1_id", profile.id)
+      .eq("player1_id", profileData.id)
       .maybeSingle();
 
     if (existingError) {
@@ -518,18 +545,13 @@ export async function POST(
     }
 
     // Vérifier que le partenaire n'est pas le même que le joueur
-    if (partnerProfile.id === profile.id) {
+    if (partnerProfile.id === profileData.id) {
       return NextResponse.json(
         { error: "Vous ne pouvez pas vous inscrire avec vous-même comme partenaire" },
         { status: 400 }
       );
     }
 
-    // Construire le nom complet du joueur depuis les métadonnées utilisateur
-    const player1_name =
-      (user.user_metadata?.full_name as string) ||
-      (user.user_metadata?.name as string) ||
-      (user.email ? user.email.split("@")[0] : "Joueur inconnu");
 
     // Définir les classements (player1 = joueur principal, player2 = partenaire)
     const player1_rank = player_rank;
@@ -555,7 +577,7 @@ export async function POST(
       .from("tournament_registrations")
       .insert({
         tournament_id: id,
-        player1_id: profile.id,
+        player1_id: profileData.id,
         player2_id: partnerProfile!.id,
         player1_name,
         player1_rank,
@@ -589,7 +611,7 @@ export async function POST(
         .from("tournament_registrations")
         .insert({
           tournament_id: id,
-          player1_id: profile.id,
+          player1_id: profileData.id,
           player2_id: partnerProfile!.id,
           registration_order,
           pair_weight: pair_total_rank,

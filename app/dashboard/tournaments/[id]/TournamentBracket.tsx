@@ -58,6 +58,26 @@ function formatRoundLabel(roundType: string) {
   }
 }
 
+// Fonction helper pour capitaliser les noms
+function capitalizeName(name: string | null | undefined): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+}
+
+// Fonction helper pour formater un nom complet avec majuscules
+function formatFullName(name: string | null | undefined): string {
+  if (!name) return "";
+  const cleaned = name.trim().replace(/\s+/g, " ");
+  if (!cleaned) return "";
+  return cleaned
+    .split(/\s+/)
+    .filter((word) => word.length > 0)
+    .map((word) => capitalizeName(word))
+    .join(" ");
+}
+
 function getRoundLabelForTmc(
   roundNum: number,
   tableau: string,
@@ -2053,14 +2073,14 @@ export default function TournamentBracket({
                     match.winner_registration_id === match.team2_registration_id;
 
                   const winnerName = isWinnerTeam1
-                    ? match.team1_name
+                    ? formatFullName(match.team1_name)
                     : isWinnerTeam2
-                    ? match.team2_name
+                    ? formatFullName(match.team2_name)
                     : null;
                   const loserName = isWinnerTeam1
-                    ? match.team2_name
+                    ? formatFullName(match.team2_name)
                     : isWinnerTeam2
-                    ? match.team1_name
+                    ? formatFullName(match.team1_name)
                     : null;
 
                   // Afficher "Finale" au-dessus du premier match de la finale (tous TMC)
@@ -2158,17 +2178,20 @@ export default function TournamentBracket({
                           </p>
                         )}
                       <div
-                        className={`rounded-md px-2 py-1.5 space-y-1 min-h-[90px] ${
+                        className={`rounded-md px-2 py-1.5 space-y-1 ${
                           (matchFormat === "B1" || matchFormat === "C1") ? "min-w-[265px]" : "min-w-[240px]"
-                        } flex flex-col justify-between ${
+                        } flex flex-col ${
                           isFinalMatch && isCompleted && hasScore
                             ? `border ${tableau.borderColor} ${tableau.bgColor}`
                             : hasScore
                             ? "border border-emerald-400/80 bg-emerald-500/10"
                             : `border ${tableau.borderColor} ${tableau.bgColor}`
                         }`}
+                        style={{
+                          minHeight: scoreErrors[match.id] ? 'auto' : '90px',
+                        }}
                       >
-                      <div className="flex items-centered justify-between">
+                      <div className="flex items-centered justify-between flex-shrink-0">
                         <span className="text-[10px] text-gray-400">
                           {timeLabel || "\u00A0"}
                         </span>
@@ -2177,7 +2200,7 @@ export default function TournamentBracket({
                         </span>
                       </div>
                       {/* Bloc des équipes et scores */}
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-1 flex-1 min-h-0">
                       {match.is_bye ? (
                         <>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
@@ -2187,7 +2210,7 @@ export default function TournamentBracket({
                                   TS{match.team1_seed_number}
                                 </span>
                               )}
-                              <span>{match.team1_name || "À définir"}</span>
+                              <span>{formatFullName(match.team1_name) || "À définir"}</span>
                             </p>
                           </div>
                           <p className="text-[10px] text-emerald-300 italic">
@@ -2242,7 +2265,7 @@ export default function TournamentBracket({
                                   TS{match.team1_seed_number}
                                 </span>
                               )}
-                              <span>{match.team1_name || "À définir"}</span>
+                              <span>{formatFullName(match.team1_name) || "À définir"}</span>
                             </p>
                           </div>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
@@ -2252,7 +2275,7 @@ export default function TournamentBracket({
                                   TS{match.team2_seed_number}
                                 </span>
                               )}
-                              <span>{match.team2_name || (match.is_bye ? "Bye" : "À définir")}</span>
+                              <span>{match.team2_name ? formatFullName(match.team2_name) : (match.is_bye ? "Bye" : "À définir")}</span>
                             </p>
                           </div>
                         </>
@@ -2330,7 +2353,7 @@ export default function TournamentBracket({
                             })}
                           </div>
                           {scoreErrors[match.id] && (
-                            <p className="text-[10px] text-red-400 mt-1">
+                            <p className="text-[10px] text-red-400 mt-1 leading-tight" style={{ maxWidth: (matchFormat === "B1" || matchFormat === "C1") ? '245px' : '220px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                               {scoreErrors[match.id]}
                             </p>
                           )}
@@ -2375,12 +2398,17 @@ export default function TournamentBracket({
       const firstRoundMatches = byRound[firstRoundKey] || [];
       const matchesInFirstRound = firstRoundMatches.length;
       const matchHeight = 90; // Hauteur des cadres de match (identique aux TMC)
-      const firstRoundSpacing = 120; // Espacement entre matchs du premier round (comme TMC)
+      // Pour TDL à 8 équipes (4 matches au premier round), augmenter l'espacement pour laisser la place aux labels "quarts de finale"
+      const isTdl8Teams = matchesInFirstRound === 4;
+      const firstRoundSpacing = isTdl8Teams ? 180 : 120; // Espacement entre matchs du premier round
       // Ajouter de l'espace pour le premier round (entre le libellé et le premier match)
       const firstRoundTopOffset = 40;
       const minHeight = matchesInFirstRound > 0
         ? firstRoundTopOffset + (matchesInFirstRound - 1) * firstRoundSpacing + matchHeight + 60
         : 800;
+
+      // Stocker la position du deuxième label "Quarts de finale" pour aligner "Demi-finale" dans TDL à 8 équipes
+      let tdl8SecondQuartersLabelPosition: number | null = null;
 
       knockoutRoundKeys.forEach((roundKey, index) => {
         const roundMatches = byRound[roundKey].slice().sort((a, b) => {
@@ -2394,6 +2422,8 @@ export default function TournamentBracket({
         const isFinalRound = roundKey === "final";
         const isQuartersRound = roundKey === "quarters";
         const isSemisRound = roundKey === "semis";
+        // Pour TDL à 8 équipes, le premier round (4 matches) correspond aux quarts de finale
+        const isTdl8QuartersRound = isTdl8Teams && isFirstRound && matchesInFirstRound === 4;
 
         // Fonction récursive pour calculer les positions des matchs (effet d'entonnoir)
         const topOffset = 40; // Espace entre le libellé et le premier match pour le premier round
@@ -2440,13 +2470,23 @@ export default function TournamentBracket({
         // Calculer les positions des labels entre les matchs pour les quarts, demis et finale
         const labelPositions: number[] = [];
         
-        if (isQuartersRound || isSemisRound) {
+        if (isQuartersRound || isSemisRound || isTdl8QuartersRound) {
           // Calculer les positions entre chaque paire de matchs
+          // Pour TDL à 8 équipes : entre M1-M2, M2-M3, M3-M4
           for (let i = 0; i < roundMatches.length - 1; i++) {
+            // Pour un centrage vertical précis, utiliser le bas du premier match et le haut du second
             const match0Bottom = matchPositions[i] + matchHeight;
             const match1Top = matchPositions[i + 1];
-            const labelPosition = match0Bottom + (match1Top - match0Bottom) / 2;
+            // Calculer le milieu exact entre le bas du match i et le haut du match i+1
+            const basePosition = match0Bottom + (match1Top - match0Bottom) / 2;
+            // Baisser légèrement les textes "Quarts de finale" pour TDL à 8 équipes
+            const labelPosition = basePosition + (isTdl8QuartersRound ? 8 : 0);
             labelPositions.push(labelPosition);
+            
+            // Stocker la position du deuxième label "Quarts de finale" (entre M2 et M3) pour TDL à 8 équipes
+            if (isTdl8QuartersRound && i === 1) {
+              tdl8SecondQuartersLabelPosition = labelPosition;
+            }
           }
         }
 
@@ -2460,7 +2500,7 @@ export default function TournamentBracket({
               style={{ minHeight: `${minHeight}px` }}
             >
               {/* Labels entre les matchs pour quarts, demis et finale */}
-              {isQuartersRound && labelPositions.map((pos, idx) => (
+              {(isQuartersRound || isTdl8QuartersRound) && labelPositions.map((pos, idx) => (
                 <div
                   key={`quarters-label-${idx}`}
                   className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
@@ -2476,22 +2516,28 @@ export default function TournamentBracket({
                   </div>
                 </div>
               ))}
-              {isSemisRound && labelPositions.map((pos, idx) => (
-                <div
-                  key={`semis-label-${idx}`}
-                  className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
-                  style={{ 
-                    top: `${pos}px`,
-                    transform: 'translateY(-50%)',
-                  }}
-                >
-                  <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
-                    <p className="text-xl font-semibold text-white text-center tracking-wide">
-                      Demi-finales
-                    </p>
+              {isSemisRound && labelPositions.map((pos, idx) => {
+                // Pour TDL à 8 équipes, aligner le label "Demi-finale" avec le deuxième label "Quarts de finale"
+                const semisLabelPosition = isTdl8Teams && tdl8SecondQuartersLabelPosition !== null 
+                  ? tdl8SecondQuartersLabelPosition 
+                  : pos;
+                return (
+                  <div
+                    key={`semis-label-${idx}`}
+                    className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                    style={{ 
+                      top: `${semisLabelPosition}px`,
+                      transform: 'translateY(-50%)',
+                    }}
+                  >
+                    <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
+                      <p className="text-xl font-semibold text-white text-center tracking-wide">
+                        Demi-finales
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {roundMatches.map((match, matchIndex) => {
                 // Afficher le label "Finale" au-dessus du premier match de la finale
                 const showFinalLabel = isFinalRound && matchIndex === 0;
@@ -2523,14 +2569,14 @@ export default function TournamentBracket({
                   match.winner_registration_id === match.team2_registration_id;
 
                 const winnerName = isWinnerTeam1
-                  ? match.team1_name
+                  ? formatFullName(match.team1_name)
                   : isWinnerTeam2
-                  ? match.team2_name
+                  ? formatFullName(match.team2_name)
                   : null;
                 const loserName = isWinnerTeam1
-                  ? match.team2_name
+                  ? formatFullName(match.team2_name)
                   : isWinnerTeam2
-                  ? match.team1_name
+                  ? formatFullName(match.team1_name)
                   : null;
 
                 return (
@@ -2553,7 +2599,7 @@ export default function TournamentBracket({
                     <div
                       className={`absolute rounded-md px-2 py-1.5 space-y-1 ${
                         (matchFormat === "B1" || matchFormat === "C1") ? "min-w-[265px]" : "min-w-[240px]"
-                      } flex flex-col justify-between ${
+                      } flex flex-col ${
                         // Bordure "verte" uniquement si un score a vraiment été saisi par le club
                         isFinalRound && isCompleted && hasScore
                           ? "border border-amber-400/90 bg-amber-500/10"
@@ -2566,7 +2612,7 @@ export default function TournamentBracket({
                         // Pour les Byes, utiliser une taille fixe qui correspond à la taille réelle des matchs normaux
                         // Les matchs normaux ont : header (~20px) + 2 équipes (~40px) + champs score (28px) + padding/espacements (~20px) = ~108px
                         height: match.is_bye ? '108px' : 'auto',
-                        minHeight: match.is_bye ? '108px' : '90px',
+                        minHeight: match.is_bye ? '108px' : (scoreErrors[match.id] ? 'auto' : '90px'),
                         // Pour les Byes, utiliser une largeur légèrement plus grande que les matchs normaux
                         // Les matchs normaux utilisent min-w-[265px] ou min-w-[240px]
                         ...(match.is_bye ? {
@@ -2575,7 +2621,7 @@ export default function TournamentBracket({
                         } : {})
                       }}
                     >
-                    <div className="flex items-centered justify-between">
+                    <div className="flex items-centered justify-between flex-shrink-0">
                       <span className="text-[10px] text-gray-400">
                         {timeLabel || "\u00A0"}
                       </span>
@@ -2583,12 +2629,12 @@ export default function TournamentBracket({
                         M{match.match_order ?? "—"}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-1 flex-1">
+                    <div className="flex flex-col gap-1 flex-1 min-h-0">
                       {match.is_bye ? (
                         <>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
                             <p className="text-[11px] font-medium text-white leading-tight break-words">
-                              {match.team1_name || "À définir"}
+                              {formatFullName(match.team1_name) || "À définir"}
                               {match.team1_seed_number && (
                                 <span className="ml-1 text-[10px] text-yellow-300 font-semibold">
                                   (TS{match.team1_seed_number})
@@ -2646,7 +2692,7 @@ export default function TournamentBracket({
                         <>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
                             <p className="text-[11px] font-medium text-white leading-tight break-words">
-                              {match.team1_name || "À définir"}
+                              {formatFullName(match.team1_name) || "À définir"}
                               {match.team1_seed_number && (
                                 <span className="ml-1 text-[10px] text-yellow-300 font-semibold">
                                   (TS{match.team1_seed_number})
@@ -2656,7 +2702,7 @@ export default function TournamentBracket({
                           </div>
                           <div className="rounded-sm bg-white/5 px-1 py-0.5">
                             <p className="text-[11px] font-medium text-white leading-tight break-words">
-                              {match.team2_name ||
+                              {match.team2_name ? formatFullName(match.team2_name) :
                                 (match.is_bye ? "Bye" : "À définir")}
                               {match.team2_seed_number && (
                                 <span className="ml-1 text-[10px] text-yellow-300 font-semibold">
@@ -2741,7 +2787,7 @@ export default function TournamentBracket({
                             })}
                           </div>
                           {scoreErrors[match.id] && (
-                            <p className="text-[10px] text-red-400 mt-1">
+                            <p className="text-[10px] text-red-400 mt-1 leading-tight" style={{ maxWidth: (matchFormat === "B1" || matchFormat === "C1") ? '245px' : '220px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                               {scoreErrors[match.id]}
                             </p>
                           )}
@@ -2978,7 +3024,7 @@ export default function TournamentBracket({
                       key={team.registrationId}
                       className="text-[11px] text-white/80"
                     >
-                      {idx + 1}. {team.name}{" "}
+                      {idx + 1}. {formatFullName(team.name)}{" "}
                       {team.wins > 0 && (
                         <span className="text-[10px] text-emerald-300">
                           ({team.wins}V)
@@ -3057,13 +3103,16 @@ export default function TournamentBracket({
                       return (
                         <div
                           key={match.id}
-                          className={`rounded-md px-3 py-2.5 space-y-1 min-h-[104px] flex flex-col justify-between ${
+                          className={`rounded-md px-3 py-2.5 space-y-1 flex flex-col ${
                             isCompleted
                               ? "border border-emerald-400/80 bg-emerald-500/10"
                               : "border border-white/15 bg-black/50"
                           }`}
+                          style={{
+                            minHeight: scoreErrors[match.id] ? 'auto' : '104px',
+                          }}
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between flex-shrink-0">
                             <span className="text-[10px] text-gray-400">
                               {timeLabel || "\u00A0"}
                             </span>
@@ -3071,15 +3120,15 @@ export default function TournamentBracket({
                               M{match.match_order ?? "—"}
                             </span>
                           </div>
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-1 flex-1 min-h-0">
                     <div className="rounded-sm bg-white/5 px-1 py-0.5">
                       <p className="text-[11px] font-medium text-white leading-tight whitespace-nowrap">
-                                {match.team1_name || "À définir"}
+                                {formatFullName(match.team1_name) || "À définir"}
                               </p>
                             </div>
                             <div className="rounded-sm bg-white/5 px-1 py-0.5">
                       <p className="text-[11px] font-medium text-white leading-tight whitespace-nowrap">
-                                {match.team2_name ||
+                                {match.team2_name ? formatFullName(match.team2_name) :
                                   (match.is_bye ? "Bye" : "À définir")}
                               </p>
                             </div>
@@ -3122,6 +3171,14 @@ export default function TournamentBracket({
                                           [key]: value,
                                         },
                                       }));
+                                      // Nettoyer l'erreur quand l'utilisateur modifie le score
+                                      if (scoreErrors[match.id]) {
+                                        setScoreErrors((prev) => {
+                                          const updated = { ...prev };
+                                          delete updated[match.id];
+                                          return updated;
+                                        });
+                                      }
 
                                       if (
                                         idx === 0 &&
@@ -3144,6 +3201,11 @@ export default function TournamentBracket({
                                 );
                               })}
                             </div>
+                            {scoreErrors[match.id] && (
+                              <p className="text-[10px] text-red-400 mt-1 leading-tight" style={{ maxWidth: '280px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                                {scoreErrors[match.id]}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );

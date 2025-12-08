@@ -107,18 +107,20 @@ export async function POST(
 
     const numPairs = registrations?.length || 0;
 
-    // Récupérer tous les matchs du Tour 4
+    const finalRoundNumber = numPairs === 8 ? 3 : 4;
+
+    // Récupérer tous les matchs du dernier tour (3 pour TMC8, 4 sinon)
     const { data: tour4Matches } = await supabaseAdmin
       .from("tournament_matches")
       .select("*")
       .eq("tournament_id", tournamentId)
-      .eq("round_number", 4)
+      .eq("round_number", finalRoundNumber)
       .order("tableau", { ascending: true })
       .order("match_order", { ascending: true });
 
     if (!tour4Matches || tour4Matches.length === 0) {
       return NextResponse.json(
-        { error: "Aucun match du Tour 4 trouvé" },
+        { error: `Aucun match du Tour ${finalRoundNumber} trouvé` },
         { status: 400 }
       );
     }
@@ -131,7 +133,7 @@ export async function POST(
     if (incompleteMatches.length > 0) {
       return NextResponse.json(
         {
-          error: `Tous les matchs du Tour 4 doivent être complétés avant de calculer le classement final. ${incompleteMatches.length} match(s) restant(s).`,
+          error: `Tous les matchs du Tour ${finalRoundNumber} doivent être complétés avant de calculer le classement final. ${incompleteMatches.length} match(s) restant(s).`,
         },
         { status: 400 }
       );
@@ -140,21 +142,24 @@ export async function POST(
     // Calculer le classement final
     const ranking: Record<string, number> = {};
 
-    // Récupérer les matchs du Tour 3 pour obtenir les perdants (nécessaire pour TMC 12)
-    // Récupérer TOUS les matchs du Tour 3, même s'ils ne sont pas complétés
-    const { data: tour3Matches, error: tour3Error } = await supabaseAdmin
-      .from("tournament_matches")
-      .select("*")
-      .eq("tournament_id", tournamentId)
-      .eq("round_number", 3)
-      .order("tableau", { ascending: true })
-      .order("match_order", { ascending: true });
+    // Récupérer les matchs du Tour 3 uniquement pour TMC 12 (les TMC 8 n'ont que 3 tours)
+    let tour3Matches: Match[] | null = null;
+    if (numPairs === 12) {
+      const { data: t3, error: tour3Error } = await supabaseAdmin
+        .from("tournament_matches")
+        .select("*")
+        .eq("tournament_id", tournamentId)
+        .eq("round_number", 3)
+        .order("tableau", { ascending: true })
+        .order("match_order", { ascending: true });
 
-    if (tour3Error) {
-      logger.error(
-        { error: tour3Error, tournamentId: tournamentId.substring(0, 8) + "…" },
-        "[calculate-final-ranking] Error fetching Tour 3 matches"
-      );
+      if (tour3Error) {
+        logger.error(
+          { error: tour3Error, tournamentId: tournamentId.substring(0, 8) + "…" },
+          "[calculate-final-ranking] Error fetching Tour 3 matches"
+        );
+      }
+      tour3Matches = t3 || null;
     }
 
     // Log détaillé des matchs du Tour 3 et Tour 4 pour déboguer
