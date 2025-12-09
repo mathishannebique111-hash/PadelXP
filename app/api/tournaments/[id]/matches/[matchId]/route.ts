@@ -407,8 +407,17 @@ function validateScoreByFormat(
         if (!(t1 === 1 && t2 === 1)) {
           return "Format A1 : super tie-break seulement si chaque équipe a gagné un set (1-1).";
         }
-        if (superTb.team1 > 15 || superTb.team2 > 15) {
-          return "Format A1 : le super tie-break doit rester raisonnable (≤ 15).";
+        // Validation du super tie-break : minimum 10 points pour une équipe, écart de 2 points minimum
+        const minScore = Math.min(superTb.team1, superTb.team2);
+        const diff = Math.abs(superTb.team1 - superTb.team2);
+        if (minScore < 10) {
+          return "Format A1 : le super tie-break doit avoir un minimum de 10 points pour une équipe.";
+        }
+        if (diff < 2) {
+          return "Format A1 : le super tie-break doit avoir un écart minimum de 2 points.";
+        }
+        if (superTb.team1 === superTb.team2) {
+          return "Format A1 : le super tie-break ne peut pas être égal.";
         }
       } else {
         // Sans super tie-break, on doit avoir 3 sets et un vainqueur clair
@@ -439,8 +448,17 @@ function validateScoreByFormat(
         if (!superTb) {
           return "Format B1 : super tie-break obligatoire en cas de 1-1.";
         }
-        if (superTb.team1 > 15 || superTb.team2 > 15) {
-          return "Format B1 : le super tie-break doit être raisonnable (≤ 15).";
+        // Validation du super tie-break : minimum 10 points pour une équipe, écart de 2 points minimum
+        const minScore = Math.min(superTb.team1, superTb.team2);
+        const diff = Math.abs(superTb.team1 - superTb.team2);
+        if (minScore < 10) {
+          return "Format B1 : le super tie-break doit avoir un minimum de 10 points pour une équipe.";
+        }
+        if (diff < 2) {
+          return "Format B1 : le super tie-break doit avoir un écart minimum de 2 points.";
+        }
+        if (superTb.team1 === superTb.team2) {
+          return "Format B1 : le super tie-break ne peut pas être égal.";
         }
       } else {
         return "Format B1 : les sets doivent déterminer un score 2-0 ou 1-1 avant super tie-break.";
@@ -457,8 +475,18 @@ function validateScoreByFormat(
       if (!superTb) {
         return "Format C1 : un super tie-break (10 pts) est requis.";
       }
-      if (superTb.team1 > 15 || superTb.team2 > 15) {
-        return "Format C1 : le super tie-break doit être raisonnable (≤ 15).";
+      // Validation du super tie-break : minimum 10 points pour une équipe, écart de 2 points minimum
+      const minScore = Math.min(superTb.team1, superTb.team2);
+      const maxScore = Math.max(superTb.team1, superTb.team2);
+      const diff = Math.abs(superTb.team1 - superTb.team2);
+      if (minScore < 10) {
+        return "Format C1 : le super tie-break doit avoir un minimum de 10 points pour une équipe.";
+      }
+      if (diff < 2) {
+        return "Format C1 : le super tie-break doit avoir un écart minimum de 2 points.";
+      }
+      if (superTb.team1 === superTb.team2) {
+        return "Format C1 : le super tie-break ne peut pas être égal.";
       }
       return null;
     }

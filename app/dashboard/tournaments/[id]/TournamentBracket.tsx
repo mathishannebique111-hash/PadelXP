@@ -877,17 +877,45 @@ export default function TournamentBracket({
       }
     }
 
-    if (format === "A1" && payload.sets.length === 2) {
-      let wins1 = 0;
-      let wins2 = 0;
-      for (const s of payload.sets) {
-        if (s.team1 > s.team2) wins1++;
-        else if (s.team2 > s.team1) wins2++;
-      }
-      if (wins1 === 1 && wins2 === 1) {
-        throw new Error(
-          "Match en 1-1 : le 3ème set est obligatoire pour ce format."
-        );
+    if (format === "A1") {
+      // A1 : 2 ou 3 sets, super tie-break possible en cas de 1-1 après 2 sets
+      if (payload.sets.length === 2) {
+        let wins1 = 0;
+        let wins2 = 0;
+        for (const s of payload.sets) {
+          if (s.team1 > s.team2) wins1++;
+          else if (s.team2 > s.team1) wins2++;
+        }
+        const isOneSetAll = wins1 === 1 && wins2 === 1;
+        
+        if (isOneSetAll && !payload.super_tiebreak) {
+          throw new Error(
+            "Format A1 : en cas de 1 set partout après 2 sets, un super tie-break (3ème manche) est obligatoire."
+          );
+        }
+        
+        if (payload.super_tiebreak) {
+          const st = payload.super_tiebreak as { team1: number; team2: number };
+          const maxPts = Math.max(st.team1, st.team2);
+          const minPts = Math.min(st.team1, st.team2);
+          if (minPts < 10 || maxPts - minPts < 2) {
+            throw new Error(
+              "Super tie-break A1 invalide : il faut au moins 10 points pour une équipe et 2 points d'écart (ex : 10/8, 11/9…)."
+            );
+          }
+          if (st.team1 === st.team2) {
+            throw new Error(
+              "Super tie-break A1 invalide : le score ne peut pas être égal."
+            );
+          }
+        }
+      } else if (payload.sets.length === 3) {
+        // Avec 3 sets, pas de super tie-break
+        if (payload.super_tiebreak) {
+          throw new Error(
+            "Format A1 : pas de super tie-break si 3 sets sont joués."
+          );
+        }
       }
     }
 
@@ -918,9 +946,14 @@ export default function TournamentBracket({
         const st = payload.super_tiebreak as { team1: number; team2: number };
         const maxPts = Math.max(st.team1, st.team2);
         const minPts = Math.min(st.team1, st.team2);
-        if (maxPts < 10 || maxPts - minPts < 2) {
+        if (minPts < 10 || maxPts - minPts < 2) {
           throw new Error(
-            "Super tie-break B1 invalide : il faut au moins 10 points et 2 points d'écart (ex : 10/8, 11/9…)."
+            "Super tie-break B1 invalide : il faut au moins 10 points pour une équipe et 2 points d'écart (ex : 10/8, 11/9…)."
+          );
+        }
+        if (st.team1 === st.team2) {
+          throw new Error(
+            "Super tie-break B1 invalide : le score ne peut pas être égal."
           );
         }
       }
@@ -1014,9 +1047,14 @@ export default function TournamentBracket({
         const st = payload.super_tiebreak as { team1: number; team2: number };
         const maxPts = Math.max(st.team1, st.team2);
         const minPts = Math.min(st.team1, st.team2);
-        if (maxPts < 10 || maxPts - minPts < 2) {
+        if (minPts < 10 || maxPts - minPts < 2) {
           throw new Error(
-            "Super tie-break C1 invalide : il faut au moins 10 points et 2 points d'écart (ex : 10/8, 11/9…)."
+            "Super tie-break C1 invalide : il faut au moins 10 points pour une équipe et 2 points d'écart (ex : 10/8, 11/9…)."
+          );
+        }
+        if (st.team1 === st.team2) {
+          throw new Error(
+            "Super tie-break C1 invalide : le score ne peut pas être égal."
           );
         }
       }

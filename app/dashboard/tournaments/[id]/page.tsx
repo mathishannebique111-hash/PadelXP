@@ -13,8 +13,12 @@ import PageTitle from "../../PageTitle";
 export default async function TournamentDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
+  // Gérer params qui peut être une Promise dans Next.js 15
+  const resolvedParams = await Promise.resolve(params);
+  const { id } = resolvedParams;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,8 +28,6 @@ export default async function TournamentDetailsPage({
   if (authError || !user) {
     return redirect("/clubs/login?next=/dashboard/tournaments");
   }
-
-  const { id } = params;
 
   const { data: tournament, error } = await supabase
     .from("tournaments")
