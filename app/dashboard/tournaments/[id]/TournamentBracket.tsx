@@ -281,6 +281,7 @@ export default function TournamentBracket({
     try {
       const res = await fetch(`/api/tournaments/${tournamentId}/generate`, {
         method: "POST",
+        cache: "no-store",
       });
 
       if (!res.ok) {
@@ -288,8 +289,14 @@ export default function TournamentBracket({
         throw new Error(json.error || `HTTP ${res.status}`);
       }
 
-      // Recharger la page après génération
-      router.refresh();
+      // Attendre un court instant pour laisser la base de données se mettre à jour
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Recharger les matchs directement sans recharger toute la page
+      await fetchMatches();
+      
+      // Forcer un re-render
+      setLoading(false);
     } catch (err: any) {
       setError(err.message || "Erreur lors de la génération du tableau");
     } finally {
@@ -898,7 +905,7 @@ export default function TournamentBracket({
           const st = payload.super_tiebreak as { team1: number; team2: number };
           const maxPts = Math.max(st.team1, st.team2);
           const minPts = Math.min(st.team1, st.team2);
-          if (minPts < 10 || maxPts - minPts < 2) {
+          if (maxPts < 10 || maxPts - minPts < 2) {
             throw new Error(
               "Super tie-break A1 invalide : il faut au moins 10 points pour une équipe et 2 points d'écart (ex : 10/8, 11/9…)."
             );
@@ -946,7 +953,7 @@ export default function TournamentBracket({
         const st = payload.super_tiebreak as { team1: number; team2: number };
         const maxPts = Math.max(st.team1, st.team2);
         const minPts = Math.min(st.team1, st.team2);
-        if (minPts < 10 || maxPts - minPts < 2) {
+        if (maxPts < 10 || maxPts - minPts < 2) {
           throw new Error(
             "Super tie-break B1 invalide : il faut au moins 10 points pour une équipe et 2 points d'écart (ex : 10/8, 11/9…)."
           );
@@ -1047,7 +1054,7 @@ export default function TournamentBracket({
         const st = payload.super_tiebreak as { team1: number; team2: number };
         const maxPts = Math.max(st.team1, st.team2);
         const minPts = Math.min(st.team1, st.team2);
-        if (minPts < 10 || maxPts - minPts < 2) {
+        if (maxPts < 10 || maxPts - minPts < 2) {
           throw new Error(
             "Super tie-break C1 invalide : il faut au moins 10 points pour une équipe et 2 points d'écart (ex : 10/8, 11/9…)."
           );
@@ -1322,10 +1329,24 @@ export default function TournamentBracket({
 
   // Préparer la liste des poules et des paires avec classement dynamique
   type PoolTeam = { registrationId: string; name: string; wins: number };
-  const poolsList: { id: string; label: string; teams: PoolTeam[] }[] = [];
+  const poolsList: { id: string; label: string; teams: PoolTeam[]; poolNumber: number }[] = [];
 
   if (poolMatches.length > 0) {
     const byPool = new Map<string, Map<string, PoolTeam>>();
+    const poolIdToNumber = new Map<string, number>();
+
+    // D'abord, collecter tous les pool_id uniques et les trier pour déterminer leur numéro
+    const uniquePoolIds = Array.from(
+      new Set(poolMatches.map((m) => m.pool_id).filter((id): id is string => Boolean(id)))
+    );
+
+    // Trier les pool_id pour avoir un ordre cohérent (on suppose qu'ils sont dans l'ordre)
+    uniquePoolIds.sort();
+
+    // Assigner un numéro à chaque pool_id
+    uniquePoolIds.forEach((poolId, index) => {
+      poolIdToNumber.set(poolId, index + 1);
+    });
 
     for (const m of poolMatches as Match[]) {
       if (!m.pool_id) continue;
@@ -1366,18 +1387,22 @@ export default function TournamentBracket({
       }
     }
 
-    let index = 1;
     for (const [poolId, teamsMap] of byPool.entries()) {
       const teams = Array.from(teamsMap.values()).sort((a, b) => {
         if (b.wins !== a.wins) return b.wins - a.wins;
         return a.name.localeCompare(b.name);
       });
+      const poolNumber = poolIdToNumber.get(poolId) || 1;
       poolsList.push({
         id: poolId,
-        label: `Poule ${index++}`,
+        label: `Poule ${poolNumber}`,
         teams,
+        poolNumber,
       });
     }
+
+    // Trier les poules par numéro
+    poolsList.sort((a, b) => a.poolNumber - b.poolNumber);
   }
 
   async function handleCalculateFromPools() {
@@ -1388,7 +1413,10 @@ export default function TournamentBracket({
 
       const res = await fetch(
         `/api/tournaments/${tournamentId}/advance/pools-final`,
-        { method: "POST" }
+        { 
+          method: "POST",
+          cache: "no-store",
+        }
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1401,7 +1429,15 @@ export default function TournamentBracket({
       setInfoMessage(
         "Tableau final généré automatiquement à partir des résultats de poules."
       );
+      
+      // Attendre un court instant pour laisser la base de données se mettre à jour
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Recharger les matchs avec cache désactivé
       await fetchMatches();
+      
+      // Forcer un re-render en réinitialisant l'état de chargement
+      setLoading(false);
     } catch (err: any) {
       setError(
         err.message ||
@@ -2433,7 +2469,24 @@ export default function TournamentBracket({
     } else if (knockoutRoundKeys.length > 0) {
       // Calculer le nombre de matchs dans le premier round pour déterminer la hauteur minimale
       const firstRoundKey = knockoutRoundKeys[0];
-      const firstRoundMatches = byRound[firstRoundKey] || [];
+      let firstRoundMatches = byRound[firstRoundKey] || [];
+      
+      // Pour les tournois "poules + tableau final", filtrer les matchs vides
+      if (tournamentType === "official_pools" || tournamentType === "pools_triple_draw") {
+        firstRoundMatches = firstRoundMatches.filter((m) => {
+          // Ne garder que les matchs qui ont au moins une équipe assignée
+          // Pour les byes, vérifier qu'ils ont au moins team1_registration_id
+          const hasTeam1 = m.team1_registration_id !== null && m.team1_registration_id !== undefined && m.team1_registration_id !== "";
+          const hasTeam2 = m.team2_registration_id !== null && m.team2_registration_id !== undefined && m.team2_registration_id !== "";
+          // Un bye doit avoir au moins team1_registration_id
+          if (m.is_bye === true) {
+            return hasTeam1;
+          }
+          // Un match normal doit avoir au moins une équipe
+          return hasTeam1 || hasTeam2;
+        });
+      }
+      
       const matchesInFirstRound = firstRoundMatches.length;
       const matchHeight = 90; // Hauteur des cadres de match (identique aux TMC)
       // Pour TDL à 8 équipes (4 matches au premier round), augmenter l'espacement pour laisser la place aux labels "quarts de finale"
@@ -2447,13 +2500,37 @@ export default function TournamentBracket({
 
       // Stocker la position du deuxième label "Quarts de finale" pour aligner "Demi-finale" dans TDL à 8 équipes
       let tdl8SecondQuartersLabelPosition: number | null = null;
+      // Stocker les positions ajustées des demi-finales pour centrer la finale (poules + tableau final à 8 équipes)
+      let adjustedSemisPositions: number[] | null = null;
 
       knockoutRoundKeys.forEach((roundKey, index) => {
-        const roundMatches = byRound[roundKey].slice().sort((a, b) => {
+        // Pour les tournois "poules + tableau final", ne pas afficher les matchs vides (sans équipes assignées)
+        let roundMatches = byRound[roundKey].slice().sort((a, b) => {
           const oa = a.match_order ?? 0;
           const ob = b.match_order ?? 0;
           return oa - ob;
         });
+        
+        // Filtrer les matchs vides pour les tournois "poules + tableau final"
+        if (tournamentType === "official_pools" || tournamentType === "pools_triple_draw") {
+          roundMatches = roundMatches.filter((m) => {
+            // Ne garder que les matchs qui ont au moins une équipe assignée
+            // Pour les byes, vérifier qu'ils ont au moins team1_registration_id
+            const hasTeam1 = m.team1_registration_id !== null && m.team1_registration_id !== undefined && m.team1_registration_id !== "";
+            const hasTeam2 = m.team2_registration_id !== null && m.team2_registration_id !== undefined && m.team2_registration_id !== "";
+            // Un bye doit avoir au moins team1_registration_id
+            if (m.is_bye === true) {
+              return hasTeam1;
+            }
+            // Un match normal doit avoir au moins une équipe
+            return hasTeam1 || hasTeam2;
+          });
+        }
+        
+        // Si aucun match valide après filtrage, ne pas afficher cette colonne
+        if (roundMatches.length === 0) {
+          return;
+        }
 
         const isFirstRound = index === 0;
         const isLastRound = index === knockoutRoundKeys.length - 1;
@@ -2464,7 +2541,9 @@ export default function TournamentBracket({
         const isTdl8QuartersRound = isTdl8Teams && isFirstRound && matchesInFirstRound === 4;
 
         // Fonction récursive pour calculer les positions des matchs (effet d'entonnoir)
-        const topOffset = 40; // Espace entre le libellé et le premier match pour le premier round
+        // Pour les demi-finales des tournois "poules + tableau final" à 8 équipes, réduire l'espace entre le titre et le premier match
+        const isPoolsFinal8TeamsSemis = (tournamentType === "official_pools" || tournamentType === "pools_triple_draw") && isSemisRound && roundMatches.length === 2;
+        const topOffset = isPoolsFinal8TeamsSemis ? 20 : 40; // Espace entre le libellé et le premier match (réduit pour poules + tableau final à 8 équipes)
         const calculateTdlMatchPosition = (
           matchIdx: number,
           roundIdx: number,
@@ -2501,9 +2580,34 @@ export default function TournamentBracket({
         };
 
         // Calculer les positions des matchs pour créer l'effet d'entonnoir
-        const matchPositions = roundMatches.map((_, matchIndex) =>
+        let matchPositions = roundMatches.map((_, matchIndex) =>
           calculateTdlMatchPosition(matchIndex, index, roundMatches.length)
         );
+        
+        // Pour les demi-finales des tournois "poules + tableau final" à 8 équipes, ajuster l'espacement pour le label
+        // Détecter un tournoi à 8 équipes : si c'est "poules + tableau final" et qu'il y a 2 matchs en demi-finales
+        const isPoolsFinal8Teams = (tournamentType === "official_pools" || tournamentType === "pools_triple_draw") && isSemisRound && roundMatches.length === 2;
+        if (isPoolsFinal8Teams && matchPositions.length === 2) {
+          // Espacement pour les demi-finales : assez pour le label "Demi-finales" (hauteur ~60px) + marge de sécurité
+          const semisMinSpacing = 100; // Espacement minimum pour laisser assez de place au texte "Demi-finales"
+          const currentSpacing = matchPositions[1] - (matchPositions[0] + matchHeight);
+          if (currentSpacing < semisMinSpacing) {
+            // Ajuster la position du deuxième match pour avoir l'espacement minimum
+            matchPositions[1] = matchPositions[0] + matchHeight + semisMinSpacing;
+          }
+          // Stocker les positions ajustées pour centrer la finale
+          adjustedSemisPositions = [...matchPositions];
+        }
+        
+        // Pour la finale des tournois "poules + tableau final" à 8 équipes, utiliser les positions ajustées des demi-finales
+        const isPoolsFinal8TeamsFinal = (tournamentType === "official_pools" || tournamentType === "pools_triple_draw") && isFinalRound && adjustedSemisPositions !== null && adjustedSemisPositions.length === 2;
+        if (isPoolsFinal8TeamsFinal && matchPositions.length === 1) {
+          // Centrer la finale par rapport aux deux demi-finales en utilisant les positions ajustées
+          const semis0Center = adjustedSemisPositions[0] + matchHeight / 2;
+          const semis1Center = adjustedSemisPositions[1] + matchHeight / 2;
+          const finalCenter = (semis0Center + semis1Center) / 2;
+          matchPositions[0] = finalCenter - matchHeight / 2;
+        }
 
         // Calculer les positions des labels entre les matchs pour les quarts, demis et finale
         const labelPositions: number[] = [];
@@ -2516,7 +2620,16 @@ export default function TournamentBracket({
             const match0Bottom = matchPositions[i] + matchHeight;
             const match1Top = matchPositions[i + 1];
             // Calculer le milieu exact entre le bas du match i et le haut du match i+1
-            const basePosition = match0Bottom + (match1Top - match0Bottom) / 2;
+            let basePosition = match0Bottom + (match1Top - match0Bottom) / 2;
+            
+            // Pour les demi-finales des tournois "poules + tableau final" à 8 équipes, s'assurer que le label est bien centré
+            if (isPoolsFinal8Teams && isSemisRound && i === 0) {
+              // Utiliser les positions ajustées des matchs pour centrer le label
+              const match0Center = matchPositions[0] + matchHeight / 2;
+              const match1Center = matchPositions[1] + matchHeight / 2;
+              basePosition = (match0Center + match1Center) / 2 + 5; // Légèrement baissé par rapport au centre
+            }
+            
             // Baisser légèrement les textes "Quarts de finale" pour TDL à 8 équipes
             const labelPosition = basePosition + (isTdl8QuartersRound ? 8 : 0);
             labelPositions.push(labelPosition);
@@ -2841,6 +2954,14 @@ export default function TournamentBracket({
         );
       });
     } else {
+      // Pour les tournois "poules + tableau final", ne pas afficher les cadres vides si le tableau final n'a pas encore été généré
+      if (tournamentType === "official_pools" || tournamentType === "pools_triple_draw") {
+        // Si aucun match du tableau final n'a été généré, ne rien afficher
+        if (knockoutRoundKeys.length === 0) {
+          return null;
+        }
+      }
+      
       const poolIds = Array.from(
         new Set(
           (poolMatches as Match[])
@@ -3004,6 +3125,7 @@ export default function TournamentBracket({
                 size="sm"
                 variant="outline"
                 disabled={advancingFinal}
+                className="min-w-[200px]"
                 onClick={() =>
                   void (tournamentType === "tmc"
                     ? handleAdvanceTmcRound()
@@ -3043,13 +3165,103 @@ export default function TournamentBracket({
       {poolMatches.length > 0 && (
         <div className="space-y-4">
           {/* Ligne des poules avec les paires (affichées en ligne au-dessus) */}
-          <div className="flex flex-wrap gap-4">
-            {poolsList.length === 0 ? (
-              <p className="text-xs text-gray-400">
-                Les poules seront affichées ici une fois générées.
-              </p>
-            ) : (
-              poolsList.map((pool) => (
+          {poolsList.length === 0 ? (
+            <p className="text-xs text-gray-400">
+              Les poules seront affichées ici une fois générées.
+            </p>
+          ) : poolsList.length === 2 ? (
+            // 2 poules : centrer
+            <div className="flex justify-center gap-4">
+              {poolsList.map((pool) => (
+                <div
+                  key={pool.id}
+                  className="min-w-[260px] max-w-[320px] rounded-md border border-white/10 bg-black/40 px-4 py-3 space-y-1"
+                >
+                  <p className="text-xs font-semibold text-white/80 mb-1">
+                    {pool.label}
+                  </p>
+                  {pool.teams.map((team, idx) => (
+                    <p
+                      key={team.registrationId}
+                      className="text-[11px] text-white/80"
+                    >
+                      {idx + 1}. {formatFullName(team.name)}{" "}
+                      {team.wins > 0 && (
+                        <span className="text-[10px] text-emerald-300">
+                          ({team.wins}V)
+                        </span>
+                      )}
+                    </p>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : poolsList.length === 4 ? (
+            // 4 poules : Poule 1 au-dessus de Poule 3, Poule 2 au-dessus de Poule 4, centré
+            <div className="flex justify-center gap-4">
+              <div className="flex flex-col gap-4">
+                {/* Colonne gauche : Poule 1 et Poule 3 */}
+                {poolsList
+                  .filter((p) => p.poolNumber === 1 || p.poolNumber === 3)
+                  .sort((a, b) => a.poolNumber - b.poolNumber)
+                  .map((pool) => (
+                    <div
+                      key={pool.id}
+                      className="min-w-[260px] max-w-[320px] rounded-md border border-white/10 bg-black/40 px-4 py-3 space-y-1"
+                    >
+                      <p className="text-xs font-semibold text-white/80 mb-1">
+                        {pool.label}
+                      </p>
+                      {pool.teams.map((team, idx) => (
+                        <p
+                          key={team.registrationId}
+                          className="text-[11px] text-white/80"
+                        >
+                          {idx + 1}. {formatFullName(team.name)}{" "}
+                          {team.wins > 0 && (
+                            <span className="text-[10px] text-emerald-300">
+                              ({team.wins}V)
+                            </span>
+                          )}
+                        </p>
+                      ))}
+                    </div>
+                  ))}
+              </div>
+              <div className="flex flex-col gap-4">
+                {/* Colonne droite : Poule 2 et Poule 4 */}
+                {poolsList
+                  .filter((p) => p.poolNumber === 2 || p.poolNumber === 4)
+                  .sort((a, b) => a.poolNumber - b.poolNumber)
+                  .map((pool) => (
+                    <div
+                      key={pool.id}
+                      className="min-w-[260px] max-w-[320px] rounded-md border border-white/10 bg-black/40 px-4 py-3 space-y-1"
+                    >
+                      <p className="text-xs font-semibold text-white/80 mb-1">
+                        {pool.label}
+                      </p>
+                      {pool.teams.map((team, idx) => (
+                        <p
+                          key={team.registrationId}
+                          className="text-[11px] text-white/80"
+                        >
+                          {idx + 1}. {formatFullName(team.name)}{" "}
+                          {team.wins > 0 && (
+                            <span className="text-[10px] text-emerald-300">
+                              ({team.wins}V)
+                            </span>
+                          )}
+                        </p>
+                      ))}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : (
+            // Autres cas : affichage par défaut
+            <div className="flex flex-wrap gap-4">
+              {poolsList.map((pool) => (
                 <div
                   key={pool.id}
                   className="flex-1 min-w-[260px] max-w-[320px] rounded-md border border-white/10 bg-black/40 px-4 py-3 space-y-1"
@@ -3071,9 +3283,9 @@ export default function TournamentBracket({
                     </p>
                   ))}
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Matchs de poules en colonnes, organisés par numéro de match
               (1er match / 2e match sur une ligne, 3e / 4e en dessous, etc.) */}
@@ -3263,6 +3475,7 @@ export default function TournamentBracket({
                 size="sm"
                 variant="outline"
                 disabled={!allPoolsCompleted || calculating}
+                className="min-w-[200px]"
                 title={
                   !allPoolsCompleted
                     ? "Tous les matchs de poule doivent être terminés pour calculer le tableau final."
