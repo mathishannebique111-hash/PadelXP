@@ -107,9 +107,9 @@ export async function POST(
       .select("id")
       .eq("tournament_id", tournamentId);
 
-    if (!registrations || (registrations.length !== 8 && registrations.length !== 12 && registrations.length !== 16)) {
+    if (!registrations || (registrations.length !== 8 && registrations.length !== 12 && registrations.length !== 16 && registrations.length !== 20)) {
       return NextResponse.json(
-        { error: "Le TMC nécessite exactement 8, 12 ou 16 équipes" },
+        { error: "Le TMC nécessite exactement 8, 12, 16 ou 20 équipes" },
         { status: 400 }
       );
     }
@@ -183,6 +183,13 @@ export async function POST(
       );
     } else if (numPairs === 12) {
       await generateNextRound12(
+        supabaseAdmin,
+        tournamentId,
+        allMatches as Match[],
+        maxRound
+      );
+    } else if (numPairs === 20) {
+      await generateNextRound20(
         supabaseAdmin,
         tournamentId,
         allMatches as Match[],
@@ -1449,5 +1456,646 @@ async function generateNextRound12(
     }
 
     // Pas de match pour les perdants du Tour 3
+  }
+}
+
+// Fonction helper pour trouver les 2 meilleures équipes parmi 5 (pour les byes TMC 20)
+async function findBestTwoTeamsOfFive(
+  supabase: any,
+  tournamentId: string,
+  teamIds: string[],
+  allMatches: Match[]
+): Promise<{ best: string; second: string }> {
+  if (teamIds.length !== 5) {
+    throw new Error("findBestTwoTeamsOfFive nécessite exactement 5 équipes");
+  }
+
+  // Récupérer les informations des équipes (pair_weight)
+  const { data: teamsData } = await supabase
+    .from("tournament_registrations")
+    .select("id, pair_total_rank")
+    .in("id", teamIds)
+    .eq("tournament_id", tournamentId);
+
+  if (!teamsData || teamsData.length !== 5) {
+    throw new Error("Impossible de récupérer les données des équipes");
+  }
+
+  // Calculer sets_diff et games_diff pour chaque équipe (même logique que findBestTeamOfThree)
+  const teamStats = teamIds.map((teamId) => {
+    let setsWon = 0;
+    let setsLost = 0;
+    let gamesWon = 0;
+    let gamesLost = 0;
+
+    const teamMatches = allMatches.filter(
+      (m) =>
+        (m.team1_registration_id === teamId || m.team2_registration_id === teamId) &&
+        m.status === "completed" &&
+        m.score
+    );
+
+    teamMatches.forEach((match) => {
+      const isTeam1 = match.team1_registration_id === teamId;
+      const sets = match.score?.sets || [];
+      const superTiebreak = match.score?.super_tiebreak;
+
+      sets.forEach((set: any) => {
+        const team1Score = set.team1 || 0;
+        const team2Score = set.team2 || 0;
+
+        if (team1Score > team2Score) {
+          if (isTeam1) setsWon++;
+          else setsLost++;
+        } else if (team2Score > team1Score) {
+          if (isTeam1) setsLost++;
+          else setsWon++;
+        }
+
+        if (isTeam1) {
+          gamesWon += team1Score;
+          gamesLost += team2Score;
+        } else {
+          gamesWon += team2Score;
+          gamesLost += team1Score;
+        }
+      });
+
+      if (superTiebreak) {
+        const team1Score = superTiebreak.team1 || 0;
+        const team2Score = superTiebreak.team2 || 0;
+
+        if (team1Score > team2Score) {
+          if (isTeam1) setsWon++;
+          else setsLost++;
+        } else if (team2Score > team1Score) {
+          if (isTeam1) setsLost++;
+          else setsWon++;
+        }
+
+        if (isTeam1) {
+          gamesWon += team1Score;
+          gamesLost += team2Score;
+        } else {
+          gamesWon += team2Score;
+          gamesLost += team1Score;
+        }
+      }
+    });
+
+    const setsDiff = setsWon - setsLost;
+    const gamesDiff = gamesWon - gamesLost;
+    const teamData = teamsData.find((t) => t.id === teamId);
+    const pairWeight = teamData?.pair_total_rank || 0;
+
+    return {
+      teamId,
+      setsDiff,
+      gamesDiff,
+      pairWeight,
+    };
+  });
+
+  // Trier : sets_diff décroissant, puis games_diff décroissant, puis pair_weight décroissant
+  teamStats.sort((a, b) => {
+    if (a.setsDiff !== b.setsDiff) {
+      return b.setsDiff - a.setsDiff;
+    }
+    if (a.gamesDiff !== b.gamesDiff) {
+      return b.gamesDiff - a.gamesDiff;
+    }
+    return b.pairWeight - a.pairWeight;
+  });
+
+  return {
+    best: teamStats[0].teamId,
+    second: teamStats[1].teamId,
+  };
+}
+
+// Génération pour TMC 20 équipes
+async function generateNextRound20(
+  supabase: any,
+  tournamentId: string,
+  allMatches: Match[],
+  currentRound: number
+) {
+  // Récupérer tous les matchs avec scores pour calculer les statistiques
+  const { data: allMatchesWithScores } = await supabase
+    .from("tournament_matches")
+    .select("*")
+    .eq("tournament_id", tournamentId)
+    .order("round_number", { ascending: true })
+    .order("match_order", { ascending: true });
+
+  if (!allMatchesWithScores) {
+    throw new Error("Impossible de récupérer les matchs");
+  }
+
+  if (currentRound === 1) {
+    // Tour 2 : 2 tableaux
+    // A) Tableau Principal (5 matchs) : 10 gagnants du T1
+    // B) Tableau Places 11-20 (5 matchs) : 10 perdants du T1
+    
+    const tour1Matches = allMatches.filter(
+      (m) => m.round_number === 1 && m.tableau === "principal"
+    );
+
+    if (tour1Matches.length !== 10) {
+      throw new Error("Le Tour 1 doit contenir exactement 10 matchs");
+    }
+
+    // Vérifier que tous les matchs sont complétés
+    const incompleteMatches = tour1Matches.filter(
+      (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
+    );
+
+    if (incompleteMatches.length > 0) {
+      throw new Error("Tous les matchs du Tour 1 doivent être complétés");
+    }
+
+    const winners = tour1Matches.map((m) => m.winner_registration_id!);
+    const losers = tour1Matches.map((m) => {
+      return m.team1_registration_id === m.winner_registration_id
+        ? m.team2_registration_id
+        : m.team1_registration_id;
+    });
+
+    // Vérifier que nous avons bien 10 gagnants et 10 perdants
+    if (winners.length !== 10 || losers.length !== 10) {
+      logger.error(
+        {
+          tournamentId: tournamentId.substring(0, 8) + "…",
+          winnersCount: winners.length,
+          losersCount: losers.length,
+        },
+        "[advance/tmc-next-round] Invalid number of winners/losers for TMC 20"
+      );
+      throw new Error(
+        `Erreur : nombre de gagnants (${winners.length}) ou perdants (${losers.length}) invalide pour TMC 20`
+      );
+    }
+
+    logger.info(
+      {
+        tournamentId: tournamentId.substring(0, 8) + "…",
+        winnersCount: winners.length,
+        losersCount: losers.length,
+      },
+      "[advance/tmc-next-round] Generating Tour 2 for TMC 20"
+    );
+
+    // A) Tableau Principal - 5 matchs avec les 10 gagnants
+    for (let i = 0; i < 5; i++) {
+      const { error } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournamentId,
+        round_type: "quarters",
+        round_number: 2,
+        match_order: i + 1,
+        team1_registration_id: winners[i * 2],
+        team2_registration_id: winners[i * 2 + 1],
+        is_bye: false,
+        status: "scheduled",
+        tableau: "principal",
+      });
+
+      if (error) {
+        throw new Error(`Erreur lors de la création du match principal ${i + 1}`);
+      }
+    }
+
+    // B) Tableau Places 11-20 - 5 matchs avec les 10 perdants
+    for (let i = 0; i < 5; i++) {
+      const team1Id = losers[i * 2];
+      const team2Id = losers[i * 2 + 1];
+      
+      if (!team1Id || !team2Id) {
+        logger.error(
+          {
+            tournamentId: tournamentId.substring(0, 8) + "…",
+            matchIndex: i,
+            team1Id: team1Id?.substring(0, 8) + "…",
+            team2Id: team2Id?.substring(0, 8) + "…",
+            losersCount: losers.length,
+          },
+          "[advance/tmc-next-round] Missing team IDs for places_11_20 match"
+        );
+        throw new Error(`Erreur : équipe manquante pour le match places 11-20 ${i + 1}`);
+      }
+
+      const { data, error } = await supabase
+        .from("tournament_matches")
+        .insert({
+          tournament_id: tournamentId,
+          round_type: "qualifications",
+          round_number: 2,
+          match_order: i + 1, // M1 à M5 pour ce tableau
+          team1_registration_id: team1Id,
+          team2_registration_id: team2Id,
+          is_bye: false,
+          status: "scheduled",
+          tableau: "places_11_20",
+        })
+        .select("id")
+        .single();
+
+      if (error || !data) {
+        logger.error(
+          {
+            tournamentId: tournamentId.substring(0, 8) + "…",
+            matchIndex: i,
+            matchOrder: i + 6,
+            error: error?.message,
+            errorDetails: error,
+          },
+          "[advance/tmc-next-round] Error creating places_11_20 match"
+        );
+        throw new Error(
+          `Erreur lors de la création du match places 11-20 ${i + 1}: ${error?.message || "Erreur inconnue"}`
+        );
+      }
+
+      logger.info(
+        {
+          tournamentId: tournamentId.substring(0, 8) + "…",
+          matchId: data.id.substring(0, 8) + "…",
+          matchOrder: i + 6,
+        },
+        "[advance/tmc-next-round] Created places_11_20 match"
+      );
+    }
+  } else if (currentRound === 2) {
+    // Tour 3 : 4 tableaux de 5 équipes avec byes
+    // A) Tableau Principal (places 1-5) : 5 gagnants du T2 Principal
+    // B) Tableau Places 6-10 : 5 perdants du T2 Principal
+    // C) Tableau Places 11-15 : 5 gagnants du T2 Places 11-20
+    // D) Tableau Places 16-20 : 5 perdants du T2 Places 11-20
+
+    const tour2Matches = allMatchesWithScores.filter((m) => m.round_number === 2);
+    const principalMatches = tour2Matches.filter((m) => m.tableau === "principal");
+    const places11_20Matches = tour2Matches.filter((m) => m.tableau === "places_11_20");
+
+    if (principalMatches.length !== 5 || places11_20Matches.length !== 5) {
+      throw new Error("Le Tour 2 doit contenir exactement 5 matchs dans chaque tableau");
+    }
+
+    // Vérifier que tous les matchs sont complétés
+    const incompletePrincipal = principalMatches.filter(
+      (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
+    );
+    const incompletePlaces11_20 = places11_20Matches.filter(
+      (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
+    );
+
+    if (incompletePrincipal.length > 0 || incompletePlaces11_20.length > 0) {
+      throw new Error("Tous les matchs du Tour 2 doivent être complétés");
+    }
+
+    // Fonction helper pour créer les matchs d'un tableau de 5 équipes
+    const createTableauOfFive = async (
+      teams: string[],
+      tableauName: string,
+      roundType: string
+    ) => {
+      // Vérifier si les matchs du Tour 3 existent déjà pour ce tableau
+      const existingTour3Matches = allMatchesWithScores.filter(
+        (m) => m.round_number === 3 && m.tableau === tableauName
+      );
+
+      if (existingTour3Matches.length > 0) {
+        // Les matchs existent déjà, vérifier s'il faut créer le Match 2
+        const match1 = existingTour3Matches.find((m) => m.match_order === 1 && !m.is_bye);
+        const match2 = existingTour3Matches.find((m) => m.match_order === 2 && !m.is_bye);
+
+        if (match1 && !match2 && match1.status === "completed" && match1.winner_registration_id) {
+          // Créer le Match 2 : Équipe 5 vs Gagnant Match 1
+          const { best, second } = await findBestTwoTeamsOfFive(
+            supabase,
+            tournamentId,
+            teams,
+            allMatchesWithScores as Match[]
+          );
+          const other = teams.filter((id) => id !== best && id !== second);
+          const team5 = other[2]; // La 5ème équipe
+
+          const { error: match2Error } = await supabase.from("tournament_matches").insert({
+            tournament_id: tournamentId,
+            round_type: roundType,
+            round_number: 3,
+            match_order: 2,
+            team1_registration_id: team5,
+            team2_registration_id: match1.winner_registration_id,
+            is_bye: false,
+            status: "scheduled",
+            tableau: tableauName,
+          });
+
+          if (match2Error) {
+            throw new Error(`Erreur lors de la création du match 2 ${tableauName}`);
+          }
+        }
+
+        // Vérifier s'il faut mettre à jour le Match 3 (bye partiel)
+        const match3 = existingTour3Matches.find((m) => m.match_order === 3 && !m.is_bye);
+        if (match2 && match3 && match2.status === "completed" && match2.winner_registration_id && !match3.team2_registration_id) {
+          // Mettre à jour le Match 3 avec le gagnant du Match 2
+          await supabase
+            .from("tournament_matches")
+            .update({ team2_registration_id: match2.winner_registration_id })
+            .eq("id", match3.id);
+        }
+
+        return; // Les matchs existent déjà
+      }
+
+      // Créer les matchs initiaux
+      const { best, second } = await findBestTwoTeamsOfFive(
+        supabase,
+        tournamentId,
+        teams,
+        allMatchesWithScores as Match[]
+      );
+      const other = teams.filter((id) => id !== best && id !== second);
+
+      // Match 1 : Équipe 3 vs Équipe 4
+      const { error: match1Error } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournamentId,
+        round_type: roundType,
+        round_number: 3,
+        match_order: 1,
+        team1_registration_id: other[0],
+        team2_registration_id: other[1],
+        is_bye: false,
+        status: "scheduled",
+        tableau: tableauName,
+      });
+
+      if (match1Error) {
+        throw new Error(`Erreur lors de la création du match 1 ${tableauName}`);
+      }
+
+      // Bye complet pour la meilleure équipe (match_order 4 pour éviter conflit)
+      const { error: byeError } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournamentId,
+        round_type: roundType,
+        round_number: 3,
+        match_order: 4,
+        team1_registration_id: best,
+        team2_registration_id: null,
+        is_bye: true,
+        status: "completed",
+        winner_registration_id: best,
+        tableau: tableauName,
+      });
+
+      if (byeError) {
+        throw new Error(`Erreur lors de la création du bye complet ${tableauName}`);
+      }
+
+      // Bye partiel pour la 2ème meilleure équipe (match_order 3)
+      // Le team2 sera mis à jour après que le Match 2 soit complété
+      const { error: byePartialError } = await supabase.from("tournament_matches").insert({
+        tournament_id: tournamentId,
+        round_type: roundType,
+        round_number: 3,
+        match_order: 3,
+        team1_registration_id: second,
+        team2_registration_id: null, // Sera mis à jour après Match 2
+        is_bye: false,
+        status: "scheduled",
+        tableau: tableauName,
+      });
+
+      if (byePartialError) {
+        throw new Error(`Erreur lors de la création du bye partiel ${tableauName}`);
+      }
+    };
+
+    // A) Tableau Principal (places 1-5)
+    const principalWinners = principalMatches.map((m) => m.winner_registration_id!);
+    await createTableauOfFive(principalWinners, "principal", "semis");
+
+    // B) Tableau Places 6-10
+    const principalLosers = principalMatches.map((m) => {
+      return m.team1_registration_id === m.winner_registration_id
+        ? m.team2_registration_id
+        : m.team1_registration_id;
+    });
+    await createTableauOfFive(principalLosers, "places_6_10", "qualifications");
+
+    // C) Tableau Places 11-15
+    const places11_20Winners = places11_20Matches.map((m) => m.winner_registration_id!);
+    await createTableauOfFive(places11_20Winners, "places_11_15", "qualifications");
+
+    // D) Tableau Places 16-20
+    const places11_20Losers = places11_20Matches.map((m) => {
+      return m.team1_registration_id === m.winner_registration_id
+        ? m.team2_registration_id
+        : m.team1_registration_id;
+    });
+    await createTableauOfFive(places11_20Losers, "places_16_20", "qualifications");
+  } else if (currentRound === 3) {
+    // Tour 4 : 10 matchs de classement final
+    // Récupérer tous les matchs du Tour 3
+    const tour3Matches = allMatchesWithScores.filter((m) => m.round_number === 3);
+
+    // Vérifier que tous les matchs du Tour 3 sont complétés
+    const incompleteTour3 = tour3Matches.filter(
+      (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
+    );
+
+    if (incompleteTour3.length > 0) {
+      throw new Error("Tous les matchs du Tour 3 doivent être complétés avant de générer le Tour 4");
+    }
+
+    // Fonction helper pour déterminer les équipes qualifiées depuis un tableau de 5 équipes
+    const getQualifiedTeamsFromTableau = (tableauName: string) => {
+      const tableauMatches = tour3Matches.filter((m) => m.tableau === tableauName);
+      const match1 = tableauMatches.find((m) => m.match_order === 1 && !m.is_bye);
+      const match2 = tableauMatches.find((m) => m.match_order === 2 && !m.is_bye);
+      const match3 = tableauMatches.find((m) => m.match_order === 3 && !m.is_bye);
+      const bye = tableauMatches.find((m) => m.is_bye);
+
+      if (!match1 || !match2 || !match3 || !bye) {
+        throw new Error(`Structure invalide pour le tableau ${tableauName} au Tour 3`);
+      }
+
+      // Structure : Match 1 (Équipe 3 vs Équipe 4), Match 2 (Équipe 5 vs Gagnant M1), Match 3 (Équipe 2 vs Gagnant M2), Bye (Équipe 1)
+      const winner1 = match1.winner_registration_id!;
+      const winner2 = match2.winner_registration_id!;
+      const winner3 = match3.winner_registration_id!;
+      const byeTeam = bye.winner_registration_id!;
+
+      // Identifier les perdants
+      const loser1 = match1.team1_registration_id === winner1
+        ? match1.team2_registration_id
+        : match1.team1_registration_id;
+      const loser2 = match2.team1_registration_id === winner2
+        ? match2.team2_registration_id
+        : match2.team1_registration_id;
+      const loser3 = match3.team1_registration_id === winner3
+        ? match3.team2_registration_id
+        : match3.team1_registration_id;
+
+      // Pour un tableau de 5 équipes :
+      // - Finale : Gagnant Match 3 vs Équipe avec bye (bye complet)
+      // - Match 3-4 : Perdant Match 3 vs Gagnant Match 2 (qui a perdu contre l'équipe avec bye partiel)
+      // - Match 5ème : Perdant Match 2 vs Perdant Match 1
+      return {
+        final1: winner3, // Gagnant Match 3
+        final2: byeTeam, // Équipe avec bye complet
+        third: loser3, // Perdant Match 3
+        fourth: winner2, // Gagnant Match 2 (qui a perdu contre l'équipe avec bye partiel au Match 3)
+        fifth: loser2, // Perdant Match 2
+        sixth: loser1, // Perdant Match 1
+      };
+    };
+
+    // A) Tableau Principal : Finale (1-2), Match 3ème (3-4), Match 5ème (5-6)
+    const principal = getQualifiedTeamsFromTableau("principal");
+    
+    // Finale (1-2)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "final",
+      round_number: 4,
+      match_order: 1,
+      team1_registration_id: principal.final1,
+      team2_registration_id: principal.final2,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "principal",
+    });
+
+    // Match 3ème place (3-4)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "third_place",
+      round_number: 4,
+      match_order: 2,
+      team1_registration_id: principal.third,
+      team2_registration_id: principal.fourth,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "principal",
+    });
+
+    // Match 5ème place (5-6)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 3,
+      team1_registration_id: principal.fifth,
+      team2_registration_id: principal.sixth,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_6_10",
+    });
+
+    // B) Tableau Places 6-10 : Match 7ème (7-8), Match 9ème (9-10)
+    const places6_10 = getQualifiedTeamsFromTableau("places_6_10");
+    
+    // Match 7ème place (7-8)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 4,
+      team1_registration_id: places6_10.final1,
+      team2_registration_id: places6_10.final2,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_6_10",
+    });
+
+    // Match 9ème place (9-10)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 5,
+      team1_registration_id: places6_10.third,
+      team2_registration_id: places6_10.fourth,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_6_10",
+    });
+
+    // C) Tableau Places 11-15 : Match 11ème (11-12), Match 13ème (13-14), Match 15ème
+    const places11_15 = getQualifiedTeamsFromTableau("places_11_15");
+    
+    // Match 11ème place (11-12)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 6,
+      team1_registration_id: places11_15.final1,
+      team2_registration_id: places11_15.final2,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_11_15",
+    });
+
+    // Match 13ème place (13-14)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 7,
+      team1_registration_id: places11_15.third,
+      team2_registration_id: places11_15.fourth,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_11_15",
+    });
+
+    // Match 15ème place (15ème seule, pas de match selon le guide)
+    // En fait, avec 5 équipes, la 5ème équipe du tableau est automatiquement 15ème
+    // Mais selon le guide, il y a un match 15ème place, donc créons-le avec la 5ème équipe
+    // qui joue contre... en fait, il n'y a que 5 équipes, donc créons un match entre les 2 dernières
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 8,
+      team1_registration_id: places11_15.fifth,
+      team2_registration_id: places11_15.sixth,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_11_15",
+    });
+
+    // D) Tableau Places 16-20 : Match 17ème (17-18), Match 19ème (19-20)
+    const places16_20 = getQualifiedTeamsFromTableau("places_16_20");
+    
+    // Match 17ème place (17-18)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 9,
+      team1_registration_id: places16_20.final1,
+      team2_registration_id: places16_20.final2,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_16_20",
+    });
+
+    // Match 19ème place (19-20)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 10,
+      team1_registration_id: places16_20.third,
+      team2_registration_id: places16_20.fourth,
+      is_bye: false,
+      status: "scheduled",
+      tableau: "places_16_20",
+    });
+  } else {
+    throw new Error("Aucun tour supplémentaire à générer pour TMC 20");
   }
 }

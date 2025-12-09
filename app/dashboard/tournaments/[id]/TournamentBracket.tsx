@@ -150,6 +150,33 @@ function getRoundLabelForTmc(
     }
   } else if (tableau === "places_9_16") {
     if (roundNum === 2) return "Tour 2";
+  } else if (tableau === "places_6_10") {
+    if (roundNum === 2) return "Tour 2";
+    if (roundNum === 3) return "Tour 3";
+    if (roundNum === 4) {
+      if (match.match_order === 4) return "Match 7ème place [7-8]";
+      if (match.match_order === 5) return "Match 9ème place [9-10]";
+      return "Matchs de classement";
+    }
+  } else if (tableau === "places_11_15") {
+    if (roundNum === 2) return "Tour 2";
+    if (roundNum === 3) return "Tour 3";
+    if (roundNum === 4) {
+      if (match.match_order === 6) return "Match 11ème place [11-12]";
+      if (match.match_order === 7) return "Match 13ème place [13-14]";
+      if (match.match_order === 8) return "Match 15ème place [15-16]";
+      return "Matchs de classement";
+    }
+  } else if (tableau === "places_16_20") {
+    if (roundNum === 2) return "Tour 2";
+    if (roundNum === 3) return "Tour 3";
+    if (roundNum === 4) {
+      if (match.match_order === 9) return "Match 17ème place [17-18]";
+      if (match.match_order === 10) return "Match 19ème place [19-20]";
+      return "Matchs de classement";
+    }
+  } else if (tableau === "places_11_20") {
+    if (roundNum === 2) return "Tour 2";
   }
   return `Tour ${roundNum}`;
 }
@@ -1536,6 +1563,7 @@ export default function TournamentBracket({
         // - TMC 8 : 3 tours (maxRound < 3)
         // - TMC 12 : 4 tours (maxRound < 4)
         // - TMC 16 : 4 tours (maxRound < 4)
+        // - TMC 20 : 4 tours (maxRound < 4)
         // On détermine le nombre d'équipes en comptant les inscriptions uniques dans les matchs du Tour 1
         const tour1Matches = matches.filter((m) => m.round_number === 1);
         const uniqueTeams = new Set<string>();
@@ -1544,7 +1572,7 @@ export default function TournamentBracket({
           if (m.team2_registration_id) uniqueTeams.add(m.team2_registration_id);
         });
         const numTeams = uniqueTeams.size;
-        // TMC 8 a 3 tours, TMC 12 et 16 ont 4 tours
+        // TMC 8 a 3 tours, TMC 12, 16 et 20 ont 4 tours
         const maxAllowedRound = numTeams === 8 ? 3 : 4;
         
         if (roundCompleted && nextRoundMatches.length === 0 && maxRound < maxAllowedRound) {
@@ -1552,7 +1580,7 @@ export default function TournamentBracket({
         }
 
         // Vérifier si le dernier tour est complété pour afficher le bouton de calcul du classement
-        // TMC 8 : Tour 3, TMC 12/16 : Tour 4
+        // TMC 8 : Tour 3, TMC 12/16/20 : Tour 4
         const finalRoundNumber = numTeams === 8 ? 3 : 4;
         if (maxRound >= finalRoundNumber) {
           const finalRoundMatches = matches.filter((m) => m.round_number === finalRoundNumber);
@@ -1673,6 +1701,42 @@ export default function TournamentBracket({
           textColor: "text-gray-300",
           places: "Places 9 à 16",
         },
+        {
+          id: "places_6_10",
+          label: "🥈 Places 6-10",
+          color: "#C0C0C0", // Argent
+          bgColor: "bg-gray-300/10",
+          borderColor: "border-gray-300/80",
+          textColor: "text-gray-200",
+          places: "Places 6 à 10",
+        },
+        {
+          id: "places_11_15",
+          label: "🥉 Places 11-15",
+          color: "#CD7F32", // Bronze
+          bgColor: "bg-amber-700/10",
+          borderColor: "border-amber-600/80",
+          textColor: "text-amber-200",
+          places: "Places 11 à 15",
+        },
+        {
+          id: "places_16_20",
+          label: "⚪ Places 16-20",
+          color: "#A9A9A9", // Gris
+          bgColor: "bg-gray-500/10",
+          borderColor: "border-gray-400/80",
+          textColor: "text-gray-300",
+          places: "Places 16 à 20",
+        },
+        {
+          id: "places_11_20",
+          label: "Places 11-20",
+          color: "#A9A9A9",
+          bgColor: "bg-gray-500/10",
+          borderColor: "border-gray-400/80",
+          textColor: "text-gray-300",
+          places: "Places 11 à 20",
+        },
       ];
 
       // Grouper les matchs par tableau
@@ -1736,10 +1800,11 @@ export default function TournamentBracket({
             ? getRoundLabelForTmc(roundNum, tableau.id, roundMatches[0], matchesInFirstRound)
             : null;
 
-          // Détecter si c'est un TMC 8/12/16 (4, 6, 8 matchs au Tour 1)
+          // Détecter si c'est un TMC 8/12/16/20 (4, 6, 8, 10 matchs au Tour 1)
           const isTmc8 = tableau.id === "principal" && matchesInFirstRound === 4;
           const isTmc12 = tableau.id === "principal" && matchesInFirstRound === 6;
           const isTmc16 = tableau.id === "principal" && matchesInFirstRound === 8;
+          const isTmc20 = tableau.id === "principal" && matchesInFirstRound === 10;
 
           // Calculer la hauteur minimale nécessaire basée sur le nombre de matchs dans le premier round
           // TMC 8 : espacement plus large pour laisser place aux labels "Quarts de finale" entre M1/M2 et M3/M4
@@ -1765,8 +1830,10 @@ export default function TournamentBracket({
 
           // Détecter les tableaux de classement pour TMC 12 (places_4_6, places_7_9, places_10_12, places_7_12)
           // et pour TMC 16 (places_5_8, places_9_12, places_13_16, places_9_16)
+          // et pour TMC 20 (places_6_10, places_11_15, places_16_20, places_11_20)
           // Pour TMC 12, le premier round est le Tour 2 avec 3 matchs
           // Pour TMC 16, le premier round est le Tour 2 avec 2 matchs
+          // Pour TMC 20, le premier round est le Tour 2 avec 5 matchs (places_11_20) ou Tour 3 avec 5 équipes
           const isClassificationTableau = (
             tableau.id === "places_4_6" || 
             tableau.id === "places_7_9" || 
@@ -1775,7 +1842,11 @@ export default function TournamentBracket({
             tableau.id === "places_5_8" ||
             tableau.id === "places_9_12" ||
             tableau.id === "places_13_16" ||
-            tableau.id === "places_9_16"
+            tableau.id === "places_9_16" ||
+            tableau.id === "places_6_10" ||
+            tableau.id === "places_11_15" ||
+            tableau.id === "places_16_20" ||
+            tableau.id === "places_11_20"
           );
           const isClassificationTour3 = roundNum === 3 && roundMatches.length === 2 && isClassificationTableau;
           // Pour TMC 16, le Tour 4 peut avoir 2 matchs (5e/7e, 9e/11e, 13e/15e place)
