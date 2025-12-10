@@ -463,6 +463,9 @@ export async function POST(req: Request) {
                 const grantRes = await grantAutoExtension(clubId!, eligibility.reason);
                 if (grantRes.success) {
                   logger.info({ clubId: clubId!.substring(0, 8) + "…", reason: eligibility.reason }, "[matches/submit] Auto extension granted after match submit");
+                  // Rafraîchir les pages frontend
+                  revalidatePath('/dashboard');
+                  revalidatePath('/dashboard/facturation');
                 } else {
                   logger.warn({ clubId: clubId!.substring(0, 8) + "…", error: grantRes.error }, "[matches/submit] Auto extension grant failed");
                 }

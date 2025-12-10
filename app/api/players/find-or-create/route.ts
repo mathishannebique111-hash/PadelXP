@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
         const grantRes = await grantAutoExtension(clubId, eligibility.reason);
         if (grantRes.success) {
           logger.info({ clubId: clubId.substring(0, 8) + "…", reason: eligibility.reason }, '[players/find-or-create] Auto extension granted after player signup');
+          // Note: revalidatePath ne peut pas être appelé ici car c'est une route API, pas un Server Component
         } else {
           logger.warn({ clubId: clubId.substring(0, 8) + "…", error: grantRes.error }, '[players/find-or-create] Auto extension grant failed after player signup');
         }

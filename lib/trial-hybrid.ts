@@ -328,10 +328,10 @@ export async function grantAutoExtension(
       return { success: false, error: 'Club ou date de fin introuvable' };
     }
 
-    // Ajouter 16 jours à la date de fin actuelle (extension automatique)
+    // Ajouter 15 jours à la date de fin actuelle (extension automatique: 14 → 30 jours)
     const currentEndDate = new Date(club.trial_current_end_date);
     const newEndDate = new Date(currentEndDate);
-    newEndDate.setDate(newEndDate.getDate() + 16);
+    newEndDate.setDate(newEndDate.getDate() + 15);
 
     // Récupérer le club pour vérifier s'il a une subscription Stripe
     const { data: clubWithStripe } = await supabaseAdmin

@@ -1,6 +1,8 @@
 'use client';
 
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface TrialExtensionProgressProps {
   clubId: string;
@@ -15,9 +17,68 @@ export default function TrialExtensionProgress({
   matchesCount,
   autoExtensionUnlocked,
 }: TrialExtensionProgressProps) {
+  const router = useRouter();
+  const [isChecking, setIsChecking] = useState(false);
+  const [extensionGranted, setExtensionGranted] = useState(autoExtensionUnlocked);
+
+  // Vérifier et déclencher l'extension automatique si un objectif est atteint
+  useEffect(() => {
+    // Si l'extension est déjà débloquée, ne rien faire
+    if (autoExtensionUnlocked || extensionGranted) {
+      return;
+    }
+
+    // Vérifier si au moins un objectif est atteint
+    const playersReached = playersCount >= 10;
+    const matchesReached = matchesCount >= 20;
+
+    if (!playersReached && !matchesReached) {
+      return; // Aucun objectif atteint, ne rien faire
+    }
+
+    // Éviter les appels multiples
+    if (isChecking) {
+      return;
+    }
+
+    const checkAndExtend = async () => {
+      setIsChecking(true);
+
+      try {
+        const response = await fetch('/api/trial/check-and-extend', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ clubId }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.extended) {
+          setExtensionGranted(true);
+          // Rafraîchir la page pour mettre à jour l'affichage
+          router.refresh();
+        } else if (response.ok && data.alreadyExtended) {
+          setExtensionGranted(true);
+        }
+      } catch (error) {
+        console.error('[TrialExtensionProgress] Error checking extension:', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    // Vérifier immédiatement et aussi après un court délai pour gérer les mises à jour asynchrones
+    checkAndExtend();
+    const timeoutId = setTimeout(checkAndExtend, 1000);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId, playersCount, matchesCount, autoExtensionUnlocked]);
 
   // Si l'extension automatique est déjà débloquée, ne pas afficher
-  if (autoExtensionUnlocked) {
+  if (extensionGranted || autoExtensionUnlocked) {
     return null;
   }
 
@@ -57,10 +118,10 @@ export default function TrialExtensionProgress({
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">
-            Débloquez +16 jours gratuits supplémentaires !
+            Débloquez +15 jours gratuits supplémentaires !
           </h3>
           <p className="text-sm text-white/80">
-            Atteignez au moins un de ces objectifs pour obtenir automatiquement 16 jours d'essai gratuit en plus (total 30 jours)
+            Atteignez au moins un de ces objectifs pour obtenir automatiquement 15 jours d'essai gratuit en plus (total 30 jours)
           </p>
         </div>
       </div>

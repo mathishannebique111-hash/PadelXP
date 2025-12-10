@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
+import { updateEngagementMetrics, checkAutoExtensionEligibility, grantAutoExtension } from "@/lib/trial-hybrid";
+import { revalidatePath } from "next/cache";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -323,6 +325,29 @@ export async function POST(request: Request) {
           } catch (metadataError) {
             logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (updated profile)");
           }
+
+          // Auto-extension après ajout d'un joueur au club
+          try {
+            logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] Trial check after player added to club');
+            await updateEngagementMetrics(clubIdForUser);
+            const eligibility = await checkAutoExtensionEligibility(clubIdForUser);
+            logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason }, '[profile/init] Trial eligibility');
+            if (eligibility.eligible && eligibility.reason) {
+              const grantRes = await grantAutoExtension(clubIdForUser, eligibility.reason);
+              if (grantRes.success) {
+                logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", reason: eligibility.reason }, '[profile/init] Auto extension granted after player added to club');
+                // Rafraîchir les pages frontend
+                revalidatePath('/dashboard');
+                revalidatePath('/dashboard/facturation');
+              } else {
+                logger.warn({ clubId: clubIdForUser.substring(0, 8) + "…", error: grantRes.error }, '[profile/init] Auto extension grant failed after player added to club');
+              }
+            } else {
+              logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] No auto extension (threshold not met or already unlocked)');
+            }
+          } catch (extErr) {
+            logger.error({ clubId: clubIdForUser.substring(0, 8) + "…", error: (extErr as Error).message }, '[profile/init] Auto extension check error');
+          }
         }
 
         return NextResponse.json({
@@ -356,6 +381,31 @@ export async function POST(request: Request) {
         });
       } catch (metadataError) {
         logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning");
+      }
+
+      // Auto-extension après ajout d'un joueur au club (profil existant)
+      if (!existing.club_id && clubIdForUser) {
+        try {
+          logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] Trial check after existing player added to club');
+          await updateEngagementMetrics(clubIdForUser);
+          const eligibility = await checkAutoExtensionEligibility(clubIdForUser);
+          logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason }, '[profile/init] Trial eligibility');
+          if (eligibility.eligible && eligibility.reason) {
+            const grantRes = await grantAutoExtension(clubIdForUser, eligibility.reason);
+            if (grantRes.success) {
+              logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", reason: eligibility.reason }, '[profile/init] Auto extension granted after existing player added to club');
+              // Rafraîchir les pages frontend
+              revalidatePath('/dashboard');
+              revalidatePath('/dashboard/facturation');
+            } else {
+              logger.warn({ clubId: clubIdForUser.substring(0, 8) + "…", error: grantRes.error }, '[profile/init] Auto extension grant failed after existing player added to club');
+            }
+          } else {
+            logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] No auto extension (threshold not met or already unlocked)');
+          }
+        } catch (extErr) {
+          logger.error({ clubId: clubIdForUser.substring(0, 8) + "…", error: (extErr as Error).message }, '[profile/init] Auto extension check error');
+        }
       }
     }
 
