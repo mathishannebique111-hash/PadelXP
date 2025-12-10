@@ -6,11 +6,11 @@
 -- Exécutez ce script dans Supabase SQL Editor
 -- =====================================================
 
--- Option 1 : Rechercher par email (décommentez et remplacez l'email)
+-- Option 1 : Rechercher par slug (décommentez et remplacez le slug exact, ex: 'padel-nantes')
 -- SELECT 
 --   id,
 --   name,
---   email,
+--   slug,
 --   trial_start_date,
 --   trial_end_date,
 --   trial_current_end_date,
@@ -37,13 +37,12 @@
 --     ELSE NULL
 --   END as days_remaining
 -- FROM clubs
--- WHERE email = 'CLUB_EMAIL_OU_ID';
+-- WHERE slug = 'CLUB_SLUG';
 
--- Option 2 : Rechercher par ID (décommentez et remplacez l'ID)
+-- Option 2 : Rechercher par ID (décommentez et remplacez l'UUID, en le laissant entre quotes)
 -- SELECT 
 --   id,
 --   name,
---   email,
 --   trial_start_date,
 --   trial_end_date,
 --   trial_current_end_date,
@@ -70,13 +69,11 @@
 --     ELSE NULL
 --   END as days_remaining
 -- FROM clubs
--- WHERE id = 'CLUB_EMAIL_OU_ID'::uuid;
+-- WHERE id = '00000000-0000-0000-0000-000000000000'::uuid;
 
--- Option 3 : Afficher tous les clubs avec extension automatique
 SELECT 
   id,
   name,
-  email,
   trial_start_date,
   trial_end_date,
   trial_current_end_date,
@@ -105,4 +102,26 @@ SELECT
 FROM clubs
 WHERE auto_extension_unlocked = TRUE
 ORDER BY trial_start_date DESC;
+
+-- Option 4 : Clubs avec 30 jours effectifs mais sans le flag auto_extension_unlocked (diagnostic)
+-- Décommentez pour identifier les clubs qui ont 30 jours calculés mais sans le flag
+-- SELECT
+--   id,
+--   name,
+--   slug,
+--   trial_start_date,
+--   trial_end_date,
+--   trial_current_end_date,
+--   trial_base_end_date,
+--   EXTRACT(DAY FROM (COALESCE(trial_current_end_date, trial_end_date) - trial_start_date)) as total_trial_days_calculated,
+--   auto_extension_unlocked,
+--   auto_extension_reason,
+--   trial_status,
+--   subscription_status,
+--   selected_plan,
+--   stripe_subscription_id
+-- FROM clubs
+-- WHERE EXTRACT(DAY FROM (COALESCE(trial_current_end_date, trial_end_date) - trial_start_date)) >= 29
+--   AND (auto_extension_unlocked IS DISTINCT FROM TRUE)
+-- ORDER BY trial_start_date DESC;
 

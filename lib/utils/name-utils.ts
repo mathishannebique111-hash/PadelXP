@@ -1,33 +1,29 @@
 /**
- * Capitalise la première lettre d'un nom ou prénom
- * Exemples:
- * - "jean" -> "Jean"
- * - "JEAN" -> "Jean"
- * - "jean-pierre" -> "Jean-pierre"
- * - "mcdonald" -> "McDonald" (gère les préfixes)
+ * Capitalise uniquement les débuts de mots :
+ * - Prend en compte les séparateurs usuels des noms/prénoms composés : espace, tiret, apostrophe.
+ * - Le reste de chaque segment est mis en minuscules.
+ * - Ne capitalise pas "Mc"/"O'" de façon spéciale : on suit strictement le découpage par séparateurs.
  */
 export function capitalizeName(name: string): string {
   if (!name || !name.trim()) {
     return name;
   }
 
-  const trimmed = name.trim();
-  
-  // Gérer les préfixes comme "Mc", "O'", "De", etc.
-  const prefixes = ['mc', "o'", 'de', 'du', 'da', 'von', 'van', 'le', 'la'];
-  const lowerName = trimmed.toLowerCase();
-  
-  for (const prefix of prefixes) {
-    if (lowerName.startsWith(prefix) && trimmed.length > prefix.length) {
-      // Capitaliser le préfixe et la lettre suivante
-      return prefix.charAt(0).toUpperCase() + prefix.slice(1) + 
-             trimmed.charAt(prefix.length).toUpperCase() + 
-             trimmed.slice(prefix.length + 1).toLowerCase();
-    }
-  }
-  
-  // Cas standard: capitaliser la première lettre, le reste en minuscules
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  const separators = /([ -'’])/; // espace, tiret, apostrophe droite ou courbe
+
+  // Split en conservant les séparateurs pour les réassembler ensuite
+  const parts = name.trim().split(separators);
+
+  const capitalized = parts
+    .map((part) => {
+      // Ne pas toucher aux séparateurs
+      if (part.match(separators)) return part;
+      // Segment de mot : première lettre en maj, le reste en minuscules
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join('');
+
+  return capitalized;
 }
 
 /**

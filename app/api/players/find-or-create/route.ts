@@ -5,6 +5,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { capitalizeFullName } from '@/lib/utils/name-utils';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { updateEngagementMetrics, checkAutoExtensionEligibility, grantAutoExtension } from '@/lib/trial-hybrid';
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -142,6 +143,26 @@ export async function POST(request: NextRequest) {
     }
 
     const guestDisplayName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || firstName;
+
+    // Auto-extension après création de joueur (invite)
+    try {
+      logger.info({ clubId: clubId.substring(0, 8) + "…" }, '[players/find-or-create] Trial check after player signup');
+      await updateEngagementMetrics(clubId);
+      const eligibility = await checkAutoExtensionEligibility(clubId);
+      logger.info({ clubId: clubId.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason }, '[players/find-or-create] Trial eligibility');
+      if (eligibility.eligible && eligibility.reason) {
+        const grantRes = await grantAutoExtension(clubId, eligibility.reason);
+        if (grantRes.success) {
+          logger.info({ clubId: clubId.substring(0, 8) + "…", reason: eligibility.reason }, '[players/find-or-create] Auto extension granted after player signup');
+        } else {
+          logger.warn({ clubId: clubId.substring(0, 8) + "…", error: grantRes.error }, '[players/find-or-create] Auto extension grant failed after player signup');
+        }
+      } else {
+        logger.info({ clubId: clubId.substring(0, 8) + "…" }, '[players/find-or-create] No auto extension (threshold not met or already unlocked)');
+      }
+    } catch (extErr) {
+      logger.error({ clubId: clubId.substring(0, 8) + "…", error: (extErr as Error).message }, '[players/find-or-create] Auto extension check error');
+    }
 
     return NextResponse.json({
       player: {

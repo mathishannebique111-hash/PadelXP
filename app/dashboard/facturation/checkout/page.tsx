@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -197,20 +198,41 @@ function CheckoutContent() {
   const firstPaymentDate = calculateFirstPaymentDate(trialEndDate);
   const daysRemaining = Math.ceil((new Date(trialEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
-  const options = {
-    clientSecret,
-    appearance: {
-      theme: 'night' as const,
-      variables: {
-        colorPrimary: '#10b981',
-        colorBackground: '#111827',
-        colorText: '#ffffff',
-        colorDanger: '#ef4444',
-        fontFamily: 'system-ui, sans-serif',
-        spacingUnit: '4px',
-        borderRadius: '8px',
+  const appearance = {
+    theme: 'night' as const,
+    variables: {
+      colorPrimary: '#10b981',
+      colorBackground: '#111827',
+      colorText: '#ffffff',
+      colorTextSecondary: '#ffffff',
+      colorDanger: '#ef4444',
+      fontFamily: 'system-ui, sans-serif',
+      spacingUnit: '4px',
+      borderRadius: '8px',
+    },
+    rules: {
+      '.InputLabel, .Label, .Label *': { color: '#ffffff' },
+      '.InputLabel--optional, .InputLabel.InputLabel--optional': { color: '#ffffff' },
+      '.Optional, .InputLabel .Optional, .Label .Optional, .Input .Optional, .Input * .Optional, .Badge, .Badge *': {
+        color: '#111827',
+        backgroundColor: '#ffffff',
+        borderColor: '#ffffff',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderRadius: '10px',
+        padding: '4px 12px',
+        fontSize: '14px',
+        fontWeight: '700',
+        display: 'inline-flex',
+        alignItems: 'center',
+        lineHeight: '1.1',
       },
     },
+  };
+
+  const options = {
+    clientSecret,
+    appearance,
   };
 
   return (
@@ -250,7 +272,13 @@ function CheckoutContent() {
 
               <div className="pt-4 border-t border-white/10">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">⏱️</span>
+                  <Image
+                    src="/images/horloge.png"
+                    alt="Icône horloge"
+                    width={24}
+                    height={24}
+                    className="h-6 w-6"
+                  />
                   <div>
                     <div className="text-white/60 text-sm">Jours d'essai restants</div>
                     <div className="text-white font-bold text-xl">{Math.max(0, daysRemaining)} jours</div>
@@ -260,7 +288,13 @@ function CheckoutContent() {
 
               <div className="pt-4 border-t border-white/10">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">💳</span>
+                  <Image
+                    src="/images/carte%20bancaire.png"
+                    alt="Icône carte bancaire"
+                    width={24}
+                    height={24}
+                    className="h-6 w-6"
+                  />
                   <div>
                     <div className="text-white/60 text-sm">Premier paiement le</div>
                     <div className="text-white font-bold text-lg">
@@ -292,7 +326,7 @@ function CheckoutContent() {
                 </p>
               </div>
             ) : (
-              <Elements stripe={stripePromise} options={options}>
+              <Elements stripe={stripePromise} options={options} key={`${clientSecret}-appearance-v3`}>
                 <CheckoutForm
                   subscriptionId={subscriptionId}
                   plan={plan}

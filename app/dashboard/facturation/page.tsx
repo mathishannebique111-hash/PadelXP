@@ -12,7 +12,6 @@ import { redirect } from "next/navigation";
 import CancelSubscriptionButton from "@/components/billing/CancelSubscriptionButton";
 import ReactivateSubscriptionButton from "@/components/billing/ReactivateSubscriptionButton";
 import SubscriptionConfirmationBanner from "@/components/billing/SubscriptionConfirmationBanner";
-import ForceRefreshTrialData from "@/components/billing/ForceRefreshTrialData";
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
 type PlanType = "monthly" | "quarterly" | "annual" | null;
@@ -1019,7 +1018,6 @@ export default async function BillingPage() {
         </ul>
       </section>
       </div>
-      <ForceRefreshTrialData />
     </div>
   );
 }

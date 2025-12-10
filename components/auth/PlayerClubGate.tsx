@@ -11,7 +11,15 @@ function buildInvitationCode(name: string, postal: string) {
   return (upper + (postal || "")).trim();
 }
 
-export default function PlayerClubGate({ onValidChange, onChange }: { onValidChange?: (valid: boolean) => void; onChange?: (v: { name: string; slug: string; invitationCode: string; code: string }) => void }) {
+export default function PlayerClubGate({
+  onValidChange,
+  onChange,
+  showInvalidState = false,
+}: {
+  onValidChange?: (valid: boolean) => void;
+  onChange?: (v: { name: string; slug: string; invitationCode: string; code: string }) => void;
+  showInvalidState?: boolean;
+}) {
   const [clubs, setClubs] = useState<Array<{ name: string; slug: string; code_invitation: string }>>([]);
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [code, setCode] = useState<string>("");
@@ -126,9 +134,11 @@ export default function PlayerClubGate({ onValidChange, onChange }: { onValidCha
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="Saisir le code reçu"
-        className={`w-full rounded-md px-3 py-2 text-white placeholder-white/40 border ${isValid ? 'bg-white/5 border-white/10' : 'bg-white/5 border-red-400'}`}
+        className={`w-full rounded-md px-3 py-2 text-white placeholder-white/40 border ${
+          isValid ? 'bg-white/5 border-white/10' : showInvalidState ? 'bg-white/5 border-red-400' : 'bg-white/5 border-white/10'
+        }`}
       />
-      {!isValid && code.length > 0 && selectedSlug && (
+      {!isValid && code.length > 0 && selectedSlug && showInvalidState && (
         <div className="text-xs mt-1 text-red-400">Le code ne correspond pas au club sélectionné.</div>
       )}
     </div>

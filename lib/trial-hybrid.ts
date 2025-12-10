@@ -23,7 +23,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 
 export type TrialStatus = 'active' | 'extended_auto' | 'extended_proposed' | 'extended_manual' | 'expired' | 'converted';
-export type AutoExtensionReason = '10_players' | '20_matches' | '5_logins';
+export type AutoExtensionReason = '20_matches' | '10_players';
 
 export interface TrialMetrics {
   playersCount: number;
@@ -179,20 +179,31 @@ export async function updateEngagementMetrics(clubId: string): Promise<{ success
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId);
 
-    // Compter les matchs (via les joueurs du club)
-    const { data: clubPlayers } = await supabaseAdmin
+    // Récupérer les joueurs du club pour compter les matchs
+    const { data: clubPlayers, error: clubPlayersError } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('club_id', clubId);
 
-    const playerIds = clubPlayers?.map(p => p.id) || [];
+    if (clubPlayersError) {
+      logger.error({ clubId: clubId.substring(0, 8) + '…', error: clubPlayersError }, '[trial-hybrid] Error fetching club players for metrics');
+      return { success: false, error: clubPlayersError.message };
+    }
+
+    const playerIds = (clubPlayers || []).map(p => p.id);
+
+    // Compter les matchs via match_participants (distinct match_id)
     let matchesCount = 0;
     if (playerIds.length > 0) {
-      const { count } = await supabaseAdmin
-        .from('matches')
-        .select('id', { count: 'exact', head: true })
-        .in('player1_id', playerIds)
-        .or(`player2_id.in.(${playerIds.join(',')}),player3_id.in.(${playerIds.join(',')}),player4_id.in.(${playerIds.join(',')})`);
+      const { count, error: matchesCountError } = await supabaseAdmin
+        .from('match_participants')
+        .select('match_id', { count: 'exact', head: true, distinct: true })
+        .in('user_id', playerIds);
+
+      if (matchesCountError) {
+        logger.error({ clubId: clubId.substring(0, 8) + '…', error: matchesCountError }, '[trial-hybrid] Error counting matches for metrics');
+        return { success: false, error: matchesCountError.message };
+      }
       matchesCount = count || 0;
     }
 
@@ -260,10 +271,17 @@ export async function checkAutoExtensionEligibility(clubId: string): Promise<{
   }
 
   try {
-    // Récupérer le club
+    // Recalculer les métriques à jour
+    const metricsResult = await updateEngagementMetrics(clubId);
+    if (!metricsResult.success || !metricsResult.metrics) {
+      return { eligible: false };
+    }
+    const metrics = metricsResult.metrics;
+
+    // Récupérer le flag d'auto-extension
     const { data: club } = await supabaseAdmin
       .from('clubs')
-      .select('auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count')
+      .select('auto_extension_unlocked, total_challenges_count, dashboard_login_count')
       .eq('id', clubId)
       .single();
 
@@ -271,35 +289,13 @@ export async function checkAutoExtensionEligibility(clubId: string): Promise<{
       return { eligible: false };
     }
 
-    // Vérifier les seuils
-    if (club.total_players_count >= 10) {
-      return { eligible: true, reason: '10_players', metrics: {
-        playersCount: club.total_players_count,
-        matchesCount: club.total_matches_count || 0,
-        challengesCount: club.total_challenges_count || 0,
-        dashboardLoginCount: 0,
-        invitationsSentCount: 0,
-      }};
+    // Seuils : 10 joueurs OU 20 matchs
+    if (metrics.playersCount >= 10) {
+      return { eligible: true, reason: '10_players', metrics };
     }
 
-    if (club.total_matches_count >= 20) {
-      return { eligible: true, reason: '20_matches', metrics: {
-        playersCount: club.total_players_count || 0,
-        matchesCount: club.total_matches_count,
-        challengesCount: club.total_challenges_count || 0,
-        dashboardLoginCount: 0,
-        invitationsSentCount: 0,
-      }};
-    }
-
-    if (club.dashboard_login_count >= 5) {
-      return { eligible: true, reason: '5_logins', metrics: {
-        playersCount: club.total_players_count || 0,
-        matchesCount: club.total_matches_count || 0,
-        challengesCount: 0,
-        dashboardLoginCount: club.dashboard_login_count,
-        invitationsSentCount: 0,
-      }};
+    if (metrics.matchesCount >= 20) {
+      return { eligible: true, reason: '20_matches', metrics };
     }
 
     return { eligible: false };

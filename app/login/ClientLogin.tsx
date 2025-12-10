@@ -6,6 +6,7 @@ import { useState } from "react";
 
 export default function ClientLogin() {
   const [clubInfo, setClubInfo] = useState<{ name: string; slug: string; invitationCode: string; code: string }>({ name: "", slug: "", invitationCode: "", code: "" });
+  const [showClubInvalid, setShowClubInvalid] = useState(false);
   return (
     <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-8">
       <h1 className="text-2xl font-extrabold mb-2">Inscription joueur</h1>
@@ -13,10 +14,11 @@ export default function ClientLogin() {
       <EmailSignupForm
         extra={
           <div className="pt-2">
-            <PlayerClubGate onChange={setClubInfo} />
+            <PlayerClubGate onChange={setClubInfo} showInvalidState={showClubInvalid} />
           </div>
         }
         beforeSubmit={() => {
+          setShowClubInvalid(true);
           const slug = (clubInfo.slug || "").trim();
           const expected = (clubInfo.invitationCode || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase().replace(/[^A-Z0-9]+/g, "");
           const input = (clubInfo.code || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase().replace(/[^A-Z0-9]+/g, "");

@@ -59,8 +59,35 @@ export async function middleware(req: NextRequest) {
 
     // Rate limiting pour la soumission de matchs
     if (pathnameForRateLimit === "/api/matches/submit") {
-      const userId = req.headers.get("x-user-id") || ip;
-      const { success, remaining, reset } = await matchSubmitRatelimit.limit(userId);
+      // Identifier par joueur connecté si possible, sinon par IP
+      let rateLimitId = req.headers.get("x-user-id") || null;
+      if (!rateLimitId) {
+        try {
+          const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+              cookies: {
+                getAll() {
+                  return req.cookies.getAll();
+                },
+                setAll() {
+                  // no-op in middleware
+                },
+              },
+            }
+          );
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            rateLimitId = user.id;
+          }
+        } catch (e) {
+          logger.warn({ error: e instanceof Error ? e.message : String(e) }, "[Middleware] Unable to resolve user for match rate-limit, fallback to IP");
+        }
+      }
+      rateLimitId = rateLimitId || ip;
+
+      const { success, remaining, reset } = await matchSubmitRatelimit.limit(rateLimitId);
       if (!success) {
         return NextResponse.json(
           { error: "Trop de matchs soumis. Limite: 5 matchs par 5 minutes.", retryAfter: reset },
@@ -106,7 +133,8 @@ export async function middleware(req: NextRequest) {
     normalizedPathname.startsWith("/api/cron/trial-check") ||
     normalizedPathname.startsWith("/api/send-trial-reminder") ||
     normalizedPathname.startsWith("/api/webhooks/") ||
-    normalizedPathname === "/api/resend-inbound"
+    normalizedPathname === "/api/resend-inbound" ||
+    normalizedPathname === "/api/trial/check-extensions"
   ) {
     return NextResponse.next();
   }
