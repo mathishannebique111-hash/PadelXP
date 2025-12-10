@@ -981,27 +981,27 @@ export default async function BillingPage() {
 
         <ul className="space-y-2">
           <li>
-            <a href="/legal" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+            <a href="/legal?returnTo=/dashboard/facturation" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
               Mentions légales (Clubs)
             </a>
           </li>
           <li>
-            <a href="/cgv" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+            <a href="/cgv?returnTo=/dashboard/facturation" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
               Conditions Générales de Vente (CGV)
             </a>
           </li>
           <li>
-            <a href="/terms" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
-              Conditions Générales d’Utilisation (CGU) — Clubs
+            <a href="/terms?returnTo=/dashboard/facturation" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+              Conditions Générales d'Utilisation (CGU) — Clubs
             </a>
           </li>
           <li>
-            <a href="/privacy" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+            <a href="/privacy?returnTo=/dashboard/facturation" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
               Politique de confidentialité — Clubs
             </a>
           </li>
           <li>
-            <a href="/cookies" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+            <a href="/cookies?returnTo=/dashboard/facturation" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
               Politique Cookies — Clubs
             </a>
           </li>
@@ -1011,7 +1011,7 @@ export default async function BillingPage() {
             </a>
           </li>
           <li>
-            <a href="#" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
+            <a href="/dpa?returnTo=/dashboard/facturation" className="text-sm text-white/70 hover:text-white/80 underline underline-offset-2">
               DPA / RGPD
             </a>
           </li>

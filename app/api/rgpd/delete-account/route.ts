@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userIdPreview = user.id.substring(0, 8) + "…";
-    logger.info({ userId: userIdPreview }, '[RGPD Delete] Début suppression pour utilisateur');
+    logger.info({ userId: userIdPreview }, '[RGPD Delete] Début suppression complète pour utilisateur');
 
     // Récupérer le profil pour identifier le club_id
     const { data: profile } = await supabaseAdmin
@@ -69,86 +69,119 @@ export async function POST(req: NextRequest) {
 
     const clubId = profile?.club_id;
 
-    // 1. Supprimer/anonymiser les données personnelles du profil
-    // On anonymise plutôt que supprimer pour garder l'intégrité référentielle
-    const randomId = randomUUID();
-    const anonymizedEmail = `deleted-${randomId}@deleted.local`;
-    const anonymizedName = 'Utilisateur supprimé';
+    // 1. Supprimer les inscriptions de tournoi où le joueur est player1_id ou player2_id
+    // (doit être fait avant de supprimer le profil car il y a une référence)
+    // Note: Les tournois créés par l'utilisateur (created_by) ne sont pas supprimés
+    // car ils appartiennent au club, pas au joueur individuel
+    const { error: tournamentRegistrationsError } = await supabaseAdmin
+      .from('tournament_registrations')
+      .delete()
+      .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`);
 
-    const { error: profileUpdateError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        display_name: anonymizedName,
-        first_name: null,
-        last_name: null,
-        email: anonymizedEmail,
-        avatar_url: null,
-        // On garde club_id pour l'intégrité des données du club
-      })
-      .eq('id', user.id);
-
-    if (profileUpdateError) {
-      logger.error({ err: profileUpdateError }, '[RGPD Delete] Erreur anonymisation profil');
+    if (tournamentRegistrationsError) {
+      logger.error({ err: tournamentRegistrationsError }, '[RGPD Delete] Erreur suppression inscriptions tournoi');
     }
 
-    // 2. Supprimer les participations aux matchs (mais garder les matchs pour l'intégrité)
-    // On anonymise les participations
+    // 2. Supprimer les participations aux tournois (Americano/Mexicano)
+    const { error: tournamentParticipantsError } = await supabaseAdmin
+      .from('tournament_participants')
+      .delete()
+      .eq('player_id', user.id);
+
+    if (tournamentParticipantsError) {
+      logger.error({ err: tournamentParticipantsError }, '[RGPD Delete] Erreur suppression participations tournoi');
+    }
+
+    // 3. Supprimer les points disciplinaires
+    const { error: disciplinaryPointsError } = await supabaseAdmin
+      .from('disciplinary_points')
+      .delete()
+      .eq('player_id', user.id);
+
+    if (disciplinaryPointsError) {
+      logger.error({ err: disciplinaryPointsError }, '[RGPD Delete] Erreur suppression points disciplinaires');
+    }
+
+    // 4. Supprimer complètement les participations aux matchs
     const { error: matchParticipantsError } = await supabaseAdmin
       .from('match_participants')
-      .update({
-        user_id: null, // Ou garder pour l'historique mais anonymiser
-      })
+      .delete()
       .eq('user_id', user.id);
 
     if (matchParticipantsError) {
-      logger.error({ err: matchParticipantsError }, '[RGPD Delete] Erreur suppression participations');
+      logger.error({ err: matchParticipantsError }, '[RGPD Delete] Erreur suppression participations matchs');
     }
 
-    // 3. Supprimer les confirmations de matchs
-    await supabaseAdmin
+    // 5. Supprimer les confirmations de matchs
+    const { error: matchConfirmationsError } = await supabaseAdmin
       .from('match_confirmations')
       .delete()
       .eq('user_id', user.id);
 
-    // 4. Supprimer les avis
-    await supabaseAdmin
+    if (matchConfirmationsError) {
+      logger.error({ err: matchConfirmationsError }, '[RGPD Delete] Erreur suppression confirmations matchs');
+    }
+
+    // 6. Supprimer les avis
+    const { error: reviewsError } = await supabaseAdmin
       .from('reviews')
       .delete()
       .eq('user_id', user.id);
 
-    // 5. Supprimer les challenges
-    await supabaseAdmin
+    if (reviewsError) {
+      logger.error({ err: reviewsError }, '[RGPD Delete] Erreur suppression avis');
+    }
+
+    // 7. Supprimer les challenges
+    const { error: challengesError } = await supabaseAdmin
       .from('player_challenges')
       .delete()
       .eq('user_id', user.id);
 
-    // 6. Gérer les droits d'admin du club
+    if (challengesError) {
+      logger.error({ err: challengesError }, '[RGPD Delete] Erreur suppression challenges');
+    }
+
+    // 8. Supprimer les droits d'admin du club
     if (clubId) {
-      // Supprimer les droits d'admin si l'utilisateur n'est plus membre
-      await supabaseAdmin
+      const { error: clubAdminsError } = await supabaseAdmin
         .from('club_admins')
         .delete()
         .eq('club_id', clubId)
         .eq('user_id', user.id);
+
+      if (clubAdminsError) {
+        logger.error({ err: clubAdminsError }, '[RGPD Delete] Erreur suppression droits admin');
+      }
     }
 
-    // 7. IMPORTANT : Ne PAS supprimer les données de facturation (obligation 10 ans)
-    // On les anonymise seulement si nécessaire
-    // Les données dans la table subscriptions liées au club_id sont conservées
+    // 9. Supprimer complètement le profil (après avoir supprimé toutes les références)
+    const { error: profileDeleteError } = await supabaseAdmin
+      .from('profiles')
+      .delete()
+      .eq('id', user.id);
 
-    // 8. Supprimer le compte Auth de Supabase
-    // Note : Cela supprime complètement le compte utilisateur
+    if (profileDeleteError) {
+      logger.error({ err: profileDeleteError }, '[RGPD Delete] Erreur suppression profil');
+    }
+
+    // 10. IMPORTANT : Ne PAS supprimer les données de facturation (obligation légale 10 ans)
+    // Les données dans la table subscriptions liées au club_id sont conservées
+    // selon les obligations comptables et fiscales
+
+    // 11. Supprimer le compte Auth de Supabase (en dernier)
+    // Note : Cela supprime complètement le compte utilisateur de Supabase Auth
     const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
     if (authDeleteError) {
       logger.error({ err: authDeleteError }, '[RGPD Delete] Erreur suppression compte auth');
       // Continuer même en cas d'erreur pour supprimer les autres données
     }
 
-    logger.info({ userId: userIdPreview }, '[RGPD Delete] Suppression terminée pour utilisateur');
+    logger.info({ userId: userIdPreview }, '[RGPD Delete] Suppression complète terminée pour utilisateur');
 
     return NextResponse.json({
       success: true,
-      message: 'Votre compte et vos données personnelles ont été supprimés.',
+      message: 'Votre compte et toutes vos données personnelles ont été définitivement supprimés.',
       note: 'Les données de facturation sont conservées selon les obligations légales (10 ans).',
     });
 
