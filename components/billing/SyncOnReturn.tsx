@@ -11,6 +11,22 @@ function SyncOnReturnContent() {
 
   useEffect(() => {
     const sync = searchParams.get("sync");
+    const subscriptionUpdated = searchParams.get("subscription_updated");
+    
+    // Si subscription_updated=true, rafraîchir directement la page
+    if (subscriptionUpdated === "true" && !synced && !syncing) {
+      setSyncing(true);
+      
+      // Retirer le paramètre de l'URL et rafraîchir
+      setTimeout(() => {
+        const newUrl = window.location.pathname;
+        router.replace(newUrl);
+        router.refresh();
+        setSynced(true);
+        setSyncing(false);
+      }, 500);
+      return;
+    }
     
     if (sync === "1" && !synced && !syncing) {
       setSyncing(true);

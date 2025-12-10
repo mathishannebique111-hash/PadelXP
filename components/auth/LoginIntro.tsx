@@ -44,7 +44,7 @@ export default function LoginIntro({ onShowLogin }: { onShowLogin?: () => void }
         />
         {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
       </div>
-      <p className="text-white/60 text-sm">Aucune carte bancaire requise pendant l’essai de 30 jours.</p>
+      <p className="text-white/60 text-sm">Aucune carte bancaire requise pendant l'essai de 14 jours.</p>
       <div className="flex items-center gap-4">
         <button type="submit" className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#00CC99] to-[#0066FF] font-semibold">
           Commencer

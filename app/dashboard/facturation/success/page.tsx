@@ -143,6 +143,9 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
       return;
     }
 
+    // Déterminer le statut : si en période d'essai Stripe, utiliser "trialing", sinon "active"
+    const subscriptionStatus = stripeSubscription.status === 'trialing' ? 'trialing' : 'active';
+
     if (existingSubscription) {
       console.log('[SuccessPage] Updating existing subscription:', existingSubscription.id);
       
@@ -150,7 +153,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
       const { error: updateError } = await supabaseAdmin
         .from('subscriptions')
         .update({
-          status: 'active',
+          status: subscriptionStatus,
           stripe_subscription_id: subscriptionId,
           stripe_customer_id: customerId,
           plan_cycle: planCycle,
@@ -168,11 +171,40 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
         console.log('[SuccessPage] Subscription updated successfully:', {
           subscriptionId,
           planCycle,
+          status: subscriptionStatus,
           currentPeriodEnd: currentPeriodEnd.toISOString(),
         });
       }
     } else {
-      console.error('[SuccessPage] No existing subscription found for club:', clubId);
+      console.log('[SuccessPage] Creating new subscription for club:', clubId);
+      
+      // Créer un nouvel abonnement
+      const { error: insertError } = await supabaseAdmin
+        .from('subscriptions')
+        .insert({
+          club_id: clubId,
+          status: subscriptionStatus,
+          stripe_subscription_id: subscriptionId,
+          stripe_customer_id: customerId,
+          plan_cycle: planCycle,
+          current_period_start: currentPeriodStart.toISOString(),
+          current_period_end: currentPeriodEnd.toISOString(),
+          next_renewal_at: nextRenewal.toISOString(),
+          has_payment_method: true,
+          trial_start_at: null,
+          trial_end_at: null,
+        });
+
+      if (insertError) {
+        console.error('[SuccessPage] Insert error:', insertError);
+      } else {
+        console.log('[SuccessPage] Subscription created successfully:', {
+          subscriptionId,
+          planCycle,
+          status: subscriptionStatus,
+          currentPeriodEnd: currentPeriodEnd.toISOString(),
+        });
+      }
     }
   } catch (error) {
     console.error('[SuccessPage] Error verifying session:', {
@@ -224,7 +256,7 @@ async function SuccessContent({ searchParams }: { searchParams: Promise<{ sessio
         )}
         <div className="flex flex-col gap-3 pt-4">
           <Link
-            href="/dashboard/facturation"
+            href="/dashboard/facturation?subscription_updated=true"
             className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-green-600 border border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-100 transition-all duration-300"
           >
             Retour à la page de facturation

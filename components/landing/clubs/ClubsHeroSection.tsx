@@ -153,7 +153,7 @@ export default function ClubsHeroSection() {
                   className="inline-block group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105"
                 >
                   <span className="flex items-center gap-2">
-                    Démarrer l'essai gratuit 30 jours
+                    Démarrer l'essai gratuit 14 jours
                     <motion.span
                       className="inline-block"
                       animate={{ x: [0, 5, 0] }}

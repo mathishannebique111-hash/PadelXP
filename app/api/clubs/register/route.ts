@@ -335,19 +335,20 @@ export async function POST(req: Request) {
       }
     }
 
-    // Initialiser l'abonnement en essai pour le club
+    // Initialiser l'essai gratuit de 14 jours pour le club
     try {
-      const { error: subscriptionError } = await supabaseAdmin.rpc("initialize_club_subscription", {
-        p_club_id: club.id,
-      });
+      const { initiateTrial } = await import('@/lib/trial-hybrid');
+      const trialResult = await initiateTrial(club.id);
       
-      if (subscriptionError) {
-        logger.warn({ clubId: club.id.substring(0, 8) + "…", error: subscriptionError }, "[clubs/register] Could not initialize subscription (non-blocking)");
-        // Ne pas bloquer la création du compte si l'initialisation de l'abonnement échoue
-        // L'abonnement pourra être initialisé plus tard
+      if (!trialResult.success) {
+        logger.warn({ clubId: club.id.substring(0, 8) + "…", error: trialResult.error }, "[clubs/register] Could not initialize trial (non-blocking)");
+        // Ne pas bloquer la création du compte si l'initialisation de l'essai échoue
+        // L'essai pourra être initialisé plus tard
+      } else {
+        logger.info({ clubId: club.id.substring(0, 8) + "…" }, "[clubs/register] ✅ Trial initialized (14 days)");
       }
     } catch (subErr) {
-      logger.warn({ clubId: club.id.substring(0, 8) + "…", error: subErr }, "[clubs/register] Subscription initialization error (non-blocking)");
+      logger.warn({ clubId: club.id.substring(0, 8) + "…", error: subErr }, "[clubs/register] Trial initialization error (non-blocking)");
     }
 
     return NextResponse.json({ ok: true, club: { ...club, logo_url: logoUrl || null } });

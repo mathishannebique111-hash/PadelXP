@@ -68,7 +68,7 @@ export default function Pricing() {
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-2 bg-[#00CC99]/20 border border-[#00CC99]/40 rounded-full px-6 py-3 mb-6">
                 <Image src="/images/Cadeau accueil club.png" alt="Cadeau" width={24} height={24} className="flex-shrink-0" unoptimized />
-                <span className="text-lg font-bold text-white">Essai gratuit 30 jours - Sans carte bancaire</span>
+                <span className="text-lg font-bold text-white">Essai gratuit 14 jours - Sans carte bancaire</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">

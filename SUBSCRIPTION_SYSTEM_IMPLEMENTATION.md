@@ -1,234 +1,171 @@
-# 🎯 Système d'Abonnement et d'Essai - Implémentation Complète
+# Système d'abonnement - Implémentation complète
 
-## 📋 Vue d'ensemble
+## ✅ Fichiers créés
 
-Implémentation complète d'un système de gestion d'abonnements pour clubs avec essai gratuit de 30 jours, gestion des états, transitions automatiques, et notifications.
+### Types et Helpers
+- ✅ `/lib/subscription.ts` - Types TypeScript et fonctions utilitaires
 
-## 🗄️ Structure de Base de Données
+### Routes API
+- ✅ `/app/api/subscription/create/route.ts` - Création d'une subscription pendant l'essai
+- ✅ `/app/api/subscription/get/route.ts` - Récupération des données de subscription
+- ✅ `/app/api/subscription/cancel/route.ts` - Annulation d'abonnement
+- ✅ `/app/api/webhooks/stripe/route.ts` - Handler pour les webhooks Stripe
 
-### Migration SQL
-Fichier: `supabase/migrations/create_subscriptions_table.sql`
+### Pages
+- ✅ `/app/dashboard/subscription/page.tsx` - Page principale de gestion d'abonnement
+- ✅ `/app/dashboard/subscription/checkout/page.tsx` - Page de checkout avec Stripe Elements
 
-**Tables créées :**
-- `subscriptions` : Gestion des abonnements avec tous les états et métadonnées
-- `subscription_notifications` : Tracking des notifications envoyées
-- `subscription_events` : Audit de tous les événements d'abonnement
+### Composants
+- ✅ `/components/TrialStatusBanner.tsx` - Bannière de statut d'abonnement
+- ✅ `/components/TrialStatusBannerWrapper.tsx` - Wrapper serveur pour TrialStatusBanner
+- ✅ `/components/subscription/PlanSelection.tsx` - Sélection de plan
+- ✅ `/components/subscription/ActiveSubscription.tsx` - Gestion d'abonnement actif
 
-**États d'abonnement supportés :**
-- `trialing` : Essai gratuit actif
-- `scheduled_activation` : Activation programmée à la fin de l'essai
-- `active` : Abonnement actif
-- `paused` : Abonnement en pause
-- `canceled` : Abonnement annulé
-- `past_due` : Paiement en retard
+### Intégration
+- ✅ `/app/dashboard/layout.tsx` - Intégration de TrialStatusBanner dans le layout
 
-**Fonctions SQL créées :**
-- `initialize_club_subscription(p_club_id UUID)` : Initialise un abonnement en essai
-- `transition_subscription_status(...)` : Gère les transitions d'état avec validation
+## 📋 À faire (Migration SQL)
 
-## 🛠️ Fonctions Utilitaires
+### 1. Migration de la table `clubs`
 
-Fichier: `lib/utils/subscription-utils.ts`
+Vous devez ajouter les champs suivants à la table `clubs` dans Supabase :
 
-**Fonctions principales :**
-- `getClubSubscription(clubId)` : Récupère l'abonnement d'un club
-- `initializeSubscription(clubId)` : Initialise un nouvel abonnement
-- `activateSubscription(...)` : Active immédiatement l'abonnement
-- `scheduleActivation(...)` : Programme l'activation à la fin de l'essai
-- `pauseSubscription(...)` : Met en pause l'abonnement
-- `cancelSubscription(...)` : Annule l'abonnement (immédiat ou à la fin de période)
-- `resumeSubscription(...)` : Reprend un abonnement en pause
-- `handleTrialEnd(...)` : Gère automatiquement la fin d'essai
-- `canAccessFeature(...)` : Vérifie les règles d'accès selon l'état
+```sql
+-- Ajouter les colonnes pour le système d'abonnement
+ALTER TABLE clubs
+ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
+ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT,
+ADD COLUMN IF NOT EXISTS trial_start_date TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS trial_end_date TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS selected_plan TEXT CHECK (selected_plan IN ('monthly', 'quarterly', 'annual')),
+ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP WITH TIME ZONE,
+ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'trialing' CHECK (subscription_status IN ('trialing', 'trialing_with_plan', 'active', 'past_due', 'canceled', 'trial_expired')),
+ADD COLUMN IF NOT EXISTS subscription_started_at TIMESTAMP WITH TIME ZONE;
 
-## 🔌 API Routes
-
-### GET `/api/subscriptions/current`
-Récupère l'abonnement actuel d'un club ou en initialise un s'il n'existe pas.
-
-### POST `/api/subscriptions/activate`
-Active l'abonnement immédiatement ou programme l'activation à la fin de l'essai.
-
-**Body:**
-```json
-{
-  "planCycle": "monthly" | "quarterly" | "annual",
-  "activateNow": boolean
-}
+-- Index pour les recherches fréquentes
+CREATE INDEX IF NOT EXISTS idx_clubs_stripe_customer_id ON clubs(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_clubs_stripe_subscription_id ON clubs(stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_clubs_subscription_status ON clubs(subscription_status);
 ```
 
-### POST `/api/subscriptions/pause`
-Met en pause l'abonnement (seulement si status = "active").
+### 2. Initialisation des essais pour les clubs existants
 
-### POST `/api/subscriptions/resume`
-Reprend l'abonnement depuis paused (nécessite un moyen de paiement).
+Si vous avez des clubs existants sans `trial_start_date` et `trial_end_date`, vous pouvez les initialiser :
 
-### POST `/api/subscriptions/cancel`
-Annule l'abonnement immédiatement ou à la fin de la période.
-
-**Body:**
-```json
-{
-  "cancelAtPeriodEnd": boolean
-}
+```sql
+-- Initialiser les essais pour les clubs existants sans dates d'essai
+UPDATE clubs
+SET 
+  trial_start_date = COALESCE(trial_start_date, created_at),
+  trial_end_date = COALESCE(trial_end_date, created_at + INTERVAL '30 days'),
+  subscription_status = COALESCE(subscription_status, 'trialing')
+WHERE trial_start_date IS NULL OR trial_end_date IS NULL;
 ```
 
-### POST `/api/subscriptions/consent`
-Met à jour le consentement d'activation automatique à la fin de l'essai.
+## 🔧 Configuration requise
 
-**Body:**
-```json
-{
-  "consent": boolean
-}
+### Variables d'environnement
+
+Assurez-vous d'avoir ces variables dans votre `.env.local` :
+
+```env
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Stripe Price IDs
+NEXT_PUBLIC_STRIPE_PRICE_MONTHLY=price_xxx
+NEXT_PUBLIC_STRIPE_PRICE_QUARTERLY=price_yyy
+NEXT_PUBLIC_STRIPE_PRICE_ANNUAL=price_zzz
 ```
 
-### GET `/api/subscriptions/cron?secret=YOUR_SECRET`
-Cron job pour gérer les transitions automatiques :
-- Fin d'essai
-- Rappels d'essai (J-10, J-3, J-1)
-- Renouvellements
-- Période de grâce (paused -> canceled après 7 jours)
+### Webhook Stripe
 
-## 🔄 Comportements et Transitions
-
-### Fin d'essai sans carte
-- Si `has_payment_method = false` → Basculer en `paused` (politique actuelle)
-- Alternative : Basculer en `canceled` (configurable)
-- Aucune facturation déclenchée
-
-### Fin d'essai avec carte + consentement
-- Si `has_payment_method = true` ET `auto_activate_at_trial_end = true` → Activer automatiquement
-- Si succès → `status = active`, `next_renewal_at` calculé selon le cycle
-- Si échec → `status = past_due`, relances nécessaires
-
-### Pause vs Annulation
-- **Pause** : Accès en lecture seule, soumission de matchs désactivée, page publique accessible
-- **Annulation** : Aucun accès opérationnel, données conservées
-- **Période de grâce** : 7 jours en `paused` avant passage en `canceled`
-
-### Past Due
-- En cas d'échec de paiement → `status = past_due`
-- Relances nécessaires
-- Si non résolu avant fin de période de grâce → Basculer en `paused`
-
-## 📧 Système de Notifications
-
-**Rappels d'essai :**
-- J-10 : Notification avec date de fin et action requise
-- J-3 : Rappel avec CTA pour ajouter carte/activer
-- J-1 : Dernier rappel avant fin d'essai
-
-**Notifications à implémenter :**
-- `trial_ended` : Essai terminé
-- `payment_failed` : Échec de paiement
-- `subscription_activated` : Abonnement activé
-- `subscription_canceled` : Abonnement annulé
-- `subscription_paused` : Abonnement mis en pause
-- `subscription_resumed` : Abonnement repris
-
-**TODO:** Implémenter les fonctions d'envoi d'emails (Resend ou autre service).
-
-## 🔐 Règles d'Accès
-
-### En `paused` :
-- ✅ Back-office en lecture seule
-- ❌ Soumission de matchs désactivée
-- ✅ Page publique accessible
-- ✅ Réactivation instantanée via "Activer maintenant" si carte présente
-
-### En `canceled` :
-- ❌ Aucun accès opérationnel
-- ✅ Données conservées
-- ℹ️ Reprise = recréer un abonnement
-
-### En `active` ou `trialing` :
-- ✅ Accès complet à toutes les fonctionnalités
-
-## 📝 Configuration du Cron Job
-
-Pour activer le cron job automatique, configurez un cron externe (Vercel Cron, GitHub Actions, etc.) :
-
-**Vercel Cron (vercel.json) :**
-```json
-{
-  "crons": [
-    {
-      "path": "/api/subscriptions/cron?secret=YOUR_SECRET",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
+Configurez un webhook dans Stripe Dashboard pointant vers :
+```
+https://votre-domaine.com/api/webhooks/stripe
 ```
 
-**Variable d'environnement requise :**
-```
-SUBSCRIPTION_CRON_SECRET=your-secret-key
-```
+Événements à écouter :
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `customer.subscription.trial_will_end`
+- `invoice.payment_succeeded`
+- `invoice.payment_failed`
 
-## 🔗 Intégration avec la Page de Facturation
+## 🎯 Fonctionnalités implémentées
 
-**Composant Client :** `components/billing/BillingActions.tsx`
+### 1. Sélection de plan pendant l'essai
+- ✅ Affichage des 3 plans (Mensuel, Trimestriel, Annuel)
+- ✅ Badge "PLUS POPULAIRE" pour l'annuel
+- ✅ Badge "2 MOIS OFFERTS" pour l'annuel
+- ✅ Calcul automatique des économies
+- ✅ Message d'encouragement si en essai
 
-Ce composant gère les actions d'abonnement (activer, pauser, annuler) avec des appels API.
+### 2. Checkout avec Stripe Elements
+- ✅ Intégration Stripe Elements pour la méthode de paiement
+- ✅ Affichage des jours d'essai restants
+- ✅ Date du premier paiement clairement indiquée
+- ✅ Message rassurant : "Votre carte ne sera débitée qu'à la fin de votre essai gratuit"
+- ✅ Confirmation du paiement sans redirection si possible
 
-**À faire :**
-1. Intégrer `BillingActions` dans `app/dashboard/facturation/page.tsx`
-2. Remplacer les données mockées par les vraies données depuis `/api/subscriptions/current`
-3. Afficher les états réels de l'abonnement
+### 3. Bannière de statut
+- ✅ Affichage selon le statut (trialing, trialing_with_plan, active, past_due, trial_expired)
+- ✅ Compteur de jours restants en temps réel
+- ✅ Date du premier paiement pour les plans sélectionnés
+- ✅ Actions contextuelles (Choisir un plan, Gérer, etc.)
 
-## 📊 Exemple d'Utilisation
+### 4. Gestion d'abonnement actif
+- ✅ Affichage du plan actuel
+- ✅ Date de prochain renouvellement
+- ✅ Bouton "Gérer mon abonnement" (portail Stripe)
+- ✅ Annulation avec confirmation modale
 
-### Initialiser un abonnement pour un nouveau club
-```typescript
-import { initializeSubscription } from "@/lib/utils/subscription-utils";
+### 5. Webhooks Stripe
+- ✅ Gestion de tous les événements critiques
+- ✅ Mise à jour automatique des statuts
+- ✅ Gestion des échecs de paiement
+- ✅ Activation automatique après le premier paiement
 
-const subscription = await initializeSubscription(clubId);
-```
+## 🔄 Flux utilisateur
 
-### Récupérer l'abonnement actuel
-```typescript
-import { getClubSubscription } from "@/lib/utils/subscription-utils";
+### Pendant l'essai (30 jours)
+1. Club s'inscrit → `trial_start_date` et `trial_end_date` initialisés
+2. Club choisit un plan → Subscription Stripe créée avec `trial_end`
+3. Club ajoute sa carte → Paiement confirmé mais non débité
+4. Statut : `trialing_with_plan`
+5. Premier paiement : Le lendemain de la fin de l'essai
 
-const subscription = await getClubSubscription(clubId);
-```
+### Après l'essai
+1. Webhook `invoice.payment_succeeded` → Statut passe à `active`
+2. Abonnement se renouvelle automatiquement selon le cycle
+3. Club peut gérer via le portail Stripe
+4. Club peut annuler (accès jusqu'à la fin de la période payée)
 
-### Activer un abonnement
-```typescript
-import { activateSubscription } from "@/lib/utils/subscription-utils";
+## 🐛 Points d'attention
 
-const success = await activateSubscription(subscriptionId, "monthly", userId);
-```
+1. **Migration SQL** : N'oubliez pas d'exécuter la migration SQL avant de déployer
+2. **Webhook Secret** : Configurez le webhook secret dans Stripe et dans les variables d'environnement
+3. **Price IDs** : Vérifiez que les Price IDs Stripe sont corrects dans les variables d'environnement
+4. **Customer Portal** : La route `/api/stripe/customer-portal` doit exister (elle existe déjà dans votre codebase)
+5. **TrialStatusBannerWrapper** : Utilise un client Supabase admin, assurez-vous que les permissions sont correctes
 
-### Vérifier les règles d'accès
-```typescript
-import { canAccessFeature } from "@/lib/utils/subscription-utils";
+## 📝 Notes importantes
 
-const canSubmitMatches = canAccessFeature(subscription, "matches");
-const canAccessDashboard = canAccessFeature(subscription, "dashboard");
-```
+- Le système utilise `trial_end` dans Stripe pour garantir que le premier paiement se fait après la fin de l'essai
+- Les statuts sont synchronisés entre Stripe et Supabase via les webhooks
+- Le composant `TrialStatusBanner` se met à jour automatiquement toutes les heures
+- Tous les messages d'erreur sont en français pour l'utilisateur final
 
-## ✅ Prochaines Étapes
+## 🚀 Prochaines étapes
 
-1. **Notifications** : Implémenter l'envoi d'emails (Resend)
-2. **Intégration Stripe** : Ajouter la gestion des paiements réels
-3. **Webhooks Stripe** : Gérer les événements de paiement (success, failure)
-4. **Intégration UI** : Connecter la page de facturation aux API routes
-5. **Tests** : Ajouter des tests unitaires et d'intégration
-6. **Documentation** : Ajouter de la documentation utilisateur
-
-## 🔒 Sécurité
-
-- Toutes les API routes vérifient l'authentification
-- Les transitions d'état sont validées côté serveur
-- RLS activé sur toutes les tables
-- Service Role utilisé uniquement pour les opérations système
-- Secret requis pour le cron job
-
-## 📌 Notes Importantes
-
-- **Opt-in par défaut** : L'activation automatique nécessite un consentement explicite
-- **Pas de facturation sans carte** : Aucune facturation ne peut être déclenchée sans moyen de paiement
-- **Données conservées** : Les données sont conservées même après annulation
-- **Période de grâce** : 7 jours en `paused` avant passage en `canceled` pour maximiser les réactivations
-
+1. Exécuter la migration SQL dans Supabase
+2. Configurer les webhooks Stripe
+3. Tester le flux complet :
+   - Création d'un club
+   - Sélection d'un plan pendant l'essai
+   - Ajout de la méthode de paiement
+   - Vérification du premier paiement après l'essai
+4. Tester les webhooks avec Stripe CLI en local si nécessaire

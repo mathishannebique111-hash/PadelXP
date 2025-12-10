@@ -67,10 +67,16 @@ function ClubsLoginForm() {
         if (!profileInit.ok) {
           const payload = await profileInit.json().catch(() => ({}));
           await supabase.auth.signOut();
-          setError(
-            payload?.error ||
-              "Impossible d'initialiser votre accès club. Veuillez contacter le propriétaire du compte."
-          );
+          
+          // Adapter le message d'erreur pour les clubs
+          let errorMessage = payload?.error || "Impossible d'initialiser votre accès club. Veuillez contacter le propriétaire du compte.";
+          
+          // Si le message parle de "compte joueur", le remplacer par un message adapté aux clubs
+          if (errorMessage.includes("compte joueur") || errorMessage.includes("inscription joueurs")) {
+            errorMessage = "Aucun compte club trouvé pour cet email. Vérifiez que vous avez bien créé votre compte club ou contactez le propriétaire du club.";
+          }
+          
+          setError(errorMessage);
           setLoading(false);
           return;
         }

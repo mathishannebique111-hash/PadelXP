@@ -6,6 +6,7 @@ import InvitationCodeCard from "./InvitationCodeCard";
 import PageTitle from "./PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import Image from "next/image";
+import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -61,6 +62,10 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   return [];
 }
 
+// Forcer le rechargement dynamique pour éviter le cache
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DashboardHome() {
   const supabase = await createClient();
   const {
@@ -78,35 +83,107 @@ export default async function DashboardHome() {
     redirect("/clubs/login?error=no_access");
   }
 
-  const { data: club } = await supabase
+  const { data: club, error: clubError } = await supabase
     .from("clubs")
-    .select("code_invitation, slug, trial_start")
+    .select("code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count")
     .eq("id", clubId)
     .maybeSingle();
+  
+  // Log pour déboguer (à retirer en production)
+  if (process.env.NODE_ENV === 'development' && club) {
+    console.log('[DashboardHome] Club data:', {
+      trial_start_date: club.trial_start_date,
+      trial_end_date: club.trial_end_date,
+      trial_current_end_date: club.trial_current_end_date,
+      auto_extension_unlocked: club.auto_extension_unlocked,
+      total_days: club.trial_current_end_date && club.trial_start_date 
+        ? Math.ceil((new Date(club.trial_current_end_date).getTime() - new Date(club.trial_start_date).getTime()) / (1000 * 60 * 60 * 24))
+        : null
+    });
+  }
 
   // Calculer le nombre de jours restants de l'essai
-  function calculateDaysRemaining(trialStart: string | null): number | null {
-    if (!trialStart) return null;
-    
-    const startDate = new Date(trialStart);
+  // Utiliser le nouveau système (trial_current_end_date) si disponible, sinon fallback sur l'ancien
+  function calculateDaysRemaining(trialEnd: string | null): number | null {
+    if (!trialEnd) return null;
+
+    const endDate = new Date(trialEnd);
     const now = new Date();
-    
-    // Définir l'heure à minuit pour compter les jours complets
-    const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+
+    const endMidnight = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
     const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Calculer les jours passés depuis l'inscription
-    const diffTime = nowMidnight.getTime() - startMidnight.getTime();
-    const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Calculer les jours restants : 30 jours d'essai - jours passés
-    const daysRemaining = 30 - daysPassed;
-    
+
+    const diffTime = endMidnight.getTime() - nowMidnight.getTime();
+    const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
     return Math.max(0, daysRemaining);
   }
 
-  const daysRemaining = calculateDaysRemaining(club?.trial_start ?? null);
+  // PRIORITÉ : trial_current_end_date (nouveau système) > trial_end_date (ancien) > calcul depuis trial_start
+  const trialEndDate = club?.trial_current_end_date || club?.trial_end_date || null;
+  const trialStartDate = club?.trial_start_date || club?.trial_start || null;
+  const daysRemaining = trialEndDate 
+    ? calculateDaysRemaining(trialEndDate)
+    : trialStartDate
+    ? (() => {
+        const startDate = new Date(trialStartDate);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 14); // 14 jours
+        return calculateDaysRemaining(endDate.toISOString());
+      })()
+    : null;
   const showTrialWarning = daysRemaining !== null && daysRemaining <= 10 && daysRemaining > 0;
+
+  // Calculer le nombre total de jours d'essai (14 ou 30 selon l'extension)
+  // IMPORTANT: Utiliser directement trial_current_end_date de la base de données
+  const calculateTotalTrialDays = (): number => {
+    if (!trialStartDate) return 14; // Par défaut 14 jours si pas de date de début
+    
+    // PRIORITÉ ABSOLUE : trial_current_end_date de la base (prend en compte les extensions)
+    // Ne pas utiliser trialEndDate qui peut être calculé avec fallback
+    let effectiveEndDate: Date | null = null;
+    
+    if (club?.trial_current_end_date) {
+      effectiveEndDate = new Date(club.trial_current_end_date);
+    } else if (club?.trial_end_date) {
+      effectiveEndDate = new Date(club.trial_end_date);
+    }
+    
+    // Si aucune date de fin n'est trouvée, calculer depuis trial_start_date + 14 jours
+    if (!effectiveEndDate) {
+      const start = new Date(trialStartDate);
+      start.setDate(start.getDate() + 14);
+      effectiveEndDate = start;
+    }
+    
+    // Vérifier que la date est valide
+    if (isNaN(effectiveEndDate.getTime())) {
+      console.error('[DashboardHome] Invalid effectiveEndDate:', effectiveEndDate);
+      return 14; // Par défaut 14 jours si date invalide
+    }
+    
+    const start = new Date(trialStartDate);
+    const end = new Date(effectiveEndDate);
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Log pour déboguer
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[DashboardHome] calculateTotalTrialDays:', {
+        trialStartDate: trialStartDate,
+        effectiveEndDate: effectiveEndDate.toISOString(),
+        diffDays,
+        trial_current_end_date: club?.trial_current_end_date,
+        trial_end_date: club?.trial_end_date,
+        auto_extension_unlocked: club?.auto_extension_unlocked,
+        raw_trial_current_end_date: club?.trial_current_end_date,
+        raw_trial_end_date: club?.trial_end_date
+      });
+    }
+    
+    return diffDays;
+  };
+  const totalTrialDays = calculateTotalTrialDays();
 
   // Derniers matchs du club (5 derniers)
   let recentMatches: Array<{ id: string; created_at: string; score_team1: number | null; score_team2: number | null; team1_id: string; team2_id: string; winner_team_id: string | null }> = [];
@@ -225,6 +302,16 @@ export default async function DashboardHome() {
         <PageTitle title="Tableau de bord" subtitle="Bienvenue dans votre espace club / complexe" />
       </header>
 
+      {/* Progress bar pour débloquer l'extension automatique */}
+      {daysRemaining !== null && daysRemaining > 0 && !club?.auto_extension_unlocked && (
+        <TrialExtensionProgress
+          clubId={clubId}
+          playersCount={club?.total_players_count || 0}
+          matchesCount={club?.total_matches_count || 0}
+          autoExtensionUnlocked={club?.auto_extension_unlocked || false}
+        />
+      )}
+
       {/* Code d'invitation */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
         <InvitationCodeCard
@@ -332,7 +419,7 @@ export default async function DashboardHome() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                  <span className="font-semibold text-base sm:text-lg text-white">Essai gratuit — 30 jours</span>
+                  <span className="font-semibold text-base sm:text-lg text-white">Essai gratuit — {totalTrialDays} jours</span>
                   <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold border ${
                     showTrialWarning
                       ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
@@ -381,7 +468,7 @@ export default async function DashboardHome() {
             <div className="text-2xl sm:text-3xl flex-shrink-0">💳</div>
             <div className="flex-1 min-w-0">
               <p className="text-xs sm:text-sm text-white/70">
-                Profitez de 30 jours d'essai gratuit pour découvrir toutes les fonctionnalités.
+                Profitez de {totalTrialDays} jours d'essai gratuit pour découvrir toutes les fonctionnalités.
               </p>
               <div className="mt-3 sm:mt-4">
                 <a

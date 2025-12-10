@@ -241,12 +241,12 @@ async function findBestTeamOfThree(
   const teamStats = teamIds.map((teamId) => {
     let setsWon = 0;
     let setsLost = 0;
-    let gamesWon = 0;
-    let gamesLost = 0;
 
     // Parcourir tous les matchs joués par cette équipe
+    // Pour le TMC20, on calcule le bye uniquement sur le tour précédent (Tour 2)
     const teamMatches = allMatches.filter(
       (m) =>
+        m.round_number === 2 &&
         (m.team1_registration_id === teamId || m.team2_registration_id === teamId) &&
         m.status === "completed" &&
         m.score
@@ -271,17 +271,9 @@ async function findBestTeamOfThree(
           else setsWon++;
         }
 
-        // Compter les jeux (les scores des sets)
-        if (isTeam1) {
-          gamesWon += team1Score;
-          gamesLost += team2Score;
-        } else {
-          gamesWon += team2Score;
-          gamesLost += team1Score;
-        }
       });
 
-      // Compter le super tie-break comme un set et ajouter les jeux
+      // Compter le super tie-break comme un set
       if (superTiebreak) {
         const team1Score = superTiebreak.team1 || 0;
         const team2Score = superTiebreak.team2 || 0;
@@ -295,41 +287,27 @@ async function findBestTeamOfThree(
           else setsWon++;
         }
 
-        // Compter les jeux du super tie-break
-        if (isTeam1) {
-          gamesWon += team1Score;
-          gamesLost += team2Score;
-        } else {
-          gamesWon += team2Score;
-          gamesLost += team1Score;
-        }
       }
     });
 
     const setsDiff = setsWon - setsLost;
-    const gamesDiff = gamesWon - gamesLost;
     const teamData = teamsData.find((t) => t.id === teamId);
     const pairWeight = teamData?.pair_total_rank || 0;
 
     return {
       teamId,
       setsDiff,
-      gamesDiff,
       pairWeight,
     };
   });
 
-  // Trier : sets_diff décroissant, puis games_diff décroissant, puis pair_weight décroissant (plus fort = meilleur)
+  // Trier : sets_diff décroissant, puis pair_weight décroissant (plus fort = meilleur)
   teamStats.sort((a, b) => {
     // Premier critère : sets_diff
     if (a.setsDiff !== b.setsDiff) {
       return b.setsDiff - a.setsDiff; // Décroissant
     }
-    // Deuxième critère : games_diff (si égalité sur sets_diff)
-    if (a.gamesDiff !== b.gamesDiff) {
-      return b.gamesDiff - a.gamesDiff; // Décroissant
-    }
-    // Troisième critère : pair_weight (si égalité sur sets_diff et games_diff)
+    // Deuxième critère : pair_weight (si égalité sur sets_diff)
     return b.pairWeight - a.pairWeight; // Décroissant (plus fort = meilleur)
   });
 
@@ -1481,12 +1459,10 @@ async function findBestTwoTeamsOfFive(
     throw new Error("Impossible de récupérer les données des équipes");
   }
 
-  // Calculer sets_diff et games_diff pour chaque équipe (même logique que findBestTeamOfThree)
+  // Calculer sets_diff pour chaque équipe (même logique que findBestTeamOfThree)
   const teamStats = teamIds.map((teamId) => {
     let setsWon = 0;
     let setsLost = 0;
-    let gamesWon = 0;
-    let gamesLost = 0;
 
     const teamMatches = allMatches.filter(
       (m) =>
@@ -1511,14 +1487,6 @@ async function findBestTwoTeamsOfFive(
           if (isTeam1) setsLost++;
           else setsWon++;
         }
-
-        if (isTeam1) {
-          gamesWon += team1Score;
-          gamesLost += team2Score;
-        } else {
-          gamesWon += team2Score;
-          gamesLost += team1Score;
-        }
       });
 
       if (superTiebreak) {
@@ -1532,37 +1500,24 @@ async function findBestTwoTeamsOfFive(
           if (isTeam1) setsLost++;
           else setsWon++;
         }
-
-        if (isTeam1) {
-          gamesWon += team1Score;
-          gamesLost += team2Score;
-        } else {
-          gamesWon += team2Score;
-          gamesLost += team1Score;
-        }
       }
     });
 
     const setsDiff = setsWon - setsLost;
-    const gamesDiff = gamesWon - gamesLost;
     const teamData = teamsData.find((t) => t.id === teamId);
     const pairWeight = teamData?.pair_total_rank || 0;
 
     return {
       teamId,
       setsDiff,
-      gamesDiff,
       pairWeight,
     };
   });
 
-  // Trier : sets_diff décroissant, puis games_diff décroissant, puis pair_weight décroissant
+  // Tri : sets_diff décroissant, puis pair_weight décroissant
   teamStats.sort((a, b) => {
     if (a.setsDiff !== b.setsDiff) {
       return b.setsDiff - a.setsDiff;
-    }
-    if (a.gamesDiff !== b.gamesDiff) {
-      return b.gamesDiff - a.gamesDiff;
     }
     return b.pairWeight - a.pairWeight;
   });
@@ -1763,78 +1718,155 @@ async function generateNextRound20(
       );
 
       if (existingTour3Matches.length > 0) {
-        // Les matchs existent déjà, vérifier s'il faut créer le Match 2
-        const match1 = existingTour3Matches.find((m) => m.match_order === 1 && !m.is_bye);
-        const match2 = existingTour3Matches.find((m) => m.match_order === 2 && !m.is_bye);
-
-        if (match1 && !match2 && match1.status === "completed" && match1.winner_registration_id) {
-          // Créer le Match 2 : Équipe 5 vs Gagnant Match 1
-          const { best, second } = await findBestTwoTeamsOfFive(
-            supabase,
-            tournamentId,
-            teams,
-            allMatchesWithScores as Match[]
-          );
-          const other = teams.filter((id) => id !== best && id !== second);
-          const team5 = other[2]; // La 5ème équipe
-
-          const { error: match2Error } = await supabase.from("tournament_matches").insert({
-            tournament_id: tournamentId,
-            round_type: roundType,
-            round_number: 3,
-            match_order: 2,
-            team1_registration_id: team5,
-            team2_registration_id: match1.winner_registration_id,
-            is_bye: false,
-            status: "scheduled",
-            tableau: tableauName,
-          });
-
-          if (match2Error) {
-            throw new Error(`Erreur lors de la création du match 2 ${tableauName}`);
-          }
-        }
-
-        // Vérifier s'il faut mettre à jour le Match 3 (bye partiel)
-        const match3 = existingTour3Matches.find((m) => m.match_order === 3 && !m.is_bye);
-        if (match2 && match3 && match2.status === "completed" && match2.winner_registration_id && !match3.team2_registration_id) {
-          // Mettre à jour le Match 3 avec le gagnant du Match 2
-          await supabase
-            .from("tournament_matches")
-            .update({ team2_registration_id: match2.winner_registration_id })
-            .eq("id", match3.id);
-        }
-
-        return; // Les matchs existent déjà
+        // Les matchs existent déjà, rien à faire pour cette nouvelle structure (2 matchs + 1 bye)
+        return;
       }
 
-      // Créer les matchs initiaux
-      const { best, second } = await findBestTwoTeamsOfFive(
-        supabase,
-        tournamentId,
-        teams,
-        allMatchesWithScores as Match[]
-      );
-      const other = teams.filter((id) => id !== best && id !== second);
+      // Créer les matchs initiaux (2 matchs + 1 bye)
+      // Récupérer les poids pour tous
+      const { data: teamsData } = await supabase
+        .from("tournament_registrations")
+        .select("id, pair_total_rank")
+        .in("id", teams)
+        .eq("tournament_id", tournamentId);
 
-      if (other.length !== 3) {
+      if (!teamsData || teamsData.length !== 5) {
+        throw new Error(`Impossible de récupérer les données des équipes pour ${tableauName}`);
+      }
+
+      const isClassificationTableau =
+        tableauName === "places_6_10" ||
+        tableauName === "places_11_15" ||
+        tableauName === "places_16_20";
+
+      let byeTeamId: string;
+      if (isClassificationTableau || tableauName === "principal") {
+        // Bye spécifique TMC20 (principal et tableaux de classement) basé uniquement sur le Tour 2
+        const tour2MatchesForTeams = allMatchesWithScores.filter(
+          (m) =>
+            m.round_number === 2 &&
+            (teams.includes(m.team1_registration_id!) ||
+              teams.includes(m.team2_registration_id!)) &&
+            m.status === "completed" &&
+            m.score
+        );
+
+        const stats = teams.map((teamId) => {
+          let setsWon = 0;
+          let setsLost = 0;
+
+          const teamMatches = tour2MatchesForTeams.filter(
+            (m) =>
+              m.round_number === 2 &&
+              (m.team1_registration_id === teamId || m.team2_registration_id === teamId) &&
+              m.status === "completed" &&
+              m.score
+          );
+
+            teamMatches.forEach((match) => {
+            const isTeam1 = match.team1_registration_id === teamId;
+            const sets = match.score?.sets || [];
+            const superTiebreak = match.score?.super_tiebreak;
+
+            sets.forEach((set: any) => {
+              const team1Score = set.team1 || 0;
+              const team2Score = set.team2 || 0;
+              if (team1Score > team2Score) {
+                if (isTeam1) {
+                  setsWon++;
+                } else {
+                  setsWon++;
+                  setsLost++;
+                }
+              } else if (team2Score > team1Score) {
+                if (isTeam1) {
+                  setsLost++;
+                } else {
+                  setsWon++;
+                }
+              }
+            });
+
+            if (superTiebreak) {
+              const team1Score = superTiebreak.team1 || 0;
+              const team2Score = superTiebreak.team2 || 0;
+              if (team1Score > team2Score) {
+                if (isTeam1) setsWon++;
+                else setsLost++;
+              } else if (team2Score > team1Score) {
+                if (isTeam1) setsLost++;
+                else setsWon++;
+              }
+            }
+          });
+
+          const pairWeight = teamsData.find((t) => t.id === teamId)?.pair_total_rank || 0;
+          return {
+            teamId,
+            setsWon,
+            setsLost,
+            setsDiff: setsWon - setsLost,
+            pairWeight,
+          };
+        });
+
+        // Tri : sets_diff décroissant, puis pair_weight (spécifique TMC20)
+        stats.sort((a, b) => {
+          if (a.setsDiff !== b.setsDiff) return b.setsDiff - a.setsDiff;
+          // Pour principal, places_6_10, places_11_15 et places_16_20 : choisir le plus petit pair_weight en cas d'égalité
+          if (
+            tableauName === "principal" ||
+            tableauName === "places_6_10" ||
+            tableauName === "places_11_15" ||
+            tableauName === "places_16_20"
+          ) {
+            return a.pairWeight - b.pairWeight;
+          }
+          // Autres tableaux TMC20 : pair_weight décroissant (plus fort en premier)
+          return b.pairWeight - a.pairWeight;
+        });
+
+        byeTeamId = stats[0].teamId;
+      } else {
+        // Autres cas (non TMC20) : logique générale (sets_diff / games_diff / pair_weight)
+        const { best } = await findBestTwoTeamsOfFive(
+          supabase,
+          tournamentId,
+          teams,
+          allMatchesWithScores as Match[]
+        );
+        byeTeamId = best;
+      }
+
+      // Ordonner les 4 autres par poids (desc) pour les appariements type têtes de série
+      const remaining = teams
+        .filter((id) => id !== byeTeamId)
+        .map((id) => {
+          const data = teamsData.find((t) => t.id === id);
+          return { id, weight: data?.pair_total_rank || 0 };
+        })
+        .sort((a, b) => b.weight - a.weight); // plus fort en premier
+
+      if (remaining.length !== 4) {
         throw new Error(
-          `Structure invalide pour ${tableauName} : impossible d'identifier les 3 autres équipes`
+          `Structure invalide pour ${tableauName} : impossible d'identifier les 4 équipes sans bye`
         );
       }
 
-      const team3 = other[0];
-      const team4 = other[1];
-      const team5 = other[2];
+      // Appariement type têtes de série : 1er vs 4e, 2e vs 3e
+      const teamA = remaining[0].id;
+      const teamB = remaining[3].id;
+      const teamC = remaining[1].id;
+      const teamD = remaining[2].id;
 
-      // Match 1 : Équipe 3 vs Équipe 4
+      // Match 1 : équipe la plus forte des 4 restantes vs la plus faible
       const { error: match1Error } = await supabase.from("tournament_matches").insert({
         tournament_id: tournamentId,
         round_type: roundType,
         round_number: 3,
         match_order: 1,
-        team1_registration_id: team3,
-        team2_registration_id: team4,
+        team1_registration_id: teamA,
+        team2_registration_id: teamB,
         is_bye: false,
         status: "scheduled",
         tableau: tableauName,
@@ -1844,14 +1876,14 @@ async function generateNextRound20(
         throw new Error(`Erreur lors de la création du match 1 ${tableauName}`);
       }
 
-      // Match 2 : Équipe 5 vs Gagnant Match 1 (team2 sera mis à jour après Match 1)
+      // Match 2 : les deux équipes intermédiaires
       const { error: match2Error } = await supabase.from("tournament_matches").insert({
         tournament_id: tournamentId,
         round_type: roundType,
         round_number: 3,
         match_order: 2,
-        team1_registration_id: team5,
-        team2_registration_id: null, // sera mis à jour quand le Match 1 est complété
+        team1_registration_id: teamC,
+        team2_registration_id: teamD,
         is_bye: false,
         status: "scheduled",
         tableau: tableauName,
@@ -1861,40 +1893,22 @@ async function generateNextRound20(
         throw new Error(`Erreur lors de la création du match 2 ${tableauName}`);
       }
 
-      // Bye complet pour la meilleure équipe (match_order 4 pour éviter conflit)
+      // Bye pour la meilleure équipe (match_order 3)
       const { error: byeError } = await supabase.from("tournament_matches").insert({
         tournament_id: tournamentId,
         round_type: roundType,
         round_number: 3,
-        match_order: 4,
-        team1_registration_id: best,
+        match_order: 3,
+        team1_registration_id: byeTeamId,
         team2_registration_id: null,
         is_bye: true,
         status: "completed",
-        winner_registration_id: best,
+        winner_registration_id: byeTeamId,
         tableau: tableauName,
       });
 
       if (byeError) {
-        throw new Error(`Erreur lors de la création du bye complet ${tableauName}`);
-      }
-
-      // Bye partiel pour la 2ème meilleure équipe (match_order 3)
-      // Le team2 sera mis à jour après que le Match 2 soit complété
-      const { error: byePartialError } = await supabase.from("tournament_matches").insert({
-        tournament_id: tournamentId,
-        round_type: roundType,
-        round_number: 3,
-        match_order: 3,
-        team1_registration_id: second,
-        team2_registration_id: null, // Sera mis à jour après Match 2
-        is_bye: false,
-        status: "scheduled",
-        tableau: tableauName,
-      });
-
-      if (byePartialError) {
-        throw new Error(`Erreur lors de la création du bye partiel ${tableauName}`);
+        throw new Error(`Erreur lors de la création du bye ${tableauName}`);
       }
     };
 
@@ -1926,45 +1940,6 @@ async function generateNextRound20(
     // Récupérer tous les matchs du Tour 3
     const tour3Matches = allMatchesWithScores.filter((m) => m.round_number === 3);
 
-    // Avant toute vérification, compléter automatiquement les matchs dépendants (match2 et match3)
-    const tableauNames = ["principal", "places_6_10", "places_11_15", "places_16_20"];
-    for (const tableauName of tableauNames) {
-      const tableauMatches = tour3Matches.filter((m) => m.tableau === tableauName);
-      const match1 = tableauMatches.find((m) => m.match_order === 1 && !m.is_bye);
-      const match2 = tableauMatches.find((m) => m.match_order === 2 && !m.is_bye);
-      const match3 = tableauMatches.find((m) => m.match_order === 3 && !m.is_bye);
-
-      // Si le match 1 est complété et que le match 2 n'a pas encore son équipe 2, l'ajouter
-      if (
-        match1 &&
-        match1.status === "completed" &&
-        match1.winner_registration_id &&
-        match2 &&
-        !match2.team2_registration_id
-      ) {
-        await supabase
-          .from("tournament_matches")
-          .update({ team2_registration_id: match1.winner_registration_id })
-          .eq("id", match2.id);
-        match2.team2_registration_id = match1.winner_registration_id;
-      }
-
-      // Si le match 2 est complété et que le match 3 n'a pas encore son équipe 2, l'ajouter
-      if (
-        match2 &&
-        match2.status === "completed" &&
-        match2.winner_registration_id &&
-        match3 &&
-        !match3.team2_registration_id
-      ) {
-        await supabase
-          .from("tournament_matches")
-          .update({ team2_registration_id: match2.winner_registration_id })
-          .eq("id", match3.id);
-        match3.team2_registration_id = match2.winner_registration_id;
-      }
-    }
-
     // Vérifier que tous les matchs du Tour 3 sont complétés
     const incompleteTour3 = tour3Matches.filter(
       (m) => !m.is_bye && (m.status !== "completed" || !m.winner_registration_id)
@@ -1974,191 +1949,297 @@ async function generateNextRound20(
       throw new Error("Tous les matchs du Tour 3 doivent être complétés avant de générer le Tour 4");
     }
 
-    // Fonction helper pour déterminer les équipes qualifiées depuis un tableau de 5 équipes
-    const getQualifiedTeamsFromTableau = (tableauName: string) => {
+    // Helper : calculer setsDiff sur les matchs du Tour 3 d'un tableau pour une équipe
+    const computeSetsDiffForTeam = (tableauMatches: Match[], teamId: string) => {
+      let setsWon = 0;
+      let setsLost = 0;
+      tableauMatches
+        .filter(
+          (m) =>
+            m.round_number === 3 &&
+            (m.team1_registration_id === teamId || m.team2_registration_id === teamId) &&
+            m.status === "completed" &&
+            m.score
+        )
+        .forEach((match) => {
+          const isTeam1 = match.team1_registration_id === teamId;
+          const sets = match.score?.sets || [];
+          const superTiebreak = match.score?.super_tiebreak;
+
+          sets.forEach((set: any) => {
+            const s1 = set.team1 || 0;
+            const s2 = set.team2 || 0;
+            if (s1 > s2) {
+              if (isTeam1) setsWon++;
+              else setsLost++;
+            } else if (s2 > s1) {
+              if (isTeam1) setsLost++;
+              else setsWon++;
+            }
+          });
+
+          if (superTiebreak) {
+            const s1 = superTiebreak.team1 || 0;
+            const s2 = superTiebreak.team2 || 0;
+            if (s1 > s2) {
+              if (isTeam1) setsWon++;
+              else setsLost++;
+            } else if (s2 > s1) {
+              if (isTeam1) setsLost++;
+              else setsWon++;
+            }
+          }
+        });
+      return setsWon - setsLost;
+    };
+
+    // Fonction helper pour déterminer les équipes qualifiées depuis un tableau de 5 équipes (2 matchs + 1 bye)
+    const getQualifiedTeamsFromTableau = async (tableauName: string) => {
       const tableauMatches = tour3Matches.filter((m) => m.tableau === tableauName);
       const match1 = tableauMatches.find((m) => m.match_order === 1 && !m.is_bye);
       const match2 = tableauMatches.find((m) => m.match_order === 2 && !m.is_bye);
-      const match3 = tableauMatches.find((m) => m.match_order === 3 && !m.is_bye);
       const bye = tableauMatches.find((m) => m.is_bye);
 
-      if (!match1 || !match2 || !match3 || !bye) {
+      if (!match1 || !match2 || !bye) {
         throw new Error(`Structure invalide pour le tableau ${tableauName} au Tour 3`);
       }
 
-      // Structure : Match 1 (Équipe 3 vs Équipe 4), Match 2 (Équipe 5 vs Gagnant M1), Match 3 (Équipe 2 vs Gagnant M2), Bye (Équipe 1)
-      const winner1 = match1.winner_registration_id!;
-      const winner2 = match2.winner_registration_id!;
-      const winner3 = match3.winner_registration_id!;
-      const byeTeam = bye.winner_registration_id!;
-
-      // Identifier les perdants
+      const winner1 = match1.winner_registration_id!; // gagnant match bas (4e vs 5e)
       const loser1 = match1.team1_registration_id === winner1
         ? match1.team2_registration_id
-        : match1.team1_registration_id;
+        : match1.team1_registration_id; // perdant match bas
+
+      const winner2 = match2.winner_registration_id!; // gagnant match haut (2e vs 3e)
       const loser2 = match2.team1_registration_id === winner2
         ? match2.team2_registration_id
-        : match2.team1_registration_id;
-      const loser3 = match3.team1_registration_id === winner3
-        ? match3.team2_registration_id
-        : match3.team1_registration_id;
+        : match2.team1_registration_id; // perdant match haut
 
-      // Pour un tableau de 5 équipes :
-      // - Finale : Gagnant Match 3 vs Équipe avec bye (bye complet)
-      // - Match 3-4 : Perdant Match 3 vs Gagnant Match 2 (qui a perdu contre l'équipe avec bye partiel)
-      // - Match 5ème : Perdant Match 2 vs Perdant Match 1
+      const byeTeam = bye.winner_registration_id!; // meilleure équipe du tableau (bye)
+
+      // Préparer les données poids/pair
+      const teamIds = Array.from(
+        new Set([
+          byeTeam,
+          winner1,
+          winner2,
+          loser1,
+          loser2,
+        ])
+      );
+      const { data: teamsData } = await supabase
+        .from("tournament_registrations")
+        .select("id, pair_total_rank")
+        .in("id", teamIds)
+        .eq("tournament_id", tournamentId);
+
+      if (!teamsData || teamsData.length !== teamIds.length) {
+        throw new Error(`Impossible de récupérer les données des équipes (Tour 4) pour ${tableauName}`);
+      }
+
+      // Classer les gagnants par sets_diff (décroissant), puis pair_weight (plus faible en premier)
+      const winners = [
+        { id: byeTeam, sd: computeSetsDiffForTeam(tableauMatches, byeTeam) },
+        { id: winner1, sd: computeSetsDiffForTeam(tableauMatches, winner1) },
+        { id: winner2, sd: computeSetsDiffForTeam(tableauMatches, winner2) },
+      ].sort((a, b) => {
+        if (a.sd !== b.sd) return b.sd - a.sd;
+        const pa =
+          teamsData.find((t: any) => t.id === a.id)?.pair_total_rank ?? Number.MAX_SAFE_INTEGER;
+        const pb =
+          teamsData.find((t: any) => t.id === b.id)?.pair_total_rank ?? Number.MAX_SAFE_INTEGER;
+        return pa - pb; // plus faible en premier
+      });
+
+      // Classer les perdants par sets_diff (décroissant), puis pair_weight (plus faible en premier)
+      const losers = [
+        { id: loser1, sd: computeSetsDiffForTeam(tableauMatches, loser1) },
+        { id: loser2, sd: computeSetsDiffForTeam(tableauMatches, loser2) },
+      ].sort((a, b) => {
+        if (a.sd !== b.sd) return b.sd - a.sd;
+        const pa =
+          teamsData.find((t: any) => t.id === a.id)?.pair_total_rank ?? Number.MAX_SAFE_INTEGER;
+        const pb =
+          teamsData.find((t: any) => t.id === b.id)?.pair_total_rank ?? Number.MAX_SAFE_INTEGER;
+        return pa - pb; // plus faible en premier
+      });
+
       return {
-        final1: winner3, // Gagnant Match 3
-        final2: byeTeam, // Équipe avec bye complet
-        third: loser3, // Perdant Match 3
-        fourth: winner2, // Gagnant Match 2 (qui a perdu contre l'équipe avec bye partiel au Match 3)
-        fifth: loser2, // Perdant Match 2
-        sixth: loser1, // Perdant Match 1
+        bestWinner: winners[0].id,
+        secondWinner: winners[1].id,
+        bye: winners[2].id, // moins bon des gagnants = classé 5/10/15/20 selon tableau
+        bestLoser: losers[0].id,
+        worstLoser: losers[1].id,
       };
     };
 
-    // A) Tableau Principal : Finale (1-2), Match 3ème (3-4), Match 5ème (5-6)
-    const principal = getQualifiedTeamsFromTableau("principal");
-    
-    // Finale (1-2)
+    // A) Tableau Principal : finale 1-2, match 3-4, place directe 5
+    const principal = await getQualifiedTeamsFromTableau("principal");
+    // Finale 1-2 (bye classé directement 5ème)
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "final",
       round_number: 4,
       match_order: 1,
-      team1_registration_id: principal.final1,
-      team2_registration_id: principal.final2,
+      team1_registration_id: principal.bestWinner,
+      team2_registration_id: principal.bye,
       is_bye: false,
       status: "scheduled",
       tableau: "principal",
     });
 
-    // Match 3ème place (3-4)
+    // Match 3-4
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "third_place",
       round_number: 4,
       match_order: 2,
-      team1_registration_id: principal.third,
-      team2_registration_id: principal.fourth,
+      team1_registration_id: principal.secondWinner,
+      team2_registration_id: principal.bestLoser,
       is_bye: false,
       status: "scheduled",
       tableau: "principal",
     });
 
-    // Match 5ème place (5-6)
+    // Place directe 5 (bye)
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
       match_order: 3,
-      team1_registration_id: principal.fifth,
-      team2_registration_id: principal.sixth,
+      team1_registration_id: principal.worstLoser,
+      team2_registration_id: null,
+      is_bye: true,
+      status: "completed",
+      winner_registration_id: principal.worstLoser,
+      tableau: "principal",
+    });
+
+    // B) Tableau Places 6-10 : finale 6-7, match 8-9, place directe 10
+    const places6_10 = await getQualifiedTeamsFromTableau("places_6_10");
+    
+    // Finale 6-7
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 1,
+      team1_registration_id: places6_10.bestWinner,
+      team2_registration_id: places6_10.bye,
       is_bye: false,
       status: "scheduled",
       tableau: "places_6_10",
     });
 
-    // B) Tableau Places 6-10 : Match 7ème (7-8), Match 9ème (9-10)
-    const places6_10 = getQualifiedTeamsFromTableau("places_6_10");
-    
-    // Match 7ème place (7-8)
+    // Match 8-9
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
-      match_order: 4,
-      team1_registration_id: places6_10.final1,
-      team2_registration_id: places6_10.final2,
+      match_order: 2,
+      team1_registration_id: places6_10.secondWinner,
+      team2_registration_id: places6_10.bestLoser,
       is_bye: false,
       status: "scheduled",
       tableau: "places_6_10",
     });
 
-    // Match 9ème place (9-10)
+    // Place directe 10 (bye)
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
-      match_order: 5,
-      team1_registration_id: places6_10.third,
-      team2_registration_id: places6_10.fourth,
-      is_bye: false,
-      status: "scheduled",
+      match_order: 3,
+      team1_registration_id: places6_10.worstLoser,
+      team2_registration_id: null,
+      is_bye: true,
+      status: "completed",
+      winner_registration_id: places6_10.worstLoser,
       tableau: "places_6_10",
     });
 
-    // C) Tableau Places 11-15 : Match 11ème (11-12), Match 13ème (13-14), Match 15ème
-    const places11_15 = getQualifiedTeamsFromTableau("places_11_15");
+    // C) Tableau Places 11-15 : finale 11-12, match 13-14, place directe 15
+    const places11_15 = await getQualifiedTeamsFromTableau("places_11_15");
     
-    // Match 11ème place (11-12)
+    // Match 11-12
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
-      match_order: 6,
-      team1_registration_id: places11_15.final1,
-      team2_registration_id: places11_15.final2,
+      match_order: 1,
+      team1_registration_id: places11_15.bestWinner,
+      team2_registration_id: places11_15.bye,
       is_bye: false,
       status: "scheduled",
       tableau: "places_11_15",
     });
 
-    // Match 13ème place (13-14)
+    // Match 13-14
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
-      match_order: 7,
-      team1_registration_id: places11_15.third,
-      team2_registration_id: places11_15.fourth,
+      match_order: 2,
+      team1_registration_id: places11_15.secondWinner,
+      team2_registration_id: places11_15.bestLoser,
       is_bye: false,
       status: "scheduled",
       tableau: "places_11_15",
     });
 
-    // Match 15ème place (15ème seule, pas de match selon le guide)
-    // En fait, avec 5 équipes, la 5ème équipe du tableau est automatiquement 15ème
-    // Mais selon le guide, il y a un match 15ème place, donc créons-le avec la 5ème équipe
-    // qui joue contre... en fait, il n'y a que 5 équipes, donc créons un match entre les 2 dernières
+    // Place directe 15 (bye)
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
-      match_order: 8,
-      team1_registration_id: places11_15.fifth,
-      team2_registration_id: places11_15.sixth,
-      is_bye: false,
-      status: "scheduled",
+      match_order: 3,
+      team1_registration_id: places11_15.worstLoser,
+      team2_registration_id: null,
+      is_bye: true,
+      status: "completed",
+      winner_registration_id: places11_15.worstLoser,
       tableau: "places_11_15",
     });
 
-    // D) Tableau Places 16-20 : Match 17ème (17-18), Match 19ème (19-20)
-    const places16_20 = getQualifiedTeamsFromTableau("places_16_20");
+    // D) Tableau Places 16-20 : match 16-17, match 18-19, place directe 20
+    const places16_20 = await getQualifiedTeamsFromTableau("places_16_20");
     
-    // Match 17ème place (17-18)
+    // Match 16-17
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
-      match_order: 9,
-      team1_registration_id: places16_20.final1,
-      team2_registration_id: places16_20.final2,
+      match_order: 1,
+      team1_registration_id: places16_20.bestWinner,
+      team2_registration_id: places16_20.bye,
       is_bye: false,
       status: "scheduled",
       tableau: "places_16_20",
     });
 
-    // Match 19ème place (19-20)
+    // Match 18-19
     await supabase.from("tournament_matches").insert({
       tournament_id: tournamentId,
       round_type: "qualifications",
       round_number: 4,
-      match_order: 10,
-      team1_registration_id: places16_20.third,
-      team2_registration_id: places16_20.fourth,
+      match_order: 2,
+      team1_registration_id: places16_20.secondWinner,
+      team2_registration_id: places16_20.bestLoser,
       is_bye: false,
       status: "scheduled",
+      tableau: "places_16_20",
+    });
+
+    // Place directe 20 (bye)
+    await supabase.from("tournament_matches").insert({
+      tournament_id: tournamentId,
+      round_type: "qualifications",
+      round_number: 4,
+      match_order: 3,
+      team1_registration_id: places16_20.worstLoser,
+      team2_registration_id: null,
+      is_bye: true,
+      status: "completed",
+      winner_registration_id: places16_20.worstLoser,
       tableau: "places_16_20",
     });
   } else {

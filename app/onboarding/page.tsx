@@ -35,7 +35,7 @@ function OnboardingForm() {
               <button className="px-4 py-3 rounded-lg bg-white/10 border border-white/15 text-left">Continuer avec email</button>
               <button className="px-4 py-3 rounded-lg bg-white/10 border border-white/15 text-left">Continuer avec Google</button>
             </div>
-            <p className="text-white/60 text-sm">Aucune carte bancaire requise pendant l’essai de 30 jours.</p>
+            <p className="text-white/60 text-sm">Aucune carte bancaire requise pendant l'essai de 14 jours.</p>
             <div className="flex items-center gap-4">
               <button className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#00CC99] to-[#0066FF] font-semibold" onClick={() => setStep(1)}>Commencer</button>
               <Link href="/signup" className="text-white/70 underline">Déjà partenaire ? Se connecter</Link>
@@ -237,7 +237,7 @@ function OnboardingForm() {
           <section className="space-y-6">
             <h2 className="text-2xl font-bold">Prêt à démarrer</h2>
             <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/70">Essai gratuit — J-30 restants</div>
+              <div className="text-sm text-white/70">Essai gratuit — J-14 restants</div>
             </div>
             <div>
               <div className="font-semibold mb-2">Check‑list d’onboarding</div>

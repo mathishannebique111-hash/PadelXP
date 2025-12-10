@@ -131,12 +131,15 @@ export async function POST(req: NextRequest) {
         .eq('club_id', clubId)
         .maybeSingle();
 
+      // Déterminer le statut : si en période d'essai Stripe, utiliser "trialing", sinon "active"
+      const subscriptionStatus = stripeSubscription.status === 'trialing' ? 'trialing' : 'active';
+
       if (existingSubscription) {
         // Mettre à jour l'abonnement existant
         const { error: updateError } = await supabaseAdmin
           .from('subscriptions')
           .update({
-            status: 'active',
+            status: subscriptionStatus,
             stripe_subscription_id: subscriptionId,
             stripe_customer_id: customerId,
             plan_cycle: planCycle,
@@ -156,12 +159,12 @@ export async function POST(req: NextRequest) {
           );
         }
       } else {
-        // Créer un nouvel abonnement (ne devrait pas arriver normalement)
+        // Créer un nouvel abonnement
         const { error: insertError } = await supabaseAdmin
           .from('subscriptions')
           .insert({
             club_id: clubId,
-            status: 'active',
+            status: subscriptionStatus,
             stripe_subscription_id: subscriptionId,
             stripe_customer_id: customerId,
             plan_cycle: planCycle,

@@ -26,7 +26,7 @@ export default function FinalCTA() {
           <div className="space-y-4 mb-8">
             <div className="flex items-center justify-center gap-3 text-white/80">
               <span>✅</span>
-              <span>Essai gratuit 30 jours (sans CB)</span>
+              <span>Essai gratuit 14 jours (sans CB)</span>
             </div>
             <div className="flex items-center justify-center gap-3 text-white/80">
               <span>✅</span>

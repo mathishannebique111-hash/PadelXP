@@ -25,7 +25,7 @@ export default function FAQ() {
       answer: "Pas du tout ! 5 minutes suffisent : créez votre profil club / complexe, ajoutez logo/photos, et partagez le code à vos membres."
     },
     {
-      question: "Que se passe-t-il après l'essai de 30 jours ?",
+      question: "Que se passe-t-il après l'essai de 14 jours ?",
       answer: "Si vous êtes satisfait, vous pouvez activer votre abonnement. Sinon, votre essai prendra fin et aucun prélèvement ne sera effectué."
     },
     {

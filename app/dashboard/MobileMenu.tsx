@@ -34,7 +34,7 @@ export default function MobileMenu() {
     { href: '/dashboard/historique', label: 'Historique des matchs', iconSrc: '/images/Historique des matchs club.png' },
     { href: '/dashboard/page-club', label: 'Page publique du club', iconSrc: '/images/Page publique du club.png' },
     { href: '/dashboard/challenges', label: 'Challenges', iconSrc: '/images/Challenges club.png' },
-    { href: '/dashboard/tournaments', label: 'Tournois', iconSrc: '/images/Trophée page badges.png' },
+    { href: '/dashboard/tournaments', label: 'Tournois', iconSrc: '/images/Tournois compte club.png' },
     { href: '/dashboard/roles', label: 'Rôles et accès', iconSrc: '/images/Role et accés club.png' },
     { href: '/dashboard/facturation', label: 'Abonnement & essai', iconSrc: '/images/Facturation et essai club.png' },
     { href: '/dashboard/import-export', label: 'Import / Export', iconSrc: '/images/Import club.png' },

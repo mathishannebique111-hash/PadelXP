@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
 
     // Récupérer l'utilisateur et son club pour vérifier la période d'essai
     let trialEndTimestamp: number | null = null;
+    let forceNoTrial = false;
     
     if (checkoutMode === 'subscription') {
       try {
@@ -89,6 +90,9 @@ export async function POST(req: NextRequest) {
                 trialEndTimestamp = Math.floor(nextDay.getTime() / 1000);
 
                 logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", trialEndAt: subscription.trial_end_at, trialEndTimestamp }, '[checkout] Trial end date found (PadelXP trial)');
+              } else {
+                // Essai déjà terminé : pas de prolongation, facturation immédiate
+                forceNoTrial = true;
               }
             }
 
@@ -131,11 +135,21 @@ export async function POST(req: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/facturation/cancel`,
     };
 
-    // Si on a un trial_end, l'ajouter aux données de subscription
-    if (checkoutMode === 'subscription' && trialEndTimestamp) {
-      sessionParams.subscription_data = {
-        trial_end: trialEndTimestamp,
-      };
+    // Si on a un trial_end, l'ajouter aux données de subscription.
+    // Stripe n'autorise pas trial_period_days à 0 : on l'omet pour éviter l'erreur.
+    if (checkoutMode === 'subscription') {
+      if (trialEndTimestamp) {
+        sessionParams.subscription_data = {
+          trial_end: trialEndTimestamp,
+        };
+      } else if (forceNoTrial) {
+        // Essai déjà terminé : facturation immédiate
+        sessionParams.subscription_data = {
+          trial_end: 'now',
+        };
+      } else {
+        // Pas de trial explicite ; on n'envoie rien pour ne pas déclencher d'erreur Stripe
+      }
     }
 
     // Créer la session de checkout

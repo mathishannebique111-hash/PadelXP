@@ -24,7 +24,7 @@ export default function ClubsPromo() {
               <div className="mb-8">
                 <div className="flex items-center gap-3 text-white/80 text-lg">
                   <span>✅</span>
-                  <span>Essai gratuit 30 jours sans CB</span>
+                  <span>Essai gratuit 14 jours sans CB</span>
                 </div>
               </div>
               <Link
