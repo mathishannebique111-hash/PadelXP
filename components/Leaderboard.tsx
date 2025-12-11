@@ -6,6 +6,7 @@ import type { LeaderboardEntry } from "@/lib/types";
 import RankBadge from "@/components/RankBadge";
 import { getBadges, type PlayerStats } from "@/lib/badges";
 import TierBadge from "./TierBadge";
+import Top3RankingNotifier from '@/components/Top3RankingNotifier'
  
 
 type Props = {
@@ -114,8 +115,16 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
     return { name: best.player_name, rate: Math.round(bestRate * 100) };
   }, [rows]);
 
+  // Calculer le rang de l'utilisateur actuel
+  const currentUserRank = rows.find(r => r.user_id === currentUserId)?.rank || null
+
   return (
     <div className="space-y-8">
+      {/* Notificateur invisible */}
+      <Top3RankingNotifier 
+        userRank={currentUserRank}
+        totalPlayers={rows.length}
+      />
       {/* Podium Top 3 - Focus principal avec agrandissement */}
       {top3.length > 0 && (
         <div className="space-y-6">

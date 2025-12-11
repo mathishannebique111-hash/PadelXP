@@ -110,13 +110,13 @@ export async function GET() {
 
     // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour
     const validMatchIdsForPointsByUser = filterMatchesByDailyLimitPerUser(
-      filteredParticipants.filter(p => p.user_id).map(p => ({
-        match_id: p.match_id,
-        user_id: p.user_id
+      filteredParticipants.filter(p => p.user_id).map(p => ({ 
+        match_id: p.match_id, 
+        user_id: p.user_id 
       })),
-      (matchesData || []).map((m: any) => ({
-        id: m.id,
-        played_at: m.played_at || new Date().toISOString()
+      (matchesData || []).map((m: any) => ({ 
+        id: m.id, 
+        played_at: m.played_at || new Date().toISOString() 
       })),
       MAX_MATCHES_PER_DAY
     );

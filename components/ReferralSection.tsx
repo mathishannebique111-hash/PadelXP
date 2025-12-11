@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import ReferralJoinedNotifier from '@/components/ReferralJoinedNotifier'
 
 interface ReferralInfo {
   referralCode: string | null;
@@ -64,8 +65,19 @@ export default function ReferralSection({ userId }: { userId: string }) {
   const isMaxReached = referralInfo.referralCount >= referralInfo.maxReferrals;
   const canShare = !isMaxReached;
 
+  // Adapter les données pour le notificateur
+  const referralsForNotifier = referralInfo.referrals?.map(r => ({
+    id: r.referredId,
+    name: r.referredName,
+    joined_at: r.createdAt
+  })) || []
+
   return (
-    <div className="rounded-xl sm:rounded-2xl border-2 border-white/80 p-4 sm:p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)] relative overflow-hidden" style={{
+    <>
+      {/* Notificateur invisible */}
+      <ReferralJoinedNotifier referrals={referralsForNotifier} />
+      
+      <div className="rounded-xl sm:rounded-2xl border-2 border-white/80 p-4 sm:p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)] relative overflow-hidden" style={{
       background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, rgba(0,102,255,0.08), transparent 70%)"
     }}>
       <div className="mb-4">
@@ -151,6 +163,7 @@ export default function ReferralSection({ userId }: { userId: string }) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

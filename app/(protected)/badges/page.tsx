@@ -7,6 +7,7 @@ import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
 import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
 import BadgeIcon from "@/components/icons/BadgeIcon";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import BadgesPageClient from '@/components/BadgesPageClient'
 
 export const dynamic = "force-dynamic";
 
@@ -268,7 +269,8 @@ export default async function BadgesPage() {
   const totalBadgesCount = obtainedCount + challengeBadgesCount;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
+    <BadgesPageClient obtainedBadges={obtainedBadges}>
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
       {/* Background avec overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
@@ -405,6 +407,7 @@ export default async function BadgesPage() {
       </div>
       </div>
     </div>
+    </BadgesPageClient>
   );
 }
 

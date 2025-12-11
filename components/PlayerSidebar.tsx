@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import LogoutButton from './LogoutButton';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 type NavKey =
   | "home"
@@ -222,7 +223,11 @@ export default function PlayerSidebar() {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <nav className="p-4 pt-20 space-y-2 text-sm flex-1 h-full overflow-y-auto">
+        {/* Header avec cloche de notifications en haut à droite */}
+        <div className="flex items-center justify-end p-4 border-b border-white/10">
+          <NotificationCenter />
+        </div>
+        <nav className="p-4 pt-4 space-y-2 text-sm flex-1 h-full overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = currentPage === item.navKey;
             return (

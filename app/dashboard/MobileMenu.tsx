@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import ClientLogout from './ClientLogout';
-import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -89,21 +88,7 @@ export default function MobileMenu() {
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header avec cloche de notifications et bouton fermer */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <NotificationCenter />
-          <button
-            onClick={() => setIsOpen(false)}
-            className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
-            aria-label="Fermer le menu"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-        <nav className="p-4 pt-4 space-y-4 text-sm flex-1 h-full overflow-y-auto">
+        <nav className="p-4 pt-20 md:pt-6 space-y-4 text-sm flex-1 h-full overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             return (

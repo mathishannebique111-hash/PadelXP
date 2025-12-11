@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/supabase'
 
@@ -6,8 +6,45 @@ type Notification = Database['public']['Tables']['notifications']['Row']
 
 export function useNotifications(userId: string | undefined) {
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
+
+  // Calculer le nombre de notifications non lues à partir de la liste
+  const unreadCount = useMemo(() => {
+    return notifications.filter(n => !n.read).length
+  }, [notifications])
+
+  // Fonction pour recharger les notifications depuis la base de données
+  const refreshNotifications = useCallback(async () => {
+    if (!userId) return
+
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error) {
+      console.error('Error fetching notifications:', error)
+    } else if (data) {
+      setNotifications(data)
+    }
+  }, [userId])
+
+  // Fonction pour marquer une notification comme lue localement (mise à jour immédiate)
+  const markNotificationAsReadLocal = useCallback((notificationId: string) => {
+    setNotifications(prev =>
+      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+    )
+  }, [])
+
+  // Fonction pour marquer toutes les notifications comme lues localement
+  const markAllAsReadLocal = useCallback(() => {
+    setNotifications(prev =>
+      prev.map(n => ({ ...n, read: true }))
+    )
+  }, [])
 
   useEffect(() => {
     if (!userId) {
@@ -30,7 +67,6 @@ export function useNotifications(userId: string | undefined) {
         console.error('Error fetching notifications:', error)
       } else if (data) {
         setNotifications(data)
-        setUnreadCount(data.filter(n => !n.read).length)
       }
       setLoading(false)
     }
@@ -51,20 +87,11 @@ export function useNotifications(userId: string | undefined) {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             setNotifications(prev => [payload.new as Notification, ...prev])
-            setUnreadCount(prev => prev + 1)
           } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Notification
             setNotifications(prev =>
-              prev.map(n => n.id === payload.new.id ? payload.new as Notification : n)
+              prev.map(n => n.id === updated.id ? updated : n)
             )
-            // Recalculer le compte de non lues
-            setUnreadCount(prev => {
-              const updated = payload.new as Notification
-              const old = notifications.find(n => n.id === updated.id)
-              if (old && !old.read && updated.read) {
-                return Math.max(0, prev - 1)
-              }
-              return prev
-            })
           } else if (payload.eventType === 'DELETE') {
             setNotifications(prev => prev.filter(n => n.id !== payload.old.id))
           }
@@ -77,6 +104,13 @@ export function useNotifications(userId: string | undefined) {
     }
   }, [userId])
 
-  return { notifications, unreadCount, loading }
+  return { 
+    notifications, 
+    unreadCount, 
+    loading, 
+    refreshNotifications,
+    markNotificationAsReadLocal,
+    markAllAsReadLocal
+  }
 }
 

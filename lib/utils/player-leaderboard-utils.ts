@@ -98,13 +98,13 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
   
   // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour pour chaque joueur
   const validMatchIdsForPointsByUser = filterMatchesByDailyLimitPerUser(
-    allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => ({
-      match_id: p.match_id,
-      user_id: p.user_id
+    allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => ({ 
+      match_id: p.match_id, 
+      user_id: p.user_id 
     })),
-    Array.from(matchesMap.entries()).map(([id, match]) => ({
-      id,
-      played_at: match.played_at || match.created_at
+    Array.from(matchesMap.entries()).map(([id, match]) => ({ 
+      id, 
+      played_at: match.played_at || match.created_at 
     })),
     MAX_MATCHES_PER_DAY
   );

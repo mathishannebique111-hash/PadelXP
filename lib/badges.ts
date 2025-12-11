@@ -24,7 +24,7 @@ export const ALL_BADGES: Badge[] = [
   { icon: "🔥", title: "série de 20", description: "Gagnez 20 matchs consécutifs" },
   { icon: "🎖️", title: "Marathonien", description: "Jouez 50 matchs" },
   { icon: "🏅", title: "Centurion", description: "Jouez 100 matchs" },
-  { icon: "💯", title: "Top Scorer", description: "Obtenez 100+ points" },
+  { icon: "💯", title: "Meilleur scoreur", description: "Obtenez 100+ points" },
   { icon: "💎", title: "Diamant", description: "Atteignez 500 points" },
   { icon: "📈", title: "En progression", description: "Ayez 5 victoires de plus que de défaites" },
   { icon: "🎯", title: "Précision", description: "Remportez 5 matchs sans en perdre aucun" },
