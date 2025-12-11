@@ -30,6 +30,10 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.SUBSCRIPTION_CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const { id: tournamentId } = await params;
 

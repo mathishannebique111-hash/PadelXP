@@ -1,5 +1,5 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { filterMatchesByDailyLimit } from "./match-limit-utils";
+import { filterMatchesByDailyLimit, filterMatchesByDailyLimitPerUser } from "./match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { calculatePointsForMultiplePlayers } from "./boost-points-utils";
 import { getPlayerDisplayName } from "./player-utils";
@@ -97,19 +97,19 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
   }
   
   // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour pour chaque joueur
-  const validMatchIdsForPoints = filterMatchesByDailyLimit(
-    allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => ({ 
-      match_id: p.match_id, 
-      user_id: p.user_id 
+  const validMatchIdsForPointsByUser = filterMatchesByDailyLimitPerUser(
+    allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => ({
+      match_id: p.match_id,
+      user_id: p.user_id
     })),
-    Array.from(matchesMap.entries()).map(([id, match]) => ({ 
-      id, 
-      played_at: match.played_at || match.created_at 
+    Array.from(matchesMap.entries()).map(([id, match]) => ({
+      id,
+      played_at: match.played_at || match.created_at
     })),
     MAX_MATCHES_PER_DAY
   );
   
-  console.log("[calculatePlayerLeaderboard] Valid matches for points (after daily limit):", validMatchIdsForPoints.size);
+  console.log("[calculatePlayerLeaderboard] Valid matches for points per user (after daily limit)");
   
   // Récupérer les profils
   const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
@@ -203,9 +203,9 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
   const finalFilteredParticipants = filteredParticipants.filter((p: any) => {
     const isValidForClub = validMatchIds.has(p.match_id);
     if (p.player_type === "user" && p.user_id) {
-      const isValidForDailyLimit = validMatchIdsForPoints.has(p.match_id);
-      // Si le match dépasse la limite quotidienne, il est exclu du calcul
-      // Donc ni victoire (+10 points) ni défaite (+3 points) ne comptent
+      const allowedMatches = validMatchIdsForPointsByUser.get(p.user_id);
+      const isValidForDailyLimit = allowedMatches ? allowedMatches.has(p.match_id) : false;
+      // Si le match dépasse la limite quotidienne pour CE joueur, il est exclu
       return isValidForClub && isValidForDailyLimit;
     }
     return isValidForClub;

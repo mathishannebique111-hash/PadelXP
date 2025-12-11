@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export async function POST(req: Request) {
+  const authHeader = req.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.SUBSCRIPTION_CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const { userIds } = await req.json() as { userIds: string[] };
   
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

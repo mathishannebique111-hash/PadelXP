@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger';
 
 // Initialiser Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-10-29.clover',
 });
 
 const supabaseAdmin = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -42,6 +42,17 @@ export async function POST(req: NextRequest) {
       logger.error('[webhook] Missing stripe-signature header');
       return NextResponse.json(
         { error: 'Missing signature' },
+        { status: 400 }
+      );
+    }
+
+    // Pré-vérification de la signature Stripe
+    try {
+      stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    } catch (err: any) {
+      logger.error('[webhook] Pre-check signature verification failed:', err.message);
+      return NextResponse.json(
+        { error: `Webhook signature verification failed: ${err.message}` },
         { status: 400 }
       );
     }

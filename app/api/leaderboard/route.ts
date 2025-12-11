@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
-import { filterMatchesByDailyLimit } from '@/lib/utils/match-limit-utils';
+import { filterMatchesByDailyLimitPerUser } from '@/lib/utils/match-limit-utils';
 import { MAX_MATCHES_PER_DAY } from '@/lib/match-constants';
 import { calculatePointsForMultiplePlayers } from '@/lib/utils/boost-points-utils';
 import { logger } from '@/lib/logger';
@@ -109,14 +109,14 @@ export async function GET() {
     }
 
     // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour
-    const validMatchIdsForPoints = filterMatchesByDailyLimit(
-      filteredParticipants.filter(p => p.user_id).map(p => ({ 
-        match_id: p.match_id, 
-        user_id: p.user_id 
+    const validMatchIdsForPointsByUser = filterMatchesByDailyLimitPerUser(
+      filteredParticipants.filter(p => p.user_id).map(p => ({
+        match_id: p.match_id,
+        user_id: p.user_id
       })),
-      (matchesData || []).map((m: any) => ({ 
-        id: m.id, 
-        played_at: m.played_at || new Date().toISOString() 
+      (matchesData || []).map((m: any) => ({
+        id: m.id,
+        played_at: m.played_at || new Date().toISOString()
       })),
       MAX_MATCHES_PER_DAY
     );
@@ -133,7 +133,8 @@ export async function GET() {
 
     filteredParticipants.forEach((p: any) => {
       // Ignorer les matchs qui dépassent la limite quotidienne
-      if (!validMatchIdsForPoints.has(p.match_id)) {
+      const allowedMatches = p.user_id ? validMatchIdsForPointsByUser.get(p.user_id) : undefined;
+      if (!allowedMatches || !allowedMatches.has(p.match_id)) {
         return;
       }
       const match = matchesMap.get(p.match_id);

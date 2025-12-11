@@ -29,6 +29,10 @@ const stripe = STRIPE_SECRET_KEY
  * 3. Met à jour Stripe si une subscription existe
  */
 export async function POST(req: Request) {
+  const authHeader = req.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.SUBSCRIPTION_CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     if (!supabaseAdmin) {
       return NextResponse.json(

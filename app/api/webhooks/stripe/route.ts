@@ -32,6 +32,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Vérification anticipée de la signature Stripe
+  try {
+    stripe.webhooks.constructEvent(body, signature, WEBHOOK_SECRET);
+  } catch (err) {
+    logger.error({ error: err instanceof Error ? err.message : String(err) }, '[webhook-stripe] Webhook signature pre-check failed');
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+
   let event: Stripe.Event;
 
   try {

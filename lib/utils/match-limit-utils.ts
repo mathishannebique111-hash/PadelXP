@@ -73,4 +73,64 @@ export function filterMatchesByDailyLimit<T extends { match_id: string; user_id:
   return validMatchIds;
 }
 
+/**
+ * Variante qui renvoie, pour chaque joueur, l'ensemble des match_ids
+ * comptés dans sa limite quotidienne. Un match peut donc être compté
+ * pour certains joueurs et pas pour d'autres.
+ */
+export function filterMatchesByDailyLimitPerUser<T extends { match_id: string; user_id: string }>(
+  matchParticipants: T[],
+  matchesData: Array<{ id: string; played_at: string }> | Map<string, { played_at: string }>,
+  maxMatchesPerDay: number = 2
+): Map<string, Set<string>> {
+  const matchesMap = matchesData instanceof Map
+    ? matchesData
+    : new Map(matchesData.map(m => [m.id, { played_at: m.played_at }]));
+
+  const participantsByUser = new Map<string, T[]>();
+  matchParticipants.forEach(p => {
+    if (!p.user_id) return;
+    if (!participantsByUser.has(p.user_id)) {
+      participantsByUser.set(p.user_id, []);
+    }
+    participantsByUser.get(p.user_id)!.push(p);
+  });
+
+  const validMatchIdsByUser = new Map<string, Set<string>>();
+
+  participantsByUser.forEach((participants, userId) => {
+    const matchesByDate = new Map<string, Array<{ match_id: string; played_at: Date }>>();
+
+    participants.forEach(p => {
+      const match = matchesMap.get(p.match_id);
+      if (!match || !match.played_at) return;
+
+      const playedAt = new Date(match.played_at);
+      const dateKey = playedAt.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      if (!matchesByDate.has(dateKey)) {
+        matchesByDate.set(dateKey, []);
+      }
+      matchesByDate.get(dateKey)!.push({
+        match_id: p.match_id,
+        played_at: playedAt
+      });
+    });
+
+    const validForUser = new Set<string>();
+    matchesByDate.forEach((dayMatches) => {
+      const sortedMatches = dayMatches.sort((a, b) =>
+        a.played_at.getTime() - b.played_at.getTime()
+      );
+      sortedMatches.slice(0, maxMatchesPerDay).forEach(m => {
+        validForUser.add(m.match_id);
+      });
+    });
+
+    validMatchIdsByUser.set(userId, validForUser);
+  });
+
+  return validMatchIdsByUser;
+}
+
 

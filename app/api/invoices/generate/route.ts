@@ -36,6 +36,10 @@ export const dynamic = 'force-dynamic';
  * - Mentions légales (pénalités de retard, indemnité forfaitaire)
  */
 export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.SUBSCRIPTION_CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const supabase = createClient();
     
