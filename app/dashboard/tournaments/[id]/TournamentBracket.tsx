@@ -89,8 +89,8 @@ function getRoundLabelForTmc(
     return "Tour 2";
   }
   // Priorité au type de match (utile pour TMC 8 : quarts/semis/finale)
-  if (match.round_type === "final") return tableau === "principal" ? "Finale [1-2]" : "Finale";
-  if (match.round_type === "third_place") return tableau === "principal" ? "Petite finale [3-4]" : "Petite finale";
+  if (match.round_type === "final") return tableau === "principal" ? null : "Finale";
+  if (match.round_type === "third_place") return tableau === "principal" ? null : "Petite finale";
   if (match.round_type === "semis") return "Demi-finales";
   if (match.round_type === "quarters") return "Quarts de finale";
 
@@ -101,9 +101,8 @@ function getRoundLabelForTmc(
     if (roundNum === 2) return "Quarts de finale";
     if (roundNum === 3) return "Demi-finales";
     if (roundNum === 4) {
-      if (match.round_type === "final") return "Finale [1-2]";
-      if (match.round_type === "third_place") return "Petite finale [3-4]";
-      return "Matchs de classement";
+      // Ne pas afficher de label pour les matchs de finale du tableau principal (les labels sont gérés séparément)
+      return null;
     }
   } else if (tableau === "places_4_6") {
     if (roundNum === 3) return "Tour 3";
@@ -154,26 +153,22 @@ function getRoundLabelForTmc(
     if (roundNum === 2) return "Tour 2";
     if (roundNum === 3) return "Tour 3";
     if (roundNum === 4) {
-      if (match.match_order === 4) return "Match 7ème place [7-8]";
-      if (match.match_order === 5) return "Match 9ème place [9-10]";
-      return "Matchs de classement";
+      // Retourner "Tour 4" pour le label de colonne
+      return "Tour 4";
     }
   } else if (tableau === "places_11_15") {
     if (roundNum === 2) return "Tour 2";
     if (roundNum === 3) return "Tour 3";
     if (roundNum === 4) {
-      if (match.match_order === 6) return "Match 11ème place [11-12]";
-      if (match.match_order === 7) return "Match 13ème place [13-14]";
-      if (match.match_order === 8) return "Match 15ème place [15-16]";
-      return "Matchs de classement";
+      // Retourner "Tour 4" pour le label de colonne
+      return "Tour 4";
     }
   } else if (tableau === "places_16_20") {
     if (roundNum === 2) return "Tour 2";
     if (roundNum === 3) return "Tour 3";
     if (roundNum === 4) {
-      if (match.match_order === 9) return "Match 17ème place [17-18]";
-      if (match.match_order === 10) return "Match 19ème place [19-20]";
-      return "Matchs de classement";
+      // Retourner "Tour 4" pour le label de colonne
+      return "Tour 4";
     }
   } else if (tableau === "places_11_20") {
     if (roundNum === 2) return "Tour 2";
@@ -1777,8 +1772,67 @@ export default function TournamentBracket({
 
         if (rounds.length === 0) return;
 
+        // Pour le TMC20, calculer les positions du Tour 3 AVANT de les utiliser pour le Tour 4
+        // Cela garantit que les positions de la finale sont alignées avec les demi-finales
+        let tmc20Round3Positions: number[] = [];
+        const isTmc20Principal = tableau.id === "principal" && 
+          tableauMatches.filter((m) => m.round_number === rounds[0]).length === 10;
+        if (isTmc20Principal) {
+          const round3Matches = tableauMatches.filter((m) => m.round_number === 3);
+          if (round3Matches.length === 3) {
+            // Calculer les positions du Tour 2 d'abord
+            const round2Matches = tableauMatches.filter((m) => m.round_number === 2);
+            const matchesInFirstRound = tableauMatches.filter((m) => m.round_number === rounds[0]).length;
+            let round2PositionsForCalc: number[] = [];
+            if (round2Matches.length === 5) {
+              round2PositionsForCalc = round2Matches.map((_, idx) =>
+                calculateMatchPosition(idx, rounds.indexOf(2), round2Matches.length, matchesInFirstRound)
+              );
+              // Recalculer avec les positions réelles des quarts (centrés entre les huitièmes)
+              const matchHeight = 90;
+              const spacingPrev = 120;
+              const firstRoundPositions = Array.from({ length: matchesInFirstRound }, (_, idx) => idx * spacingPrev);
+              round2PositionsForCalc = round2Matches.map((_, idx) => {
+                const huitiemeIndexA = idx * 2;
+                const huitiemeIndexB = idx * 2 + 1;
+                if (huitiemeIndexA < firstRoundPositions.length && huitiemeIndexB < firstRoundPositions.length) {
+                  const prevTopA = firstRoundPositions[huitiemeIndexA];
+                  const prevTopB = firstRoundPositions[huitiemeIndexB];
+                  const center = ((prevTopA + matchHeight / 2) + (prevTopB + matchHeight / 2)) / 2;
+                  return center - matchHeight / 2;
+                }
+                const prevTopA = (idx * 2) * spacingPrev;
+                const prevTopB = (idx * 2 + 1) * spacingPrev;
+                const center = ((prevTopA + matchHeight / 2) + (prevTopB + matchHeight / 2)) / 2;
+                return center - matchHeight / 2;
+              });
+            }
+            // Calculer les positions du Tour 3 en utilisant EXACTEMENT la même logique que matchPositions
+            const round3IndexInTableau = rounds.indexOf(3);
+            tmc20Round3Positions = round3Matches.map((_, idx) => {
+              if (round2PositionsForCalc.length === 5) {
+                const matchHeight = 90;
+                if (idx === 1) {
+                  return round2PositionsForCalc[2];
+                } else if (idx === 2) {
+                  const match4Bottom = round2PositionsForCalc[3] + matchHeight / 2;
+                  const match5Top = round2PositionsForCalc[4] + matchHeight / 2;
+                  const center = (match4Bottom + match5Top) / 2;
+                  return center - matchHeight / 2;
+                }
+              }
+              return calculateMatchPosition(idx, round3IndexInTableau, 3, matchesInFirstRound);
+            });
+          }
+        }
+
         // Créer une section pour ce tableau
         const tableauColumns: React.ReactElement[] = [];
+        
+        // Pour le TMC20, stocker les positions réelles du Tour 3 après leur calcul
+        let tmc20ActualRound3Positions: number[] = [];
+        // Pour les tableaux de classement TMC20, stocker les positions réelles du Tour 3
+        let tmc20ClassificationTour3Positions: { [key: string]: number[] } = {};
 
         rounds.forEach((roundNum) => {
           const roundMatches = tableauMatches
@@ -1792,7 +1846,9 @@ export default function TournamentBracket({
           if (roundMatches.length === 0) return;
 
           // Pour le Tour 4, chaque match a son propre label, donc on n'affiche pas de label de colonne
-          const showColumnLabel = roundNum !== 4;
+          // Exception : afficher "Tour 4" pour les tableaux de classement TMC20 (places_6_10, places_11_15, places_16_20)
+          const isTmc20ClassificationTableau = (tableau.id === "places_6_10" || tableau.id === "places_11_15" || tableau.id === "places_16_20");
+          const showColumnLabel = roundNum !== 4 || (roundNum === 4 && isTmc20ClassificationTableau);
           const roundIndexInTableau = rounds.indexOf(roundNum);
           const firstRoundMatches = tableauMatches.filter((m) => m.round_number === rounds[0]);
           const matchesInFirstRound = firstRoundMatches.length;
@@ -1819,10 +1875,12 @@ export default function TournamentBracket({
           const isSemisRound = (roundNum === 2 && roundMatches.length === 2 && isTmc8)
             || (roundNum === 3 && roundMatches.length === 2 && (isTmc12 || isTmc16));
           // Pour le Tour 4, détecter la finale et la petite finale (peut y avoir 1 ou 2 matchs selon le type)
+          // Pour TMC20, la finale a 3 matchs au Tour 4
           const isFinalRound = (
             roundNum === 4 && tableau.id === "principal" && (
               (isTmc12 && roundMatches.length === 1) || 
-              (isTmc16 && (roundMatches.length === 1 || roundMatches.length === 2))
+              (isTmc16 && (roundMatches.length === 1 || roundMatches.length === 2)) ||
+              (isTmc20 && roundMatches.length === 3)
             )
           ) || (
             roundNum === 3 && tableau.id === "principal" && isTmc8 && roundMatches.length === 2
@@ -1852,27 +1910,52 @@ export default function TournamentBracket({
           // Pour TMC 16, le Tour 4 peut avoir 2 matchs (5e/7e, 9e/11e, 13e/15e place)
           const isClassificationTour4 = roundNum === 4 && (roundMatches.length === 1 || roundMatches.length === 2 || roundMatches.length === 3) && isClassificationTableau;
 
-          const isTmc20Principal = tableau.id === "principal" && matchesInFirstRound === 10;
+          // Utiliser isTmc20 qui est défini dans la boucle
           const isTmc20Classification = (tableau.id === "places_6_10" || tableau.id === "places_11_15" || tableau.id === "places_16_20") && matchesInFirstRound >= 2;
-          const isTmc20Quarters = isTmc20Principal && roundNum === 2 && roundMatches.length === 5;
+          const isTmc20Quarters = isTmc20 && roundNum === 2 && roundMatches.length === 5;
 
           // Calculer toutes les positions des matchs d'abord
-          // Pour le Tour 3 TMC 12/16, on doit calculer les positions du Tour 2 d'abord pour centrer le 2e match
+          // Pour le Tour 3 TMC 12/16/20, on doit calculer les positions du Tour 2 d'abord pour centrer le 2e match
           let round2Positions: number[] = [];
-          if (isSemisRound || isFinalRound) {
+          const isTmc20Semis = isTmc20 && roundNum === 3 && roundMatches.length >= 2;
+          if (isSemisRound || isFinalRound || isTmc20Semis) {
             const round2Matches = tableauMatches.filter((m) => m.round_number === 2);
-            if (round2Matches.length === 2 || round2Matches.length === 3 || round2Matches.length === 4) {
-              round2Positions = round2Matches.map((_, idx) =>
-                calculateMatchPosition(idx, rounds.indexOf(2), round2Matches.length, matchesInFirstRound)
-              );
+            if (round2Matches.length === 2 || round2Matches.length === 3 || round2Matches.length === 4 || round2Matches.length === 5) {
+              // Pour le TMC20, utiliser la même logique que dans matchPositions pour centrer les quarts entre les huitièmes
+              // IMPORTANT : Utiliser isTmc20 au lieu de isTmc20Quarters car isTmc20Quarters n'est vrai que pour roundNum === 2
+              if (isTmc20 && round2Matches.length === 5) {
+                const matchHeight = 90;
+                const spacingPrev = 120;
+                const firstRoundPositions = Array.from({ length: matchesInFirstRound }, (_, idx) => idx * spacingPrev);
+                round2Positions = round2Matches.map((_, idx) => {
+                  const huitiemeIndexA = idx * 2;
+                  const huitiemeIndexB = idx * 2 + 1;
+                  if (huitiemeIndexA < firstRoundPositions.length && huitiemeIndexB < firstRoundPositions.length) {
+                    const prevTopA = firstRoundPositions[huitiemeIndexA];
+                    const prevTopB = firstRoundPositions[huitiemeIndexB];
+                    const center = ((prevTopA + matchHeight / 2) + (prevTopB + matchHeight / 2)) / 2;
+                    return center - matchHeight / 2;
+                  }
+                  const prevTopA = (idx * 2) * spacingPrev;
+                  const prevTopB = (idx * 2 + 1) * spacingPrev;
+                  const center = ((prevTopA + matchHeight / 2) + (prevTopB + matchHeight / 2)) / 2;
+                  return center - matchHeight / 2;
+                });
+              } else {
+                round2Positions = round2Matches.map((_, idx) =>
+                  calculateMatchPosition(idx, rounds.indexOf(2), round2Matches.length, matchesInFirstRound)
+                );
+              }
             }
           }
 
-          // Pour le Tour 4 TMC 12/16, on doit calculer les positions réelles du Tour 3 (avec le centrage spécial pour TMC 12)
+          // Pour le Tour 4 TMC 12/16/20, on doit calculer les positions réelles du Tour 3 (avec le centrage spécial pour TMC 12)
+          // IMPORTANT : Pour le TMC20, on doit calculer les positions du Tour 3 en utilisant exactement la même logique
+          // que celle utilisée dans matchPositions pour le Tour 3, afin que la finale soit parfaitement alignée
           let round3Positions: number[] = [];
           if (isFinalRound) {
             const round3Matches = tableauMatches.filter((m) => m.round_number === 3);
-            if (round3Matches.length === 2) {
+            if (round3Matches.length === 2 || round3Matches.length === 3) {
               if (isTmc12 && round2Positions.length === 3) {
                 // TMC 12 : Calculer les positions réelles du Tour 3 avec centrage spécial
                 round3Positions = round3Matches.map((_, idx) => {
@@ -1910,6 +1993,33 @@ export default function TournamentBracket({
                 const finalTop = centerSemis - totalHeight / 2 + labelHeight + verticalOffset; // top du match sous son label
                 const petiteFinaleTop = finalTop + blockHeight + spacing;
                 round3Positions = [finalTop, petiteFinaleTop];
+              } else if (isTmc20 && round3Matches.length === 3) {
+                // TMC20 : Utiliser les positions du Tour 3 calculées AVANT la boucle des rounds
+                // Cela garantit que les positions correspondent exactement aux positions réelles des demi-finales
+                if (tmc20Round3Positions.length === 3) {
+                  round3Positions = tmc20Round3Positions;
+                } else {
+                  // Fallback : recalculer avec la même logique que dans matchPositions pour le Tour 3
+                  // Utiliser round2Positions qui est maintenant calculé avec la logique spéciale pour le TMC20
+                  const round3IndexInTableau = rounds.indexOf(3);
+                  round3Positions = round3Matches.map((_, idx) => {
+                    if (round2Positions.length === 5) {
+                      const matchHeight = 90;
+                      if (idx === 1) {
+                        // M2 des demi-finales aligné avec M3 des quarts de finale (index 2)
+                        return round2Positions[2];
+                      } else if (idx === 2) {
+                        // M3 des demi-finales centré entre M4 et M5 des quarts de finale (indices 3 et 4)
+                        const match4Bottom = round2Positions[3] + matchHeight / 2;
+                        const match5Top = round2Positions[4] + matchHeight / 2;
+                        const center = (match4Bottom + match5Top) / 2;
+                        return center - matchHeight / 2;
+                      }
+                      // M1 (idx === 0) : utiliser calculateMatchPosition
+                    }
+                    return calculateMatchPosition(idx, round3IndexInTableau, 3, matchesInFirstRound);
+                  });
+                }
               }
             }
           }
@@ -1941,7 +2051,7 @@ export default function TournamentBracket({
           const isTmc20Round4 =
             roundNum === 4 &&
             roundMatches.length === 3 &&
-            (isTmc20Principal || isTmc20Classification);
+            (isTmc20 || isTmc20Classification);
           if (isTmc20Round4) {
             const spacing = 120;
             tmc20Round4Positions = [0, spacing, spacing * 2];
@@ -1970,13 +2080,57 @@ export default function TournamentBracket({
               }
             }
             // TMC20 : centrer les 5 quarts (Tour 2) par rapport aux 10 huitièmes (Tour 1) du principal
+            // M1 quart centré entre M1 et M2 huitièmes (indices 0 et 1)
+            // M2 quart centré entre M3 et M4 huitièmes (indices 2 et 3)
+            // M3 quart centré entre M5 et M6 huitièmes (indices 4 et 5)
+            // M4 quart centré entre M7 et M8 huitièmes (indices 6 et 7)
+            // M5 quart centré entre M9 et M10 huitièmes (indices 8 et 9)
             if (isTmc20Quarters) {
               const matchHeight = 90;
-              const spacingPrev = 120; // huitièmes TMC20
+              const spacingPrev = 120; // espacement des huitièmes TMC20
+              
+              // Calculer les positions réelles des huitièmes de finale (Tour 1)
+              // Les huitièmes sont positionnés avec un espacement de 120px
+              const firstRoundPositions = Array.from({ length: matchesInFirstRound }, (_, idx) => idx * spacingPrev);
+              
+              // Pour chaque quart, centrer entre les deux huitièmes correspondants
+              // matchIndex 0 (M1 quart) -> huitièmes 0 (M1) et 1 (M2)
+              // matchIndex 1 (M2 quart) -> huitièmes 2 (M3) et 3 (M4)
+              // matchIndex 2 (M3 quart) -> huitièmes 4 (M5) et 5 (M6)
+              // matchIndex 3 (M4 quart) -> huitièmes 6 (M7) et 7 (M8)
+              // matchIndex 4 (M5 quart) -> huitièmes 8 (M9) et 9 (M10)
+              const huitiemeIndexA = matchIndex * 2;
+              const huitiemeIndexB = matchIndex * 2 + 1;
+              
+              if (huitiemeIndexA < firstRoundPositions.length && huitiemeIndexB < firstRoundPositions.length) {
+                const prevTopA = firstRoundPositions[huitiemeIndexA];
+                const prevTopB = firstRoundPositions[huitiemeIndexB];
+                // Centrer le quart entre les deux huitièmes : calculer le centre entre le bas du premier et le haut du deuxième
+                const center = ((prevTopA + matchHeight / 2) + (prevTopB + matchHeight / 2)) / 2;
+                return center - matchHeight / 2;
+              }
+              
+              // Fallback si les indices sont hors limites
               const prevTopA = (matchIndex * 2) * spacingPrev;
               const prevTopB = (matchIndex * 2 + 1) * spacingPrev;
               const center = ((prevTopA + matchHeight / 2) + (prevTopB + matchHeight / 2)) / 2;
               return center - matchHeight / 2;
+            }
+            // Pour le Tour 3 TMC 20, positionner les demi-finales selon les règles spécifiques
+            const isTmc20Semis = isTmc20 && roundNum === 3 && roundMatches.length >= 2;
+            if (isTmc20Semis && round2Positions.length === 5) {
+              const matchHeight = 90;
+              if (matchIndex === 1) {
+                // M2 des demi-finales aligné avec M3 des quarts de finale (index 2)
+                return round2Positions[2];
+              } else if (matchIndex === 2) {
+                // M3 des demi-finales centré entre M4 et M5 des quarts de finale (indices 3 et 4)
+                const match4Bottom = round2Positions[3] + matchHeight / 2;
+                const match5Top = round2Positions[4] + matchHeight / 2;
+                const center = (match4Bottom + match5Top) / 2;
+                return center - matchHeight / 2;
+              }
+              // Pour M1 (matchIndex 0), utiliser la position normale
             }
             // Pour le Tour 3 TMC 12, centrer le 2e match par rapport aux 2e et 3e matchs du Tour 2
             if (isSemisRound && matchIndex === 1 && round2Positions.length === 3) {
@@ -2016,9 +2170,44 @@ export default function TournamentBracket({
               const centerPosition = (match0Bottom + match1Top) / 2;
               return centerPosition - 45 - 50;
             }
-            // TMC20 : positions fixes en Tour 4 pour 3 cadres (principal et classements)
-            if (isTmc20Round4 && tmc20Round4Positions.length === 3) {
-              return tmc20Round4Positions[matchIndex] ?? matchIndex * 120;
+            // TMC20 : positions de la finale (Tour 4) calculées par rapport aux demi-finales
+            // IMPORTANT : Utiliser les positions RÉELLES du Tour 3 stockées après leur calcul
+            // Cela garantit un alignement parfait avec les demi-finales
+            if (isTmc20Round4) {
+              // Utiliser les positions réelles du Tour 3 si disponibles, sinon utiliser round3Positions
+              const actualPositions = tmc20ActualRound3Positions.length === 3 
+                ? tmc20ActualRound3Positions 
+                : round3Positions;
+              
+              if (actualPositions.length === 3) {
+                // IMPORTANT : Les matchs sont triés par match_order, donc :
+                // - matchIndex 0 = M1 (match_order 1)
+                // - matchIndex 1 = M2 (match_order 2)
+                // - matchIndex 2 = M3 (match_order 3)
+                // Pour la finale :
+                // - M2 de la finale (matchIndex 1) doit être aligné avec M1 de la demi-finale (index 0)
+                // - M1 de la finale (matchIndex 0) doit être aligné avec M2 de la demi-finale (index 1)
+                // - M3 de la finale (matchIndex 2) doit être aligné avec M3 de la demi-finale (index 2)
+                // IMPORTANT : Le Tour 3 (demi-finales) a un label de colonne avec mb-4 (16px) + hauteur du texte (~16px)
+                // Le label pousse le conteneur des matchs du Tour 3 vers le bas
+                // Donc on doit ajouter cette hauteur aux positions de la finale pour compenser l'absence du label
+                // Augmenter légèrement la valeur pour décaler les cadres vers le bas
+                const labelTotalHeight = 32; // Hauteur totale du label (texte + margin-bottom) - légèrement augmenté
+                // Utiliser exactement les mêmes positions que les demi-finales, avec ajustement pour le label
+                if (matchIndex === 0) {
+                  // M1 de la finale aligné avec M2 de la demi-finale (index 1)
+                  // Ajouter la hauteur totale du label pour compenser l'absence du label au Tour 4
+                  return actualPositions[1] + labelTotalHeight;
+                } else if (matchIndex === 1) {
+                  // M2 de la finale aligné avec M1 de la demi-finale (index 0)
+                  // Ajouter la hauteur totale du label pour compenser l'absence du label au Tour 4
+                  return actualPositions[0] + labelTotalHeight;
+                } else if (matchIndex === 2) {
+                  // M3 de la finale aligné avec M3 de la demi-finale (index 2)
+                  // Ajouter la hauteur totale du label pour compenser l'absence du label au Tour 4
+                  return actualPositions[2] + labelTotalHeight;
+                }
+              }
             }
 
             // Pour les tableaux de classement, Tour 3 : utiliser les positions calculées avec espacement de 120px
@@ -2054,6 +2243,24 @@ export default function TournamentBracket({
             }
             // Pour les tableaux de classement TMC 12, Tour 4 : centrer le match entre les deux matchs du Tour 3
             if (isClassificationTour4 && !isTmc16Tournament) {
+              // Pour les tableaux de classement TMC20 (places_6_10, places_11_15, places_16_20), aligner directement
+              if (isTmc20Classification && roundMatches.length === 3) {
+                // Utiliser les positions réelles du Tour 3 stockées après leur calcul
+                const actualTour3Positions = tmc20ClassificationTour3Positions[tableau.id];
+                if (actualTour3Positions && actualTour3Positions.length >= 3) {
+                  // Aligner M1, M2, M3 du Tour 4 avec M1, M2, M3 du Tour 3 respectivement
+                  // IMPORTANT : Le Tour 3 a un label de colonne avec mb-4 (16px) + hauteur du texte (~16px)
+                  // Le Tour 4 a maintenant aussi un label "Tour 4" avec mb-4 (16px) + hauteur du texte (~16px)
+                  // Donc les deux ont le même décalage, on utilise les positions du Tour 3 directement
+                  // Les positions stockées du Tour 3 incluent déjà le décalage du label, donc on les utilise telles quelles
+                  return actualTour3Positions[matchIndex];
+                }
+                // Fallback : utiliser classificationTour3Positions si disponible
+                if (classificationTour3Positions.length >= 3) {
+                  // Les positions du Tour 3 incluent déjà le décalage du label, donc on les utilise telles quelles
+                  return classificationTour3Positions[matchIndex];
+                }
+              }
               // Les positions du Tour 3 sont déjà calculées plus haut
               if (matchIndex === 0 && classificationTour3Positions.length === 2) {
                 const match0Center = classificationTour3Positions[0] + 45; // Centre du match 0 (index 0) du Tour 3
@@ -2069,6 +2276,34 @@ export default function TournamentBracket({
               matchesInFirstRound
             );
           });
+          
+          // Pour le TMC20, stocker les positions réelles du Tour 3 après leur calcul
+          // Utiliser isTmc20 au lieu de isTmc20Principal car isTmc20Principal peut ne pas être défini dans la boucle
+          if (isTmc20 && roundNum === 3 && matchPositions.length === 3) {
+            tmc20ActualRound3Positions = [...matchPositions];
+          }
+          
+          // Calculer les positions des labels "Demi-finales" pour TMC20 (centrés entre M1-M2 et M2-M3)
+          let customSemisLabels: number[] = [];
+          if (isTmc20 && roundNum === 3 && matchPositions.length === 3) {
+            const matchHeight = 90;
+            // Centrer un label entre M1 et M2
+            const match1Bottom = matchPositions[0] + matchHeight;
+            const match2Top = matchPositions[1];
+            const center1 = (match1Bottom + match2Top) / 2;
+            customSemisLabels.push(center1);
+            // Centrer un label entre M2 et M3
+            const match2Bottom = matchPositions[1] + matchHeight;
+            const match3Top = matchPositions[2];
+            const center2 = (match2Bottom + match3Top) / 2;
+            customSemisLabels.push(center2);
+          }
+          
+          // Pour les tableaux de classement TMC20, stocker les positions réelles du Tour 3
+          // IMPORTANT : Stocker les positions uniquement si on a 3 matchs (cas places_6_10, places_11_15, places_16_20)
+          if (isTmc20Classification && roundNum === 3 && matchPositions.length === 3) {
+            tmc20ClassificationTour3Positions[tableau.id] = [...matchPositions];
+          }
 
           // Calculer les positions des labels pour les quarts et demi-finales TMC 12/16
           const matchHeight = 90;
@@ -2127,18 +2362,30 @@ export default function TournamentBracket({
             ? "min-w-[620px]" // 2x280 + 20 spacing pour éviter le wrap
             : "min-w-[280px]";
           
-          // Labels quarts principal (TMC16/TMC20) centrés sur les paires d’huitièmes
+          // Labels quarts principal (TMC16/TMC20) centrés entre les matchs des quarts de finale
           let customQuartersLabels: number[] = [];
           if (roundLabel === "Quarts de finale" && tableau.id === "principal") {
             const matchHeight = 90;
-            const spacingPrev = isTmc8 ? 180 : 120;
-            const prevCount = matchesInFirstRound; // 8 (TMC16) ou 10 (TMC20)
-            const pairs = Math.floor(prevCount / 2);
-            for (let i = 0; i < roundMatches.length && i < pairs; i++) {
-              const prevTop1 = (i * 2) * spacingPrev;
-              const prevTop2 = (i * 2 + 1) * spacingPrev;
-              const center = (prevTop1 + matchHeight / 2 + prevTop2 + matchHeight / 2) / 2;
-              customQuartersLabels.push(center);
+            // Pour TMC20, centrer les labels entre les matchs des quarts de finale (pas entre les huitièmes)
+            if (isTmc20 && matchPositions.length >= 2) {
+              // Centrer un label entre chaque paire de matchs consécutifs
+              for (let i = 0; i < matchPositions.length - 1; i++) {
+                const matchBottom = matchPositions[i] + matchHeight;
+                const nextMatchTop = matchPositions[i + 1];
+                const center = (matchBottom + nextMatchTop) / 2;
+                customQuartersLabels.push(center);
+              }
+            } else {
+              // Pour TMC16 et TMC8, utiliser la logique existante (centrés sur les paires d'huitièmes)
+              const spacingPrev = isTmc8 ? 180 : 120;
+              const prevCount = matchesInFirstRound; // 8 (TMC16) ou 4 (TMC8)
+              const pairs = Math.floor(prevCount / 2);
+              for (let i = 0; i < roundMatches.length && i < pairs; i++) {
+                const prevTop1 = (i * 2) * spacingPrev;
+                const prevTop2 = (i * 2 + 1) * spacingPrev;
+                const center = (prevTop1 + matchHeight / 2 + prevTop2 + matchHeight / 2) / 2;
+                customQuartersLabels.push(center);
+              }
             }
           }
 
@@ -2239,15 +2486,34 @@ export default function TournamentBracket({
                     </div>
                   </div>
                 )}
+                {/* Labels "Demi-finales" pour TMC20 (centrés entre M1-M2 et M2-M3) */}
+                {isTmc20 && roundNum === 3 && customSemisLabels.length > 0 && (
+                  customSemisLabels.map((pos, idx) => (
+                    <div
+                      key={`semis-label-${idx}`}
+                      className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                      style={{ 
+                        top: `${pos}px`,
+                        transform: 'translateY(-50%)',
+                      }}
+                    >
+                      <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
+                        <p className="text-xl font-semibold text-white text-center tracking-wide">
+                          Demi-finales
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
 
                 {roundMatches.map((match, matchIndex) => {
                   const isTmc8FirstRound = isTmc8 && roundIndexInTableau === 0;
-                  // Utiliser la position pré-calculée pour TMC 12/16 (tableau principal ou tableaux de classement), sinon utiliser flex
+                  // Utiliser la position pré-calculée pour TMC 8/12/16/20 (tableau principal ou tableaux de classement), sinon utiliser flex
                   // Pour les tableaux de classement TMC 16 Tour 4, utiliser la même position pour les deux matchs (côte à côte)
                   const isTmc16ClassificationTour4 = isClassificationTour4 && isTmc16Tournament && roundMatches.length === 2;
                   // FORCER la même position verticale pour les deux matchs du Tour 4 des tableaux de classement TMC 16
-                  // Pour TMC 8, utiliser aussi position absolue pour permettre le centrage des labels
-                  const verticalPosition = (isTmc12 || isTmc16 || isClassificationTableau || isTmc8) 
+                  // Pour TMC 8/12/16/20, utiliser position absolue pour permettre le centrage des labels et des matchs
+                  const verticalPosition = (isTmc12 || isTmc16 || isTmc20 || isClassificationTableau || isTmc8) 
                     ? (isTmc16ClassificationTour4 ? matchPositions[0] : matchPositions[matchIndex])
                     : undefined;
                   // Pour le premier tour, ajouter une marge en bas pour créer un espace visible entre les cadres
@@ -2300,8 +2566,13 @@ export default function TournamentBracket({
 
                   // Afficher "Finale" au-dessus du premier match de la finale (tous TMC)
                   const showFinalLabel = isFinalRound && matchIndex === 0;
-                  // Afficher "Petite finale" au-dessus du cadre third_place (tous TMC)
-                  const showThirdPlaceLabel = isFinalRound && match.round_type === "third_place";
+                  // Afficher "Petite finale" au-dessus du M2 de la finale pour TMC20, ou au-dessus du cadre third_place pour les autres TMC
+                  const showThirdPlaceLabel = isFinalRound && (
+                    (isTmc20 && matchIndex === 1) || 
+                    (match.round_type === "third_place" && !isTmc20)
+                  );
+                  // Afficher "5e place" au-dessus du M3 de la finale pour TMC20
+                  const showFifthPlaceLabel = isTmc20 && isFinalRound && matchIndex === 2;
 
                   // Définir isTmc8Places58Finals avant son utilisation
                   const isTmc8Places58Finals =
@@ -2313,7 +2584,7 @@ export default function TournamentBracket({
                   const spacing = 20; // Espacement entre les deux matchs
                   // Construire le style de positionnement
                   let matchStyle: React.CSSProperties | undefined = undefined;
-                  if (isTmc12 || isTmc16 || isClassificationTableau || isTmc8) {
+                  if (isTmc12 || isTmc16 || isTmc20 || isClassificationTableau || isTmc8) {
                     // Pour les tableaux de classement TMC 16 Tour 4, FORCER la même position verticale pour les deux matchs
                     const finalTop = isTmc16ClassificationTour4 
                       ? matchPositions[0] // Utiliser la position du premier match pour les deux (même ligne horizontale)
@@ -2356,19 +2627,21 @@ export default function TournamentBracket({
                   const matchClassName =
                     isTmc8Places58Finals
                       ? "space-y-1" // flow normal pour aligner côte à côte sans position absolue
-                      : (isTmc12 || isTmc16 || isClassificationTableau || isTmc8)
+                      : (isTmc12 || isTmc16 || isTmc20 || isClassificationTableau || isTmc8)
                       ? "absolute space-y-1"
                       : "space-y-1 mb-6";
 
                   return (
                     <React.Fragment key={match.id}>
-                      <div
-                        className={matchClassName}
-                        style={isTmc8Places58Finals ? undefined : matchStyle}
-                      >
-                      {/* Label "Finale" au-dessus du cadre pour TMC 12/16/8 */}
+                      {/* Labels positionnés de manière absolue par rapport au conteneur parent pour ne pas affecter l'alignement des cadres */}
+                      {/* Label "Finale" au-dessus du M1 de la finale */}
                       {showFinalLabel && (
-                        <div className="flex items-center justify-center mb-3">
+                        <div 
+                          className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                          style={{
+                            top: `${(verticalPosition || 0) - 70}px`, // Positionner avec plus d'espace au-dessus du cadre M1
+                          }}
+                        >
                           <div className="bg-black/70 backdrop-blur-sm px-6 py-2 rounded-lg border border-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.2)]">
                             <p className="text-2xl font-bold text-amber-300 text-center tracking-wide">
                               Finale
@@ -2376,19 +2649,63 @@ export default function TournamentBracket({
                           </div>
                         </div>
                       )}
-                      {/* Label "Petite finale" au-dessus du cadre third_place (même style que "Tour 2") */}
+                      {/* Label "Petite finale" au-dessus du M2 de la finale pour TMC20 */}
+                      {showThirdPlaceLabel && (
+                        <div 
+                          className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                          style={{
+                            top: `${(verticalPosition || 0) - 50}px`, // Positionner juste au-dessus du cadre M2
+                            transform: 'translateY(-50%)',
+                          }}
+                        >
+                          <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
+                            <p className="text-xl font-semibold text-white text-center tracking-wide">
+                              Petite finale
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {/* Label "Petite finale" au-dessus du cadre third_place pour TMC 8 places_5_8 */}
                       {isTmc8 && tableau.id === "places_5_8" && roundNum === 3 && matchIndex === 1 && (
-                        <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide mb-2">
+                        <p 
+                          className="absolute left-0 right-0 text-xs font-semibold text-white/70 text-center uppercase tracking-wide pointer-events-none z-10"
+                          style={{
+                            top: `${(verticalPosition || 0) - 25}px`, // Positionner au-dessus du cadre
+                          }}
+                        >
                           Match 7e place
                         </p>
                       )}
-                      {showThirdPlaceLabel && (
-                        <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide mb-2">
-                          Petite finale
-                        </p>
+                      {/* Label "5e place" au-dessus du M3 de la finale pour TMC20 */}
+                      {showFifthPlaceLabel && (
+                        <div 
+                          className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                          style={{
+                            top: `${(verticalPosition || 0) - 50}px`, // Positionner juste au-dessus du cadre M3
+                            transform: 'translateY(-50%)',
+                          }}
+                        >
+                          <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
+                            <p className="text-xl font-semibold text-white text-center tracking-wide">
+                              5e place
+                            </p>
+                          </div>
+                        </div>
                       )}
-                        {matchLabel && (
-                          <p className="text-xs font-semibold text-white/70 text-center uppercase tracking-wide mb-2">
+                      <div
+                        className={matchClassName}
+                        style={isTmc8Places58Finals ? undefined : matchStyle}
+                      >
+                        {/* Label du match positionné de manière absolue pour ne pas affecter l'alignement */}
+                        {/* Ne pas afficher le label pour les matchs de finale du tableau principal (les labels sont gérés séparément) */}
+                        {/* Ne pas afficher le label pour places_6_10, places_11_15 et places_16_20 au Tour 4 (les labels sont gérés séparément à droite) */}
+                        {matchLabel && !(tableau.id === "principal" && roundNum === 4) && !(tableau.id === "places_6_10" && roundNum === 4) && !(tableau.id === "places_11_15" && roundNum === 4) && !(tableau.id === "places_16_20" && roundNum === 4) && (
+                          <p 
+                            className="absolute left-0 right-0 text-xs font-semibold text-white/70 text-center uppercase tracking-wide pointer-events-none z-10"
+                            style={{
+                              top: `${(verticalPosition || 0) - 25}px`, // Positionner au-dessus du cadre
+                            }}
+                          >
                             {matchLabel}
                           </p>
                         )}
@@ -2507,12 +2824,13 @@ export default function TournamentBracket({
                                 | "set3";
                               const isSuperTiebreakSlot =
                                 (matchFormat === "B1" || matchFormat === "C1") && idx === 2;
-                              // Largeur plus grande pour laisser passer "Set 1", "Set 2" et "Super tie-break"
+                              // Largeur réduite pour que les cases passent dans les cadres sans couper le texte
+                              // Agrandir légèrement pour le TMC20
                               const widthClass = isSuperTiebreakSlot
-                                ? "w-[150px]"
+                                ? (isTmc20 ? "w-[130px]" : "w-[120px]")
                                 : (matchFormat === "B1" || matchFormat === "C1")
-                                ? idx === 1 ? "w-[72px]" : "w-[70px]"
-                                : "w-[78px]";
+                                ? idx === 1 ? "w-[60px]" : "w-[60px]"
+                                : "w-[65px]";
                               const alignClass = isSuperTiebreakSlot
                                 ? "text-center"
                                 : "";
@@ -2577,6 +2895,63 @@ export default function TournamentBracket({
                     </div>
                     </div>
                     </div>
+                    {/* Labels à droite des matchs du Tour 4 pour places_6_10 */}
+                    {tableau.id === "places_6_10" && roundNum === 4 && verticalPosition !== undefined && (
+                      <div 
+                        className="absolute flex items-center pointer-events-none z-10"
+                        style={{
+                          left: '300px', // À droite du match (largeur du match ~280px + espacement de 20px)
+                          top: `${(verticalPosition || 0) + 5}px`, // Décaler légèrement vers le bas
+                          height: '90px', // Hauteur du match
+                        }}
+                      >
+                        <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-md border border-white/25">
+                          <p className="text-sm font-semibold text-white text-center tracking-wide whitespace-nowrap">
+                            {matchIndex === 0 && "Match pour la 6e et 7e place"}
+                            {matchIndex === 1 && "Match pour la 8e et 9e place"}
+                            {matchIndex === 2 && "10e place"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {/* Labels à droite des matchs du Tour 4 pour places_11_15 */}
+                    {tableau.id === "places_11_15" && roundNum === 4 && verticalPosition !== undefined && (
+                      <div 
+                        className="absolute flex items-center pointer-events-none z-10"
+                        style={{
+                          left: '300px', // À droite du match (largeur du match ~280px + espacement de 20px)
+                          top: `${(verticalPosition || 0) + 5}px`, // Décaler légèrement vers le bas
+                          height: '90px', // Hauteur du match
+                        }}
+                      >
+                        <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-md border border-white/25">
+                          <p className="text-sm font-semibold text-white text-center tracking-wide whitespace-nowrap">
+                            {matchIndex === 0 && "Match pour la 11e et 12e place"}
+                            {matchIndex === 1 && "Match pour la 13e et 14e place"}
+                            {matchIndex === 2 && "15e place"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {/* Labels à droite des matchs du Tour 4 pour places_16_20 */}
+                    {tableau.id === "places_16_20" && roundNum === 4 && verticalPosition !== undefined && (
+                      <div 
+                        className="absolute flex items-center pointer-events-none z-10"
+                        style={{
+                          left: '300px', // À droite du match (largeur du match ~280px + espacement de 20px)
+                          top: `${(verticalPosition || 0) + 5}px`, // Décaler légèrement vers le bas
+                          height: '90px', // Hauteur du match
+                        }}
+                      >
+                        <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-md border border-white/25">
+                          <p className="text-sm font-semibold text-white text-center tracking-wide whitespace-nowrap">
+                            {matchIndex === 0 && "Match pour la 16e et 17e place"}
+                            {matchIndex === 1 && "Match pour la 18e et 19e place"}
+                            {matchIndex === 2 && "20e place"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     </React.Fragment>
                   );
                 })}

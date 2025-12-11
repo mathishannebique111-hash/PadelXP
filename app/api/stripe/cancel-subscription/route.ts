@@ -243,11 +243,11 @@ export async function POST(req: NextRequest) {
     if (subscription.stripe_subscription_id) {
       try {
         stripeSubscription = await stripe.subscriptions.update(
-          subscription.stripe_subscription_id,
-          {
-            cancel_at_period_end: true,
-          }
-        );
+      subscription.stripe_subscription_id,
+      {
+        cancel_at_period_end: true,
+      }
+    );
       } catch (err: any) {
         const message = err instanceof Error ? err.message : String(err);
 
@@ -275,12 +275,12 @@ export async function POST(req: NextRequest) {
       logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: updateError }, '[cancel-subscription] Database update error');
       // Essayer de revenir en arrière côté Stripe uniquement si on avait mis à jour Stripe
       if (subscription.stripe_subscription_id && stripeSubscription) {
-        try {
-          await stripe.subscriptions.update(
-            subscription.stripe_subscription_id,
-            { cancel_at_period_end: false }
-          );
-        } catch (stripeError) {
+      try {
+        await stripe.subscriptions.update(
+          subscription.stripe_subscription_id,
+          { cancel_at_period_end: false }
+        );
+      } catch (stripeError) {
           logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscription.id.substring(0, 8) + "…", error: stripeError }, '[cancel-subscription] Failed to revert Stripe');
         }
       }
@@ -313,7 +313,7 @@ export async function POST(req: NextRequest) {
       cancel_at_period_end: true,
         current_period_end: stripeSubscription && (stripeSubscription as any).current_period_end
           ? new Date((stripeSubscription as any).current_period_end * 1000).toISOString()
-          : null,
+        : null,
     });
   } catch (error) {
     logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, '[cancel-subscription] Error');

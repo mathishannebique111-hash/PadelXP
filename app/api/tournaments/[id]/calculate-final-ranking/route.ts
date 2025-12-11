@@ -142,9 +142,9 @@ export async function POST(
     // Calculer le classement final
     const ranking: Record<string, number> = {};
 
-    // Récupérer les matchs du Tour 3 uniquement pour TMC 12 (les TMC 8 n'ont que 3 tours)
+    // Récupérer les matchs du Tour 3 pour TMC 12 et TMC 20 (les TMC 8 n'ont que 3 tours)
     let tour3Matches: Match[] | null = null;
-    if (numPairs === 12) {
+    if (numPairs === 12 || numPairs === 20) {
       const { data: t3, error: tour3Error } = await supabaseAdmin
         .from("tournament_matches")
         .select("*")
@@ -194,8 +194,147 @@ export async function POST(
       );
     }
 
-    // Logique spécifique pour TMC 12 équipes
-    if (numPairs === 12) {
+    // Logique spécifique pour TMC 20 équipes
+    if (numPairs === 20) {
+      // 1) Places 1-2 : Finale (Tour 4, tableau principal)
+      const finalMatch = tour4Matches.find(
+        (m: Match) => m.tableau === "principal" && m.round_type === "final" && m.match_order === 1
+      );
+      const finalists = new Set<string>();
+      if (finalMatch && finalMatch.status === "completed" && finalMatch.winner_registration_id) {
+        ranking[finalMatch.winner_registration_id] = 1;
+        finalists.add(finalMatch.winner_registration_id);
+        const loserId =
+          finalMatch.team1_registration_id === finalMatch.winner_registration_id
+            ? finalMatch.team2_registration_id
+            : finalMatch.team1_registration_id;
+        if (loserId) {
+          ranking[loserId] = 2;
+          finalists.add(loserId);
+        }
+      }
+
+      // 2) Place 3 : Petite finale (Tour 4, tableau principal)
+      const thirdPlaceMatch = tour4Matches.find(
+        (m: Match) => m.tableau === "principal" && m.round_type === "third_place" && m.match_order === 2
+      );
+      if (thirdPlaceMatch && thirdPlaceMatch.status === "completed" && thirdPlaceMatch.winner_registration_id) {
+        ranking[thirdPlaceMatch.winner_registration_id] = 3;
+        const loserId =
+          thirdPlaceMatch.team1_registration_id === thirdPlaceMatch.winner_registration_id
+            ? thirdPlaceMatch.team2_registration_id
+            : thirdPlaceMatch.team1_registration_id;
+        if (loserId) ranking[loserId] = 4;
+      }
+
+      // 3) Place 5 : 5e place (Tour 4, tableau principal)
+      const fifthPlaceMatch = tour4Matches.find(
+        (m: Match) => m.tableau === "principal" && m.match_order === 3
+      );
+      if (fifthPlaceMatch && fifthPlaceMatch.status === "completed" && fifthPlaceMatch.winner_registration_id) {
+        ranking[fifthPlaceMatch.winner_registration_id] = 5;
+      }
+
+      // 4) Places 6-10 : Tableau places_6_10 (Tour 4)
+      const places6_10Matches = tour4Matches.filter(
+        (m: Match) => m.tableau === "places_6_10"
+      ).sort((a, b) => a.match_order - b.match_order);
+      
+      // M1 : Match pour la 6e et 7e place
+      const places6_7Match = places6_10Matches.find((m: Match) => m.match_order === 1);
+      if (places6_7Match && places6_7Match.status === "completed" && places6_7Match.winner_registration_id) {
+        ranking[places6_7Match.winner_registration_id] = 6;
+        const loserId =
+          places6_7Match.team1_registration_id === places6_7Match.winner_registration_id
+            ? places6_7Match.team2_registration_id
+            : places6_7Match.team1_registration_id;
+        if (loserId) ranking[loserId] = 7;
+      }
+
+      // M2 : Match pour la 8e et 9e place
+      const places8_9Match = places6_10Matches.find((m: Match) => m.match_order === 2);
+      if (places8_9Match && places8_9Match.status === "completed" && places8_9Match.winner_registration_id) {
+        ranking[places8_9Match.winner_registration_id] = 8;
+        const loserId =
+          places8_9Match.team1_registration_id === places8_9Match.winner_registration_id
+            ? places8_9Match.team2_registration_id
+            : places8_9Match.team1_registration_id;
+        if (loserId) ranking[loserId] = 9;
+      }
+
+      // M3 : 10e place
+      const place10Match = places6_10Matches.find((m: Match) => m.match_order === 3);
+      if (place10Match && place10Match.status === "completed" && place10Match.winner_registration_id) {
+        ranking[place10Match.winner_registration_id] = 10;
+      }
+
+      // 5) Places 11-15 : Tableau places_11_15 (Tour 4)
+      const places11_15Matches = tour4Matches.filter(
+        (m: Match) => m.tableau === "places_11_15"
+      ).sort((a, b) => a.match_order - b.match_order);
+      
+      // M1 : Match pour la 11e et 12e place
+      const places11_12Match = places11_15Matches.find((m: Match) => m.match_order === 1);
+      if (places11_12Match && places11_12Match.status === "completed" && places11_12Match.winner_registration_id) {
+        ranking[places11_12Match.winner_registration_id] = 11;
+        const loserId =
+          places11_12Match.team1_registration_id === places11_12Match.winner_registration_id
+            ? places11_12Match.team2_registration_id
+            : places11_12Match.team1_registration_id;
+        if (loserId) ranking[loserId] = 12;
+      }
+
+      // M2 : Match pour la 13e et 14e place
+      const places13_14Match = places11_15Matches.find((m: Match) => m.match_order === 2);
+      if (places13_14Match && places13_14Match.status === "completed" && places13_14Match.winner_registration_id) {
+        ranking[places13_14Match.winner_registration_id] = 13;
+        const loserId =
+          places13_14Match.team1_registration_id === places13_14Match.winner_registration_id
+            ? places13_14Match.team2_registration_id
+            : places13_14Match.team1_registration_id;
+        if (loserId) ranking[loserId] = 14;
+      }
+
+      // M3 : 15e place
+      const place15Match = places11_15Matches.find((m: Match) => m.match_order === 3);
+      if (place15Match && place15Match.status === "completed" && place15Match.winner_registration_id) {
+        ranking[place15Match.winner_registration_id] = 15;
+      }
+
+      // 6) Places 16-20 : Tableau places_16_20 (Tour 4)
+      const places16_20Matches = tour4Matches.filter(
+        (m: Match) => m.tableau === "places_16_20"
+      ).sort((a, b) => a.match_order - b.match_order);
+      
+      // M1 : Match pour la 16e et 17e place
+      const places16_17Match = places16_20Matches.find((m: Match) => m.match_order === 1);
+      if (places16_17Match && places16_17Match.status === "completed" && places16_17Match.winner_registration_id) {
+        ranking[places16_17Match.winner_registration_id] = 16;
+        const loserId =
+          places16_17Match.team1_registration_id === places16_17Match.winner_registration_id
+            ? places16_17Match.team2_registration_id
+            : places16_17Match.team1_registration_id;
+        if (loserId) ranking[loserId] = 17;
+      }
+
+      // M2 : Match pour la 18e et 19e place
+      const places18_19Match = places16_20Matches.find((m: Match) => m.match_order === 2);
+      if (places18_19Match && places18_19Match.status === "completed" && places18_19Match.winner_registration_id) {
+        ranking[places18_19Match.winner_registration_id] = 18;
+        const loserId =
+          places18_19Match.team1_registration_id === places18_19Match.winner_registration_id
+            ? places18_19Match.team2_registration_id
+            : places18_19Match.team1_registration_id;
+        if (loserId) ranking[loserId] = 19;
+      }
+
+      // M3 : 20e place
+      const place20Match = places16_20Matches.find((m: Match) => m.match_order === 3);
+      if (place20Match && place20Match.status === "completed" && place20Match.winner_registration_id) {
+        ranking[place20Match.winner_registration_id] = 20;
+      }
+    } else if (numPairs === 12) {
+      // Logique spécifique pour TMC 12 équipes
 
       // 1) Places 1-2 : Finale (Tour 4, tableau principal)
       const finalMatch = tour4Matches.find(
@@ -536,12 +675,13 @@ export async function POST(
       "[calculate-final-ranking] Final ranking calculated"
     );
 
-    // Vérifier que toutes les places sont assignées (pour TMC 12) et assigner les places manquantes
-    if (numPairs === 12) {
+    // Vérifier que toutes les places sont assignées (pour TMC 12 et TMC 20) et assigner les places manquantes
+    if (numPairs === 12 || numPairs === 20) {
       const assignedRanks = new Set(Object.values(ranking));
       const assignedTeamIds = new Set(Object.keys(ranking));
       const missingRanks: number[] = [];
-      for (let i = 1; i <= 12; i++) {
+      const maxRank = numPairs === 20 ? 20 : 12;
+      for (let i = 1; i <= maxRank; i++) {
         if (!assignedRanks.has(i)) {
           missingRanks.push(i);
         }
@@ -742,8 +882,8 @@ export async function POST(
       }
     }
 
-    // Vérification finale : s'assurer que toutes les équipes sont assignées (pour TMC 12)
-    if (numPairs === 12) {
+    // Vérification finale : s'assurer que toutes les équipes sont assignées (pour TMC 12 et TMC 20)
+    if (numPairs === 12 || numPairs === 20) {
       const { data: allRegistrations } = await supabaseAdmin
         .from("tournament_registrations")
         .select("id")
@@ -755,7 +895,8 @@ export async function POST(
       
       const assignedRanks = new Set(Object.values(ranking));
       const missingRanks: number[] = [];
-      for (let i = 1; i <= 12; i++) {
+      const maxRank = numPairs === 20 ? 20 : 12;
+      for (let i = 1; i <= maxRank; i++) {
         if (!assignedRanks.has(i)) {
           missingRanks.push(i);
         }
@@ -921,7 +1062,8 @@ export async function POST(
     // Vérification finale avant de retourner
     const finalCheck = new Set(Object.values(ranking));
     const missingPlaces: number[] = [];
-    for (let i = 1; i <= 12; i++) {
+    const maxRank = numPairs === 20 ? 20 : (numPairs === 12 ? 12 : 16);
+    for (let i = 1; i <= maxRank; i++) {
       if (!finalCheck.has(i)) {
         missingPlaces.push(i);
       }
