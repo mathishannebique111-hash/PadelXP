@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
+import { validateRequest } from "@/lib/validate";
+import { BillingDetailsSchema } from "@/lib/validations/schemas";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -28,7 +30,18 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { billingEmail, billingAddress, vatNumber } = body;
+
+    // Validation des données
+    const validation = validateRequest(BillingDetailsSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    // Utiliser les données validées
+    const { billingEmail, billingAddress, vatNumber } = validation.data;
 
     if (!supabaseAdmin) {
       return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });

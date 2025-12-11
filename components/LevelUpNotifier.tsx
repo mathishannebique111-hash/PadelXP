@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useUser } from '@/lib/hooks/useUser';
+import { createNotification } from '@/lib/notifications';
 
 interface Props {
   tier: string; // Bronze / Argent / Or / Diamant / Champion
@@ -10,6 +12,7 @@ export default function LevelUpNotifier({ tier }: Props) {
   const [show, setShow] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
   const checkedTierRef = useRef<string | null>(null); // Pour suivre le tier déjà vérifié dans cette session
+  const { user, loading: userLoading } = useUser();
 
   const tierKey = useMemo(() => `padelleague.lastTier`, []);
   const shownTierKey = useMemo(() => `padelleague.shownTier`, []); // Clé pour suivre les tiers déjà affichés
@@ -33,6 +36,16 @@ export default function LevelUpNotifier({ tier }: Props) {
         if (last !== null && !hasBeenShown) {
           setCurrent(tier);
           setShow(true);
+          // Sauvegarder aussi en DB
+          if (user?.id) {
+            createNotification(user.id, 'level_up', {
+              tier,
+              tier_name: `Tier ${tier}`,
+              timestamp: new Date().toISOString(),
+            }).catch(err => {
+              console.error('Failed to save level_up notification to DB:', err)
+            })
+          }
           // Marquer ce tier comme affiché
           const updated = Array.from(new Set([...shownTiersList, tier]));
           window.localStorage.setItem(shownTierKey, JSON.stringify(updated));
@@ -46,7 +59,7 @@ export default function LevelUpNotifier({ tier }: Props) {
       // fail silent
       checkedTierRef.current = tier; // Marquer comme vérifié même en cas d'erreur
     }
-  }, [tier, tierKey, shownTierKey]);
+  }, [tier, tierKey, shownTierKey, user]);
 
   if (!show || !current) return null;
 

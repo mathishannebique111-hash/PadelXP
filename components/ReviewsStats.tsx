@@ -88,14 +88,9 @@ export default function ReviewsStats({
           const statusData = await statusResponse.json();
           setRewardStatus(statusData);
         }
-        // Optionnel : afficher un message de succès
-        alert("Boost gratuit attribué avec succès ! 🎉");
-      } else {
-        alert(data.error || "Erreur lors de la réclamation du boost");
       }
     } catch (error) {
       console.error("Error claiming reward:", error);
-      alert("Erreur lors de la réclamation du boost");
     } finally {
       setClaiming(false);
     }

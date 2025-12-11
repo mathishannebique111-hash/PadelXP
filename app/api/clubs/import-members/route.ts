@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { validateRequest } from "@/lib/validate";
+import { ClubImportSchema } from "@/lib/validations/schemas";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,49 +14,6 @@ const supabaseAdmin =
         auth: { autoRefreshToken: false, persistSession: false },
       })
     : null;
-
-// === AJOUT : Schéma Zod pour validation ===
-const importMemberRowSchema = z.object({
-  firstName: z
-    .string()
-    .trim()
-    .max(60, "Le prénom est trop long (max 60 caractères)")
-    .optional(),
-  lastName: z
-    .string()
-    .trim()
-    .max(60, "Le nom est trop long (max 60 caractères)")
-    .optional(),
-  email: z
-    .string()
-    .trim()
-    .email("Email invalide")
-    .max(255, "Email trop long"),
-  phone: z
-    .string()
-    .trim()
-    .max(20, "Téléphone trop long (max 20 caractères)")
-    .regex(/^[0-9+\s()-]*$/, "Format de téléphone invalide")
-    .nullable()
-    .optional(),
-  notes: z
-    .string()
-    .trim()
-    .max(500, "Notes trop longues (max 500 caractères)")
-    .nullable()
-    .optional(),
-  raw: z.record(z.any()).optional(),
-});
-
-const importMembersSchema = z.object({
-  rows: z
-    .array(importMemberRowSchema)
-    .min(1, "Au moins une ligne est requise")
-    .max(500, "Maximum 500 lignes par import"),
-});
-// === FIN AJOUT ===
-
-type IncomingRow = z.infer<typeof importMemberRowSchema>;
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -87,21 +45,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Format JSON invalide" }, { status: 400 });
     }
 
-    const parsed = importMembersSchema.safeParse(payload);
-    if (!parsed.success) {
-      const fieldErrors = parsed.error.flatten().fieldErrors;
-      const firstError = Object.values(fieldErrors).flat()[0] ?? "Données invalides";
+    const validation = validateRequest(ClubImportSchema, payload);
+    if (!validation.success) {
       return NextResponse.json(
-        { 
-          error: firstError, 
-          details: fieldErrors,
-          message: "Veuillez vérifier le format de vos données"
-        },
+        { error: validation.error },
         { status: 400 }
       );
     }
 
-    const rows: IncomingRow[] = parsed.data.rows;
+    const rows = validation.data.rows;
     // === FIN MODIFICATION ===
 
     // Déterminer le club associé à l'utilisateur
