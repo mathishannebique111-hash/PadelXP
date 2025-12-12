@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
+import Image from "next/image";
 
 export default function DeleteAccountButton() {
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -56,7 +57,16 @@ export default function DeleteAccountButton() {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-red-500/50 bg-red-500/20 p-4">
-        <h3 className="text-base sm:text-lg font-semibold text-white mb-3">⚠️ Confirmation de suppression</h3>
+        <h3 className="text-base sm:text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <Image 
+            src="/images/Danger page réglages.png" 
+            alt="Danger"
+            width={24}
+            height={24}
+            className="w-6 h-6"
+          />
+          Confirmation de suppression
+        </h3>
         <p className="text-sm text-white/90 mb-4">
           Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est <strong>irréversible</strong> et toutes vos données seront <strong>définitivement supprimées</strong> :
         </p>
@@ -71,8 +81,15 @@ export default function DeleteAccountButton() {
           <li>Vos avis et commentaires</li>
           <li>Toutes les autres données associées à votre compte</li>
         </ul>
-        <p className="text-sm text-white/90 font-semibold">
-          ⚠️ Cette action ne peut pas être annulée. Vos données seront supprimées de manière permanente et ne pourront pas être récupérées.
+        <p className="text-sm text-white/90 font-semibold flex items-center gap-2">
+          <Image 
+            src="/images/Danger page réglages.png" 
+            alt="Danger"
+            width={20}
+            height={20}
+            className="w-5 h-5 flex-shrink-0"
+          />
+          <span>Cette action ne peut pas être annulée. Vos données seront supprimées de manière permanente et ne pourront pas être récupérées.</span>
         </p>
       </div>
 

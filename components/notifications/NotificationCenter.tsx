@@ -9,10 +9,26 @@ import NotificationItem from './NotificationItem'
 
 export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({})
   const panelRef = useRef<HTMLDivElement>(null)
   const { user } = useUser()
   const { notifications, unreadCount, loading, refreshNotifications, markNotificationAsReadLocal, markAllAsReadLocal } = useNotifications(user?.id)
+
+  const handleOpen = () => {
+    setIsOpen(true)
+    setIsAnimating(true)
+  }
+
+  const handleClose = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      setIsOpen(false)
+      setIsClosing(false)
+      setIsAnimating(false)
+    }, 400)
+  }
 
   // Calculer la position et la taille du panneau pour qu'il soit centré et entièrement visible
   useEffect(() => {
@@ -104,28 +120,34 @@ export default function NotificationCenter() {
   return (
     <div className="relative">
       {/* Icône cloche */}
-      <NotificationBell onClick={() => setIsOpen(!isOpen)} />
+      <NotificationBell onClick={() => isOpen ? handleClose() : handleOpen()} />
 
       {/* Panneau dropdown */}
       {isOpen && (
         <>
           {/* Overlay pour fermer au clic extérieur */}
           <div 
-            className="fixed inset-0 z-[100001] bg-black/50 backdrop-blur-sm" 
-            onClick={() => setIsOpen(false)}
+            className={`fixed inset-0 z-[100001] bg-black/50 backdrop-blur-sm transition-all duration-300 ease-in-out ${
+              isClosing ? 'opacity-0' : 'opacity-0 animate-fadeIn'
+            }`}
+            onClick={handleClose}
           />
 
           {/* Panneau - Centré à l'écran et entièrement visible */}
           <div 
             ref={panelRef}
-            className="fixed bg-black/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 z-[100002] flex flex-col overflow-hidden"
+            className={`fixed bg-black/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 z-[100002] flex flex-col overflow-hidden ${
+              isClosing 
+                ? 'animate-scaleOut' 
+                : 'animate-scaleIn'
+            }`}
             style={panelStyle}
           >
             {/* Header */}
             <div className="p-3 sm:p-4 border-b border-white/10 flex items-center justify-between flex-shrink-0 gap-2 bg-gradient-to-r from-[#0066FF]/10 to-transparent">
               <h3 className="font-semibold text-base sm:text-lg text-white flex-shrink-0">Notifications</h3>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
                 aria-label="Fermer"
               >
@@ -179,6 +201,52 @@ export default function NotificationCenter() {
           </div>
         </>
       )}
+
+      {/* Animations CSS personnalisées */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.85);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes scaleOut {
+          from {
+            opacity: 1;
+            transform: scale(1);
+          }
+          to {
+            opacity: 0;
+            transform: scale(0.85);
+          }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .animate-scaleIn {
+          animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .animate-scaleOut {
+          animation: scaleOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+      `}</style>
     </div>
   )
 }

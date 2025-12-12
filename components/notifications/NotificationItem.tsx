@@ -107,6 +107,39 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
     return null
   }
 
+  const levelUpStyles: Record<string, { categoryColor: string; gradient: string; iconBg: string; borderColor: string }> = {
+    Bronze: {
+      categoryColor: 'bg-orange-500/20 text-orange-200 border border-orange-500/30',
+      gradient: 'from-orange-500/10 to-orange-500/5',
+      iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
+      borderColor: 'border-l-orange-500'
+    },
+    Argent: {
+      categoryColor: 'bg-gray-300/20 text-gray-100 border border-gray-300/30',
+      gradient: 'from-gray-300/10 to-gray-200/5',
+      iconBg: 'bg-gradient-to-br from-gray-300 to-gray-400',
+      borderColor: 'border-l-gray-300'
+    },
+    Or: {
+      categoryColor: 'bg-yellow-400/20 text-yellow-100 border border-yellow-400/30',
+      gradient: 'from-yellow-400/10 to-amber-300/5',
+      iconBg: 'bg-gradient-to-br from-yellow-400 to-amber-400',
+      borderColor: 'border-l-yellow-400'
+    },
+    Diamant: {
+      categoryColor: 'bg-cyan-400/20 text-cyan-50 border border-cyan-400/30',
+      gradient: 'from-cyan-400/10 to-blue-400/5',
+      iconBg: 'bg-gradient-to-br from-cyan-400 to-blue-400',
+      borderColor: 'border-l-cyan-400'
+    },
+    Champion: {
+      categoryColor: 'bg-purple-500/20 text-purple-50 border border-purple-500/30',
+      gradient: 'from-purple-500/10 to-pink-500/5',
+      iconBg: 'bg-gradient-to-br from-purple-500 to-pink-500',
+      borderColor: 'border-l-purple-500'
+    }
+  }
+
   // Configuration du style selon le type de notification (style du site : fond sombre, glassmorphism)
   const getNotificationConfig = () => {
     let data = notification.data as any
@@ -121,14 +154,23 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
 
     switch (notification.type) {
       case 'level_up':
+        {
+          const tierName = extractTier(data)
+          const style = (tierName && levelUpStyles[tierName]) || {
+            categoryColor: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+            gradient: 'from-purple-500/10 to-purple-500/5',
+            iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
+            borderColor: 'border-l-purple-500'
+          }
         return {
           category: 'LEVEL UP',
-          categoryColor: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
-          gradient: 'from-purple-500/10 to-purple-500/5',
-          iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
+          categoryColor: style.categoryColor,
+          gradient: style.gradient,
+          iconBg: style.iconBg,
           icon: Trophy,
           iconColor: 'text-white',
-          borderColor: 'border-l-purple-500'
+          borderColor: style.borderColor
+        }
         }
       case 'badge':
       case 'badge_unlocked':
@@ -193,7 +235,7 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
       const tier = extractTier(data)
       if (tier) {
         return (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-full flex justify-center">
             <TierBadge tier={tier as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
           </div>
         )
@@ -208,11 +250,11 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
                         notification.type === 'top3_ranking'
     
     const circleSize = isSmallIcon 
-      ? 'w-11 h-11 sm:w-12 sm:h-12' 
+      ? 'w-12 h-12 sm:w-14 sm:h-14' 
       : 'w-12 h-12 sm:w-14 sm:h-14'
     
     const iconSize = isSmallIcon
-      ? 'w-5 h-5 sm:w-6 sm:h-6'
+      ? 'w-6 h-6 sm:w-7 sm:h-7'
       : 'w-6 h-6 sm:w-7 sm:h-7'
     
     return (
@@ -237,7 +279,7 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
     switch (notification.type) {
       case 'level_up':
         const tierName = extractTier(data) || 'Nouveau tier'
-        return `Félicitations ! Tu as atteint le tier ${tierName}`
+        return `Félicitations ! Tu as atteint le niveau ${tierName}`
       case 'badge':
       case 'badge_unlocked':
         // Utiliser exactement le titre du badge tel qu'il est stocké
@@ -269,7 +311,7 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
     <div
       onClick={handleClick}
       className={`
-        group relative flex items-start gap-3 sm:gap-4 p-4 sm:p-5 cursor-pointer
+        group relative grid grid-cols-[88px_1fr] sm:grid-cols-[104px_1fr] items-center gap-3 sm:gap-4 p-4 sm:p-5 cursor-pointer
         transition-all duration-300 ease-out
         ${isUnread 
           ? `bg-gradient-to-r ${config.gradient} border-l-4 ${config.borderColor} backdrop-blur-sm` 
@@ -284,12 +326,12 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
       )}
 
       {/* Icône */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 w-full flex justify-center">
         {renderIcon()}
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 min-w-0 space-y-1.5">
+      <div className="flex-1 min-w-0 space-y-1.5 pl-2 sm:pl-3">
         {/* Badge de catégorie */}
         <div className="flex items-center gap-2">
           <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${config.categoryColor}`}>

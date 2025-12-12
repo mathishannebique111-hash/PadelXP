@@ -2,6 +2,7 @@
 
 import { useUser } from '@/lib/hooks/useUser'
 import { useNotifications } from '@/lib/hooks/useNotifications'
+import Image from 'next/image'
 
 interface NotificationBellProps {
   onClick: () => void
@@ -14,12 +15,18 @@ export default function NotificationBell({ onClick }: NotificationBellProps) {
   return (
     <button
       onClick={onClick}
-      className="relative p-2 hover:bg-white/10 rounded-full transition-colors"
+      className="relative w-full h-full flex items-center justify-center hover:bg-white/10 rounded-full transition-colors"
       aria-label={loading ? 'Notifications' : `Notifications (${unreadCount} non lues)`}
       disabled={loading}
     >
       {/* Icône cloche */}
-      <span className="text-2xl">🔔</span>
+      <Image 
+        src="/images/Notifications.png" 
+        alt="Notifications"
+        width={20}
+        height={20}
+        className="w-5 h-5 sm:w-6 sm:h-6"
+      />
 
       {/* Badge avec nombre */}
       {!loading && unreadCount > 0 && (
