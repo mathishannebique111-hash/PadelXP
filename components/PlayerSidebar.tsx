@@ -236,7 +236,7 @@ export default function PlayerSidebar() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </Link>
-          <div className="w-10 h-10 sm:w-12 sm:h-12">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
             <NotificationCenter />
           </div>
         </div>
