@@ -1,4 +1,5 @@
 import pino from 'pino';
+import * as Sentry from "@sentry/nextjs";
 
 const isDev = process.env.NODE_ENV === 'development';
 const isTest = process.env.NODE_ENV === 'test';
@@ -27,7 +28,12 @@ const baseLogger = pino(pinoConfig);
 
 const createLogger = (instance: pino.Logger) => ({
   info: (msg: string, context?: any) => instance.info(context || {}, msg),
-  error: (msg: string, context?: any) => instance.error(context || {}, msg),
+  error: (msg: string, context?: any) => {
+    instance.error(context || {}, msg);
+    if (context?.error instanceof Error) {
+      Sentry.captureException(context.error);
+    }
+  },
   warn: (msg: string, context?: any) => instance.warn(context || {}, msg),
   debug: (msg: string, context?: any) => instance.debug(context || {}, msg),
   child: (bindings: any) => createLogger(instance.child(bindings)),
@@ -38,6 +44,7 @@ export const logger = createLogger(baseLogger);
 export const logError = (error: any, context?: any) => {
   if (error instanceof Error) {
     logger.error(error.message, { ...context, stack: error.stack });
+    Sentry.captureException(error, { extra: context });
   } else {
     logger.error('Unknown error', { ...context, error: String(error) });
   }

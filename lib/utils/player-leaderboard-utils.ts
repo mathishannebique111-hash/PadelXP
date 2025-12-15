@@ -4,6 +4,7 @@ import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { calculatePointsForMultiplePlayers } from "./boost-points-utils";
 import { getPlayerDisplayName } from "./player-utils";
 import { logger, logError } from "@/lib/logger";
+import { cacheGet, cacheSet } from '@/lib/cache/redis';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -41,6 +42,19 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       logger.warn("[calculatePlayerLeaderboard] Supabase admin client not configured");
     }
     return [];
+  }
+
+  // Essayer de récupérer depuis le cache
+  try {
+    const cacheKey = `leaderboard:${clubId}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      logger.info("[calculatePlayerLeaderboard] Returning cached leaderboard", { clubId: clubId.substring(0, 8) + "..." });
+      return cached as LeaderboardEntry[];
+    }
+  } catch (error) {
+    // Si le cache échoue, continuer normalement
+    logger.warn("[calculatePlayerLeaderboard] Cache read failed, continuing without cache", { error: error instanceof Error ? error.message : String(error) });
   }
 
   // Étape 1: Récupérer tous les participants sans jointure
@@ -537,6 +551,16 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     totalPlayers: finalLeaderboard.length, 
     playersWithNoMatches: playersWithNoMatches.length 
   });
+
+  // Sauvegarder dans le cache (TTL 5 minutes)
+  try {
+    const cacheKey = `leaderboard:${clubId}`;
+    await cacheSet(cacheKey, finalLeaderboard, 300);
+    logger.info("[calculatePlayerLeaderboard] Leaderboard cached", { clubId: clubId.substring(0, 8) + "..." });
+  } catch (error) {
+    // Si le cache échoue, ignorer et continuer
+    logger.warn("[calculatePlayerLeaderboard] Cache write failed, continuing without cache", { error: error instanceof Error ? error.message : String(error) });
+  }
 
   return finalLeaderboard;
 }
