@@ -440,49 +440,48 @@ export async function POST(req: Request) {
     }
 
     // ======= AUTO-EXTENSION TRIAL (par club) =======
-    try {
-      // Récupérer les clubs des participants (users uniquement)
-      const userIds = participants.filter(p => p.player_type === 'user').map(p => p.user_id);
-      if (userIds.length > 0) {
-        const { data: participantProfiles, error: profilesError } = await supabaseAdmin
-          .from("profiles")
-          .select("id, club_id")
-          .in("id", userIds);
+try {
+  // Récupérer les clubs des participants (users uniquement)
+  const userIds = participants.filter(p => p.player_type === 'user').map(p => p.user_id);
+  if (userIds.length > 0) {
+    const { data: participantProfiles, error: profilesError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, club_id")
+      .in("id", userIds);
 
-        if (profilesError) {
-          logger.error({ error: profilesError.message }, "[matches/submit] Error fetching participant profiles for trial extension");
-        } else {
-          const clubIds = Array.from(new Set((participantProfiles || []).map(p => p.club_id).filter(Boolean)));
-          for (const clubId of clubIds) {
-            try {
-              logger.info({ clubId: clubId!.substring(0, 8) + "…" }, "[matches/submit] Trial check after match");
-              await updateEngagementMetrics(clubId!);
-              const eligibility = await checkAutoExtensionEligibility(clubId!);
-              logger.info({ clubId: clubId!.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason }, "[matches/submit] Trial eligibility");
-              if (eligibility.eligible && eligibility.reason) {
-                const grantRes = await grantAutoExtension(clubId!, eligibility.reason);
-                if (grantRes.success) {
-                  logger.info({ clubId: clubId!.substring(0, 8) + "…", reason: eligibility.reason }, "[matches/submit] Auto extension granted after match submit");
-                  // Rafraîchir les pages frontend
-                  revalidatePath('/dashboard');
-                  revalidatePath('/dashboard/facturation');
-                } else {
-                  logger.warn({ clubId: clubId!.substring(0, 8) + "…", error: grantRes.error }, "[matches/submit] Auto extension grant failed");
-                }
-              } else {
-                logger.info({ clubId: clubId!.substring(0, 8) + "…" }, "[matches/submit] No auto extension (threshold not met or already unlocked)");
-              }
-            } catch (extErr) {
-              logger.error({ clubId: clubId!.substring(0, 8) + "…", error: (extErr as Error).message }, "[matches/submit] Auto extension check error");
+    if (profilesError) {
+      logger.error("[matches/submit] Error fetching participant profiles for trial extension", { error: profilesError.message });
+    } else {
+      const clubIds = Array.from(new Set((participantProfiles || []).map(p => p.club_id).filter(Boolean)));
+      for (const clubId of clubIds) {
+        try {
+          logger.info("[matches/submit] Trial check after match", { clubId: clubId!.substring(0, 8) + "…" });
+          await updateEngagementMetrics(clubId!);
+          const eligibility = await checkAutoExtensionEligibility(clubId!);
+          logger.info("[matches/submit] Trial eligibility", { clubId: clubId!.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason });
+          if (eligibility.eligible && eligibility.reason) {
+            const grantRes = await grantAutoExtension(clubId!, eligibility.reason);
+            if (grantRes.success) {
+              logger.info("[matches/submit] Auto extension granted after match submit", { clubId: clubId!.substring(0, 8) + "…", reason: eligibility.reason });
+              // Rafraîchir les pages frontend
+              revalidatePath('/dashboard');
+              revalidatePath('/dashboard/facturation');
+            } else {
+              logger.warn("[matches/submit] Auto extension grant failed", { clubId: clubId!.substring(0, 8) + "…", error: grantRes.error });
             }
+          } else {
+            logger.info("[matches/submit] No auto extension (threshold not met or already unlocked)", { clubId: clubId!.substring(0, 8) + "…" });
           }
+        } catch (extErr) {
+          logger.error("[matches/submit] Auto extension check error", { clubId: clubId!.substring(0, 8) + "…", error: (extErr as Error).message });
         }
       }
-    } catch (extOuterErr) {
-      logger.error({ error: (extOuterErr as Error).message }, "[matches/submit] Auto extension outer error");
     }
-    // ===============================================
-
+  }
+} catch (extOuterErr) {
+  logger.error("[matches/submit] Auto extension outer error", { error: (extOuterErr as Error).message });
+}
+// ===============================================
 
     // Gérer l'application d'un boost si demandé
     let boostApplied = false;

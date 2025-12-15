@@ -72,14 +72,13 @@ export async function GET(req: Request) {
       .limit(100);
 
     if (error) {
-      logger.error({ err: error }, "Error fetching reviews");
+      logger.error("Error fetching reviews", { error: error.message });
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     logger.info(
-      { count: reviews?.length || 0 },
-      "[GET /api/reviews] Found reviews"
-    );
+      "[GET /api/reviews] Found reviews",
+       { count: reviews?.length || 0 });
 
     const userIds = (reviews || [])
       .map((r) => r.user_id)
@@ -108,8 +107,8 @@ export async function GET(req: Request) {
         (review) => review.rating >= minRating
       );
       logger.info(
-        { minRating, beforeFilter, afterFilter: enrichedReviews.length },
-        "[GET /api/reviews] Filtered reviews"
+        "[GET /api/reviews] Filtered reviews",
+        { minRating, beforeFilter, afterFilter: enrichedReviews.length }
       );
     }
 
@@ -125,10 +124,10 @@ export async function GET(req: Request) {
           ) / 10
         : 0;
 
-    logger.info(
-      { count: enrichedReviews.length, averageRating },
-      "[GET /api/reviews] Returning reviews"
-    );
+        logger.info(
+          "[GET /api/reviews] Returning reviews",
+          { count: enrichedReviews.length, averageRating }
+        );
 
     const positiveReviewsCount = enrichedReviews.filter(
       (r) => r.rating >= 4
