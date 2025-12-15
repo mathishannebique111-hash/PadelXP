@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import BadgeIconDisplay from "./BadgeIconDisplay";
+import { useUser } from '@/lib/hooks/useUser';
+import { createNotification } from '@/lib/notifications';
 
 type Badge = {
   icon: string;
@@ -17,6 +19,7 @@ export default function BadgesUnlockNotifier({ obtained }: Props) {
   const [toCelebrate, setToCelebrate] = useState<Badge[]>([]);
   const [show, setShow] = useState(false);
   const checkedKeysRef = useRef<string>(""); // Pour suivre les badges déjà vérifiés dans cette session
+  const { user } = useUser();
 
   const obtainedKeys = useMemo(() => obtained.map(b => `${b.icon}|${b.title}`).sort().join(","), [obtained]);
 
@@ -31,9 +34,23 @@ export default function BadgesUnlockNotifier({ obtained }: Props) {
 
       const newlyUnlocked = obtained.filter(b => !seen.includes(`${b.icon}|${b.title}`));
       if (newlyUnlocked.length > 0) {
+        // TOUJOURS créer les notifications dans la BD pour chaque nouveau badge
+        if (user?.id) {
+          newlyUnlocked.forEach(badge => {
+            createNotification(user.id, 'badge_unlocked', {
+              badge_name: badge.title,
+              badge_icon: badge.icon,
+              badge_description: badge.description,
+              timestamp: new Date().toISOString(),
+            }).catch(err => {
+              console.error('Failed to save badge_unlocked notification to DB:', err)
+            })
+          })
+        }
+        
         setToCelebrate(newlyUnlocked);
         setShow(true);
-        // marquer comme vus immédiatement pour éviter les répétitions
+        // marquer comme vus immédiatement pour éviter les répétitions du popup
         const updated = Array.from(new Set([...seen, ...newlyUnlocked.map(b => `${b.icon}|${b.title}`)]));
         window.localStorage.setItem(key, JSON.stringify(updated));
       }
@@ -43,7 +60,7 @@ export default function BadgesUnlockNotifier({ obtained }: Props) {
       // fail silent
       checkedKeysRef.current = obtainedKeys; // Marquer comme vérifié même en cas d'erreur
     }
-  }, [obtainedKeys]);
+  }, [obtainedKeys, user]);
 
   if (!show || toCelebrate.length === 0) return null;
 

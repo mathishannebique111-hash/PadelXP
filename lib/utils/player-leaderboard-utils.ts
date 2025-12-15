@@ -3,6 +3,7 @@ import { filterMatchesByDailyLimit, filterMatchesByDailyLimitPerUser } from "./m
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { calculatePointsForMultiplePlayers } from "./boost-points-utils";
 import { getPlayerDisplayName } from "./player-utils";
+import { logger, logError } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -37,7 +38,7 @@ export type LeaderboardEntry = {
 export async function calculatePlayerLeaderboard(clubId: string | null): Promise<LeaderboardEntry[]> {
   if (!clubId || !supabaseAdmin) {
     if (!supabaseAdmin) {
-      console.warn("[calculatePlayerLeaderboard] Supabase admin client not configured");
+      logger.warn("[calculatePlayerLeaderboard] Supabase admin client not configured");
     }
     return [];
   }
@@ -50,7 +51,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     .eq("player_type", "user");
   
   if (participantsError) {
-    console.error("[calculatePlayerLeaderboard] Error fetching match participants:", {
+    logger.error("[calculatePlayerLeaderboard] Error fetching match participants", {
       message: participantsError.message,
       details: participantsError.details,
       hint: participantsError.hint,
@@ -59,12 +60,12 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     return [];
   }
   
-  console.log("[calculatePlayerLeaderboard] Total participants fetched:", participantsData?.length || 0);
+  logger.info("[calculatePlayerLeaderboard] Total participants fetched", { count: participantsData?.length || 0 });
   
   // Étape 2: Récupérer tous les matchs uniques
   const allParticipants = participantsData || [];
   const uniqueMatchIds = [...new Set(allParticipants.map((p: any) => p.match_id))];
-  console.log("[calculatePlayerLeaderboard] Unique matches found:", uniqueMatchIds.length);
+  logger.info("[calculatePlayerLeaderboard] Unique matches found", { count: uniqueMatchIds.length });
   
   // Récupérer les données des matchs
   const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string; created_at: string; played_at: string }>();
@@ -76,7 +77,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       .in("id", uniqueMatchIds);
     
     if (matchesError) {
-      console.error("[calculatePlayerLeaderboard] Error fetching matches:", {
+      logger.error("[calculatePlayerLeaderboard] Error fetching matches", {
         message: matchesError.message,
         details: matchesError.details,
         hint: matchesError.hint,
@@ -92,7 +93,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
           played_at: m.played_at || m.created_at,
         });
       });
-      console.log("[calculatePlayerLeaderboard] Matches loaded:", matchesData.length);
+      logger.info("[calculatePlayerLeaderboard] Matches loaded", { count: matchesData.length });
     }
   }
   
@@ -109,7 +110,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     MAX_MATCHES_PER_DAY
   );
   
-  console.log("[calculatePlayerLeaderboard] Valid matches for points per user (after daily limit)");
+  logger.info("[calculatePlayerLeaderboard] Valid matches for points per user (after daily limit)");
   
   // Récupérer les profils
   const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
@@ -137,7 +138,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       if (profilesError.details) errorDetails.details = profilesError.details;
       if (profilesError.hint) errorDetails.hint = profilesError.hint;
       if (profilesError.code) errorDetails.code = profilesError.code;
-      console.error("[calculatePlayerLeaderboard] Error fetching profiles:", errorDetails);
+      logger.error("[calculatePlayerLeaderboard] Error fetching profiles", errorDetails);
     } else if (profiles) {
       profiles.forEach(p => {
         profilesMap.set(p.id, p.display_name || "");
@@ -154,14 +155,14 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
           profilesLastNameMap.set(p.id, nameParts.slice(1).join(" ") || "");
         }
       });
-      console.log("[calculatePlayerLeaderboard] Profiles loaded:", profiles.length);
+      logger.info("[calculatePlayerLeaderboard] Profiles loaded", { count: profiles.length });
     }
   }
   
   // Créer un Set des userIds valides (du même club)
   const validUserIds = new Set(profilesMap.keys());
   
-  console.log("[calculatePlayerLeaderboard] Valid user IDs (same club):", validUserIds.size);
+  logger.info("[calculatePlayerLeaderboard] Valid user IDs (same club)", { count: validUserIds.size });
   
   // Filtrer les participants pour ne garder que ceux du même club
   const filteredParticipants = clubId 
@@ -173,7 +174,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       })
     : allParticipants;
   
-  console.log("[calculatePlayerLeaderboard] Participants after club filtering:", filteredParticipants.length);
+  logger.info("[calculatePlayerLeaderboard] Participants after club filtering", { count: filteredParticipants.length });
   
   // Filtrer les matchs : ne garder que ceux où TOUS les participants users appartiennent au même club
   const participantsByMatch = filteredParticipants.reduce((acc: Record<string, any[]>, p: any) => {
@@ -194,7 +195,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     }
   });
   
-  console.log("[calculatePlayerLeaderboard] Valid matches (all users in same club):", validMatchIds.size);
+  logger.info("[calculatePlayerLeaderboard] Valid matches (all users in same club)", { count: validMatchIds.size });
   
   // Filtrer les participants pour ne garder que ceux des matchs valides (même club) ET qui respectent la limite quotidienne
   // IMPORTANT: Quand un joueur a atteint sa limite de matchs de la journée (2 matchs),
@@ -211,8 +212,8 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     return isValidForClub;
   });
   
-  console.log("[calculatePlayerLeaderboard] Participants after match filtering (club + daily limit):", finalFilteredParticipants.length);
-  console.log("[calculatePlayerLeaderboard] Matches excluded due to daily limit:", filteredParticipants.length - finalFilteredParticipants.length);
+  logger.info("[calculatePlayerLeaderboard] Participants after match filtering (club + daily limit)", { count: finalFilteredParticipants.length });
+  logger.info("[calculatePlayerLeaderboard] Matches excluded due to daily limit", { count: filteredParticipants.length - finalFilteredParticipants.length });
   
   // Enrichir les participants filtrés avec les données des matchs
   const agg = finalFilteredParticipants.map((p: any) => ({
@@ -278,7 +279,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     }
   });
   
-  console.log("[calculatePlayerLeaderboard] Players aggregated:", Object.keys(byPlayer).length);
+  logger.info("[calculatePlayerLeaderboard] Players aggregated", { count: Object.keys(byPlayer).length });
   
   // Récupérer les guest players
   const allGuestIds = [...new Set(Object.keys(byPlayer).filter(id => id.startsWith("guest_")).map(id => id.replace("guest_", "")))];
@@ -291,7 +292,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       .in("id", allGuestIds);
     
     if (guestsError) {
-      console.error("[calculatePlayerLeaderboard] Error fetching guest players:", guestsError);
+      logger.error("[calculatePlayerLeaderboard] Error fetching guest players", { error: guestsError.message });
     } else if (guests) {
       guests.forEach(g => guestsMap.set(g.id, { first_name: g.first_name, last_name: g.last_name }));
     }
@@ -428,7 +429,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
   // Calculer les points avec boosts en une seule requête optimisée
   const pointsWithBoosts = await calculatePointsForMultiplePlayers(playersForBoostCalculation);
   
-  console.log("[calculatePlayerLeaderboard] Points with boosts calculated");
+  logger.info("[calculatePlayerLeaderboard] Points with boosts calculated");
   
   // Construire le leaderboard (uniquement les joueurs du même club)
   const leaderboard = Object.entries(byPlayer)
@@ -532,7 +533,10 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     })
     .map((r, idx) => ({ ...r, rank: idx + 1 }));
 
-  console.log("[calculatePlayerLeaderboard] Leaderboard calculated:", finalLeaderboard.length, "players (including", playersWithNoMatches.length, "players with no matches, even with 0 points)");
+  logger.info("[calculatePlayerLeaderboard] Leaderboard calculated", { 
+    totalPlayers: finalLeaderboard.length, 
+    playersWithNoMatches: playersWithNoMatches.length 
+  });
 
   return finalLeaderboard;
 }

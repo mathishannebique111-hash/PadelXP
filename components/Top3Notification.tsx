@@ -5,6 +5,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import NotificationModal from "./NotificationModal";
 import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
+import { createNotification } from '@/lib/notifications';
 
 interface Top3NotificationProps {
   currentUserId: string;
@@ -279,33 +280,70 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
       console.log("  - previousRank <= 3:", previousRank <= 3);
       console.log("  - currentRank > previousRank:", currentRank > previousRank);
 
-      // Détecter les détrônements
-      if (previousRank !== null && previousRank <= 3) {
-        if (previousRank === 1 && currentRank > 1) {
+      // Détecter les changements de rang et créer des notifications
+      
+      // Cas 1: Détrônement du top 3 (3 → 4+)
+      if (previousRank !== null && previousRank <= 3 && currentRank > 3) {
+        if (previousRank === 1) {
           console.log(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 1ÈRE PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
-          // Mettre à jour le rang précédent AVANT de déclencher la notification
-          previousRankRef.current = currentRank;
-          console.log(`🚨🚨🚨 [Top3Notification] Appel de setNotification('dethroned_from_1')`);
           setNotification("dethroned_from_1");
-          console.log(`🚨🚨🚨 [Top3Notification] setNotification('dethroned_from_1') appelé`);
-        } else if (previousRank === 2 && currentRank > 2) {
+          // Créer notification dans la BD
+          createNotification(currentUserId, 'top3_ranking', {
+            type: 'dethroned',
+            previous_rank: previousRank,
+            current_rank: currentRank,
+            timestamp: new Date().toISOString(),
+          }).catch(err => console.error('Failed to save top3 notification:', err))
+        } else if (previousRank === 2) {
           console.log(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 2ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
-          previousRankRef.current = currentRank;
           setNotification("dethroned_from_2");
-          console.log(`🚨🚨🚨 [Top3Notification] setNotification('dethroned_from_2') appelé`);
-        } else if (previousRank === 3 && currentRank > 3) {
+          // Créer notification dans la BD
+          createNotification(currentUserId, 'top3_ranking', {
+            type: 'dethroned',
+            previous_rank: previousRank,
+            current_rank: currentRank,
+            timestamp: new Date().toISOString(),
+          }).catch(err => console.error('Failed to save top3 notification:', err))
+        } else if (previousRank === 3) {
           console.log(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 3ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
-          previousRankRef.current = currentRank;
           setNotification("dethroned_from_3");
-          console.log(`🚨🚨🚨 [Top3Notification] setNotification('dethroned_from_3') appelé`);
-        } else {
-          // Mise à jour du rang sans détrônement (ex: 1→2, 2→3, 3→2, etc.)
-          console.log(`➡️ [Top3Notification] Changement de rang dans le top 3 (pas de détrônement): ${previousRank} → ${currentRank}`);
-          previousRankRef.current = currentRank;
+          // Créer notification dans la BD
+          createNotification(currentUserId, 'top3_ranking', {
+            type: 'dethroned',
+            previous_rank: previousRank,
+            current_rank: currentRank,
+            timestamp: new Date().toISOString(),
+          }).catch(err => console.error('Failed to save top3 notification:', err))
         }
-      } else {
-        // Mise à jour normale si on n'était pas dans le top 3
-        console.log(`➡️ [Top3Notification] Changement de rang hors top 3: ${previousRank} → ${currentRank}`);
+        previousRankRef.current = currentRank;
+      }
+      // Cas 2: Entrée dans le top 3 (4+ → 1/2/3)
+      else if (previousRank !== null && previousRank > 3 && currentRank <= 3) {
+        console.log(`🎉 [Top3Notification] ENTRÉE DANS LE TOP 3 DÉTECTÉE: ${previousRank} → ${currentRank}`);
+        // Créer notification dans la BD pour célébrer l'entrée dans le top 3
+        createNotification(currentUserId, 'top3_ranking', {
+          type: 'entered_top3',
+          rank: currentRank,
+          previous_rank: previousRank,
+          timestamp: new Date().toISOString(),
+        }).catch(err => console.error('Failed to save top3 notification:', err))
+        previousRankRef.current = currentRank;
+      }
+      // Cas 3: Changement au sein du top 3 (1→2, 2→1, etc.)
+      else if (previousRank !== null && previousRank <= 3 && currentRank <= 3 && previousRank !== currentRank) {
+        console.log(`➡️ [Top3Notification] Changement de rang dans le top 3: ${previousRank} → ${currentRank}`);
+        // Créer notification pour les mouvements dans le top 3
+        createNotification(currentUserId, 'top3_ranking', {
+          type: 'rank_changed',
+          rank: currentRank,
+          previous_rank: previousRank,
+          timestamp: new Date().toISOString(),
+        }).catch(err => console.error('Failed to save top3 notification:', err))
+        previousRankRef.current = currentRank;
+      }
+      // Cas 4: Autres changements
+      else {
+        console.log(`➡️ [Top3Notification] Changement de rang: ${previousRank} → ${currentRank}`);
         previousRankRef.current = currentRank;
       }
       

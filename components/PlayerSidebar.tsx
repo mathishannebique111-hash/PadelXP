@@ -237,7 +237,7 @@ export default function PlayerSidebar() {
             </svg>
           </Link>
           <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
-            <NotificationCenter />
+          <NotificationCenter />
           </div>
         </div>
         <nav className="p-4 pt-4 space-y-2 text-sm flex-1 h-full overflow-y-auto">

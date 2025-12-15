@@ -288,8 +288,20 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
       case 'top3':
       case 'top3_ranking':
         const rank = typeof data.rank === 'number' ? data.rank : parseInt(data.rank || '1', 10)
-        const displayRank = rank > 1 ? rank - 1 : rank
-        return `Tu es dans le Top 3 ! Rang #${displayRank}`
+        const type = data.type || 'entered_top3'
+        
+        if (type === 'dethroned') {
+          const prevRank = data.previous_rank || 1
+          return `Tu es descendu de la ${prevRank}${prevRank === 1 ? 'ère' : 'ème'} place ! Continue à jouer pour remonter 💪`
+        } else if (type === 'entered_top3') {
+          const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'
+          return `Bravo ! Tu es entré dans le Top 3 ${rankEmoji} (Position #${rank})`
+        } else if (type === 'rank_changed') {
+          const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'
+          return `Ton classement a changé ! Tu es maintenant #${rank} ${rankEmoji}`
+        } else {
+          return `Tu es dans le Top 3 ! Position #${rank}`
+        }
       case 'referral':
       case 'referral_joined':
         return `${data.referral_name || 'Un joueur'} a rejoint grâce à toi !`

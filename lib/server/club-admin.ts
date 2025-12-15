@@ -1,10 +1,11 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger, logError } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.warn("[club-admin] SUPABASE credentials missing. ensureClubForOwner will be disabled.");
+  logger.warn("[club-admin] SUPABASE credentials missing. ensureClubForOwner will be disabled.");
 }
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
@@ -123,7 +124,7 @@ export async function ensureClubForOwner(options: {
     .single();
 
   if (clubError || !club) {
-    console.error("[club-admin] Failed to create club", clubError);
+    logger.error("[club-admin] Failed to create club", { error: clubError?.message });
     return null;
   }
 
@@ -133,7 +134,7 @@ export async function ensureClubForOwner(options: {
     .eq("id", userId);
 
   if (updateError) {
-    console.error("[club-admin] Failed to link profile to club", updateError);
+    logger.error("[club-admin] Failed to link profile to club", { error: updateError.message });
     return null;
   }
 

@@ -2265,7 +2265,7 @@ export default function TournamentBracket({
                 // Centrer les deux matchs du Tour 4 par rapport aux positions réelles du Tour 3
                 const match0Center = actualTour3Positions[0] + 45;
                 const match1Center = actualTour3Positions[1] + 45;
-                const centerPosition = (match0Center + match1Center) / 2;
+              const centerPosition = (match0Center + match1Center) / 2;
                 return centerPosition - 45;
               }
               // Fallback : utiliser classificationTour3Positions théoriques
@@ -2685,19 +2685,19 @@ export default function TournamentBracket({
                       {/* Label "Petite finale" au-dessus du M2 de la finale */}
                       {showThirdPlaceLabel && (
                         isTmc20 ? (
-                          <div 
-                            className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
-                            style={{
+                        <div 
+                          className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+                          style={{
                               top: `${(verticalPosition || 0) - 50}px`,
-                              transform: 'translateY(-50%)',
-                            }}
-                          >
-                            <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
-                              <p className="text-xl font-semibold text-white text-center tracking-wide">
-                                Petite finale
-                              </p>
-                            </div>
+                            transform: 'translateY(-50%)',
+                          }}
+                        >
+                          <div className="bg-black/60 backdrop-blur-sm px-5 py-1.5 rounded-md border border-white/25">
+                            <p className="text-xl font-semibold text-white text-center tracking-wide">
+                              Petite finale
+                            </p>
                           </div>
+                        </div>
                         ) : (
                           <p 
                             className="absolute left-0 right-0 text-xs font-semibold text-white/70 text-center uppercase tracking-wide pointer-events-none z-10"

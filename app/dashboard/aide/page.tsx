@@ -41,7 +41,21 @@ export default function HelpPage() {
   const [error, setError] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
   const [openConversations, setOpenConversations] = useState<Set<string>>(new Set());
-  const [readMessages, setReadMessages] = useState<Set<string>>(new Set()); // Messages que le club a vus
+  const [readMessages, setReadMessages] = useState<Set<string>>(() => {
+    // Charger les messages lus depuis localStorage au montage du composant
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('readSupportMessages');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          return new Set(parsed);
+        } catch (e) {
+          console.error('Error parsing stored read messages:', e);
+        }
+      }
+    }
+    return new Set();
+  }); // Messages que le club a vus
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const replyFormRefs = useRef<{ [conversationId: string]: HTMLFormElement | null }>({});
@@ -117,6 +131,14 @@ export default function HelpPage() {
     const interval = setInterval(() => loadConversations(false), 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Sauvegarder les messages lus dans localStorage à chaque changement
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const messagesArray = Array.from(readMessages);
+      localStorage.setItem('readSupportMessages', JSON.stringify(messagesArray));
+    }
+  }, [readMessages]);
 
   // Ouvrir/fermer une conversation
   const toggleConversation = (conversationId: string) => {
@@ -390,31 +412,23 @@ export default function HelpPage() {
                         {firstMessage.message_text}
                       </div>
                     </div>
-                    {unreadCount > 0 && (
-                      <div className="flex-shrink-0 flex items-center gap-2">
+                    <div className="flex-shrink-0 flex items-center gap-2">
+                      {/* Badge de messages non lus - n'apparaît que s'il y a des messages non lus */}
+                      {unreadCount > 0 && (
                         <span className="px-2 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold">
                           {unreadCount}
                         </span>
-                        <svg
-                          className={`w-5 h-5 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    )}
-                    {unreadCount === 0 && (
+                      )}
+                      {/* Flèche pour ouvrir/fermer la conversation */}
                       <svg
-                        className={`w-5 h-5 text-white/60 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                        className={`w-5 h-5 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
-                    )}
+                    </div>
                   </div>
 
                   {/* Contenu du bloc (réponses et formulaire de réponse) */}

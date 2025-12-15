@@ -394,26 +394,57 @@ export default async function BillingPage() {
         <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white mb-1">
-              <span className="block sm:inline">Essai gratuit — {totalTrialDays} jours</span>{" "}
-              {isTrialActive && daysRemaining !== null && (
-                <span className={`ml-0 sm:ml-2 mt-1 sm:mt-0 inline-block align-middle rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold ${
-                  showWarning
-                    ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
-                    : "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
-                }`}>
-                  {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}
-                </span>
+              {/* Afficher "Abonnement actif" si le club a un abonnement actif ou a choisi un plan après l'essai, sinon "Essai gratuit" */}
+              {newSubscriptionStatus === "active" || (club?.selected_plan && isTrialExpired) ? (
+                <>
+                  <span className="block sm:inline">
+                    Abonnement {currentPlan === "monthly" ? "mensuel" : currentPlan === "quarterly" ? "trimestriel" : currentPlan === "annual" ? "annuel" : ""}
+                  </span>{" "}
+                  <span className="ml-0 sm:ml-2 mt-1 sm:mt-0 inline-block align-middle rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold border-emerald-400/50 bg-emerald-500/20 text-emerald-300">
+                    {newSubscriptionStatus === "active" ? "Actif" : "En cours d'activation"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="block sm:inline">Essai gratuit — {totalTrialDays} jours</span>{" "}
+                  {isTrialActive && daysRemaining !== null && (
+                    <span className={`ml-0 sm:ml-2 mt-1 sm:mt-0 inline-block align-middle rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold ${
+                      showWarning
+                        ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
+                        : "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
+                    }`}>
+                      {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </>
               )}
             </h2>
           </div>
-          {isTrialActive && (
+          {/* Afficher l'icône appropriée selon le statut */}
+          {newSubscriptionStatus === "active" || (club?.selected_plan && isTrialExpired) ? (
+            <div className="flex-shrink-0">
+              <Image src="/images/Facturation et essai club.png" alt="Abonnement" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 object-contain" />
+            </div>
+          ) : isTrialActive && (
             <div className="flex-shrink-0">
               <Image src="/images/Cadeau accueil club.png" alt="Cadeau" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 object-contain" />
             </div>
           )}
         </div>
 
-        {isTrialActive && (
+        {/* Afficher les informations selon le statut */}
+        {newSubscriptionStatus === "active" || (club?.selected_plan && isTrialExpired) ? (
+          // Abonnement actif ou plan choisi après l'essai
+          <div className="space-y-2 sm:space-y-3">
+            <p className="text-xs sm:text-sm text-white/80">
+              {newSubscriptionStatus === "active"
+                ? "Votre abonnement est actif et vous donne accès à toutes les fonctionnalités de la plateforme."
+                : "Votre abonnement a été choisi et sera activé prochainement. Vous avez accès à toutes les fonctionnalités de la plateforme."
+              }
+            </p>
+          </div>
+        ) : isTrialActive ? (
+          // Essai actif
           <div className="space-y-2 sm:space-y-3">
             <p className="text-xs sm:text-sm text-white/80">
               {showWarning
@@ -440,9 +471,8 @@ export default async function BillingPage() {
               </div>
             )}
           </div>
-        )}
-
-        {isTrialExpired && (
+        ) : isTrialExpired ? (
+          // Essai expiré
           <div className="space-y-2 sm:space-y-3">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="text-3xl sm:text-4xl flex-shrink-0">⏰</div>
@@ -456,9 +486,8 @@ export default async function BillingPage() {
               </div>
             </div>
           </div>
-        )}
-
-        {!isTrialActive && !isTrialExpired && (
+        ) : (
+          // Pas d'essai
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="text-3xl sm:text-4xl flex-shrink-0">💳</div>
             <div className="flex-1 min-w-0">

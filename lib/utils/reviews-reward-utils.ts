@@ -3,6 +3,7 @@
  */
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { logger, logError } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -21,7 +22,7 @@ const FREE_BOOST_SESSION_ID = "reviews_50_goal_reward";
  */
 export async function isReviewsGoalReached(): Promise<boolean> {
   if (!supabaseAdmin) {
-    console.warn("[reviews-reward-utils] Supabase admin client not available");
+    logger.warn("[reviews-reward-utils] Supabase admin client not available");
     return false;
   }
 
@@ -32,13 +33,13 @@ export async function isReviewsGoalReached(): Promise<boolean> {
       .eq("is_hidden", false);
 
     if (error) {
-      console.error("[reviews-reward-utils] Error counting reviews:", error);
+      logger.error("[reviews-reward-utils] Error counting reviews", { error: error.message });
       return false;
     }
 
     return (count || 0) >= REVIEWS_GOAL;
   } catch (error) {
-    console.error("[reviews-reward-utils] Exception checking reviews goal:", error);
+    logger.error("[reviews-reward-utils] Exception checking reviews goal", { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }
@@ -68,7 +69,7 @@ export async function getReviewsGoalReachedDate(): Promise<string | null> {
     // Le 50ème avis est le dernier de la liste
     return reviews[REVIEWS_GOAL - 1]?.created_at || null;
   } catch (error) {
-    console.error("[reviews-reward-utils] Exception getting goal reached date:", error);
+    logger.error("[reviews-reward-utils] Exception getting goal reached date", { error: error instanceof Error ? error.message : String(error) });
     return null;
   }
 }
@@ -92,7 +93,7 @@ export async function hasUserReviewedBeforeGoal(userId: string): Promise<boolean
         .eq("user_id", userId);
 
       if (error) {
-        console.error("[reviews-reward-utils] Error checking user review:", error);
+        logger.error("[reviews-reward-utils] Error checking user review", { error: error.message });
         return false;
       }
 
@@ -107,13 +108,13 @@ export async function hasUserReviewedBeforeGoal(userId: string): Promise<boolean
       .lt("created_at", goalReachedDate);
 
     if (error) {
-      console.error("[reviews-reward-utils] Error checking user review before goal:", error);
+      logger.error("[reviews-reward-utils] Error checking user review before goal", { error: error.message });
       return false;
     }
 
     return (count || 0) > 0;
   } catch (error) {
-    console.error("[reviews-reward-utils] Exception checking user review eligibility:", error);
+    logger.error("[reviews-reward-utils] Exception checking user review eligibility", { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }
@@ -134,13 +135,13 @@ export async function hasUserClaimedFreeBoost(userId: string): Promise<boolean> 
       .eq("created_by_session_id", FREE_BOOST_SESSION_ID);
 
     if (error) {
-      console.error("[reviews-reward-utils] Error checking claimed boost:", error);
+      logger.error("[reviews-reward-utils] Error checking claimed boost", { error: error.message });
       return false;
     }
 
     return (count || 0) > 0;
   } catch (error) {
-    console.error("[reviews-reward-utils] Exception checking claimed boost:", error);
+    logger.error("[reviews-reward-utils] Exception checking claimed boost", { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }
@@ -199,7 +200,7 @@ export async function creditUserFreeBoost(userId: string): Promise<{
       .single();
 
     if (insertError || !insertedCredit) {
-      console.error("[reviews-reward-utils] Error crediting free boost:", insertError);
+      logger.error("[reviews-reward-utils] Error crediting free boost", { error: insertError?.message });
       return {
         success: false,
         error: "Erreur lors de l'attribution du boost gratuit",
@@ -210,7 +211,7 @@ export async function creditUserFreeBoost(userId: string): Promise<{
       success: true,
     };
   } catch (error) {
-    console.error("[reviews-reward-utils] Exception crediting free boost:", error);
+    logger.error("[reviews-reward-utils] Exception crediting free boost", { error: error instanceof Error ? error.message : String(error) });
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -233,13 +234,13 @@ export async function getTotalReviewsCount(): Promise<number> {
       .eq("is_hidden", false);
 
     if (error) {
-      console.error("[reviews-reward-utils] Error counting reviews:", error);
+      logger.error("[reviews-reward-utils] Error counting reviews", { error: error.message });
       return 0;
     }
 
     return count || 0;
   } catch (error) {
-    console.error("[reviews-reward-utils] Exception counting reviews:", error);
+    logger.error("[reviews-reward-utils] Exception counting reviews", { error: error instanceof Error ? error.message : String(error) });
     return 0;
   }
 }

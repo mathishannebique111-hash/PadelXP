@@ -85,7 +85,7 @@ export default async function DashboardHome() {
 
   const { data: club, error: clubError } = await supabase
     .from("clubs")
-    .select("code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count")
+    .select("code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count, subscription_status, selected_plan, subscription_started_at, stripe_subscription_id")
     .eq("id", clubId)
     .maybeSingle();
   
@@ -403,7 +403,48 @@ export default async function DashboardHome() {
           </a>
         </div>
         
-        {daysRemaining !== null && daysRemaining > 0 ? (
+        {/* Vérifier si le club a un abonnement actif ou a choisi un plan */}
+        {club?.subscription_status === "active" || (club?.selected_plan && daysRemaining !== null && daysRemaining === 0) ? (
+          // Abonnement actif ou plan choisi après l'essai
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="flex-shrink-0 pt-0.5">
+                <Image
+                  src="/images/Facturation et essai club.png"
+                  alt="Abonnement"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 object-contain"
+                  unoptimized
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <span className="font-semibold text-base sm:text-lg text-white">
+                    Abonnement {club?.selected_plan === "monthly" ? "mensuel" : club?.selected_plan === "quarterly" ? "trimestriel" : club?.selected_plan === "annual" ? "annuel" : ""}
+                  </span>
+                  <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold border border-emerald-400/50 bg-emerald-500/20 text-emerald-300">
+                    {club?.subscription_status === "active" ? "Actif" : "En cours d'activation"}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-white/70 mt-2 sm:mt-3">
+                  {club?.subscription_status === "active" 
+                    ? "Votre abonnement est actif et vous donne accès à toutes les fonctionnalités de la plateforme."
+                    : "Votre abonnement a été choisi et sera activé prochainement. Vous avez accès à toutes les fonctionnalités de la plateforme."
+                  }
+                </p>
+                <div className="mt-2 sm:mt-3">
+                  <a
+                    href="/dashboard/facturation"
+                    className="inline-flex items-center gap-2 rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 border border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.3)] hover:shadow-[0_8px_24px_rgba(59,130,246,0.4)] hover:scale-105 active:scale-100 transition-all duration-300"
+                  >
+                    <span>Gérer mon abonnement</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : daysRemaining !== null && daysRemaining > 0 ? (
           // Essai actif
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-start gap-3 sm:gap-4">

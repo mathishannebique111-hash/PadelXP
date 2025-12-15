@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { logger, logError } from "@/lib/logger";
 
 export type NotificationType = 'badge' | 'level_up' | 'top3' | 'referral' | 'challenge'
 
@@ -31,13 +32,13 @@ export async function createNotification(
       })
 
     if (error) {
-      console.error('Error creating notification:', error)
+      logger.error('Error creating notification', { error: error.message })
       return false
     }
 
     return true
   } catch (error) {
-    console.error('Failed to create notification:', error)
+    logger.error('Failed to create notification', { error: error instanceof Error ? error.message : String(error) })
     return false
   }
 }
@@ -59,13 +60,13 @@ export async function getUnreadNotifications(userId: string) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching notifications:', error)
+      logger.error('Error fetching notifications', { error: error.message })
       return []
     }
 
     return data || []
   } catch (error) {
-    console.error('Failed to fetch notifications:', error)
+    logger.error('Failed to fetch notifications', { error: error instanceof Error ? error.message : String(error) })
     return []
   }
 }
@@ -84,13 +85,13 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
       .eq('id', notificationId)
 
     if (error) {
-      console.error('Error marking notification as read:', error)
+      logger.error('Error marking notification as read', { error: error.message })
       return false
     }
 
     return true
   } catch (error) {
-    console.error('Failed to mark notification as read:', error)
+    logger.error('Failed to mark notification as read', { error: error instanceof Error ? error.message : String(error) })
     return false
   }
 }
@@ -107,7 +108,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
     .eq('id', notificationId)
   
   if (error) {
-    console.error('Error marking notification as read:', error)
+    logger.error('Error marking notification as read', { error: error.message })
     throw error
   }
 }
@@ -125,7 +126,7 @@ export async function markAllAsRead(userId: string): Promise<void> {
     .eq('read', false)
   
   if (error) {
-    console.error('Error marking all notifications as read:', error)
+    logger.error('Error marking all notifications as read', { error: error.message })
     throw error
   }
 }

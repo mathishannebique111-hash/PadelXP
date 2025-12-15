@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/client";
+import { logger, logError } from "@/lib/logger";
 
 export async function getUserClubIdClient(): Promise<string | null> {
   const supabase = createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    console.error("[getUserClubIdClient] Error fetching user:", userError);
+    logger.error("[getUserClubIdClient] Error fetching user", { error: userError?.message });
     return null;
   }
 
@@ -16,7 +17,7 @@ export async function getUserClubIdClient(): Promise<string | null> {
     .maybeSingle();
 
   if (profileError) {
-    console.error("[getUserClubIdClient] Error fetching profile:", profileError);
+    logger.error("[getUserClubIdClient] Error fetching profile", { error: profileError.message });
     return null;
   }
 

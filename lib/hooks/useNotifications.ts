@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/supabase'
+import { logger, logError } from "@/lib/logger";
 
 type Notification = Database['public']['Tables']['notifications']['Row']
 
@@ -26,7 +27,7 @@ export function useNotifications(userId: string | undefined) {
       .limit(50)
 
     if (error) {
-      console.error('Error fetching notifications:', error)
+      logger.error('Error fetching notifications', { error: error.message })
     } else if (data) {
       setNotifications(data)
     }
@@ -64,7 +65,7 @@ export function useNotifications(userId: string | undefined) {
         .limit(50) // Limiter à 50 notifications récentes
 
       if (error) {
-        console.error('Error fetching notifications:', error)
+        logger.error('Error fetching notifications', { error: error.message })
       } else if (data) {
         setNotifications(data)
       }

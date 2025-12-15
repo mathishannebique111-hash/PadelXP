@@ -35,13 +35,36 @@ export async function GET() {
     }
 
     // Vérifier combien de profils correspondent à des utilisateurs auth réels
-    const { data: authUsers, error: authCheckError } = await supabaseAdmin.auth.admin.listUsers();
+    // Récupérer TOUS les utilisateurs en paginant (par défaut listUsers() limite à 50)
+    let allAuthUsers: any[] = [];
+    let page = 1;
+    let hasMore = true;
     
-    if (authCheckError) {
-      logger.error({ error: authCheckError }, "[public/stats] auth check error:");
+    while (hasMore) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: 1000, // Maximum par page
+      });
+      
+      if (error) {
+        logger.error({ error, page }, "[public/stats] auth check error:");
+        break;
+      }
+      
+      if (data?.users && data.users.length > 0) {
+        allAuthUsers = allAuthUsers.concat(data.users);
+        page++;
+        
+        // Si on a reçu moins que perPage, il n'y a plus de pages
+        if (data.users.length < 1000) {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
+      }
     }
 
-    const realPlayerCount = authUsers?.users?.length || 0;
+    const realPlayerCount = allAuthUsers.length;
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);

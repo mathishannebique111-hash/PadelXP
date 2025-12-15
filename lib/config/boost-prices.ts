@@ -9,6 +9,8 @@
  * Note: Utilisation de getters pour forcer l'évaluation au runtime plutôt qu'au chargement du module
  */
 
+import { logger, logError } from "@/lib/logger";
+
 export const BOOST_PRICE_IDS = {
   get x1(): string {
     // Forcer l'accès au runtime
@@ -40,11 +42,11 @@ export const BOOST_PRICES = {
         if (!isNaN(parsed) && parsed > 0) {
           return parsed;
         }
-        console.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_1 value:', price);
+        logger.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_1 value', { price });
       }
       return 0.79;
     } catch (error) {
-      console.error('[BOOST_PRICES] Error parsing x1 price:', error);
+      logger.error('[BOOST_PRICES] Error parsing x1 price', { error: error instanceof Error ? error.message : String(error) });
       return 0.79;
     }
   },
@@ -56,11 +58,11 @@ export const BOOST_PRICES = {
         if (!isNaN(parsed) && parsed > 0) {
           return parsed;
         }
-        console.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_5 value:', price);
+        logger.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_5 value', { price });
       }
       return 3.95;
     } catch (error) {
-      console.error('[BOOST_PRICES] Error parsing x5 price:', error);
+      logger.error('[BOOST_PRICES] Error parsing x5 price', { error: error instanceof Error ? error.message : String(error) });
       return 3.95;
     }
   },
@@ -72,11 +74,11 @@ export const BOOST_PRICES = {
         if (!isNaN(parsed) && parsed > 0) {
           return parsed;
         }
-        console.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_10 value:', price);
+        logger.warn('[BOOST_PRICES] Invalid NEXT_PUBLIC_BOOST_PRICE_10 value', { price });
       }
       return 7.10;
     } catch (error) {
-      console.error('[BOOST_PRICES] Error parsing x10 price:', error);
+      logger.error('[BOOST_PRICES] Error parsing x10 price', { error: error instanceof Error ? error.message : String(error) });
       return 7.10;
     }
   },
