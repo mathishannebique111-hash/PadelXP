@@ -4,6 +4,7 @@ import Link from "next/link";
 import Stripe from "stripe";
 import { creditPlayerBoosts, getPlayerBoostStats } from "@/lib/utils/boost-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { logger } from '@/lib/logger';
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export default async function BoostSuccessPage({
       // Récupérer la session Stripe
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       
-      console.log('[boost/success] Session retrieved:', {
+      logger.info('[boost/success] Session retrieved:', {
         id: session.id,
         mode: session.mode,
         payment_status: session.payment_status,
@@ -66,7 +67,7 @@ export default async function BoostSuccessPage({
           .limit(1);
 
         if (checkError) {
-          console.error('[boost/success] Error checking existing credits:', checkError);
+          logger.error('[boost/success] Error checking existing credits:', checkError);
         }
 
         // Si aucun crédit n'existe pour cette session, créditer les boosts
@@ -74,7 +75,7 @@ export default async function BoostSuccessPage({
           const quantity = parseInt(session.metadata?.quantity || '1', 10);
           const paymentIntentId = session.payment_intent as string | null;
           
-          console.log('[boost/success] Crediting boosts:', {
+          logger.info('[boost/success] Crediting boosts:', {
             userId: user.id,
             quantity,
             sessionId,
@@ -90,22 +91,22 @@ export default async function BoostSuccessPage({
           
           if (result.success) {
             boostsCredited = true;
-            console.log('[boost/success] Boosts credited successfully:', {
+            logger.info('[boost/success] Boosts credited successfully:', {
               userId: user.id,
               quantity: result.credited,
               sessionId,
             });
           } else {
             creditError = result.error || 'Erreur lors du crédit des boosts';
-            console.error('[boost/success] Failed to credit boosts:', result.error);
+            logger.error('[boost/success] Failed to credit boosts:', result.error);
           }
         } else {
           // Les boosts ont déjà été crédités
           boostsCredited = true;
-          console.log('[boost/success] Boosts already credited for this session');
+          logger.info('[boost/success] Boosts already credited for this session');
         }
       } else {
-        console.warn('[boost/success] Session is not a valid boost session:', {
+        logger.warn('[boost/success] Session is not a valid boost session:', {
           mode: session.mode,
           type: session.metadata?.type,
           payment_status: session.payment_status,
@@ -115,19 +116,19 @@ export default async function BoostSuccessPage({
       }
     } catch (error) {
       creditError = error instanceof Error ? error.message : 'Erreur inconnue lors de la vérification de la session';
-      console.error('[boost/success] Error processing boost session:', error);
+      logger.error('[boost/success] Error processing boost session:', error);
       // Ne pas bloquer l'affichage de la page si la vérification échoue
       // Le webhook devrait créditer les boosts de toute façon
     }
   } else {
     if (!sessionId) {
-      console.warn('[boost/success] No session_id provided in searchParams');
+      logger.warn('[boost/success] No session_id provided in searchParams');
     }
     if (!stripe) {
-      console.error('[boost/success] Stripe client not initialized');
+      logger.error('[boost/success] Stripe client not initialized');
     }
     if (!supabaseAdmin) {
-      console.error('[boost/success] Supabase admin client not available');
+      logger.error('[boost/success] Supabase admin client not available');
     }
   }
 

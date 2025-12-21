@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 interface TrialExtensionProgressProps {
   clubId: string;
@@ -63,7 +64,7 @@ export default function TrialExtensionProgress({
           setExtensionGranted(true);
         }
       } catch (error) {
-        console.error('[TrialExtensionProgress] Error checking extension:', error);
+        logger.error('[TrialExtensionProgress] Error checking extension:', error);
       } finally {
         setIsChecking(false);
       }

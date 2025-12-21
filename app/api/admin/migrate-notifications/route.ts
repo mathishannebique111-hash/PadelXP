@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -115,7 +116,7 @@ async function calculateStreak(userId: string): Promise<number> {
     }
     return bestStreak;
   } catch (error) {
-    console.error(`Erreur calcul streak pour ${userId}:`, error);
+    logger.error(`Erreur calcul streak pour ${userId}:`, error);
     return 0;
   }
 }
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("🚀 Début de la migration des notifications historiques");
+    logger.info("🚀 Début de la migration des notifications historiques");
     const logs: string[] = [];
 
     // 2. Optionnel : Supprimer les notifications existantes
@@ -343,7 +344,7 @@ export async function POST(request: NextRequest) {
       logs,
     });
   } catch (error: any) {
-    console.error("❌ Erreur migration:", error);
+    logger.error("❌ Erreur migration:", error);
     return NextResponse.json(
       { error: "Erreur serveur", details: error.message },
       { status: 500 }

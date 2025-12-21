@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseClient } from "@/lib/supabase";
+import { logger } from '@/lib/logger';
 
 export default function LogoutButton({ variant = "dark" }: { variant?: "dark" | "light" }) {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function LogoutButton({ variant = "dark" }: { variant?: "dark" | 
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("Error logging out:", error);
+        logger.error("Error logging out:", error);
         // Même en cas d'erreur, rediriger vers la page d'accueil
       }
       
@@ -23,7 +24,7 @@ export default function LogoutButton({ variant = "dark" }: { variant?: "dark" | 
       router.push("/");
       router.refresh();
     } catch (error) {
-      console.error("Error logging out:", error);
+      logger.error("Error logging out:", error);
       router.push("/");
     } finally {
       setLoading(false);

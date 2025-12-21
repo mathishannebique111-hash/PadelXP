@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 interface NewSubscriptionCheckoutButtonProps {
   plan: 'monthly' | 'quarterly' | 'annual';
@@ -44,7 +45,7 @@ export default function NewSubscriptionCheckoutButton({
       router.push(`/dashboard/facturation/checkout?subscription_id=${data.subscriptionId}&plan=${plan}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      console.error('Subscription creation error:', errorMessage);
+      logger.error('Subscription creation error:', errorMessage);
       onError?.(errorMessage);
       setLoading(false);
     }

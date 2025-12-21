@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { logger } from '@/lib/logger';
 
 type MatchStatus = "scheduled" | "ready" | "in_progress" | "completed" | "cancelled" | "forfeit";
 
@@ -322,8 +323,8 @@ export default function TournamentBracket({
       if (res.ok) {
         const data = await res.json();
         if (data.rankings && Array.isArray(data.rankings)) {
-          console.log("[TournamentBracket] Final rankings fetched:", data.rankings.length, "teams");
-          console.log("[TournamentBracket] Rankings with places:", data.rankings.filter((r: any) => r.rank !== null).map((r: any) => ({ rank: r.rank, team: r.teamName })));
+          logger.info("[TournamentBracket] Final rankings fetched:", data.rankings.length, "teams");
+          logger.info("[TournamentBracket] Rankings with places:", data.rankings.filter((r: any) => r.rank !== null).map((r: any) => ({ rank: r.rank, team: r.teamName })));
           setFinalRankings(data.rankings);
           return;
         }
@@ -682,7 +683,7 @@ export default function TournamentBracket({
       setFinalRankings(ranking);
     } catch (err) {
       // Ignore les erreurs de chargement des classements
-      console.error("Error fetching final rankings:", err);
+      logger.error("Error fetching final rankings:", err);
     }
   }
 

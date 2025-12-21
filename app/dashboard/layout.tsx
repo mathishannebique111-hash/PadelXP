@@ -7,6 +7,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import ClubHeader from "./ClubHeader";
 import ParallaxHalos from "@/components/ParallaxHalos";
+import { logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -35,7 +36,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   
   // Si une session existe mais getUser() échoue temporairement, afficher un message d'erreur temporaire
   if (session && !user && userError) {
-    console.warn("[DashboardLayout] Session exists but getUser() failed (temporary error?):", {
+    logger.warn("[DashboardLayout] Session exists but getUser() failed (temporary error?):", {
       errorCode: userError?.code,
       errorMessage: userError?.message,
     });
@@ -71,7 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .maybeSingle();
 
     if (adminEntryError) {
-      console.warn("[dashboard/layout] club_admins lookup error", adminEntryError);
+      logger.warn("[dashboard/layout] club_admins lookup error", adminEntryError);
     }
 
     if (adminEntry?.club_id) {
@@ -102,7 +103,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .maybeSingle();
 
     if (clubRowError) {
-      console.warn("[dashboard/layout] clubs lookup error", clubRowError);
+      logger.warn("[dashboard/layout] clubs lookup error", clubRowError);
     }
 
     if (clubRow) {
@@ -121,7 +122,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .eq("role", "owner");
 
     if (ownersError) {
-      console.warn("[dashboard/layout] club owners lookup error", ownersError);
+      logger.warn("[dashboard/layout] club owners lookup error", ownersError);
     }
 
     const ownerId = owners?.[0]?.user_id as string | undefined;
@@ -133,7 +134,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         clubLogo = clubLogo ?? (typeof ownerMeta.club_logo_url === "string" ? ownerMeta.club_logo_url : null);
         clubSlug = clubSlug ?? (typeof ownerMeta.club_slug === "string" ? ownerMeta.club_slug : null);
       } catch (ownerMetaError) {
-        console.warn("[dashboard/layout] Unable to fetch owner metadata", ownerMetaError);
+        logger.warn("[dashboard/layout] Unable to fetch owner metadata", ownerMetaError);
       }
     }
   }
@@ -147,7 +148,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       clubLogo = clubLogo ?? (typeof meta.club_logo_url === "string" ? meta.club_logo_url : null);
       clubSlug = clubSlug ?? (typeof meta.club_slug === "string" ? meta.club_slug : null);
     } catch (metaError) {
-      console.warn("[dashboard/layout] Unable to fetch auth metadata", metaError);
+      logger.warn("[dashboard/layout] Unable to fetch auth metadata", metaError);
     }
   }
 
@@ -159,7 +160,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         clubLogo = data.publicUrl;
       }
     } catch (storageError) {
-      console.warn("[dashboard/layout] Unable to resolve logo public URL", {
+      logger.warn("[dashboard/layout] Unable to resolve logo public URL", {
         logo: clubLogo,
         error: storageError,
       });

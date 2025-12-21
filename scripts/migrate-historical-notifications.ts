@@ -16,7 +16,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error("❌ Variables d'environnement manquantes");
+  logger.error("❌ Variables d'environnement manquantes");
   process.exit(1);
 }
 
@@ -128,13 +128,13 @@ async function calculateStreak(userId: string): Promise<number> {
     }
     return bestStreak;
   } catch (error) {
-    console.error(`Erreur calcul streak pour ${userId}:`, error);
+    logger.error(`Erreur calcul streak pour ${userId}:`, error);
     return 0;
   }
 }
 
 async function migrateNotifications() {
-  console.log("🚀 Début de la migration des notifications historiques\n");
+  logger.info("🚀 Début de la migration des notifications historiques\n");
 
   try {
     // 1. Récupérer tous les clubs actifs
@@ -144,18 +144,18 @@ async function migrateNotifications() {
       .eq("status", "active");
 
     if (clubsError) {
-      console.error("❌ Erreur récupération clubs:", clubsError);
+      logger.error("❌ Erreur récupération clubs:", clubsError);
       return;
     }
 
-    console.log(`📊 ${clubs?.length || 0} clubs trouvés\n`);
+    logger.info(`📊 ${clubs?.length || 0} clubs trouvés\n`);
 
     let totalNotificationsCreated = 0;
     let totalPlayersProcessed = 0;
 
     // 2. Pour chaque club, traiter les joueurs
     for (const club of clubs || []) {
-      console.log(`\n🏢 Traitement du club: ${club.name} (${club.id})`);
+      logger.info(`\n🏢 Traitement du club: ${club.name} (${club.id})`);
 
       // Récupérer tous les joueurs du club
       const { data: players, error: playersError } = await supabase
@@ -164,11 +164,11 @@ async function migrateNotifications() {
         .eq("club_id", club.id);
 
       if (playersError || !players || players.length === 0) {
-        console.log(`   ⚠️ Aucun joueur dans ce club`);
+        logger.info(`   ⚠️ Aucun joueur dans ce club`);
         continue;
       }
 
-      console.log(`   👥 ${players.length} joueurs trouvés`);
+      logger.info(`   👥 ${players.length} joueurs trouvés`);
 
       // Récupérer les statistiques pour tous les joueurs du club via l'API leaderboard
       // Note: Pour simplifier, on va calculer directement ici
@@ -182,7 +182,7 @@ async function migrateNotifications() {
         .eq("player_type", "user");
 
       if (!allParticipants || allParticipants.length === 0) {
-        console.log(`   ⚠️ Aucun match pour ce club`);
+        logger.info(`   ⚠️ Aucun match pour ce club`);
         continue;
       }
 
@@ -243,7 +243,7 @@ async function migrateNotifications() {
         const player = leaderboard[i];
         const playerId = player.user_id;
 
-        console.log(
+        logger.info(
           `   👤 ${player.player_name} - ${player.points} pts, ${player.wins}V/${player.losses}D`
         );
 
@@ -264,7 +264,7 @@ async function migrateNotifications() {
             read: false,
             created_at: new Date().toISOString(),
           });
-          console.log(`      🎯 Niveau: ${tier}`);
+          logger.info(`      🎯 Niveau: ${tier}`);
         }
 
         // B. Notifications de badges
@@ -288,7 +288,7 @@ async function migrateNotifications() {
             created_at: new Date().toISOString(),
           });
         }
-        console.log(`      🏅 ${badges.length} badges`);
+        logger.info(`      🏅 ${badges.length} badges`);
 
         // C. Notification de classement (Top 3)
         const rank = i + 1;
@@ -305,7 +305,7 @@ async function migrateNotifications() {
             read: false,
             created_at: new Date().toISOString(),
           });
-          console.log(`      🏆 Top 3 - Position #${rank}`);
+          logger.info(`      🏆 Top 3 - Position #${rank}`);
         }
 
         // Insérer toutes les notifications en une seule requête
@@ -315,10 +315,10 @@ async function migrateNotifications() {
             .insert(notificationsToCreate);
 
           if (insertError) {
-            console.error(`      ❌ Erreur insertion notifications:`, insertError.message);
+            logger.error(`      ❌ Erreur insertion notifications:`, insertError.message);
           } else {
             totalNotificationsCreated += notificationsToCreate.length;
-            console.log(`      ✅ ${notificationsToCreate.length} notifications créées`);
+            logger.info(`      ✅ ${notificationsToCreate.length} notifications créées`);
           }
         }
 
@@ -326,12 +326,12 @@ async function migrateNotifications() {
       }
     }
 
-    console.log("\n\n✅ Migration terminée !");
-    console.log(`📊 Statistiques:`);
-    console.log(`   - Joueurs traités: ${totalPlayersProcessed}`);
-    console.log(`   - Notifications créées: ${totalNotificationsCreated}`);
+    logger.info("\n\n✅ Migration terminée !");
+    logger.info(`📊 Statistiques:`);
+    logger.info(`   - Joueurs traités: ${totalPlayersProcessed}`);
+    logger.info(`   - Notifications créées: ${totalNotificationsCreated}`);
   } catch (error) {
-    console.error("❌ Erreur globale:", error);
+    logger.error("❌ Erreur globale:", error);
     throw error;
   }
 }
@@ -340,11 +340,11 @@ async function migrateNotifications() {
 if (require.main === module) {
   migrateNotifications()
     .then(() => {
-      console.log("\n🎉 Script terminé avec succès");
+      logger.info("\n🎉 Script terminé avec succès");
       process.exit(0);
     })
     .catch((error) => {
-      console.error("\n💥 Erreur fatale:", error);
+      logger.error("\n💥 Erreur fatale:", error);
       process.exit(1);
     });
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useUser } from '@/lib/hooks/useUser'
 import { createNotification } from '@/lib/notifications'
+import { logger } from '@/lib/logger';
 
 interface Top3RankingNotifierProps {
   userRank: number | null // Position actuelle de l'utilisateur (1, 2, 3, ou > 3)
@@ -37,7 +38,7 @@ export default function Top3RankingNotifier({ userRank, totalPlayers }: Top3Rank
         total_players: totalPlayers,
         timestamp: new Date().toISOString(),
       }).catch(err => {
-        console.error('Failed to save top3_ranking notification:', err)
+        logger.error('Failed to save top3_ranking notification:', err)
       })
     }
 

@@ -7,6 +7,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { formatPlanName, formatDate, calculateFirstPaymentDate, getMonthlyPrice, getTotalPrice, type PlanType } from '@/lib/subscription';
 import PageTitle from '../../PageTitle';
+import { logger } from '@/lib/logger';
 
 // Récupérer la clé publique Stripe (supporte les deux noms de variables)
 const stripePublishableKey = 
@@ -15,7 +16,7 @@ const stripePublishableKey =
   '';
 
 if (!stripePublishableKey) {
-  console.error('[Checkout] Stripe publishable key is missing. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY or NEXT_PUBLIC_STRIPE_PUBLIC_KEY in your .env.local file.');
+  logger.error('[Checkout] Stripe publishable key is missing. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY or NEXT_PUBLIC_STRIPE_PUBLIC_KEY in your .env.local file.');
 }
 
 const stripePromise = loadStripe(stripePublishableKey);
@@ -88,7 +89,7 @@ function CheckoutForm({ subscriptionId, plan, trialEndDate, clientSecret, isSetu
         }
       }
     } catch (err) {
-      console.error('Error confirming payment/setup:', err);
+      logger.error('Error confirming payment/setup:', err);
       setError('Une erreur inattendue s\'est produite');
       setLoading(false);
     }
@@ -163,7 +164,7 @@ function CheckoutContent() {
         });
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching subscription data:', err);
+        logger.error('Error fetching subscription data:', err);
         setError('Erreur lors de la récupération des informations');
         setLoading(false);
       }

@@ -7,6 +7,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import TierBadge from "@/components/TierBadge";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 export default function ClubsHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -52,7 +53,7 @@ export default function ClubsHeroSection() {
           rating: avgRating
         });
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        logger.error("Error fetching stats:", error);
       }
     }
 

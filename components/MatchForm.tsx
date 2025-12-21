@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
+import { logger } from '@/lib/logger';
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -103,7 +104,7 @@ export default function MatchForm({
           .maybeSingle();
 
         if (profileError) {
-          console.warn('[MatchForm] Error fetching profile:', profileError);
+          logger.warn('[MatchForm] Error fetching profile:', profileError);
           // Fallback sur localStorage en cas d'erreur
           if (typeof window !== 'undefined') {
             try {
@@ -148,7 +149,7 @@ export default function MatchForm({
           }
         }
       } catch (error) {
-        console.warn('[MatchForm] Error checking match limit info status:', error);
+        logger.warn('[MatchForm] Error checking match limit info status:', error);
         // En cas d'erreur, vérifier localStorage comme fallback
         if (typeof window !== 'undefined') {
           try {
@@ -178,13 +179,13 @@ export default function MatchForm({
           .eq('id', user.id);
 
         if (updateError) {
-          console.warn('[MatchForm] Error saving to database:', updateError);
+          logger.warn('[MatchForm] Error saving to database:', updateError);
           // Fallback sur localStorage en cas d'erreur
           if (typeof window !== 'undefined') {
             try {
               localStorage.setItem('matchLimitInfoUnderstood', 'true');
             } catch (localStorageError) {
-              console.warn('[MatchForm] Error saving to localStorage:', localStorageError);
+              logger.warn('[MatchForm] Error saving to localStorage:', localStorageError);
             }
           }
         } else {
@@ -203,14 +204,14 @@ export default function MatchForm({
           try {
             localStorage.setItem('matchLimitInfoUnderstood', 'true');
           } catch (error) {
-            console.warn('[MatchForm] Error saving to localStorage:', error);
+            logger.warn('[MatchForm] Error saving to localStorage:', error);
           }
         }
       }
 
       setShowMatchLimitInfo(false);
     } catch (error) {
-      console.warn('[MatchForm] Error in handleUnderstoodClick:', error);
+      logger.warn('[MatchForm] Error in handleUnderstoodClick:', error);
       // Masquer le message même en cas d'erreur
       setShowMatchLimitInfo(false);
       // Essayer de sauvegarder dans localStorage comme fallback
@@ -253,8 +254,8 @@ export default function MatchForm({
         
         if (res.ok) {
           const data = await res.json();
-          console.log('[MatchForm] ===== RAW API RESPONSE =====');
-          console.log('[MatchForm] Raw boost stats response:', JSON.stringify(data, null, 2));
+          logger.info('[MatchForm] ===== RAW API RESPONSE =====');
+          logger.info('[MatchForm] Raw boost stats response:', JSON.stringify(data, null, 2));
           
           if (data && typeof data === 'object' && !cancelled) {
             // Utiliser directement les valeurs de l'API - FORCER LA CONVERSION EN NOMBRE
@@ -270,31 +271,31 @@ export default function MatchForm({
               canUse,
             };
             
-            console.log('[MatchForm] ===== BOOST STATS PARSED =====');
-            console.log('[MatchForm] creditsAvailable:', creditsAvailable, 'type:', typeof creditsAvailable);
-            console.log('[MatchForm] Number(creditsAvailable):', Number(creditsAvailable));
-            console.log('[MatchForm] creditsAvailable >= 1?', creditsAvailable >= 1);
-            console.log('[MatchForm] Checkbox will be:', creditsAvailable >= 1 ? '✅ ENABLED' : '❌ DISABLED');
-            console.log('[MatchForm] Full stats:', stats);
-            console.log('[MatchForm] =============================');
+            logger.info('[MatchForm] ===== BOOST STATS PARSED =====');
+            logger.info('[MatchForm] creditsAvailable:', creditsAvailable, 'type:', typeof creditsAvailable);
+            logger.info('[MatchForm] Number(creditsAvailable):', Number(creditsAvailable));
+            logger.info('[MatchForm] creditsAvailable >= 1?', creditsAvailable >= 1);
+            logger.info('[MatchForm] Checkbox will be:', creditsAvailable >= 1 ? '✅ ENABLED' : '❌ DISABLED');
+            logger.info('[MatchForm] Full stats:', stats);
+            logger.info('[MatchForm] =============================');
             
             if (!cancelled) {
               setBoostStats(stats);
               // Forcer un re-render en mettant à jour l'état
-              console.log('[MatchForm] State updated with stats:', stats);
+              logger.info('[MatchForm] State updated with stats:', stats);
             }
           } else if (!cancelled) {
-            console.error('[MatchForm] ❌ Invalid boost stats data:', data);
+            logger.error('[MatchForm] ❌ Invalid boost stats data:', data);
             setBoostStats(null);
           }
         } else if (!cancelled) {
           const errorText = await res.text();
-          console.error('[MatchForm] Failed to load boost stats:', res.status, res.statusText, errorText);
+          logger.error('[MatchForm] Failed to load boost stats:', res.status, res.statusText, errorText);
           setBoostStats(null);
         }
       } catch (error) {
         if (!cancelled && error instanceof Error && !error.message.includes('404')) {
-          console.error('[MatchForm] Error loading boost stats:', error);
+          logger.error('[MatchForm] Error loading boost stats:', error);
         }
         if (!cancelled) {
           setBoostStats(null);
@@ -494,7 +495,7 @@ export default function MatchForm({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
-        console.error("Validate exact API error:", response.status, response.statusText, errorData);
+        logger.error("Validate exact API error:", response.status, response.statusText, errorData);
         
         if (response.status === 401) {
           return { valid: false, error: "Erreur d'authentification. Veuillez vous reconnecter." };
@@ -523,7 +524,7 @@ export default function MatchForm({
         ? `${first_name.trim()} ${last_name.trim()}`.trim()
         : player.display_name || "";
 
-      console.log(`Player validated for "${name}":`, {
+      logger.info(`Player validated for "${name}":`, {
         id: player.id,
         display_name: fullName,
         first_name: first_name.trim(),
@@ -545,7 +546,7 @@ export default function MatchForm({
         },
       };
     } catch (error) {
-      console.error("Error validating exact player:", error instanceof Error ? error.message : String(error));
+      logger.error("Error validating exact player:", error instanceof Error ? error.message : String(error));
       return { 
         valid: false, 
         error: `Erreur lors de la validation du joueur "${name.trim()}". Veuillez réessayer.` 
@@ -555,13 +556,13 @@ export default function MatchForm({
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🚀 Form submission started");
+    logger.info("🚀 Form submission started");
     const newErrors: Record<string, string> = {};
     setErrors({});
     setLoading(true);
 
     try {
-      console.log("📋 Current state:", { partnerName, opp1Name, opp2Name, selectedPlayers });
+      logger.info("📋 Current state:", { partnerName, opp1Name, opp2Name, selectedPlayers });
       
       // Vérifier d'abord que le joueur connecté (selfId) a un prénom et un nom
       // Utiliser l'API pour récupérer le profil du joueur connecté AVANT de valider les autres joueurs
@@ -581,7 +582,7 @@ export default function MatchForm({
         });
         
         if (!profileRes.ok) {
-          console.error("❌ Error fetching self profile from API:", profileRes.status, profileRes.statusText);
+          logger.error("❌ Error fetching self profile from API:", profileRes.status, profileRes.statusText);
           if (profileRes.status === 404) {
             setErrorMessage("Votre profil n'a pas été trouvé. Veuillez contacter le support.");
           } else {
@@ -593,7 +594,7 @@ export default function MatchForm({
         
         const profileData = await profileRes.json();
         
-        console.log("🔍 Self profile data received:", {
+        logger.info("🔍 Self profile data received:", {
           id: profileData.id,
           first_name: profileData.first_name,
           last_name: profileData.last_name,
@@ -605,18 +606,18 @@ export default function MatchForm({
         
         // Vérifier que le profil a un prénom ET un nom (non vides)
         if (!profileData.hasCompleteName) {
-          console.error("❌ Self profile missing first_name or last_name:", profileData);
+          logger.error("❌ Self profile missing first_name or last_name:", profileData);
           setErrorMessage("Votre profil doit avoir un prénom et un nom complet pour enregistrer un match. Veuillez compléter vos informations dans les paramètres de votre profil.");
           setLoading(false);
           return;
         }
         
-        console.log("✅ Self profile validated:", {
+        logger.info("✅ Self profile validated:", {
           first_name: profileData.first_name,
           last_name: profileData.last_name
         });
       } catch (profileError) {
-        console.error("❌ Error checking self profile:", profileError);
+        logger.error("❌ Error checking self profile:", profileError);
         setErrorMessage("Erreur lors de la vérification de votre profil. Veuillez réessayer.");
         setLoading(false);
         return;
@@ -631,10 +632,10 @@ export default function MatchForm({
       if (!partnerName.trim()) {
         newErrors.partnerName = "Indiquez un partenaire (prénom et nom complet)";
       } else {
-        console.log("🔍 Validating partner:", partnerName);
+        logger.info("🔍 Validating partner:", partnerName);
         const partnerValidation = await validateExactPlayer(partnerName);
         if (!partnerValidation.valid) {
-          console.error("❌ Partner validation failed:", partnerValidation.error);
+          logger.error("❌ Partner validation failed:", partnerValidation.error);
           newErrors.partnerName = partnerValidation.error || `Aucun joueur trouvé avec le nom exact "${partnerName}". Vérifiez l'orthographe (lettres, espaces, accents).`;
         } else if (partnerValidation.player) {
           // Vérifier que le joueur a un prénom ET un nom dans la base de données
@@ -656,7 +657,7 @@ export default function MatchForm({
             } else {
               partner = partnerValidation.player;
               setSelectedPlayers((prev) => ({ ...prev, partner }));
-              console.log("✅ Partner validated:", partner);
+              logger.info("✅ Partner validated:", partner);
             }
           }
         }
@@ -666,10 +667,10 @@ export default function MatchForm({
       if (!opp1Name.trim()) {
         newErrors.opp1Name = "Indiquez un joueur (prénom et nom complet)";
       } else {
-        console.log("🔍 Validating opp1:", opp1Name);
+        logger.info("🔍 Validating opp1:", opp1Name);
         const opp1Validation = await validateExactPlayer(opp1Name);
         if (!opp1Validation.valid) {
-          console.error("❌ Opp1 validation failed:", opp1Validation.error);
+          logger.error("❌ Opp1 validation failed:", opp1Validation.error);
           newErrors.opp1Name = opp1Validation.error || `Aucun joueur trouvé avec le nom exact "${opp1Name}". Vérifiez l'orthographe (lettres, espaces, accents).`;
         } else if (opp1Validation.player) {
           // Vérifier que le joueur a un prénom ET un nom dans la base de données
@@ -691,7 +692,7 @@ export default function MatchForm({
             } else {
               opp1 = opp1Validation.player;
               setSelectedPlayers((prev) => ({ ...prev, opp1 }));
-              console.log("✅ Opp1 validated:", opp1);
+              logger.info("✅ Opp1 validated:", opp1);
             }
           }
         }
@@ -701,10 +702,10 @@ export default function MatchForm({
       if (!opp2Name.trim()) {
         newErrors.opp2Name = "Indiquez un joueur (prénom et nom complet)";
       } else {
-        console.log("🔍 Validating opp2:", opp2Name);
+        logger.info("🔍 Validating opp2:", opp2Name);
         const opp2Validation = await validateExactPlayer(opp2Name);
         if (!opp2Validation.valid) {
-          console.error("❌ Opp2 validation failed:", opp2Validation.error);
+          logger.error("❌ Opp2 validation failed:", opp2Validation.error);
           newErrors.opp2Name = opp2Validation.error || `Aucun joueur trouvé avec le nom exact "${opp2Name}". Vérifiez l'orthographe (lettres, espaces, accents).`;
         } else if (opp2Validation.player) {
           // Vérifier que le joueur a un prénom ET un nom dans la base de données
@@ -726,7 +727,7 @@ export default function MatchForm({
             } else {
               opp2 = opp2Validation.player;
               setSelectedPlayers((prev) => ({ ...prev, opp2 }));
-              console.log("✅ Opp2 validated:", opp2);
+              logger.info("✅ Opp2 validated:", opp2);
             }
           }
         }
@@ -741,7 +742,7 @@ export default function MatchForm({
         const filteredErrors = Object.fromEntries(
           Object.entries(newErrors).filter(([_, value]) => value)
         );
-        console.error("❌ Validation errors:", filteredErrors);
+        logger.error("❌ Validation errors:", filteredErrors);
         setErrors(filteredErrors);
         setLoading(false);
         return; // Ne pas effacer les données du formulaire
@@ -749,7 +750,7 @@ export default function MatchForm({
 
       // S'assurer que tous les joueurs sont validés
       if (!partner || !opp1 || !opp2) {
-        console.error("❌ Some players are missing after validation");
+        logger.error("❌ Some players are missing after validation");
         setErrors({ 
           partnerName: !partner ? "Erreur de validation du partenaire" : "",
           opp1Name: !opp1 ? "Erreur de validation du joueur 1" : "",
@@ -759,7 +760,7 @@ export default function MatchForm({
         return;
       }
 
-      console.log("✅ All players validated:", { partner, opp1, opp2 });
+      logger.info("✅ All players validated:", { partner, opp1, opp2 });
 
       // À ce stade, on sait que tous les joueurs sont résolus (validation faite plus haut)
       // TypeScript sait que partner, opp1, opp2 sont non-null grâce à la validation
@@ -791,7 +792,7 @@ export default function MatchForm({
         return;
       }
 
-      console.log("🔧 Preparing players data...");
+      logger.info("🔧 Preparing players data...");
       
       // Préparer les données pour l'API avec le nouveau format
       // Pour les joueurs invités, générer un UUID unique pour chaque user_id
@@ -819,10 +820,10 @@ export default function MatchForm({
         },
       ];
       
-      console.log("✅ Players data prepared:", players);
+      logger.info("✅ Players data prepared:", players);
 
       // Validation des sets
-      console.log("🔍 Validating sets...");
+      logger.info("🔍 Validating sets...");
       const setsErrors: Record<string, string> = {};
       sets.forEach((set, index) => {
         if (!set.team1Score.trim()) {
@@ -834,7 +835,7 @@ export default function MatchForm({
       });
 
       if (Object.keys(setsErrors).length > 0) {
-        console.error("❌ Sets validation errors:", setsErrors);
+        logger.error("❌ Sets validation errors:", setsErrors);
         setErrors(setsErrors);
         setLoading(false);
         return;
@@ -878,7 +879,7 @@ export default function MatchForm({
       });
 
       if (Object.keys(setsErrors).length > 0) {
-        console.error("❌ Sets validation errors:", setsErrors);
+        logger.error("❌ Sets validation errors:", setsErrors);
         setErrors(setsErrors);
         setLoading(false);
         return;
@@ -936,18 +937,18 @@ export default function MatchForm({
       }
 
       if (Object.keys(setsErrors).length > 0) {
-        console.error("❌ Match validation errors:", setsErrors);
+        logger.error("❌ Match validation errors:", setsErrors);
         setErrors(setsErrors);
         setLoading(false);
         return;
       }
       
-      console.log("✅ Sets validated successfully");
+      logger.info("✅ Sets validated successfully");
 
       // Vérifier que tous les sets ont des scores valides avant d'envoyer
       const validSets = sets.filter(set => set.team1Score.trim() && set.team2Score.trim());
       if (validSets.length !== sets.length) {
-        console.error("❌ Some sets have empty scores");
+        logger.error("❌ Some sets have empty scores");
         setErrors({ partnerName: "Veuillez remplir tous les scores des sets" });
         setLoading(false);
         return;
@@ -962,9 +963,9 @@ export default function MatchForm({
         useBoost: useBoost, // Envoyer la valeur de la case, la vérification se fera côté serveur
       };
       
-      console.log("🔍 [MatchForm] useBoost value before sending:", useBoost, "type:", typeof useBoost);
-      console.log("📤 Données envoyées à l'API:", JSON.stringify(payload, null, 2));
-      console.log("📤 Structure détaillée:", {
+      logger.info("🔍 [MatchForm] useBoost value before sending:", useBoost, "type:", typeof useBoost);
+      logger.info("📤 Données envoyées à l'API:", JSON.stringify(payload, null, 2));
+      logger.info("📤 Structure détaillée:", {
         playersCount: players.length,
         players: players.map(p => ({
           player_type: p.player_type,
@@ -988,20 +989,20 @@ export default function MatchForm({
         body: JSON.stringify(payload),
       });
       
-      console.log("📥 Response status:", res.status, res.statusText);
+      logger.info("📥 Response status:", res.status, res.statusText);
       
       if (res.ok) {
         const data = await res.json();
-        console.log("✅ Match submitted successfully:", data);
+        logger.info("✅ Match submitted successfully:", data);
         
         // Gérer les messages de boost
         if (data.boostApplied) {
-          console.log("⚡ Boost applied:", data.boostPointsInfo);
+          logger.info("⚡ Boost applied:", data.boostPointsInfo);
           // Le message de succès inclura les infos du boost
           
           // Recharger immédiatement les stats de boost pour refléter la consommation
           // Cela mettra à jour le nombre de boosts disponibles et la case à cocher
-          console.log("🔄 Reloading boost stats after boost consumption...");
+          logger.info("🔄 Reloading boost stats after boost consumption...");
           
           // Attendre un peu pour que la base de données soit mise à jour
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -1022,7 +1023,7 @@ export default function MatchForm({
               
               if (boostRes.ok) {
                 const boostData = await boostRes.json();
-                console.log(`[MatchForm] ✅ Boost stats reloaded after consumption (attempt ${attempt + 1}):`, boostData);
+                logger.info(`[MatchForm] ✅ Boost stats reloaded after consumption (attempt ${attempt + 1}):`, boostData);
                 
                 const creditsAvailable = Number(boostData.creditsAvailable) || 0;
                 const usedThisMonth = Number(boostData.usedThisMonth) || 0;
@@ -1039,7 +1040,7 @@ export default function MatchForm({
                 // Réinitialiser la case à cocher si plus de boosts disponibles
                 if (creditsAvailable === 0) {
                   setUseBoost(false);
-                  console.log('[MatchForm] ✅ Checkbox reset (no boosts remaining)');
+                  logger.info('[MatchForm] ✅ Checkbox reset (no boosts remaining)');
                 }
                 
                 // Si on a trouvé la bonne valeur (boost consommé), arrêter les tentatives
@@ -1054,16 +1055,16 @@ export default function MatchForm({
               }
             }
           } catch (boostError) {
-            console.error('[MatchForm] ❌ Error reloading boost stats:', boostError);
+            logger.error('[MatchForm] ❌ Error reloading boost stats:', boostError);
           }
         } else if (data.boostError) {
-          console.warn("⚠️ Boost error:", data.boostError);
+          logger.warn("⚠️ Boost error:", data.boostError);
           // Afficher l'erreur de boost mais ne pas bloquer le match
         }
 
         // Afficher un avertissement si des joueurs ont atteint la limite
         if (data.warning) {
-          console.warn("⚠️ Warning:", data.warning);
+          logger.warn("⚠️ Warning:", data.warning);
           setWarningMessage(data.warning);
           // Pas de redirection automatique, le joueur doit cliquer sur "Compris"
         } else {
@@ -1077,7 +1078,7 @@ export default function MatchForm({
           setLoading(false);
           // Redirection automatique seulement si pas d'avertissement
           setTimeout(() => {
-            console.log("🔄 Redirecting to match history...");
+            logger.info("🔄 Redirecting to match history...");
             window.location.href = "/matches/history";
           }, 2000);
         }
@@ -1087,11 +1088,11 @@ export default function MatchForm({
         let errorMsg = "Erreur lors de l'enregistrement";
         try {
           const errorData = await res.json();
-          console.log("🔍 Error data complet:", JSON.stringify(errorData, null, 2));
-          console.error("❌ Match submission failed:", res.status, errorData);
+          logger.info("🔍 Error data complet:", JSON.stringify(errorData, null, 2));
+          logger.error("❌ Match submission failed:", res.status, errorData);
           errorMsg = errorData?.error || errorData?.message || `Erreur ${res.status}: ${res.statusText}`;
         } catch (parseError) {
-          console.error("❌ Failed to parse error response:", parseError);
+          logger.error("❌ Failed to parse error response:", parseError);
           errorMsg = `Erreur ${res.status}: ${res.statusText || "Erreur serveur"}`;
         }
         
@@ -1106,7 +1107,7 @@ export default function MatchForm({
         }, 5000);
       }
     } catch (error) {
-      console.error("❌ Error submitting match:", error);
+      logger.error("❌ Error submitting match:", error);
       const errorMsg = "Erreur lors de l'enregistrement";
       setErrorMessage(errorMsg);
       setErrors({ partnerName: errorMsg });
@@ -1150,7 +1151,7 @@ export default function MatchForm({
                   setWarningMessage(null);
                   // Rediriger vers l'historique après avoir cliqué sur "Compris"
                   setTimeout(() => {
-                    console.log("🔄 Redirecting to match history...");
+                    logger.info("🔄 Redirecting to match history...");
                     window.location.href = "/matches/history";
                   }, 300);
                 }}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { logger } from '@/lib/logger';
 
 type CookiePreferences = {
   necessary: boolean;
@@ -32,7 +33,7 @@ export default function CookiePreferencesManager() {
         setPreferences(saved);
         setHasConsent(true);
       } catch (e) {
-        console.error("Error parsing cookie consent:", e);
+        logger.error("Error parsing cookie consent:", e);
       }
     }
     setLoading(false);
@@ -46,19 +47,19 @@ export default function CookiePreferencesManager() {
     
     // Appliquer les cookies selon les préférences
     if (prefs.analytics) {
-      console.log("Analytics cookies enabled");
+      logger.info("Analytics cookies enabled");
       // Ici, vous pourriez initialiser Google Analytics ou autre outil analytique
     } else {
       // Désactiver les cookies analytiques si nécessaire
-      console.log("Analytics cookies disabled");
+      logger.info("Analytics cookies disabled");
     }
     
     if (prefs.marketing) {
-      console.log("Marketing cookies enabled");
+      logger.info("Marketing cookies enabled");
       // Ici, vous pourriez initialiser des cookies marketing
     } else {
       // Désactiver les cookies marketing si nécessaire
-      console.log("Marketing cookies disabled");
+      logger.info("Marketing cookies disabled");
     }
 
     // Cacher le message de confirmation après 3 secondes

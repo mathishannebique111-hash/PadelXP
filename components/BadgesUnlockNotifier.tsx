@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import { useUser } from '@/lib/hooks/useUser';
 import { createNotification } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
 
 type Badge = {
   icon: string;
@@ -43,7 +44,7 @@ export default function BadgesUnlockNotifier({ obtained }: Props) {
               badge_description: badge.description,
               timestamp: new Date().toISOString(),
             }).catch(err => {
-              console.error('Failed to save badge_unlocked notification to DB:', err)
+              logger.error('Failed to save badge_unlocked notification to DB:', err)
             })
           })
         }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { logger } from '@/lib/logger';
 
 interface CounterProps {
   end: number;
@@ -50,7 +51,7 @@ export default function SocialProof() {
       try {
         const res = await fetch("/api/public/stats", { cache: "no-store" });
         if (!res.ok) {
-          console.error("Failed to fetch public stats", res.status);
+          logger.error("Failed to fetch public stats", res.status);
           return;
         }
         const data = await res.json();
@@ -62,7 +63,7 @@ export default function SocialProof() {
           });
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        logger.error("Error fetching stats:", error);
       }
     }
 

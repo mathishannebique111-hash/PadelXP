@@ -4,6 +4,7 @@ import ChallengesList from "@/components/challenges/ChallengesList";
 import PageTitle from "@/components/PageTitle";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { logger } from '@/lib/logger';
 
 interface PlayerChallenge {
   id: string;
@@ -71,11 +72,11 @@ export default async function PlayerChallengesPage() {
     cache: "no-store",
     next: { revalidate: 0 },
   }).catch((error) => {
-    console.error("[PlayerChallengesPage] fetch error", error);
+    logger.error("[PlayerChallengesPage] fetch error", error);
     return null;
   });
   
-  console.log(`[PlayerChallengesPage] Fetched at ${new Date().toISOString()} - response status:`, response?.status);
+  logger.info(`[PlayerChallengesPage] Fetched at ${new Date().toISOString()} - response status:`, response?.status);
 
   if (!response) {
     redirect("/login");
@@ -87,17 +88,17 @@ export default async function PlayerChallengesPage() {
     try {
       const raw = await response.text();
       if (!raw || raw.trim().length === 0) {
-        console.warn("[PlayerChallengesPage] Empty response body, will try fallback");
+        logger.warn("[PlayerChallengesPage] Empty response body, will try fallback");
       } else {
         const payload = JSON.parse(raw);
         challenges = Array.isArray(payload?.challenges) ? payload.challenges : [];
-        console.log(`[PlayerChallengesPage] Loaded ${challenges.length} challenges from API`);
+        logger.info(`[PlayerChallengesPage] Loaded ${challenges.length} challenges from API`);
       }
     } catch (error) {
-      console.error("[PlayerChallengesPage] parse error, will try fallback", error);
+      logger.error("[PlayerChallengesPage] parse error, will try fallback", error);
     }
   } else {
-    console.warn(`[PlayerChallengesPage] API returned status ${responseStatus}, will try fallback`);
+    logger.warn(`[PlayerChallengesPage] API returned status ${responseStatus}, will try fallback`);
   }
 
   // Récupérer les points et badges de challenges
@@ -145,7 +146,7 @@ export default async function PlayerChallengesPage() {
             }
           }
         } catch (authError) {
-          console.warn("[PlayerChallengesPage] Error fetching auth metadata", authError);
+          logger.warn("[PlayerChallengesPage] Error fetching auth metadata", authError);
         }
       }
 
@@ -186,16 +187,16 @@ export default async function PlayerChallengesPage() {
                     rewardClaimed: false,
                   };
                 });
-                console.log(`[PlayerChallengesPage] Loaded ${challenges.length} challenges from storage fallback`);
+                logger.info(`[PlayerChallengesPage] Loaded ${challenges.length} challenges from storage fallback`);
               }
             }
           } catch (parseError) {
-            console.error("[PlayerChallengesPage] Error parsing challenge file from storage", parseError);
+            logger.error("[PlayerChallengesPage] Error parsing challenge file from storage", parseError);
           }
         }
       }
     } catch (fallbackError) {
-      console.error("[PlayerChallengesPage] Error in fallback challenge loading", fallbackError);
+      logger.error("[PlayerChallengesPage] Error in fallback challenge loading", fallbackError);
     }
   }
   
@@ -229,7 +230,7 @@ export default async function PlayerChallengesPage() {
             : (typeof adminProfile.points === 'string' ? parseInt(adminProfile.points, 10) || 0 : 0);
         }
       } catch (e) {
-        console.error("[PlayerChallengesPage] Error fetching profile via admin client", e);
+        logger.error("[PlayerChallengesPage] Error fetching profile via admin client", e);
       }
     }
     

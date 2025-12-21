@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useUser } from '@/lib/hooks/useUser';
 import { createNotification } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
 
 interface Props {
   tier: string; // Bronze / Argent / Or / Diamant / Champion
@@ -39,7 +40,7 @@ export default function LevelUpNotifier({ tier }: Props) {
             previous_tier: last,
             timestamp: new Date().toISOString(),
           }).catch(err => {
-            console.error('Failed to save level_up notification to DB:', err)
+            logger.error('Failed to save level_up notification to DB:', err)
           })
         }
         

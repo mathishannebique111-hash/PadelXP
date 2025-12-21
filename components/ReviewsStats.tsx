@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 interface ReviewsStatsProps {
   initialReviews?: any[];
@@ -43,7 +44,7 @@ export default function ReviewsStats({
           setRewardStatus(data);
         }
       } catch (error) {
-        console.error("Error loading reward status:", error);
+        logger.error("Error loading reward status:", error);
       }
     };
 
@@ -60,7 +61,7 @@ export default function ReviewsStats({
           setRewardStatus(data);
         }
       } catch (error) {
-        console.error("Error reloading reward status:", error);
+        logger.error("Error reloading reward status:", error);
       }
     };
 
@@ -90,7 +91,7 @@ export default function ReviewsStats({
         }
       }
     } catch (error) {
-      console.error("Error claiming reward:", error);
+      logger.error("Error claiming reward:", error);
     } finally {
       setClaiming(false);
     }
@@ -99,7 +100,7 @@ export default function ReviewsStats({
   // Écouter les événements de soumission d'avis
   useEffect(() => {
     const handleReviewSubmitted = async (event?: Event) => {
-      console.log("📥 ReviewsStats received reviewSubmitted event");
+      logger.info("📥 ReviewsStats received reviewSubmitted event");
       setLoading(true);
       try {
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -122,7 +123,7 @@ export default function ReviewsStats({
           setAverageRating(data.averageRating || 0);
         }
       } catch (error) {
-        console.error("❌ Error fetching reviews:", error);
+        logger.error("❌ Error fetching reviews:", error);
       } finally {
         setLoading(false);
       }

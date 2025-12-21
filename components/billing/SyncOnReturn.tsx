@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { logger } from '@/lib/logger';
 
 function SyncOnReturnContent() {
   const router = useRouter();
@@ -42,7 +43,7 @@ function SyncOnReturnContent() {
           const data = await response.json();
           
           if (response.ok) {
-            console.log("[SyncOnReturn] Subscription synchronized successfully");
+            logger.info("[SyncOnReturn] Subscription synchronized successfully");
             setSynced(true);
             
             // Retirer le paramètre sync de l'URL et rafraîchir
@@ -50,10 +51,10 @@ function SyncOnReturnContent() {
             router.replace(newUrl);
             router.refresh();
           } else {
-            console.error("[SyncOnReturn] Sync error:", data.error);
+            logger.error("[SyncOnReturn] Sync error:", data.error);
           }
         } catch (error) {
-          console.error("[SyncOnReturn] Unexpected error:", error);
+          logger.error("[SyncOnReturn] Unexpected error:", error);
         } finally {
           setSyncing(false);
         }

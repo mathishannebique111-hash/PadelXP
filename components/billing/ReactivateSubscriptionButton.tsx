@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 interface ReactivateSubscriptionButtonProps {
   className?: string;
@@ -45,7 +46,7 @@ export default function ReactivateSubscriptionButton({
       router.refresh();
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      console.error('Reactivate subscription error:', errorMessage);
+      logger.error('Reactivate subscription error:', errorMessage);
       setError(errorMessage);
       setLoading(false);
       setConfirmed(false);

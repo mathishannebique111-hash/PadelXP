@@ -117,7 +117,7 @@ export default function PlayerSidebar() {
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
     { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 12), navKey: 'history' },
     { href: '/badges', label: 'Badges', icon: getIconPath('Badge.png', 11), navKey: 'badges' },
-    { href: '/club', label: 'Mon club', icon: getIconPath('mon club.png'), navKey: 'club' },
+    { href: '/club', label: 'Mon club', icon: getIconPath('mon-club.png'), navKey: 'club' },
     { href: '/tournaments', label: 'Tournois', icon: getIconPath('Trophée page badges.png'), navKey: 'tournaments' },
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },

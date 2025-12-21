@@ -1,5 +1,6 @@
 import pino from 'pino';
 import * as Sentry from "@sentry/nextjs";
+import { logger } from '@/lib/logger';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isTest = process.env.NODE_ENV === 'test';

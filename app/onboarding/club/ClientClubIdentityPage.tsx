@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { logger } from '@/lib/logger';
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   let binary = "";
@@ -178,7 +179,7 @@ export default function ClientClubIdentityPage() {
                             body: JSON.stringify({ event: 'SIGNED_IN', session: reauthData.session }),
                           });
                         } catch (callbackError) {
-                          console.warn('[ClubIdentity] auth callback failed', callbackError);
+                          logger.warn('[ClubIdentity] auth callback failed', callbackError);
                         }
                         sessionData = reauthData;
                       }
@@ -235,10 +236,10 @@ export default function ClientClubIdentityPage() {
                           try {
                             const errorData = JSON.parse(errorText);
                             errorMessage = errorData?.error || errorMessage;
-                            console.error("[ClubIdentity] register failure", errorData);
+                            logger.error("[ClubIdentity] register failure", errorData);
                           } catch (parseError) {
                             errorMessage = errorText;
-                            console.error("[ClubIdentity] register failure (text)", errorText);
+                            logger.error("[ClubIdentity] register failure (text)", errorText);
                           }
                         }
                         throw new Error(errorMessage);

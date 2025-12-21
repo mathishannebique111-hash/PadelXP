@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { logger } from '@/lib/logger';
 
 interface BoostCreditCheckerProps {
   currentStats: {
@@ -71,7 +72,7 @@ export default function BoostCreditChecker({ currentStats }: BoostCreditCheckerP
         }, isAuto ? 500 : 1000);
       }
     } catch (err) {
-      console.error("Error checking boosts:", err);
+      logger.error("Error checking boosts:", err);
       if (!isAuto) {
         setError("Une erreur est survenue lors de la vérification");
       }

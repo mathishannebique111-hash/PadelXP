@@ -7,6 +7,7 @@ import PageTitle from "./PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import Image from "next/image";
 import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
+import { logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -46,7 +47,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   const { data, error } = await storage.download(path);
   if (error || !data) {
     if (error && error.message && !error.message.toLowerCase().includes("not found")) {
-      console.warn("[dashboard/home] loadChallenges error", error);
+      logger.warn("[dashboard/home] loadChallenges error", error);
     }
     return [];
   }
@@ -57,7 +58,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
       return parsed as ChallengeRecord[];
     }
   } catch (err) {
-    console.warn("[dashboard/home] invalid JSON", err);
+    logger.warn("[dashboard/home] invalid JSON", err);
   }
   return [];
 }
@@ -91,7 +92,7 @@ export default async function DashboardHome() {
   
   // Log pour déboguer (à retirer en production)
   if (process.env.NODE_ENV === 'development' && club) {
-    console.log('[DashboardHome] Club data:', {
+    logger.info('[DashboardHome] Club data:', {
       trial_start_date: club.trial_start_date,
       trial_end_date: club.trial_end_date,
       trial_current_end_date: club.trial_current_end_date,
@@ -158,7 +159,7 @@ export default async function DashboardHome() {
     
     // Vérifier que la date est valide
     if (isNaN(effectiveEndDate.getTime())) {
-      console.error('[DashboardHome] Invalid effectiveEndDate:', effectiveEndDate);
+      logger.error('[DashboardHome] Invalid effectiveEndDate:', effectiveEndDate);
       return 14; // Par défaut 14 jours si date invalide
     }
     
@@ -169,7 +170,7 @@ export default async function DashboardHome() {
     
     // Log pour déboguer
     if (process.env.NODE_ENV === 'development') {
-      console.log('[DashboardHome] calculateTotalTrialDays:', {
+      logger.info('[DashboardHome] calculateTotalTrialDays:', {
         trialStartDate: trialStartDate,
         effectiveEndDate: effectiveEndDate.toISOString(),
         diffDays,
@@ -248,9 +249,9 @@ export default async function DashboardHome() {
           const path = `${clubId}.json`;
           const payload = JSON.stringify(filteredChallenges, null, 2);
           await storage.upload(path, payload, { upsert: true, contentType: "application/json" });
-          console.log(`[dashboard/home] Supprimé ${allChallenges.length - filteredChallenges.length} challenge(s) terminé(s) depuis plus d'un jour`);
+          logger.info(`[dashboard/home] Supprimé ${allChallenges.length - filteredChallenges.length} challenge(s) terminé(s) depuis plus d'un jour`);
         } catch (error) {
-          console.error("[dashboard/home] Erreur lors de la sauvegarde après nettoyage", error);
+          logger.error("[dashboard/home] Erreur lors de la sauvegarde après nettoyage", error);
         }
       }
       
@@ -268,7 +269,7 @@ export default async function DashboardHome() {
         .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
         .slice(0, 5); // Limiter à 5 challenges
     } catch (err) {
-      console.error("[dashboard/home] Error loading challenges", err);
+      logger.error("[dashboard/home] Error loading challenges", err);
     }
   }
 

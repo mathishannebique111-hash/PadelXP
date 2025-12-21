@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 interface CancelSubscriptionButtonProps {
   cancelAtPeriodEnd: boolean;
@@ -49,7 +50,7 @@ export default function CancelSubscriptionButton({
       router.refresh();
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      console.error('Cancel subscription error:', errorMessage);
+      logger.error('Cancel subscription error:', errorMessage);
       setError(errorMessage);
       setLoading(false);
       setConfirmed(false);

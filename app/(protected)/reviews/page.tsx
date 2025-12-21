@@ -6,6 +6,7 @@ import ReviewsStats from "@/components/ReviewsStats";
 import PageTitle from "@/components/PageTitle";
 import Link from "next/link";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 export const dynamic = "force-dynamic";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
@@ -49,7 +50,7 @@ export default async function ReviewsPage() {
           .eq("id", user.id)
           .maybeSingle();
         if (adminProfileError) {
-          console.error("[Reviews] Failed to fetch profile via admin client", {
+          logger.error("[Reviews] Failed to fetch profile via admin client", {
             message: adminProfileError.message,
             details: adminProfileError.details,
             hint: adminProfileError.hint,
@@ -60,7 +61,7 @@ export default async function ReviewsPage() {
           userClubId = adminProfile.club_id;
         }
       } catch (e) {
-        console.error("[Reviews] Unexpected error when fetching profile via admin client", e);
+        logger.error("[Reviews] Unexpected error when fetching profile via admin client", e);
       }
     }
 
@@ -83,7 +84,7 @@ export default async function ReviewsPage() {
 
     // Gérer les erreurs de récupération des avis
     if (reviewsError) {
-      console.error("❌ Error fetching reviews:", reviewsError);
+      logger.error("❌ Error fetching reviews:", reviewsError);
     }
 
     // Récupérer les profils pour chaque user_id (tous les profils)
@@ -104,9 +105,9 @@ export default async function ReviewsPage() {
           code: profilesError.code || null
         };
         if (!errorDetails.message && !errorDetails.details && !errorDetails.hint && !errorDetails.code) {
-          console.error("❌ Error fetching profiles:", profilesError);
+          logger.error("❌ Error fetching profiles:", profilesError);
         } else {
-          console.error("❌ Error fetching profiles:", errorDetails);
+          logger.error("❌ Error fetching profiles:", errorDetails);
         }
       }
       
@@ -194,7 +195,7 @@ export default async function ReviewsPage() {
     </div>
     );
   } catch (error) {
-    console.error("❌ Unexpected error in ReviewsPage:", error);
+    logger.error("❌ Unexpected error in ReviewsPage:", error);
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-8">
         <div className="rounded-2xl bg-red-50 border border-red-200 p-6">

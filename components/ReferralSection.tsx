@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import ReferralJoinedNotifier from '@/components/ReferralJoinedNotifier'
+import { logger } from '@/lib/logger';
 
 interface ReferralInfo {
   referralCode: string | null;
@@ -29,7 +30,7 @@ export default function ReferralSection({ userId }: { userId: string }) {
           setReferralInfo(data);
         }
       } catch (error) {
-        console.error("Error loading referral info:", error);
+        logger.error("Error loading referral info:", error);
       } finally {
         setLoading(false);
       }
@@ -46,7 +47,7 @@ export default function ReferralSection({ userId }: { userId: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Error copying code:", error);
+      logger.error("Error copying code:", error);
     }
   };
 

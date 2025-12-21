@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { logger } from '@/lib/logger';
 
 type OpeningHoursValue = { open: string | null; close: string | null; closed?: boolean };
 type OpeningHours = Record<string, OpeningHoursValue>;
@@ -217,7 +218,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
           }
       }
     } catch (err: any) {
-      console.error("[ClubPublicFormClient] load error", err);
+      logger.error("[ClubPublicFormClient] load error", err);
       setError(err?.message || "Erreur lors du chargement des informations");
     } finally {
       setLoading(false);
@@ -395,7 +396,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
 
       payload.opening_hours = openingHours;
       
-      console.log("[ClubPublicFormClient] Submitting with opening_hours:", JSON.stringify(openingHours, null, 2));
+      logger.info("[ClubPublicFormClient] Submitting with opening_hours:", JSON.stringify(openingHours, null, 2));
 
       const response = await fetch("/api/clubs/public", {
         method: "POST",
@@ -409,29 +410,29 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
       }
 
       const result = await response.json().catch(() => null);
-      console.log("[ClubPublicFormClient] Response result:", JSON.stringify(result, null, 2));
+      logger.info("[ClubPublicFormClient] Response result:", JSON.stringify(result, null, 2));
       
       // Mettre à jour les horaires d'ouverture depuis la réponse immédiatement
       // IMPORTANT : Utiliser les horaires de la réponse de sauvegarde, pas ceux du rechargement
       // car le rechargement pourrait retourner d'anciennes données
       let savedHours: OpeningHours | null = null;
       if (result?.club?.opening_hours) {
-        console.log("[ClubPublicFormClient] Setting opening_hours from result.club:", JSON.stringify(result.club.opening_hours, null, 2));
+        logger.info("[ClubPublicFormClient] Setting opening_hours from result.club:", JSON.stringify(result.club.opening_hours, null, 2));
         savedHours = normaliseHours(result.club.opening_hours);
       } else if (result?.extras?.opening_hours) {
-        console.log("[ClubPublicFormClient] Setting opening_hours from result.extras:", JSON.stringify(result.extras.opening_hours, null, 2));
+        logger.info("[ClubPublicFormClient] Setting opening_hours from result.extras:", JSON.stringify(result.extras.opening_hours, null, 2));
         savedHours = normaliseHours(result.extras.opening_hours);
       }
       
       // Si on a des horaires sauvegardés dans la réponse, les utiliser
       // Sinon, garder les horaires actuels (ceux qu'on vient de sauvegarder)
       if (savedHours) {
-        console.log("[ClubPublicFormClient] Using saved hours from response:", JSON.stringify(savedHours, null, 2));
+        logger.info("[ClubPublicFormClient] Using saved hours from response:", JSON.stringify(savedHours, null, 2));
         setOpeningHours(savedHours);
         setOpeningHoursVersion(prev => prev + 1); // Forcer le re-render
       } else {
         // Si pas d'horaires dans la réponse, garder ceux qu'on vient d'envoyer
-        console.log("[ClubPublicFormClient] No hours in response, keeping current hours:", JSON.stringify(openingHours, null, 2));
+        logger.info("[ClubPublicFormClient] No hours in response, keeping current hours:", JSON.stringify(openingHours, null, 2));
         // On garde openingHours tel quel, pas besoin de setOpeningHours
       }
       
@@ -514,7 +515,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
       
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      console.error("[ClubPublicFormClient] submit error", err);
+      logger.error("[ClubPublicFormClient] submit error", err);
       setError(err?.message || "Erreur lors de l'enregistrement");
       
       // Restaurer la position de scroll même en cas d'erreur

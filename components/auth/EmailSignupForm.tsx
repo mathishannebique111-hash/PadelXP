@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
+import { logger } from '@/lib/logger';
 
 type PrecheckResult =
   | boolean
@@ -173,7 +174,7 @@ export default function EmailSignupForm({
         },
       });
       if (error) {
-        console.error("[EmailSignup] SignUp error:", error);
+        logger.error("[EmailSignup] SignUp error:", error);
         // Améliorer le message d'erreur pour l'utilisateur
         if (error.message?.includes("Database") || error.message?.includes("database")) {
           throw new Error("Erreur lors de la création du compte. Veuillez réessayer ou contacter le support.");
@@ -195,7 +196,7 @@ export default function EmailSignupForm({
           }
           accessToken = signInData.session?.access_token || null;
         } catch (signInProblem) {
-          console.error("[EmailSignup] Impossible de créer la session après inscription", signInProblem);
+          logger.error("[EmailSignup] Impossible de créer la session après inscription", signInProblem);
           setError("Impossible de créer la session. Réessayez.");
           setLoading(false);
           return;
@@ -228,7 +229,7 @@ export default function EmailSignupForm({
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('[EmailSignup] Failed to attach club:', response.status, errorData);
+          logger.error('[EmailSignup] Failed to attach club:', response.status, errorData);
           const message = errorData?.error || "Impossible d'attacher le club";
           throw new Error(message);
         }
@@ -242,7 +243,7 @@ export default function EmailSignupForm({
           sessionStorage.setItem("referral_reward_received", "true");
         }
       } catch (attachError) {
-        console.error('[EmailSignup] Error attaching club:', attachError);
+        logger.error('[EmailSignup] Error attaching club:', attachError);
         if (attachError instanceof Error) {
           // Améliorer le message d'erreur pour l'utilisateur
           let errorMessage = attachError.message;
@@ -262,7 +263,7 @@ export default function EmailSignupForm({
       }
       router.replace(customRedirect || redirectTo);
     } catch (e: any) {
-      console.error("[EmailSignup] Unexpected error:", e);
+      logger.error("[EmailSignup] Unexpected error:", e);
       // Améliorer le message d'erreur pour l'utilisateur
       let errorMessage = e?.message || "Impossible de créer le compte";
       if (errorMessage.includes("Database") || errorMessage.includes("database")) {

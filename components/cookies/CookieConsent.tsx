@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { logger } from '@/lib/logger';
 
 type CookiePreferences = {
   necessary: boolean;
@@ -32,7 +33,7 @@ export default function CookieConsent() {
         const saved = JSON.parse(consent);
         setPreferences(saved);
       } catch (e) {
-        console.error("Error parsing cookie consent:", e);
+        logger.error("Error parsing cookie consent:", e);
       }
     }
   }, []);
@@ -45,11 +46,11 @@ export default function CookieConsent() {
     // Appliquer les cookies selon les préférences
     if (prefs.analytics) {
       // Ici, vous pourriez initialiser Google Analytics ou autre outil analytique
-      console.log("Analytics cookies enabled");
+      logger.info("Analytics cookies enabled");
     }
     if (prefs.marketing) {
       // Ici, vous pourriez initialiser des cookies marketing
-      console.log("Marketing cookies enabled");
+      logger.info("Marketing cookies enabled");
     }
   };
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatPlanName, getMonthlyPrice, getTotalPrice, calculateSavings, type PlanType } from '@/lib/subscription';
+import { logger } from '@/lib/logger';
 
 interface PlanSelectionProps {
   clubId: string;
@@ -43,7 +44,7 @@ export default function PlanSelection({
       // Rediriger vers la page de checkout
       router.push(`/dashboard/subscription/checkout?subscription_id=${data.subscriptionId}&plan=${plan}`);
     } catch (error) {
-      console.error('Error selecting plan:', error);
+      logger.error('Error selecting plan:', error);
       alert('Erreur lors de la sélection du plan');
       setLoading(null);
     }

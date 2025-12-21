@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 interface RefreshSubscriptionButtonProps {
   sessionId?: string | null;
@@ -49,7 +50,7 @@ function RefreshSubscriptionButtonContent({ sessionId, variant = 'success' }: Re
         setLoading(false);
       }
     } catch (error) {
-      console.error('Refresh error:', error);
+      logger.error('Refresh error:', error);
       alert('Erreur lors de la synchronisation de l\'abonnement');
       setLoading(false);
     }

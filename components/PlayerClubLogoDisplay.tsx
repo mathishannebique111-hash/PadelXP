@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { logger } from '@/lib/logger';
 
 interface PlayerClubLogoDisplayProps {
   publicLogoUrl: string | null;
@@ -47,7 +48,7 @@ export default function PlayerClubLogoDisplay({
           className="h-full w-full object-contain"
           style={imageStyle}
           onError={(e) => {
-            console.error("[PlayerClubLogoDisplay] Erreur lors du chargement du logo:", {
+            logger.error("[PlayerClubLogoDisplay] Erreur lors du chargement du logo:", {
               publicLogoUrl,
               name,
               error: e,

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 interface BoostPurchaseButtonProps {
   quantity: number;
@@ -26,12 +27,12 @@ export default function BoostPurchaseButton({
   // Normaliser le prix
   const normalizedPrice = useMemo(() => {
     if (price === undefined || price === null) {
-      console.warn('[BoostPurchaseButton] Price is undefined or null for quantity:', quantity);
+      logger.warn('[BoostPurchaseButton] Price is undefined or null for quantity:', quantity);
       return null;
     }
     if (typeof price === 'number') {
       if (isNaN(price) || price <= 0) {
-        console.warn('[BoostPurchaseButton] Invalid number price:', price, 'for quantity:', quantity);
+        logger.warn('[BoostPurchaseButton] Invalid number price:', price, 'for quantity:', quantity);
         return null;
       }
       return price;
@@ -39,7 +40,7 @@ export default function BoostPurchaseButton({
     if (typeof price === 'string') {
       const parsed = parseFloat(price);
       if (isNaN(parsed) || parsed <= 0) {
-        console.warn('[BoostPurchaseButton] Invalid string price:', price, 'for quantity:', quantity);
+        logger.warn('[BoostPurchaseButton] Invalid string price:', price, 'for quantity:', quantity);
         return null;
       }
       return parsed;
@@ -111,7 +112,7 @@ export default function BoostPurchaseButton({
           }
         } catch (parseError) {
           // Si le JSON ne peut pas être parsé, utiliser le message par défaut
-          console.error("Error parsing error response:", parseError);
+          logger.error("Error parsing error response:", parseError);
           errorMessage = `Erreur serveur (${res.status}): ${res.statusText || 'Erreur inconnue'}`;
         }
         
@@ -132,13 +133,13 @@ export default function BoostPurchaseButton({
       try {
         responseData = await res.json();
       } catch (parseError) {
-        console.error("Error parsing success response:", parseError);
+        logger.error("Error parsing success response:", parseError);
         throw new Error("Erreur lors de la lecture de la réponse du serveur");
       }
 
       // Vérifier que l'URL existe et est valide
       if (!responseData || typeof responseData !== 'object' || !responseData.url) {
-        console.error("Invalid response data:", responseData);
+        logger.error("Invalid response data:", responseData);
         throw new Error("URL de paiement non reçue du serveur");
       }
 
@@ -150,7 +151,7 @@ export default function BoostPurchaseButton({
       // Rediriger vers l'URL de paiement Stripe
       window.location.href = url;
     } catch (err) {
-      console.error("Error purchasing boosts:", err);
+      logger.error("Error purchasing boosts:", err);
       const errorMessage = err instanceof Error 
         ? err.message 
         : typeof err === 'string'

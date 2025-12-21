@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { sortReviewsByDate } from "@/lib/utils/review-utils";
 import type { Review } from "@/lib/utils/review-utils";
+import { logger } from '@/lib/logger';
 
 // Fonction pour formater la date sur une seule ligne
 const formatDate = (dateString: string): string => {
@@ -43,7 +44,7 @@ export default function ReviewsList({
   // Écouter les événements de soumission d'avis
   useEffect(() => {
     const handleReviewSubmitted = async (event?: Event) => {
-      console.log("📥 ReviewsList received reviewSubmitted event");
+      logger.info("📥 ReviewsList received reviewSubmitted event");
       // Recharger les avis depuis l'API avec un petit délai pour s'assurer que la DB est à jour
       setLoading(true);
       try {
@@ -62,23 +63,23 @@ export default function ReviewsList({
         }
         
         const data = await response.json();
-        console.log("📊 Fetched reviews:", data.reviews?.length || 0, "Average:", data.averageRating);
-        console.log("📊 First review:", data.reviews?.[0]);
+        logger.info("📊 Fetched reviews:", data.reviews?.length || 0, "Average:", data.averageRating);
+        logger.info("📊 First review:", data.reviews?.[0]);
         
         if (data.reviews && Array.isArray(data.reviews)) {
           // Trier par date décroissante pour s'assurer que le nouvel avis est en premier
           const sortedReviews = [...data.reviews].sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
-          console.log("✅ Setting reviews:", sortedReviews.length);
-          console.log("✅ First review data:", sortedReviews[0]);
+          logger.info("✅ Setting reviews:", sortedReviews.length);
+          logger.info("✅ First review data:", sortedReviews[0]);
           setReviews(sortedReviews);
           setAverageRating(data.averageRating || 0);
         } else {
-          console.warn("⚠️ No reviews in response:", data);
+          logger.warn("⚠️ No reviews in response:", data);
         }
       } catch (error) {
-        console.error("❌ Error fetching reviews:", error);
+        logger.error("❌ Error fetching reviews:", error);
       } finally {
         setLoading(false);
       }

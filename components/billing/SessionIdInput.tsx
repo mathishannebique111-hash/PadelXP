@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 export default function SessionIdInput() {
   const [sessionId, setSessionId] = useState('');
@@ -42,7 +43,7 @@ export default function SessionIdInput() {
         setLoading(false);
       }
     } catch (error) {
-      console.error('Verify session error:', error);
+      logger.error('Verify session error:', error);
       alert('Erreur lors de la vérification de l\'abonnement');
       setLoading(false);
     }

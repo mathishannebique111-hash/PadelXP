@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
+import { logger } from '@/lib/logger';
 
 interface PlayerAutocompleteProps {
   value: string;
@@ -117,7 +118,7 @@ export default function PlayerAutocomplete({
     try {
       // On les envoie quand même pour compatibilité, mais ils seront ignorés
       const params = new URLSearchParams({ q: query });
-      console.log("[PlayerAutocomplete] Searching for query:", query, "(club will be read from session server-side)");
+      logger.info("[PlayerAutocomplete] Searching for query:", query, "(club will be read from session server-side)");
       
       const response = await fetch(`/api/players/search?${params.toString()}`, {
         credentials: 'include',
@@ -144,14 +145,14 @@ export default function PlayerAutocomplete({
         // Si c'est une erreur 401, ne pas logger comme erreur - juste logger un avertissement et continuer
         // (peut être dû à une erreur temporaire d'authentification qui se résout automatiquement)
         if (response.status === 401) {
-          console.warn('[PlayerAutocomplete] Unauthorized access to search API - returning empty results (may be temporary)');
+          logger.warn('[PlayerAutocomplete] Unauthorized access to search API - returning empty results (may be temporary)');
           setSearchResults([]);
           return;
         }
         
         // Pour les erreurs serveur (500+), logger avec tous les détails
         if (response.status >= 500) {
-          console.error('[PlayerAutocomplete] Server error in search API:', {
+          logger.error('[PlayerAutocomplete] Server error in search API:', {
             status: response.status,
             message: errorMessage,
             details: errorData?.details,
@@ -160,7 +161,7 @@ export default function PlayerAutocomplete({
           });
         } else {
           // Pour les autres erreurs client (400-499), logger un avertissement
-          console.warn('[PlayerAutocomplete] Client error in search API:', {
+          logger.warn('[PlayerAutocomplete] Client error in search API:', {
             status: response.status,
             message: errorMessage,
             details: errorData?.details
@@ -176,16 +177,16 @@ export default function PlayerAutocomplete({
       const data = responseData.players || responseData || [];
       const normalizedQuery = query.toLowerCase().trim();
       
-      console.log(`[PlayerAutocomplete] Received ${data.length} results for query "${query}" (club filtered server-side from session)`);
+      logger.info(`[PlayerAutocomplete] Received ${data.length} results for query "${query}" (club filtered server-side from session)`);
       
       // Si aucun résultat, ne rien faire
       if (!data || data.length === 0) {
-        console.log(`[PlayerAutocomplete] No results found for query "${query}"`);
+        logger.info(`[PlayerAutocomplete] No results found for query "${query}"`);
         setSearchResults([]);
         return;
       }
       
-      console.log(`[PlayerAutocomplete] Setting ${data.length} search results:`, data.map((p: any) => p.display_name));
+      logger.info(`[PlayerAutocomplete] Setting ${data.length} search results:`, data.map((p: any) => p.display_name));
       setSearchResults(data);
       // Toujours afficher le dropdown s'il y a des résultats
       if (data.length > 0) {
@@ -255,7 +256,7 @@ export default function PlayerAutocomplete({
         }
       }
     } catch (error) {
-      console.error("Error searching players:", error);
+      logger.error("Error searching players:", error);
     }
   };
 
@@ -403,7 +404,7 @@ export default function PlayerAutocomplete({
         alert(`Erreur: ${errorMessage}`);
       }
     } catch (error) {
-      console.error("Error creating guest:", error);
+      logger.error("Error creating guest:", error);
       alert("Erreur lors de la création du joueur");
     } finally {
       setCreatingGuest(false);

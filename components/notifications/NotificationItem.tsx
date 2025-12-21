@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Trophy, Medal, TrendingUp, UserPlus, Bell } from 'lucide-react'
 import TierBadge from '@/components/TierBadge'
+import { logger } from '@/lib/logger';
 
 type Notification = Database['public']['Tables']['notifications']['Row']
 
@@ -30,7 +31,7 @@ export default function NotificationItem({ notification, onMarkAsRead, markAsRea
           await onMarkAsRead()
         }
       } catch (error) {
-        console.error('Failed to mark notification as read:', error)
+        logger.error('Failed to mark notification as read:', error)
         // En cas d'erreur, recharger pour restaurer l'état correct
         if (onMarkAsRead) {
           await onMarkAsRead()

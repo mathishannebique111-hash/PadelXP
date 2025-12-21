@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from '@/lib/logger';
 
 interface NotificationModalProps {
   type: "dethroned_from_1" | "dethroned_from_2" | "dethroned_from_3";
@@ -9,16 +10,16 @@ interface NotificationModalProps {
 
 export default function NotificationModal({ type, onClose }: NotificationModalProps) {
   useEffect(() => {
-    console.log(`[NotificationModal] 🎬 MODAL MONTÉ avec type: ${type}`);
+    logger.info(`[NotificationModal] 🎬 MODAL MONTÉ avec type: ${type}`);
     
     // Fermer automatiquement après 3 secondes
     const timer = setTimeout(() => {
-      console.log(`[NotificationModal] ⏰ Fermeture automatique après 3 secondes`);
+      logger.info(`[NotificationModal] ⏰ Fermeture automatique après 3 secondes`);
       onClose();
     }, 3000);
 
     return () => {
-      console.log(`[NotificationModal] 🧹 Nettoyage du modal`);
+      logger.info(`[NotificationModal] 🧹 Nettoyage du modal`);
       clearTimeout(timer);
     };
   }, [onClose, type]);

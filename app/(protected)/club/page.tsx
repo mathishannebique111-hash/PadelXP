@@ -4,6 +4,7 @@ import ClubProfileClient from "@/components/club/ClubProfileClient";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getClubPublicExtras, getUserClubInfo } from "@/lib/utils/club-utils";
+import { logger } from '@/lib/logger';
 
 type ClubRecord = {
   name: string;
@@ -74,7 +75,7 @@ async function loadClubIdentity({
         }
       }
     } catch (error) {
-      console.warn("[player/club] Unable to fetch club metadata from auth", error);
+      logger.warn("[player/club] Unable to fetch club metadata from auth", error);
     }
   }
 
@@ -193,7 +194,7 @@ export default async function PlayerClubPage() {
 
   let { clubId, clubSlug, clubName, clubLogoUrl } = await getUserClubInfo();
   
-  console.log("[PlayerClubPage] Initial club info from getUserClubInfo:", {
+  logger.info("[PlayerClubPage] Initial club info from getUserClubInfo:", {
     clubId,
     clubSlug,
     clubName,
@@ -308,7 +309,7 @@ export default async function PlayerClubPage() {
   // Déterminer le clubId final
   let finalClubId: string | null = clubId;
   
-  console.log("[PlayerClubPage] Étape initiale:", {
+  logger.info("[PlayerClubPage] Étape initiale:", {
     clubId,
     clubSlug,
     finalClubId,
@@ -324,7 +325,7 @@ export default async function PlayerClubPage() {
         .eq("slug", clubSlug)
         .maybeSingle();
       
-      console.log("[PlayerClubPage] Lookup slug->id (admin):", {
+      logger.info("[PlayerClubPage] Lookup slug->id (admin):", {
         clubSlug,
         slugLookup,
         error: slugError,
@@ -342,7 +343,7 @@ export default async function PlayerClubPage() {
         .eq("slug", clubSlug)
         .maybeSingle();
       
-      console.log("[PlayerClubPage] Lookup slug->id (standard):", {
+      logger.info("[PlayerClubPage] Lookup slug->id (standard):", {
         clubSlug,
         slugLookup,
         error: slugError,
@@ -354,7 +355,7 @@ export default async function PlayerClubPage() {
     }
   }
 
-  console.log("[PlayerClubPage] Après détermination finalClubId:", {
+  logger.info("[PlayerClubPage] Après détermination finalClubId:", {
     finalClubId,
     clubSlug,
   });
@@ -366,14 +367,14 @@ export default async function PlayerClubPage() {
 
   // Priorité absolue : récupérer depuis clubs avec admin client (bypass RLS) via club_id
   if (finalClubId && supabaseAdmin) {
-    console.log("[PlayerClubPage] Tentative récupération par club_id (admin)...");
+    logger.info("[PlayerClubPage] Tentative récupération par club_id (admin)...");
     const { data: clubData, error: clubError } = await supabaseAdmin
       .from("clubs")
       .select("name, logo_url, address, postal_code, city, phone, website, number_of_courts, court_type")
       .eq("id", finalClubId)
       .maybeSingle();
     
-    console.log("[PlayerClubPage] Récupération par club_id (admin):", {
+    logger.info("[PlayerClubPage] Récupération par club_id (admin):", {
       finalClubId,
       clubData: clubData ? { name: clubData.name, logo_url: clubData.logo_url } : null,
       hasData: !!clubData,
@@ -381,7 +382,7 @@ export default async function PlayerClubPage() {
     });
     
     if (clubError) {
-      console.error("[PlayerClubPage] ❌ Erreur lors de la récupération par club_id (admin):", {
+      logger.error("[PlayerClubPage] ❌ Erreur lors de la récupération par club_id (admin):", {
         message: clubError.message,
         code: clubError.code,
         details: clubError.details,
@@ -394,7 +395,7 @@ export default async function PlayerClubPage() {
       name = (clubData.name as string) || name;
       // Gérer logo_url correctement : peut être null, false, ou une string
       const rawLogoUrl = clubData.logo_url;
-      console.log("[PlayerClubPage] Raw logo_url from database:", {
+      logger.info("[PlayerClubPage] Raw logo_url from database:", {
         rawLogoUrl,
         type: typeof rawLogoUrl,
         isString: typeof rawLogoUrl === 'string',
@@ -406,15 +407,15 @@ export default async function PlayerClubPage() {
       
       if (rawLogoUrl && typeof rawLogoUrl === 'string' && rawLogoUrl.trim() !== '') {
         logoUrl = rawLogoUrl;
-        console.log("[PlayerClubPage] ✅ Logo URL assigné:", logoUrl.substring(0, 80));
+        logger.info("[PlayerClubPage] ✅ Logo URL assigné:", logoUrl.substring(0, 80));
       } else {
-        console.log("[PlayerClubPage] ⚠️ Logo URL non valide, valeur actuelle logoUrl:", logoUrl);
+        logger.info("[PlayerClubPage] ⚠️ Logo URL non valide, valeur actuelle logoUrl:", logoUrl);
         if (!logoUrl) {
           logoUrl = null;
         }
       }
       clubRecord = clubData as ClubRecord;
-      console.log("[PlayerClubPage] ✅ Données récupérées par club_id (admin):", { 
+      logger.info("[PlayerClubPage] ✅ Données récupérées par club_id (admin):", { 
         name, 
         logoUrl: logoUrl ? `${logoUrl.substring(0, 50)}...` : null,
         rawLogoUrl,
@@ -422,20 +423,20 @@ export default async function PlayerClubPage() {
         finalLogoUrl: logoUrl,
       });
     } else if (!clubData && !clubError) {
-      console.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour club_id:", finalClubId);
+      logger.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour club_id:", finalClubId);
     }
   }
 
   // Si pas encore récupéré complètement, essayer avec le slug (admin)
   if (!clubRecord && clubSlug && supabaseAdmin) {
-    console.log("[PlayerClubPage] Tentative récupération par slug (admin)...");
+    logger.info("[PlayerClubPage] Tentative récupération par slug (admin)...");
     const { data: clubData, error: clubError } = await supabaseAdmin
       .from("clubs")
       .select("name, logo_url, address, postal_code, city, phone, website, number_of_courts, court_type")
       .eq("slug", clubSlug)
       .maybeSingle();
 
-    console.log("[PlayerClubPage] Récupération par slug (admin):", {
+    logger.info("[PlayerClubPage] Récupération par slug (admin):", {
       clubSlug,
       clubData: clubData ? { name: clubData.name, logo_url: clubData.logo_url } : null,
       hasData: !!clubData,
@@ -443,7 +444,7 @@ export default async function PlayerClubPage() {
     });
     
     if (clubError) {
-      console.error("[PlayerClubPage] ❌ Erreur lors de la récupération par slug (admin):", {
+      logger.error("[PlayerClubPage] ❌ Erreur lors de la récupération par slug (admin):", {
         message: clubError.message,
         code: clubError.code,
         details: clubError.details,
@@ -462,27 +463,27 @@ export default async function PlayerClubPage() {
         logoUrl = null;
       }
       if (!clubRecord) clubRecord = clubData as ClubRecord;
-      console.log("[PlayerClubPage] ✅ Données récupérées par slug (admin):", { 
+      logger.info("[PlayerClubPage] ✅ Données récupérées par slug (admin):", { 
         name, 
         logoUrl: logoUrl ? `${logoUrl.substring(0, 50)}...` : null,
         rawLogoUrl,
         rawLogoUrlType: typeof rawLogoUrl,
       });
     } else if (!clubData && !clubError) {
-      console.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour slug:", clubSlug);
+      logger.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour slug:", clubSlug);
     }
   }
 
   // Fallback avec client standard si nécessaire via club_id
   if (!clubRecord && finalClubId) {
-    console.log("[PlayerClubPage] Tentative récupération par club_id (standard)...");
+    logger.info("[PlayerClubPage] Tentative récupération par club_id (standard)...");
     const { data: clubData, error: clubError } = await supabase
       .from("clubs")
       .select("name, logo_url, address, postal_code, city, phone, website, number_of_courts, court_type")
       .eq("id", finalClubId)
       .maybeSingle();
     
-    console.log("[PlayerClubPage] Fallback standard par club_id:", {
+    logger.info("[PlayerClubPage] Fallback standard par club_id:", {
       finalClubId,
       clubData: clubData ? { name: clubData.name, logo_url: clubData.logo_url } : null,
       hasData: !!clubData,
@@ -490,7 +491,7 @@ export default async function PlayerClubPage() {
     });
     
     if (clubError) {
-      console.error("[PlayerClubPage] ❌ Erreur lors de la récupération par club_id (standard):", {
+      logger.error("[PlayerClubPage] ❌ Erreur lors de la récupération par club_id (standard):", {
         message: clubError.message,
         code: clubError.code,
         details: clubError.details,
@@ -509,27 +510,27 @@ export default async function PlayerClubPage() {
         logoUrl = null;
       }
       if (!clubRecord) clubRecord = clubData as ClubRecord;
-      console.log("[PlayerClubPage] ✅ Données récupérées par club_id (standard):", { 
+      logger.info("[PlayerClubPage] ✅ Données récupérées par club_id (standard):", { 
         name, 
         logoUrl: logoUrl ? `${logoUrl.substring(0, 50)}...` : null,
         rawLogoUrl,
         rawLogoUrlType: typeof rawLogoUrl,
       });
     } else if (!clubData && !clubError) {
-      console.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour club_id:", finalClubId);
+      logger.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour club_id:", finalClubId);
     }
   }
 
   // Fallback avec client standard via slug
   if (!clubRecord && clubSlug) {
-    console.log("[PlayerClubPage] Tentative récupération par slug (standard)...");
+    logger.info("[PlayerClubPage] Tentative récupération par slug (standard)...");
     const { data: clubData, error: clubError } = await supabase
       .from("clubs")
       .select("name, logo_url, address, postal_code, city, phone, website, number_of_courts, court_type")
       .eq("slug", clubSlug)
       .maybeSingle();
     
-    console.log("[PlayerClubPage] Fallback standard par slug:", {
+    logger.info("[PlayerClubPage] Fallback standard par slug:", {
       clubSlug,
       clubData: clubData ? { name: clubData.name, logo_url: clubData.logo_url } : null,
       hasData: !!clubData,
@@ -537,7 +538,7 @@ export default async function PlayerClubPage() {
     });
     
     if (clubError) {
-      console.error("[PlayerClubPage] ❌ Erreur lors de la récupération par slug (standard):", {
+      logger.error("[PlayerClubPage] ❌ Erreur lors de la récupération par slug (standard):", {
         message: clubError.message,
         code: clubError.code,
         details: clubError.details,
@@ -556,14 +557,14 @@ export default async function PlayerClubPage() {
         logoUrl = null;
       }
       if (!clubRecord) clubRecord = clubData as ClubRecord;
-      console.log("[PlayerClubPage] ✅ Données récupérées par slug (standard):", { 
+      logger.info("[PlayerClubPage] ✅ Données récupérées par slug (standard):", { 
         name, 
         logoUrl: logoUrl ? `${logoUrl.substring(0, 50)}...` : null,
         rawLogoUrl,
         rawLogoUrlType: typeof rawLogoUrl,
       });
     } else if (!clubData && !clubError) {
-      console.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour slug:", clubSlug);
+      logger.warn("[PlayerClubPage] ⚠️ Aucune donnée retournée (ni erreur ni données) pour slug:", clubSlug);
     }
   }
 
@@ -574,13 +575,13 @@ export default async function PlayerClubPage() {
   
   // Priorité sur clubLogoUrl si disponible (depuis getUserClubInfo qui vérifie aussi les métadonnées)
   if (!logoUrl && clubLogoUrl) {
-    console.log("[PlayerClubPage] Utilisation du logo depuis clubLogoUrl (métadonnées/utilisateur):", clubLogoUrl.substring(0, 80));
+    logger.info("[PlayerClubPage] Utilisation du logo depuis clubLogoUrl (métadonnées/utilisateur):", clubLogoUrl.substring(0, 80));
     logoUrl = clubLogoUrl;
   }
   
   // Si toujours pas de logo, essayer de le récupérer depuis les métadonnées utilisateur
   if (!logoUrl && metadata?.club_logo_url && typeof metadata.club_logo_url === 'string' && metadata.club_logo_url.trim() !== '') {
-    console.log("[PlayerClubPage] Utilisation du logo depuis métadonnées user:", metadata.club_logo_url.substring(0, 80));
+    logger.info("[PlayerClubPage] Utilisation du logo depuis métadonnées user:", metadata.club_logo_url.substring(0, 80));
     logoUrl = metadata.club_logo_url as string;
   }
 
@@ -591,14 +592,14 @@ export default async function PlayerClubPage() {
   
   // Dernier essai : récupérer directement depuis la table clubs avec une requête simple
   if (!logoUrl && effectiveClubId && supabaseAdmin) {
-    console.log("[PlayerClubPage] Dernier essai : récupération directe de logo_url...");
+    logger.info("[PlayerClubPage] Dernier essai : récupération directe de logo_url...");
     const { data: directLogoData, error: directLogoError } = await supabaseAdmin
       .from("clubs")
       .select("logo_url")
       .eq("id", effectiveClubId)
       .maybeSingle();
     
-    console.log("[PlayerClubPage] Récupération directe logo_url:", {
+    logger.info("[PlayerClubPage] Récupération directe logo_url:", {
       directLogoData,
       error: directLogoError,
       logo_url: directLogoData?.logo_url,
@@ -607,13 +608,13 @@ export default async function PlayerClubPage() {
     
     if (directLogoData?.logo_url && typeof directLogoData.logo_url === 'string' && directLogoData.logo_url.trim() !== '') {
       logoUrl = directLogoData.logo_url;
-      console.log("[PlayerClubPage] ✅ Logo récupéré via requête directe:", logoUrl.substring(0, 80));
+      logger.info("[PlayerClubPage] ✅ Logo récupéré via requête directe:", logoUrl.substring(0, 80));
     }
   }
 
   // Fallback spécial pour les clubs existants : récupérer depuis les métadonnées des admins du club
   if (!logoUrl && effectiveClubId && supabaseAdmin) {
-    console.log("[PlayerClubPage] Fallback spécial TCAM : récupération depuis les admins du club...");
+    logger.info("[PlayerClubPage] Fallback spécial TCAM : récupération depuis les admins du club...");
     try {
       // Récupérer les admins du club
       const { data: clubAdmins, error: adminsError } = await supabaseAdmin
@@ -622,7 +623,7 @@ export default async function PlayerClubPage() {
         .eq("club_id", effectiveClubId)
         .limit(5);
       
-      console.log("[PlayerClubPage] Admins du club trouvés:", {
+      logger.info("[PlayerClubPage] Admins du club trouvés:", {
         count: clubAdmins?.length || 0,
         error: adminsError,
       });
@@ -636,21 +637,21 @@ export default async function PlayerClubPage() {
               const adminLogoUrl = adminUser.user.user_metadata.club_logo_url as string;
               if (typeof adminLogoUrl === 'string' && adminLogoUrl.trim() !== '') {
                 logoUrl = adminLogoUrl;
-                console.log("[PlayerClubPage] ✅ Logo récupéré depuis métadonnées admin du club:", logoUrl.substring(0, 80));
+                logger.info("[PlayerClubPage] ✅ Logo récupéré depuis métadonnées admin du club:", logoUrl.substring(0, 80));
                 break; // On arrête dès qu'on trouve un logo valide
               }
             }
           } catch (userError) {
-            console.warn("[PlayerClubPage] Erreur lors de la récupération des métadonnées admin:", userError);
+            logger.warn("[PlayerClubPage] Erreur lors de la récupération des métadonnées admin:", userError);
           }
         }
       }
     } catch (error) {
-      console.warn("[PlayerClubPage] Erreur lors du fallback admin:", error);
+      logger.warn("[PlayerClubPage] Erreur lors du fallback admin:", error);
     }
   }
 
-  console.log("[PlayerClubPage] Données finales avant rendu:", {
+  logger.info("[PlayerClubPage] Données finales avant rendu:", {
     name,
     logoUrl: logoUrl ? `${logoUrl.substring(0, 50)}...` : null,
     logoUrlLength: logoUrl?.length || 0,

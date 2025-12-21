@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { logger } from '@/lib/logger';
 
 type StepStatus = "loading" | "ready" | "error" | "success";
 
@@ -154,7 +155,7 @@ export default function ClientAdminInvite() {
 
                 if (reissueResponse.ok) {
                   const linkResponse = await reissueResponse.json();
-                  console.log("[clubs/signup] Reissue response", linkResponse);
+                  logger.info("[clubs/signup] Reissue response", linkResponse);
                   const { token: reissuedToken, actionLink, email: reissuedEmail, linkType } =
                     linkResponse;
                   const resolvedEmail =
@@ -186,7 +187,7 @@ export default function ClientAdminInvite() {
                         }
                         window.sessionStorage.setItem("club_invite_reissue_url", actionLink);
                       } catch (parseError) {
-                        console.warn("[clubs/signup] Unable to parse action link", parseError);
+                        logger.warn("[clubs/signup] Unable to parse action link", parseError);
                       }
                     }
                     if (!cancelled) {
@@ -210,7 +211,7 @@ export default function ClientAdminInvite() {
               }
             }
 
-            console.error("[clubs/signup] invite session not established after retry", lastError);
+            logger.error("[clubs/signup] invite session not established after retry", lastError);
             throw new Error(
               lastError?.message ||
                 "Lien d'invitation expiré ou déjà utilisé. Demandez-en un nouveau."
@@ -262,7 +263,7 @@ export default function ClientAdminInvite() {
 
         throw new Error("Lien d'invitation invalide ou déjà utilisé.");
       } catch (err: any) {
-        console.error("[clubs/signup] Invitation error:", err);
+        logger.error("[clubs/signup] Invitation error:", err);
         if (!cancelled) {
           setError(err?.message || "Impossible de valider cette invitation.");
           setStatus("error");
@@ -302,7 +303,7 @@ export default function ClientAdminInvite() {
         method: "POST",
         credentials: "include",
       }).catch((err) => {
-        console.warn("[clubs/signup] activate-admin warning", err);
+        logger.warn("[clubs/signup] activate-admin warning", err);
       });
 
       await supabase.auth.signOut();
@@ -317,7 +318,7 @@ export default function ClientAdminInvite() {
         router.refresh();
       }, 1500);
     } catch (err: any) {
-      console.error("[clubs/signup] Password setup error:", err);
+      logger.error("[clubs/signup] Password setup error:", err);
       setError(err?.message || "Impossible d'enregistrer le mot de passe. Réessayez plus tard.");
     } finally {
       setIsSubmitting(false);

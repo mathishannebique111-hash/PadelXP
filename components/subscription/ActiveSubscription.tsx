@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatPlanName, formatDate, type PlanType, type SubscriptionStatus } from '@/lib/subscription';
+import { logger } from '@/lib/logger';
 
 interface ActiveSubscriptionProps {
   clubId: string;
@@ -41,7 +42,7 @@ export default function ActiveSubscription({
         alert(data.error || 'Erreur lors de l\'ouverture du portail client');
       }
     } catch (error) {
-      console.error('Error opening customer portal:', error);
+      logger.error('Error opening customer portal:', error);
       alert('Erreur lors de l\'ouverture du portail client');
     } finally {
       setLoading(false);
@@ -66,7 +67,7 @@ export default function ActiveSubscription({
         alert(data.error || 'Erreur lors de l\'annulation');
       }
     } catch (error) {
-      console.error('Error canceling subscription:', error);
+      logger.error('Error canceling subscription:', error);
       alert('Erreur lors de l\'annulation');
     } finally {
       setLoading(false);
@@ -92,7 +93,7 @@ export default function ActiveSubscription({
         alert(data.error || 'Erreur lors de la réactivation');
       }
     } catch (error) {
-      console.error('Error reactivating subscription:', error);
+      logger.error('Error reactivating subscription:', error);
       alert('Erreur lors de la réactivation');
     } finally {
       setLoading(false);

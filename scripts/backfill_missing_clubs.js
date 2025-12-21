@@ -4,7 +4,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error('Missing Supabase credentials. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the environment.');
+  logger.error('Missing Supabase credentials. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the environment.');
   process.exit(1);
 }
 
@@ -56,14 +56,14 @@ async function ensureUniqueSlug(baseSlug) {
 async function backfill() {
   const { data: owners, error: ownersError } = await admin.auth.admin.listUsers({ limit: 200 });
   if (ownersError) {
-    console.error('Unable to list users:', ownersError);
+    logger.error('Unable to list users:', ownersError);
     process.exit(1);
   }
 
   const ownerUsers = owners.users
     .filter((u) => (u.user_metadata?.role || u.raw_user_meta_data?.role) === 'owner');
 
-  console.log(`Found ${ownerUsers.length} owner accounts.`);
+  logger.info(`Found ${ownerUsers.length} owner accounts.`);
 
   for (const owner of ownerUsers) {
     const { data: profile, error: profileError } = await admin
@@ -73,17 +73,17 @@ async function backfill() {
       .maybeSingle();
 
     if (profileError) {
-      console.error('Profile fetch error for', owner.id, profileError);
+      logger.error('Profile fetch error for', owner.id, profileError);
       continue;
     }
 
     if (!profile) {
-      console.warn('No profile for owner', owner.id);
+      logger.warn('No profile for owner', owner.id);
       continue;
     }
 
     if (profile.club_id) {
-      console.log('Owner already linked to club:', owner.id);
+      logger.info('Owner already linked to club:', owner.id);
       continue;
     }
 
@@ -92,7 +92,7 @@ async function backfill() {
     );
 
     if (!postalDigits) {
-      console.warn(`Skipping owner ${owner.id} - postal code missing or invalid.`);
+      logger.warn(`Skipping owner ${owner.id} - postal code missing or invalid.`);
       continue;
     }
 
@@ -108,7 +108,7 @@ async function backfill() {
       .maybeSingle();
 
     if (existingCode) {
-      console.warn(`Skipping owner ${owner.id} - invitation code already exists.`);
+      logger.warn(`Skipping owner ${owner.id} - invitation code already exists.`);
       continue;
     }
 
@@ -125,7 +125,7 @@ async function backfill() {
       .single();
 
     if (clubError) {
-      console.error('Club insert error for', owner.id, clubError);
+      logger.error('Club insert error for', owner.id, clubError);
       continue;
     }
 
@@ -135,17 +135,17 @@ async function backfill() {
       .eq('id', owner.id);
 
     if (updateError) {
-      console.error('Failed to update profile for', owner.id, updateError);
+      logger.error('Failed to update profile for', owner.id, updateError);
       continue;
     }
 
-    console.log(`Created club ${club.slug} (${club.code_invitation}) for owner ${owner.id}`);
+    logger.info(`Created club ${club.slug} (${club.code_invitation}) for owner ${owner.id}`);
   }
 
-  console.log('Backfill completed.');
+  logger.info('Backfill completed.');
 }
 
 backfill().catch((err) => {
-  console.error('Unexpected error:', err);
+  logger.error('Unexpected error:', err);
   process.exit(1);
 });

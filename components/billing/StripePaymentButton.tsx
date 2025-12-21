@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface StripePaymentButtonProps {
   priceId: string;
@@ -53,7 +54,7 @@ export default function StripePaymentButton({
       window.location.href = data.url;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      console.error('Stripe checkout error:', errorMessage);
+      logger.error('Stripe checkout error:', errorMessage);
       setError(errorMessage);
       setLoading(false);
     }

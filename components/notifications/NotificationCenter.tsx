@@ -6,6 +6,7 @@ import { useNotifications } from '@/lib/hooks/useNotifications'
 import { markAllAsRead } from '@/lib/notifications'
 import NotificationBell from './NotificationBell'
 import NotificationItem from './NotificationItem'
+import { logger } from '@/lib/logger';
 
 export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false)
@@ -111,7 +112,7 @@ export default function NotificationCenter() {
       // Recharger depuis la base de données pour synchroniser
       await refreshNotifications()
     } catch (error) {
-      console.error('Failed to mark all as read:', error)
+      logger.error('Failed to mark all as read:', error)
       // En cas d'erreur, recharger pour restaurer l'état correct
       await refreshNotifications()
     }

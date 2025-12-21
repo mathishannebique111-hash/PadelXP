@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { logger } from '@/lib/logger';
 
 type ClubMember = { id: string; display_name: string | null; club_slug: string | null; club_id: string | null };
 
@@ -57,7 +58,7 @@ export default function ClubRecordMatchPage() {
           const { data, error: membersError } = await query;
           
           if (membersError) {
-            console.error("[ClubRecordMatch] Error loading members:", membersError);
+            logger.error("[ClubRecordMatch] Error loading members:", membersError);
             setMembers([]);
           } else if (data) {
             // Double vérification côté client : ne garder que ceux qui correspondent exactement
@@ -66,13 +67,13 @@ export default function ClubRecordMatchPage() {
               const hasClubSlug = m.club_slug === slug;
               return hasClubId || hasClubSlug;
             });
-            console.log("[ClubRecordMatch] Loaded members:", filtered.length, "for club", slug);
+            logger.info("[ClubRecordMatch] Loaded members:", filtered.length, "for club", slug);
             setMembers(filtered as ClubMember[]);
           } else {
             setMembers([]);
           }
         } else {
-          console.warn("[ClubRecordMatch] No club_id found for slug:", slug);
+          logger.warn("[ClubRecordMatch] No club_id found for slug:", slug);
           setMembers([]);
         }
       } catch (e: any) {

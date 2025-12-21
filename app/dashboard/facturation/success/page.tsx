@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Stripe from 'stripe';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import RefreshSubscriptionButton from '@/components/billing/RefreshSubscriptionButton';
+import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
@@ -22,7 +23,7 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
 
 async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
   if (!supabaseAdmin || !process.env.STRIPE_SECRET_KEY) {
-    console.error('[SuccessPage] Missing configuration');
+    logger.error('[SuccessPage] Missing configuration');
     return;
   }
 
@@ -32,7 +33,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
       expand: ['subscription', 'customer'],
     });
 
-    console.log('[SuccessPage] Session retrieved:', {
+    logger.info('[SuccessPage] Session retrieved:', {
       id: session.id,
       status: session.status,
       payment_status: session.payment_status,
@@ -42,7 +43,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
     });
 
     if (session.payment_status !== 'paid' && session.status !== 'complete') {
-      console.error('[SuccessPage] Payment not completed:', {
+      logger.error('[SuccessPage] Payment not completed:', {
         payment_status: session.payment_status,
         status: session.status,
       });
@@ -66,11 +67,11 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
     }
 
     if (!subscriptionId) {
-      console.error('[SuccessPage] No subscription ID found in session');
+      logger.error('[SuccessPage] No subscription ID found in session');
       return;
     }
 
-    console.log('[SuccessPage] Found subscription:', {
+    logger.info('[SuccessPage] Found subscription:', {
       subscriptionId,
       customerId,
     });
@@ -91,7 +92,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
         planCycle = 'annual';
       }
 
-      console.log('[SuccessPage] Plan cycle determined:', {
+      logger.info('[SuccessPage] Plan cycle determined:', {
         interval,
         intervalCount,
         planCycle,
@@ -139,7 +140,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
       .maybeSingle();
 
     if (fetchError) {
-      console.error('[SuccessPage] Error fetching existing subscription:', fetchError);
+      logger.error('[SuccessPage] Error fetching existing subscription:', fetchError);
       return;
     }
 
@@ -147,7 +148,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
     const subscriptionStatus = stripeSubscription.status === 'trialing' ? 'trialing' : 'active';
 
     if (existingSubscription) {
-      console.log('[SuccessPage] Updating existing subscription:', existingSubscription.id);
+      logger.info('[SuccessPage] Updating existing subscription:', existingSubscription.id);
       
       // Mettre à jour l'abonnement existant
       const { error: updateError } = await supabaseAdmin
@@ -166,9 +167,9 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
         .eq('id', existingSubscription.id);
 
       if (updateError) {
-        console.error('[SuccessPage] Update error:', updateError);
+        logger.error('[SuccessPage] Update error:', updateError);
       } else {
-        console.log('[SuccessPage] Subscription updated successfully:', {
+        logger.info('[SuccessPage] Subscription updated successfully:', {
           subscriptionId,
           planCycle,
           status: subscriptionStatus,
@@ -176,7 +177,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
         });
       }
     } else {
-      console.log('[SuccessPage] Creating new subscription for club:', clubId);
+      logger.info('[SuccessPage] Creating new subscription for club:', clubId);
       
       // Créer un nouvel abonnement
       const { error: insertError } = await supabaseAdmin
@@ -196,9 +197,9 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
         });
 
       if (insertError) {
-        console.error('[SuccessPage] Insert error:', insertError);
+        logger.error('[SuccessPage] Insert error:', insertError);
       } else {
-        console.log('[SuccessPage] Subscription created successfully:', {
+        logger.info('[SuccessPage] Subscription created successfully:', {
           subscriptionId,
           planCycle,
           status: subscriptionStatus,
@@ -207,7 +208,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
       }
     }
   } catch (error) {
-    console.error('[SuccessPage] Error verifying session:', {
+    logger.error('[SuccessPage] Error verifying session:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -231,14 +232,14 @@ async function SuccessContent({ searchParams }: { searchParams: Promise<{ sessio
   if (sessionId) {
     const { clubId } = await getUserClubInfo();
     if (clubId) {
-      console.log('[SuccessPage] Attempting to verify subscription for club:', clubId, 'session:', sessionId);
+      logger.info('[SuccessPage] Attempting to verify subscription for club:', clubId, 'session:', sessionId);
       await verifyAndUpdateSubscription(sessionId, clubId);
       updateSuccess = true;
     } else {
-      console.error('[SuccessPage] No club ID found for user');
+      logger.error('[SuccessPage] No club ID found for user');
     }
   } else {
-    console.warn('[SuccessPage] No session_id in URL');
+    logger.warn('[SuccessPage] No session_id in URL');
   }
 
   return (

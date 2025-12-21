@@ -3,6 +3,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import PlayerClubLogoDisplay from "./PlayerClubLogoDisplay";
+import { logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -201,7 +202,7 @@ export default async function PlayerClubLogo() {
     }
   }
 
-  console.log('[PlayerClubLogo] Logo récupéré (même logique que page mon club):', {
+  logger.info('[PlayerClubLogo] Logo récupéré (même logique que page mon club):', {
     finalClubId,
     clubSlug,
     name,

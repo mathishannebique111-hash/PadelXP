@@ -9,6 +9,7 @@ import BadgeIconDisplay from "./BadgeIconDisplay";
 import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { calculatePointsWithBoosts } from "@/lib/utils/boost-points-utils";
+import { logger } from '@/lib/logger';
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
 const supabaseAdmin = createAdminClient(
@@ -38,8 +39,8 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     ? playerProfile.points 
     : (typeof playerProfile?.points === 'string' ? parseInt(playerProfile.points, 10) || 0 : 0);
   
-  console.log(`[PlayerSummary] Player ${profileId.substring(0, 8)} - Challenge points from DB:`, challengePoints, `(type: ${typeof challengePoints})`);
-  console.log(`[PlayerSummary] Player profile data:`, playerProfile);
+  logger.info(`[PlayerSummary] Player ${profileId.substring(0, 8)} - Challenge points from DB:`, challengePoints, `(type: ${typeof challengePoints})`);
+  logger.info(`[PlayerSummary] Player profile data:`, playerProfile);
   
   // Calcule les stats globales
   // Utiliser une approche en deux étapes pour éviter les problèmes RLS
@@ -50,7 +51,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     .eq("player_type", "user");
   
   if (mpError) {
-    console.error("[PlayerSummary] Error fetching participants:", mpError);
+    logger.error("[PlayerSummary] Error fetching participants:", mpError);
   }
 
   let wins = 0;
@@ -66,7 +67,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
-    console.log("[PlayerSummary] Fetching matches for player:", profileId, "Match IDs:", matchIds.length);
+    logger.info("[PlayerSummary] Fetching matches for player:", profileId, "Match IDs:", matchIds.length);
     
     // IMPORTANT: Récupérer TOUS les matchs du joueur d'abord pour appliquer la limite quotidienne
     // (comme dans home/page.tsx, on applique la limite quotidienne avant de filtrer par club)
@@ -76,7 +77,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       .in("id", matchIds);
     
     if (allMsError) {
-      console.error("[PlayerSummary] Error fetching all matches:", allMsError);
+      logger.error("[PlayerSummary] Error fetching all matches:", allMsError);
     }
     
     // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour sur TOUS les matchs
@@ -87,8 +88,8 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       MAX_MATCHES_PER_DAY
     );
     
-    console.log("[PlayerSummary] Valid matches after daily limit:", validMatchIdsForPoints.size);
-    console.log("[PlayerSummary] Valid match IDs for points:", Array.from(validMatchIdsForPoints));
+    logger.info("[PlayerSummary] Valid matches after daily limit:", validMatchIdsForPoints.size);
+    logger.info("[PlayerSummary] Valid match IDs for points:", Array.from(validMatchIdsForPoints));
     
     // Si on a un club_id, filtrer les matchs pour ne garder que ceux du même club
     // IMPORTANT: Utiliser la même logique que home/page.tsx pour garantir la cohérence
@@ -139,15 +140,15 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         return allUsersInSameClub;
       });
       
-      console.log("[PlayerSummary] Valid matches after club filtering:", validMatchIds.length);
-      console.log("[PlayerSummary] Valid match IDs after club filtering:", validMatchIds);
+      logger.info("[PlayerSummary] Valid matches after club filtering:", validMatchIds.length);
+      logger.info("[PlayerSummary] Valid match IDs after club filtering:", validMatchIds);
     }
     
     // Construire byId à partir de tous les matchs (allMs) pour avoir toutes les données nécessaires
     const byId: Record<string, { winner_team: number; score_team1: number; score_team2: number }> = {};
     (allMs || []).forEach((m: any) => {
       if (!m.winner_team_id || !m.team1_id || !m.team2_id) {
-        console.warn("[PlayerSummary] Skipping match without winner_team_id:", m.id);
+        logger.warn("[PlayerSummary] Skipping match without winner_team_id:", m.id);
         return;
       }
       
@@ -169,14 +170,14 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       const shouldInclude = isValidForClub && isValidForDailyLimit && hasValidWinner;
       
       if (!shouldInclude) {
-        console.log(`[PlayerSummary] Excluding match ${p.match_id}: club=${isValidForClub}, dailyLimit=${isValidForDailyLimit}, exists=${matchExists}, validWinner=${hasValidWinner}`);
+        logger.info(`[PlayerSummary] Excluding match ${p.match_id}: club=${isValidForClub}, dailyLimit=${isValidForDailyLimit}, exists=${matchExists}, validWinner=${hasValidWinner}`);
       }
       
       return shouldInclude;
     });
     
-    console.log("[PlayerSummary] Filtered matches count:", filteredMp.length);
-    console.log("[PlayerSummary] Filtered match IDs:", filteredMp.map((p: any) => p.match_id));
+    logger.info("[PlayerSummary] Filtered matches count:", filteredMp.length);
+    logger.info("[PlayerSummary] Filtered match IDs:", filteredMp.map((p: any) => p.match_id));
     
     // Collecter les matchs gagnés pour le calcul de boosts
     winMatches = new Set<string>();
@@ -204,10 +205,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       }
     });
     
-    console.log("[PlayerSummary] Player stats calculated:", { matches, wins, losses, setsWon, setsLost });
-    console.log("[PlayerSummary] Filtered matches count:", filteredMp.length);
-    console.log("[PlayerSummary] Win matches count:", winMatches.size);
-    console.log("[PlayerSummary] Win matches:", Array.from(winMatches));
+    logger.info("[PlayerSummary] Player stats calculated:", { matches, wins, losses, setsWon, setsLost });
+    logger.info("[PlayerSummary] Filtered matches count:", filteredMp.length);
+    logger.info("[PlayerSummary] Win matches count:", winMatches.size);
+    logger.info("[PlayerSummary] Win matches:", Array.from(winMatches));
   }
   // Calcul du bonus XP pour le premier avis valide ( +10 XP une seule fois )
   // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
@@ -231,7 +232,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     }
   }
   
-  console.log("[PlayerSummary] Before calculatePointsWithBoosts:", {
+  logger.info("[PlayerSummary] Before calculatePointsWithBoosts:", {
     wins,
     losses,
     reviewsBonus,
@@ -252,7 +253,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     challengePoints
   );
   
-  console.log("[PlayerSummary] After calculatePointsWithBoosts - Final points:", points);
+  logger.info("[PlayerSummary] After calculatePointsWithBoosts - Final points:", points);
 
   function tierForPoints(p: number) {
     if (p >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white" };
@@ -294,7 +295,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       const hasValidDetails = Object.keys(filteredDetails).length > 0;
       
       if (hasValidDetails) {
-        console.error("[PlayerSummary] Error fetching matches for streak:", filteredDetails);
+        logger.error("[PlayerSummary] Error fetching matches for streak:", filteredDetails);
       } else {
         // Si l'erreur existe mais n'a pas de propriétés standard, 
         // on vérifie si c'est une vraie erreur ou juste un état vide
@@ -303,7 +304,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         
         // Ne logger que si l'erreur a un contenu significatif
         if (isMeaningfulError) {
-          console.warn("[PlayerSummary] Error fetching matches for streak (no standard properties):", errorString);
+          logger.warn("[PlayerSummary] Error fetching matches for streak (no standard properties):", errorString);
         }
         // Sinon, on ignore silencieusement pour éviter la pollution de la console
       }
@@ -369,7 +370,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     }
   }
   
-  console.log("[PlayerSummary] Streak calculated:", { best: streak, current: currentWinStreak });
+  logger.info("[PlayerSummary] Streak calculated:", { best: streak, current: currentWinStreak });
 
   // IMPORTANT: Calculer les stats pour les badges EXACTEMENT comme dans la page badges
   // (sans limite quotidienne, points simples wins*10 + losses*3)

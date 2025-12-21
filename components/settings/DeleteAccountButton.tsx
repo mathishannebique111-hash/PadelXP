@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 export default function DeleteAccountButton() {
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -37,7 +38,7 @@ export default function DeleteAccountButton() {
       router.push("/");
       router.refresh();
     } catch (err: any) {
-      console.error("Error deleting account:", err);
+      logger.error("Error deleting account:", err);
       setError(err.message || "Une erreur est survenue lors de la suppression du compte");
       setIsDeleting(false);
     }

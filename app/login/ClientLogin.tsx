@@ -3,6 +3,7 @@
 import EmailSignupForm from "@/components/auth/EmailSignupForm";
 import PlayerClubGate from "@/components/auth/PlayerClubGate";
 import { useState } from "react";
+import { logger } from '@/lib/logger';
 
 export default function ClientLogin() {
   const [clubInfo, setClubInfo] = useState<{ name: string; slug: string; invitationCode: string; code: string }>({ name: "", slug: "", invitationCode: "", code: "" });
@@ -65,7 +66,7 @@ export default function ClientLogin() {
 
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({}));
-              console.error('[ClientLogin] Failed to attach club:', response.status, errorData);
+              logger.error('[ClientLogin] Failed to attach club:', response.status, errorData);
               const message = errorData?.error || 'Impossible d’attacher le club';
               if (typeof window !== 'undefined') {
                 window.alert(message);
@@ -73,7 +74,7 @@ export default function ClientLogin() {
               throw new Error(message);
             }
           } catch (attachError) {
-            console.error('[ClientLogin] Error attaching club:', attachError);
+            logger.error('[ClientLogin] Error attaching club:', attachError);
             if (typeof window !== 'undefined') {
               window.alert(attachError instanceof Error ? attachError.message : 'Erreur lors de l’attachement au club');
             }

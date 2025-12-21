@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useUser } from '@/lib/hooks/useUser'
 import { createNotification } from '@/lib/notifications'
+import { logger } from '@/lib/logger';
 
 interface Badge {
   id: string
@@ -41,7 +42,7 @@ export default function BadgeUnlockedNotifier({ unlockedBadges }: BadgeUnlockedN
           badge_icon: badge.icon,
           timestamp: new Date().toISOString(),
         }).catch(err => {
-          console.error('Failed to save badge_unlocked notification:', err)
+          logger.error('Failed to save badge_unlocked notification:', err)
         })
       })
     }

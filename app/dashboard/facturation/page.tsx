@@ -12,6 +12,7 @@ import { redirect } from "next/navigation";
 import CancelSubscriptionButton from "@/components/billing/CancelSubscriptionButton";
 import ReactivateSubscriptionButton from "@/components/billing/ReactivateSubscriptionButton";
 import SubscriptionConfirmationBanner from "@/components/billing/SubscriptionConfirmationBanner";
+import { logger } from '@/lib/logger';
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
 type PlanType = "monthly" | "quarterly" | "annual" | null;
@@ -66,7 +67,7 @@ export default async function BillingPage() {
       if (result.data) {
         // Log pour déboguer
         if (process.env.NODE_ENV === 'development') {
-          console.log('[BillingPage] Club data fetched:', {
+          logger.info('[BillingPage] Club data fetched:', {
             trial_start_date: result.data.trial_start_date,
             trial_end_date: result.data.trial_end_date,
             trial_current_end_date: result.data.trial_current_end_date,
@@ -82,7 +83,7 @@ export default async function BillingPage() {
   
   // Log pour déboguer (à retirer en production)
   if (process.env.NODE_ENV === 'development' && club) {
-    console.log('[BillingPage] Club data:', {
+    logger.info('[BillingPage] Club data:', {
       trial_start_date: club.trial_start_date,
       trial_end_date: club.trial_end_date,
       trial_current_end_date: club.trial_current_end_date,
@@ -158,7 +159,7 @@ export default async function BillingPage() {
     
     // Vérifier que la date est valide
     if (isNaN(effectiveEndDate.getTime())) {
-      console.error('[BillingPage] Invalid effectiveEndDate:', effectiveEndDate);
+      logger.error('[BillingPage] Invalid effectiveEndDate:', effectiveEndDate);
       return 14; // Par défaut 14 jours si date invalide
     }
     
@@ -169,7 +170,7 @@ export default async function BillingPage() {
     
     // Log pour déboguer
     if (process.env.NODE_ENV === 'development') {
-      console.log('[BillingPage] calculateTotalTrialDays:', {
+      logger.info('[BillingPage] calculateTotalTrialDays:', {
         trialStartDate: trialStartDate,
         effectiveEndDate: effectiveEndDate.toISOString(),
         diffDays,

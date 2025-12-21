@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 interface PlayerChallenge {
   id: string;
@@ -68,7 +69,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
   const isFailed = isExpired && !isCompleted;
   const canClaim = isCompleted && !challenge.rewardClaimed && !hasClaimed && !isExpired;
 
-  console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] "${challenge.title}" - Progress: ${challenge.progress.current}/${challenge.progress.target}, isCompleted: ${isCompleted}, isExpired: ${isExpired}, isFailed: ${isFailed}, canClaim: ${canClaim}, rewardClaimed: ${challenge.rewardClaimed}, hasClaimed: ${hasClaimed}`);
+  logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] "${challenge.title}" - Progress: ${challenge.progress.current}/${challenge.progress.target}, isCompleted: ${isCompleted}, isExpired: ${isExpired}, isFailed: ${isFailed}, canClaim: ${canClaim}, rewardClaimed: ${challenge.rewardClaimed}, hasClaimed: ${hasClaimed}`);
 
   // Nettoyer le timeout si le composant est démonté ou si le pop-up est fermé
   useEffect(() => {
@@ -81,11 +82,11 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
   const claimReward = async () => {
     if (claiming || challenge.rewardClaimed || hasClaimed) {
-      console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] ❌ Cannot claim: claiming=${claiming}, rewardClaimed=${challenge.rewardClaimed}, hasClaimed=${hasClaimed}`);
+      logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] ❌ Cannot claim: claiming=${claiming}, rewardClaimed=${challenge.rewardClaimed}, hasClaimed=${hasClaimed}`);
       return;
     }
 
-    console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🚀 Claiming reward...`);
+    logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🚀 Claiming reward...`);
     setClaiming(true);
     setHasClaimed(true); // Marquer comme réclamé immédiatement pour éviter les doublons
     try {
@@ -99,11 +100,11 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         }),
       });
 
-      console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] Response status:`, response.status);
+      logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] Response status:`, response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] ✅ Reward claimed successfully!`, data);
+        logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] ✅ Reward claimed successfully!`, data);
         setRewardValue(data.rewardValue);
         setShowCongrats(true);
         
@@ -117,19 +118,19 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         setAutoCloseTimeout(timeout);
       } else {
         const error = await response.json();
-        console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] ⚠️ Error response:`, error);
+        logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] ⚠️ Error response:`, error);
         if (error.alreadyClaimed) {
-          console.log("Récompense déjà réclamée");
+          logger.info("Récompense déjà réclamée");
           // Garder hasClaimed = true car la récompense a déjà été réclamée
         } else {
           // Réinitialiser hasClaimed en cas d'erreur pour permettre une nouvelle tentative
           setHasClaimed(false);
-          console.log("Récompense non disponible pour le moment");
+          logger.info("Récompense non disponible pour le moment");
         }
       }
     } catch (error) {
       // Erreur silencieuse pour éviter de polluer la console
-      console.log(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🔴 Exception:`, error);
+      logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] 🔴 Exception:`, error);
       // Réinitialiser hasClaimed en cas d'exception pour permettre une nouvelle tentative
       setHasClaimed(false);
     } finally {

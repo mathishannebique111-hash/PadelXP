@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { logger } from '@/lib/logger';
 
 function buildInvitationCode(name: string, postal: string) {
   const upper = name
@@ -29,7 +30,7 @@ export default function PlayerClubGate({
     (async () => {
       // Utiliser directement l'API publique pour éviter les problèmes RLS
       try {
-        console.log("[PlayerClubGate] Loading clubs via API...");
+        logger.info("[PlayerClubGate] Loading clubs via API...");
         const apiRes = await fetch('/api/clubs/list', {
           cache: 'no-store',
           next: { revalidate: 0 },
@@ -37,26 +38,26 @@ export default function PlayerClubGate({
         
         if (!apiRes.ok) {
           const errorText = await apiRes.text();
-          console.error("[PlayerClubGate] API error response:", apiRes.status, errorText);
+          logger.error("[PlayerClubGate] API error response:", apiRes.status, errorText);
           throw new Error(`API returned ${apiRes.status}: ${errorText}`);
         }
         
         const apiData = await apiRes.json();
-        console.log("[PlayerClubGate] API response:", apiData);
+        logger.info("[PlayerClubGate] API response:", apiData);
         
         if (apiData.error) {
-          console.error("[PlayerClubGate] API returned error:", apiData.error);
+          logger.error("[PlayerClubGate] API returned error:", apiData.error);
           // Essayer la requête directe en fallback
           await loadClubsDirect();
         } else if (apiData.clubs && Array.isArray(apiData.clubs)) {
-          console.log("[PlayerClubGate] API returned", apiData.clubs.length, "clubs");
+          logger.info("[PlayerClubGate] API returned", apiData.clubs.length, "clubs");
           setClubs(apiData.clubs);
         } else {
-          console.warn("[PlayerClubGate] API returned empty clubs array");
+          logger.warn("[PlayerClubGate] API returned empty clubs array");
           setClubs([]);
         }
       } catch (apiErr: any) {
-        console.error("[PlayerClubGate] API fetch failed, trying direct query...", apiErr);
+        logger.error("[PlayerClubGate] API fetch failed, trying direct query...", apiErr);
         await loadClubsDirect();
       }
       
@@ -72,7 +73,7 @@ export default function PlayerClubGate({
             .select("*")
             .order("name", { ascending: true });
           
-          console.log("[PlayerClubGate] Direct query result:", { data: result.data, error: result.error });
+          logger.info("[PlayerClubGate] Direct query result:", { data: result.data, error: result.error });
           
           if (!result.error && result.data) {
             const filtered = result.data.filter((club: any) => {
@@ -87,16 +88,16 @@ export default function PlayerClubGate({
               code_invitation: club.code_invitation || club.invitation_code || club.code || '',
             })).filter((club: any) => club.name && club.slug && club.code_invitation);
             
-            console.log("[PlayerClubGate] Loaded clubs via direct query:", normalizedClubs.length);
+            logger.info("[PlayerClubGate] Loaded clubs via direct query:", normalizedClubs.length);
             setClubs(normalizedClubs);
             return;
           }
         } catch (directErr) {
-          console.error("[PlayerClubGate] Direct query also failed:", directErr);
+          logger.error("[PlayerClubGate] Direct query also failed:", directErr);
         }
         
         // Dernier recours : fallback TCAM
-        console.warn("[PlayerClubGate] All methods failed, returning empty list");
+        logger.warn("[PlayerClubGate] All methods failed, returning empty list");
         setClubs([]);
       }
     })();

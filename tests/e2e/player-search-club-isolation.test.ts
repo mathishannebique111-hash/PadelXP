@@ -13,6 +13,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { logger } from '@/lib/logger';
 
 // Configuration des utilisateurs de test
 const TCAM_USER = {
@@ -65,7 +66,7 @@ test.describe('Isolation des clubs dans la recherche de joueurs', () => {
       const text = await result.textContent();
       
       // Log pour debug
-      console.log(`TCAM result ${i}: ${text}`);
+      logger.info(`TCAM result ${i}: ${text}`);
       
       // Vérifier que le résultat ne contient pas de mention d'un autre club
       // (Cette vérification dépend de votre implémentation UI)
@@ -122,7 +123,7 @@ test.describe('Isolation des clubs dans la recherche de joueurs', () => {
       const result = results.nth(i);
       const text = await result.textContent();
       
-      console.log(`Amiens result ${i}: ${text}`);
+      logger.info(`Amiens result ${i}: ${text}`);
       
       // Vérifier que le résultat ne contient pas de mention du club TCAM
       expect(text).not.toContain(TCAM_USER.clubName);
@@ -176,7 +177,7 @@ test.describe('Isolation des clubs dans la recherche de joueurs', () => {
       const amiensCount = await amiensResults.count();
       
       // Les deux devraient avoir des résultats (si des joueurs existent dans chaque club)
-      console.log(`TCAM results: ${tcamCount}, Amiens results: ${amiensCount}`);
+      logger.info(`TCAM results: ${tcamCount}, Amiens results: ${amiensCount}`);
       
       // Vérifier que les résultats sont différents
       if (tcamCount > 0 && amiensCount > 0) {
@@ -197,7 +198,7 @@ test.describe('Isolation des clubs dans la recherche de joueurs', () => {
         const intersection = tcamNames.filter(name => amiensNames.includes(name));
         expect(intersection.length).toBe(0);
         
-        console.log('✓ Isolation confirmed: No common players between clubs');
+        logger.info('✓ Isolation confirmed: No common players between clubs');
       }
     } finally {
       await tcamContext.close();

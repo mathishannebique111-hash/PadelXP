@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import MatchForm from "@/components/MatchForm";
 import PageTitle from "@/components/PageTitle";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { logger } from '@/lib/logger';
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,7 +44,7 @@ export default async function NewMatchPage() {
         .eq("id", user.id)
         .maybeSingle();
       if (adminProfileError) {
-        console.error("[Match/New] Failed to fetch profile via admin client", {
+        logger.error("[Match/New] Failed to fetch profile via admin client", {
           message: adminProfileError.message,
           details: adminProfileError.details,
           hint: adminProfileError.hint,
@@ -55,7 +56,7 @@ export default async function NewMatchPage() {
         clubSlug = clubSlug || adminProfile.club_slug || null;
       }
     } catch (e) {
-      console.error("[Match/New] Unexpected error when fetching profile via admin client", e);
+      logger.error("[Match/New] Unexpected error when fetching profile via admin client", e);
     }
   }
 

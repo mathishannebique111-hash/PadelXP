@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ClubHeader from "@/components/club/ClubHeader";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 type Player = { 
   id: string; 
@@ -89,7 +90,7 @@ export default function ClubClassementPage() {
           setPlayers([]);
         }
       } catch (e) {
-        console.error("Error loading players:", e);
+        logger.error("Error loading players:", e);
         setPlayers([]);
       } finally {
         setLoading(false);

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState, useCallback } from "react";
+import { logger } from '@/lib/logger';
 
 interface Review {
   id: string;
@@ -30,7 +31,7 @@ export default function Testimonials() {
       });
       
       if (!response.ok) {
-        console.warn(`Reviews API returned ${response.status}, using empty reviews`);
+        logger.warn(`Reviews API returned ${response.status}, using empty reviews`);
         setReviews([]);
         setAverageRating(0);
         return;
@@ -49,7 +50,7 @@ export default function Testimonials() {
         setAverageRating(0);
       }
     } catch (error) {
-      console.error("Error fetching reviews:", error);
+      logger.error("Error fetching reviews:", error);
       setReviews([]);
       setAverageRating(0);
     } finally {
@@ -64,7 +65,7 @@ export default function Testimonials() {
   // Écouter les événements de soumission d'avis pour mettre à jour automatiquement
   useEffect(() => {
     const handleReviewSubmitted = async () => {
-      console.log("📥 Testimonials received reviewSubmitted event");
+      logger.info("📥 Testimonials received reviewSubmitted event");
       // Attendre un peu pour s'assurer que la DB est à jour
       await new Promise(resolve => setTimeout(resolve, 300));
       fetchReviews();

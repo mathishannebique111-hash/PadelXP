@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import PageTitle from "@/components/PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import { logger } from '@/lib/logger';
 export const dynamic = "force-dynamic";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
@@ -60,7 +61,7 @@ export default async function MatchHistoryPage() {
         .eq("id", user.id)
         .maybeSingle();
       if (adminProfileError) {
-        console.error("[MatchHistory] Failed to fetch profile via admin client", {
+        logger.error("[MatchHistory] Failed to fetch profile via admin client", {
           message: adminProfileError.message,
           details: adminProfileError.details,
           hint: adminProfileError.hint,
@@ -71,7 +72,7 @@ export default async function MatchHistoryPage() {
         userClubId = adminProfile.club_id;
       }
     } catch (e) {
-      console.error("[MatchHistory] Unexpected error when fetching profile via admin client", e);
+      logger.error("[MatchHistory] Unexpected error when fetching profile via admin client", e);
     }
   }
 
@@ -107,10 +108,10 @@ export default async function MatchHistoryPage() {
     .eq("user_id", user.id)
     .eq("player_type", "user");
 
-  console.log("[MatchHistory] User participations:", userParticipations, "Error:", partError);
+  logger.info("[MatchHistory] User participations:", userParticipations, "Error:", partError);
 
   if (partError) {
-    console.error("Error fetching participations:", partError);
+    logger.error("Error fetching participations:", partError);
   }
 
   if (!userParticipations || userParticipations.length === 0) {
@@ -144,7 +145,7 @@ export default async function MatchHistoryPage() {
   // Récupérer tous les matchs correspondants (on filtrera après par club)
   const matchIds = userParticipations.map((p: any) => p.match_id);
   
-  console.log("[MatchHistory] Match IDs to fetch:", matchIds);
+  logger.info("[MatchHistory] Match IDs to fetch:", matchIds);
 
   if (matchIds.length === 0) {
     return (
@@ -193,10 +194,10 @@ export default async function MatchHistoryPage() {
     };
   });
 
-  console.log("[MatchHistory] All matches fetched:", allMatches, "Error:", matchesError);
+  logger.info("[MatchHistory] All matches fetched:", allMatches, "Error:", matchesError);
 
   if (matchesError) {
-    console.error("Error fetching matches:", matchesError);
+    logger.error("Error fetching matches:", matchesError);
   }
 
   if (!transformedMatches || transformedMatches.length === 0) {
@@ -229,7 +230,7 @@ export default async function MatchHistoryPage() {
 
   // Récupérer les détails de tous les participants pour chaque match (users et guests)
   // Utiliser une approche sans jointures pour éviter les problèmes RLS
-  console.log("[MatchHistory] Fetching participants for match IDs:", matchIds);
+  logger.info("[MatchHistory] Fetching participants for match IDs:", matchIds);
   
   // Récupérer d'abord les participants sans jointures
   const { data: participantsSimple, error: simpleError } = await supabase
@@ -238,8 +239,8 @@ export default async function MatchHistoryPage() {
     .in("match_id", matchIds);
 
   if (simpleError) {
-    console.error("❌ Error fetching participants:", simpleError);
-    console.error("❌ Error details:", {
+    logger.error("❌ Error fetching participants:", simpleError);
+    logger.error("❌ Error details:", {
       message: simpleError.message,
       details: simpleError.details,
       hint: simpleError.hint,
@@ -250,7 +251,7 @@ export default async function MatchHistoryPage() {
   let allParticipants: any[] = participantsSimple || [];
   let participantsByMatch: Record<string, any[]> = {};
   let validMatchIds: Set<string> = new Set();
-  console.log("[MatchHistory] Participants fetched (base):", allParticipants.length);
+  logger.info("[MatchHistory] Participants fetched (base):", allParticipants.length);
   
   // Enrichir avec les noms des joueurs
   if (allParticipants.length > 0) {
@@ -258,7 +259,7 @@ export default async function MatchHistoryPage() {
     const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
     const guestIds = [...new Set(allParticipants.filter(p => p.player_type === "guest" && p.guest_player_id).map(p => p.guest_player_id))];
     
-    console.log("[MatchHistory] Enriching with names - User IDs:", userIds.length, "Guest IDs:", guestIds.length);
+    logger.info("[MatchHistory] Enriching with names - User IDs:", userIds.length, "Guest IDs:", guestIds.length);
     
     // Récupérer les profils des users (filtrés par club) - utiliser admin pour bypass RLS
     const profilesMap = new Map<string, string>();
@@ -283,15 +284,15 @@ export default async function MatchHistoryPage() {
           code: profilesError.code || null
         };
         if (!errorDetails.message && !errorDetails.details && !errorDetails.hint && !errorDetails.code) {
-          console.error("❌ Error fetching profiles:", profilesError);
+          logger.error("❌ Error fetching profiles:", profilesError);
         } else {
-          console.error("❌ Error fetching profiles:", errorDetails);
+          logger.error("❌ Error fetching profiles:", errorDetails);
         }
       } else if (profiles) {
         profiles.forEach(p => {
           profilesMap.set(p.id, p.display_name);
         });
-        console.log("[MatchHistory] Profiles loaded:", profiles.length);
+        logger.info("[MatchHistory] Profiles loaded:", profiles.length);
       }
     }
     
@@ -304,10 +305,10 @@ export default async function MatchHistoryPage() {
         .in("id", guestIds);
       
       if (guestsError) {
-        console.error("❌ Error fetching guest players:", guestsError);
+        logger.error("❌ Error fetching guest players:", guestsError);
       } else if (guests) {
         guests.forEach(g => guestsMap.set(g.id, { first_name: g.first_name, last_name: g.last_name }));
-        console.log("[MatchHistory] Guest players loaded:", guests.length);
+        logger.info("[MatchHistory] Guest players loaded:", guests.length);
       }
     }
     
@@ -324,7 +325,7 @@ export default async function MatchHistoryPage() {
         })
       : allParticipants;
     
-    console.log("[MatchHistory] Participants after club filtering:", filteredParticipants.length);
+    logger.info("[MatchHistory] Participants after club filtering:", filteredParticipants.length);
     
     // Filtrer les matchs : ne garder que ceux où TOUS les participants users appartiennent au même club
     const participantsByMatchTemp = filteredParticipants.reduce((acc: Record<string, any[]>, p: any) => {
@@ -344,11 +345,11 @@ export default async function MatchHistoryPage() {
       if (allUsersInSameClub) {
         validMatchIds.add(matchId);
       } else {
-        console.log(`[MatchHistory] Filtering out match ${matchId} - not all users in same club`);
+        logger.info(`[MatchHistory] Filtering out match ${matchId} - not all users in same club`);
       }
     });
     
-    console.log("[MatchHistory] Valid matches (all users in same club):", validMatchIds.size);
+    logger.info("[MatchHistory] Valid matches (all users in same club):", validMatchIds.size);
     
     // Filtrer les participants pour ne garder que ceux des matchs valides
     const finalFilteredParticipants = filteredParticipants.filter((p: any) => validMatchIds.has(p.match_id));
@@ -368,7 +369,7 @@ export default async function MatchHistoryPage() {
       return enriched;
     });
     
-    console.log("[MatchHistory] Participants enriched:", enrichedParticipants.length);
+    logger.info("[MatchHistory] Participants enriched:", enrichedParticipants.length);
     
     // Mettre à jour allParticipants avec les participants enrichis
     allParticipants = enrichedParticipants;
@@ -404,7 +405,7 @@ export default async function MatchHistoryPage() {
   
   const finalMatches = transformedMatches.filter((match: any) => validMatchIdsForDisplay.has(match.id));
   
-  console.log("[MatchHistory] Final matches after filtering:", finalMatches.length);
+  logger.info("[MatchHistory] Final matches after filtering:", finalMatches.length);
 
   // Créer un map pour accéder rapidement à la team du joueur pour chaque match
   const userTeamByMatch: Record<string, number> = {};

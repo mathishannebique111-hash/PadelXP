@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
+import { logger } from '@/lib/logger';
 
 // Forcer le rendu dynamique pour éviter les erreurs de prerender avec useSearchParams
 export const dynamic = 'force-dynamic';
@@ -59,7 +60,7 @@ function SignupForm() {
           body: JSON.stringify({ event: "SIGNED_IN", session: signInData.session }),
         });
       } catch (callbackError) {
-        console.warn("/api/auth/callback failed", callbackError);
+        logger.warn("/api/auth/callback failed", callbackError);
       }
 
       await supabase.auth.refreshSession();

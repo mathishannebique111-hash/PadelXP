@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 interface ReferralNotification {
   type: "referrer" | "referred";
@@ -73,7 +74,7 @@ export default function ReferralNotifier() {
         localStorage.setItem("padelleague.seenReferralNotifications", JSON.stringify(updated));
         hasCheckedRef.current = true;
       } catch (error) {
-        console.error("Error checking referral notifications:", error);
+        logger.error("Error checking referral notifications:", error);
         hasCheckedRef.current = true;
       }
     };

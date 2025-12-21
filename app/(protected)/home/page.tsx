@@ -13,6 +13,7 @@ import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import Image from "next/image";
+import { logger } from '@/lib/logger';
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -57,7 +58,7 @@ export default async function HomePage() {
   const hasSessionButNoUser = session && !user && userError;
   
   if (hasSessionButNoUser) {
-    console.warn("[HomePage] Session exists but getUser() failed (temporary error?):", {
+    logger.warn("[HomePage] Session exists but getUser() failed (temporary error?):", {
       errorCode: userError?.code,
       errorMessage: userError?.message,
     });
@@ -85,7 +86,7 @@ export default async function HomePage() {
         .eq("id", user.id)
         .maybeSingle();
       if (adminProfileError) {
-        console.error("[Home] Failed to fetch profile via admin client", {
+        logger.error("[Home] Failed to fetch profile via admin client", {
           message: adminProfileError.message,
           details: adminProfileError.details,
           hint: adminProfileError.hint,
@@ -96,7 +97,7 @@ export default async function HomePage() {
         profile = { ...profile, ...adminProfile };
       }
     } catch (e) {
-      console.error("[Home] Unexpected error when fetching profile via admin client", e);
+      logger.error("[Home] Unexpected error when fetching profile via admin client", e);
       }
     }
   }
@@ -150,7 +151,7 @@ export default async function HomePage() {
   // Récupérer le club_id de l'utilisateur pour filtrer les données
   const userClubId = profile?.club_id || null;
   
-  console.log("[Home] Récupération du logo du club - userClubId:", userClubId, "profile club_id:", profile?.club_id);
+  logger.info("[Home] Récupération du logo du club - userClubId:", userClubId, "profile club_id:", profile?.club_id);
 
   // Récupérer directement depuis la table clubs avec la même logique que la page club
   // (app/club/[slug]/page.tsx) pour garantir que le logo est toujours récupéré
@@ -158,11 +159,11 @@ export default async function HomePage() {
   let clubLogoUrl: string | null = null;
   
   if (userClubId) {
-    console.log("[Home] Tentative de récupération du logo avec club_id:", userClubId);
+    logger.info("[Home] Tentative de récupération du logo avec club_id:", userClubId);
     
     // Essayer d'abord avec admin client (même logique que la page club)
     if (supabaseAdmin) {
-      console.log("[Home] Utilisation du client admin pour récupérer le logo");
+      logger.info("[Home] Utilisation du client admin pour récupérer le logo");
       const { data: clubData, error: clubError } = await supabaseAdmin
         .from("clubs")
         .select("id, name, logo_url")
@@ -170,14 +171,14 @@ export default async function HomePage() {
         .maybeSingle();
       
       if (clubError) {
-        console.error("[Home] Erreur lors de la récupération du logo (admin):", clubError);
+        logger.error("[Home] Erreur lors de la récupération du logo (admin):", clubError);
       }
       
       if (clubData) {
         clubName = (clubData.name as string | null) ?? null;
         // Récupérer le logo_url brut (comme dans la page club)
         const rawLogoUrl = clubData.logo_url as string | null;
-        console.log("[Home] Logo brut récupéré depuis clubs (admin):", { 
+        logger.info("[Home] Logo brut récupéré depuis clubs (admin):", { 
           clubId: userClubId, 
           rawLogoUrl, 
           clubName 
@@ -185,15 +186,15 @@ export default async function HomePage() {
         
         // Convertir le logo_url brut en URL publique
         clubLogoUrl = getClubLogoPublicUrl(rawLogoUrl);
-        console.log("[Home] Logo converti en URL publique (admin):", clubLogoUrl);
+        logger.info("[Home] Logo converti en URL publique (admin):", clubLogoUrl);
       } else {
-        console.log("[Home] Aucune donnée retournée par la requête admin pour club_id:", userClubId);
+        logger.info("[Home] Aucune donnée retournée par la requête admin pour club_id:", userClubId);
       }
     }
     
     // Fallback avec client standard si admin n'a pas fonctionné
     if (!clubName || !clubLogoUrl) {
-      console.log("[Home] Tentative de récupération avec client standard (fallback)");
+      logger.info("[Home] Tentative de récupération avec client standard (fallback)");
       const { data: clubData, error: clubError } = await supabase
         .from("clubs")
         .select("id, name, logo_url")
@@ -201,34 +202,34 @@ export default async function HomePage() {
         .maybeSingle();
       
       if (clubError) {
-        console.error("[Home] Erreur lors de la récupération du logo (standard):", clubError);
+        logger.error("[Home] Erreur lors de la récupération du logo (standard):", clubError);
       }
       
       if (clubData) {
         clubName = clubName ?? (clubData.name as string | null) ?? null;
         const rawLogoUrl = clubData.logo_url as string | null;
-        console.log("[Home] Logo brut récupéré depuis clubs (standard):", { 
+        logger.info("[Home] Logo brut récupéré depuis clubs (standard):", { 
           clubId: userClubId, 
           rawLogoUrl, 
           clubName 
         });
         clubLogoUrl = clubLogoUrl ?? getClubLogoPublicUrl(rawLogoUrl);
-        console.log("[Home] Logo converti en URL publique (standard):", clubLogoUrl);
+        logger.info("[Home] Logo converti en URL publique (standard):", clubLogoUrl);
       } else {
-        console.log("[Home] Aucune donnée retournée par la requête standard pour club_id:", userClubId);
+        logger.info("[Home] Aucune donnée retournée par la requête standard pour club_id:", userClubId);
       }
     }
   } else {
-    console.log("[Home] Pas de userClubId, impossible de récupérer le logo");
+    logger.info("[Home] Pas de userClubId, impossible de récupérer le logo");
   }
   
   // Fallback avec getUserClubInfo si on n'a toujours pas de logo
   if (!clubName || !clubLogoUrl) {
-    console.log("[Home] Fallback vers getUserClubInfo car logo non récupéré");
+    logger.info("[Home] Fallback vers getUserClubInfo car logo non récupéré");
     const clubInfo = await getUserClubInfo();
     clubName = clubName ?? clubInfo.clubName ?? null;
     clubLogoUrl = clubLogoUrl ?? clubInfo.clubLogoUrl ?? null;
-    console.log("[Home] Fallback avec getUserClubInfo:", { 
+    logger.info("[Home] Fallback avec getUserClubInfo:", { 
       clubName: clubInfo.clubName, 
       clubLogoUrl: clubInfo.clubLogoUrl,
       finalClubName: clubName,
@@ -236,7 +237,7 @@ export default async function HomePage() {
     });
   }
   
-  console.log("[Home] Résultat final de la récupération du logo:", {
+  logger.info("[Home] Résultat final de la récupération du logo:", {
     clubName,
     clubLogoUrl,
     userClubId
@@ -296,17 +297,17 @@ export default async function HomePage() {
   const hasMultipleRealPlayersInLeaderboard = realPlayers.length >= 2;
   const shouldShowPoints = hasMultipleRealPlayersInDB && hasMultipleRealPlayersInLeaderboard && totalMatchesInLeaderboard > 0;
   
-  console.log("[Home] ===== LEADERBOARD SUMMARY =====");
-  console.log("[Home] Total profiles in database:", totalProfilesCount);
-  console.log("[Home] Total players in leaderboard:", leaderboard.length);
-  console.log("[Home] Real players (non-guests) in leaderboard:", realPlayers.length);
-  console.log("[Home] Total matches counted:", totalMatchesInLeaderboard);
-  console.log("[Home] Total wins:", totalWinsInLeaderboard);
-  console.log("[Home] Total losses:", totalLossesInLeaderboard);
-  console.log("[Home] Has multiple real players in DB:", hasMultipleRealPlayersInDB);
-  console.log("[Home] Has multiple real players in leaderboard:", hasMultipleRealPlayersInLeaderboard);
-  console.log("[Home] Should show points:", shouldShowPoints);
-  console.log("[Home] ================================");
+  logger.info("[Home] ===== LEADERBOARD SUMMARY =====");
+  logger.info("[Home] Total profiles in database:", totalProfilesCount);
+  logger.info("[Home] Total players in leaderboard:", leaderboard.length);
+  logger.info("[Home] Real players (non-guests) in leaderboard:", realPlayers.length);
+  logger.info("[Home] Total matches counted:", totalMatchesInLeaderboard);
+  logger.info("[Home] Total wins:", totalWinsInLeaderboard);
+  logger.info("[Home] Total losses:", totalLossesInLeaderboard);
+  logger.info("[Home] Has multiple real players in DB:", hasMultipleRealPlayersInDB);
+  logger.info("[Home] Has multiple real players in leaderboard:", hasMultipleRealPlayersInLeaderboard);
+  logger.info("[Home] Should show points:", shouldShowPoints);
+  logger.info("[Home] ================================");
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">

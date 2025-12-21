@@ -4,6 +4,7 @@ import { getPlayerBoostStats } from "@/lib/utils/boost-utils";
 import BoostPurchaseButton from "@/components/BoostPurchaseButton";
 import { BOOST_PRICE_IDS, BOOST_PRICES } from "@/lib/config/boost-prices";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import { logger } from '@/lib/logger';
 
 export const dynamic = "force-dynamic";
 
@@ -46,11 +47,11 @@ export default async function BoostPage() {
     x10: BOOST_PRICES.x10,
   };
   
-  console.log('[Boost Page] Direct env vars (Price IDs):', directEnvVars);
-  console.log('[Boost Page] Direct env vars (Prices):', directPriceVars);
-  console.log('[Boost Page] BOOST_PRICE_IDS:', boostPriceIds);
-  console.log('[Boost Page] BOOST_PRICES:', boostPrices);
-  console.log('[Boost Page] All NEXT_PUBLIC vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_STRIPE_PRICE') || k.startsWith('NEXT_PUBLIC_BOOST_PRICE')));
+  logger.info('[Boost Page] Direct env vars (Price IDs):', directEnvVars);
+  logger.info('[Boost Page] Direct env vars (Prices):', directPriceVars);
+  logger.info('[Boost Page] BOOST_PRICE_IDS:', boostPriceIds);
+  logger.info('[Boost Page] BOOST_PRICES:', boostPrices);
+  logger.info('[Boost Page] All NEXT_PUBLIC vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_STRIPE_PRICE') || k.startsWith('NEXT_PUBLIC_BOOST_PRICE')));
 
   // Vérifier que les Price IDs sont configurés
   const hasPriceIds = BOOST_PRICE_IDS.x1 && BOOST_PRICE_IDS.x5 && BOOST_PRICE_IDS.x10;

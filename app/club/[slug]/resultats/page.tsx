@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ClubHeader from "@/components/club/ClubHeader";
+import { logger } from '@/lib/logger';
 
 type Match = {
   id: string;
@@ -103,7 +104,7 @@ export default function ClubResultatsPage() {
 
         setMatches(filtered as Match[]);
       } catch (e) {
-        console.error("Error loading matches:", e);
+        logger.error("Error loading matches:", e);
         setMatches([]);
       } finally {
         setLoading(false);

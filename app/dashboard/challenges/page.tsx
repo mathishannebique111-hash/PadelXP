@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import PageTitle from "../PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import { logger } from '@/lib/logger';
 
 type RewardType = "points" | "badge";
 
@@ -80,7 +81,7 @@ export default function ChallengesPage() {
       const payload = await response.json();
       setChallenges(payload?.challenges ?? []);
     } catch (err: any) {
-      console.error("[ClubChallenges] load error", err);
+      logger.error("[ClubChallenges] load error", err);
       setError(err?.message || "Erreur lors du chargement des challenges");
       setChallenges([]);
     } finally {
@@ -141,7 +142,7 @@ export default function ChallengesPage() {
       setRewardPoints("");
       setRewardBadgeTitle("");
     } catch (err: any) {
-      console.error("[ClubChallenges] submit error", err);
+      logger.error("[ClubChallenges] submit error", err);
       setError(err?.message || "Erreur inattendue lors de la création du challenge");
     } finally {
       setIsSubmitting(false);

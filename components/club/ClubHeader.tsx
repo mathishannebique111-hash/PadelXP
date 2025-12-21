@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { logger } from '@/lib/logger';
 
 export type AccentPalette = {
   base: string;
@@ -69,14 +70,14 @@ async function extractDominantColor(url: string): Promise<string | null> {
           const toHex = (value: number) => Math.round(value / total).toString(16).padStart(2, "0");
           resolve(`#${toHex(r)}${toHex(g)}${toHex(b)}`);
         } catch (error) {
-          console.warn("[ClubHeader] extractDominantColor error", error);
+          logger.warn("[ClubHeader] extractDominantColor error", error);
           resolve(null);
         }
       };
       image.onerror = () => resolve(null);
       image.src = url;
     } catch (err) {
-      console.warn("[ClubHeader] unable to analyse logo", err);
+      logger.warn("[ClubHeader] unable to analyse logo", err);
       resolve(null);
     }
   });
@@ -159,7 +160,7 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
                   alt={`Logo ${name}`}
                   className="h-full w-full object-contain"
                   onError={(e) => {
-                    console.error("[ClubHeader] Erreur lors du chargement du logo:", {
+                    logger.error("[ClubHeader] Erreur lors du chargement du logo:", {
                       logoUrl,
                       name,
                       error: e,

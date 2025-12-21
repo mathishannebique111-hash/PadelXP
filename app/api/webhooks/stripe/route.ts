@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 import type { SubscriptionStatus } from '@/lib/subscription';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-10-29.clover',
 });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature');
 
   if (!signature || !WEBHOOK_SECRET) {
-    logger.error({}, '[webhook-stripe] Missing signature or webhook secret');
+    logger.error('[webhook-stripe] Missing signature or webhook secret');
     return NextResponse.json(
       { error: 'Missing signature' },
       { status: 400 }
@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
   try {
     stripe.webhooks.constructEvent(body, signature, WEBHOOK_SECRET);
   } catch (err) {
-    logger.error({ error: err instanceof Error ? err.message : String(err) }, '[webhook-stripe] Webhook signature pre-check failed');
+    logger.error('[webhook-stripe] Webhook signature pre-check failed', { 
+      error: err instanceof Error ? err.message : String(err) 
+    });
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
@@ -45,7 +47,9 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, WEBHOOK_SECRET);
   } catch (err) {
-    logger.error({ error: err instanceof Error ? err.message : String(err) }, '[webhook-stripe] Webhook signature verification failed');
+    logger.error('[webhook-stripe] Webhook signature verification failed', { 
+      error: err instanceof Error ? err.message : String(err) 
+    });
     return NextResponse.json(
       { error: 'Invalid signature' },
       { status: 400 }
@@ -91,16 +95,16 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        logger.info({ type: event.type }, '[webhook-stripe] Unhandled event type');
+        logger.info('[webhook-stripe] Unhandled event type', { type: event.type });
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    logger.error({
+    logger.error('[webhook-stripe] Error processing webhook', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       eventType: event.type,
-    }, '[webhook-stripe] Error processing webhook');
+    });
 
     return NextResponse.json(
       { error: 'Webhook processing failed' },
@@ -113,7 +117,10 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   const clubId = subscription.metadata?.club_id;
   if (!clubId || !supabaseAdmin) return;
 
-  logger.info({ subscriptionId: subscription.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Subscription created');
+  logger.info('[webhook-stripe] Subscription created', { 
+    subscriptionId: subscription.id.substring(0, 8) + "…", 
+    clubId: clubId.substring(0, 8) + "…" 
+  });
 
   // Mettre à jour le statut vers trialing_with_plan si en période d'essai
   const status: SubscriptionStatus = subscription.status === 'trialing' ? 'trialing_with_plan' : 'active';
@@ -127,7 +134,10 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     .eq('id', clubId);
 
   if (error) {
-    logger.error({ error, clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Error updating club on subscription created');
+    logger.error('[webhook-stripe] Error updating club on subscription created', { 
+      error: error.message, 
+      clubId: clubId.substring(0, 8) + "…" 
+    });
   }
 }
 
@@ -135,7 +145,10 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const clubId = subscription.metadata?.club_id;
   if (!clubId || !supabaseAdmin) return;
 
-  logger.info({ subscriptionId: subscription.id.substring(0, 8) + "…", status: subscription.status }, '[webhook-stripe] Subscription updated');
+  logger.info('[webhook-stripe] Subscription updated', { 
+    subscriptionId: subscription.id.substring(0, 8) + "…", 
+    status: subscription.status 
+  });
 
   // Déterminer le statut selon l'état Stripe
   let status: SubscriptionStatus = 'active';
@@ -165,7 +178,10 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     .eq('id', clubId);
 
   if (error) {
-    logger.error({ error, clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Error updating club on subscription updated');
+    logger.error('[webhook-stripe] Error updating club on subscription updated', { 
+      error: error.message, 
+      clubId: clubId.substring(0, 8) + "…" 
+    });
   }
 }
 
@@ -173,7 +189,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const clubId = subscription.metadata?.club_id;
   if (!clubId || !supabaseAdmin) return;
 
-  logger.info({ subscriptionId: subscription.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Subscription deleted');
+  logger.info('[webhook-stripe] Subscription deleted', { 
+    subscriptionId: subscription.id.substring(0, 8) + "…", 
+    clubId: clubId.substring(0, 8) + "…" 
+  });
 
   // Récupérer les informations du club pour vérifier si l'annulation était pendant l'essai
   const { data: club } = await supabaseAdmin
@@ -205,7 +224,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .eq('id', clubId);
 
   if (error) {
-    logger.error({ error, clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Error updating club on subscription deleted');
+    logger.error('[webhook-stripe] Error updating club on subscription deleted', { 
+      error: error.message, 
+      clubId: clubId.substring(0, 8) + "…" 
+    });
   }
 }
 
@@ -213,7 +235,10 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
   const clubId = subscription.metadata?.club_id;
   if (!clubId || !supabaseAdmin) return;
 
-  logger.info({ subscriptionId: subscription.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Trial will end');
+  logger.info('[webhook-stripe] Trial will end', { 
+    subscriptionId: subscription.id.substring(0, 8) + "…", 
+    clubId: clubId.substring(0, 8) + "…" 
+  });
 
   // TODO: Envoyer un email de rappel 3 jours avant la fin de l'essai
   // Pour l'instant, on log juste l'événement
@@ -228,7 +253,11 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   const clubId = subscription.metadata?.club_id;
   if (!clubId) return;
 
-  logger.info({ subscriptionId: subscriptionId.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", billingReason: invoice.billing_reason }, '[webhook-stripe] Invoice payment succeeded');
+  logger.info('[webhook-stripe] Invoice payment succeeded', { 
+    subscriptionId: subscriptionId.substring(0, 8) + "…", 
+    clubId: clubId.substring(0, 8) + "…", 
+    billingReason: invoice.billing_reason 
+  });
 
   // Si c'est le premier paiement (subscription_create), activer l'abonnement
   if (invoice.billing_reason === 'subscription_create' || invoice.billing_reason === 'subscription_cycle') {
@@ -241,7 +270,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       .eq('id', clubId);
 
     if (error) {
-      logger.error({ error, clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Error updating club on invoice payment succeeded');
+      logger.error('[webhook-stripe] Error updating club on invoice payment succeeded', { 
+        error: error.message, 
+        clubId: clubId.substring(0, 8) + "…" 
+      });
     }
   }
 }
@@ -255,7 +287,10 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const clubId = subscription.metadata?.club_id;
   if (!clubId) return;
 
-  logger.info({ subscriptionId: subscriptionId.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Invoice payment failed');
+  logger.info('[webhook-stripe] Invoice payment failed', { 
+    subscriptionId: subscriptionId.substring(0, 8) + "…", 
+    clubId: clubId.substring(0, 8) + "…" 
+  });
 
   // Mettre à jour le statut vers past_due
   const { error } = await supabaseAdmin
@@ -266,9 +301,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     .eq('id', clubId);
 
   if (error) {
-    logger.error({ error, clubId: clubId.substring(0, 8) + "…" }, '[webhook-stripe] Error updating club on invoice payment failed');
+    logger.error('[webhook-stripe] Error updating club on invoice payment failed', { 
+      error: error.message, 
+      clubId: clubId.substring(0, 8) + "…" 
+    });
   }
 
   // TODO: Envoyer un email au club pour l'informer du problème de paiement
 }
-

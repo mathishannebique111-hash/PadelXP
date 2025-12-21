@@ -8,6 +8,7 @@ import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
 import BadgeIcon from "@/components/icons/BadgeIcon";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import BadgesPageClient from '@/components/BadgesPageClient'
+import { logger } from '@/lib/logger';
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function BadgesPage() {
         .eq("id", user.id)
         .maybeSingle();
       if (adminProfileError) {
-        console.error("[Badges] Failed to fetch profile via admin client", {
+        logger.error("[Badges] Failed to fetch profile via admin client", {
           message: adminProfileError.message,
           details: adminProfileError.details,
           hint: adminProfileError.hint,
@@ -126,7 +127,7 @@ export default async function BadgesPage() {
           : (typeof adminProfile.points === 'string' ? parseInt(adminProfile.points, 10) || 0 : 0);
       }
     } catch (e) {
-      console.error("[Badges] Unexpected error when fetching profile via admin client", e);
+      logger.error("[Badges] Unexpected error when fetching profile via admin client", e);
     }
   }
 

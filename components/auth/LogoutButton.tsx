@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { logger } from '@/lib/logger';
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -32,14 +33,14 @@ export default function LogoutButton() {
         window.location.assign("/");
       }
     } catch (error) {
-      console.error("Error logging out:", error);
+      logger.error("Error logging out:", error);
       // En cas d'erreur, essayer quand même la déconnexion côté client
       try {
         const { supabaseClient } = await import("@/lib/supabase");
         const supabase = supabaseClient();
         await supabase.auth.signOut();
       } catch (e) {
-        console.error("Error during fallback signout:", e);
+        logger.error("Error during fallback signout:", e);
       }
       window.location.assign("/");
     } finally {

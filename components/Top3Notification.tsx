@@ -6,6 +6,7 @@ import NotificationModal from "./NotificationModal";
 import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { createNotification } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
 
 interface Top3NotificationProps {
   currentUserId: string;
@@ -32,15 +33,15 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
   const checkCountRef = useRef(0);
 
   // DIAGNOSTIC: Log initial du composant
-  console.log("🔵 [Top3Notification] COMPOSANT INITIALISÉ");
-  console.log("🔵 [Top3Notification] 👤 User ID reçu:", currentUserId);
-  console.log("🔵 [Top3Notification] 📊 État notification initial:", notification);
+  logger.info("🔵 [Top3Notification] COMPOSANT INITIALISÉ");
+  logger.info("🔵 [Top3Notification] 👤 User ID reçu:", currentUserId);
+  logger.info("🔵 [Top3Notification] 📊 État notification initial:", notification);
 
   // Fonction pour récupérer le classement actuel (FILTRÉ PAR CLUB)
   // Utilise l'API qui calcule déjà les points avec boosts
   const fetchLeaderboard = useCallback(async (): Promise<LeaderboardEntry[]> => {
     try {
-      console.log("📥 [Top3Notification] Début fetchLeaderboard via API...");
+      logger.info("📥 [Top3Notification] Début fetchLeaderboard via API...");
       
       // Utiliser l'API leaderboard qui calcule déjà les points avec boosts
       const res = await fetch('/api/leaderboard');
@@ -54,11 +55,11 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
           losses: entry.losses,
           matches: entry.matches,
         }));
-        console.log("📥 [Top3Notification] Leaderboard récupéré via API:", leaderboard.length, "joueurs");
+        logger.info("📥 [Top3Notification] Leaderboard récupéré via API:", leaderboard.length, "joueurs");
         return leaderboard;
       }
       
-      console.warn('[Top3Notification] API leaderboard failed, using fallback');
+      logger.warn('[Top3Notification] API leaderboard failed, using fallback');
       const supabase = supabaseRef.current;
       
       try {
@@ -69,19 +70,19 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
         .eq("player_type", "user");
 
       if (participantsError) {
-        console.error("❌ [Top3Notification] Error fetching participants:", participantsError);
+        logger.error("❌ [Top3Notification] Error fetching participants:", participantsError);
         return [];
       }
 
-      console.log("📥 [Top3Notification] Participants récupérés:", participantsData?.length || 0);
+      logger.info("📥 [Top3Notification] Participants récupérés:", participantsData?.length || 0);
 
       if (!participantsData || participantsData.length === 0) {
-        console.warn("⚠️ [Top3Notification] Aucun participant trouvé");
+        logger.warn("⚠️ [Top3Notification] Aucun participant trouvé");
         return [];
       }
 
       const uniqueMatchIds = [...new Set(participantsData.map((p: any) => p.match_id))];
-      console.log("📥 [Top3Notification] Matchs uniques:", uniqueMatchIds.length);
+      logger.info("📥 [Top3Notification] Matchs uniques:", uniqueMatchIds.length);
       
       const { data: matchesData, error: matchesError } = await supabase
         .from("matches")
@@ -89,11 +90,11 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
         .in("id", uniqueMatchIds);
 
       if (matchesError) {
-        console.error("❌ [Top3Notification] Error fetching matches:", matchesError);
+        logger.error("❌ [Top3Notification] Error fetching matches:", matchesError);
         return [];
       }
 
-      console.log("📥 [Top3Notification] Matchs récupérés:", matchesData?.length || 0);
+      logger.info("📥 [Top3Notification] Matchs récupérés:", matchesData?.length || 0);
 
       const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string; played_at: string }>();
       (matchesData || []).forEach((m: any) => {
@@ -149,7 +150,7 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
       });
 
       const userIds = Object.keys(byPlayer);
-      console.log("📥 [Top3Notification] Joueurs uniques:", userIds.length);
+      logger.info("📥 [Top3Notification] Joueurs uniques:", userIds.length);
       
       const { data: profiles } = await supabase
         .from("profiles")
@@ -188,16 +189,16 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
 
       const sorted = leaderboard.sort((a, b) => b.points - a.points || b.wins - a.wins || a.matches - b.matches);
       
-      console.log("📥 [Top3Notification] Leaderboard complet calculé (fallback):", sorted.length, "joueurs");
-      console.log("📥 [Top3Notification] Top 3:", sorted.slice(0, 3).map(p => ({ name: p.player_name, points: p.points, id: p.user_id })));
+      logger.info("📥 [Top3Notification] Leaderboard complet calculé (fallback):", sorted.length, "joueurs");
+      logger.info("📥 [Top3Notification] Top 3:", sorted.slice(0, 3).map(p => ({ name: p.player_name, points: p.points, id: p.user_id })));
       
       return sorted;
       } catch (fallbackError) {
-        console.error("❌ [Top3Notification] Fallback method also failed:", fallbackError);
+        logger.error("❌ [Top3Notification] Fallback method also failed:", fallbackError);
         return [];
       }
     } catch (error) {
-      console.error("❌ [Top3Notification] Error fetching leaderboard:", error);
+      logger.error("❌ [Top3Notification] Error fetching leaderboard:", error);
       return [];
     }
   }, []);
@@ -209,16 +210,16 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
     
     if (rank !== null) {
       const player = leaderboard[index];
-      console.log("🎯 [Top3Notification] Joueur trouvé dans leaderboard:", {
+      logger.info("🎯 [Top3Notification] Joueur trouvé dans leaderboard:", {
         rank,
         name: player.player_name,
         points: player.points,
         user_id: player.user_id
       });
     } else {
-      console.warn("⚠️ [Top3Notification] Joueur NON trouvé dans leaderboard");
-      console.warn("⚠️ [Top3Notification] User ID recherché:", currentUserId);
-      console.warn("⚠️ [Top3Notification] User IDs dans leaderboard:", leaderboard.map(p => p.user_id));
+      logger.warn("⚠️ [Top3Notification] Joueur NON trouvé dans leaderboard");
+      logger.warn("⚠️ [Top3Notification] User ID recherché:", currentUserId);
+      logger.warn("⚠️ [Top3Notification] User IDs dans leaderboard:", leaderboard.map(p => p.user_id));
     }
     
     return rank;
@@ -227,65 +228,65 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
   // Vérifier les changements de position
   const checkPositionChange = useCallback(async () => {
     if (isCheckingRef.current) {
-      console.log("⏸️ [Top3Notification] Vérification déjà en cours, ignorée");
+      logger.info("⏸️ [Top3Notification] Vérification déjà en cours, ignorée");
       return;
     }
     isCheckingRef.current = true;
     checkCountRef.current += 1;
 
     try {
-      console.log(`\n🔄 [Top3Notification] ===== VÉRIFICATION #${checkCountRef.current} =====`);
+      logger.info(`\n🔄 [Top3Notification] ===== VÉRIFICATION #${checkCountRef.current} =====`);
       
       const leaderboard = await fetchLeaderboard();
       const currentRank = findUserRank(leaderboard);
       const previousRank = previousRankRef.current;
 
-      console.log("🎯 [Top3Notification] Rank actuel:", currentRank, "| Rank précédent:", previousRank);
-      console.log("🎯 [Top3Notification] isInitialMount:", isInitialMountRef.current);
-      console.log("🎯 [Top3Notification] 👤 User ID:", currentUserId);
+      logger.info("🎯 [Top3Notification] Rank actuel:", currentRank, "| Rank précédent:", previousRank);
+      logger.info("🎯 [Top3Notification] isInitialMount:", isInitialMountRef.current);
+      logger.info("🎯 [Top3Notification] 👤 User ID:", currentUserId);
 
       // Ignorer le premier chargement
       if (isInitialMountRef.current) {
-        console.log("⚠️ [Top3Notification] ⚠️ INITIALISATION - Rang actuel:", currentRank);
+        logger.info("⚠️ [Top3Notification] ⚠️ INITIALISATION - Rang actuel:", currentRank);
         previousRankRef.current = currentRank;
         isInitialMountRef.current = false;
-        console.log("✅ [Top3Notification] Initialisation terminée, previousRankRef défini à:", previousRankRef.current);
+        logger.info("✅ [Top3Notification] Initialisation terminée, previousRankRef défini à:", previousRankRef.current);
         return;
       }
 
       // Si on n'a pas de rang précédent, on initialise
       if (previousRank === null) {
-        console.log("⚠️ [Top3Notification] Pas de rang précédent, initialisation avec:", currentRank);
+        logger.info("⚠️ [Top3Notification] Pas de rang précédent, initialisation avec:", currentRank);
         previousRankRef.current = currentRank;
         return;
       }
 
       // Si le rang actuel est null (hors classement), on ne fait rien
       if (currentRank === null) {
-        console.log("⚠️ [Top3Notification] Rang actuel null (hors classement)");
+        logger.info("⚠️ [Top3Notification] Rang actuel null (hors classement)");
         previousRankRef.current = null;
         return;
       }
 
       // Si le rang n'a pas changé, on ne fait rien
       if (currentRank === previousRank) {
-        console.log("➡️ [Top3Notification] Rang inchangé:", currentRank);
+        logger.info("➡️ [Top3Notification] Rang inchangé:", currentRank);
         return;
       }
 
-      console.log(`🔄 [Top3Notification] 🔄 CHANGEMENT DÉTECTÉ: ${previousRank} → ${currentRank}`);
-      console.log("🔍 [Top3Notification] Vérification conditions détrônement:");
-      console.log("  - previousRank:", previousRank, "(doit être <= 3)");
-      console.log("  - currentRank:", currentRank, "(doit être > previousRank)");
-      console.log("  - previousRank <= 3:", previousRank <= 3);
-      console.log("  - currentRank > previousRank:", currentRank > previousRank);
+      logger.info(`🔄 [Top3Notification] 🔄 CHANGEMENT DÉTECTÉ: ${previousRank} → ${currentRank}`);
+      logger.info("🔍 [Top3Notification] Vérification conditions détrônement:");
+      logger.info("  - previousRank:", previousRank, "(doit être <= 3)");
+      logger.info("  - currentRank:", currentRank, "(doit être > previousRank)");
+      logger.info("  - previousRank <= 3:", previousRank <= 3);
+      logger.info("  - currentRank > previousRank:", currentRank > previousRank);
 
       // Détecter les changements de rang et créer des notifications
       
       // Cas 1: Détrônement du top 3 (3 → 4+)
       if (previousRank !== null && previousRank <= 3 && currentRank > 3) {
         if (previousRank === 1) {
-          console.log(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 1ÈRE PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
+          logger.info(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 1ÈRE PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
           setNotification("dethroned_from_1");
           // Créer notification dans la BD
           createNotification(currentUserId, 'top3_ranking', {
@@ -293,9 +294,9 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
             previous_rank: previousRank,
             current_rank: currentRank,
             timestamp: new Date().toISOString(),
-          }).catch(err => console.error('Failed to save top3 notification:', err))
+          }).catch(err => logger.error('Failed to save top3 notification:', err))
         } else if (previousRank === 2) {
-          console.log(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 2ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
+          logger.info(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 2ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
           setNotification("dethroned_from_2");
           // Créer notification dans la BD
           createNotification(currentUserId, 'top3_ranking', {
@@ -303,9 +304,9 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
             previous_rank: previousRank,
             current_rank: currentRank,
             timestamp: new Date().toISOString(),
-          }).catch(err => console.error('Failed to save top3 notification:', err))
+          }).catch(err => logger.error('Failed to save top3 notification:', err))
         } else if (previousRank === 3) {
-          console.log(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 3ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
+          logger.info(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 3ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
           setNotification("dethroned_from_3");
           // Créer notification dans la BD
           createNotification(currentUserId, 'top3_ranking', {
@@ -313,57 +314,57 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
             previous_rank: previousRank,
             current_rank: currentRank,
             timestamp: new Date().toISOString(),
-          }).catch(err => console.error('Failed to save top3 notification:', err))
+          }).catch(err => logger.error('Failed to save top3 notification:', err))
         }
         previousRankRef.current = currentRank;
       }
       // Cas 2: Entrée dans le top 3 (4+ → 1/2/3)
       else if (previousRank !== null && previousRank > 3 && currentRank <= 3) {
-        console.log(`🎉 [Top3Notification] ENTRÉE DANS LE TOP 3 DÉTECTÉE: ${previousRank} → ${currentRank}`);
+        logger.info(`🎉 [Top3Notification] ENTRÉE DANS LE TOP 3 DÉTECTÉE: ${previousRank} → ${currentRank}`);
         // Créer notification dans la BD pour célébrer l'entrée dans le top 3
         createNotification(currentUserId, 'top3_ranking', {
           type: 'entered_top3',
           rank: currentRank,
           previous_rank: previousRank,
           timestamp: new Date().toISOString(),
-        }).catch(err => console.error('Failed to save top3 notification:', err))
+        }).catch(err => logger.error('Failed to save top3 notification:', err))
         previousRankRef.current = currentRank;
       }
       // Cas 3: Changement au sein du top 3 (1→2, 2→1, etc.)
       else if (previousRank !== null && previousRank <= 3 && currentRank <= 3 && previousRank !== currentRank) {
-        console.log(`➡️ [Top3Notification] Changement de rang dans le top 3: ${previousRank} → ${currentRank}`);
+        logger.info(`➡️ [Top3Notification] Changement de rang dans le top 3: ${previousRank} → ${currentRank}`);
         // Créer notification pour les mouvements dans le top 3
         createNotification(currentUserId, 'top3_ranking', {
           type: 'rank_changed',
           rank: currentRank,
           previous_rank: previousRank,
           timestamp: new Date().toISOString(),
-        }).catch(err => console.error('Failed to save top3 notification:', err))
+        }).catch(err => logger.error('Failed to save top3 notification:', err))
         previousRankRef.current = currentRank;
       }
       // Cas 4: Autres changements
       else {
-        console.log(`➡️ [Top3Notification] Changement de rang: ${previousRank} → ${currentRank}`);
+        logger.info(`➡️ [Top3Notification] Changement de rang: ${previousRank} → ${currentRank}`);
         previousRankRef.current = currentRank;
       }
       
-      console.log(`✅ [Top3Notification] ===== FIN VÉRIFICATION #${checkCountRef.current} =====\n`);
+      logger.info(`✅ [Top3Notification] ===== FIN VÉRIFICATION #${checkCountRef.current} =====\n`);
     } catch (error) {
-      console.error("❌ [Top3Notification] Error in checkPositionChange:", error);
+      logger.error("❌ [Top3Notification] Error in checkPositionChange:", error);
     } finally {
       isCheckingRef.current = false;
     }
   }, [fetchLeaderboard, findUserRank]);
 
   useEffect(() => {
-    console.log("🚀 [Top3Notification] 🚀 useEffect MONTÉ");
-    console.log("🚀 [Top3Notification] 👤 User ID:", currentUserId);
+    logger.info("🚀 [Top3Notification] 🚀 useEffect MONTÉ");
+    logger.info("🚀 [Top3Notification] 👤 User ID:", currentUserId);
     
     const supabase = supabaseRef.current;
     let isMounted = true;
     
     // Vérification initiale immédiate
-    console.log("🚀 [Top3Notification] Déclenchement vérification initiale...");
+    logger.info("🚀 [Top3Notification] Déclenchement vérification initiale...");
     checkPositionChange();
 
     // Écouter les changements en temps réel
@@ -373,12 +374,12 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       } catch (error) {
-        console.warn("⚠️ [Top3Notification] Erreur lors du nettoyage du channel précédent:", error);
+        logger.warn("⚠️ [Top3Notification] Erreur lors du nettoyage du channel précédent:", error);
       }
     }
 
     const channelName = `top3-notification-${currentUserId}-${Date.now()}`;
-    console.log("🚀 [Top3Notification] Création channel Realtime:", channelName);
+    logger.info("🚀 [Top3Notification] Création channel Realtime:", channelName);
     
     let channel: any = null;
     
@@ -399,7 +400,7 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
           },
           (payload) => {
             if (!isMounted) return;
-            console.log("🔄🔄🔄 [Top3Notification] Match détecté via Realtime, payload:", payload);
+            logger.info("🔄🔄🔄 [Top3Notification] Match détecté via Realtime, payload:", payload);
             setTimeout(() => {
               if (isMounted) {
                 checkPositionChange();
@@ -416,7 +417,7 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
           },
           (payload) => {
             if (!isMounted) return;
-            console.log("🔄🔄🔄 [Top3Notification] Participant détecté via Realtime, payload:", payload);
+            logger.info("🔄🔄🔄 [Top3Notification] Participant détecté via Realtime, payload:", payload);
             setTimeout(() => {
               if (isMounted) {
                 checkPositionChange();
@@ -427,42 +428,42 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
 
       channel.subscribe((status: string, err?: Error) => {
         if (!isMounted) return;
-        console.log(`📡 [Top3Notification] Subscription status: ${status}`);
+        logger.info(`📡 [Top3Notification] Subscription status: ${status}`);
         if (status === "SUBSCRIBED") {
-          console.log("✅✅✅ [Top3Notification] Realtime subscription ACTIVE");
+          logger.info("✅✅✅ [Top3Notification] Realtime subscription ACTIVE");
         } else if (status === "CHANNEL_ERROR") {
           // Ne pas logger comme erreur, juste comme avertissement
-          console.warn("⚠️ [Top3Notification] Erreur de subscription Realtime (le polling périodique continuera)", err);
+          logger.warn("⚠️ [Top3Notification] Erreur de subscription Realtime (le polling périodique continuera)", err);
           // Le polling périodique continuera de fonctionner même si Realtime échoue
         } else if (status === "TIMED_OUT") {
-          console.warn("⏱️⏱️⏱️ [Top3Notification] Subscription timeout (le polling périodique continuera)");
+          logger.warn("⏱️⏱️⏱️ [Top3Notification] Subscription timeout (le polling périodique continuera)");
         } else if (status === "CLOSED") {
-          console.warn("🚪🚪🚪 [Top3Notification] Subscription fermée");
+          logger.warn("🚪🚪🚪 [Top3Notification] Subscription fermée");
         }
       });
 
       channelRef.current = channel;
     } catch (error) {
-      console.warn("⚠️ [Top3Notification] Erreur lors de la création du channel (le polling périodique continuera):", error);
+      logger.warn("⚠️ [Top3Notification] Erreur lors de la création du channel (le polling périodique continuera):", error);
       // Le polling périodique continuera de fonctionner même si Realtime échoue
     }
 
     // Vérifier très fréquemment (toutes les 3 secondes) pour s'assurer de détecter les changements
     const interval = setInterval(() => {
       if (isMounted) {
-        console.log("⏰ [Top3Notification] Vérification périodique déclenchée");
+        logger.info("⏰ [Top3Notification] Vérification périodique déclenchée");
         checkPositionChange();
       }
     }, 3000);
 
     return () => {
       isMounted = false;
-      console.log("🧹 [Top3Notification] Nettoyage du composant");
+      logger.info("🧹 [Top3Notification] Nettoyage du composant");
       if (channelRef.current) {
         try {
           supabase.removeChannel(channelRef.current);
         } catch (error) {
-          console.error("❌ [Top3Notification] Erreur lors du nettoyage du channel:", error);
+          logger.error("❌ [Top3Notification] Erreur lors du nettoyage du channel:", error);
         }
       }
       clearInterval(interval);
@@ -471,23 +472,23 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
 
   // DIAGNOSTIC: Log chaque changement de state notification
   useEffect(() => {
-    console.log("📢 [Top3Notification] 📢 État notification changé:", notification);
+    logger.info("📢 [Top3Notification] 📢 État notification changé:", notification);
     if (notification) {
-      console.log("✅✅✅ [Top3Notification] NOTIFICATION ACTIVE:", notification);
-      console.log("✅✅✅ [Top3Notification] Le modal devrait maintenant s'afficher");
+      logger.info("✅✅✅ [Top3Notification] NOTIFICATION ACTIVE:", notification);
+      logger.info("✅✅✅ [Top3Notification] Le modal devrait maintenant s'afficher");
     } else {
-      console.log("➖ [Top3Notification] Notification effacée (null)");
+      logger.info("➖ [Top3Notification] Notification effacée (null)");
     }
   }, [notification]);
 
   const handleCloseNotification = () => {
-    console.log("❌ [Top3Notification] Fermeture de la notification");
+    logger.info("❌ [Top3Notification] Fermeture de la notification");
     setNotification(null);
   };
 
   // DIAGNOSTIC: Log avant le rendu
   if (notification) {
-    console.log("🎨 [Top3Notification] 🎨 RENDU DU MODAL avec type:", notification);
+    logger.info("🎨 [Top3Notification] 🎨 RENDU DU MODAL avec type:", notification);
   }
 
   return (

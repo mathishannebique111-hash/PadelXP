@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useUser } from '@/lib/hooks/useUser'
 import { createNotification } from '@/lib/notifications'
+import { logger } from '@/lib/logger';
 
 interface Referral {
   id: string
@@ -41,7 +42,7 @@ export default function ReferralJoinedNotifier({ referrals }: ReferralJoinedNoti
           joined_at: referral.joined_at,
           timestamp: new Date().toISOString(),
         }).catch(err => {
-          console.error('Failed to save referral_joined notification:', err)
+          logger.error('Failed to save referral_joined notification:', err)
         })
       })
     }

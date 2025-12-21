@@ -2,6 +2,7 @@
 
 import { useState, FormEvent, useEffect, useRef } from 'react';
 import PageTitle from "../PageTitle";
+import { logger } from '@/lib/logger';
 
 interface SupportMessage {
   id: string;
@@ -50,7 +51,7 @@ export default function HelpPage() {
           const parsed = JSON.parse(stored);
           return new Set(parsed);
         } catch (e) {
-          console.error('Error parsing stored read messages:', e);
+          logger.error('Error parsing stored read messages:', e);
         }
       }
     }
@@ -70,7 +71,7 @@ export default function HelpPage() {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('✅ Conversations loaded:', {
+        logger.info('✅ Conversations loaded:', {
           count: data.conversations?.length || 0,
           conversations: data.conversations?.map((c: ConversationWithMessages) => ({
             id: c.id,
@@ -99,13 +100,13 @@ export default function HelpPage() {
         setIsInitialLoad(false);
         
         if (data.error) {
-          console.error('❌ Error in conversations data:', data.error);
+          logger.error('❌ Error in conversations data:', data.error);
           if (data.error.includes('non configuré')) {
             setError(data.error + (data.hint ? ' - ' + data.hint : ''));
           }
         }
       } else {
-        console.error('❌ Error loading conversations:', {
+        logger.error('❌ Error loading conversations:', {
           status: response.status,
           statusText: response.statusText,
           data: data
@@ -116,7 +117,7 @@ export default function HelpPage() {
         setIsInitialLoad(false);
       }
     } catch (err) {
-      console.error('❌ Error loading conversations:', err);
+      logger.error('❌ Error loading conversations:', err);
       setIsInitialLoad(false);
     } finally {
       if (showLoading || isInitialLoad) {

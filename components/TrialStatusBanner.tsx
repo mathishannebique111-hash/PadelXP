@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { calculateTrialDaysRemaining, formatDate, calculateFirstPaymentDate, formatPlanName } from '@/lib/subscription';
 import type { SubscriptionStatus, PlanType } from '@/lib/subscription';
+import { logger } from '@/lib/logger';
 
 interface TrialStatusBannerProps {
   trialEndDate: string | null;
@@ -203,7 +204,7 @@ export default function TrialStatusBanner({
           alert(data.error || 'Erreur lors de la réactivation');
         }
       } catch (error) {
-        console.error('Error reactivating subscription:', error);
+        logger.error('Error reactivating subscription:', error);
         alert('Erreur lors de la réactivation');
       } finally {
         setReactivating(false);
