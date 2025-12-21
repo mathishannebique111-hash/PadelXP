@@ -75,33 +75,62 @@ export function useNotifications(userId: string | undefined) {
     fetchNotifications()
 
     // Écouter les nouvelles notifications en temps réel
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setNotifications(prev => [payload.new as Notification, ...prev])
-          } else if (payload.eventType === 'UPDATE') {
-            const updated = payload.new as Notification
-            setNotifications(prev =>
-              prev.map(n => n.id === updated.id ? updated : n)
-            )
-          } else if (payload.eventType === 'DELETE') {
-            setNotifications(prev => prev.filter(n => n.id !== payload.old.id))
+    let channel: any = null
+    let subscriptionError = false
+
+    try {
+      channel = supabase
+        .channel('notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${userId}`
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setNotifications(prev => [payload.new as Notification, ...prev])
+            } else if (payload.eventType === 'UPDATE') {
+              const updated = payload.new as Notification
+              setNotifications(prev =>
+                prev.map(n => n.id === updated.id ? updated : n)
+              )
+            } else if (payload.eventType === 'DELETE') {
+              setNotifications(prev => prev.filter(n => n.id !== payload.old.id))
+            }
           }
-        }
-      )
-      .subscribe()
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            logger.info('Notifications subscription established')
+            subscriptionError = false
+          } else if (status === 'CLOSED') {
+            logger.warn('Notifications subscription closed')
+          } else if (status === 'CHANNEL_ERROR') {
+            logger.warn('Notifications channel error - WebSocket might be unavailable')
+            subscriptionError = true
+          }
+        })
+    } catch (error) {
+      logger.warn('Failed to establish real-time notifications subscription', { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+      })
+      subscriptionError = true
+    }
 
     return () => {
-      channel.unsubscribe()
+      if (channel) {
+        try {
+          channel.unsubscribe()
+        } catch (error) {
+          logger.warn('Error unsubscribing from notifications', { 
+            error: error instanceof Error ? error.message : 'Unknown error'
+          })
+        }
+      }
     }
   }, [userId])
 

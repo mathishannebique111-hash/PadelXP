@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import TierBadge from "../TierBadge";
+import { logger } from '@/lib/logger';
 
 type Row = {
   rank: number;
@@ -31,7 +32,7 @@ export default function LeaderboardPreviewMini() {
         );
 
       if (error) {
-        console.warn("Error loading leaderboard:", error);
+        logger.warn("Error loading leaderboard:", error);
         setLoading(false);
         return;
       }
@@ -94,7 +95,7 @@ export default function LeaderboardPreviewMini() {
       const withRank = list.slice(0, 4).map((r, i) => ({ ...r, rank: i + 1 }));
       setRows(withRank);
     } catch (error) {
-      console.error("Error in load function:", error);
+      logger.error("Error in load function:", error);
     } finally {
       setLoading(false);
     }
@@ -103,16 +104,37 @@ export default function LeaderboardPreviewMini() {
   useEffect(() => {
     load();
     // écoute simple en temps réel sur l'insert de matches
-    const channel = supabase
-      .channel("lb-preview")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "matches" },
-        () => load()
-      )
-      .subscribe();
+    let channel: any = null;
+    
+    try {
+      channel = supabase
+        .channel("lb-preview")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "matches" },
+          () => load()
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            logger.info("Leaderboard realtime preview subscribed");
+          } else if (status === "CHANNEL_ERROR") {
+            logger.warn("Leaderboard preview channel error - polling will continue");
+          } else if (status === "CLOSED") {
+            logger.warn("Leaderboard preview subscription closed");
+          }
+        });
+    } catch (error) {
+      logger.warn("Failed to subscribe to leaderboard preview realtime:", error);
+    }
+    
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (error) {
+          logger.warn("Error removing leaderboard preview channel:", error);
+        }
+      }
     };
   }, []);
 
