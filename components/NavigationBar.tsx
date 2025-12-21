@@ -38,7 +38,7 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
           <span className={label}>Badges</span>
         </Link>
         <Link href="/club" className={`${base} ${currentPage === "club" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/mon club.png" alt="Mon club" width={14} height={14} className="w-3.5 h-3.5 sm:w-[14px] sm:h-[14px] object-contain flex-shrink-0" unoptimized />
+          <Image src="/images/mon%20club.png" alt="Mon club" width={14} height={14} className="w-3.5 h-3.5 sm:w-[14px] sm:h-[14px] object-contain flex-shrink-0" unoptimized />
           <span className={label}>Club</span>
         </Link>
         <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import LogoutButton from './LogoutButton';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import { logger } from '@/lib/logger';
 
 type NavKey =
   | "home"
@@ -32,7 +33,7 @@ export default function PlayerSidebar() {
   // FORCER l'affichage immédiatement, y compris avant l'hydratation complète
   // Utiliser plusieurs timers pour garantir l'affichage même si l'un échoue
   useEffect(() => {
-    console.log('[PlayerSidebar] Component mounted - TOUJOURS VISIBLE (même pour nouveaux joueurs)');
+    logger.info('[PlayerSidebar] Component mounted - TOUJOURS VISIBLE (même pour nouveaux joueurs)');
     
     // Fonction pour forcer l'affichage du bouton (responsive)
     const forceButtonDisplay = () => {
@@ -62,7 +63,7 @@ export default function PlayerSidebar() {
           background-color: rgba(255, 255, 255, 0.1) !important;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
         `;
-        console.log('[PlayerSidebar] Button display forced (responsive)');
+        logger.info('[PlayerSidebar] Button display forced (responsive)');
       }
     };
     
@@ -116,7 +117,7 @@ export default function PlayerSidebar() {
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
     { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 12), navKey: 'history' },
     { href: '/badges', label: 'Badges', icon: getIconPath('Badge.png', 11), navKey: 'badges' },
-    { href: '/club', label: 'Mon club', icon: '/images/mon club.png', navKey: 'club' },
+    { href: '/club', label: 'Mon club', icon: getIconPath('mon club.png'), navKey: 'club' },
     { href: '/tournaments', label: 'Tournois', icon: getIconPath('Trophée page badges.png'), navKey: 'tournaments' },
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
@@ -268,11 +269,11 @@ export default function PlayerSidebar() {
                       imageRendering: 'crisp-edges'
                     }}
                     onError={(e) => {
-                      console.error(`Failed to load icon for ${item.label}:`, item.icon);
+                      logger.error(`Failed to load icon for ${item.label}:`, item.icon);
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                     onLoad={() => {
-                      console.log(`Successfully loaded icon for ${item.label}:`, item.icon);
+                      logger.info(`Successfully loaded icon for ${item.label}:`, item.icon);
                     }}
                   />
                 </div>
