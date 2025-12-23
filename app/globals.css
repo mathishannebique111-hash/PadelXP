@@ -61,6 +61,7 @@
 html {
   background-color: #000; /* noir absolu */
   color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -75,12 +76,13 @@ body {
 }
 
 /* Éviter le zoom automatique sur iOS lors du focus des champs de formulaire
-   en s'assurant que les inputs ont une taille de police minimale de 16px. */
+   en s'assurant que les inputs ont une taille de police minimale de 16px.
+   On utilise !important pour passer devant les classes Tailwind (text-sm, etc.). */
 @supports (-webkit-touch-callout: none) {
   input,
   textarea,
   select {
-    font-size: 16px;
+    font-size: 16px !important;
   }
 }
 

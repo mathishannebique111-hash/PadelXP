@@ -122,7 +122,7 @@ export default function PlayerClubGate({
           const slug = e.target.value;
           setSelectedSlug(slug);
         }}
-        className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 text-white"
+        className="w-full rounded-md bg-white/5 border border-white/10 px-3 pr-8 py-2 text-white"
       >
         <option value="">Sélectionnez votre club / complexe</option>
         {clubs.map((c) => (

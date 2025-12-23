@@ -23,7 +23,7 @@ export default async function PlayerLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white px-6">
-      <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-8">
+      <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/20 p-8">
         <h1 className="text-2xl font-extrabold mb-2">Connexion joueur</h1>
         <p className="text-white/60 mb-6 text-sm">Connectez-vous avec votre email et mot de passe pour accéder à votre club.</p>
         <EmailLoginForm />

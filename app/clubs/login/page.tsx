@@ -115,7 +115,7 @@ function ClubsLoginForm() {
         </div>
 
         {/* Formulaire de connexion */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-8 backdrop-blur-sm">
+        <div className="rounded-2xl bg-white/5 border border-white/20 p-8 backdrop-blur-sm">
           <h2 className="text-2xl font-bold mb-2">Connexion</h2>
           <p className="text-white/60 mb-6 text-sm">
             Connectez-vous à votre compte club / complexe
