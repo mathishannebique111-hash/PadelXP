@@ -10,6 +10,11 @@ export const metadata: Metadata = {
     initialScale: 1,
     maximumScale: 5,
   },
+  icons: {
+    icon: "/images/flavicon.png",
+    shortcut: "/images/flavicon.png",
+    apple: "/images/flavicon.png",
+  },
 };
 
 export default function RootLayout({
