@@ -116,10 +116,13 @@ export async function POST(request: Request) {
         });
       }      
 
+    // Toujours générer un lien compatible avec verifyOtp côté client.
+    // On commence par un magiclink, puis on bascule éventuellement en recovery
+    // si l'utilisateur existe déjà et que Supabase le demande.
     let linkType: "magiclink" | "recovery" = "magiclink";
 
     let linkResult = await supabaseAdmin.auth.admin.generateLink({
-      type: "invite",
+      type: "magiclink",
       email: normalizedEmail!,
       options: {
         redirectTo,
@@ -131,6 +134,9 @@ export async function POST(request: Request) {
       },
     });
 
+    // Pour certains messages Supabase (utilisateur déjà enregistré), on préfère
+    // basculer sur un lien de type "recovery" afin de permettre la définition/réinitialisation
+    // du mot de passe, tout en conservant le même redirectTo.
     if (linkResult.error?.message?.includes("already registered")) {
       linkType = "recovery";
       linkResult = await supabaseAdmin.auth.admin.generateLink({

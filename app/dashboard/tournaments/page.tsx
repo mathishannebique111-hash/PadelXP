@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import PageTitle from "../PageTitle";
+import Image from "next/image";
 
 function renderTournamentType(type: string) {
   switch (type) {
@@ -81,6 +82,106 @@ export default async function TournamentsPage() {
 
   if (authError || !user) {
     return redirect("/clubs/login?next=/dashboard/tournaments");
+  }
+
+  // Feature flag : seuls les comptes dont l'email correspond à TOURNAMENTS_DEV_EMAIL
+  // voient la vraie page de gestion de tournois. Pour tous les autres clubs,
+  // on affiche un écran "Arrive bientôt" cohérent avec la landing page clubs.
+  // Déterminer si l'utilisateur courant est autorisé à voir la vraie page tournois.
+  // On supporte plusieurs emails séparés par des virgules et deux variables possibles :
+  // - TOURNAMENTS_DEV_EMAIL (côté serveur)
+  // - NEXT_PUBLIC_TOURNAMENTS_DEV_EMAIL (au cas où tu l'aurais mise en public)
+  const rawDevEmails =
+    process.env.TOURNAMENTS_DEV_EMAIL ||
+    process.env.NEXT_PUBLIC_TOURNAMENTS_DEV_EMAIL ||
+    "";
+  const devEmailList = rawDevEmails
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const userEmail = user.email?.toLowerCase() || null;
+  const isDevViewer =
+    (!!userEmail && devEmailList.includes(userEmail)) ||
+    userEmail === "tcam@gmail.com" ||
+    userEmail === "mathis.hannebique111@gmail.com" ||
+    userEmail === "amiensac@gmail.com";
+
+  logger.info(
+    {
+      userEmailPreview: userEmail ? userEmail.substring(0, 8) + "…" : null,
+      devEmailsConfigured: devEmailList,
+      isDevViewer,
+    },
+    "[dashboard/tournaments] Dev viewer check"
+  );
+
+  if (!isDevViewer) {
+    return (
+      <div className="space-y-6 p-6">
+        <PageTitle
+          title="Tournois"
+          className="flex-1"
+        />
+
+        <div className="flex items-center justify-center">
+          <div className="w-full max-w-3xl rounded-3xl border border-white/15 bg-gradient-to-br from-[#020617] via-[#020617] to-[#0f172a] p-8 md:p-10 shadow-[0_30px_80px_rgba(15,23,42,0.9)] relative overflow-hidden">
+            <div className="pointer-events-none absolute inset-0 opacity-40">
+              <div className="absolute -top-24 -right-32 w-72 h-72 bg-[#0066FF] rounded-full blur-3xl" />
+              <div className="absolute bottom-[-4rem] left-[-2rem] w-64 h-64 bg-[#BFFF00] rounded-full blur-3xl opacity-70" />
+            </div>
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-1 space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 uppercase tracking-[0.25em]">
+                  <span className="text-[11px]">TOURNOIS</span>
+                  <span className="text-xs text-[#BFFF00]">Arrive bientôt</span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-extrabold text-white">
+                  Organisez vos tournois{" "}
+                  <span className="bg-gradient-to-r from-[#BFFF00] to-[#00CC99] bg-clip-text text-transparent">
+                    en quelques clics
+                  </span>
+                </h3>
+                <p className="text-sm md:text-base text-white/70 leading-relaxed">
+                  Bientôt, vous pourrez créer des tournois officiels ou amicaux directement depuis votre
+                  dashboard : tableaux automatiques, suivi en temps réel et communication simplifiée avec vos joueurs.
+                </p>
+                <div className="mt-4 grid gap-3 text-sm text-white/80">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#BFFF00]">•</span>
+                    <span>Création automatique des tableaux de matchs</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#BFFF00]">•</span>
+                    <span>
+                      Les clubs saisissent les scores directement dans les cases des matchs, tout se met à jour en
+                      temps réel
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#BFFF00]">•</span>
+                    <span>
+                      Communication simplifiée avec les joueurs : infos clés du tournoi centralisées au même endroit
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 flex items-center justify-center">
+                <Image
+                  src="/images/Logo.png"
+                  alt="Tournois PadelXP"
+                  width={420}
+                  height={260}
+                  className="rounded-xl object-contain"
+                  unoptimized
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const clubInfo = await getUserClubInfo();

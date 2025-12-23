@@ -163,7 +163,7 @@ export default async function RolesPage() {
                     </div>
                     <div className="shrink-0 flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto">
                       <div className="rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500/30 to-indigo-500/30 border border-blue-400/40 px-2.5 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold text-blue-200 shadow-lg backdrop-blur-sm">
-                        ADMIN
+                        {admin.role === "owner" ? "PROPRIÉTAIRE" : "ADMIN"}
                       </div>
                       {/* Bouton de suppression uniquement pour le propriétaire et seulement pour les admins invités */}
                       {isOwner && admin.role === "admin" && (

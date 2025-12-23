@@ -74,6 +74,16 @@ body {
   font-feature-settings: 'tnum' 1; /* Chiffres tabulaires */
 }
 
+/* Éviter le zoom automatique sur iOS lors du focus des champs de formulaire
+   en s'assurant que les inputs ont une taille de police minimale de 16px. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* Hiérarchie typographique */
 h1 {
   font-size: 2rem; /* 32px */

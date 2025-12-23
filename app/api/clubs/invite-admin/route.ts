@@ -267,7 +267,7 @@ export async function POST(request: Request) {
     // Enregistrer ou mettre à jour l'invitation dans la table club_admins
     // Toujours avec activated_at: null pour que ce soit une invitation en attente
     if (invitedUserId) {
-      // Vérifier si une entrée existe déjà
+      // Vérifier si une entrée existe déjà pour ce user_id
       const { data: existingEntry } = await supabaseAdmin
         .from("club_admins")
         .select("id")
@@ -291,7 +291,7 @@ export async function POST(request: Request) {
           logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", invitedUserId: invitedUserId.substring(0, 8) + "…", error: updateError }, "[invite-admin] Erreur lors de la mise à jour dans club_admins");
         }
       } else {
-        // Créer une nouvelle invitation en attente
+        // Créer une nouvelle invitation en attente liée à ce user_id
         const { error: insertError } = await supabaseAdmin
           .from("club_admins")
           .insert({
@@ -306,6 +306,46 @@ export async function POST(request: Request) {
         if (insertError && insertError.code !== "23505") {
           logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", invitedUserId: invitedUserId.substring(0, 8) + "…", error: insertError }, "[invite-admin] Erreur lors de l'ajout dans club_admins");
           // On ne bloque pas l'invitation même si l'ajout échoue
+        }
+      }
+    } else {
+      // Cas où Supabase n'a pas encore d'user_id (nouvel utilisateur invité).
+      // On crée tout de même une entrée club_admins basée sur l'email,
+      // pour que /api/clubs/admin-invite/reissue puisse la retrouver et régénérer un lien.
+      const { data: existingByEmail } = await supabaseAdmin
+        .from("club_admins")
+        .select("id")
+        .eq("club_id", clubId)
+        .eq("email", normalizedEmail)
+        .maybeSingle();
+
+      if (existingByEmail) {
+        const { error: updateError } = await supabaseAdmin
+          .from("club_admins")
+          .update({
+            invited_at: new Date().toISOString(),
+            activated_at: null,
+            invited_by: user.id,
+          })
+          .eq("id", existingByEmail.id);
+
+        if (updateError) {
+          logger.error({ clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: updateError }, "[invite-admin] Erreur lors de la mise à jour club_admins par email");
+        }
+      } else {
+        const { error: insertError } = await supabaseAdmin
+          .from("club_admins")
+          .insert({
+            club_id: clubId,
+            user_id: null,
+            email: normalizedEmail,
+            role: "admin",
+            invited_by: user.id,
+            activated_at: null,
+          });
+
+        if (insertError && insertError.code !== "23505") {
+          logger.error({ clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: insertError }, "[invite-admin] Erreur lors de la création club_admins par email (sans user_id)");
         }
       }
     }

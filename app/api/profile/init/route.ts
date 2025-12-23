@@ -183,13 +183,16 @@ export async function POST(request: Request) {
       
       // Créer ou activer l'entrée club_admins si elle n'existe pas
       if (!clubAdmin) {
+        // Déterminer le rôle adéquat : "owner" par défaut, mais respecter un éventuel rôle "admin"
+        const desiredRole =
+          (userMetadata.role as string | null)?.toLowerCase() === "admin" ? "admin" : "owner";
         const { error: createAdminError } = await serviceClient
           .from("club_admins")
           .insert({
             club_id: String(clubIdForUser),
             user_id: user.id,
             email: user.email || '',
-            role: 'owner',
+            role: desiredRole,
             invited_by: user.id,
             activated_at: new Date().toISOString(),
           });

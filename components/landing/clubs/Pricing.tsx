@@ -115,7 +115,7 @@ export default function Pricing() {
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-10 transition-opacity blur-lg" />
               </Link>
               <p className="text-white/60 text-sm mt-4">
-                Aucune carte bancaire requise • Activation immédiate • Support inclus
+                Aucune carte bancaire requise • Activation immédiate
               </p>
             </div>
 
@@ -145,8 +145,8 @@ export default function Pricing() {
               <div className="flex items-start gap-3">
                 <span className="text-xl">✅</span>
                 <div>
-                  <div className="text-white font-semibold mb-1">Résultats mesurables</div>
-                  <div className="text-white/70 text-sm">Dashboard complet pour suivre l'engagement et la progression</div>
+                  <div className="text-white font-semibold mb-1">Gain de temps pour l'équipe</div>
+                  <div className="text-white/70 text-sm">Moins d'administratif, plus de temps pour vos membres et l'animation du club</div>
                 </div>
               </div>
             </div>

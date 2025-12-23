@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from '@/lib/logger';
+import Image from "next/image";
 
 type StepStatus = "loading" | "ready" | "error" | "success";
 
@@ -251,9 +252,86 @@ export default function ClientAdminInvite() {
         // Vérifier si une session existe déjà (par exemple après actualisation)
         const { data: existingSession } = await supabase.auth.getSession();
         if (existingSession?.session && !cancelled) {
-          setEmail(existingSession.session.user.email ?? emailParam ?? null);
-          setStatus("ready");
-          return;
+          const sessionEmail = existingSession.session.user.email?.toLowerCase() || null;
+
+          // Ne continuer que si la session correspond bien à l'email de l'invitation
+          if (normalizedEmailParam && sessionEmail === normalizedEmailParam) {
+            setEmail(sessionEmail);
+            setStatus("ready");
+            return;
+          }
+
+          // Si la session courante est sur un autre compte (ex: propriétaire déjà connecté),
+          // on la ferme pour éviter d'écraser son mot de passe.
+          await supabase.auth.signOut().catch(() => {});
+        }
+
+        // Cas de lien sans token ni access_token (ex: ancien lien ou lien copié sans le hash)
+        // Si on a au moins un email, on tente de régénérer un lien d'invitation frais
+        if (!accessToken && !inviteToken && normalizedEmailParam && !hasRetriedRef.current) {
+          hasRetriedRef.current = true;
+          try {
+            const reissueResponse = await fetch("/api/clubs/admin-invite/reissue", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: normalizedEmailParam,
+              }),
+              credentials: "include",
+            });
+
+            if (reissueResponse.ok) {
+              const linkResponse = await reissueResponse.json();
+              logger.info("[clubs/signup] Reissue (no token) response", linkResponse);
+              const { actionLink, email: reissuedEmail } = linkResponse;
+
+              if (typeof window !== "undefined") {
+                if (actionLink) {
+                  // Mémoriser l'email pour les futurs échanges de token
+                  if (reissuedEmail) {
+                    try {
+                      const urlObj = new URL(actionLink);
+                      const tokens: string[] = [];
+                      const searchParamsTokens = [
+                        urlObj.searchParams.get("token"),
+                        urlObj.searchParams.get("token_hash"),
+                      ].filter(Boolean) as string[];
+                      tokens.push(...searchParamsTokens);
+                      const hashParams = new URLSearchParams(
+                        urlObj.hash.startsWith("#") ? urlObj.hash.slice(1) : urlObj.hash
+                      );
+                      const hashTokens = [
+                        hashParams.get("token"),
+                        hashParams.get("token_hash"),
+                      ].filter(Boolean) as string[];
+                      tokens.push(...hashTokens);
+
+                      tokens.forEach((tokenValue) => {
+                        window.localStorage.setItem(
+                          `club_invite_email_${tokenValue}`,
+                          reissuedEmail.toLowerCase()
+                        );
+                      });
+                    } catch (parseError) {
+                      logger.warn("[clubs/signup] Unable to parse reissued action link", parseError);
+                    }
+                  }
+                  // Rediriger vers le lien Supabase qui ajoutera les bons paramètres (token / access_token)
+                  window.location.replace(actionLink);
+                  return;
+                }
+              }
+            } else {
+              const payload = await reissueResponse.json().catch(() => null);
+              throw new Error(payload?.error || "Impossible de régénérer le lien d'invitation.");
+            }
+          } catch (reissueError: any) {
+            logger.error("[clubs/signup] Reissue (no token) error", reissueError);
+            throw new Error(
+              reissueError?.message ||
+                "Lien d'invitation expiré ou déjà utilisé. Demandez-en un nouveau."
+            );
+          }
         }
 
         // Lien incomplet : rediriger vers la connexion club avec message
@@ -299,6 +377,7 @@ export default function ClientAdminInvite() {
         throw updateError;
       }
 
+      // Activer l'invitation admin côté base
       await fetch("/api/clubs/activate-admin", {
         method: "POST",
         credentials: "include",
@@ -306,17 +385,32 @@ export default function ClientAdminInvite() {
         logger.warn("[clubs/signup] activate-admin warning", err);
       });
 
-      await supabase.auth.signOut();
-
-      if (typeof window !== "undefined") {
-        window.sessionStorage.setItem("club_signup_success", "1");
+      // Initialiser le profil / métadonnées club pour ce nouvel admin
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data.session;
+        if (session?.access_token) {
+          await fetch("/api/profile/init", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+          }).catch((initErr) => {
+            logger.warn("[clubs/signup] profile/init warning", initErr);
+          });
+        }
+      } catch (profileErr) {
+        logger.warn("[clubs/signup] profile init after admin invite warning", profileErr);
       }
 
+      // Garder l'utilisateur connecté et le rediriger directement vers le dashboard club
       setStatus("success");
       setTimeout(() => {
-        router.push("/clubs/login");
+        router.replace("/dashboard");
         router.refresh();
-      }, 1500);
+      }, 1000);
     } catch (err: any) {
       logger.error("[clubs/signup] Password setup error:", err);
       setError(err?.message || "Impossible d'enregistrer le mot de passe. Réessayez plus tard.");
@@ -329,7 +423,16 @@ export default function ClientAdminInvite() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
         <div className="max-w-md text-center">
-          <div className="text-3xl mb-4 animate-pulse">🚀</div>
+          <div className="mb-4 flex justify-center animate-pulse">
+            <Image 
+              src="/images/fusée page boost.png" 
+              alt="Invitation en cours" 
+              width={40} 
+              height={40} 
+              className="flex-shrink-0"
+              unoptimized
+            />
+          </div>
           <p className="text-white/70">Validation de votre invitation en cours...</p>
         </div>
       </div>
@@ -340,7 +443,7 @@ export default function ClientAdminInvite() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
         <div className="max-w-md rounded-2xl border border-red-500/40 bg-red-500/10 p-6 text-center">
-          <div className="text-4xl mb-3">😕</div>
+          <div className="text-4xl mb-3">❌</div>
           <h1 className="text-xl font-semibold mb-2">Invitation invalide</h1>
           <p className="text-sm text-white/70 mb-4">
             {error || "Cette invitation n'est plus valide ou a déjà été utilisée."}
