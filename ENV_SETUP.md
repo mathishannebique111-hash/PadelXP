@@ -12,7 +12,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # Resend (pour l'envoi d'emails)
 RESEND_API_KEY=re_xxxxxxxxxxxxx
-RESEND_FROM_EMAIL="PadelLeague <noreply@yourdomain.com>"
+RESEND_FROM_EMAIL="PadelXP <noreply@yourdomain.com>"
 
 # URL de base de l'application
 NEXT_PUBLIC_SITE_URL=http://localhost:3000  # En production: https://yourdomain.com

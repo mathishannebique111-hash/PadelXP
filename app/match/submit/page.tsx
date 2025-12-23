@@ -11,7 +11,7 @@ export default function Home() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500 font-bold text-white">
               P
             </div>
-            <span className="text-lg font-semibold">PadelLeague</span>
+            <span className="text-lg font-semibold">PadelXP</span>
           </Link>
         </nav>
       </header>
@@ -38,7 +38,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t py-8 text-center text-slate-500">
-        © 2025 PadelLeague
+        © 2025 PadelXP
       </footer>
     </div>
   );

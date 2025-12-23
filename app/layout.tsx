@@ -3,7 +3,7 @@ import "./globals.css";
 import CookieConsent from "@/components/cookies/CookieConsent";
 
 export const metadata: Metadata = {
-  title: "PadelLeague",
+  title: "PadelXP",
   description: "Leaderboards, rangs, badges et ligues pour complexes de padel",
   viewport: {
     width: "device-width",

@@ -19,6 +19,7 @@ function SignupForm() {
   const [accept, setAccept] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? sessionStorage.getItem("onboarding_email") || "" : "";
@@ -85,7 +86,23 @@ function SignupForm() {
             <input required placeholder="Nom" className="w-1/2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
           <input required type="email" placeholder="Email pro" className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <input required type="password" placeholder="Mot de passe" className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="relative">
+            <input
+              required
+              type={showPassword ? "text" : "password"}
+              placeholder="Mot de passe"
+              className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 pr-20"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-2 my-1 px-1.5 text-[11px] font-semibold text-white/70 hover:text-white rounded-md bg-white/5 hover:bg-white/10"
+            >
+              {showPassword ? "Masquer" : "Afficher"}
+            </button>
+          </div>
           <label className="flex items-start gap-3 text-sm text-white/80">
             <input type="checkbox" className="mt-1" checked={accept} onChange={(e) => setAccept(e.target.checked)} />
             <span>J’accepte les <a className="underline" href="/legal/terms" target="_blank">Conditions d’utilisation</a> et la <a className="underline" href="/legal/privacy" target="_blank">Politique de confidentialité</a></span>

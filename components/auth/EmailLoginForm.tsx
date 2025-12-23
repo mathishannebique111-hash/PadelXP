@@ -21,6 +21,7 @@ export default function EmailLoginForm({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,14 +120,23 @@ export default function EmailLoginForm({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <input
-        type="password"
-        required
-        placeholder="Mot de passe"
-        className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <div className="relative">
+        <input
+          type={showPassword ? "text" : "password"}
+          required
+          placeholder="Mot de passe"
+          className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 pr-20 text-white placeholder-white/50"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword((v) => !v)}
+          className="absolute inset-y-0 right-2 my-1 px-1.5 text-[11px] font-semibold text-white/70 hover:text-white rounded-md bg-white/5 hover:bg-white/10"
+        >
+          {showPassword ? "Masquer" : "Afficher"}
+        </button>
+      </div>
       {extra}
       <button
         disabled={loading}

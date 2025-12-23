@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
 
     // Informations du prestataire (à compléter avec vos informations)
     const provider = {
-      name: 'PadelXP / PadelLeague',
+      name: 'PadelXP',
       siret: process.env.SIRET_NUMBER || '[À compléter]',
       siren: process.env.SIREN_NUMBER || '[À compléter]',
       vatNumber: process.env.VAT_NUMBER || '[À compléter]',

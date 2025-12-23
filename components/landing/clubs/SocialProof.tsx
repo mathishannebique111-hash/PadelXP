@@ -8,7 +8,7 @@ export default function SocialProof() {
   const testimonials = [
     {
       rating: 5,
-      quote: "Nos membres sont 3x plus engagés depuis qu'on utilise Padel Pro. Le classement crée une vraie émulation et tout le monde suit sa progression en temps réel !",
+      quote: "Nos membres sont 3x plus engagés depuis qu'on utilise Padel XP. Le classement crée une vraie émulation et tout le monde suit sa progression en temps réel !",
       author: "Marc D.",
       role: "Gérant Padel Center Toulouse",
       metric: "+67% d'activité en 3 mois"

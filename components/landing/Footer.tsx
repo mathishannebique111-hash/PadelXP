@@ -68,7 +68,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <div className="text-sm text-white/40 text-center md:text-right">
-            © {new Date().getFullYear()} PadelLeague · Made with 🏆 for padel lovers
+            © {new Date().getFullYear()} PadelXP · Made with 🏆 for padel lovers
           </div>
         </div>
       </div>

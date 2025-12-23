@@ -21,7 +21,7 @@ export async function sendMatchConfirmationEmail(
 
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "PadelLeague <noreply@padelleague.com>",
+      from: process.env.RESEND_FROM_EMAIL || "PadelXP <noreply@padelleague.com>",
       to,
       subject: `🎾 Confirmation de match - ${matchCreatorName}`,
       html: `
@@ -81,7 +81,7 @@ export async function sendAdminInvitationEmail(
 
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "PadelLeague <noreply@padelleague.com>",
+      from: process.env.RESEND_FROM_EMAIL || "PadelXP <noreply@padelleague.com>",
       to,
       subject: `🎾 Invitation à devenir administrateur de ${clubName}`,
       html: `

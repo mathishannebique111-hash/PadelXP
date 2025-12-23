@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "../../app/globals.css";
 
 export const metadata: Metadata = {
-  title: "PadelLeague",
+  title: "PadelXP",
   description: "Leaderboards, rangs, badges et ligues pour complexes de padel",
 };
 

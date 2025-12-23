@@ -21,7 +21,7 @@ export default function LegalPage() {
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">1. Identité de l'entreprise</h2>
             <div className="space-y-2 text-white/80">
-              <p><strong>Dénomination sociale :</strong> [À compléter - PadelXP / PadelLeague]</p>
+              <p><strong>Dénomination sociale :</strong> [À compléter - PadelXP]</p>
               <p><strong>Forme juridique :</strong> [À compléter - SARL, SAS, EURL, Auto-entrepreneur, etc.]</p>
               <p><strong>Numéro SIRET :</strong> [À compléter]</p>
               <p><strong>Numéro SIREN :</strong> [À compléter - si société]</p>

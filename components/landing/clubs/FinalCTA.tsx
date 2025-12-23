@@ -20,7 +20,7 @@ export default function FinalCTA() {
           </h2>
           
           <p className="text-xl text-white/80 mb-8 leading-relaxed">
-            Transformez l'expérience de vos membres dès aujourd'hui avec Padel Pro
+            Transformez l'expérience de vos membres dès aujourd'hui avec Padel XP
           </p>
 
           <div className="space-y-4 mb-8">

@@ -68,7 +68,7 @@ export default function ProblemSolution() {
           <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
             La Solution{" "}
             <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent">
-              Padel Pro
+              Padel XP
             </span>
           </h2>
         </motion.div>

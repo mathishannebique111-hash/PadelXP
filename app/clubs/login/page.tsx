@@ -17,6 +17,7 @@ function ClubsLoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const justCreated = searchParams?.get("created") === "1";
   const errorParam = searchParams?.get("error");
 
@@ -154,16 +155,26 @@ function ClubsLoginForm() {
               <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
                 Mot de passe
               </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                disabled={loading}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-lg bg-white/5 border border-white/10 px-4 py-3 pr-24 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-2 my-1 px-2.5 text-[11px] font-semibold text-white/70 hover:text-white rounded-md bg-white/5 hover:bg-white/10"
+                  disabled={loading}
+                >
+                  {showPassword ? "Masquer" : "Afficher"}
+                </button>
+              </div>
             </div>
 
             <button

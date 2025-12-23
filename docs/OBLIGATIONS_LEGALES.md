@@ -52,7 +52,7 @@
    - Numéro d'agrément/autorisation
 
 4. Pour PadelXP (exemple) :
-   - Nom : PadelXP / PadelLeague
+   - Nom : PadelXP
    - Forme juridique : [À compléter]
    - SIRET : [À compléter]
    - Capital social : [À compléter]
@@ -896,7 +896,7 @@ Date d'émission : 01/01/2025
 Date de la prestation : 01/01/2025 - 31/01/2025
 
 PRESTATAIRE :
-PadelXP / PadelLeague
+PadelXP
 [Adresse complète]
 SIRET : [Votre SIRET]
 TVA Intracommunautaire : FR[Votre numéro TVA]

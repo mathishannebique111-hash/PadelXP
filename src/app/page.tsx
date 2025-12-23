@@ -5,7 +5,7 @@ export default function Home() {
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#3B82F6] font-bold text-white">P</div>
-            <span className="text-lg font-semibold tracking-tight">PadelLeague</span>
+            <span className="text-lg font-semibold tracking-tight">PadelXP</span>
           </a>
           <div className="hidden items-center gap-6 sm:flex">
             <a href="/" className="text-sm text-slate-600 transition-colors hover:text-slate-900">Accueil</a>
@@ -19,7 +19,7 @@ export default function Home() {
         <section className="grid items-center gap-12 lg:grid-cols-2">
           <div>
             <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">Organisez vos ligues de padel</h1>
-            <p className="mt-3 text-lg font-medium text-slate-700">PadelLeague — la plateforme simple et moderne pour vos clubs</p>
+            <p className="mt-3 text-lg font-medium text-slate-700">PadelXP — la plateforme simple et moderne pour vos clubs</p>
             <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-slate-600">Créez des ligues en quelques minutes, suivez un classement en temps réel et gamifiez l’expérience avec rangs et badges. Soumission de match en moins de 30 secondes.</p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -45,7 +45,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-500">© {new Date().getFullYear()} PadelLeague — Tous droits réservés</footer>
+      <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-500">© {new Date().getFullYear()} PadelXP — Tous droits réservés</footer>
     </div>
   );
 }

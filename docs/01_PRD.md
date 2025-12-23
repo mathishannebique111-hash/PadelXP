@@ -1,4 +1,4 @@
-# PadelLeague — PRD, Vision, Stack et Guidelines (MVP)
+# PadelXP — PRD, Vision, Stack et Guidelines (MVP)
 
 Version: 1.0
 Statut: Concept validé → MVP
