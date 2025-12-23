@@ -452,7 +452,7 @@ function GamificationFeature() {
               } else if (badge.title === "Précision") {
                 badgeImage = "/images/Badge.png"; // Badge générique pour Précision
               } else if (badge.title === "Contributeur") {
-                badgeImage = "/images/Badge Contributeur.png";
+                badgeImage = "/images/Commentaire page avis.png";
               }
               
               return (
