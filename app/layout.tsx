@@ -3,6 +3,7 @@ import "./globals.css";
 import CookieConsent from "@/components/cookies/CookieConsent";
 
 
+
 export const metadata: Metadata = {
   title: "PadelXP",
   description: "Leaderboards, rangs, badges et ligues pour complexes de padel",
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -21,6 +23,8 @@ export default function RootLayout({
     <html lang="fr" className="bg-black">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

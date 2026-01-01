@@ -1,5 +1,6 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+
 const config: CapacitorConfig = {
   appId: 'eu.padelxp.player',
   appName: 'PadelXP',
@@ -9,7 +10,11 @@ const config: CapacitorConfig = {
     cleartext: true,
     allowNavigation: ['padelxp.eu']
   },
-  appendUserAgent: 'PadelXPCapacitor'
+  appendUserAgent: 'PadelXPCapacitor',
+  ios: {
+    contentInset: 'always'
+  }
 };
+
 
 export default config;
