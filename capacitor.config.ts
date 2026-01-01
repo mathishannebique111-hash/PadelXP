@@ -8,7 +8,8 @@ const config: CapacitorConfig = {
     url: 'https://padelxp.eu',
     cleartext: true,
     allowNavigation: ['padelxp.eu']
-  }
+  },
+  appendUserAgent: 'PadelXPCapacitor'
 };
 
 export default config;

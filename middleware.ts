@@ -30,7 +30,7 @@ const matchSubmitRatelimit = new Ratelimit({
 
 // Fonction pour détecter l'app mobile Capacitor
 function isCapacitorApp(userAgent: string): boolean {
-  return userAgent.toLowerCase().includes('capacitor');
+  return userAgent.toLowerCase().includes('padelxpcapacitor');
 }
 
 // URLs réservées aux clubs (bloquées dans l'app mobile)
