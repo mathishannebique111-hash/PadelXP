@@ -2,15 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import CookieConsent from "@/components/cookies/CookieConsent";
 
+
 export const metadata: Metadata = {
   title: "PadelXP",
   description: "Leaderboards, rangs, badges et ligues pour complexes de padel",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    viewportFit: "cover",
-  },  
   icons: {
     icon: "/images/flavicon.png",
     shortcut: "/images/flavicon.png",
@@ -18,12 +13,14 @@ export const metadata: Metadata = {
   },
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" className="bg-black">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -197,4 +194,3 @@ export default function RootLayout({
     </html>
   );
 }
-
