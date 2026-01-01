@@ -41,12 +41,71 @@ function computeBadges(row: LeaderboardEntry, streak: number): { icon: string; t
 export default function Leaderboard({ initialData, currentUserId }: Props) {
   const supabase = createClientComponentClient();
   const [streak, setStreak] = useState<Record<string, number>>({});
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(initialData);
+
+  // Recharger les données du leaderboard périodiquement et après les événements de match
+  useEffect(() => {
+    const reloadLeaderboard = async () => {
+      try {
+        const response = await fetch("/api/leaderboard", {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.leaderboard) {
+            setLeaderboardData(data.leaderboard);
+          }
+        }
+      } catch (error) {
+        // En cas d'erreur, garder les données initiales
+        console.error("Error reloading leaderboard:", error);
+      }
+    };
+
+    // Recharger immédiatement au montage pour avoir les dernières données
+    reloadLeaderboard();
+
+    // Écouter les événements de soumission de match (événement personnalisé pour le même onglet)
+    const handleMatchSubmitted = () => {
+      reloadLeaderboard();
+    };
+
+    // Écouter les événements storage pour la communication cross-tab
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "matchSubmitted" && e.newValue === "true") {
+        reloadLeaderboard();
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("matchSubmitted", handleMatchSubmitted);
+      window.addEventListener("storage", handleStorageChange);
+
+      // Recharger également si le flag est déjà présent (même onglet)
+      if (localStorage.getItem("matchSubmitted") === "true") {
+        reloadLeaderboard();
+        localStorage.removeItem("matchSubmitted");
+      }
+
+      // Recharger toutes les 30 secondes pour avoir les dernières données
+      const interval = setInterval(reloadLeaderboard, 30000);
+
+      return () => {
+        window.removeEventListener("matchSubmitted", handleMatchSubmitted);
+        window.removeEventListener("storage", handleStorageChange);
+        clearInterval(interval);
+      };
+    }
+  }, []);
 
   const rows = useMemo(() => {
-    // Utiliser les points issus de la vue SQL (inclut bonus premier avis)
-    const sorted = [...initialData].sort((a, b) => b.points - a.points || b.wins - a.wins || a.matches - b.matches);
+    // Utiliser les données dynamiques au lieu de initialData
+    const sorted = [...leaderboardData].sort((a, b) => b.points - a.points || b.wins - a.wins || a.matches - b.matches);
     return sorted.map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [initialData]);
+  }, [leaderboardData]);
 
   useEffect(() => {
     let cancelled = false;

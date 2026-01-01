@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PadelXP</string>
+    <string name="title_activity_main">PadelXP</string>
+    <string name="package_name">eu.padelxp.player</string>
+    <string name="custom_url_scheme">eu.padelxp.player</string>
+</resources>

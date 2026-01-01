@@ -22,14 +22,34 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6">
       <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-8">
         <h1 className="text-2xl font-extrabold mb-2">Connexion</h1>
         <p className="text-white/60 mb-6 text-sm">Connectez-vous à votre compte pour accéder à votre espace.</p>
         <EmailLoginForm />
         <div className="mt-4 text-center text-sm text-white/70">
-          Pas encore de compte ? <Link href="/player/signup" className="underline">S'inscrire en tant que joueur</Link>
+          Pas encore de compte ?{" "}
+          <Link href="/player/signup" className="underline">
+            S'inscrire en tant que joueur
+          </Link>
         </div>
+      </div>
+      <div className="mt-6 text-[11px] text-white/50 flex flex-wrap justify-center gap-3">
+        <Link href="/player/legal" className="hover:text-white underline-offset-2 hover:underline">
+          Mentions légales joueurs
+        </Link>
+        <span>•</span>
+        <Link href="/player/terms" className="hover:text-white underline-offset-2 hover:underline">
+          CGU joueurs
+        </Link>
+        <span>•</span>
+        <Link href="/player/privacy" className="hover:text-white underline-offset-2 hover:underline">
+          Confidentialité joueurs
+        </Link>
+        <span>•</span>
+        <Link href="/player/cookies" className="hover:text-white underline-offset-2 hover:underline">
+          Cookies joueurs
+        </Link>
       </div>
     </div>
   );

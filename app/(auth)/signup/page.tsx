@@ -105,10 +105,45 @@ function SignupForm() {
           </div>
           <label className="flex items-start gap-3 text-sm text-white/80">
             <input type="checkbox" className="mt-1" checked={accept} onChange={(e) => setAccept(e.target.checked)} />
-            <span>J’accepte les <a className="underline" href="/legal/terms" target="_blank">Conditions d’utilisation</a> et la <a className="underline" href="/legal/privacy" target="_blank">Politique de confidentialité</a></span>
+            <span>
+              J’accepte les{" "}
+              <a className="underline" href="/terms" target="_blank">
+                Conditions d’utilisation
+              </a>{" "}
+              et la{" "}
+              <a className="underline" href="/privacy" target="_blank">
+                Politique de confidentialité
+              </a>
+            </span>
           </label>
-              <button disabled={loading} className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#00CC99] to-[#0066FF] font-semibold disabled:opacity-60">Continuer</button>
+          <button
+            disabled={loading}
+            className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#00CC99] to-[#0066FF] font-semibold disabled:opacity-60"
+          >
+            Continuer
+          </button>
         </form>
+        <div className="mt-6 text-[11px] text-white/50 flex flex-wrap justify-center gap-3">
+          <a href="/legal" className="hover:text-white underline-offset-2 hover:underline">
+            Mentions légales clubs
+          </a>
+          <span>•</span>
+          <a href="/terms" className="hover:text-white underline-offset-2 hover:underline">
+            CGU clubs
+          </a>
+          <span>•</span>
+          <a href="/cgv" className="hover:text-white underline-offset-2 hover:underline">
+            CGV
+          </a>
+          <span>•</span>
+          <a href="/privacy" className="hover:text-white underline-offset-2 hover:underline">
+            Confidentialité clubs
+          </a>
+          <span>•</span>
+          <a href="/cookies" className="hover:text-white underline-offset-2 hover:underline">
+            Cookies clubs
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -104,7 +104,7 @@ function ClubsLoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white px-6 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6 py-12">
       <div className="w-full max-w-md">
         {/* Logo et titre */}
         <div className="text-center mb-8">
@@ -115,7 +115,7 @@ function ClubsLoginForm() {
         </div>
 
         {/* Formulaire de connexion */}
-        <div className="rounded-2xl bg-white/5 border border-white/20 p-8 backdrop-blur-sm">
+        <div className="rounded-2xl bg-white/5 border border-white p-8 backdrop-blur-sm">
           <h2 className="text-2xl font-bold mb-2">Connexion</h2>
           <p className="text-white/60 mb-6 text-sm">
             Connectez-vous à votre compte club / complexe
@@ -194,6 +194,27 @@ function ClubsLoginForm() {
               ← Retour à la page d'accueil
             </Link>
           </div>
+        </div>
+        <div className="mt-6 text-[11px] text-white/50 flex flex-wrap justify-center gap-3">
+          <Link href="/legal" className="hover:text-white underline-offset-2 hover:underline">
+            Mentions légales clubs
+          </Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-white underline-offset-2 hover:underline">
+            CGU clubs
+          </Link>
+          <span>•</span>
+          <Link href="/cgv" className="hover:text-white underline-offset-2 hover:underline">
+            CGV
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-white underline-offset-2 hover:underline">
+            Confidentialité clubs
+          </Link>
+          <span>•</span>
+          <Link href="/cookies" className="hover:text-white underline-offset-2 hover:underline">
+            Cookies clubs
+          </Link>
         </div>
       </div>
     </div>

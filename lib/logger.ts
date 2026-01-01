@@ -9,6 +9,12 @@ const isTest = process.env.NODE_ENV === 'test';
 const pinoConfig: pino.LoggerOptions = {
   level: isTest ? 'silent' : (isDev ? 'debug' : 'info'),
   
+  // Désactiver hostname et pid pour réduire la taille des logs et améliorer les performances
+  base: {
+    hostname: false,
+    pid: false,
+  },
+  
   // Format de base sans pino-pretty pour éviter les erreurs de worker
   formatters: {
     level: (label) => {

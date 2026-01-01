@@ -9,9 +9,11 @@ export default function ClientLogin() {
   const [clubInfo, setClubInfo] = useState<{ name: string; slug: string; invitationCode: string; code: string }>({ name: "", slug: "", invitationCode: "", code: "" });
   const [showClubInvalid, setShowClubInvalid] = useState(false);
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/20 p-8">
+    <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white p-8">
       <h1 className="text-2xl font-extrabold mb-2">Inscription joueur</h1>
-      <p className="text-white/60 mb-6 text-sm">Créez votre compte, puis associez‑le à votre club / complexe avec le code d’invitation.</p>
+      <p className="text-white/60 mb-6 text-sm">
+        Créez votre compte, puis associez‑le à votre club / complexe avec le code d’invitation.
+      </p>
       <EmailSignupForm
         extra={
           <div className="pt-2">

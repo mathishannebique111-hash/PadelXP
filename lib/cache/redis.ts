@@ -26,3 +26,13 @@ export async function cacheSet(key: string, value: any, ttlSeconds: number = 300
   }
 }
 
+export async function cacheDelete(key: string) {
+  if (!redis) return false
+  try {
+    await redis.del(key)
+    return true
+  } catch (error) {
+    return false
+  }
+}
+

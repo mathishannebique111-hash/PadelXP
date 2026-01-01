@@ -116,19 +116,24 @@ export default function PlayerClubGate({
   return (
     <div className="space-y-3">
       <label className="block text-sm text-white/70">Club / complexe</label>
-      <select
-        value={selectedSlug}
-        onChange={(e) => {
-          const slug = e.target.value;
-          setSelectedSlug(slug);
-        }}
-        className="w-full rounded-md bg-white/5 border border-white/10 px-3 pr-8 py-2 text-white"
-      >
-        <option value="">Sélectionnez votre club / complexe</option>
-        {clubs.map((c) => (
-          <option key={c.slug} value={c.slug}>{c.name}</option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          value={selectedSlug}
+          onChange={(e) => {
+            const slug = e.target.value;
+            setSelectedSlug(slug);
+          }}
+          className="w-full appearance-none rounded-md bg-white/5 border border-white px-3 pr-10 py-2 text-white"
+        >
+          <option value="">Sélectionnez votre club / complexe</option>
+          {clubs.map((c) => (
+            <option key={c.slug} value={c.slug}>{c.name}</option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-white/70">
+          ▼
+        </div>
+      </div>
 
       <label className="block text-sm text-white/70">Code d’invitation</label>
       <input

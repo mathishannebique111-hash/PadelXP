@@ -1074,6 +1074,13 @@ export default function MatchForm({
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
           
+          // Définir un flag pour indiquer qu'un match a été soumis (pour recharger le leaderboard)
+          if (typeof window !== "undefined") {
+            localStorage.setItem("matchSubmitted", "true");
+            // Déclencher un événement personnalisé pour recharger le leaderboard même dans le même onglet
+            window.dispatchEvent(new Event("matchSubmitted"));
+          }
+          
           setShowSuccess(true);
           setLoading(false);
           // Redirection automatique seulement si pas d'avertissement
@@ -1149,6 +1156,12 @@ export default function MatchForm({
               <button
                 onClick={() => {
                   setWarningMessage(null);
+                  // Définir un flag pour indiquer qu'un match a été soumis (pour recharger le leaderboard)
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("matchSubmitted", "true");
+                    // Déclencher un événement personnalisé pour recharger le leaderboard même dans le même onglet
+                    window.dispatchEvent(new Event("matchSubmitted"));
+                  }
                   // Rediriger vers l'historique après avoir cliqué sur "Compris"
                   setTimeout(() => {
                     logger.info("🔄 Redirecting to match history...");

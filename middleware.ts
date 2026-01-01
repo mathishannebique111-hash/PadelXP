@@ -168,11 +168,17 @@ export async function middleware(req: NextRequest) {
     "/dashboard", 
     "/player/login", 
     "/player/signup", 
+    // Pages légales clubs (déjà publiques)
     "/terms", 
     "/privacy", 
     "/legal", 
     "/cgv", 
     "/cookies", 
+    // Pages légales joueurs (à rendre accessibles sans connexion)
+    "/player/legal",
+    "/player/terms",
+    "/player/privacy",
+    "/player/cookies",
     "/about", 
     "/contact"
   ]);

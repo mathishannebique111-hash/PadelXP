@@ -50,9 +50,9 @@ export default function CGVPage() {
                 formules suivantes :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li><strong>Formule Mensuelle :</strong> 49 € TTC / mois (40,83 € HT + 8,17 € TVA)</li>
-                <li><strong>Formule Trimestrielle :</strong> 137 € TTC / 3 mois (114,17 € HT)</li>
-                <li><strong>Formule Annuelle :</strong> 490 € TTC / an (408,33 € HT)</li>
+                <li><strong>Formule Mensuelle :</strong> 99 € TTC / mois</li>
+                <li><strong>Formule Trimestrielle :</strong> 89 € TTC / mois</li>
+                <li><strong>Formule Annuelle :</strong> 82 € TTC / mois</li>
               </ul>
               <p>
                 Le nombre de membres utilisant la plateforme est illimité pour toutes les formules.
@@ -119,7 +119,7 @@ export default function CGVPage() {
             <div className="space-y-2 text-white/80">
               <p>
                 <strong>Vous pouvez résilier votre abonnement à tout moment, sans préavis, gratuitement,</strong> 
-                via votre espace client dans la section "Facturation" ou par email à contact@padelxp.com.
+                via votre compte club dans la section "Abonnement et essai" ou par email à contactpadelxp@gmail.com.
               </p>
               <p>
                 La résiliation prend effet à la date de renouvellement prévue. Vous conservez l'accès 

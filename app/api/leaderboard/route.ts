@@ -105,7 +105,7 @@ export async function GET() {
     }
 
     if (filteredParticipants.length === 0) {
-      return NextResponse.json({ leaderboard: []       });
+      return NextResponse.json({ leaderboard: [] });
     }
 
     // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour
@@ -244,7 +244,14 @@ export async function GET() {
 
     logger.info({ userId: user.id.substring(0, 8) + "…", clubId: userClubId.substring(0, 8) + "…", playersCount: sortedLeaderboard.length }, '✅ Leaderboard calculated');
 
-    return NextResponse.json({ leaderboard: sortedLeaderboard });
+    // Désactiver le cache pour garantir des données à jour
+    return NextResponse.json({ leaderboard: sortedLeaderboard }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     logger.error({ error }, '❌ Unexpected error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
