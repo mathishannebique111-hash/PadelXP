@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import MatchForm from "@/components/MatchForm";
 import PageTitle from "@/components/PageTitle";
@@ -16,6 +17,8 @@ const supabaseAdmin = createAdminClient(
     },
   }
 );
+
+export const dynamic = 'force-dynamic';
 
 export default async function NewMatchPage({
   searchParams,
@@ -109,11 +112,23 @@ export default async function NewMatchPage({
         <div className="mb-6">
           <PageTitle title="Matchs" />
         </div>
-        <MatchTabs
-          activeTab={activeTab}
-          recordContent={<MatchForm selfId={user.id} />}
-          historyContent={<MatchHistoryContent />}
-        />
+        <Suspense fallback={
+          <div className="w-full">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
+              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
+              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
+            </div>
+            <div className="mt-4 sm:mt-6 flex items-center justify-center">
+              <div className="text-white/60">Chargement...</div>
+            </div>
+          </div>
+        }>
+          <MatchTabs
+            activeTab={activeTab}
+            recordContent={<MatchForm selfId={user.id} />}
+            historyContent={<MatchHistoryContent />}
+          />
+        </Suspense>
       </div>
     </div>
   );
