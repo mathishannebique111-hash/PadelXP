@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-type NavKey = "home" | "match" | "history" | "badges" | "club" | "challenges" | "reviews" | "boost";
+type NavKey = "home" | "match" | "challenges" | "reviews" | "boost";
 
 export default function NavigationBar({ currentPage }: { currentPage?: NavKey }) {
   // Styles de base responsive : plus petits sur mobile, normaux sur desktop
@@ -28,18 +28,6 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
             unoptimized 
           />
           <span className={label}>Enregistrer un match</span>
-        </Link>
-        <Link href="/matches/history" className={`${base} ${currentPage === "history" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Historique%20des%20matchs%20joueur.png?v=12" alt="Historique des matchs" width={16} height={16} className={iconClass} unoptimized />
-          <span className={label}>Historique des matchs</span>
-        </Link>
-        <Link href="/badges" className={`${base} ${currentPage === "badges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/Badge.png?v=11" alt="Badges" width={16} height={16} className={iconClass} unoptimized />
-          <span className={label}>Badges</span>
-        </Link>
-        <Link href="/club" className={`${base} ${currentPage === "club" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <Image src="/images/mon-club.png" alt="Mon club" width={14} height={14} className="w-3.5 h-3.5 sm:w-[14px] sm:h-[14px] object-contain flex-shrink-0" unoptimized />
-          <span className={label}>Club</span>
         </Link>
         <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <Image src="/images/Objectif%20page%20avis.png?v=9" alt="Challenges" width={16} height={16} className={iconClass} unoptimized />

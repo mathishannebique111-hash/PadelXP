@@ -3,7 +3,7 @@ import BadgeIcon from "../icons/BadgeIcon";
 import BadgeIconDisplay from "../BadgeIconDisplay";
 import Image from "next/image";
 
-type NavKey = "home" | "match" | "history" | "badges" | "club" | "challenges" | "reviews";
+type NavKey = "home" | "match" | "challenges" | "reviews";
 
 export default function NavigationBar({ currentPage }: { currentPage?: NavKey }) {
   const base = "inline-flex items-center justify-between rounded-xl px-5 py-2.5 text-sm font-semibold transition-all backdrop-blur border";
@@ -21,18 +21,6 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
         <Link href="/match/new" className={`${base} ${currentPage === "match" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <span className={label}>Enregistrer un match</span>
           <BadgeIconDisplay icon="🎾" size={18} className={icon} />
-        </Link>
-        <Link href="/matches/history" className={`${base} ${currentPage === "history" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Historique des matchs</span>
-          <span className={icon}>📊</span>
-        </Link>
-        <Link href="/badges" className={`${base} ${currentPage === "badges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Badges</span>
-          <BadgeIcon size={18} className="ml-2 opacity-90" />
-        </Link>
-        <Link href="/club" className={`${base} ${currentPage === "club" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
-          <span className={label}>Club</span>
-          <span className={icon}>🏢</span>
         </Link>
         <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em" }}>
           <span className={label}>Challenges</span>

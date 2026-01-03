@@ -1,12 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import PageTitle from "@/components/PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import { logger } from '@/lib/logger';
-export const dynamic = "force-dynamic";
 
-// Créer un client admin pour bypass RLS dans les requêtes critiques
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -18,31 +15,18 @@ const supabaseAdmin = createAdminClient(
   }
 );
 
-export default async function MatchHistoryPage() {
+export default async function MatchHistoryContent() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  
   if (!user) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        
-        {/* Pattern animé - halos de la landing page */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-10 text-white">
-          <h1 className="text-xl font-semibold">Accès restreint</h1>
-          <Link href="/login" className="text-blue-400 underline">Se connecter</Link>
-        </div>
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
+        <p>Vous devez être connecté pour consulter l'historique des matchs.</p>
+        <Link href="/login" className="text-blue-400 underline mt-2 inline-block">Se connecter</Link>
       </div>
     );
   }
-
-  // supabase déjà instancié ci-dessus
 
   // Récupérer le club_id de l'utilisateur
   const { data: userProfile } = await supabase
@@ -78,25 +62,8 @@ export default async function MatchHistoryPage() {
 
   if (!userClubId) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        
-        {/* Pattern animé - halos de la landing page */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <PageTitle title="Historique des matchs" />
-          </div>
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
-            <p>Vous devez être rattaché à un club pour consulter l'historique des matchs. Contactez votre club / complexe pour obtenir le code d'invitation.</p>
-          </div>
-        </div>
+      <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
+        <p>Vous devez être rattaché à un club pour consulter l'historique des matchs. Contactez votre club / complexe pour obtenir le code d'invitation.</p>
       </div>
     );
   }
@@ -116,28 +83,11 @@ export default async function MatchHistoryPage() {
 
   if (!userParticipations || userParticipations.length === 0) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        
-        {/* Pattern animé - halos de la landing page */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <PageTitle title="Historique des matchs" />
-          </div>
-          <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
-            <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-            <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-              Enregistrer un match
-            </Link>
-          </div>
-        </div>
+      <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
+        <p className="text-white/80">Aucun match enregistré pour le moment.</p>
+        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+          Enregistrer un match
+        </Link>
       </div>
     );
   }
@@ -149,28 +99,11 @@ export default async function MatchHistoryPage() {
 
   if (matchIds.length === 0) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        
-        {/* Pattern animé - halos de la landing page */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <PageTitle title="Historique des matchs" />
-          </div>
-          <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
-            <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-            <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-              Enregistrer un match
-            </Link>
-          </div>
-        </div>
+      <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
+        <p className="text-white/80">Aucun match enregistré pour le moment.</p>
+        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+          Enregistrer un match
+        </Link>
       </div>
     );
   }
@@ -183,7 +116,6 @@ export default async function MatchHistoryPage() {
     .order("created_at", { ascending: false });
   
   // Transformer les données pour générer winner_team et score formaté
-  // (on filtrera les matchs après avoir vérifié les participants)
   const transformedMatches = (allMatches || []).map((match: any) => {
     const winner_team = match.winner_team_id === match.team1_id ? 1 : 2;
     const score = `${match.score_team1 || 0}-${match.score_team2 || 0}`;
@@ -202,37 +134,18 @@ export default async function MatchHistoryPage() {
 
   if (!transformedMatches || transformedMatches.length === 0) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        
-        {/* Pattern animé - halos de la landing page */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8 text-white">
-          <div className="mb-6">
-            <PageTitle title="Historique des matchs" />
-          </div>
-          <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
-            <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-            <Link href="/match/new" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-              Enregistrer un match
-            </Link>
-          </div>
-        </div>
+      <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
+        <p className="text-white/80">Aucun match enregistré pour le moment.</p>
+        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+          Enregistrer un match
+        </Link>
       </div>
     );
   }
 
-  // Récupérer les détails de tous les participants pour chaque match (users et guests)
-  // Utiliser une approche sans jointures pour éviter les problèmes RLS
+  // Récupérer les détails de tous les participants pour chaque match
   logger.info("[MatchHistory] Fetching participants for match IDs:", matchIds);
   
-  // Récupérer d'abord les participants sans jointures
   const { data: participantsSimple, error: simpleError } = await supabase
     .from("match_participants")
     .select("match_id, user_id, player_type, guest_player_id, team")
@@ -240,12 +153,6 @@ export default async function MatchHistoryPage() {
 
   if (simpleError) {
     logger.error("❌ Error fetching participants:", simpleError);
-    logger.error("❌ Error details:", {
-      message: simpleError.message,
-      details: simpleError.details,
-      hint: simpleError.hint,
-      code: simpleError.code,
-    });
   }
 
   let allParticipants: any[] = participantsSimple || [];
@@ -255,13 +162,11 @@ export default async function MatchHistoryPage() {
   
   // Enrichir avec les noms des joueurs
   if (allParticipants.length > 0) {
-    // Récupérer les IDs uniques des users et guests
     const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
     const guestIds = [...new Set(allParticipants.filter(p => p.player_type === "guest" && p.guest_player_id).map(p => p.guest_player_id))];
     
     logger.info("[MatchHistory] Enriching with names - User IDs:", userIds.length, "Guest IDs:", guestIds.length);
     
-    // Récupérer les profils des users (filtrés par club) - utiliser admin pour bypass RLS
     const profilesMap = new Map<string, string>();
     if (userIds.length > 0) {
       let profilesQuery = supabaseAdmin
@@ -269,7 +174,6 @@ export default async function MatchHistoryPage() {
         .select("id, display_name")
         .in("id", userIds);
       
-      // Filtrer par club_id si disponible
       if (userClubId) {
         profilesQuery = profilesQuery.eq("club_id", userClubId);
       }
@@ -277,17 +181,7 @@ export default async function MatchHistoryPage() {
       const { data: profiles, error: profilesError } = await profilesQuery;
       
       if (profilesError) {
-        const errorDetails = {
-          message: profilesError.message || "Unknown error",
-          details: profilesError.details || null,
-          hint: profilesError.hint || null,
-          code: profilesError.code || null
-        };
-        if (!errorDetails.message && !errorDetails.details && !errorDetails.hint && !errorDetails.code) {
-          logger.error("❌ Error fetching profiles:", profilesError);
-        } else {
-          logger.error("❌ Error fetching profiles:", errorDetails);
-        }
+        logger.error("❌ Error fetching profiles:", profilesError);
       } else if (profiles) {
         profiles.forEach(p => {
           profilesMap.set(p.id, p.display_name);
@@ -296,7 +190,6 @@ export default async function MatchHistoryPage() {
       }
     }
     
-    // Récupérer les guest players
     const guestsMap = new Map<string, { first_name: string; last_name: string }>();
     if (guestIds.length > 0) {
       const { data: guests, error: guestsError } = await supabase
@@ -312,22 +205,19 @@ export default async function MatchHistoryPage() {
       }
     }
     
-    // Créer un Set des userIds valides (du même club)
     const validUserIds = new Set(profilesMap.keys());
     
-    // Filtrer les participants pour ne garder que ceux du même club
     const filteredParticipants = userClubId 
       ? allParticipants.filter((p: any) => {
           if (p.player_type === "user" && p.user_id) {
             return validUserIds.has(p.user_id);
           }
-          return p.player_type === "guest"; // Garder les guests
+          return p.player_type === "guest";
         })
       : allParticipants;
     
     logger.info("[MatchHistory] Participants after club filtering:", filteredParticipants.length);
     
-    // Filtrer les matchs : ne garder que ceux où TOUS les participants users appartiennent au même club
     const participantsByMatchTemp = filteredParticipants.reduce((acc: Record<string, any[]>, p: any) => {
       if (!acc[p.match_id]) {
         acc[p.match_id] = [];
@@ -338,7 +228,6 @@ export default async function MatchHistoryPage() {
     
     const validMatchIds = new Set<string>();
     Object.entries(participantsByMatchTemp).forEach(([matchId, participants]: [string, any[]]) => {
-      // Vérifier que tous les participants users appartiennent au même club
       const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
       const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
       
@@ -351,10 +240,8 @@ export default async function MatchHistoryPage() {
     
     logger.info("[MatchHistory] Valid matches (all users in same club):", validMatchIds.size);
     
-    // Filtrer les participants pour ne garder que ceux des matchs valides
     const finalFilteredParticipants = filteredParticipants.filter((p: any) => validMatchIds.has(p.match_id));
     
-    // Enrichir les participants avec les noms
     const enrichedParticipants = finalFilteredParticipants.map(p => {
       const enriched: any = { ...p };
       
@@ -371,10 +258,8 @@ export default async function MatchHistoryPage() {
     
     logger.info("[MatchHistory] Participants enriched:", enrichedParticipants.length);
     
-    // Mettre à jour allParticipants avec les participants enrichis
     allParticipants = enrichedParticipants;
     
-    // Préparer participantsByMatch pour affichage
     participantsByMatch = enrichedParticipants.reduce((acc: Record<string, any[]>, participant: any) => {
       if (!acc[participant.match_id]) {
         acc[participant.match_id] = [];
@@ -392,14 +277,10 @@ export default async function MatchHistoryPage() {
     }, {});
   }
 
-  // Filtrer les matchs pour ne garder que ceux où tous les participants appartiennent au même club
-  // (utiliser validMatchIds si disponible, sinon utiliser tous les matchs)
   let validMatchIdsForDisplay: Set<string>;
   if (validMatchIds.size > 0 && userClubId) {
-    // validMatchIds a été créé dans le bloc précédent et contient les matchs valides
     validMatchIdsForDisplay = validMatchIds;
   } else {
-    // Si pas de filtrage par club ou pas de matchs valides, utiliser tous les matchs
     validMatchIdsForDisplay = new Set(transformedMatches.map((m: any) => m.id));
   }
   
@@ -407,13 +288,11 @@ export default async function MatchHistoryPage() {
   
   logger.info("[MatchHistory] Final matches after filtering:", finalMatches.length);
 
-  // Créer un map pour accéder rapidement à la team du joueur pour chaque match
   const userTeamByMatch: Record<string, number> = {};
   userParticipations.forEach((p: any) => {
     userTeamByMatch[p.match_id] = p.team;
   });
 
-  // Calculer les stats du joueur uniquement sur les matchs valides
   let totalWins = 0;
   let totalLosses = 0;
   finalMatches.forEach((match: any) => {
@@ -424,22 +303,7 @@ export default async function MatchHistoryPage() {
   });
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-      {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-      
-        {/* Pattern animé - halos de la landing page */}
-        <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        </div>
-
-      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-8 pb-8">
-        <div className="mb-6">
-          <PageTitle title="Historique des matchs" />
-        </div>
-
+    <>
       {/* Stats globales */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl bg-white p-4">
@@ -573,8 +437,7 @@ export default async function MatchHistoryPage() {
           );
         })}
       </div>
-      </div>
-    </div>
+    </>
   );
 }
 

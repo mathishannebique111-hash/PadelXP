@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import MatchForm from "@/components/MatchForm";
 import PageTitle from "@/components/PageTitle";
+import MatchTabs from "@/components/MatchTabs";
+import MatchHistoryContent from "@/components/MatchHistoryContent";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
 
@@ -15,9 +17,15 @@ const supabaseAdmin = createAdminClient(
   }
 );
 
-export default async function NewMatchPage() {
+export default async function NewMatchPage({
+  searchParams,
+}: {
+  searchParams?: { tab?: string };
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const activeTab = searchParams?.tab === 'history' ? 'history' : 'record';
+  
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-10">
@@ -73,9 +81,9 @@ export default async function NewMatchPage() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 sm:pt-8 pb-8 text-white">
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-20 sm:pt-8 pb-8 text-white">
           <div className="mb-6">
-            <PageTitle title="Enregistrer un match" />
+            <PageTitle title="Matchs" />
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
             <p>Vous devez être rattaché à un club pour enregistrer un match. Demandez à votre club / complexe de vous inviter ou utilisez le code d'invitation depuis l'espace joueur.</p>
@@ -97,11 +105,15 @@ export default async function NewMatchPage() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 md:pt-8 pb-8">
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-20 md:pt-8 pb-8">
         <div className="mb-6">
-          <PageTitle title="Enregistrer un match" />
+          <PageTitle title="Matchs" />
         </div>
-        <MatchForm selfId={user.id} />
+        <MatchTabs
+          activeTab={activeTab}
+          recordContent={<MatchForm selfId={user.id} />}
+          historyContent={<MatchHistoryContent />}
+        />
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import LogoutButton from './LogoutButton';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -11,9 +11,6 @@ import { logger } from '@/lib/logger';
 type NavKey =
   | "home"
   | "match"
-  | "history"
-  | "badges"
-  | "club"
   | "tournaments"
   | "challenges"
   | "reviews"
@@ -29,6 +26,7 @@ interface MenuItem {
 export default function PlayerSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // FORCER l'affichage immédiatement, y compris avant l'hydratation complète
   // Utiliser plusieurs timers pour garantir l'affichage même si l'un échoue
@@ -115,9 +113,6 @@ export default function PlayerSidebar() {
   const menuItems: MenuItem[] = [
     { href: '/home', label: 'Profil', icon: getIconPath('Profil.png'), navKey: 'home' },
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
-    { href: '/matches/history', label: 'Historique des matchs', icon: getIconPath('Historique des matchs joueur.png', 12), navKey: 'history' },
-    { href: '/badges', label: 'Badges', icon: getIconPath('Badge.png', 11), navKey: 'badges' },
-    { href: '/club', label: 'Mon club', icon: getIconPath('mon-club.png'), navKey: 'club' },
     { href: '/tournaments', label: 'Tournois', icon: getIconPath('Trophée page badges.png'), navKey: 'tournaments' },
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
@@ -126,11 +121,18 @@ export default function PlayerSidebar() {
 
   // Déterminer la page active
   const getCurrentPage = (): NavKey | undefined => {
-    if (pathname === '/home') return 'home';
-    if (pathname === '/match/new') return 'match';
-    if (pathname === '/matches/history') return 'history';
-    if (pathname === '/badges') return 'badges';
-    if (pathname === '/club') return 'club';
+    // Vérifier d'abord les cas avec onglets
+    if (pathname === '/home') {
+      const tab = searchParams?.get('tab');
+      if (tab === 'badges') return 'badges';
+      if (tab === 'club') return 'club';
+      return 'home';
+    }
+    if (pathname === '/match/new') {
+      const tab = searchParams?.get('tab');
+      if (tab === 'history') return 'history';
+      return 'match';
+    }
     if (pathname === '/tournaments') return 'tournaments';
     if (pathname === '/challenges') return 'challenges';
     if (pathname === '/reviews') return 'reviews';
@@ -254,15 +256,15 @@ export default function PlayerSidebar() {
                 }`}
               >
                 <div
-                  className={`flex-shrink-0 flex items-center justify-center ${item.navKey === 'club' ? 'w-[18px] h-[18px]' : 'w-5 h-5'}`}
+                  className="flex-shrink-0 flex items-center justify-center w-5 h-5"
                 >
                   <Image 
                     key={`${item.navKey}-${item.icon}`}
                     src={item.icon} 
                     alt={item.label} 
-                    width={item.navKey === 'club' ? 18 : 20}
-                    height={item.navKey === 'club' ? 18 : 20}
-                    className={`object-contain ${item.navKey === 'club' ? 'w-[18px] h-[18px]' : 'w-5 h-5'}`}
+                    width={20}
+                    height={20}
+                    className="object-contain w-5 h-5"
                     unoptimized
                     style={{ 
                       opacity: 1,
