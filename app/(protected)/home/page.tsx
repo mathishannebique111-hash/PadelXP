@@ -378,84 +378,7 @@ export default async function HomePage() {
                   </span>
                 <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
               </div>
-              <div className="hidden md:flex items-end justify-center gap-4 md:gap-6 w-full mt-6 md:mt-8">
-                <div className="flex-1 max-w-[240px]">
-                  <div 
-                        className="podium-silver border-4 border-slate-400/80 rounded-2xl p-8 shadow-lg relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
-                    }}
-                  >
-                        <div className="absolute top-2 right-2 z-30">
-                          <span className="text-3xl md:text-4xl lg:text-5xl">🥈</span>
-                        </div>
-                    <div className="text-center relative z-10 pt-5">
-                          <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight">
-                        {leaderboard[1].player_name}
-                      </h3>
-                      <div className="flex items-center justify-center mt-4">
-                        <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-zinc-500 ring-2 ring-zinc-300 shadow-lg shadow-zinc-300/70">
-                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[1].points.toLocaleString()}</span>
-                          <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-1 max-w-[280px]">
-                  <div 
-                        className="podium-gold border-4 border-yellow-500/80 rounded-2xl p-9 shadow-xl relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)',
-                      boxShadow: '0 6px 25px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 140px rgba(255, 215, 0, 0.4), inset 0 2px 6px rgba(255,255,255,0.6)'
-                    }}
-                  >
-                        <div className="absolute top-2 right-2 z-30">
-                          <span className="text-3xl md:text-4xl lg:text-5xl">🥇</span>
-                        </div>
-                    <div className="absolute top-1 left-1 z-20">
-                      <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold shadow-sm border border-yellow-300">Meilleur joueur</span>
-                    </div>
-                    <div className="text-center relative z-10 pt-6">
-                          <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight drop-shadow-sm">
-                        {leaderboard[0].player_name}
-                      </h3>
-                      <div className="flex items-center justify-center mt-4">
-                        <div className="inline-flex items-center gap-3 rounded-full px-6 py-2.5 bg-white/95 backdrop-blur border-2 border-yellow-500 ring-2 ring-yellow-300 shadow-xl shadow-yellow-300/70">
-                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[0].points.toLocaleString()}</span>
-                          <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex-1 max-w-[240px]">
-                  <div 
-                        className="podium-bronze border-4 border-orange-600/80 rounded-2xl p-8 shadow-lg relative overflow-hidden"
-                    style={{
-                      background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.35), inset 0 2px 4px rgba(255,255,255,0.5)'
-                    }}
-                  >
-                        <div className="absolute top-2 right-2 z-30">
-                          <span className="text-3xl md:text-4xl lg:text-5xl">🥉</span>
-                        </div>
-                    <div className="text-center relative z-10 pt-5">
-                          <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-gray-900 tracking-tight">
-                            {(() => { var parts = (leaderboard[2].player_name || '').split(' '); var f = parts[0] || ''; var l = parts.slice(1).join(' '); return (<span><span className="text-2xl md:text-3xl">{f}</span>{l ? ' ' + l : ''}</span>); })()}
-                      </h3>
-                      <div className="flex items-center justify-center mt-4">
-                        <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 bg-white/95 backdrop-blur border-2 border-orange-500 ring-2 ring-orange-300 shadow-lg shadow-orange-300/70">
-                          <span className="text-2xl font-bold text-gray-900 tabular-nums">{leaderboard[2].points.toLocaleString()}</span>
-                          <span className="text-xs font-normal text-gray-800 uppercase tracking-wider">points</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="md:hidden space-y-3 sm:space-y-4 mt-4 sm:mt-6">
+              <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-4 sm:mt-6">
                 {leaderboard.slice(0, 3).map(function(player, index) {
                       var medalEmojis = ['🥇', '🥈', '🥉'];
                   var borderColors = [
@@ -463,7 +386,7 @@ export default async function HomePage() {
                     'border-slate-400/80',
                     'border-orange-600/80'
                   ];
-                  var borderWidth = 'border-4';
+                  var borderWidth = 'border-2 sm:border-2 md:border-2';
                   var shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
                   var bgGradients = [
                     { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
@@ -471,18 +394,18 @@ export default async function HomePage() {
                     { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
                   ];
                   return (
-                    <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl p-5 shadow-2xl relative overflow-hidden')} style={bgGradients[index]}>
-                          <div className="absolute top-2 right-2 z-30">
-                            <span className="text-3xl md:text-4xl">{medalEmojis[index]}</span>
+                    <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-xl sm:rounded-xl md:rounded-2xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]')} style={bgGradients[index]}>
+                          <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
+                            <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl">{medalEmojis[index]}</span>
                           </div>
-                      <div className="relative z-10 pt-4">
-                            <h3 className={"font-extrabold mb-6 text-center text-gray-900 " + (index === 0 ? 'text-2xl' : index === 1 ? 'text-2xl' : 'text-2xl')}>
-                              {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-2xl">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}
+                      <div className="relative z-10 pt-3 sm:pt-4 md:pt-5">
+                            <h3 className="font-extrabold mb-2 sm:mb-3 md:mb-4 text-center text-gray-900 text-xs sm:text-sm md:text-base lg:text-lg leading-tight line-clamp-2">
+                              {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-xs sm:text-sm md:text-base lg:text-lg">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}
                         </h3>
-                        <div className="flex items-center justify-center mt-2">
-                          <div className={"inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-white/95 backdrop-blur border-2 shadow-lg " + (index === 0 ? 'border-yellow-500 ring-2 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-2 ring-zinc-300' : 'border-orange-500 ring-2 ring-orange-300')}>
-                            <span className="text-2xl font-bold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
-                            <span className="text-xs font-normal text-gray-900 uppercase tracking-wider">points</span>
+                        <div className="flex items-center justify-center">
+                          <div className={"inline-flex items-center gap-1 sm:gap-1.5 md:gap-2 rounded-full px-2 sm:px-2.5 md:px-3 lg:px-4 py-1 sm:py-1.5 md:py-2 bg-white/95 backdrop-blur border shadow-md " + (index === 0 ? 'border-yellow-500 ring-1 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-1 ring-zinc-300' : 'border-orange-500 ring-1 ring-orange-300')}>
+                            <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
+                            <span className="text-[9px] sm:text-[10px] md:text-xs font-normal text-gray-900 uppercase tracking-wider">pts</span>
                           </div>
                         </div>
                       </div>

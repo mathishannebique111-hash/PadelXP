@@ -331,15 +331,15 @@ export default async function BillingPage() {
   const adminContact = user.email;
 
   // Calculer les prix automatiquement
-  const MONTHLY_PRICE = 99;
+  const MONTHLY_PRICE = 79;
   const QUARTERLY_DISCOUNT = 0.10; // 10%
-  const ANNUAL_DISCOUNT = 0.17; // 17%
+  const ANNUAL_DISCOUNT = 0.15; // 15%
 
-  const quarterlyMonthlyPrice = MONTHLY_PRICE * (1 - QUARTERLY_DISCOUNT); // 89.10€
-  const quarterlyTotalPrice = quarterlyMonthlyPrice * 3; // 267.30€
+  const quarterlyMonthlyPrice = 71; // 71€/mois
+  const quarterlyTotalPrice = 237; // 237€ pour 3 mois
 
-  const annualMonthlyPrice = MONTHLY_PRICE * (1 - ANNUAL_DISCOUNT); // 82.17€
-  const annualTotalPrice = annualMonthlyPrice * 12; // 986.04€
+  const annualMonthlyPrice = 67; // 67€/mois
+  const annualTotalPrice = 804; // 804€ par an
 
   // Informations sur une activation programmée après l'essai
   const hasScheduledActivation =
@@ -595,7 +595,7 @@ export default async function BillingPage() {
               </div>
             </div>
             <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-              <div className="text-xs sm:text-sm text-emerald-300 font-extrabold">Économisez 10% par rapport à l'offre mensuelle</div>
+              <div className="text-xs sm:text-sm text-emerald-300 font-extrabold">Économisez {Math.round((1 - quarterlyMonthlyPrice / MONTHLY_PRICE) * 100)}% par rapport à l'offre mensuelle</div>
               <div className="flex items-center">
                 <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
                 <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation tous les 3 mois</div>
@@ -642,13 +642,6 @@ export default async function BillingPage() {
                 </span>
               </div>
             )}
-            {currentPlan !== "annual" && (
-              <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                <span className="rounded-full border-2 border-yellow-400/80 bg-gradient-to-r from-yellow-500 to-amber-600 px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-xs sm:text-sm font-extrabold text-white shadow-lg">
-                  2 mois gratuits
-                </span>
-              </div>
-            )}
             <div className="mb-3 sm:mb-4">
               <h3 className="text-lg sm:text-xl font-extrabold text-white">Annuel</h3>
             </div>
@@ -662,7 +655,7 @@ export default async function BillingPage() {
               </div>
             </div>
             <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-              <div className="text-xs sm:text-sm text-yellow-300 font-extrabold">Économisez 17% par rapport à l'offre mensuelle</div>
+              <div className="text-xs sm:text-sm text-yellow-300 font-extrabold">Économisez {Math.round((1 - annualMonthlyPrice / MONTHLY_PRICE) * 100)}% par rapport à l'offre mensuelle</div>
               <div className="flex items-center">
                 <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
                 <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation annuelle</div>
