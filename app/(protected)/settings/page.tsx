@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PageTitle from "@/components/PageTitle";
 import DeleteAccountButton from "@/components/settings/DeleteAccountButton";
 
-export default function SettingsPage() {
+function SettingsContent() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
       {/* Background avec overlay */}
@@ -27,6 +28,14 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }
 
