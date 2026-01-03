@@ -50,6 +50,8 @@ function formatDateRange(start: string, end: string) {
   return `${startStr} – ${endStr}`;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function PublicTournamentsPage() {
   const supabase = await createClient();
 
