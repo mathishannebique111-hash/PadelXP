@@ -5,12 +5,14 @@ import { Redis } from "@upstash/redis";
 import { logger } from "@/lib/logger";
 
 
+
 const generalRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(1000, "15 m"),
   analytics: true,
   prefix: "ratelimit:general",
 });
+
 
 
 const loginRatelimit = new Ratelimit({
@@ -21,6 +23,7 @@ const loginRatelimit = new Ratelimit({
 });
 
 
+
 const matchSubmitRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(5, "5 m"),
@@ -28,10 +31,12 @@ const matchSubmitRatelimit = new Ratelimit({
   prefix: "ratelimit:match",
 });
 
+
 // Fonction pour détecter l'app mobile Capacitor
 function isCapacitorApp(userAgent: string): boolean {
   return userAgent.toLowerCase().includes('padelxpcapacitor');
 }
+
 
 // URLs réservées aux clubs (bloquées dans l'app mobile)
 const CLUB_ONLY_URLS = [
@@ -53,6 +58,21 @@ const CLUB_ONLY_URLS = [
   "/dashboard/aide",
 ];
 
+// URLs réservées aux joueurs (bloquées sur le web en production)
+const PLAYER_ONLY_URLS = [
+  "/player/signup",
+  "/player/login",
+  "/player/dashboard",
+  "/player/profile",
+  "/player/settings",
+  "/player/stats",
+  "/player/matches",
+  "/player/badges",
+  "/leaderboard",
+  "/matches/submit",
+];
+
+
 
 export async function middleware(req: NextRequest) {
   // Exclure les webhooks Stripe du middleware
@@ -64,13 +84,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+
   // Normaliser le pathname
   const { pathname } = req.nextUrl;
   const normalizedPathname = pathname.endsWith("/") && pathname !== "/" 
     ? pathname.slice(0, -1) 
     : pathname;
 
-  // BLOQUER LES URLs CLUB DANS L'APP MOBILE (avant tout le reste)
+
+  // BLOQUER LES URLs CLUB DANS L'APP MOBILE
   const userAgent = req.headers.get('user-agent') || '';
   if (isCapacitorApp(userAgent)) {
     const isClubUrl = CLUB_ONLY_URLS.some(url => 
@@ -85,14 +107,36 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // BLOQUER LES URLs JOUEURS SUR LE WEB (selon variable d'environnement)
+  if (!isCapacitorApp(userAgent)) {
+    // Vérifier si le blocage est activé (true en production, false en local/preview)
+    const blockPlayersOnWeb = process.env.BLOCK_PLAYERS_ON_WEB === 'true';
+    
+    if (blockPlayersOnWeb) {
+      const isPlayerUrl = PLAYER_ONLY_URLS.some(url => 
+        normalizedPathname === url || normalizedPathname.startsWith(url + '/')
+      );
+      
+      if (isPlayerUrl) {
+        logger.info({ path: normalizedPathname }, "[Middleware] Player URL blocked on website");
+        const url = req.nextUrl.clone();
+        url.pathname = "/download";
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
+
 
   // RATE LIMITING - Appliqué avant toute autre logique
   const ip = req.ip ?? req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
   const pathnameForRateLimit = normalizedPathname;
 
 
+
   // Variables pour stocker les informations de rate limiting (pour les headers de réponse)
   let rateLimitInfo: { limit: string; remaining: number; reset: number } | null = null;
+
 
 
   try {
@@ -107,6 +151,7 @@ export async function middleware(req: NextRequest) {
       }
       rateLimitInfo = { limit: "5", remaining, reset };
     }
+
 
 
     // Rate limiting pour la soumission de matchs
@@ -137,6 +182,7 @@ export async function middleware(req: NextRequest) {
       rateLimitId = rateLimitId || ip;
 
 
+
       const { success, remaining, reset } = await matchSubmitRatelimit.limit(rateLimitId);
       if (!success) {
         return NextResponse.json(
@@ -146,6 +192,7 @@ export async function middleware(req: NextRequest) {
       }
       rateLimitInfo = { limit: "5", remaining, reset };
     }
+
 
 
     // Rate limiting général pour toutes les routes API
@@ -171,6 +218,7 @@ export async function middleware(req: NextRequest) {
   }
 
 
+
   // 2) Laisser passer le cron, l'API d'email et les webhooks
   if (
     normalizedPathname.startsWith("/api/cron/trial-check") ||
@@ -181,6 +229,7 @@ export async function middleware(req: NextRequest) {
   ) {
     return NextResponse.next();
   }
+
 
 
   // Définir les routes publiques AVANT toute vérification d'authentification
@@ -211,6 +260,7 @@ export async function middleware(req: NextRequest) {
     "/dashboard", 
     "/player/login", 
     "/player/signup",
+    "/download",  // NOUVEAU : page de téléchargement app
     "/terms", 
     "/privacy", 
     "/legal", 
@@ -231,6 +281,7 @@ export async function middleware(req: NextRequest) {
   const isApiRoute = normalizedPathname.startsWith("/api/");
 
 
+
   // Si la route est publique, laisser passer immédiatement
   if (isPublic) {
     const publicResponse = NextResponse.next();
@@ -243,6 +294,7 @@ export async function middleware(req: NextRequest) {
   }
 
 
+
   const res = NextResponse.next();
   
   if (rateLimitInfo) {
@@ -250,6 +302,7 @@ export async function middleware(req: NextRequest) {
     res.headers.set("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
     res.headers.set("X-RateLimit-Reset", rateLimitInfo.reset.toString());
   }
+
 
 
   const supabase = createServerClient(
@@ -271,10 +324,12 @@ export async function middleware(req: NextRequest) {
   );
 
 
+
   const {
     data: { session },
     error: sessionError,
   } = await supabase.auth.getSession();
+
 
 
   // Vérifier l'inactivité
@@ -315,6 +370,7 @@ export async function middleware(req: NextRequest) {
   }
 
 
+
   // Vérifier l'expiration de la session
   if (session?.expires_at) {
     const now = Math.floor(Date.now() / 1000);
@@ -337,10 +393,12 @@ export async function middleware(req: NextRequest) {
   }
 
 
+
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
+
 
 
   if (!user && !session && isProtected) {
@@ -353,6 +411,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url);
     }
   }
+
 
 
   if (session && !user && userError) {
@@ -375,6 +434,7 @@ export async function middleware(req: NextRequest) {
   }
 
 
+
   if (user && (normalizedPathname === "/signup" || normalizedPathname === "/login")) {
     const url = req.nextUrl.clone();
     url.pathname = "/home";
@@ -382,8 +442,10 @@ export async function middleware(req: NextRequest) {
   }
 
 
+
   return res;
 }
+
 
 
 export const config = {

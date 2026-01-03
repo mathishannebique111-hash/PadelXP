@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 
+
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -77,7 +78,13 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addVariant }: any) {
+      addVariant('is-app', '.is-app &');
+      addVariant('is-web', '.is-web &');
+    }
+  ],
 };
+
 
 export default config;
