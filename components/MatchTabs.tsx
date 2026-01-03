@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 type TabType = 'record' | 'history';
@@ -11,7 +11,7 @@ interface MatchTabsProps {
   historyContent: React.ReactNode;
 }
 
-export default function MatchTabs({ 
+function MatchTabsContent({ 
   activeTab = 'record',
   recordContent,
   historyContent 
@@ -60,6 +60,24 @@ export default function MatchTabs({
         {currentTab === 'history' && <div>{historyContent}</div>}
       </div>
     </div>
+  );
+}
+
+export default function MatchTabs(props: MatchTabsProps) {
+  return (
+    <Suspense fallback={
+      <div className="w-full">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
+        </div>
+        <div className="mt-4 sm:mt-6 flex items-center justify-center">
+          <div className="text-white/60">Chargement...</div>
+        </div>
+      </div>
+    }>
+      <MatchTabsContent {...props} />
+    </Suspense>
   );
 }
 

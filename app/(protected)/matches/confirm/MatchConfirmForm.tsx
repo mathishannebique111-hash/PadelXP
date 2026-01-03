@@ -1,19 +1,11 @@
-import { Suspense } from "react";
-import MatchConfirmForm from "./MatchConfirmForm";
+"use client";
 
-export const dynamic = 'force-dynamic';
+import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 
-export default function MatchConfirmPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-white">Chargement...</div>
-      </div>
-    }>
-      <MatchConfirmForm />
-    </Suspense>
-  );
-}
+export default function MatchConfirmForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
@@ -143,18 +135,6 @@ export default function MatchConfirmPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function MatchConfirmPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-white">Chargement...</div>
-      </div>
-    }>
-      <MatchConfirmForm />
-    </Suspense>
   );
 }
 

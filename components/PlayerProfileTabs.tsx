@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 type TabType = 'stats' | 'leaderboard' | 'club' | 'badges';
@@ -13,7 +13,7 @@ interface PlayerProfileTabsProps {
   badgesContent: React.ReactNode;
 }
 
-export default function PlayerProfileTabs({ 
+function PlayerProfileTabsContent({ 
   activeTab = 'stats',
   statsContent,
   leaderboardContent,
@@ -68,6 +68,26 @@ export default function PlayerProfileTabs({
         {currentTab === 'badges' && <div>{badgesContent}</div>}
       </div>
     </div>
+  );
+}
+
+export default function PlayerProfileTabs(props: PlayerProfileTabsProps) {
+  return (
+    <Suspense fallback={
+      <div className="w-full">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes stats</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Classement global</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon club</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
+        </div>
+        <div className="mt-4 sm:mt-6 flex items-center justify-center">
+          <div className="text-white/60">Chargement...</div>
+        </div>
+      </div>
+    }>
+      <PlayerProfileTabsContent {...props} />
+    </Suspense>
   );
 }
 
