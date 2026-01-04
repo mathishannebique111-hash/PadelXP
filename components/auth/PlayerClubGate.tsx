@@ -114,8 +114,8 @@ export default function PlayerClubGate({
   }, [isValid, onValidChange, onChange, selectedClub, expectedCode, code]);
 
   return (
-    <div className="space-y-3">
-      <label className="block text-xs text-white/70 mb-1">
+    <div className="space-y-2.5">
+      <label className="block text-[10px] text-white/70 mb-0.5">
         Club / complexe <span className="text-red-400">*</span>
       </label>
       <div className="relative">
@@ -125,31 +125,31 @@ export default function PlayerClubGate({
             const slug = e.target.value;
             setSelectedSlug(slug);
           }}
-          className="w-full appearance-none rounded-md bg-white/5 border border-white px-3 pr-10 py-2 text-white"
+          className="w-full appearance-none rounded-md bg-white/5 border border-white px-2.5 pr-8 py-1.5 text-sm text-white"
         >
           <option value="">Sélectionnez votre club / complexe</option>
           {clubs.map((c) => (
             <option key={c.slug} value={c.slug}>{c.name}</option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-white/70">
+        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[10px] text-white/70">
           ▼
         </div>
       </div>
 
-      <label className="block text-xs text-white/70 mb-1">
+      <label className="block text-[10px] text-white/70 mb-0.5">
         Code d'invitation <span className="text-red-400">*</span>
       </label>
       <input
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="Saisir le code reçu"
-        className={`w-full rounded-md px-3 py-2 text-white placeholder-white/40 border ${
+        className={`w-full rounded-md px-2.5 py-1.5 text-sm text-white placeholder-white/40 border ${
           isValid ? 'bg-white/5 border-white/10' : showInvalidState ? 'bg-white/5 border-red-400' : 'bg-white/5 border-white/10'
         }`}
       />
       {!isValid && code.length > 0 && selectedSlug && showInvalidState && (
-        <div className="text-xs mt-1 text-red-400">Le code ne correspond pas au club sélectionné.</div>
+        <div className="text-[10px] mt-0.5 text-red-400">Le code ne correspond pas au club sélectionné.</div>
       )}
     </div>
   );

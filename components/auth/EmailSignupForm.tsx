@@ -325,66 +325,66 @@ export default function EmailSignupForm({
   };
 
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-3">
-      {error && <div className="rounded-md border border-red-400 bg-red-900/20 px-3 py-2 text-sm text-red-400">{error}</div>}
+    <form onSubmit={onSubmit} className="mt-4 space-y-2.5">
+      {error && <div className="rounded-md border border-red-400 bg-red-900/20 px-2.5 py-1.5 text-xs text-red-400">{error}</div>}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         <div>
-          <label className="block text-xs text-white/70 mb-1">
+          <label className="block text-[10px] text-white/70 mb-0.5">
             Prénom <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
             required
             placeholder="Prénom"
-            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
           />
         </div>
         <div>
-          <label className="block text-xs text-white/70 mb-1">
+          <label className="block text-[10px] text-white/70 mb-0.5">
             Nom <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
             required
             placeholder="Nom"
-            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
           />
         </div>
       </div>
       <div>
-        <label className="block text-xs text-white/70 mb-1">
+        <label className="block text-[10px] text-white/70 mb-0.5">
           Email <span className="text-red-400">*</span>
         </label>
         <input
           type="email"
           required
           placeholder="Email"
-          className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+          className="w-full rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div className="relative">
-        <label className="block text-xs text-white/70 mb-1">
+        <label className="block text-[10px] text-white/70 mb-0.5">
           Mot de passe <span className="text-red-400">*</span>
         </label>
         <input
           type={showPassword ? "text" : "password"}
           required
           placeholder="Mot de passe"
-          className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 pr-14 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+          className="w-full rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5 pr-12 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
         <button
           type="button"
           onClick={() => setShowPassword((v) => !v)}
-          className="absolute top-1/2 -translate-y-1/2 right-2 px-2 py-1 text-[10px] font-semibold text-white/70 hover:text-white rounded bg-white/5 hover:bg-white/10"
+          className="absolute top-1/2 -translate-y-1/2 right-2 px-1.5 py-0.5 text-[9px] font-semibold text-white/70 hover:text-white rounded bg-white/5 hover:bg-white/10"
         >
           {showPassword ? "Masquer" : "Afficher"}
         </button>
