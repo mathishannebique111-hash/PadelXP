@@ -115,7 +115,9 @@ export default function PlayerClubGate({
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm text-white/70">Club / complexe</label>
+      <label className="block text-xs text-white/70 mb-1">
+        Club / complexe <span className="text-red-400">*</span>
+      </label>
       <div className="relative">
         <select
           value={selectedSlug}
@@ -135,7 +137,9 @@ export default function PlayerClubGate({
         </div>
       </div>
 
-      <label className="block text-sm text-white/70">Code d’invitation</label>
+      <label className="block text-xs text-white/70 mb-1">
+        Code d'invitation <span className="text-red-400">*</span>
+      </label>
       <input
         value={code}
         onChange={(e) => setCode(e.target.value)}

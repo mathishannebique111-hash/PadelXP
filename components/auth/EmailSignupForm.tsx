@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
 import { logger } from '@/lib/logger';
+import ProfilePhotoUpload from "./ProfilePhotoUpload";
 
 type PrecheckResult =
   | boolean
@@ -42,6 +43,8 @@ export default function EmailSignupForm({
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   // Validation du code de parrainage en temps réel
   const validateReferralCode = async (code: string) => {
@@ -116,6 +119,7 @@ export default function EmailSignupForm({
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setPhotoError(null);
     try {
       // Validation des champs prénom et nom
       if (!firstName.trim() || !lastName.trim()) {
@@ -123,6 +127,7 @@ export default function EmailSignupForm({
         setLoading(false);
         return;
       }
+
 
       // Si un code de parrainage est fourni, vérifier qu'il est valide
       if (referralCode.trim().length > 0) {
@@ -243,6 +248,55 @@ export default function EmailSignupForm({
           // On peut aussi stocker dans sessionStorage pour afficher immédiatement
           sessionStorage.setItem("referral_reward_received", "true");
         }
+
+        // Uploader la photo de profil après l'attachement au club
+        if (profilePhoto && accessToken) {
+          try {
+            // Convertir le fichier en base64
+            const base64Data = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const result = reader.result as string;
+                const base64 = result.split(',')[1];
+                resolve(base64);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(profilePhoto);
+            });
+
+            const photoResponse = await fetch('/api/player/profile-photo', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                photo_payload: {
+                  data: base64Data,
+                  mime: profilePhoto.type,
+                  filename: profilePhoto.name,
+                },
+              }),
+            });
+
+            if (!photoResponse.ok) {
+              const errorData = await photoResponse.json().catch(() => ({}));
+              logger.error('[EmailSignup] Failed to upload profile photo:', photoResponse.status, errorData);
+              // Ne pas bloquer l'inscription si l'upload de la photo échoue
+            } else {
+              logger.info('[EmailSignup] Profile photo uploaded successfully');
+            }
+          } catch (photoError) {
+            logger.error('[EmailSignup] Error uploading profile photo:', photoError);
+            // Ne pas bloquer l'inscription si l'upload de la photo échoue
+          }
+        }
+
+        if (afterAuth) {
+          try { await afterAuth(precheckContext); } catch {}
+        }
+        router.replace(customRedirect || redirectTo);
       } catch (attachError) {
         logger.error('[EmailSignup] Error attaching club:', attachError);
         if (attachError instanceof Error) {
@@ -258,11 +312,6 @@ export default function EmailSignupForm({
         setLoading(false);
         return;
       }
-
-      if (afterAuth) {
-        try { await afterAuth(precheckContext); } catch {}
-      }
-      router.replace(customRedirect || redirectTo);
     } catch (e: any) {
       logger.error("[EmailSignup] Unexpected error:", e);
       // Améliorer le message d'erreur pour l'utilisateur
@@ -280,48 +329,77 @@ export default function EmailSignupForm({
       {error && <div className="rounded-md border border-red-400 bg-red-900/20 px-3 py-2 text-sm text-red-400">{error}</div>}
 
       <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-white/70 mb-1">
+            Prénom <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="Prénom"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/70 mb-1">
+            Nom <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="Nom"
+            className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs text-white/70 mb-1">
+          Email <span className="text-red-400">*</span>
+        </label>
         <input
-          type="text"
+          type="email"
           required
-          placeholder="Prénom"
+          placeholder="Email"
           className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-        <input
-          type="text"
-          required
-          placeholder="Nom"
-          className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </div>
-      <input
-        type="email"
-        required
-        placeholder="Email"
-        className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
       <div className="relative">
+        <label className="block text-xs text-white/70 mb-1">
+          Mot de passe <span className="text-red-400">*</span>
+        </label>
         <input
           type={showPassword ? "text" : "password"}
           required
           placeholder="Mot de passe"
-          className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 pr-20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+          className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 pr-14 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
         <button
           type="button"
           onClick={() => setShowPassword((v) => !v)}
-          className="absolute inset-y-0 right-2 my-1 px-1.5 text-[11px] font-semibold text-white/70 hover:text-white rounded-md bg-white/5 hover:bg-white/10"
+          className="absolute top-1/2 -translate-y-1/2 right-2 px-2 py-1 text-[10px] font-semibold text-white/70 hover:text-white rounded bg-white/5 hover:bg-white/10"
         >
           {showPassword ? "Masquer" : "Afficher"}
         </button>
       </div>
+
+      {/* Champ photo de profil (optionnel) */}
+      <ProfilePhotoUpload
+        value={profilePhoto}
+        onChange={(file) => {
+          setProfilePhoto(file);
+          setPhotoError(null);
+        }}
+        error={photoError || undefined}
+        required={false}
+      />
       
       {/* Champ code de parrainage (optionnel) */}
       <div>
