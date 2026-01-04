@@ -60,12 +60,20 @@ function PlayerProfileTabsContent({
         ))}
       </div>
 
-      {/* Contenu des onglets */}
+      {/* Contenu des onglets - GARDER TOUS MONTÉS pour les event listeners */}
       <div className="mt-4 sm:mt-6">
-        {currentTab === 'stats' && <div>{statsContent}</div>}
-        {currentTab === 'leaderboard' && <div>{leaderboardContent}</div>}
-        {currentTab === 'club' && <div>{clubContent}</div>}
-        {currentTab === 'badges' && <div>{badgesContent}</div>}
+        <div style={{ display: currentTab === 'stats' ? 'block' : 'none' }}>
+          {statsContent}
+        </div>
+        <div style={{ display: currentTab === 'leaderboard' ? 'block' : 'none' }}>
+          {leaderboardContent}
+        </div>
+        <div style={{ display: currentTab === 'club' ? 'block' : 'none' }}>
+          {clubContent}
+        </div>
+        <div style={{ display: currentTab === 'badges' ? 'block' : 'none' }}>
+          {badgesContent}
+        </div>
       </div>
     </div>
   );

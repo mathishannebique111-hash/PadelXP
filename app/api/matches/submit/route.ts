@@ -9,7 +9,7 @@ import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { consumeBoostForMatch, canPlayerUseBoost, getPlayerBoostCreditsAvailable } from "@/lib/utils/boost-utils";
 import { logger } from "@/lib/logger"; // ✅ AJOUTÉ
 import { updateEngagementMetrics, checkAutoExtensionEligibility, grantAutoExtension } from "@/lib/trial-hybrid";
-import { cacheDelete } from "@/lib/cache/redis";
+import { cacheDelete, cacheSet } from "@/lib/cache/redis";
 
 
 const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
@@ -616,40 +616,19 @@ try {
     }
 
 
-    // Invalider le cache du leaderboard pour tous les clubs concernés
-    const userIdsForCache = participants.filter(p => p.player_type === 'user').map(p => p.user_id);
-    if (userIdsForCache.length > 0) {
-      const { data: participantProfilesForCache } = await supabaseAdmin
-        .from("profiles")
-        .select("club_id")
-        .in("id", userIdsForCache);
-      
-      if (participantProfilesForCache) {
-        const clubIdsForCache = Array.from(new Set(participantProfilesForCache.map(p => p.club_id).filter(Boolean)));
-        for (const clubId of clubIdsForCache) {
-          try {
-            const cacheKey = `leaderboard:${clubId}`;
-            await cacheDelete(cacheKey);
-            logger.info("Leaderboard cache invalidated", { clubId: clubId.substring(0, 8) + "..." });
-          } catch (cacheError) {
-            logger.warn("Cache invalidation failed", { 
-              clubId: clubId?.substring(0, 8) + "...",
-              error: (cacheError as Error).message 
-            });
-          }
-        }
-      }
-    }
+    // CACHE DÉSACTIVÉ TEMPORAIREMENT - pas besoin d'invalider
+    logger.info("Match submitted successfully, leaderboard will recalculate on next fetch");
 
     try {
       logger.info("Revalidating paths"); // ✅ REMPLACÉ
+      // Revalider /home en premier pour s'assurer que le classement global est mis à jour
+      revalidatePath("/home", "page");
       revalidatePath("/dashboard");
       revalidatePath("/dashboard/historique");
       revalidatePath("/dashboard/classement");
       revalidatePath("/dashboard/membres");
       revalidatePath("/challenges");
       revalidatePath("/");
-      revalidatePath("/home");
       revalidatePath("/matches/history");
       revalidatePath("/boost");
       logger.info("All paths revalidated successfully"); // ✅ REMPLACÉ

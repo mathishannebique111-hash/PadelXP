@@ -1074,15 +1074,45 @@ export default function MatchForm({
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
           
-          // Définir un flag pour indiquer qu'un match a été soumis (pour recharger le leaderboard)
+          // Forcer le rechargement du classement
           if (typeof window !== "undefined") {
-            localStorage.setItem("matchSubmitted", "true");
-            // Déclencher un événement personnalisé pour recharger le leaderboard même dans le même onglet
-            window.dispatchEvent(new Event("matchSubmitted"));
+            console.log('[MatchForm] ✅ Match enregistré ! Rechargement du classement...');
+            
+            // Marquer le timestamp du match dans localStorage (pour le polling et cross-tab)
+            const matchTime = Date.now();
+            localStorage.setItem('lastMatchTime', matchTime.toString());
+            localStorage.setItem('matchSubmitted', 'true');
+            
+            // Dispatch l'événement custom (pour les composants sur la même page)
+            const event = new CustomEvent("matchSubmitted", { 
+              detail: { 
+                timestamp: matchTime,
+                matchId: data.match?.id 
+              } 
+            });
+            window.dispatchEvent(event);
+            
+            // Forcer le rechargement de toutes les pages Next.js
+            router.refresh();
+            
+            // Forcer le rechargement de la page /home si elle est ouverte dans un autre onglet
+            // En utilisant un événement storage (fonctionne cross-tab)
+            setTimeout(() => {
+              localStorage.removeItem('matchSubmitted');
+            }, 100);
+            
+            console.log('[MatchForm] ✅ Rechargement déclenché');
           }
           
           setShowSuccess(true);
           setLoading(false);
+          
+          // Forcer le rechargement de la page /home pour mettre à jour le classement
+          // Attendre un peu pour que le match soit bien sauvegardé en DB
+          setTimeout(() => {
+            router.refresh();
+          }, 500);
+          
           // Redirection automatique seulement si pas d'avertissement
           setTimeout(() => {
             logger.info("🔄 Redirecting to match history...");
@@ -1156,11 +1186,33 @@ export default function MatchForm({
               <button
                 onClick={() => {
                   setWarningMessage(null);
-                  // Définir un flag pour indiquer qu'un match a été soumis (pour recharger le leaderboard)
+                  // Forcer le rechargement du classement
                   if (typeof window !== "undefined") {
-                    localStorage.setItem("matchSubmitted", "true");
-                    // Déclencher un événement personnalisé pour recharger le leaderboard même dans le même onglet
-                    window.dispatchEvent(new Event("matchSubmitted"));
+                    console.log('[MatchForm] ✅ Match confirmé ! Rechargement du classement...');
+                    
+                    // Marquer le timestamp du match dans localStorage (pour le polling et cross-tab)
+                    const matchTime = Date.now();
+                    localStorage.setItem('lastMatchTime', matchTime.toString());
+                    localStorage.setItem('matchSubmitted', 'true');
+                    
+                    // Dispatch l'événement custom (pour les composants sur la même page)
+                    const event = new CustomEvent("matchSubmitted", { 
+                      detail: { 
+                        timestamp: matchTime
+                      } 
+                    });
+                    window.dispatchEvent(event);
+                    
+                    // Forcer le rechargement de toutes les pages Next.js
+                    router.refresh();
+                    
+                    // Forcer le rechargement de la page /home si elle est ouverte dans un autre onglet
+                    // En utilisant un événement storage (fonctionne cross-tab)
+                    setTimeout(() => {
+                      localStorage.removeItem('matchSubmitted');
+                    }, 100);
+                    
+                    console.log('[MatchForm] ✅ Rechargement déclenché');
                   }
                   // Rediriger vers l'historique après avoir cliqué sur "Compris"
                   setTimeout(() => {

@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger';
 import PlayerProfileTabs from "@/components/PlayerProfileTabs";
 import ClubProfileClient from "@/components/club/ClubProfileClient";
 import BadgesContent from "@/components/BadgesContent";
+import LeaderboardContent from "@/components/LeaderboardContent";
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -328,7 +329,12 @@ export default async function HomePage({
 
   // Utiliser la fonction de calcul du leaderboard (même logique que la page profil)
   // Si pas de club_id, retourner un tableau vide au lieu d'appeler la fonction
-  const leaderboard = hasNoClub ? [] : await calculatePlayerLeaderboard(userClubId);
+  const leaderboardRaw = hasNoClub ? [] : await calculatePlayerLeaderboard(userClubId);
+  // Ajouter le rang à chaque joueur
+  const leaderboard = leaderboardRaw.map((player, index) => ({
+    ...player,
+    rank: index + 1,
+  }));
   
   // Récupérer les profils pour l'affichage des noms (première partie en gras)
   const profilesFirstNameMap = new Map<string, string>();
@@ -445,135 +451,21 @@ export default async function HomePage({
             statsContent={
               <div className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6">
                 <div className="w-full max-w-md">
-                  <PlayerSummary profileId={profile.id} />
+          <PlayerSummary profileId={profile.id} />
                 </div>
                 <a href="/match/new" className="inline-flex w-full max-w-md items-center justify-center rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
                 <div className="w-full max-w-md">
-                  <ReferralSection userId={profile.id} />
-                </div>
+              <ReferralSection userId={profile.id} />
+        </div>
               </div>
             }
             leaderboardContent={
-              <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {leaderboard.length >= 3 && (
-            <div className="mb-6 sm:mb-8">
-              <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
-                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
-                    Top joueurs du moment
-                  </span>
-                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-              </div>
-              <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-4 sm:mt-6">
-                {leaderboard.slice(0, 3).map(function(player, index) {
-                      var medalEmojis = ['🥇', '🥈', '🥉'];
-                  var borderColors = [
-                    'border-yellow-500/80',
-                    'border-slate-400/80',
-                    'border-orange-600/80'
-                  ];
-                  var borderWidth = 'border-2 sm:border-2 md:border-2';
-                  var shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
-                  var bgGradients = [
-                    { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
-                    { background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' },
-                    { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
-                  ];
-                  return (
-                    <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-xl sm:rounded-xl md:rounded-2xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]')} style={bgGradients[index]}>
-                          <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
-                            <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl">{medalEmojis[index]}</span>
-                          </div>
-                      <div className="relative z-10 pt-3 sm:pt-4 md:pt-5">
-                            <h3 className="font-extrabold mb-2 sm:mb-3 md:mb-4 text-center text-gray-900 text-xs sm:text-sm md:text-base lg:text-lg leading-tight line-clamp-2">
-                              {index === 2 ? (function(){ var parts=(player.player_name||'').split(' '); var f=parts[0]||''; var l=parts.slice(1).join(' '); return (<span><span className="text-xs sm:text-sm md:text-base lg:text-lg">{f}</span>{l ? ' ' + l : ''}</span>); })() : player.player_name}
-                        </h3>
-                        <div className="flex items-center justify-center">
-                          <div className={"inline-flex items-center gap-1 sm:gap-1.5 md:gap-2 rounded-full px-2 sm:px-2.5 md:px-3 lg:px-4 py-1 sm:py-1.5 md:py-2 bg-white/95 backdrop-blur border shadow-md " + (index === 0 ? 'border-yellow-500 ring-1 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-1 ring-zinc-300' : 'border-orange-500 ring-1 ring-orange-300')}>
-                            <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
-                            <span className="text-[9px] sm:text-[10px] md:text-xs font-normal text-gray-900 uppercase tracking-wider">pts</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {leaderboard.length > 0 ? (
-            <div className="overflow-hidden">
-              <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5">
-                <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
-                  <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                  <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
-                    Classement global
-                  </span>
-                  <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-                </div>
-              </div>
-                  <div className="overflow-x-auto rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-100">
-                    <tr>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100 whitespace-nowrap">Rang</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Joueur</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap">Niveau</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Points</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell whitespace-nowrap">Winrate</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0 whitespace-nowrap" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0 whitespace-nowrap" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
-                          <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap">MJ</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {leaderboard.map(function(player, idx) {
-                          var isCurrentUser = profile && user && player.user_id === profile.id;
-                      var winRate = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
-                      // Même logique que PlayerSummary.tierForPoints
-                      var tierLabel = (player.points >= 500) ? 'Champion' : (player.points >= 300) ? 'Diamant' : (player.points >= 200) ? 'Or' : (player.points >= 100) ? 'Argent' : 'Bronze';
-                      var tierClassName = (player.points >= 500) ? 'bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white' :
-                                         (player.points >= 300) ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' :
-                                         (player.points >= 200) ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-white' :
-                                         (player.points >= 100) ? 'bg-gradient-to-r from-zinc-300 to-zinc-400 text-zinc-800' :
-                                                                 'bg-gradient-to-r from-orange-400 to-orange-600 text-white';
-                      // Utiliser first_name depuis Supabase si disponible
-                      var firstName = profilesFirstNameMap.get(player.user_id) || '';
-                      var lastName = profilesLastNameMap.get(player.user_id) || '';
-                      // Si first_name n'est pas disponible, diviser depuis player_name
-                      if (!firstName && player.player_name) {
-                      var nameParts = (player.player_name || '').trim().split(' ');
-                        firstName = nameParts[0] || '';
-                        lastName = nameParts.slice(1).join(' ');
-                      }
-                      var rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
-                      return (
-                        <tr key={player.user_id} className={rowClass}>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                            <RankBadge rank={player.rank} size="md" />
-                          </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                                <span className="truncate block max-w-[100px] sm:max-w-[150px] md:max-w-none"><strong>{firstName || 'Joueur'}</strong>{lastName ? ' ' + lastName : ''}{isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}</span>
-                          </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
-                            <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
-                          </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
-                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate >= 51 ? '#10B981' : winRate === 50 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
-                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>{player.wins}</td>
-                              <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>{player.losses}</td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell">{player.matches}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-10 text-gray-500 text-sm">Aucun joueur dans le classement</div>
-          )}
-              </div>
+              <LeaderboardContent
+                initialLeaderboard={leaderboard}
+                initialProfilesFirstNameMap={profilesFirstNameMap}
+                initialProfilesLastNameMap={profilesLastNameMap}
+                currentUserId={profile?.id}
+              />
             }
             clubContent={
               clubDataForTab ? (
@@ -593,7 +485,7 @@ export default async function HomePage({
               ) : (
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
                   Vous n'êtes rattaché à aucun club pour le moment.
-                </div>
+      </div>
               )
             }
             badgesContent={<BadgesContent />}
