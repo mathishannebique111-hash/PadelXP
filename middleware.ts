@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { logger } from "@/lib/logger";
+import { isAdmin } from "@/lib/admin-auth";
 
 
 
@@ -435,10 +436,51 @@ export async function middleware(req: NextRequest) {
 
 
 
-  if (user && (normalizedPathname === "/signup" || normalizedPathname === "/login")) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/home";
-    return NextResponse.redirect(url);
+  // Admin redirection logic
+  if (user) {
+    const userIsAdmin = isAdmin(user.email);
+    
+    // Protect admin routes
+    if (normalizedPathname.startsWith('/admin')) {
+      if (!userIsAdmin) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/home';
+        return NextResponse.redirect(url);
+      }
+    }
+    
+    // Redirect admin users to admin dashboard when accessing player entry pages
+    if (
+      userIsAdmin &&
+      (normalizedPathname === "/player/login" ||
+        normalizedPathname === "/player/signup" ||
+        normalizedPathname === "/player/dashboard" ||
+        normalizedPathname === "/home")
+    ) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/admin/dashboard";
+      return NextResponse.redirect(url);
+    }
+    
+    // Redirect non-admin users away from admin routes
+    if (normalizedPathname.startsWith('/admin') && !userIsAdmin) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/home';
+      return NextResponse.redirect(url);
+    }
+    
+    // Redirect logged-in users away from login/signup pages
+    if (normalizedPathname === "/signup" || normalizedPathname === "/login") {
+      if (userIsAdmin) {
+        const url = req.nextUrl.clone();
+        url.pathname = "/admin/dashboard";
+        return NextResponse.redirect(url);
+      } else {
+        const url = req.nextUrl.clone();
+        url.pathname = "/home";
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
 

@@ -3,7 +3,15 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  images: { domains: [] },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
   outputFileTracingRoot: path.join(process.cwd()),
   serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium"],
   eslint: {
