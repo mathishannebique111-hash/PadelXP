@@ -223,7 +223,14 @@ export default function LeaderboardContent({
             <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
           </div>
           <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-4 sm:mt-6">
-            {leaderboard.slice(0, 3).map((player, index) => {
+            {(() => {
+              const top3 = leaderboard.slice(0, 3);
+              // Réorganiser : [2, 1, 3] pour avoir 2 à gauche, 1 au milieu, 3 à droite
+              const reordered = [top3[1], top3[0], top3[2]];
+              return reordered.map((player, displayIndex) => {
+                // L'index réel dans le classement (0=1er, 1=2ème, 2=3ème)
+                const realIndex = displayIndex === 0 ? 1 : displayIndex === 1 ? 0 : 2;
+                const index = realIndex; // Utiliser realIndex pour les styles (medal, couleur, etc.)
               const medalEmojis = ['🥇', '🥈', '🥉'];
               const borderColors = [
                 'border-yellow-500/80',
@@ -237,30 +244,67 @@ export default function LeaderboardContent({
                 { background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' },
                 { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
               ];
+              
+              // Extraire prénom et nom de famille
+              const firstName = profilesFirstNameMap.get(player.user_id) || '';
+              const lastName = profilesLastNameMap.get(player.user_id) || '';
+              const nameParts = player.player_name ? player.player_name.trim().split(' ') : [];
+              const finalFirstName = firstName || nameParts[0] || '';
+              const finalLastName = lastName || nameParts.slice(1).join(' ');
+              const lastNameInitial = finalLastName ? finalLastName.charAt(0).toUpperCase() : '';
+              
+              // Taille différente pour le top 1 (au milieu)
+              const sizeClass = index === 0 
+                ? 'max-w-[120px] sm:max-w-[160px] md:max-w-[200px] lg:max-w-[240px]' 
+                : 'max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]';
+              
               return (
-                <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-xl sm:rounded-xl md:rounded-2xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]')} style={bgGradients[index]}>
+                <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-xl sm:rounded-xl md:rounded-2xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 ' + sizeClass)} style={bgGradients[index]}>
                   <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
                     <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl">{medalEmojis[index]}</span>
                   </div>
                   <div className="relative z-10 pt-3 sm:pt-4 md:pt-5">
-                    <h3 className="font-extrabold mb-2 sm:mb-3 md:mb-4 text-center text-gray-900 text-xs sm:text-sm md:text-base lg:text-lg leading-tight line-clamp-2">
-                      {index === 2 ? (() => {
-                        const parts = (player.player_name || '').split(' ');
-                        const f = parts[0] || '';
-                        const l = parts.slice(1).join(' ');
-                        return (<span><span className="text-xs sm:text-sm md:text-base lg:text-lg">{f}</span>{l ? ' ' + l : ''}</span>);
-                      })() : player.player_name}
-                    </h3>
-                    <div className="flex items-center justify-center">
-                      <div className={"inline-flex items-center gap-1 sm:gap-1.5 md:gap-2 rounded-full px-2 sm:px-2.5 md:px-3 lg:px-4 py-1 sm:py-1.5 md:py-2 bg-white/95 backdrop-blur border shadow-md " + (index === 0 ? 'border-yellow-500 ring-1 ring-yellow-300' : index === 1 ? 'border-zinc-500 ring-1 ring-zinc-300' : 'border-orange-500 ring-1 ring-orange-300')}>
-                        <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-900 tabular-nums">{player.points.toLocaleString()}</span>
-                        <span className="text-[9px] sm:text-[10px] md:text-xs font-normal text-gray-900 uppercase tracking-wider">pts</span>
-                      </div>
+                    {/* Photo de profil - taille différente pour le top 1 */}
+                    <div className="flex justify-center mb-2 sm:mb-3">
+                      {player.avatar_url ? (
+                        <div className={`relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/80 shadow-lg ${
+                          index === 0 
+                            ? 'w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24' 
+                            : 'w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20'
+                        }`}>
+                          <img
+                            src={player.avatar_url}
+                            alt={finalFirstName || 'Joueur'}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`relative flex-shrink-0 ${
+                          index === 0 
+                            ? 'w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24' 
+                            : 'w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20'
+                        }`}>
+                          <img
+                            src="/images/Sans pdp.png"
+                            alt="Pas de photo"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
                     </div>
+                    
+                    {/* Prénom + première lettre du nom de famille - taille différente pour le top 1 */}
+                    <h3 className={`font-extrabold mb-2 sm:mb-3 md:mb-4 text-center text-gray-900 leading-tight line-clamp-2 ${
+                      index === 0 
+                        ? 'text-sm sm:text-base md:text-lg lg:text-xl' 
+                        : 'text-xs sm:text-sm md:text-base lg:text-lg'
+                    }`}>
+                      {finalFirstName || 'Joueur'}{lastNameInitial ? ' ' + lastNameInitial + '.' : ''}
+                    </h3>
                   </div>
                 </div>
               );
-            })}
+            })})()}
           </div>
         </div>
       )}
@@ -302,8 +346,10 @@ export default function LeaderboardContent({
                   const rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
                   return (
                     <tr key={player.user_id} className={rowClass}>
-                      <td className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-black text-center border-l border-gray-200 first:border-l-0 w-12 sm:w-14">
-                        {player.rank}
+                      <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-12 sm:w-14">
+                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 text-xs sm:text-sm font-bold text-gray-800 shadow-sm">
+                          {player.rank}
+                        </span>
                       </td>
                       <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0">
                         <div className="flex items-center gap-2 sm:gap-3">

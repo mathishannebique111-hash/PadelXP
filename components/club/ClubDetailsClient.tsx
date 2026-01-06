@@ -153,7 +153,7 @@ export default function ClubDetailsClient({
         </section>
 
         <section
-          className="rounded-2xl border p-6 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)] min-h-[240px]"
+          className="rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
           style={cardStyle}
         >
           <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">Infrastructure</h2>

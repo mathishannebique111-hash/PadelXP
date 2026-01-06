@@ -18,16 +18,16 @@ export const ALL_BADGES: Badge[] = [
   { icon: "🏆", title: "Première victoire", description: "Obtenez votre première victoire" },
   { icon: "🔥", title: "Série de 3", description: "Gagnez 3 matchs consécutifs" },
   { icon: "🔥", title: "Série de 5", description: "Gagnez 5 matchs consécutifs" },
+  { icon: "🎖️", title: "Marathonien", description: "Jouez 50 matchs" },
+  { icon: "💯", title: "Meilleur scoreur", description: "Obtenez 100+ points" },
   { icon: "🔥", title: "Série de 7", description: "Gagnez 7 matchs consécutifs" },
   { icon: "🔥", title: "Série de 10", description: "Gagnez 10 matchs consécutifs" },
+  { icon: "🎯", title: "Précision", description: "Remportez 5 matchs sans en perdre aucun" },
+  { icon: "📈", title: "En progression", description: "Ayez 5 victoires de plus que de défaites" },
   { icon: "🔥", title: "série de 15", description: "Gagnez 15 matchs consécutifs" },
   { icon: "🔥", title: "série de 20", description: "Gagnez 20 matchs consécutifs" },
-  { icon: "🎖️", title: "Marathonien", description: "Jouez 50 matchs" },
   { icon: "🏅", title: "Centurion", description: "Jouez 100 matchs" },
-  { icon: "💯", title: "Meilleur scoreur", description: "Obtenez 100+ points" },
   { icon: "💎", title: "Diamant", description: "Atteignez 500 points" },
-  { icon: "📈", title: "En progression", description: "Ayez 5 victoires de plus que de défaites" },
-  { icon: "🎯", title: "Précision", description: "Remportez 5 matchs sans en perdre aucun" },
   { icon: "🏆🏆🏆", title: "Légende", description: "Gagnez 200 matchs au total" },
   { icon: "🎾", title: "Amour du padel", description: "Jouez 200 matchs au total" },
   // Badges liés aux avis
@@ -44,26 +44,36 @@ export function getBadges(stats: PlayerStats): Badge[] {
   // Séries de victoires
   if (streak >= 3) result.push(ALL_BADGES[1]);
   if (streak >= 5) result.push(ALL_BADGES[2]);
-  if (streak >= 7) result.push(ALL_BADGES[3]);
-  if (streak >= 10) result.push(ALL_BADGES[4]);
-  if (streak >= 15) result.push(ALL_BADGES[5]);
 
-  // Invincible
-  if (streak >= 20) result.push(ALL_BADGES[6]);
+  // Marathonien (entre Série de 5 et Série de 7)
+  if (matches >= 50 && matches < 100) result.push(ALL_BADGES[3]);
 
-  // Marathonien / Centurion
-  if (matches >= 50 && matches < 100) result.push(ALL_BADGES[7]);
-  if (matches >= 100) result.push(ALL_BADGES[8]);
+  // Meilleur scoreur (entre Série de 5 et Série de 7)
+  if (points >= 100) result.push(ALL_BADGES[4]);
 
-  // Points
-  if (points >= 100) result.push(ALL_BADGES[9]);
-  if (points >= 500) result.push(ALL_BADGES[10]);
+  // Série de 7
+  if (streak >= 7) result.push(ALL_BADGES[5]);
 
-  // En progression
-  if (wins - losses >= 5) result.push(ALL_BADGES[11]);
+  // Série de 10
+  if (streak >= 10) result.push(ALL_BADGES[6]);
 
-  // Précision (5 matchs sans défaite)
-  if (wins >= 5 && losses === 0) result.push(ALL_BADGES[12]);
+  // Précision (entre Série de 10 et série de 15)
+  if (wins >= 5 && losses === 0) result.push(ALL_BADGES[7]);
+
+  // En progression (entre Série de 10 et série de 15)
+  if (wins - losses >= 5) result.push(ALL_BADGES[8]);
+
+  // série de 15
+  if (streak >= 15) result.push(ALL_BADGES[9]);
+
+  // série de 20
+  if (streak >= 20) result.push(ALL_BADGES[10]);
+
+  // Centurion
+  if (matches >= 100) result.push(ALL_BADGES[11]);
+
+  // Diamant
+  if (points >= 500) result.push(ALL_BADGES[12]);
 
   // Légende / Amour du padel
   if (wins >= 200) result.push(ALL_BADGES[13]);

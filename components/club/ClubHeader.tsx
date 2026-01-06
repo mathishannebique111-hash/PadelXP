@@ -141,19 +141,12 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
   return (
     <>
       <section
-        className="relative overflow-hidden rounded-2xl border border-white p-4 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
-        style={gradientStyle}
+        className="relative overflow-hidden rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+        style={aboutCardStyle}
       >
-        <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]" />
-        {/* Effet brillant style challenges */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
-          </div>
-        </div>
         <div className="relative z-10 flex flex-col gap-3 md:flex-row md:items-center">
           <div className="flex items-center gap-4">
-            <div className="flex h-36 w-36 items-center justify-center overflow-hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
               {logoUrl ? (
                 <img
                   src={logoUrl}
@@ -170,23 +163,21 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
                     const parent = e.currentTarget.parentElement;
                     if (parent && !parent.querySelector('.fallback-icon')) {
                       const fallback = document.createElement('span');
-                      fallback.className = 'fallback-icon text-4xl';
+                      fallback.className = 'fallback-icon text-2xl';
                       fallback.textContent = '🏟️';
                       parent.appendChild(fallback);
                     }
                   }}
                 />
               ) : (
-                <span className="text-4xl">🏟️</span>
+                <span className="text-2xl">🏟️</span>
               )}
             </div>
-            <h1 className="text-3xl font-extrabold md:text-4xl tracking-tight text-white/95 leading-tight md:leading-none flex items-center">
+            <h1 className="text-xl font-extrabold md:text-2xl tracking-tight text-white/95 leading-tight md:leading-none flex items-center">
               {name}
             </h1>
           </div>
         </div>
-
-        <span className="pointer-events-none absolute inset-x-6 bottom-3 h-px rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
       </section>
 
       {description ? (
