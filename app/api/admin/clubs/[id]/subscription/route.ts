@@ -375,6 +375,7 @@ export async function PATCH(
           next_renewal_at: newPeriodEnd.toISOString(),
           stripe_customer_id: customerId,
           stripe_subscription_id: stripeSubscription.id,
+          cancel_at_period_end: false, // Réactiver l'abonnement si il était annulé
         };
 
         console.log('Updating subscriptions table with:', subscriptionData);
@@ -488,19 +489,67 @@ export async function PATCH(
     }
 
     // Log action in admin_club_actions table
-    await supabaseAdmin.from('admin_club_actions').insert({
+    // S'assurer que previousValue et newValue sont bien définis
+    if (!actionDescription) {
+      console.error('actionDescription is empty for action:', action);
+      actionDescription = `Action: ${action}`;
+    }
+
+    const actionLogData = {
       club_id: clubId,
       admin_user_id: user.id,
       action_type: action,
       action_description: actionDescription,
+      previous_value: previousValue || {},
+      new_value: newValue || {},
+    };
+
+    console.log('Logging action to admin_club_actions:', {
+      club_id: clubId,
+      action_type: action,
+      action_description: actionDescription,
+      admin_user_id: user.id,
       previous_value: previousValue,
       new_value: newValue,
     });
+
+    const { data: insertedAction, error: logError } = await supabaseAdmin
+      .from('admin_club_actions')
+      .insert(actionLogData)
+      .select(`
+        id,
+        action_type,
+        action_description,
+        previous_value,
+        new_value,
+        created_at,
+        admin_user_id,
+        admin_profiles:admin_user_id (
+          email,
+          display_name
+        )
+      `)
+      .single();
+
+    if (logError) {
+      console.error('Error logging action to admin_club_actions:', logError);
+      // Ne pas faire échouer la requête si le log échoue, mais loguer l'erreur
+    } else {
+      console.log('Action successfully logged to admin_club_actions:', insertedAction?.id);
+    }
+
+    // Formater l'action comme dans l'API /actions pour cohérence
+    const formattedAction = insertedAction ? {
+      ...insertedAction,
+      admin_name: insertedAction.admin_profiles?.display_name || insertedAction.admin_profiles?.email || 'Admin',
+    } : null;
 
     return NextResponse.json({ 
       success: true, 
       subscription: newValue,
       stripe_subscription_id: stripeSubscription?.id,
+      action_logged: !logError, // Indiquer si l'action a été loggée
+      action: formattedAction, // Retourner l'action formatée pour l'afficher immédiatement
     });
   } catch (error) {
     console.error('Unexpected error in subscription API:', error);

@@ -136,3 +136,4 @@ Cela signifie que les variables sont chargées mais vides. Vérifiez :
 
 Une fois tout cela fait, les boutons d'abonnement devraient fonctionner ! 🎉
 
+

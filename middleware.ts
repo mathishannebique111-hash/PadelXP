@@ -440,18 +440,25 @@ export async function middleware(req: NextRequest) {
   if (user) {
     const userIsAdmin = isAdmin(user.email);
     
-    // Protect admin routes
+    // Protect admin routes - rediriger uniquement si vraiment non-admin
     if (normalizedPathname.startsWith('/admin')) {
       if (!userIsAdmin) {
         const url = req.nextUrl.clone();
         url.pathname = '/home';
         return NextResponse.redirect(url);
       }
+      // Si admin et sur route admin, continuer normalement (pas de redirection)
     }
     
     // Redirect admin users to admin dashboard when accessing player entry pages
+    // MAIS seulement si l'admin n'est pas déjà en train de naviguer dans l'admin
+    // (vérifier le referer pour éviter les redirections lors de la navigation admin)
+    const referer = req.headers.get('referer') || '';
+    const isComingFromAdmin = referer.includes('/admin');
+    
     if (
       userIsAdmin &&
+      !isComingFromAdmin &&
       (normalizedPathname === "/player/login" ||
         normalizedPathname === "/player/signup" ||
         normalizedPathname === "/player/dashboard" ||
@@ -459,13 +466,6 @@ export async function middleware(req: NextRequest) {
     ) {
       const url = req.nextUrl.clone();
       url.pathname = "/admin/dashboard";
-      return NextResponse.redirect(url);
-    }
-    
-    // Redirect non-admin users away from admin routes
-    if (normalizedPathname.startsWith('/admin') && !userIsAdmin) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/home';
       return NextResponse.redirect(url);
     }
     

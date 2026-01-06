@@ -46,10 +46,10 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
   logger.info("[calculatePlayerLeaderboard] Starting calculation", { clubId: clubId.substring(0, 8) + "..." });
 
   try {
-    // Étape 1: Récupérer tous les profils du club
+    // Étape 1: Récupérer tous les profils du club (inclure avatar_url)
     const { data: clubProfiles, error: profilesError } = await supabaseAdmin
       .from("profiles")
-      .select("id, first_name, last_name, display_name, points, club_id")
+      .select("id, first_name, last_name, display_name, points, club_id, avatar_url")
       .eq("club_id", clubId);
 
     if (profilesError) {
@@ -113,6 +113,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
           matches: 0,
           badges: [],
           isGuest: false,
+          avatar_url: profile.avatar_url || null,
         };
       }).sort((a, b) => b.points - a.points).map((entry, index) => ({ ...entry, rank: index + 1 }));
     }
@@ -336,6 +337,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         matches: stats.matches,
         badges: [],
         isGuest: false,
+        avatar_url: profile.avatar_url || null,
       };
     });
 

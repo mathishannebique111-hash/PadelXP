@@ -101,3 +101,4 @@ Après ces modifications :
 - [ ] Test sur Android réel : pas de bandes blanches
 - [ ] Le dégradé s'étend bien dans les safe areas
 
+

@@ -74,3 +74,4 @@ if (allGood) {
 
 process.exit(allGood ? 0 : 1);
 
+

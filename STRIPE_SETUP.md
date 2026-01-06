@@ -86,3 +86,4 @@ Les Price IDs seront automatiquement chargés au démarrage.
 - Vérifiez que votre `STRIPE_SECRET_KEY` est bien configurée
 - Assurez-vous d'utiliser la clé de **test** (commence par `sk_test_`)
 
+

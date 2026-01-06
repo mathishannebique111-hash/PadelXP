@@ -22,21 +22,87 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
     async function checkAdmin() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user || !isAdmin(user.email)) {
-        router.push('/home');
-        return;
+      try {
+        const supabase = createClient();
+        
+        // D'abord vérifier la session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          // Pas de session = rediriger vers login
+          if (isMounted) {
+            router.push('/login');
+          }
+          return;
+        }
+
+        // Ensuite récupérer l'utilisateur
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        // Si erreur temporaire, réessayer jusqu'à MAX_RETRIES fois
+        if (userError && retryCount < MAX_RETRIES) {
+          retryCount++;
+          console.warn(`[AdminLayout] getUser() failed, retry ${retryCount}/${MAX_RETRIES}:`, userError);
+          // Attendre un peu avant de réessayer
+          await new Promise(resolve => setTimeout(resolve, 500));
+          if (isMounted) {
+            return checkAdmin();
+          }
+          return;
+        }
+        
+        if (!user) {
+          // Pas d'utilisateur après tous les essais = rediriger vers login
+          if (isMounted) {
+            router.push('/login');
+          }
+          return;
+        }
+
+        // Vérifier si admin
+        const userIsAdmin = isAdmin(user.email);
+        
+        if (!userIsAdmin) {
+          // Utilisateur non-admin = rediriger vers home
+          if (isMounted) {
+            router.push('/home');
+          }
+          return;
+        }
+        
+        // Tout est OK, autoriser l'accès
+        if (isMounted) {
+          setUser(user);
+          setIsAuthorized(true);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('[AdminLayout] Error checking admin status:', error);
+        // En cas d'erreur, ne pas rediriger immédiatement
+        // Attendre un peu et réessayer une dernière fois
+        if (retryCount < MAX_RETRIES && isMounted) {
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (isMounted) {
+            return checkAdmin();
+          }
+        } else if (isMounted) {
+          // Après tous les essais, rediriger vers login
+          router.push('/login');
+        }
       }
-      
-      setUser(user);
-      setIsAuthorized(true);
-      setIsLoading(false);
     }
 
     checkAdmin();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   if (isLoading) {

@@ -46,3 +46,4 @@ CREATE POLICY "Admins can update messages"
     auth.email() IN ('contactpadelxp@gmail.com', 'mathis.hannebique111@gmail.com')
   );
 
+

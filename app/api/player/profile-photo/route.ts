@@ -104,3 +104,77 @@ export async function POST(req: Request) {
   }
 }
 
+// Nouvelle route DELETE pour supprimer la photo de profil
+export async function DELETE(req: Request) {
+  try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: "Serveur mal configuré" }, { status: 500 });
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
+
+    // Récupérer l'URL actuelle de la photo
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      logger.error({ userId: user.id.substring(0, 8) + "…", error: profileError }, "[player/profile-photo] Error fetching profile");
+      return NextResponse.json({ error: "Erreur lors de la récupération du profil" }, { status: 500 });
+    }
+
+    // Si une photo existe, essayer de la supprimer du storage
+    if (profile?.avatar_url) {
+      try {
+        // Extraire le chemin du fichier depuis l'URL
+        const url = new URL(profile.avatar_url);
+        const pathParts = url.pathname.split('/');
+        const bucketIndex = pathParts.findIndex(part => part === 'player-profile-photos');
+        
+        if (bucketIndex !== -1 && pathParts[bucketIndex + 1]) {
+          const filePath = pathParts.slice(bucketIndex + 1).join('/');
+          
+          // Supprimer le fichier du storage
+          const { error: deleteError } = await supabaseAdmin.storage
+            .from("player-profile-photos")
+            .remove([filePath]);
+
+          if (deleteError) {
+            logger.warn({ userId: user.id.substring(0, 8) + "…", error: deleteError }, "[player/profile-photo] Error deleting file from storage (continuing anyway)");
+            // Continuer même si la suppression du fichier échoue
+          }
+        }
+      } catch (storageError) {
+        logger.warn({ userId: user.id.substring(0, 8) + "…", error: storageError }, "[player/profile-photo] Error parsing avatar_url (continuing anyway)");
+        // Continuer même si on ne peut pas parser l'URL
+      }
+    }
+
+    // Mettre à jour le profil pour supprimer l'URL de la photo
+    const { error: updateError } = await supabaseAdmin
+      .from("profiles")
+      .update({ avatar_url: null })
+      .eq("id", user.id);
+
+    if (updateError) {
+      logger.error({ userId: user.id.substring(0, 8) + "…", error: updateError }, "[player/profile-photo] Error updating profile");
+      return NextResponse.json({ error: "Erreur lors de la suppression de la photo" }, { status: 500 });
+    }
+
+    logger.info({ userId: user.id.substring(0, 8) + "…" }, "[player/profile-photo] Photo deleted successfully");
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    logger.error({ error: error?.message || String(error) }, "[player/profile-photo] unexpected error");
+    return NextResponse.json({ error: error?.message || "Erreur serveur" }, { status: 500 });
+  }
+}

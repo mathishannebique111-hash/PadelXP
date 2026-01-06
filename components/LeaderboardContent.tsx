@@ -15,6 +15,7 @@ interface LeaderboardEntry {
   losses: number;
   matches: number;
   isGuest: boolean;
+  avatar_url?: string | null;
 }
 
 interface LeaderboardContentProps {
@@ -278,8 +279,8 @@ export default function LeaderboardContent({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100 whitespace-nowrap">Rang</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Joueur</th>
+                  <th className="px-1 sm:px-2 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100 whitespace-nowrap w-12 sm:w-14">Rang</th>
+                  <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap min-w-[150px] sm:min-w-[200px]">Joueur</th>
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap">Niveau</th>
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Points</th>
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell whitespace-nowrap">Winrate</th>
@@ -301,15 +302,36 @@ export default function LeaderboardContent({
                   const rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
                   return (
                     <tr key={player.user_id} className={rowClass}>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                        <RankBadge rank={player.rank} size="md" />
+                      <td className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-black text-center border-l border-gray-200 first:border-l-0 w-12 sm:w-14">
+                        {player.rank}
                       </td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                        <span className="truncate block max-w-[100px] sm:max-w-[150px] md:max-w-none">
-                          <strong>{finalFirstName || 'Joueur'}</strong>
-                          {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
-                          {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
-                        </span>
+                      <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          {/* Photo de profil */}
+                          {player.avatar_url ? (
+                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
+                              <img
+                                src={player.avatar_url}
+                                alt={finalFirstName || 'Joueur'}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                              <img
+                                src="/images/Sans pdp.png"
+                                alt="Pas de photo"
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          )}
+                          {/* Nom du joueur */}
+                          <span className="truncate">
+                            <strong>{finalFirstName || 'Joueur'}</strong>
+                            {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
+                            {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
                         <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />

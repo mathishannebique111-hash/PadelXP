@@ -116,10 +116,22 @@ export default function AdminClubDetailPage() {
         setPlayers(playersData || []);
 
         // Fetch action history
-        const historyResponse = await fetch(`/api/admin/clubs/${clubId}/actions`);
+        console.log('Fetching action history for club:', clubId);
+        const historyResponse = await fetch(`/api/admin/clubs/${clubId}/actions?t=${Date.now()}`);
         if (historyResponse.ok) {
-          const { actions } = await historyResponse.json();
-          setActionHistory(actions || []);
+          const { actions, error: historyError } = await historyResponse.json();
+          if (historyError) {
+            console.error('Error in action history response:', historyError);
+            setActionHistory([]);
+          } else {
+            console.log('Action history fetched:', actions?.length || 0, 'actions');
+            setActionHistory(actions || []);
+          }
+        } else {
+          console.error('Failed to fetch action history:', historyResponse.status);
+          const errorText = await historyResponse.text().catch(() => 'Unknown error');
+          console.error('Error details:', errorText);
+          setActionHistory([]);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -130,6 +142,27 @@ export default function AdminClubDetailPage() {
 
     fetchData();
   }, [clubId, lastAction]);
+
+  // Recharger l'historique périodiquement pour s'assurer qu'il est à jour
+  useEffect(() => {
+    if (!clubId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const historyResponse = await fetch(`/api/admin/clubs/${clubId}/actions?t=${Date.now()}`);
+        if (historyResponse.ok) {
+          const { actions } = await historyResponse.json();
+          if (actions && Array.isArray(actions)) {
+            setActionHistory(actions);
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing action history:', error);
+      }
+    }, 5000); // Recharger toutes les 5 secondes
+
+    return () => clearInterval(interval);
+  }, [clubId]);
 
   async function updateSubscription(action: string) {
     if (!clubId) return;
@@ -146,16 +179,46 @@ export default function AdminClubDetailPage() {
       if (!response.ok) {
         const error = await response.json();
         alert(`Erreur: ${error.error || 'Erreur inconnue'}`);
+        setIsUpdating(false);
         return;
       }
 
-      // Refresh data
-      setLastAction(true);
-      setTimeout(() => setLastAction(false), 1000);
+      const result = await response.json();
+      console.log('Action result:', result);
+
+      // Fermer le dialogue de confirmation immédiatement
       setShowConfirmDialog(null);
+
+      // Si l'API renvoie l'action loggée, l'ajouter immédiatement en haut de l'historique
+      if (result?.action && result.action_logged) {
+        setActionHistory((prev) => {
+          // Vérifier si l'action existe déjà (éviter les doublons)
+          const existingIds = new Set(prev.map((a: any) => a.id));
+          if (result.action.id && existingIds.has(result.action.id)) {
+            return prev;
+          }
+          // Ajouter la nouvelle action en haut de la liste
+          return [result.action, ...prev];
+        });
+        console.log('✅ Action ajoutée à l\'historique:', result.action.action_description);
+      }
       
-      // Reload page data
-      window.location.reload();
+      // Recharger les données sans recharger toute la page (évite les problèmes de session)
+      // Utiliser router.refresh() au lieu de window.location.reload() pour préserver la session
+      router.refresh();
+      
+      // Recharger les données du club
+      try {
+        const clubResponse = await fetch(`/api/admin/clubs/${clubId}`);
+        if (clubResponse.ok) {
+          const { club: clubData } = await clubResponse.json();
+          if (clubData) {
+            setClub(clubData as Club);
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing club data:', error);
+      }
     } catch (error) {
       console.error('Error updating subscription:', error);
       alert('Erreur lors de la mise à jour');

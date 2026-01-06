@@ -5,6 +5,7 @@ import BillingInfoSection from "@/components/billing/BillingInfoSection";
 import StripeCheckoutButton from "@/components/billing/StripeCheckoutButton";
 import NewSubscriptionCheckoutButton from "@/components/billing/NewSubscriptionCheckoutButton";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
+import SubscriptionStatusAutoRefresh from "@/components/billing/SubscriptionStatusAutoRefresh";
 import ParallaxHalos from "@/components/ParallaxHalos";
 import PageTitle from "../PageTitle";
 import Image from "next/image";
@@ -190,10 +191,13 @@ export default async function BillingPage() {
   // Priorité : nouveaux champs de la table clubs, puis ancienne table subscriptions
   const newSubscriptionStatus = club?.subscription_status as string | null;
   
-  // Vérifier si l'abonnement est annulé (nouveau ou ancien système)
+  // Vérifier si l'abonnement est annulé
+  // IMPORTANT: Si le nouveau statut est "active", l'abonnement n'est PAS annulé, même si l'ancien système dit le contraire
+  // Cela permet de gérer le cas où l'admin a réactivé un abonnement annulé
   const isCanceledNewSystem = newSubscriptionStatus === "canceled";
   const isCanceledOldSystem = subscription?.status === "canceled" || subscription?.cancel_at_period_end === true;
-  const isCanceled = isCanceledNewSystem || isCanceledOldSystem;
+  // Si le nouveau statut est "active", l'abonnement n'est pas annulé (priorité au nouveau système)
+  const isCanceled = newSubscriptionStatus === "active" ? false : (isCanceledNewSystem || isCanceledOldSystem);
   
   let subscriptionStatus: SubscriptionStatus = "none";
 
@@ -385,6 +389,8 @@ export default async function BillingPage() {
       <div className="relative z-10 space-y-4 sm:space-y-5 md:space-y-6">
         {/* Sync Stripe → App au retour du portail */}
         <SyncOnReturn />
+        {/* Auto-refresh du statut de l'abonnement quand l'admin fait des actions */}
+        {clubId && <SubscriptionStatusAutoRefresh clubId={clubId} refreshInterval={3000} />}
         <PageTitle title="Abonnement & essai" subtitle="Gérez votre abonnement et votre période d'essai" />
         
         {/* Bannière de confirmation */}
@@ -733,6 +739,11 @@ export default async function BillingPage() {
                 {!isCanceled && subscriptionStatus === "active" && (
                   <span className="rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-300">
                     Abonnement actif
+                    {currentPlan && (
+                      <span className="ml-2 text-xs">
+                        ({currentPlan === "monthly" ? "Mensuel" : currentPlan === "quarterly" ? "Trimestriel" : currentPlan === "annual" ? "Annuel" : ""})
+                      </span>
+                    )}
                   </span>
                 )}
                 {!isCanceled && subscriptionStatus === "payment_pending" && (

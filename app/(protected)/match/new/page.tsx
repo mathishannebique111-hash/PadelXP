@@ -38,37 +38,38 @@ export default async function NewMatchPage({
     );
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("club_id, club_slug")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Récupérer le club du joueur en utilisant directement le client admin
+  // pour éviter tout problème de RLS / cache qui pourrait faire croire
+  // que le joueur n'est pas rattaché à un club alors qu'il l'est.
+  let clubId: string | null = null;
+  let clubSlug: string | null = null;
 
-  let clubId = profile?.club_id || null;
-  let clubSlug = profile?.club_slug || null;
+  try {
+    const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
+      .from("profiles")
+      .select("club_id, club_slug")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  if (!clubId || !clubSlug) {
-    try {
-      const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
-        .from("profiles")
-        .select("club_id, club_slug")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (adminProfileError) {
-        logger.error("[Match/New] Failed to fetch profile via admin client", {
-          message: adminProfileError.message,
-          details: adminProfileError.details,
-          hint: adminProfileError.hint,
-          code: adminProfileError.code,
-        });
-      }
-      if (adminProfile) {
-        clubId = clubId || adminProfile.club_id || null;
-        clubSlug = clubSlug || adminProfile.club_slug || null;
-      }
-    } catch (e) {
-      logger.error("[Match/New] Unexpected error when fetching profile via admin client", e);
+    if (adminProfileError) {
+      logger.error("[Match/New] Failed to fetch profile via admin client", {
+        message: adminProfileError.message,
+        details: adminProfileError.details,
+        hint: adminProfileError.hint,
+        code: adminProfileError.code,
+      });
     }
+
+    if (adminProfile) {
+      clubId = adminProfile.club_id || null;
+      clubSlug = adminProfile.club_slug || null;
+    } else {
+      logger.warn("[Match/New] No profile found for user via admin client", {
+        userId: user.id,
+      });
+    }
+  } catch (e) {
+    logger.error("[Match/New] Unexpected error when fetching profile via admin client", e);
   }
 
   if (!clubId) {
