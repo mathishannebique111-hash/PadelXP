@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieConsent from "@/components/cookies/CookieConsent";
+import SafeAreas from './components/SafeAreas';
 
 
 
@@ -24,9 +25,102 @@ export default function RootLayout({
   return (
     <html lang="fr" className="bg-black">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+        <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="theme-color" content="#000000" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        
+        {/* Style inline pour forcer la couleur de fond et éviter les Safe Areas blanches */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html, body {
+                background-color: #000000 !important;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100vh;
+                overflow-x: hidden;
+              }
+              
+              /* Pages joueurs (dashboard, profil, matchs) */
+              html.player-page, body.player-page {
+                background-color: #0B1C45 !important;
+              }
+              
+              /* Landing, inscription, connexion : noir par défaut (pas de classe nécessaire) */
+            `,
+          }}
+        />
+        
+        {/* Script pour forcer la couleur NOIRE des Safe Areas AVANT l'hydratation React */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function notifyNativeColor(color) {
+                  try {
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.updateSafeAreaColor) {
+                      window.webkit.messageHandlers.updateSafeAreaColor.postMessage(color);
+                    }
+                  } catch(e) {
+                    console.error('Error notifying native:', e);
+                  }
+                }
+                
+                function forceBlackSafeAreas() {
+                  const blackColor = '#000000';
+                  
+                  // Notifier le code natif iOS
+                  notifyNativeColor(blackColor);
+                  
+                  function createOrUpdate(id, position) {
+                    let el = document.getElementById(id);
+                    if (!el) {
+                      el = document.createElement('div');
+                      el.id = id;
+                      document.body.appendChild(el);
+                    }
+                    el.style.setProperty('position', 'fixed', 'important');
+                    el.style.setProperty('left', '0', 'important');
+                    el.style.setProperty('right', '0', 'important');
+                    el.style.setProperty('z-index', '9999', 'important');
+                    el.style.setProperty('pointer-events', 'none', 'important');
+                    el.style.setProperty('background-color', blackColor, 'important');
+                    if (position === 'top') {
+                      el.style.setProperty('top', '0', 'important');
+                      el.style.setProperty('height', 'env(safe-area-inset-top, 0px)', 'important');
+                    } else {
+                      el.style.setProperty('bottom', '0', 'important');
+                      el.style.setProperty('height', 'env(safe-area-inset-bottom, 0px)', 'important');
+                    }
+                  }
+                  
+                  if (document.body) {
+                    createOrUpdate('safe-area-top', 'top');
+                    createOrUpdate('safe-area-bottom', 'bottom');
+                  }
+                }
+                
+                // Exécuter immédiatement si body existe
+                if (document.body) {
+                  forceBlackSafeAreas();
+                } else {
+                  document.addEventListener('DOMContentLoaded', forceBlackSafeAreas);
+                }
+                
+                // Forcer plusieurs fois
+                setTimeout(forceBlackSafeAreas, 0);
+                setTimeout(forceBlackSafeAreas, 10);
+                setTimeout(forceBlackSafeAreas, 50);
+                setTimeout(forceBlackSafeAreas, 100);
+                setTimeout(forceBlackSafeAreas, 200);
+                setTimeout(forceBlackSafeAreas, 500);
+                setTimeout(forceBlackSafeAreas, 1000);
+              })();
+            `,
+          }}
+        />
         
         {/* Script de détection app/web et gestion de la safe area */}
         <script
@@ -240,6 +334,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-black text-white min-h-screen" style={{ backgroundColor: '#000' }}>
+        <SafeAreas />
         {children}
         <CookieConsent />
       </body>

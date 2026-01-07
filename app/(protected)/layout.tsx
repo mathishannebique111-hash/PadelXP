@@ -22,8 +22,9 @@ export default function PlayerAccountLayout({
               const blueColor = '#172554';
               
               // Appliquer sur body et html
-              document.body.style.backgroundColor = blueColor;
-              document.documentElement.style.backgroundColor = blueColor;
+              document.body.className = 'player-page bg-[#0B1C45]';
+              document.body.style.backgroundColor = '#0B1C45';
+              document.documentElement.style.backgroundColor = '#0B1C45';
               document.body.setAttribute('data-player-layout', 'true');
               document.documentElement.setAttribute('data-player-layout', 'true');
               // Ajouter la classe player-page pour le CSS

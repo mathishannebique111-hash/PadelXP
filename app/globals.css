@@ -58,27 +58,54 @@
   text-rendering: optimizeLegibility;
 }
 
-html {
-  background-color: #000; /* noir absolu */
-  color-scheme: dark;
-  -webkit-text-size-adjust: 100%;
-  /* S'assurer que le fond s'étend dans la safe area */
+
+html, body {
   min-height: 100vh;
-  min-height: -webkit-fill-available;
+  margin: 0;
+  padding: 0;
 }
+
+/* Pour iOS spécifiquement */
+@supports (-webkit-touch-callout: none) {
+  html, body {
+    min-height: -webkit-fill-available;
+    height: -webkit-fill-available;
+  }
+}
+
+/* Couleur de fond par défaut */
+html, body {
+  background-color: #000000;
+}
+
+/* Pages joueurs */
+html.player-page, body.player-page {
+  background-color: #0B1C45;
+}
+
+/* Safe Area SUPÉRIEURE bleue pour pages joueurs */
+body.player-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background-color: #0B1C45;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Safe Area INFÉRIEURE reste noire partout (défaut capacitor) */
 
 body {
   @apply bg-black text-white;
-  background-color: #000; /* noir absolu */
   color: #fff;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 0.875rem; /* 14px */
   font-weight: 400;
   line-height: 1.5;
   font-feature-settings: 'tnum' 1; /* Chiffres tabulaires */
-  /* S'assurer que le fond s'étend dans la safe area */
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
 }
 
 /* Éviter le zoom automatique sur iOS lors du focus des champs de formulaire
@@ -284,6 +311,8 @@ p {
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Landing page specific styles */
@@ -662,41 +691,4 @@ html {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
-}
-/* iOS Safe Area - Zone safe area avec couleur selon le type de page */
-/* Pour les pages joueur (protected), la safe area sera bleue (blue-950) */
-/* Pour les autres pages (landing, login, signup), la safe area sera noire */
-
-/* Couleur de fond par défaut pour toutes les pages */
-body {
-  background-color: #000000;
-}
-
-html {
-  background-color: #000000;
-}
-
-/* Couleur de fond pour les pages joueurs (avec classe player-page) */
-body.player-page {
-  background-color: #0B1C45;
-}
-
-html.player-page {
-  background-color: #0B1C45;
-}
-
-/* Compatibilité avec l'ancien système data-player-layout */
-body[data-player-layout="true"],
-body[data-player-layout="true"] html,
-html[data-player-layout="true"] {
-  background-color: #0B1C45 !important;
-}
-
-/* Pour les pages joueur, forcer la couleur bleue */
-body[data-player-layout="true"] {
-  background-color: #0B1C45 !important;
-}
-
-html[data-player-layout="true"] {
-  background-color: #0B1C45 !important;
 }

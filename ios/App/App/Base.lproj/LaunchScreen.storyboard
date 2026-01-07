@@ -16,20 +16,14 @@
                         <rect key="frame" x="0.0" y="0.0" width="402" height="874"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="Splash" translatesAutoresizingMaskIntoConstraints="NO" id="MST-E3-Fp7">
-                                <rect key="frame" x="113" y="330" width="176" height="214"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="Splash" adjustsImageSizeForAccessibilityContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xiO-vq-PcL">
+                                <rect key="frame" x="-79" y="287" width="560" height="301"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" red="0.02745098039" green="0.08235294118" blue="0.32941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="AhY-3k-Ycp"/>
-                        <color key="backgroundColor" red="0.03979492188" green="0.080932624640000006" blue="0.3156738281" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
-                        <constraints>
-                            <constraint firstItem="MST-E3-Fp7" firstAttribute="centerX" secondItem="AhY-3k-Ycp" secondAttribute="centerX" id="2cT-hp-RAG"/>
-                            <constraint firstItem="MST-E3-Fp7" firstAttribute="centerY" secondItem="AhY-3k-Ycp" secondAttribute="centerY" id="5YW-Za-aeJ"/>
-                            <constraint firstItem="MST-E3-Fp7" firstAttribute="centerX" secondItem="AhY-3k-Ycp" secondAttribute="centerX" id="DwR-Jo-jlg"/>
-                            <constraint firstItem="MST-E3-Fp7" firstAttribute="centerX" secondItem="AhY-3k-Ycp" secondAttribute="centerX" id="Hn5-fK-KgC"/>
-                            <constraint firstItem="MST-E3-Fp7" firstAttribute="centerY" secondItem="AhY-3k-Ycp" secondAttribute="centerY" id="l6C-8G-a5k"/>
-                            <constraint firstItem="MST-E3-Fp7" firstAttribute="centerY" secondItem="AhY-3k-Ycp" secondAttribute="centerY" id="oDr-4H-XzV"/>
-                        </constraints>
+                        <color key="backgroundColor" red="0.02745098039" green="0.08235294118" blue="0.32941176471" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -38,6 +32,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="Splash" width="1333.3333740234375" height="1333.3333740234375"/>
+        <image name="Splash" width="341.33334350585938" height="341.33334350585938"/>
     </resources>
 </document>

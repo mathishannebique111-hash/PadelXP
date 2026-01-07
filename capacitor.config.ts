@@ -12,7 +12,8 @@ const config: CapacitorConfig = {
   },
   appendUserAgent: 'PadelXPCapacitor',
   ios: {
-    contentInset: 'always'
+    contentInset: 'always',
+    backgroundColor: '#000000'
   }
 };
 

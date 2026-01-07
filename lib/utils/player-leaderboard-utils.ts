@@ -67,16 +67,16 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     // Étape 2: Récupérer tous les match_participants pour ces profils (player_type = 'user')
     const userIds = clubProfiles.map(p => p.id);
     const { data: allParticipants, error: participantsError } = await supabaseAdmin
-      .from("match_participants")
-      .select("user_id, player_type, guest_player_id, team, match_id")
+    .from("match_participants")
+    .select("user_id, player_type, guest_player_id, team, match_id")
       .in("user_id", userIds)
-      .eq("player_type", "user");
-
-    if (participantsError) {
+    .eq("player_type", "user");
+  
+  if (participantsError) {
       logger.error("[calculatePlayerLeaderboard] Error fetching participants", { error: participantsError.message });
-      return [];
-    }
-
+    return [];
+  }
+  
     logger.info("[calculatePlayerLeaderboard] Participants found", { count: allParticipants?.length || 0 });
 
     // Étape 3: Récupérer tous les matchs uniques
@@ -122,7 +122,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, played_at, created_at")
       .in("id", uniqueMatchIds);
-
+    
     if (matchesError) {
       logger.error("[calculatePlayerLeaderboard] Error fetching matches", { error: matchesError.message });
       return [];
@@ -186,9 +186,9 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       const validMatchIdsForPoints = filterMatchesByDailyLimit(
         playerParticipants.map(p => ({ match_id: p.match_id, user_id: userId })),
         playerMatches.map(m => ({ id: m.id, played_at: m.played_at })),
-        MAX_MATCHES_PER_DAY
-      );
-
+    MAX_MATCHES_PER_DAY
+  );
+  
       // Étape 4b: Filtrer par club (ne garder que les matchs où tous les participants users sont du même club)
       // Récupérer tous les participants de ces matchs
       const matchIdsForClubFilter = playerMatchIds;
@@ -203,7 +203,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         .map(p => p.user_id))];
 
       const { data: participantProfiles } = await supabaseAdmin
-        .from("profiles")
+      .from("profiles")
         .select("id, club_id")
         .in("id", participantUserIds)
         .eq("club_id", clubId);
@@ -228,7 +228,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
           return false;
         }
         
-        const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
+    const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
         return allUsersInSameClub;
       });
 
@@ -257,7 +257,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         if (won) {
           wins += 1;
           winMatches.add(p.match_id);
-        } else {
+    } else {
           losses += 1;
         }
       });
@@ -271,15 +271,15 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     }
 
     // Étape 5: Récupérer les bonus d'avis pour tous les joueurs
-    const bonusMap = new Map<string, number>();
+  const bonusMap = new Map<string, number>();
     const { data: allReviews } = await supabaseAdmin
-      .from("reviews")
-      .select("user_id, rating, comment")
+        .from("reviews")
+        .select("user_id, rating, comment")
       .in("user_id", userIds);
 
     if (allReviews) {
       allReviews.forEach((r: any) => {
-        if (isReviewValidForBonus(r.rating || 0, r.comment || null)) {
+          if (isReviewValidForBonus(r.rating || 0, r.comment || null)) {
           // +10 points pour le premier avis valide (on garde le premier trouvé)
           if (!bonusMap.has(r.user_id)) {
             bonusMap.set(r.user_id, 10);
@@ -295,7 +295,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         ? profile.points 
         : (profile && typeof profile.points === 'string' ? parseInt(profile.points, 10) || 0 : 0);
       const bonus = bonusMap.get(userId) || 0;
-
+      
       return {
         userId,
         wins: stats.wins,
@@ -307,8 +307,8 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     });
 
     // Étape 7: Calculer les points avec boosts en une seule requête optimisée
-    const pointsWithBoosts = await calculatePointsForMultiplePlayers(playersForBoostCalculation);
-
+  const pointsWithBoosts = await calculatePointsForMultiplePlayers(playersForBoostCalculation);
+  
     // Étape 8: Construire le leaderboard
     const allPlayers = clubProfiles.map(p => ({
       first_name: p.first_name || (p.display_name ? p.display_name.split(/\s+/)[0] : ""),
@@ -326,7 +326,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         { first_name: firstName, last_name: lastName },
         allPlayers
       );
-
+      
       return {
         rank: 0, // Sera recalculé après le tri
         user_id: profile.id,
@@ -343,15 +343,15 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
 
     // Trier par points décroissants, puis par nom alphabétiquement pour les ex-aequo
     const sortedLeaderboard = leaderboard
-      .sort((a, b) => {
-        if (b.points !== a.points) {
-          return b.points - a.points;
-        }
-        return a.player_name.localeCompare(b.player_name);
-      })
+    .sort((a, b) => {
+      if (b.points !== a.points) {
+        return b.points - a.points;
+      }
+      return a.player_name.localeCompare(b.player_name);
+    })
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
 
-    logger.info("[calculatePlayerLeaderboard] Leaderboard calculated", { 
+  logger.info("[calculatePlayerLeaderboard] Leaderboard calculated", { 
       count: sortedLeaderboard.length,
       samplePlayer: sortedLeaderboard[0] ? {
         name: sortedLeaderboard[0].player_name,
