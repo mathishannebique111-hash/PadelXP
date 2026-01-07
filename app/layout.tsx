@@ -26,9 +26,9 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         
-        {/* Script de détection app/web - NOUVEAU */}
+        {/* Script de détection app/web et gestion de la safe area */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -39,6 +39,28 @@ export default function RootLayout({
                 } else {
                   document.documentElement.classList.add('is-web');
                 }
+                
+                // Par défaut, safe area noire (sera remplacée par bleu sur les pages joueur)
+                const blackColor = '#000';
+                document.body.style.backgroundColor = blackColor;
+                document.documentElement.style.backgroundColor = blackColor;
+                
+                // Notifier la vue native iOS pour mettre à jour la couleur des safe areas en noir
+                function notifyNativeColor(color) {
+                  try {
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.updateSafeAreaColor) {
+                      window.webkit.messageHandlers.updateSafeAreaColor.postMessage(color);
+                    }
+                  } catch(e) {
+                    console.error('Error notifying native color:', e);
+                  }
+                }
+                
+                // Notifier immédiatement et plusieurs fois
+                notifyNativeColor(blackColor);
+                setTimeout(function() { notifyNativeColor(blackColor); }, 100);
+                setTimeout(function() { notifyNativeColor(blackColor); }, 500);
+                setTimeout(function() { notifyNativeColor(blackColor); }, 1000);
               })();
             `,
           }}
@@ -63,7 +85,8 @@ export default function RootLayout({
                 criticalStyle.textContent = \`
                   [data-hamburger-button] {
                     position: fixed !important;
-                    top: 0.75rem !important;
+                    top: calc(0.75rem + constant(safe-area-inset-top)) !important;
+                    top: calc(0.75rem + env(safe-area-inset-top)) !important;
                     left: 0.75rem !important;
                     z-index: 100000 !important;
                     display: flex !important;
@@ -81,7 +104,8 @@ export default function RootLayout({
                   }
                   @media (min-width: 640px) {
                     [data-hamburger-button] {
-                      top: 1rem !important;
+                      top: calc(1rem + constant(safe-area-inset-top)) !important;
+                      top: calc(1rem + env(safe-area-inset-top)) !important;
                       left: 1rem !important;
                       width: 3rem !important;
                       height: 3rem !important;
@@ -91,7 +115,8 @@ export default function RootLayout({
                   }
                   [data-club-logo-container="true"] {
                     position: absolute !important;
-                    top: 0.75rem !important;
+                    top: calc(0.75rem + constant(safe-area-inset-top)) !important;
+                    top: calc(0.75rem + env(safe-area-inset-top)) !important;
                     right: 0.75rem !important;
                     z-index: 99999 !important;
                     visibility: visible !important;
@@ -108,7 +133,8 @@ export default function RootLayout({
                   }
                   @media (min-width: 640px) {
                     [data-club-logo-container="true"] {
-                      top: 1rem !important;
+                      top: calc(1rem + constant(safe-area-inset-top)) !important;
+                      top: calc(1rem + env(safe-area-inset-top)) !important;
                       right: 1rem !important;
                       width: 5rem !important;
                       height: 5rem !important;
@@ -169,10 +195,13 @@ export default function RootLayout({
                     // Responsive: mobile par défaut
                     const isMobile = window.innerWidth < 640;
                     const isDesktop = window.innerWidth >= 1024;
-                    const top = isMobile ? '0.75rem' : '1rem';
+                    // Calculer la safe area top (pour iOS)
+                    const safeAreaTop = window.visualViewport ? (window.visualViewport.offsetTop || 0) : (parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)')) || 0);
+                    const baseTop = isMobile ? 0.75 : 1;
+                    const top = (baseTop + (safeAreaTop / 16)) + 'rem'; // Convertir px en rem (16px = 1rem)
                     const left = isMobile ? '0.75rem' : '1rem';
                     const size = isMobile ? '2.5rem' : '3rem';
-                    button.style.cssText = 'position: fixed !important; top: ' + top + ' !important; left: ' + left + ' !important; z-index: 100000 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; width: ' + size + ' !important; height: ' + size + ' !important; min-width: ' + size + ' !important; min-height: ' + size + ' !important; pointer-events: auto !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 0.75rem !important; background-color: rgba(255, 255, 255, 0.1) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;';
+                    button.style.cssText = 'position: fixed !important; top: calc(' + baseTop + 'rem + env(safe-area-inset-top)) !important; left: ' + left + ' !important; z-index: 100000 !important; display: flex !important; visibility: visible !important; opacity: 1 !important; width: ' + size + ' !important; height: ' + size + ' !important; min-width: ' + size + ' !important; min-height: ' + size + ' !important; pointer-events: auto !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; border-radius: 0.75rem !important; background-color: rgba(255, 255, 255, 0.1) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;';
                   }
                   
                   if (logo) {
@@ -180,10 +209,10 @@ export default function RootLayout({
                     const isMobile = window.innerWidth < 640;
                     const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
                     const isDesktop = window.innerWidth >= 1024;
-                    const top = isMobile ? '0.75rem' : '1rem';
+                    const baseTop = isMobile ? 0.75 : 1;
                     const right = isMobile ? '0.75rem' : '1rem';
                     const size = isMobile ? '4rem' : (isTablet ? '5rem' : '6rem');
-                    logo.style.cssText = 'position: absolute !important; top: ' + top + ' !important; right: ' + right + ' !important; z-index: 99999 !important; visibility: visible !important; display: flex !important; align-items: center !important; justify-content: center !important; width: ' + size + ' !important; height: ' + size + ' !important; min-width: ' + size + ' !important; min-height: ' + size + ' !important; max-width: ' + size + ' !important; max-height: ' + size + ' !important; opacity: 1 !important;';
+                    logo.style.cssText = 'position: absolute !important; top: calc(' + baseTop + 'rem + env(safe-area-inset-top)) !important; right: ' + right + ' !important; z-index: 99999 !important; visibility: visible !important; display: flex !important; align-items: center !important; justify-content: center !important; width: ' + size + ' !important; height: ' + size + ' !important; min-width: ' + size + ' !important; min-height: ' + size + ' !important; max-width: ' + size + ' !important; max-height: ' + size + ' !important; opacity: 1 !important;';
                     // Forcer la taille des images à l'intérieur du conteneur
                     const logoImages = logo.querySelectorAll('img');
                     logoImages.forEach((img) => {
@@ -210,7 +239,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-black text-white min-h-screen">
+      <body className="bg-black text-white min-h-screen" style={{ backgroundColor: '#000' }}>
         {children}
         <CookieConsent />
       </body>

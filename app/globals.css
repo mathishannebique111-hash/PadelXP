@@ -62,6 +62,9 @@ html {
   background-color: #000; /* noir absolu */
   color-scheme: dark;
   -webkit-text-size-adjust: 100%;
+  /* S'assurer que le fond s'étend dans la safe area */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 body {
@@ -73,6 +76,9 @@ body {
   font-weight: 400;
   line-height: 1.5;
   font-feature-settings: 'tnum' 1; /* Chiffres tabulaires */
+  /* S'assurer que le fond s'étend dans la safe area */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 /* Éviter le zoom automatique sur iOS lors du focus des champs de formulaire
@@ -657,12 +663,40 @@ html {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-/* iOS Safe Area */
+/* iOS Safe Area - Zone safe area avec couleur selon le type de page */
+/* Pour les pages joueur (protected), la safe area sera bleue (blue-950) */
+/* Pour les autres pages (landing, login, signup), la safe area sera noire */
+
+/* Couleur de fond par défaut pour toutes les pages */
+body {
+  background-color: #000000;
+}
+
 html {
-  padding-top: constant(safe-area-inset-top);
-  padding-top: env(safe-area-inset-top);
-  padding-left: constant(safe-area-inset-left);
-  padding-left: env(safe-area-inset-left);
-  padding-right: constant(safe-area-inset-right);
-  padding-right: env(safe-area-inset-right);
+  background-color: #000000;
+}
+
+/* Couleur de fond pour les pages joueurs (avec classe player-page) */
+body.player-page {
+  background-color: #0B1C45;
+}
+
+html.player-page {
+  background-color: #0B1C45;
+}
+
+/* Compatibilité avec l'ancien système data-player-layout */
+body[data-player-layout="true"],
+body[data-player-layout="true"] html,
+html[data-player-layout="true"] {
+  background-color: #0B1C45 !important;
+}
+
+/* Pour les pages joueur, forcer la couleur bleue */
+body[data-player-layout="true"] {
+  background-color: #0B1C45 !important;
+}
+
+html[data-player-layout="true"] {
+  background-color: #0B1C45 !important;
 }

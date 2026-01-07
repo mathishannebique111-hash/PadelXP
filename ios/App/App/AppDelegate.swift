@@ -8,6 +8,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        // S'assurer que la fenêtre principale a un fond noir pour éviter les safe areas blanches
+        if let window = self.window {
+            window.backgroundColor = UIColor.black
+        }
+        
         return true
     }
 
