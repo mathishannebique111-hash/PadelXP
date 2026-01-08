@@ -5,6 +5,7 @@ import { useUser } from '@/lib/hooks/useUser';
 import { createNotification } from '@/lib/notifications';
 import { usePopupQueue } from '@/contexts/PopupQueueContext';
 import { logger } from '@/lib/logger';
+import { createClient } from '@/lib/supabase/client';
 
 type Badge = {
   icon: string;
@@ -33,30 +34,44 @@ export default function BadgesUnlockNotifier({ obtained }: Props) {
       const seen: string[] = raw ? JSON.parse(raw) : [];
 
       const newlyUnlocked = obtained.filter(b => !seen.includes(`${b.icon}|${b.title}`));
-      if (newlyUnlocked.length > 0) {
-        // TOUJOURS créer les notifications dans la BD pour chaque nouveau badge
-        if (user?.id) {
-          newlyUnlocked.forEach(badge => {
-            createNotification(user.id, 'badge_unlocked', {
-              badge_name: badge.title,
-              badge_icon: badge.icon,
-              badge_description: badge.description,
-              timestamp: new Date().toISOString(),
-            }).catch(err => {
-              logger.error('Failed to save badge_unlocked notification to DB:', err)
-            })
-          })
-        }
+      if (newlyUnlocked.length > 0 && user?.id) {
+        // Fonction async pour traiter chaque badge
+        const processBadges = async () => {
+          const supabase = createClient();
+          for (const badge of newlyUnlocked) {
+            // 1. Créer la notification en base de données IMMÉDIATEMENT
+            try {
+              await supabase.from('notifications').insert({
+                user_id: user.id,
+                type: 'badge_unlocked',
+                title: 'Badge débloqué !',
+                message: `Badge débloqué : ${badge.title}`,
+                data: {
+                  badge_name: badge.title,
+                  badge_icon: badge.icon,
+                  badge_description: badge.description,
+                  timestamp: new Date().toISOString(),
+                },
+                is_read: false,
+                read: false,
+              });
+            } catch (err) {
+              logger.error('Failed to save badge_unlocked notification to DB:', err);
+            }
+            
+            // 2. Ajouter à la file d'attente des popups
+            enqueuePopup({
+              type: "badge",
+              icon: badge.icon,
+              title: badge.title,
+              description: badge.description,
+              badgeId: `${badge.icon}|${badge.title}`, // Identifiant unique
+            });
+          }
+        };
         
-        // Ajouter chaque badge à la file d'attente des popups
-        newlyUnlocked.forEach(badge => {
-          enqueuePopup({
-            type: "badge",
-            icon: badge.icon,
-            title: badge.title,
-            description: badge.description,
-            badgeId: `${badge.icon}|${badge.title}`, // Identifiant unique
-          });
+        processBadges().catch(err => {
+          logger.error('Error processing badges:', err);
         });
 
         // Marquer comme vus dans localStorage (le contexte gère aussi sa propre vérification)

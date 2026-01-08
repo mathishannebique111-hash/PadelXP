@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useUser } from '@/lib/hooks/useUser';
-import { createNotification } from '@/lib/notifications';
 import { usePopupQueue } from '@/contexts/PopupQueueContext';
 import { logger } from '@/lib/logger';
+import { createClient } from '@/lib/supabase/client';
 
 interface Props {
   tier: string; // Bronze / Argent / Or / Diamant / Champion
@@ -24,27 +24,42 @@ export default function LevelUpNotifier({ tier }: Props) {
     try {
       const last = window.localStorage.getItem(tierKey);
       
-      if (tier && tier !== last) {
-        // TOUJOURS créer la notification dans la BD quand le tier change
-        // (même si on ne montre pas le popup, pour que le NotificationCenter l'affiche)
-        if (last !== null && user?.id) {
-          createNotification(user.id, 'level_up', {
-            tier,
-            tier_name: tier,
-            previous_tier: last,
-            timestamp: new Date().toISOString(),
-          }).catch(err => {
-            logger.error('Failed to save level_up notification to DB:', err)
-          })
-        }
-        
+      if (tier && tier !== last && user?.id) {
         // Afficher le popup seulement si il y avait un tier précédent (pas le premier chargement)
-        // Le contexte gère la vérification des doublons
         if (last !== null) {
-          enqueuePopup({
-            type: "level_up",
-            tier,
-            previousTier: last,
+          // Fonction async pour créer la notification et afficher le popup
+          (async () => {
+            const { createClient } = await import('@/lib/supabase/client');
+            const supabase = createClient();
+            
+            // 1. Créer la notification en base de données IMMÉDIATEMENT
+            try {
+              await supabase.from('notifications').insert({
+                user_id: user.id,
+                type: 'level_up',
+                title: 'Niveau atteint !',
+                message: `Félicitations, vous avez atteint le niveau ${tier}.`,
+                data: {
+                  tier,
+                  tier_name: tier,
+                  previous_tier: last,
+                  timestamp: new Date().toISOString(),
+                },
+                is_read: false,
+                read: false,
+              });
+            } catch (err) {
+              logger.error('Failed to save level_up notification to DB:', err);
+            }
+            
+            // 2. Ajouter à la file d'attente des popups
+            enqueuePopup({
+              type: "level_up",
+              tier,
+              previousTier: last,
+            });
+          })().catch(err => {
+            logger.error('Error processing level up:', err);
           });
         }
         

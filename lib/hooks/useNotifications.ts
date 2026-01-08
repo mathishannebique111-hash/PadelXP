@@ -32,17 +32,26 @@ export function useNotifications(userId: string | undefined) {
     if (!userId) return
 
     const supabase = createClient()
+    const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+    
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
+      .gte('created_at', seventyTwoHoursAgo)
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(100)
 
     if (error) {
       logger.error('Error fetching notifications', { error: error.message })
     } else if (data) {
-      setNotifications(data)
+      // Normaliser les données pour gérer read/is_read
+      const normalized = data.map((n: any) => ({
+        ...n,
+        is_read: n.is_read !== undefined ? n.is_read : n.read,
+        read: n.read !== undefined ? n.read : n.is_read,
+      }));
+      setNotifications(normalized as Notification[])
     }
   }, [userId])
 
@@ -126,10 +135,15 @@ export function useNotifications(userId: string | undefined) {
                 // Normaliser les données
                 const normalized = {
                   ...newNotification,
-                  is_read: newNotification.is_read !== undefined ? newNotification.is_read : newNotification.read,
-                  read: newNotification.read !== undefined ? newNotification.read : newNotification.is_read,
+                  is_read: newNotification.is_read !== undefined ? newNotification.is_read : (newNotification.read !== undefined ? newNotification.read : false),
+                  read: newNotification.read !== undefined ? newNotification.read : (newNotification.is_read !== undefined ? newNotification.is_read : false),
                 };
-                setNotifications(prev => [normalized as Notification, ...prev])
+                setNotifications(prev => {
+                  // Éviter les doublons
+                  const exists = prev.some(n => n.id === normalized.id);
+                  if (exists) return prev;
+                  return [normalized as Notification, ...prev];
+                });
                 // Haptic feedback sur mobile (si disponible)
                 if (typeof window !== 'undefined' && 'vibrate' in navigator) {
                   navigator.vibrate(50);
@@ -139,8 +153,8 @@ export function useNotifications(userId: string | undefined) {
               const updated = payload.new as any;
               const normalized = {
                 ...updated,
-                is_read: updated.is_read !== undefined ? updated.is_read : updated.read,
-                read: updated.read !== undefined ? updated.read : updated.is_read,
+                is_read: updated.is_read !== undefined ? updated.is_read : (updated.read !== undefined ? updated.read : false),
+                read: updated.read !== undefined ? updated.read : (updated.is_read !== undefined ? updated.is_read : false),
               };
               setNotifications(prev =>
                 prev.map(n => n.id === normalized.id ? (normalized as Notification) : n)

@@ -42,6 +42,7 @@ export async function createNotification(
         title,
         message,
         data,
+        is_read: false,
         read: false,
       })
 

@@ -265,7 +265,7 @@ export default function NotificationCenter() {
       {/* Modal/Panneau de notifications */}
       {isOpen && (
         <>
-          {/* Overlay */}
+          {/* Overlay - Tap pour fermer */}
           <div 
             className="fixed inset-0 z-[100000] bg-black/50 backdrop-blur-sm transition-opacity duration-300"
             onClick={handleClose}
@@ -284,6 +284,7 @@ export default function NotificationCenter() {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            onClick={(e) => e.stopPropagation()}
             className={`
               fixed z-[100001] 
               bg-black/95 backdrop-blur-xl 
@@ -304,15 +305,17 @@ export default function NotificationCenter() {
               {/* Bouton retour/fermer (mobile) ou X (desktop) */}
               <button
                 onClick={handleClose}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors md:hidden"
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors md:hidden z-20"
                 aria-label="Fermer"
+                type="button"
               >
                 <ChevronLeft className="w-6 h-6 text-white" />
               </button>
               <button
                 onClick={handleClose}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors hidden md:block"
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors hidden md:block z-20"
                 aria-label="Fermer"
+                type="button"
               >
                 <X className="w-5 h-5 text-white/70" />
               </button>
