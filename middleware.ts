@@ -18,7 +18,7 @@ const generalRatelimit = new Ratelimit({
 
 const loginRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "15 m"),
+  limiter: Ratelimit.slidingWindow(15, "15 m"), // Augmenté de 5 à 15 tentatives
   analytics: true,
   prefix: "ratelimit:login",
 });
@@ -141,8 +141,16 @@ export async function middleware(req: NextRequest) {
 
 
   try {
-    // Rate limiting pour les tentatives de connexion
-    if (pathnameForRateLimit.startsWith("/login") || pathnameForRateLimit.startsWith("/api/auth/login") || pathnameForRateLimit.startsWith("/api/auth/callback")) {
+    // Rate limiting pour les tentatives de connexion (uniquement POST vers les API d'auth)
+    // Ne pas appliquer aux visites simples de pages (GET) ni aux pages de réinitialisation
+    const isLoginApiCall = 
+      (pathnameForRateLimit.startsWith("/api/auth/login") || 
+       pathnameForRateLimit.startsWith("/api/auth/callback")) &&
+      req.method === "POST";
+    
+    // Ne pas appliquer le rate limiting aux visites simples de la page /login (GET)
+    // ni aux pages de réinitialisation de mot de passe
+    if (isLoginApiCall) {
       const { success, remaining, reset } = await loginRatelimit.limit(ip);
       if (!success) {
         return NextResponse.json(
@@ -150,7 +158,7 @@ export async function middleware(req: NextRequest) {
           { status: 429 }
         );
       }
-      rateLimitInfo = { limit: "5", remaining, reset };
+      rateLimitInfo = { limit: "15", remaining, reset };
     }
 
 
@@ -262,6 +270,8 @@ export async function middleware(req: NextRequest) {
     "/player/login", 
     "/player/signup",
     "/download",  // NOUVEAU : page de téléchargement app
+    "/forgot-password",  // Page de réinitialisation de mot de passe
+    "/reset-password",  // Page de définition du nouveau mot de passe
     "/terms", 
     "/privacy", 
     "/legal", 

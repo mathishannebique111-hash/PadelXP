@@ -1,6 +1,5 @@
 const ADMIN_EMAILS = [
   "contactpadelxp@gmail.com",
-  "mathis.hannebique111@gmail.com",
 ] as const;
 
 type AdminEmail = (typeof ADMIN_EMAILS)[number];

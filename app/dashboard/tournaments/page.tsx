@@ -103,7 +103,6 @@ export default async function TournamentsPage() {
   const isDevViewer =
     (!!userEmail && devEmailList.includes(userEmail)) ||
     userEmail === "tcam@gmail.com" ||
-    userEmail === "mathis.hannebique111@gmail.com" ||
     userEmail === "amiensac@gmail.com";
 
   logger.info(

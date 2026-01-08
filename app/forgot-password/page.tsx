@@ -1,17 +1,12 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import EmailLoginForm from "@/components/auth/EmailLoginForm";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import Link from "next/link";
-import LoginSuccessMessage from "@/components/auth/LoginSuccessMessage";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams?: { "password-reset"?: string };
-}) {
+export default async function ForgotPasswordPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
+    // Si l'utilisateur est déjà connecté, rediriger vers home
     const { data: profile } = await supabase
       .from("profiles")
       .select("club_slug")
@@ -19,26 +14,38 @@ export default async function LoginPage({
       .maybeSingle();
     
     if (profile) {
-      // L'utilisateur a un profil joueur, le rediriger vers l'espace joueur
-      // TOUJOURS rediriger vers /home pour garantir l'affichage du menu hamburger et du logo du club
-      // /home utilise le layout (protected) qui contient PlayerSidebar et PlayerClubLogo
+      const { redirect } = await import("next/navigation");
       redirect("/home");
     }
   }
 
-  const showPasswordResetSuccess = searchParams?.["password-reset"] === "success";
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6">
       <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-6">
-        <h1 className="text-xl font-extrabold mb-2">Connexion</h1>
-        <p className="text-white/70 mb-5 text-xs opacity-70">Bon retour sur PadelXP !</p>
-        {showPasswordResetSuccess && <LoginSuccessMessage />}
-        <EmailLoginForm />
-        <div className="mt-4 text-center text-sm text-white/70">
-          Pas encore membre ?{" "}
-          <Link href="/player/signup" className="underline">
-            S'inscrire
+        <h1 className="text-xl font-extrabold mb-2">Mot de passe oublié ?</h1>
+        <p className="text-white/70 mb-5 text-xs opacity-70">
+          Entrez votre email, nous vous enverrons un lien de réinitialisation.
+        </p>
+        <ForgotPasswordForm />
+        <div className="mt-4 text-center">
+          <Link
+            href="/login"
+            className="text-sm text-white/70 hover:text-white underline transition-colors flex items-center justify-center gap-1"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Retour à la connexion
           </Link>
         </div>
       </div>
@@ -62,5 +69,3 @@ export default async function LoginPage({
     </div>
   );
 }
-
-

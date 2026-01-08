@@ -36,8 +36,7 @@ export async function GET(request: NextRequest) {
     const isAuthorized = 
       profile?.club_id === clubId || 
       club?.owner_id === user.id ||
-      user.email === 'contactpadelxp@gmail.com' ||
-      user.email === 'mathis.hannebique111@gmail.com';
+      user.email === 'contactpadelxp@gmail.com';
 
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
