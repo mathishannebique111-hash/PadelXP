@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import NotificationModal from "./NotificationModal";
+import { usePopupQueue } from "@/contexts/PopupQueueContext";
 import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { createNotification } from '@/lib/notifications';
@@ -21,21 +21,17 @@ interface LeaderboardEntry {
   matches: number;
 }
 
-type NotificationType = "dethroned_from_1" | "dethroned_from_2" | "dethroned_from_3" | null;
-
 export default function Top3Notification({ currentUserId }: Top3NotificationProps) {
-  const [notification, setNotification] = useState<NotificationType>(null);
   const previousRankRef = useRef<number | null>(null);
   const supabaseRef = useRef(createClientComponentClient());
   const channelRef = useRef<any>(null);
   const isInitialMountRef = useRef(true);
   const isCheckingRef = useRef(false);
   const checkCountRef = useRef(0);
+  const { enqueuePopup } = usePopupQueue();
 
   // DIAGNOSTIC: Log initial du composant
-  logger.info("🔵 [Top3Notification] COMPOSANT INITIALISÉ");
-  logger.info("🔵 [Top3Notification] 👤 User ID reçu:", currentUserId);
-  logger.info("🔵 [Top3Notification] 📊 État notification initial:", notification);
+  logger.info(`🔵 [Top3Notification] COMPOSANT INITIALISÉ - User ID: ${currentUserId.substring(0, 8)}…`);
 
   // Fonction pour récupérer le classement actuel (FILTRÉ PAR CLUB)
   // Utilise l'API qui calcule déjà les points avec boosts
@@ -55,7 +51,7 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
           losses: entry.losses,
           matches: entry.matches,
         }));
-        logger.info("📥 [Top3Notification] Leaderboard récupéré via API:", leaderboard.length, "joueurs");
+        logger.info(`📥 [Top3Notification] Leaderboard récupéré via API: ${leaderboard.length} joueurs`);
         return leaderboard;
       }
       
@@ -189,8 +185,9 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
 
       const sorted = leaderboard.sort((a, b) => b.points - a.points || b.wins - a.wins || a.matches - b.matches);
       
-      logger.info("📥 [Top3Notification] Leaderboard complet calculé (fallback):", sorted.length, "joueurs");
-      logger.info("📥 [Top3Notification] Top 3:", sorted.slice(0, 3).map(p => ({ name: p.player_name, points: p.points, id: p.user_id })));
+      logger.info(`📥 [Top3Notification] Leaderboard complet calculé (fallback): ${sorted.length} joueurs`);
+      const top3Data = sorted.slice(0, 3).map(p => ({ name: p.player_name, points: p.points, id: p.user_id }));
+      logger.info(`📥 [Top3Notification] Top 3: ${JSON.stringify(top3Data)}`);
       
       return sorted;
       } catch (fallbackError) {
@@ -241,9 +238,9 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
       const currentRank = findUserRank(leaderboard);
       const previousRank = previousRankRef.current;
 
-      logger.info("🎯 [Top3Notification] Rank actuel:", currentRank, "| Rank précédent:", previousRank);
-      logger.info("🎯 [Top3Notification] isInitialMount:", isInitialMountRef.current);
-      logger.info("🎯 [Top3Notification] 👤 User ID:", currentUserId);
+      logger.info(`🎯 [Top3Notification] Rank actuel: ${currentRank} | Rank précédent: ${previousRank}`);
+      logger.info(`🎯 [Top3Notification] isInitialMount: ${isInitialMountRef.current}`);
+      logger.info(`🎯 [Top3Notification] 👤 User ID: ${currentUserId.substring(0, 8)}…`);
 
       // Ignorer le premier chargement
       if (isInitialMountRef.current) {
@@ -276,45 +273,43 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
 
       logger.info(`🔄 [Top3Notification] 🔄 CHANGEMENT DÉTECTÉ: ${previousRank} → ${currentRank}`);
       logger.info("🔍 [Top3Notification] Vérification conditions détrônement:");
-      logger.info("  - previousRank:", previousRank, "(doit être <= 3)");
-      logger.info("  - currentRank:", currentRank, "(doit être > previousRank)");
-      logger.info("  - previousRank <= 3:", previousRank <= 3);
-      logger.info("  - currentRank > previousRank:", currentRank > previousRank);
+      logger.info(`  - previousRank: ${previousRank} (doit être <= 3)`);
+      logger.info(`  - currentRank: ${currentRank} (doit être > previousRank)`);
+      logger.info(`  - previousRank <= 3: ${previousRank <= 3}`);
+      logger.info(`  - currentRank > previousRank: ${currentRank > previousRank}`);
 
       // Détecter les changements de rang et créer des notifications
       
       // Cas 1: Détrônement du top 3 (3 → 4+)
       if (previousRank !== null && previousRank <= 3 && currentRank > 3) {
+        let notificationType: "dethroned_from_1" | "dethroned_from_2" | "dethroned_from_3" | null = null;
+        
         if (previousRank === 1) {
           logger.info(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 1ÈRE PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
-          setNotification("dethroned_from_1");
-          // Créer notification dans la BD
-          createNotification(currentUserId, 'top3_ranking', {
-            type: 'dethroned',
-            previous_rank: previousRank,
-            current_rank: currentRank,
-            timestamp: new Date().toISOString(),
-          }).catch(err => logger.error('Failed to save top3 notification:', err))
+          notificationType = "dethroned_from_1";
         } else if (previousRank === 2) {
           logger.info(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 2ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
-          setNotification("dethroned_from_2");
-          // Créer notification dans la BD
-          createNotification(currentUserId, 'top3_ranking', {
-            type: 'dethroned',
-            previous_rank: previousRank,
-            current_rank: currentRank,
-            timestamp: new Date().toISOString(),
-          }).catch(err => logger.error('Failed to save top3 notification:', err))
+          notificationType = "dethroned_from_2";
         } else if (previousRank === 3) {
           logger.info(`🚨🚨🚨 [Top3Notification] DÉTRÔNEMENT DE LA 3ÈME PLACE DÉTECTÉ: ${previousRank} → ${currentRank}`);
-          setNotification("dethroned_from_3");
+          notificationType = "dethroned_from_3";
+        }
+        
+        if (notificationType) {
           // Créer notification dans la BD
-          createNotification(currentUserId, 'top3_ranking', {
+          createNotification(currentUserId, 'top3' as any, {
             type: 'dethroned',
             previous_rank: previousRank,
             current_rank: currentRank,
+            notification_type: notificationType,
             timestamp: new Date().toISOString(),
-          }).catch(err => logger.error('Failed to save top3 notification:', err))
+          }).catch(err => logger.error('Failed to save top3 notification:', err));
+          
+          // Ajouter à la file d'attente des popups
+          enqueuePopup({
+            type: "top3",
+            notificationType,
+          });
         }
         previousRankRef.current = currentRank;
       }
@@ -322,7 +317,7 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
       else if (previousRank !== null && previousRank > 3 && currentRank <= 3) {
         logger.info(`🎉 [Top3Notification] ENTRÉE DANS LE TOP 3 DÉTECTÉE: ${previousRank} → ${currentRank}`);
         // Créer notification dans la BD pour célébrer l'entrée dans le top 3
-        createNotification(currentUserId, 'top3_ranking', {
+        createNotification(currentUserId, 'top3', {
           type: 'entered_top3',
           rank: currentRank,
           previous_rank: previousRank,
@@ -334,7 +329,7 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
       else if (previousRank !== null && previousRank <= 3 && currentRank <= 3 && previousRank !== currentRank) {
         logger.info(`➡️ [Top3Notification] Changement de rang dans le top 3: ${previousRank} → ${currentRank}`);
         // Créer notification pour les mouvements dans le top 3
-        createNotification(currentUserId, 'top3_ranking', {
+        createNotification(currentUserId, 'top3', {
           type: 'rank_changed',
           rank: currentRank,
           previous_rank: previousRank,
@@ -470,35 +465,6 @@ export default function Top3Notification({ currentUserId }: Top3NotificationProp
     };
   }, [currentUserId, checkPositionChange]);
 
-  // DIAGNOSTIC: Log chaque changement de state notification
-  useEffect(() => {
-    logger.info("📢 [Top3Notification] 📢 État notification changé:", notification);
-    if (notification) {
-      logger.info("✅✅✅ [Top3Notification] NOTIFICATION ACTIVE:", notification);
-      logger.info("✅✅✅ [Top3Notification] Le modal devrait maintenant s'afficher");
-    } else {
-      logger.info("➖ [Top3Notification] Notification effacée (null)");
-    }
-  }, [notification]);
-
-  const handleCloseNotification = () => {
-    logger.info("❌ [Top3Notification] Fermeture de la notification");
-    setNotification(null);
-  };
-
-  // DIAGNOSTIC: Log avant le rendu
-  if (notification) {
-    logger.info("🎨 [Top3Notification] 🎨 RENDU DU MODAL avec type:", notification);
-  }
-
-  return (
-    <>
-      {notification && (
-        <NotificationModal
-          type={notification}
-          onClose={handleCloseNotification}
-        />
-      )}
-    </>
-  );
+  // Ce composant ne rend plus rien, il délègue au PopupQueueRenderer
+  return null;
 }

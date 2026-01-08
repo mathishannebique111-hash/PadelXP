@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { logger, logError } from "@/lib/logger";
 
-export type NotificationType = 'badge' | 'level_up' | 'top3' | 'referral' | 'challenge'
+export type NotificationType = 'badge' | 'badge_unlocked' | 'level_up' | 'top3' | 'top3_ranking' | 'referral' | 'challenge'
 
 export interface NotificationData {
   [key: string]: any // Flexible pour stocker n'importe quelles données
@@ -22,11 +22,25 @@ export async function createNotification(
   try {
     const supabase = createClient()
     
+    // Générer le titre et message selon le type
+    let title: string | null = null;
+    let message: string | null = null;
+    
+    if (type === 'badge_unlocked' || type === 'badge') {
+      title = 'Badge débloqué !';
+      message = data.badge_name ? `Badge débloqué : ${data.badge_name}` : 'Nouveau badge débloqué';
+    } else if (type === 'level_up') {
+      title = 'Niveau atteint !';
+      message = data.tier_name ? `Félicitations, vous avez atteint le niveau ${data.tier_name}.` : 'Nouveau niveau atteint';
+    }
+    
     const { error } = await supabase
       .from('notifications')
       .insert({
         user_id: userId,
         type,
+        title,
+        message,
         data,
         read: false,
       })
@@ -104,7 +118,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
   
   const { error } = await supabase
     .from('notifications')
-    .update({ read: true })
+    .update({ is_read: true, read: true })
     .eq('id', notificationId)
   
   if (error) {
@@ -121,9 +135,9 @@ export async function markAllAsRead(userId: string): Promise<void> {
   
   const { error } = await supabase
     .from('notifications')
-    .update({ read: true })
+    .update({ is_read: true, read: true })
     .eq('user_id', userId)
-    .eq('read', false)
+    .or('is_read.eq.false,read.eq.false')
   
   if (error) {
     logger.error('Error marking all notifications as read', { error: error.message })

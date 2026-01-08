@@ -1,9 +1,18 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/types/supabase'
 import { logger, logError } from "@/lib/logger";
 
-type Notification = Database['public']['Tables']['notifications']['Row']
+interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string | null;
+  message: string | null;
+  data: any;
+  is_read?: boolean;
+  read?: boolean;
+  created_at: string;
+}
 
 export function useNotifications(userId: string | undefined) {
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -11,7 +20,11 @@ export function useNotifications(userId: string | undefined) {
 
   // Calculer le nombre de notifications non lues à partir de la liste
   const unreadCount = useMemo(() => {
-    return notifications.filter(n => !n.read).length
+    return notifications.filter(n => {
+      // Gérer la compatibilité avec read et is_read
+      const isRead = (n as any).is_read !== undefined ? (n as any).is_read : (n as any).read;
+      return !isRead;
+    }).length
   }, [notifications])
 
   // Fonction pour recharger les notifications depuis la base de données
@@ -36,14 +49,19 @@ export function useNotifications(userId: string | undefined) {
   // Fonction pour marquer une notification comme lue localement (mise à jour immédiate)
   const markNotificationAsReadLocal = useCallback((notificationId: string) => {
     setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      prev.map(n => {
+        if (n.id === notificationId) {
+          return { ...n, is_read: true, read: true } as Notification;
+        }
+        return n;
+      })
     )
   }, [])
 
   // Fonction pour marquer toutes les notifications comme lues localement
   const markAllAsReadLocal = useCallback(() => {
     setNotifications(prev =>
-      prev.map(n => ({ ...n, read: true }))
+      prev.map(n => ({ ...n, is_read: true, read: true } as Notification))
     )
   }, [])
 
@@ -55,19 +73,28 @@ export function useNotifications(userId: string | undefined) {
 
     const supabase = createClient()
 
-    // Charger les notifications initiales
+    // Charger les notifications initiales (72 dernières heures)
     const fetchNotifications = async () => {
+      const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+      
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
+        .gte('created_at', seventyTwoHoursAgo)
         .order('created_at', { ascending: false })
-        .limit(50) // Limiter à 50 notifications récentes
+        .limit(100) // Limiter à 100 notifications récentes
 
       if (error) {
         logger.error('Error fetching notifications', { error: error.message })
       } else if (data) {
-        setNotifications(data)
+        // Normaliser les données pour gérer read/is_read
+        const normalized = data.map((n: any) => ({
+          ...n,
+          is_read: n.is_read !== undefined ? n.is_read : n.read,
+          read: n.read !== undefined ? n.read : n.is_read,
+        }));
+        setNotifications(normalized as Notification[])
       }
       setLoading(false)
     }
@@ -89,20 +116,41 @@ export function useNotifications(userId: string | undefined) {
             table: 'notifications',
             filter: `user_id=eq.${userId}`
           },
-          (payload) => {
+          (payload: any) => {
             if (payload.eventType === 'INSERT') {
-              setNotifications(prev => [payload.new as Notification, ...prev])
+              const newNotification = payload.new as any;
+              // Filtrer les notifications de plus de 72h
+              const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
+              const createdAt = new Date(newNotification.created_at);
+              if (createdAt >= seventyTwoHoursAgo) {
+                // Normaliser les données
+                const normalized = {
+                  ...newNotification,
+                  is_read: newNotification.is_read !== undefined ? newNotification.is_read : newNotification.read,
+                  read: newNotification.read !== undefined ? newNotification.read : newNotification.is_read,
+                };
+                setNotifications(prev => [normalized as Notification, ...prev])
+                // Haptic feedback sur mobile (si disponible)
+                if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+                  navigator.vibrate(50);
+                }
+              }
             } else if (payload.eventType === 'UPDATE') {
-              const updated = payload.new as Notification
+              const updated = payload.new as any;
+              const normalized = {
+                ...updated,
+                is_read: updated.is_read !== undefined ? updated.is_read : updated.read,
+                read: updated.read !== undefined ? updated.read : updated.is_read,
+              };
               setNotifications(prev =>
-                prev.map(n => n.id === updated.id ? updated : n)
+                prev.map(n => n.id === normalized.id ? (normalized as Notification) : n)
               )
             } else if (payload.eventType === 'DELETE') {
               setNotifications(prev => prev.filter(n => n.id !== payload.old.id))
             }
           }
         )
-        .subscribe((status) => {
+        .subscribe((status: any) => {
           if (status === 'SUBSCRIBED') {
             logger.info('Notifications subscription established')
             subscriptionError = false

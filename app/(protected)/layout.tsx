@@ -5,6 +5,8 @@
 import PlayerSidebar from '@/components/PlayerSidebar';
 import PlayerClubLogo from '@/components/PlayerClubLogo';
 import PlayerSafeAreaColor from '@/components/PlayerSafeAreaColor';
+import { PopupQueueProvider } from '@/contexts/PopupQueueContext';
+import PopupQueueRenderer from '@/components/notifications/PopupQueueRenderer';
 
 export default function PlayerAccountLayout({
   children,
@@ -166,32 +168,34 @@ export default function PlayerAccountLayout({
           `,
         }}
       />
-      {/* Menu hamburger - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
-      {/* Composant client, s'affiche immédiatement sans attendre la vérification du club_id */}
-      <PlayerSidebar />
-      {/* Conteneur principal avec fond bleu (blue-950) qui s'étend dans toute la safe area pour les pages joueur */}
-      <div 
-        className="relative min-h-screen"
-        style={{
-          minHeight: '100vh',
-          minHeight: '-webkit-fill-available',
-          backgroundColor: '#172554', // blue-950 de Tailwind
-        }}
-      >
-        {/* Logo du club - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
-        {/* NE PLUS utiliser Suspense - afficher directement pour garantir la visibilité immédiate */}
-        <PlayerClubLogo />
-        {/* Contenu des pages - démarre sous la barre de statut avec padding-top */}
+      <PopupQueueProvider>
+        {/* Menu hamburger - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
+        {/* Composant client, s'affiche immédiatement sans attendre la vérification du club_id */}
+        <PlayerSidebar />
+        {/* Conteneur principal avec fond bleu (blue-950) qui s'étend dans toute la safe area pour les pages joueur */}
         <div 
           className="relative min-h-screen"
           style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            paddingTop: 'constant(safe-area-inset-top)', // Fallback pour iOS < 11.2
+            minHeight: '100vh',
+            backgroundColor: '#172554', // blue-950 de Tailwind
           }}
         >
-          {children}
+          {/* Logo du club - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
+          {/* NE PLUS utiliser Suspense - afficher directement pour garantir la visibilité immédiate */}
+          <PlayerClubLogo />
+          {/* Contenu des pages - démarre sous la barre de statut avec padding-top */}
+          <div 
+            className="relative min-h-screen"
+            style={{
+              paddingTop: 'env(safe-area-inset-top, constant(safe-area-inset-top))',
+            }}
+          >
+            {children}
+          </div>
+          {/* Renderer pour afficher les popups de la file d'attente */}
+          <PopupQueueRenderer />
         </div>
-      </div>
+      </PopupQueueProvider>
     </>
   );
 }
