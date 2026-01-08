@@ -1,42 +1,132 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import { Camera, Loader2, Check, Trash2 } from "lucide-react";
+import ProfilePhotoCrop from "@/components/auth/ProfilePhotoCrop";
 
 export default function ProfilePhotoUpload() {
+  const pathname = usePathname();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageKeyRef = useRef(0); // Référence pour forcer le rechargement de l'image
 
+  // Effet pour faire disparaître le message de succès après 5 secondes
   useEffect(() => {
-    // Charger la photo de profil actuelle
-    const loadProfile = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+    if (uploadSuccess) {
+      const timer = setTimeout(() => {
+        setUploadSuccess(false);
+      }, 5000); // 5 secondes
       
-      if (user) {
-        const { data: profile } = await supabase
+      return () => clearTimeout(timer);
+    }
+  }, [uploadSuccess]);
+
+  // Effet pour faire disparaître le message de suppression après 5 secondes
+  useEffect(() => {
+    if (deleteSuccess) {
+      const timer = setTimeout(() => {
+        setDeleteSuccess(false);
+      }, 5000); // 5 secondes
+      
+      return () => clearTimeout(timer);
+    }
+  }, [deleteSuccess]);
+
+  // SOLUTION COMPLÈTE : Charger la photo de profil à chaque montage et à chaque retour sur la page
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          console.warn("[ProfilePhotoUpload] Pas d'utilisateur connecté:", userError?.message || "Aucun utilisateur");
+          setAvatarUrl(null);
+          return;
+        }
+        
+        console.log("[ProfilePhotoUpload] Chargement du profil pour l'utilisateur:", user.id.substring(0, 8));
+        
+        // Récupérer l'URL de la photo depuis la base de données
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("avatar_url")
           .eq("id", user.id)
           .maybeSingle();
         
-        if (profile?.avatar_url) {
-          setAvatarUrl(profile.avatar_url);
+        // Gérer les erreurs de manière plus détaillée
+        if (profileError) {
+          // Vérifier si c'est une erreur "not found" (profil n'existe pas encore) ou une vraie erreur
+          if (profileError.code === "PGRST116" || profileError.message?.includes("No rows")) {
+            // Le profil n'existe pas encore, c'est normal pour un nouvel utilisateur
+            console.log("[ProfilePhotoUpload] Profil n'existe pas encore, c'est normal");
+            setAvatarUrl(null);
+            return;
+          }
+          
+          // C'est une vraie erreur (RLS, permissions, etc.)
+          console.error("[ProfilePhotoUpload] Erreur lors de la récupération du profil:", {
+            code: profileError.code,
+            message: profileError.message,
+            details: profileError.details,
+            hint: profileError.hint
+          });
+          setAvatarUrl(null);
+          return;
         }
+        
+        // Si une photo existe, l'afficher
+        if (profile?.avatar_url) {
+          const url = profile.avatar_url.trim();
+          if (url && url.length > 0) {
+            console.log("[ProfilePhotoUpload] Photo trouvée, mise à jour de l'URL:", url.substring(0, 60) + "...");
+            setAvatarUrl(url);
+            // Incrémenter la clé pour forcer le rechargement de l'image
+            imageKeyRef.current += 1;
+          } else {
+            console.log("[ProfilePhotoUpload] URL de photo vide");
+            setAvatarUrl(null);
+          }
+        } else {
+          console.log("[ProfilePhotoUpload] Pas de photo dans le profil");
+          setAvatarUrl(null);
+        }
+      } catch (err: any) {
+        // Gérer les erreurs inattendues
+        console.error("[ProfilePhotoUpload] Erreur inattendue lors du chargement du profil:", {
+          message: err?.message,
+          stack: err?.stack,
+          error: err
+        });
+        setAvatarUrl(null);
       }
     };
+    
+    // Charger immédiatement au montage
+    loadUserProfile();
+    
+    // Recharger aussi quand on arrive sur la page settings (au cas où le composant serait mis en cache)
+    if (pathname === "/settings") {
+      // Petit délai pour s'assurer que le composant est bien monté
+      const timer = setTimeout(() => {
+        loadUserProfile();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]); // Recharger quand le pathname change (navigation)
 
-    loadProfile();
-  }, []);
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -52,12 +142,31 @@ export default function ProfilePhotoUpload() {
       return;
     }
 
-    setIsUploading(true);
     setError(null);
     setUploadSuccess(false);
 
+    // Afficher le modal de recadrage
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const imageSrc = reader.result as string;
+      setImageToCrop(imageSrc);
+      setShowCropModal(true);
+    };
+    reader.onerror = () => {
+      setError("Erreur lors de la lecture du fichier");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
+    setIsUploading(true);
+    setError(null);
+    setUploadSuccess(false);
+    setShowCropModal(false);
+    setImageToCrop(null);
+
     try {
-      // Convertir l'image en base64
+      // Convertir le Blob en base64
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64Data = reader.result as string;
@@ -72,8 +181,8 @@ export default function ProfilePhotoUpload() {
           body: JSON.stringify({
             photo_payload: {
               data: base64Content,
-              filename: file.name,
-              mime: file.type,
+              filename: "profile-photo.png",
+              mime: "image/png",
             },
           }),
         });
@@ -84,18 +193,22 @@ export default function ProfilePhotoUpload() {
           throw new Error(data.error || "Erreur lors de l'upload");
         }
 
-        // Mettre à jour l'URL de l'avatar
+        // Mettre à jour l'URL de l'avatar immédiatement
+        // L'URL retournée par l'API est déjà l'URL publique complète stockée dans la DB
         if (data.photo_url) {
-          setAvatarUrl(data.photo_url);
+          const photoUrl = data.photo_url.trim();
+          if (photoUrl && photoUrl.length > 0) {
+            // Utiliser l'URL directement (sans timestamp) car elle est déjà persistée dans la DB
+            setAvatarUrl(photoUrl);
+            imageKeyRef.current += 1; // Forcer le rechargement de l'image
+            console.log("[ProfilePhotoUpload] Photo uploadée avec succès, URL mise à jour");
+          }
         }
 
         setUploadSuccess(true);
         setIsUploading(false);
 
-        // Recharger la page après 1 seconde pour mettre à jour partout
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        // Ne pas recharger la page automatiquement - laisser l'utilisateur voir sa photo en permanence
       };
 
       reader.onerror = () => {
@@ -103,10 +216,19 @@ export default function ProfilePhotoUpload() {
         setIsUploading(false);
       };
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(croppedImageBlob);
     } catch (err: any) {
       setError(err.message || "Erreur lors de l'upload");
       setIsUploading(false);
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setImageToCrop(null);
+    // Réinitialiser l'input file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -114,16 +236,23 @@ export default function ProfilePhotoUpload() {
     fileInputRef.current?.click();
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
     if (!avatarUrl) return;
+    setShowDeleteConfirm(true);
+    setError(null);
+  };
 
-    if (!confirm("Êtes-vous sûr de vouloir supprimer votre photo de profil ?")) {
-      return;
-    }
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!avatarUrl) return;
 
     setIsDeleting(true);
     setError(null);
     setDeleteSuccess(false);
+    setShowDeleteConfirm(false);
 
     try {
       const response = await fetch("/api/player/profile-photo", {
@@ -143,10 +272,7 @@ export default function ProfilePhotoUpload() {
       setDeleteSuccess(true);
       setIsDeleting(false);
 
-      // Recharger la page après 1 seconde pour mettre à jour partout
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Ne pas recharger automatiquement - la photo est déjà supprimée visuellement
     } catch (err: any) {
       setError(err.message || "Erreur lors de la suppression");
       setIsDeleting(false);
@@ -164,12 +290,50 @@ export default function ProfilePhotoUpload() {
         <div className="relative">
           <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-white/20 bg-white/5">
             {avatarUrl ? (
-              <Image
+              // Utiliser une balise img native pour éviter les problèmes de cache de Next.js Image
+              <img
+                key={`avatar-${imageKeyRef.current}`} // Clé unique pour forcer le rechargement
                 src={avatarUrl}
                 alt="Photo de profil"
-                fill
-                className="object-cover"
-                unoptimized
+                className="w-full h-full object-cover"
+                loading="eager" // Charger immédiatement sans lazy loading
+                onError={async (e) => {
+                  // En cas d'erreur de chargement, réessayer de charger depuis la DB
+                  console.error("[ProfilePhotoUpload] Erreur de chargement de l'image, rechargement depuis la DB...");
+                  try {
+                    const supabase = createClient();
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                      const { data: profile } = await supabase
+                        .from("profiles")
+                        .select("avatar_url")
+                        .eq("id", user.id)
+                        .maybeSingle();
+                      
+                      if (profile?.avatar_url) {
+                        const url = profile.avatar_url.trim();
+                        if (url && url.length > 0) {
+                          // Recharger avec l'URL de la DB
+                          setAvatarUrl(url);
+                          imageKeyRef.current += 1;
+                          console.log("[ProfilePhotoUpload] Photo rechargée depuis la DB après erreur");
+                        } else {
+                          setAvatarUrl(null);
+                        }
+                      } else {
+                        // Pas de photo dans la DB, réinitialiser
+                        console.warn("[ProfilePhotoUpload] Pas de photo trouvée dans la DB");
+                        setAvatarUrl(null);
+                      }
+                    }
+                  } catch (err) {
+                    console.error("[ProfilePhotoUpload] Erreur lors du rechargement de la photo:", err);
+                  }
+                }}
+                onLoad={() => {
+                  // Image chargée avec succès
+                  console.log("[ProfilePhotoUpload] Photo chargée avec succès");
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20">
@@ -225,29 +389,56 @@ export default function ProfilePhotoUpload() {
               ) : (
                 <>
                   <Camera className="w-4 h-4" />
-                  <span>{avatarUrl ? "Changer la photo" : "Ajouter une photo"}</span>
+                  <span>{avatarUrl ? "Modifier la photo" : "Ajouter une photo"}</span>
                 </>
               )}
             </button>
 
-            {avatarUrl && (
+            {avatarUrl && !showDeleteConfirm && (
               <button
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 disabled={isUploading || isDeleting}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Suppression...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4" />
-                    <span>Supprimer la photo</span>
-                  </>
-                )}
+                <Trash2 className="w-4 h-4" />
+                <span>Supprimer la photo</span>
               </button>
+            )}
+
+            {showDeleteConfirm && (
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                <div className="flex-1">
+                  <p className="text-sm text-white/90 mb-2 font-medium">
+                    Êtes-vous sûr de vouloir supprimer votre photo de profil ?
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDeleteCancel}
+                    disabled={isDeleting}
+                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/20"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleDeleteConfirm}
+                    disabled={isDeleting}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Suppression...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        <span>Confirmer</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
@@ -270,6 +461,15 @@ export default function ProfilePhotoUpload() {
           )}
         </div>
       </div>
+
+      {/* Modal de recadrage */}
+      {showCropModal && imageToCrop && (
+        <ProfilePhotoCrop
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }

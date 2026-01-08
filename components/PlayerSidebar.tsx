@@ -14,7 +14,8 @@ type NavKey =
   | "tournaments"
   | "challenges"
   | "reviews"
-  | "boost";
+  | "boost"
+  | "club";
 
 interface MenuItem {
   href: string;
@@ -117,6 +118,7 @@ export default function PlayerSidebar() {
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
+    { href: '/club', label: 'Mon club', icon: getIconPath('mon-club.png'), navKey: 'club' },
   ];
 
   // Déterminer la page active
@@ -125,7 +127,6 @@ export default function PlayerSidebar() {
     if (pathname === '/home') {
       const tab = searchParams?.get('tab');
       if (tab === 'badges') return 'badges';
-      if (tab === 'club') return 'club';
       return 'home';
     }
     if (pathname === '/match/new') {
@@ -137,6 +138,7 @@ export default function PlayerSidebar() {
     if (pathname === '/challenges') return 'challenges';
     if (pathname === '/reviews') return 'reviews';
     if (pathname === '/boost') return 'boost';
+    if (pathname === '/club') return 'club';
     return undefined;
   };
 

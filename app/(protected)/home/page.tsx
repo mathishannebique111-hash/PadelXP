@@ -9,13 +9,12 @@ import TierBadge from "@/components/TierBadge";
 import RankBadge from "@/components/RankBadge";
 import Link from "next/link";
 import PageTitle from "@/components/PageTitle";
-import { getUserClubInfo, getClubPublicExtras } from "@/lib/utils/club-utils";
+import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
 import PlayerProfileTabs from "@/components/PlayerProfileTabs";
-import ClubProfileClient from "@/components/club/ClubProfileClient";
 import BadgesContent from "@/components/BadgesContent";
 import LeaderboardContent from "@/components/LeaderboardContent";
 
@@ -47,8 +46,8 @@ export default async function HomePage({
   searchParams?: { tab?: string };
 }) {
   const supabase = await createClient();
-  const activeTab = (searchParams?.tab === 'club' || searchParams?.tab === 'leaderboard' || searchParams?.tab === 'badges') 
-    ? (searchParams.tab as 'club' | 'leaderboard' | 'badges') 
+  const activeTab = (searchParams?.tab === 'leaderboard' || searchParams?.tab === 'badges') 
+    ? (searchParams.tab as 'leaderboard' | 'badges') 
     : 'stats';
   
   // Vérifier d'abord la session pour éviter les déconnexions inattendues
@@ -259,73 +258,6 @@ export default async function HomePage({
   // Afficher simplement un leaderboard vide si pas de club_id
   const hasNoClub = !userClubId;
 
-  // Récupérer les données du club pour l'onglet "Mon club"
-  let clubDataForTab: {
-    name: string;
-    logoUrl: string | null;
-    description: string | null;
-    addressLine: string | null;
-    phone: string | null;
-    website: string | null;
-    numberOfCourts: number | null;
-    courtType: string | null;
-    openingHours: any;
-  } | null = null;
-
-  if (userClubId) {
-    try {
-      // Récupérer les données du club (similaire à la page club)
-      let finalClubId = userClubId;
-      let clubNameForTab = clubName || "Club";
-      let clubLogoUrlForTab = clubLogoUrl;
-
-      // Récupérer les extras du club
-      const extras = await getClubPublicExtras(finalClubId);
-      
-      // Récupérer les données du club depuis la table clubs
-      let clubRecord: any = null;
-      if (supabaseAdmin) {
-        const { data: clubData } = await supabaseAdmin
-          .from("clubs")
-          .select("name, logo_url, address, postal_code, city, phone, website, number_of_courts, court_type")
-          .eq("id", finalClubId)
-          .maybeSingle();
-        
-        if (clubData) {
-          clubRecord = clubData;
-          clubNameForTab = (clubData.name as string) || clubNameForTab;
-          const rawLogoUrl = clubData.logo_url as string | null;
-          if (rawLogoUrl && typeof rawLogoUrl === 'string' && rawLogoUrl.trim() !== '') {
-            clubLogoUrlForTab = getClubLogoPublicUrl(rawLogoUrl);
-          }
-        }
-      }
-
-      const addressValue = clubRecord?.address ?? extras.address ?? null;
-      const postalValue = clubRecord?.postal_code ?? extras.postal_code ?? null;
-      const cityValue = clubRecord?.city ?? extras.city ?? null;
-
-      const addressLineParts: string[] = [];
-      if (addressValue) addressLineParts.push(addressValue);
-      if (postalValue) addressLineParts.push(postalValue);
-      if (cityValue) addressLineParts.push(cityValue);
-      const addressLine = addressLineParts.length ? addressLineParts.join(" · ") : null;
-
-      clubDataForTab = {
-        name: clubNameForTab,
-        logoUrl: clubLogoUrlForTab,
-        description: extras.description ?? null,
-        addressLine,
-        phone: clubRecord?.phone ?? extras.phone ?? null,
-        website: clubRecord?.website ?? extras.website ?? null,
-        numberOfCourts: clubRecord?.number_of_courts ?? extras.number_of_courts ?? null,
-        courtType: clubRecord?.court_type ?? extras.court_type ?? null,
-        openingHours: extras.opening_hours ?? null,
-      };
-    } catch (error) {
-      logger.error("[Home] Erreur lors de la récupération des données du club:", error);
-    }
-  }
 
   // Utiliser la fonction de calcul du leaderboard (même logique que la page profil)
   // Si pas de club_id, retourner un tableau vide au lieu d'appeler la fonction
@@ -466,27 +398,6 @@ export default async function HomePage({
                 initialProfilesLastNameMap={profilesLastNameMap}
                 currentUserId={profile?.id}
               />
-            }
-            clubContent={
-              clubDataForTab ? (
-                <div className="space-y-6">
-                  <ClubProfileClient
-                    name={clubDataForTab.name}
-                    logoUrl={clubDataForTab.logoUrl}
-                    description={clubDataForTab.description}
-                    addressLine={clubDataForTab.addressLine}
-                    phone={clubDataForTab.phone}
-                    website={clubDataForTab.website}
-                    numberOfCourts={clubDataForTab.numberOfCourts}
-                    courtType={clubDataForTab.courtType}
-                    openingHours={clubDataForTab.openingHours}
-                  />
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
-                  Vous n'êtes rattaché à aucun club pour le moment.
-      </div>
-              )
             }
             badgesContent={<BadgesContent />}
           />
