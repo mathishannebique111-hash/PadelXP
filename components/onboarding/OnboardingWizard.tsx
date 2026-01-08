@@ -200,13 +200,12 @@ export default function OnboardingWizard() {
     }));
     
     // Passer automatiquement à la question suivante après un court délai pour l'animation
+    // Sauf pour la dernière question où on affiche le bouton "Enregistrer"
     setTimeout(() => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion((prev) => (prev + 1) as QuestionId);
-      } else {
-        // Si c'est la dernière question, soumettre automatiquement
-        handleSubmit();
       }
+      // Pour la dernière question, on ne soumet pas automatiquement, on attend le clic sur "Enregistrer"
     }, 300);
   };
 
@@ -309,7 +308,7 @@ export default function OnboardingWizard() {
 
                 return (
                   <motion.button
-                    key={option.value}
+                    key={`${currentQuestion}-${option.value}`}
                     onClick={() => handleAnswer(option.value)}
                     className={`w-full p-4 sm:p-5 rounded-2xl border-2 transition-all ${
                       isSelected
@@ -318,6 +317,8 @@ export default function OnboardingWizard() {
                     }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 1 }}
                   >
                     <div className="flex items-center gap-4">
                       <div
@@ -369,6 +370,45 @@ export default function OnboardingWizard() {
                 );
               })}
             </div>
+
+            {/* Bouton Enregistrer pour la dernière question */}
+            {currentQuestion === questions.length - 1 && answers.best_shot && (
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full py-4 sm:py-5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-base sm:text-lg shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Enregistrement...
+                  </span>
+                ) : (
+                  "Enregistrer"
+                )}
+              </motion.button>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
