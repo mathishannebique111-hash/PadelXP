@@ -139,6 +139,13 @@ export default function EmailLoginForm({
           return;
         }
 
+        // Vérifier si l'onboarding est complété
+        // Si has_completed_onboarding est false ou undefined, rediriger vers l'onboarding
+        if (!profile.has_completed_onboarding) {
+          router.replace("/player/onboarding");
+          return;
+        }
+
         let finalRedirect =
           payload?.redirect ||
           customRedirect ||

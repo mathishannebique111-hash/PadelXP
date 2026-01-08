@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { redirect } from "next/navigation";
 import PlayerSummary from "@/components/PlayerSummary";
 import LogoutButton from "@/components/LogoutButton";
 import Top3Notification from "@/components/Top3Notification";
@@ -17,6 +18,7 @@ import { logger } from '@/lib/logger';
 import PlayerProfileTabs from "@/components/PlayerProfileTabs";
 import BadgesContent from "@/components/BadgesContent";
 import LeaderboardContent from "@/components/LeaderboardContent";
+import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -46,8 +48,8 @@ export default async function HomePage({
   searchParams?: { tab?: string };
 }) {
   const supabase = await createClient();
-  const activeTab = (searchParams?.tab === 'leaderboard' || searchParams?.tab === 'badges') 
-    ? (searchParams.tab as 'leaderboard' | 'badges') 
+  const activeTab = (searchParams?.tab === 'leaderboard' || searchParams?.tab === 'badges' || searchParams?.tab === 'padel') 
+    ? (searchParams.tab as 'leaderboard' | 'badges' | 'padel') 
     : 'stats';
   
   // Vérifier d'abord la session pour éviter les déconnexions inattendues
@@ -87,6 +89,11 @@ export default async function HomePage({
   if (user) {
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     profile = data ?? null;
+    
+    // Vérifier si l'onboarding est complété
+    if (profile && !profile.has_completed_onboarding) {
+      redirect("/player/onboarding");
+    }
 
   if (!profile || !profile.club_id) {
     try {
@@ -161,7 +168,7 @@ export default async function HomePage({
   // Récupérer le club_id de l'utilisateur pour filtrer les données
   const userClubId = profile?.club_id || null;
   
-  logger.info("[Home] Récupération du logo du club - userClubId:", userClubId, "profile club_id:", profile?.club_id);
+  logger.info(`[Home] Récupération du logo du club - userClubId: ${userClubId}, profile club_id: ${profile?.club_id}`);
 
   // Récupérer directement depuis la table clubs avec la même logique que la page club
   // (app/club/[slug]/page.tsx) pour garantir que le logo est toujours récupéré
@@ -400,6 +407,7 @@ export default async function HomePage({
               />
             }
             badgesContent={<BadgesContent />}
+            padelContent={profile ? <PadelProfileSection userId={profile.id} /> : null}
           />
         ) : null}
       </div>

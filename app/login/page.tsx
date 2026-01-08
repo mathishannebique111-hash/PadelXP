@@ -14,11 +14,16 @@ export default async function LoginPage({
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("club_slug")
+      .select("club_slug, has_completed_onboarding")
       .eq("id", user.id)
       .maybeSingle();
     
     if (profile) {
+      // Vérifier si l'onboarding est complété
+      if (!profile.has_completed_onboarding) {
+        // Rediriger vers l'onboarding si pas encore complété
+        redirect("/player/onboarding");
+      }
       // L'utilisateur a un profil joueur, le rediriger vers l'espace joueur
       // TOUJOURS rediriger vers /home pour garantir l'affichage du menu hamburger et du logo du club
       // /home utilise le layout (protected) qui contient PlayerSidebar et PlayerClubLogo

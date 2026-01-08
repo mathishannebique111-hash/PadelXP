@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
   const { data: existing, error } = await serviceClient
     .from("profiles")
-    .select("id, club_id, club_slug, display_name")
+    .select("id, club_id, club_slug, display_name, has_completed_onboarding")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -419,6 +419,7 @@ export async function POST(request: Request) {
         club_id: existing.club_id ?? clubIdForUser ?? null,
         club_slug: existing.club_slug ?? clubSlugForUser ?? null,
         display_name: existing.display_name || fullName,
+        has_completed_onboarding: existing.has_completed_onboarding ?? false,
       },
     });
   }
