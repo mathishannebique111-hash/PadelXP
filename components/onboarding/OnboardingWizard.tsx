@@ -187,6 +187,7 @@ export default function OnboardingWizard() {
     best_shot: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const question = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -199,19 +200,29 @@ export default function OnboardingWizard() {
       [key]: value as any,
     }));
     
+    // Désactiver les interactions pendant la transition pour éviter les états persistants
+    setIsTransitioning(true);
+    
     // Passer automatiquement à la question suivante après un court délai pour l'animation
     // Sauf pour la dernière question où on affiche le bouton "Enregistrer"
     setTimeout(() => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion((prev) => (prev + 1) as QuestionId);
       }
-      // Pour la dernière question, on ne soumet pas automatiquement, on attend le clic sur "Enregistrer"
+      // Réactiver les interactions après un court délai pour laisser le temps à la transition
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 100);
     }, 300);
   };
 
   const handlePrevious = () => {
     if (currentQuestion > 0) {
+      setIsTransitioning(true);
       setCurrentQuestion((prev) => (prev - 1) as QuestionId);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 100);
     }
   };
 
@@ -277,7 +288,7 @@ export default function OnboardingWizard() {
 
       {/* Contenu principal */}
       <div className="flex-1 flex items-center justify-center px-4 py-20">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" onExitComplete={() => setIsTransitioning(false)}>
           <motion.div
             key={currentQuestion}
             initial={{ opacity: 0, x: 50 }}
@@ -285,6 +296,20 @@ export default function OnboardingWizard() {
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.3 }}
             className="w-full max-w-md space-y-8"
+            onAnimationComplete={() => {
+              // Forcer la réinitialisation de tous les états actifs/hover après la transition
+              if (typeof document !== 'undefined') {
+                const activeElement = document.activeElement as HTMLElement;
+                if (activeElement) {
+                  activeElement.blur();
+                }
+                // Réinitialiser tous les boutons
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach(btn => {
+                  (btn as HTMLElement).blur();
+                });
+              }
+            }}
           >
             {/* Titre et sous-titre */}
             <div className="text-center space-y-2">
@@ -309,16 +334,27 @@ export default function OnboardingWizard() {
                 return (
                   <motion.button
                     key={`${currentQuestion}-${option.value}`}
-                    onClick={() => handleAnswer(option.value)}
+                    onClick={() => !isTransitioning && handleAnswer(option.value)}
+                    disabled={isTransitioning}
                     className={`w-full p-4 sm:p-5 rounded-2xl border-2 transition-all ${
                       isSelected
                         ? "border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/20"
                         : "border-white/20 bg-white/5 hover:border-white/40 hover:bg-white/10"
-                    }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 1 }}
+                    } ${isTransitioning ? "pointer-events-none" : ""}`}
+                    whileHover={isTransitioning ? {} : { scale: 1.02 }}
+                    whileTap={isTransitioning ? {} : { scale: 0.98 }}
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onAnimationComplete={() => {
+                      // Forcer la réinitialisation des états CSS après l'animation
+                      if (typeof document !== 'undefined') {
+                        const buttons = document.querySelectorAll('button');
+                        buttons.forEach(btn => {
+                          btn.blur();
+                        });
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-4">
                       <div
