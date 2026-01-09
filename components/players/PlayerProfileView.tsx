@@ -27,6 +27,7 @@ interface Player {
   preferred_side: string | null;
   frequency: string | null;
   best_shot: string | null;
+  level: string | null; // Niveau de l'onboarding (beginner, leisure, regular, competition)
   created_at: string;
 }
 
@@ -63,6 +64,13 @@ const shotLabels: Record<string, string> = {
   defense: "Défense",
 };
 
+const levelLabels: Record<string, string> = {
+  beginner: "Je débute",
+  leisure: "Loisir",
+  regular: "Régulier",
+  competition: "Compétition",
+};
+
 export default function PlayerProfileView({
   player,
   currentUserId,
@@ -94,11 +102,14 @@ export default function PlayerProfileView({
   const coupSignature = player.best_shot
     ? shotLabels[player.best_shot] || player.best_shot
     : "Non renseigné";
+  const niveauOnboarding = player.level
+    ? levelLabels[player.level] || player.level
+    : "Non renseigné";
 
   return (
     <div className="min-h-screen bg-slate-950">
       {/* HEADER FIXE - Mobile optimized */}
-      <div className="sticky top-0 z-20 bg-gradient-to-b from-slate-950 via-slate-950/95 to-transparent backdrop-blur-sm safe-area-top">
+      <div className="sticky top-0 z-20 bg-slate-950 safe-area-top">
         <div className="px-4 py-3">
           <button
             type="button"
@@ -111,14 +122,14 @@ export default function PlayerProfileView({
       </div>
 
       {/* HERO SECTION - MISE EN VALEUR DU JOUEUR */}
-      <div className="px-4 -mt-8 pb-6">
+      <div className="px-4 pt-4 pb-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="relative"
         >
           {/* Card principale avec effet de profondeur */}
-          <div className="relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-3xl p-5 md:p-8 shadow-2xl border border-slate-700/50">
+          <div className="relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-3xl p-5 md:p-8 shadow-2xl border-2 border-slate-700/80">
             {/* Badge "Vérifié" si niveau évalué - Mobile optimized */}
             {player.niveau_padel && (
               <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-blue-500/20 border border-blue-400/40 rounded-full px-2.5 py-1 md:px-3 md:py-1.5 flex items-center gap-1">
@@ -257,7 +268,7 @@ export default function PlayerProfileView({
       </div>
 
       {/* PROFIL PADEL - Version mobile épurée */}
-      {(player.hand || player.preferred_side || player.frequency || player.best_shot) && (
+      {(player.hand || player.preferred_side || player.frequency || player.best_shot || player.level) && (
         <div className="px-4 pb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -266,8 +277,8 @@ export default function PlayerProfileView({
             className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-slate-800/50"
           >
             <h2 className="text-base md:text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Target size={18} className="text-blue-400 md:hidden" />
-              <Target size={20} className="text-blue-400 hidden md:block" />
+              <Target size={18} className="text-white md:hidden" />
+              <Target size={20} className="text-white hidden md:block" />
               <span>Profil Padel</span>
             </h2>
 
@@ -280,7 +291,6 @@ export default function PlayerProfileView({
                     icon={Hand}
                     label="Main forte"
                     value={mainForte}
-                    accent="blue"
                   />
                 )}
                 {player.preferred_side && (
@@ -288,7 +298,6 @@ export default function PlayerProfileView({
                     icon={Target}
                     label="Côté préféré"
                     value={cotePrefere}
-                    accent="purple"
                   />
                 )}
               </div>
@@ -299,7 +308,6 @@ export default function PlayerProfileView({
                   icon={Users}
                   label="Fréquence de jeu"
                   value={frequenceJeu}
-                  accent="green"
                   full
                 />
               )}
@@ -310,7 +318,16 @@ export default function PlayerProfileView({
                   icon={Zap}
                   label="Coup signature"
                   value={coupSignature}
-                  accent="orange"
+                  full
+                />
+              )}
+
+              {/* Niveau (onboarding) - Pleine largeur */}
+              {player.level && (
+                <InfoCard
+                  icon={Shield}
+                  label="Niveau"
+                  value={niveauOnboarding}
                   full
                 />
               )}
@@ -383,46 +400,30 @@ export default function PlayerProfileView({
   );
 }
 
-// COMPOSANT INFO CARD - Mobile-first
+// COMPOSANT INFO CARD - Mobile-first (blanc uniquement)
 function InfoCard({
   icon: Icon,
   label,
   value,
-  accent,
   full = false,
 }: {
   icon: any;
   label: string;
   value: string;
-  accent: "blue" | "purple" | "green" | "orange";
   full?: boolean;
 }) {
-  const accentClasses = {
-    blue: "border-blue-500/20 bg-blue-500/5",
-    purple: "border-purple-500/20 bg-purple-500/5",
-    green: "border-green-500/20 bg-green-500/5",
-    orange: "border-orange-500/20 bg-orange-500/5",
-  };
-
-  const iconClasses = {
-    blue: "text-blue-400",
-    purple: "text-purple-400",
-    green: "text-green-400",
-    orange: "text-orange-400",
-  };
-
   return (
     <div
-      className={`${full ? "col-span-2" : ""} border ${accentClasses[accent]} rounded-xl p-3 md:p-3.5`}
+      className={`${full ? "col-span-2" : ""} border border-white/20 bg-white/5 rounded-xl p-3 md:p-3.5`}
     >
       <div className="flex items-center gap-2 md:gap-3">
-        <Icon size={16} className={`${iconClasses[accent]} flex-shrink-0 md:hidden`} />
+        <Icon size={16} className="text-white flex-shrink-0 md:hidden" />
         <Icon
           size={18}
-          className={`${iconClasses[accent]} flex-shrink-0 hidden md:block`}
+          className="text-white flex-shrink-0 hidden md:block"
         />
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] md:text-xs text-gray-500 mb-0.5 leading-tight">
+          <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 leading-tight">
             {label}
           </p>
           <p className="text-xs md:text-sm font-bold text-white truncate capitalize leading-tight">

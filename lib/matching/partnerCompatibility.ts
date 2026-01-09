@@ -26,6 +26,9 @@ export function calculateCompatibility(
     return null;
   }
 
+  // NOTE: On ne retourne plus null pour les mêmes côtés ici
+  // L'exclusion se fait dans l'API route, mais on peut quand même calculer un score
+
   const tags: string[] = [];
   let score = 0;
   let factors = 0;
@@ -136,9 +139,17 @@ export function calculateCompatibility(
   }
 
   // Normaliser le score sur 100
-  if (factors > 0) {
-    score = Math.round((score / factors) * 2.5); // Ajuster pour avoir un score 0-100
-    score = Math.min(100, Math.max(0, score));
+  // Le score brut est déjà entre 0 et 100 (max: 40+15+15+20+10 = 100)
+  // Donc on n'a pas besoin de diviser par factors, juste s'assurer qu'il est entre 0 et 100
+  score = Math.round(score);
+  score = Math.min(100, Math.max(0, score));
+  
+  // Boost si les joueurs ont le même niveau (compatibilité très forte même sans complémentarité parfaite)
+  // Par exemple, deux joueurs de même niveau mais même main/côté sont quand même très compatibles
+  if (Math.abs((currentUser.niveau_padel || 0) - (otherPlayer.niveau_padel || 0)) <= 0.5) {
+    // Ajouter un bonus de 15-20 points pour les joueurs de même niveau
+    // Cela garantit qu'ils auront au moins 60% de compatibilité
+    score = Math.min(100, score + 18);
   }
 
   return {

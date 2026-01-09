@@ -111,7 +111,13 @@ export default function PadelProfileSection({
 
   const loadProfile = async () => {
     try {
-      const response = await fetch(`/api/profile/padel?userId=${userId}`);
+      setIsLoading(true);
+      // Utiliser le cache navigateur avec stale-while-revalidate pour un chargement instantané
+      const response = await fetch(`/api/profile/padel?userId=${userId}`, {
+        headers: {
+          "Cache-Control": "max-age=30, stale-while-revalidate=120",
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setProfileData(data);

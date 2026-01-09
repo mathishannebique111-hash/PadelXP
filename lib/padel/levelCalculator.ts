@@ -1,4 +1,5 @@
 import { CATEGORY_INFO } from "./levelQuestions";
+import { generateSmartRecommendations } from "./levelRecommendations";
 
 export interface AssessmentResponses {
   vitres: number;
@@ -103,7 +104,16 @@ export function calculatePadelLevel(
   };
   const strengths = identifyStrengths(breakdown);
   const weaknesses = identifyWeaknesses(breakdown);
-  const recommendations = generateRecommendations(niveau, weaknesses);
+  
+  // Utiliser le nouveau système de recommandations intelligentes
+  const recommendations = generateSmartRecommendations({
+    niveau,
+    breakdown,
+    // On peut ajouter plus d'infos si disponibles dans responses
+    // frequenceJeu: responses.frequence > 5 ? 'weekly' : 'monthly',
+    // hasTournamentExperience: responses.tournois > 0
+  });
+  
   const nextLevelProgress = calculateNextLevelProgress(scoreGlobal, niveau);
 
   return {
@@ -204,25 +214,8 @@ function identifyWeaknesses(breakdown: {
   return weaknesses;
 }
 
-function generateRecommendations(
-  niveau: number,
-  weaknesses: string[]
-): string[] {
-  const recs: string[] = [];
-
-  weaknesses.forEach((w) => {
-    if (w === "Technique") recs.push("Pratiquez des paniers de balles.");
-    if (w === "Tactique") recs.push("Analysez vos matchs en vidéo.");
-    if (w === "Expérience") recs.push("Participez à plus de tournois.");
-    if (w === "Physique") recs.push("Intégrez de la préparation physique.");
-  });
-
-  if (niveau <= 3) recs.push("Prenez des cours avec un coach.");
-  else if (niveau <= 6) recs.push("Jouez avec des niveaux supérieurs.");
-  else recs.push("Perfectionnez les coups avancés.");
-
-  return recs.slice(0, 3);
-}
+// Ancienne fonction generateRecommendations supprimée - remplacée par generateSmartRecommendations
+// dans levelRecommendations.ts
 
 function calculateNextLevelProgress(
   score: number,

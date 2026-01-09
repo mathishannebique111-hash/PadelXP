@@ -42,7 +42,23 @@ export default function LevelResultCard({ result, onRetake }: Props) {
 
       if (response.ok) {
         setIsSaved(true);
+        
+        // Déclencher la mise à jour des suggestions de partenaires
         if (typeof window !== "undefined") {
+          // Événement personnalisé pour mettre à jour les suggestions
+          window.dispatchEvent(new Event("questionnaireCompleted"));
+          
+          // Synchroniser avec localStorage pour cross-tab
+          try {
+            localStorage.setItem("questionnaireCompleted", "true");
+            // Retirer le flag après un court délai
+            setTimeout(() => {
+              localStorage.removeItem("questionnaireCompleted");
+            }, 1000);
+          } catch (e) {
+            // Ignorer les erreurs localStorage
+          }
+          
           // Rafraîchir le profil pour afficher le niveau sauvegardé
           window.location.reload();
         }
@@ -159,13 +175,16 @@ export default function LevelResultCard({ result, onRetake }: Props) {
           </div>
         </div>
 
-        {/* Recommandations */}
-        <div className="bg-slate-800 rounded-2xl p-4 md:p-6">
-          <h3 className="text-base md:text-lg font-bold text-white mb-3 flex items-center gap-2">
+        {/* Recommandations - Plan d'action personnalisé */}
+        <div className="bg-slate-800 rounded-2xl p-4 md:p-6 shadow-xl">
+          <h3 className="text-base md:text-lg font-bold text-white mb-2 flex items-center gap-2">
             <Lightbulb size={20} className="text-yellow-400" />
-            Recommandations
+            Plan d&apos;action personnalisé
           </h3>
-          <ul className="space-y-2">
+          <p className="text-xs md:text-sm text-gray-400 mb-4">
+            Basé sur votre profil et vos points faibles
+          </p>
+          <ul className="space-y-3">
             {result.recommendations.map((rec, i) => (
               <motion.li
                 // eslint-disable-next-line react/no-array-index-key
@@ -173,13 +192,29 @@ export default function LevelResultCard({ result, onRetake }: Props) {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: i * 0.15 }}
-                className="text-sm md:text-base text-gray-300 flex items-center gap-2"
+                className="bg-slate-700/50 rounded-xl p-3 md:p-4 border border-slate-600"
               >
-                <ArrowRight size={16} className="text-blue-400 flex-shrink-0" />
-                <span>{rec}</span>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 font-bold text-white text-xs md:text-sm mt-0.5">
+                    {i + 1}
+                  </div>
+                  <p className="text-xs md:text-sm text-gray-200 leading-relaxed flex-1">
+                    {rec}
+                  </p>
+                </div>
               </motion.li>
             ))}
           </ul>
+          
+          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+            <p className="text-xs text-blue-300 flex items-start gap-2">
+              <span className="text-blue-400 flex-shrink-0">💡</span>
+              <span>
+                Ces recommandations sont conçues pour être réalisables en 2-4 semaines. 
+                Réévalue ton niveau dans 1 mois pour suivre ta progression !
+              </span>
+            </p>
+          </div>
         </div>
 
         {/* Progression vers niveau suivant */}

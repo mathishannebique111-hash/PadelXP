@@ -4,6 +4,7 @@ import { useState } from "react";
 import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
 import LevelBadge from "@/components/padel-level/LevelBadge";
+import PartnerSuggestions from "@/components/partners/PartnerSuggestions";
 import { Lightbulb, ArrowRight } from "lucide-react";
 
 interface Props {
@@ -23,6 +24,8 @@ export default function PadelTabContent({ profile }: Props) {
           <LevelAssessmentWizard />
         </div>
         <PadelProfileSection userId={profile.id} />
+        {/* Suggestions de partenaires */}
+        <PartnerSuggestions />
       </div>
     );
   }
@@ -120,6 +123,9 @@ export default function PadelTabContent({ profile }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Suggestions de partenaires */}
+      <PartnerSuggestions />
 
       {/* Profil padel détaillé */}
       <PadelProfileSection userId={profile.id} />
