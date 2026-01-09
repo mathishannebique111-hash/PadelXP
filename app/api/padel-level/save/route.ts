@@ -21,10 +21,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { niveau, categorie, breakdown } = body as {
+    const { niveau, categorie, breakdown, recommendations } = body as {
       niveau: number;
       categorie: string;
       breakdown: Record<string, number>;
+      recommendations?: string[];
     };
 
     const { error } = await supabase
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
         niveau_padel: niveau,
         niveau_categorie: categorie,
         niveau_breakdown: breakdown,
+        niveau_recommendations: recommendations || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);

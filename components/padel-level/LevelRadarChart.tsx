@@ -108,9 +108,10 @@ export default function LevelRadarChart({ breakdown }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mt-4">
         {Object.entries(breakdown).map(([key, value]) => {
           const info = CATEGORY_INFO[key as keyof typeof CATEGORY_INFO];
+          const CategoryIcon = info.Icon;
           return (
             <div key={key} className="flex items-center gap-2">
-              <span className="text-lg md:text-xl">{info.icon}</span>
+              <CategoryIcon size={18} className="text-blue-400 flex-shrink-0" />
               <div>
                 <p className="text-xs md:text-sm text-gray-400">
                   {info.label}

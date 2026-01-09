@@ -175,7 +175,7 @@ function identifyStrengths(breakdown: {
   entries.slice(0, 2).forEach(([key, value]) => {
     if (value >= 7) {
       const info = CATEGORY_INFO[key as keyof typeof CATEGORY_INFO];
-      strengths.push(`${info.icon} ${info.label} excellente`);
+      strengths.push(info.label);
     }
   });
 

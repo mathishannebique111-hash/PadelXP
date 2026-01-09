@@ -94,28 +94,28 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
 
   if (!hasStarted) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-900 px-4 py-6 pb-24">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-md bg-slate-800 rounded-2xl p-6 shadow-2xl">
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
-              Évaluer mon niveau
-            </h1>
-            <p className="text-sm md:text-base text-gray-400 mb-6">
-              23 questions rapides pour estimer précisément ton niveau de padel
-              de 1 à 10. Design mobile-first, tu peux arrêter à tout moment.
-            </p>
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setHasStarted(true)}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-sm md:text-base flex items-center justify-center gap-2 min-h-[44px]"
-            >
-              Commencer l&apos;évaluation
-              <ChevronRight size={18} />
-            </motion.button>
-          </div>
-        </div>
-      </div>
+      <motion.div
+        initial={{ height: "auto" }}
+        animate={{ height: "auto" }}
+        className="bg-white/5 rounded-2xl border border-white/80 p-4 sm:p-6 shadow-xl"
+      >
+        <h1 className="text-lg sm:text-xl font-bold text-white mb-2">
+          Évaluer mon niveau
+        </h1>
+        <p className="text-xs sm:text-sm text-gray-400 mb-4">
+          23 questions rapides pour estimer précisément ton niveau de padel de 1
+          à 10.
+        </p>
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setHasStarted(true)}
+          className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px]"
+        >
+          Commencer l&apos;évaluation
+          <ChevronRight size={18} />
+        </motion.button>
+      </motion.div>
     );
   }
 
@@ -133,7 +133,12 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-900">
+    <motion.div
+      initial={{ height: "auto", opacity: 0 }}
+      animate={{ height: "100vh", opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="fixed inset-0 z-50 flex flex-col bg-slate-900"
+    >
       {/* Header fixe - mobile first */}
       <div className="sticky top-0 z-20 bg-slate-900 px-4 py-4 border-b border-slate-800">
         <LevelProgressBar
@@ -143,9 +148,10 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
         />
 
         <div className="mt-3 flex items-center gap-2">
-          <span className="text-xl">
-            {CATEGORY_INFO[question.category].icon}
-          </span>
+          {(() => {
+            const CategoryIcon = CATEGORY_INFO[question.category].Icon;
+            return <CategoryIcon size={20} className="text-blue-400" />;
+          })()}
           <span className="text-xs md:text-sm font-medium text-gray-400">
             {CATEGORY_INFO[question.category].label}
           </span>
@@ -206,7 +212,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
           </motion.button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

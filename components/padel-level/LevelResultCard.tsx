@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, TrendingUp, Target, RefreshCw, Save } from "lucide-react";
+import {
+  Trophy,
+  TrendingUp,
+  Target,
+  RefreshCw,
+  Save,
+  Award,
+  Lightbulb,
+  ArrowRight,
+} from "lucide-react";
 import type { LevelResult } from "@/lib/padel/levelCalculator";
 import LevelRadarChart from "./LevelRadarChart";
 
@@ -27,6 +36,7 @@ export default function LevelResultCard({ result, onRetake }: Props) {
           niveau: result.niveau,
           categorie: result.categorie,
           breakdown: result.breakdown,
+          recommendations: result.recommendations,
         }),
       });
 
@@ -84,9 +94,10 @@ export default function LevelResultCard({ result, onRetake }: Props) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-4 inline-block px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full text-white text-sm md:text-base font-bold"
+                className="mt-4 inline-block px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full text-white text-sm md:text-base font-bold flex items-center gap-2"
               >
-                🏆 Niveau d'élite !
+                <Award size={18} />
+                Niveau d&apos;élite !
               </motion.div>
             )}
           </div>
@@ -150,8 +161,9 @@ export default function LevelResultCard({ result, onRetake }: Props) {
 
         {/* Recommandations */}
         <div className="bg-slate-800 rounded-2xl p-4 md:p-6">
-          <h3 className="text-base md:text-lg font-bold text-white mb-3">
-            💡 Recommandations
+          <h3 className="text-base md:text-lg font-bold text-white mb-3 flex items-center gap-2">
+            <Lightbulb size={20} className="text-yellow-400" />
+            Recommandations
           </h3>
           <ul className="space-y-2">
             {result.recommendations.map((rec, i) => (
@@ -161,9 +173,10 @@ export default function LevelResultCard({ result, onRetake }: Props) {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: i * 0.15 }}
-                className="text-sm md:text-base text-gray-300 pl-6 relative before:content-['→'] before:absolute before:left-0 before:text-blue-400"
+                className="text-sm md:text-base text-gray-300 flex items-center gap-2"
               >
-                {rec}
+                <ArrowRight size={16} className="text-blue-400 flex-shrink-0" />
+                <span>{rec}</span>
               </motion.li>
             ))}
           </ul>

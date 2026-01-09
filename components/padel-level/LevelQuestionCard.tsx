@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Info } from "lucide-react";
 import type { Question } from "@/lib/padel/levelQuestions";
 
 interface Props {
@@ -48,8 +48,9 @@ export default function LevelQuestionCard({
       )}
 
       {isMultiple && (
-        <div className="mb-4 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 text-sm">
-          💡 Sélection multiple possible
+        <div className="mb-4 px-3 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 text-sm flex items-center gap-2">
+          <Info size={16} />
+          <span>Sélection multiple possible</span>
         </div>
       )}
 

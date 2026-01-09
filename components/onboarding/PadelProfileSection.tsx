@@ -190,7 +190,7 @@ export default function PadelProfileSection({
   const isLeftHanded = data.hand === "left";
 
   return (
-    <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 sm:p-8 md:p-10 backdrop-blur-sm">
+    <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 sm:p-8 md:p-10 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
@@ -212,7 +212,7 @@ export default function PadelProfileSection({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {/* Niveau */}
         {data.level && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
+          <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
             <div className="flex items-start gap-4">
               {LevelIcon && (
                 <LevelIcon className="w-7 h-7 text-white flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
@@ -231,7 +231,7 @@ export default function PadelProfileSection({
 
         {/* Côté préféré */}
         {data.preferred_side && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
+          <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
             <div className="flex items-start gap-4">
               {SideIcon && (
                 <SideIcon className="w-7 h-7 text-white flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
@@ -250,7 +250,7 @@ export default function PadelProfileSection({
 
         {/* Main forte */}
         {data.hand && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
+          <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
             <div className="flex items-start gap-4">
               {HandIcon && (
                 <HandIcon className={`w-7 h-7 text-white flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform ${isLeftHanded ? "rotate-180" : ""}`} />
@@ -269,7 +269,7 @@ export default function PadelProfileSection({
 
         {/* Fréquence */}
         {data.frequency && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
+          <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
             <div className="flex items-start gap-4">
               {FrequencyIcon && (
                 <FrequencyIcon className="w-7 h-7 text-white flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
@@ -288,7 +288,7 @@ export default function PadelProfileSection({
 
         {/* Coup signature */}
         {data.best_shot && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group sm:col-span-2">
+          <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group sm:col-span-2">
             <div className="flex items-start gap-4">
               {ShotIcon && (
                 <ShotIcon className="w-7 h-7 text-white flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />

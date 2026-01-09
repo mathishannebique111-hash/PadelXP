@@ -91,17 +91,16 @@ export const PADEL_QUESTIONS: Question[] = [
   {
     id: 6,
     category: "technique",
-    question: "Coups techniques maîtrisés ?",
-    description: "Sélectionnez tous les coups que vous réalisez",
+    question: "Quels coups techniques maîtrisez-vous ?",
+    description: "Sélectionnez tous les coups que vous réalisez régulièrement",
     multiple: true,
     options: [
-      { label: "Lob défensif", points: 2 },
-      { label: "Lob offensif lifté", points: 4 },
-      { label: "Bandeja", points: 6 },
-      { label: "Vibora", points: 7 },
-      { label: "Chiquita", points: 8 },
-      { label: "Bajada", points: 9 },
-      { label: "Globo", points: 10 },
+      { label: "Lob défensif", description: "Haut et profond", points: 2 },
+      { label: "Lob offensif", description: "Avec lift", points: 4 },
+      { label: "Bandeja", description: "Smash coupé", points: 6 },
+      { label: "Vibora", description: "Smash latéral lifté", points: 7 },
+      { label: "Chiquita", description: "Balle courte dans les pieds", points: 8 },
+      { label: "Bajada", description: "Smash après la vitre", points: 9 },
     ],
   },
 
@@ -188,9 +187,10 @@ export const PADEL_QUESTIONS: Question[] = [
   {
     id: 13,
     category: "experience",
-    question: "Classement FFT ?",
+    question: "Avez-vous un classement FFT ?",
     options: [
       { label: "Non classé", points: 0 },
+      { label: "+40000", points: 2 },
       { label: "15000-40000", points: 4 },
       { label: "6000-15000", points: 6 },
       { label: "3000-6000", points: 8 },
@@ -328,38 +328,40 @@ export const PADEL_QUESTIONS: Question[] = [
   },
 ];
 
+import { Target, Brain, Trophy, Zap, Dumbbell } from "lucide-react";
+
 export const CATEGORY_INFO: Record<
   QuestionCategory,
-  { label: string; color: string; icon: string; weight: number }
+  { label: string; color: string; Icon: typeof Target; weight: number }
 > = {
   technique: {
     label: "Technique",
     color: "blue",
-    icon: "🎾",
+    Icon: Target,
     weight: 0.35,
   },
   tactique: {
     label: "Tactique",
     color: "purple",
-    icon: "🧠",
+    Icon: Brain,
     weight: 0.25,
   },
   experience: {
     label: "Expérience",
     color: "orange",
-    icon: "🏆",
+    Icon: Trophy,
     weight: 0.3,
   },
   physique: {
     label: "Physique",
     color: "green",
-    icon: "💪",
+    Icon: Dumbbell,
     weight: 0.07,
   },
   situations: {
     label: "Situations",
     color: "red",
-    icon: "⚡",
+    Icon: Zap,
     weight: 0.03,
   },
 };
