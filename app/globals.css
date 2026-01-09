@@ -220,6 +220,12 @@ p {
 
 /* FORCER l'affichage du menu hamburger et du logo du club pour TOUS les joueurs, y compris nouveaux inscrits */
 /* Responsive: mobile -> tablette -> desktop */
+html.px-hide-player-nav [data-hamburger-button],
+html.px-hide-player-nav [data-club-logo-container="true"] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 [data-hamburger-button] {
   position: fixed !important;
   top: 0.75rem !important;

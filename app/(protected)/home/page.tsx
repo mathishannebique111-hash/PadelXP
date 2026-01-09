@@ -18,10 +18,7 @@ import { logger } from '@/lib/logger';
 import PlayerProfileTabs from "@/components/PlayerProfileTabs";
 import BadgesContent from "@/components/BadgesContent";
 import LeaderboardContent from "@/components/LeaderboardContent";
-import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
-import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
-import LevelBadge from "@/components/padel-level/LevelBadge";
-import { Lightbulb, ArrowRight } from "lucide-react";
+import PadelTabContent from "@/components/PadelTabContent";
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -410,121 +407,7 @@ export default async function HomePage({
               />
             }
             badgesContent={<BadgesContent />}
-            padelContent={
-              profile ? (
-                <div className="space-y-4">
-                  {/* Bloc évaluation / niveau actuel */}
-                  {profile.niveau_padel && profile.niveau_categorie ? (
-                    <div className="mb-6 space-y-4">
-                      {/* Carte principale du niveau */}
-                      <div className="bg-white/5 rounded-2xl border border-white/80 p-6">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                          <div>
-                            <h3 className="text-lg font-bold text-white mb-3">
-                              Votre niveau actuel
-                            </h3>
-                            <LevelBadge
-                              niveau={profile.niveau_padel}
-                              categorie={profile.niveau_categorie}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Progression vers niveau suivant */}
-                        {profile.niveau_padel < 10 && (
-                          <div className="mb-6">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-xs md:text-sm text-gray-400">
-                                Progression vers niveau{" "}
-                                {Math.floor(profile.niveau_padel) + 1}
-                              </span>
-                              <span className="text-sm md:text-base text-blue-400 font-bold">
-                                {(() => {
-                                  const currentLevel = Math.floor(
-                                    profile.niveau_padel
-                                  );
-                                  const nextThreshold = currentLevel + 0.5;
-                                  const prevThreshold = currentLevel - 0.5;
-                                  const progress =
-                                    ((profile.niveau_padel - prevThreshold) /
-                                      (nextThreshold - prevThreshold)) *
-                                    100;
-                                  return Math.round(
-                                    Math.min(Math.max(progress, 0), 100)
-                                  );
-                                })()}
-                                %
-                              </span>
-                            </div>
-                            <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
-                                style={{
-                                  width: `${(() => {
-                                    const currentLevel = Math.floor(
-                                      profile.niveau_padel
-                                    );
-                                    const nextThreshold = currentLevel + 0.5;
-                                    const prevThreshold = currentLevel - 0.5;
-                                    const progress =
-                                      ((profile.niveau_padel - prevThreshold) /
-                                        (nextThreshold - prevThreshold)) *
-                                      100;
-                                    return Math.min(
-                                      Math.max(progress, 0),
-                                      100
-                                    );
-                                  })()}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Recommandations sauvegardées */}
-                        {profile.niveau_recommendations &&
-                          Array.isArray(profile.niveau_recommendations) &&
-                          profile.niveau_recommendations.length > 0 && (
-                            <div className="bg-slate-700/30 rounded-xl p-4">
-                              <h4 className="text-sm md:text-base font-bold text-white mb-3 flex items-center gap-2">
-                                <Lightbulb
-                                  size={18}
-                                  className="text-yellow-400"
-                                />
-                                Vos recommandations
-                              </h4>
-                              <ul className="space-y-2">
-                                {profile.niveau_recommendations.map(
-                                  (rec: string, i: number) => (
-                                    <li
-                                      key={i}
-                                      className="text-xs md:text-sm text-gray-300 flex items-start gap-2"
-                                    >
-                                      <ArrowRight
-                                        size={14}
-                                        className="text-blue-400 flex-shrink-0 mt-0.5"
-                                      />
-                                      <span>{rec}</span>
-                                    </li>
-                                  )
-                                )}
-                              </ul>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Si pas de niveau : première case avec CTA + bouton géré par le wizard */
-                    <div className="mb-6">
-                      <LevelAssessmentWizard />
-                    </div>
-                  )}
-
-                  {/* Deuxième case : profil padel détaillé */}
-                  <PadelProfileSection userId={profile.id} />
-                </div>
-              ) : null
-            }
+            padelContent={profile ? <PadelTabContent profile={profile} /> : null}
           />
         ) : null}
       </div>

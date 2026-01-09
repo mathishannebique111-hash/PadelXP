@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import {
@@ -28,6 +28,22 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [result, setResult] = useState<any>(null);
 
+  // Cacher le menu hamburger et le logo du club pendant le questionnaire
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    const shouldHideNav = hasStarted || isCompleted;
+
+    if (shouldHideNav) {
+      root.classList.add("px-hide-player-nav");
+    } else {
+      root.classList.remove("px-hide-player-nav");
+    }
+
+    return () => {
+      root.classList.remove("px-hide-player-nav");
+    };
+  }, [hasStarted, isCompleted]);
   const question = PADEL_QUESTIONS[currentQuestion];
   const progress = ((currentQuestion + 1) / PADEL_QUESTIONS.length) * 100;
   const canGoNext = responses[question.id] !== undefined;
@@ -93,6 +109,8 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
   };
 
   if (!hasStarted) {
+    const hasProgress = currentQuestion > 0;
+
     return (
       <motion.div
         initial={{ height: "auto" }}
@@ -102,17 +120,27 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
         <h1 className="text-lg sm:text-xl font-bold text-white mb-2">
           Évaluer mon niveau
         </h1>
-        <p className="text-xs sm:text-sm text-gray-400 mb-4">
-          23 questions rapides pour estimer précisément ton niveau de padel de 1
-          à 10.
-        </p>
+        {hasProgress ? (
+          <p className="text-xs sm:text-sm text-gray-400 mb-4">
+            Vous vous êtes arrêté à la question{" "}
+            <span className="font-semibold text-white">
+              {Math.min(currentQuestion + 1, PADEL_QUESTIONS.length)}
+            </span>{" "}
+            sur {PADEL_QUESTIONS.length}. Reprenez quand vous voulez.
+          </p>
+        ) : (
+          <p className="text-xs sm:text-sm text-gray-400 mb-4">
+            23 questions rapides pour estimer précisément ton niveau de padel de
+            1 à 10. Vous pouvez interrompre et reprendre plus tard.
+          </p>
+        )}
         <motion.button
           type="button"
           whileTap={{ scale: 0.95 }}
           onClick={() => setHasStarted(true)}
           className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px]"
         >
-          Commencer l&apos;évaluation
+          {hasProgress ? "Reprendre le questionnaire" : "Commencer l'évaluation"}
           <ChevronRight size={18} />
         </motion.button>
       </motion.div>
@@ -211,6 +239,13 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
             )}
           </motion.button>
         </div>
+        <button
+          type="button"
+          onClick={() => setHasStarted(false)}
+          className="mt-3 w-full text-xs sm:text-sm text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200 min-h-[36px]"
+        >
+          Poursuivre plus tard
+        </button>
       </div>
     </motion.div>
   );

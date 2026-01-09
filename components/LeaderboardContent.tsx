@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye } from 'lucide-react';
 import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
@@ -344,6 +345,7 @@ export default function LeaderboardContent({
                   const finalFirstName = firstName || nameParts[0] || '';
                   const finalLastName = lastName || nameParts.slice(1).join(' ');
                   const rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
+                  const canViewProfile = !player.isGuest && player.user_id !== currentUserId;
                   return (
                     <tr key={player.user_id} className={rowClass}>
                       <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-12 sm:w-14">
@@ -372,11 +374,25 @@ export default function LeaderboardContent({
                             </div>
                           )}
                           {/* Nom du joueur */}
-                          <span className="truncate">
-                            <strong>{finalFirstName || 'Joueur'}</strong>
-                            {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
-                            {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <span className="truncate block">
+                              <strong>{finalFirstName || 'Joueur'}</strong>
+                              {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
+                              {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
+                            </span>
+                          </div>
+                          {/* Bouton Voir profil (uniquement pour les autres joueurs) */}
+                          {canViewProfile && (
+                            <button
+                              type="button"
+                              onClick={() => router.push(`/players/${player.user_id}`)}
+                              className="ml-2 p-1.5 sm:p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0 min-h-[32px] min-w-[32px] flex items-center justify-center"
+                              title="Voir le profil"
+                            >
+                              <Eye size={14} className="sm:hidden" />
+                              <Eye size={16} className="hidden sm:block" />
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
