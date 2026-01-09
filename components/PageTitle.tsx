@@ -13,19 +13,42 @@ export default function PageTitle({
   icon?: React.ReactNode;
   className?: string;
 }) {
+  // Style avec fond gris blanc et padding réduit
+  const cardStyle: React.CSSProperties = {
+    background: "rgba(255, 255, 255, 0.05)",
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    backdropFilter: "blur(4px)",
+    WebkitBackdropFilter: "blur(4px)",
+  };
+
   return (
     <div className={(className ? className + " " : "") + "mb-4 sm:mb-5 md:mb-6"}>
-      <div className="flex items-stretch gap-2 sm:gap-3">
-        <span className="w-1 sm:w-1.5 self-stretch rounded-full bg-gradient-to-b from-white/80 to-white/30" aria-hidden />
-        <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border border-white/10 bg-white/5 px-2 sm:px-3 py-1 sm:py-1.5 backdrop-blur-sm">
-          {icon ? <span className="text-base sm:text-lg md:text-xl" aria-hidden>{icon}</span> : null}
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-            {title}
-          </h1>
-        </span>
-      </div>
+      <section
+        className="relative overflow-hidden rounded-xl border inline-block text-white"
+        style={cardStyle}
+      >
+        <div className="relative z-10 flex items-center">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5">
+            {/* Barre verticale à gauche */}
+            <span 
+              className="w-1 sm:w-1.5 self-stretch rounded-full flex-shrink-0" 
+              style={{
+                background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.3))'
+              }}
+              aria-hidden="true" 
+            />
+            {/* Titre avec icône optionnelle */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {icon ? <span className="text-lg sm:text-xl md:text-2xl flex-shrink-0" aria-hidden="true">{icon}</span> : null}
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-tight">
+                {title}
+              </h1>
+            </div>
+          </div>
+        </div>
+      </section>
       {subtitle ? (
-        <p className="mt-1.5 sm:mt-2 ml-4 sm:ml-5 text-xs sm:text-sm text-white/60">{subtitle}</p>
+        <p className="mt-2 sm:mt-3 ml-1 sm:ml-2 text-xs sm:text-sm text-white/60">{subtitle}</p>
       ) : null}
     </div>
   );

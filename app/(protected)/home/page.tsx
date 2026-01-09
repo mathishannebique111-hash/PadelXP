@@ -19,6 +19,8 @@ import PlayerProfileTabs from "@/components/PlayerProfileTabs";
 import BadgesContent from "@/components/BadgesContent";
 import LeaderboardContent from "@/components/LeaderboardContent";
 import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
+import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
+import LevelBadge from "@/components/padel-level/LevelBadge";
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -407,7 +409,39 @@ export default async function HomePage({
               />
             }
             badgesContent={<BadgesContent />}
-            padelContent={profile ? <PadelProfileSection userId={profile.id} /> : null}
+            padelContent={
+              profile ? (
+                <div className="space-y-4">
+                  {profile.niveau_padel && profile.niveau_categorie ? (
+                    <div className="rounded-2xl bg-slate-800 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-white mb-2">
+                          Votre niveau actuel
+                        </h3>
+                        <LevelBadge
+                          niveau={profile.niveau_padel}
+                          categorie={profile.niveau_categorie}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="rounded-2xl bg-slate-800 p-4 sm:p-6">
+                    <h3 className="text-lg font-bold text-white mb-3">
+                      Mon Profil Padel
+                    </h3>
+                    <PadelProfileSection userId={profile.id} />
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-800 p-4 sm:p-6">
+                    <h3 className="text-lg font-bold text-white mb-3">
+                      Évaluer mon niveau (1 à 10)
+                    </h3>
+                    <LevelAssessmentWizard />
+                  </div>
+                </div>
+              ) : null
+            }
           />
         ) : null}
       </div>

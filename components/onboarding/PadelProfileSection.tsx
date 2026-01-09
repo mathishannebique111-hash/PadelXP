@@ -98,7 +98,9 @@ interface PadelProfileSectionProps {
   userId: string;
 }
 
-export default function PadelProfileSection({ userId }: PadelProfileSectionProps) {
+export default function PadelProfileSection({
+  userId,
+}: PadelProfileSectionProps) {
   const [profileData, setProfileData] = useState<OnboardingData | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -164,7 +166,8 @@ export default function PadelProfileSection({ userId }: PadelProfileSectionProps
           Mon Profil Padel
         </h2>
         <p className="text-sm text-white/70 mb-4">
-          Vous n'avez pas encore complété votre profil padel. Complétez-le pour personnaliser votre expérience !
+          Vous n&apos;avez pas encore complété votre profil padel. Complétez-le
+          pour personnaliser votre expérience !
         </p>
         <a
           href="/player/onboarding"

@@ -45,6 +45,20 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* Variables de thème personnalisées PadelXP - avec support opacité */
+        theme: {
+          page: "rgb(var(--theme-page) / <alpha-value>)",
+          "player-page": "rgb(var(--theme-player-page) / <alpha-value>)",
+          card: "rgb(var(--theme-card) / <alpha-value>)",
+          secondary: "rgb(var(--theme-secondary) / <alpha-value>)",
+          text: "rgb(var(--theme-text) / <alpha-value>)",
+          "text-muted": "rgb(var(--theme-text-muted) / <alpha-value>)",
+          "text-secondary": "rgb(var(--theme-text-secondary) / <alpha-value>)",
+          border: "rgb(var(--theme-border) / <alpha-value>)",
+          "border-light": "rgb(var(--theme-border-light) / <alpha-value>)",
+          accent: "rgb(var(--theme-accent) / <alpha-value>)",
+          "accent-hover": "rgb(var(--theme-accent-hover) / <alpha-value>)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
