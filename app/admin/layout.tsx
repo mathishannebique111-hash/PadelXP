@@ -64,8 +64,14 @@ export default function AdminLayout({
           return;
         }
 
-        // Vérifier si admin
-        const userIsAdmin = isAdmin(user.email);
+        // Vérifier si admin via la base de données (plus fiable que juste l'email)
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", user.id)
+          .maybeSingle();
+        
+        const userIsAdmin = profile?.is_admin || isAdmin(user.email);
         
         if (!userIsAdmin) {
           // Utilisateur non-admin = rediriger vers home

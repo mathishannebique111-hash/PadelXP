@@ -14,12 +14,17 @@ export default async function LoginPage({
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("club_slug, has_completed_onboarding")
+      .select("club_slug, has_completed_onboarding, is_admin")
       .eq("id", user.id)
       .maybeSingle();
     
     if (profile) {
-      // Vérifier si l'onboarding est complété
+      // Si l'utilisateur est admin, rediriger vers l'interface admin (pas d'onboarding)
+      if (profile.is_admin) {
+        redirect("/admin/messages");
+      }
+      
+      // Vérifier si l'onboarding est complété (uniquement pour les non-admins)
       if (!profile.has_completed_onboarding) {
         // Rediriger vers l'onboarding si pas encore complété
         redirect("/player/onboarding");

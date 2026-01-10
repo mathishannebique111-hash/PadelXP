@@ -64,17 +64,23 @@ export default function Testimonials() {
 
   // Écouter les événements de soumission d'avis pour mettre à jour automatiquement
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let timeoutId: NodeJS.Timeout;
+
     const handleReviewSubmitted = async () => {
       logger.info("📥 Testimonials received reviewSubmitted event");
       // Attendre un peu pour s'assurer que la DB est à jour
-      await new Promise(resolve => setTimeout(resolve, 300));
-      fetchReviews();
+      timeoutId = setTimeout(() => {
+        fetchReviews();
+      }, 300);
     };
 
     window.addEventListener("reviewSubmitted", handleReviewSubmitted);
     
     return () => {
       window.removeEventListener("reviewSubmitted", handleReviewSubmitted);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [fetchReviews]);
 

@@ -139,7 +139,13 @@ export default function EmailLoginForm({
           return;
         }
 
-        // Vérifier si l'onboarding est complété
+        // Si l'utilisateur est admin, rediriger vers l'interface admin (pas d'onboarding)
+        if (profile.is_admin) {
+          router.replace("/admin/messages");
+          return;
+        }
+
+        // Vérifier si l'onboarding est complété (uniquement pour les non-admins)
         // Si has_completed_onboarding est false ou undefined, rediriger vers l'onboarding
         if (!profile.has_completed_onboarding) {
           router.replace("/player/onboarding");

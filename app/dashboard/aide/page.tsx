@@ -1,313 +1,390 @@
-'use client';
+"use client";
 
-import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useState, FormEvent, useEffect, useRef } from "react";
 import PageTitle from "../PageTitle";
-import { logger } from '@/lib/logger';
+import { logger } from "@/lib/logger";
+import { createClient } from "@/lib/supabase/client";
+import { Loader2, Send, MessageCircle } from "lucide-react";
 
-interface SupportMessage {
+interface Message {
   id: string;
-  conversation_id: string;
-  sender_type: 'club' | 'admin';
-  sender_id: string | null;
-  sender_email?: string | null;
-  message_text?: string;
-  content?: string;
-  html_content?: string | null;
+  content: string;
+  sender_id: string;
+  is_admin: boolean;
   created_at: string;
 }
 
-interface SupportConversation {
+interface Conversation {
   id: string;
   club_id: string;
-  user_id: string;
-  user_email: string;
-  club_name: string;
-  subject: string | null;
-  status: 'open' | 'closed' | 'resolved';
   last_message_at: string;
-  created_at: string;
-  messages?: SupportMessage[];
-}
-
-interface ConversationWithMessages extends SupportConversation {
-  messages: SupportMessage[];
+  is_read_by_club: boolean;
 }
 
 export default function HelpPage() {
-  const [message, setMessage] = useState('');
-  const [replyMessage, setReplyMessage] = useState<{ [conversationId: string]: string }>({});
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<{ [conversationId: string]: boolean }>({});
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<ConversationWithMessages[]>([]);
-  const [openConversations, setOpenConversations] = useState<Set<string>>(new Set());
-  const [readMessages, setReadMessages] = useState<Set<string>>(() => {
-    // Charger les messages lus depuis localStorage au montage du composant
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('readSupportMessages');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          return new Set(parsed);
-        } catch (e) {
-          logger.error('Error parsing stored read messages:', e);
-        }
-      }
-    }
-    return new Set();
-  }); // Messages que le club a vus
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const replyFormRefs = useRef<{ [conversationId: string]: HTMLFormElement | null }>({});
+  const [userId, setUserId] = useState<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
 
-  // Charger toutes les conversations et leurs messages
-  const loadConversations = async (showLoading = false) => {
-    try {
-      if (showLoading || isInitialLoad) {
-        setLoadingMessages(true);
-      }
-      const response = await fetch('/api/support/conversation');
-      const data = await response.json();
-
-      if (response.ok) {
-        logger.info('✅ Conversations loaded:', {
-          count: data.conversations?.length || 0,
-          conversations: data.conversations?.map((c: ConversationWithMessages) => ({
-            id: c.id,
-            messagesCount: c.messages?.length || 0,
-            firstMessage: c.messages?.find(m => m.sender_type === 'club')?.message_text?.substring(0, 50) + '...'
-          }))
-        });
-        
-          if (data.conversations && Array.isArray(data.conversations)) {
-          setConversations(data.conversations);
-          
-          // Si une conversation est ouverte, marquer automatiquement ses messages comme lus
-          data.conversations.forEach((conv: ConversationWithMessages) => {
-            if (openConversations.has(conv.id)) {
-              const allMessageIds = conv.messages?.map(m => m.id) || [];
-              setReadMessages(prevRead => {
-                const newReadSet = new Set(prevRead);
-                allMessageIds.forEach(id => newReadSet.add(id));
-                return newReadSet;
-              });
-            }
-          });
-        } else {
-          setConversations([]);
-        }
-        setIsInitialLoad(false);
-        
-        if (data.error) {
-          logger.error('❌ Error in conversations data:', data.error);
-          if (data.error.includes('non configuré')) {
-            setError(data.error + (data.hint ? ' - ' + data.hint : ''));
-          }
-        }
-      } else {
-        logger.error('❌ Error loading conversations:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: data
-        });
-        if (data.error && data.error.includes('non configuré')) {
-          setError(data.error + (data.hint ? ' - ' + data.hint : ''));
-        }
-        setIsInitialLoad(false);
-      }
-    } catch (err) {
-      logger.error('❌ Error loading conversations:', err);
-      setIsInitialLoad(false);
-    } finally {
-      if (showLoading || isInitialLoad) {
-        setLoadingMessages(false);
-      }
-    }
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Charger au montage et toutes les 5 secondes pour les nouvelles réponses
+  // Initialisation de la conversation et chargement des messages
   useEffect(() => {
-    loadConversations(true);
-    const interval = setInterval(() => loadConversations(false), 5000);
-    return () => clearInterval(interval);
+    let isMounted = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const init = async () => {
+      try {
+        setLoadingMessages(true);
+
+        // Récupérer l'utilisateur
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user || !isMounted) {
+          if (!user) logger.error("[ClubSupport] Pas d'utilisateur connecté");
+          return;
+        }
+
+        userIdRef.current = user.id;
+        setUserId(user.id);
+
+        // Récupérer le club_id de l'utilisateur (via profiles OU club_admins)
+        let clubId: string | null = null;
+        
+        // Essayer d'abord via profiles
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("club_id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        clubId = profile?.club_id || null;
+
+        // Si pas de club_id dans profiles, essayer via club_admins
+        if (!clubId) {
+          const { data: adminEntry } = await supabase
+            .from("club_admins")
+            .select("club_id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          
+          clubId = adminEntry?.club_id || null;
+        }
+
+        if (!clubId || !isMounted) {
+          if (!clubId) {
+            logger.error("[ClubSupport] Pas de club_id trouvé pour l'utilisateur (ni dans profiles ni dans club_admins)");
+            setError("Vous devez être associé à un club pour utiliser le support. Contactez votre administrateur.");
+          }
+          if (isMounted) {
+            setLoadingMessages(false);
+          }
+          return;
+        }
+
+        // Vérifier si une conversation existe pour ce club
+        let { data: conv, error: convError } = await supabase
+          .from("club_conversations")
+          .select("*")
+          .eq("club_id", clubId)
+          .maybeSingle();
+
+        // Si pas de conversation, essayer de la créer directement
+        // Si ça échoue à cause de RLS, la conversation sera créée automatiquement par l'API lors du premier message
+        if (!conv && isMounted) {
+          const { data: newConv, error: createError } = await supabase
+            .from("club_conversations")
+            .insert({
+              club_id: clubId,
+              status: "open",
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            logger.warn("[ClubSupport] Impossible de créer la conversation côté client (RLS?). Elle sera créée lors du premier message.", { 
+              error: createError.message,
+              clubId: clubId.substring(0, 8)
+            });
+            // On continue sans conversation, elle sera créée par l'API lors du premier envoi
+          } else if (newConv) {
+            conv = newConv;
+          }
+        }
+
+        if (!isMounted) return;
+        
+        // Si on a une conversation, la charger et s'abonner aux messages
+        if (conv) {
+          setConversation(conv);
+
+          // Charger les messages existants
+          const { data: msgs, error: msgsError } = await supabase
+            .from("club_messages")
+            .select("*")
+            .eq("conversation_id", conv.id)
+            .order("created_at", { ascending: true });
+
+          if (msgsError) {
+            logger.error("[ClubSupport] Erreur chargement messages:", msgsError);
+          } else if (msgs && isMounted) {
+            const uniqueMessages = msgs
+              .reduce((acc: Message[], msg: Message) => {
+                if (!acc.find((m: Message) => m.id === msg.id)) {
+                  acc.push(msg);
+                }
+                return acc;
+              }, [] as Message[])
+              .sort((a: Message, b: Message) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            setMessages(uniqueMessages);
+
+            // Marquer comme lu par le club
+            await supabase
+              .from("club_conversations")
+              .update({ is_read_by_club: true })
+              .eq("id", conv.id);
+
+            // S'abonner aux nouveaux messages en temps réel
+            if (isMounted) {
+              channel = supabase
+                .channel(`club-conversation:${conv.id}`)
+                .on(
+                  "postgres_changes",
+                  {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "club_messages",
+                    filter: `conversation_id=eq.${conv.id}`,
+                  },
+                  (payload: { new: Message }) => {
+                    if (isMounted) {
+                      const newMessage = payload.new as Message;
+                      setMessages((current) => {
+                        const exists = current.some((m) => m.id === newMessage.id);
+                        if (exists) return current;
+                        return [...current, newMessage].sort(
+                          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                        );
+                      });
+                      supabase
+                        .from("club_conversations")
+                        .update({ is_read_by_club: true })
+                        .eq("id", conv.id);
+                    }
+                  }
+                )
+                .subscribe();
+            }
+          }
+        } else {
+          // Pas de conversation encore, mais on peut quand même permettre l'envoi
+          // La conversation sera créée par l'API lors du premier message
+          logger.info("[ClubSupport] Pas de conversation existante, sera créée lors du premier message");
+        }
+      } catch (error) {
+        logger.error("[ClubSupport] Erreur initialisation chat:", error);
+      } finally {
+        if (isMounted) {
+          setLoadingMessages(false);
+        }
+      }
+    };
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { user: { id: string } } | null) => {
+      if (session?.user && isMounted) {
+        userIdRef.current = session.user.id;
+        setUserId(session.user.id);
+      } else if (!session?.user && isMounted) {
+        userIdRef.current = null;
+        setUserId(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Sauvegarder les messages lus dans localStorage à chaque changement
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const messagesArray = Array.from(readMessages);
-      localStorage.setItem('readSupportMessages', JSON.stringify(messagesArray));
-    }
-  }, [readMessages]);
+    scrollToBottom();
+  }, [messages]);
 
-  // Ouvrir/fermer une conversation
-  const toggleConversation = (conversationId: string) => {
-    setOpenConversations(prev => {
-      const newSet = new Set(prev);
-      const wasOpen = newSet.has(conversationId);
-      
-      if (wasOpen) {
-        newSet.delete(conversationId);
-      } else {
-        newSet.add(conversationId);
-        // Quand on ouvre une conversation, marquer tous les messages de cette conversation comme lus
-        const conversation = conversations.find(c => c.id === conversationId);
-        if (conversation) {
-          const allMessageIds = conversation.messages?.map(m => m.id) || [];
-          setReadMessages(prevRead => {
-            const newReadSet = new Set(prevRead);
-            allMessageIds.forEach(id => newReadSet.add(id));
-            return newReadSet;
-          });
-        }
-        
-        // Scroller vers le formulaire de réponse après un court délai pour que le DOM soit mis à jour
-        setTimeout(() => {
-          const formElement = replyFormRefs.current[conversationId];
-          if (formElement) {
-            formElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            // Focus sur le textarea du formulaire
-            const textarea = formElement.querySelector('textarea') as HTMLTextAreaElement;
-            if (textarea) {
-              textarea.focus();
-            }
-          }
-        }, 100);
-      }
-      return newSet;
-    });
-  };
-
-  // Envoyer un nouveau message (crée une nouvelle conversation)
+  // Envoyer un nouveau message
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!message.trim()) return;
+
     setLoading(true);
     setError(null);
     setSuccess(false);
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
+      // L'API créera automatiquement la conversation si elle n'existe pas
+      const response = await fetch("/api/club-messages/send", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: message.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorMessage = data.error || 'Erreur lors de l\'envoi du message';
-        const errorDetails = data.details ? ` (${data.details})` : '';
-        const errorHint = data.hint ? ` - ${data.hint}` : '';
-        throw new Error(errorMessage + errorDetails + errorHint);
-      }
-
-      setSuccess(true);
-      setMessage('');
-      
-      // Recharger les conversations
-      await loadConversations(false);
-      setTimeout(() => loadConversations(false), 500);
-      setTimeout(() => loadConversations(false), 1500);
-      setTimeout(() => loadConversations(false), 3000);
-      
-      setTimeout(() => setSuccess(false), 5000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi du message');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Envoyer une réponse dans une conversation existante
-  const handleReply = async (conversationId: string, e: FormEvent) => {
-    e.preventDefault();
-    const replyText = replyMessage[conversationId]?.trim();
-    if (!replyText) return;
-
-    setReplyingTo(prev => ({ ...prev, [conversationId]: true }));
-    setError(null);
-
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          message: replyText,
-          conversationId: conversationId // Passer l'ID de conversation pour répondre dans la même conversation
+        body: JSON.stringify({
+          content: message.trim(),
+          conversation_id: conversation?.id, // Peut être undefined, l'API créera la conversation
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data.error || 'Erreur lors de l\'envoi de la réponse';
+        const errorMessage = data.error || "Erreur lors de l'envoi du message";
         throw new Error(errorMessage);
       }
 
-      // Vider le champ de réponse
-      setReplyMessage(prev => ({ ...prev, [conversationId]: '' }));
+      setSuccess(true);
+      setMessage("");
+
+      // Si la conversation n'existait pas, elle a été créée par l'API
+      // Recharger la conversation pour avoir l'ID et s'abonner aux messages
+      const newConversationId = data.conversation_id || data.message?.conversation_id;
       
-      // Recharger les conversations
-      await loadConversations(false);
-      setTimeout(() => loadConversations(false), 500);
-      setTimeout(() => loadConversations(false), 1500);
-      setTimeout(() => loadConversations(false), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi de la réponse');
-    } finally {
-      setReplyingTo(prev => ({ ...prev, [conversationId]: false }));
-    }
-  };
+      if (!conversation && newConversationId) {
+        // Recharger les données de la conversation
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("club_id")
+          .eq("id", userId || "")
+          .maybeSingle();
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+        let clubId: string | null = profile?.club_id || null;
+        if (!clubId) {
+          const { data: adminEntry } = await supabase
+            .from("club_admins")
+            .select("club_id")
+            .eq("user_id", userId || "")
+            .maybeSingle();
+          clubId = adminEntry?.club_id || null;
+        }
 
-    if (diffMins < 1) return 'À l\'instant';
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
-    
-    return date.toLocaleDateString('fr-FR', { 
-      day: 'numeric', 
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Obtenir le premier message du club pour une conversation
-  const getFirstClubMessage = (conversation: ConversationWithMessages): SupportMessage | null => {
-    return conversation.messages?.find(m => m.sender_type === 'club') || null;
-  };
-
-  // Compter les réponses non lues (messages de l'admin qui n'ont pas été vus par le club)
-  const getUnreadRepliesCount = (conversation: ConversationWithMessages): number => {
-    const messages = conversation.messages || [];
-    if (messages.length === 0) return 0;
-
-    // Compter uniquement les messages de l'admin qui n'ont pas été marqués comme lus
-    let unreadCount = 0;
-    for (const msg of messages) {
-      if (msg.sender_type === 'admin' && !readMessages.has(msg.id)) {
-        unreadCount++;
+        if (clubId) {
+          const { data: newConv } = await supabase
+            .from("club_conversations")
+            .select("*")
+            .eq("club_id", clubId)
+            .maybeSingle();
+          
+          if (newConv) {
+            setConversation(newConv);
+            
+            // Charger les messages existants maintenant qu'on a la conversation
+            const { data: msgs } = await supabase
+              .from("club_messages")
+              .select("*")
+              .eq("conversation_id", newConv.id)
+              .order("created_at", { ascending: true });
+            
+            if (msgs) {
+              const uniqueMessages = msgs
+                .reduce((acc: Message[], msg: Message) => {
+                  if (!acc.find((m: Message) => m.id === msg.id)) {
+                    acc.push(msg);
+                  }
+                  return acc;
+                }, [] as Message[])
+                .sort((a: Message, b: Message) => 
+                  new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                );
+              setMessages(uniqueMessages);
+            }
+            
+            // S'abonner aux nouveaux messages en temps réel
+            const channel = supabase
+              .channel(`club-conversation:${newConv.id}`)
+              .on(
+                "postgres_changes",
+                {
+                  event: "INSERT",
+                  schema: "public",
+                  table: "club_messages",
+                  filter: `conversation_id=eq.${newConv.id}`,
+                },
+                (payload: { new: Message }) => {
+                  const newMessage = payload.new as Message;
+                  setMessages((current) => {
+                    const exists = current.some((m) => m.id === newMessage.id);
+                    if (exists) return current;
+                    return [...current, newMessage].sort(
+                      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                    );
+                  });
+                  supabase
+                    .from("club_conversations")
+                    .update({ is_read_by_club: true })
+                    .eq("id", newConv.id);
+                }
+              )
+              .subscribe();
+          }
+        }
       }
-    }
 
-    return unreadCount;
+      // Ajouter le message à la liste immédiatement si disponible
+      if (data.message) {
+        setMessages((current) => {
+          const exists = current.some((m) => m.id === data.message.id);
+          return exists ? current : [...current, data.message].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        });
+      }
+
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'envoi du message");
+    } finally {
+      setLoading(false);
+    }
   };
+
+
+  if (loadingMessages) {
+    return (
+      <div className="relative space-y-6">
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.18),transparent_70%)] blur-[100px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
+          <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(191,255,0,0.28),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
+          <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
+        </div>
+        <div className="relative z-10 space-y-6">
+          <PageTitle title="Aide & Support" />
+          <div className="text-center text-white/50 py-8">
+            <Loader2 className="animate-spin mx-auto mb-4" size={32} />
+            <p>Chargement...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative min-h-screen flex flex-col">
       {/* Halos de couleur en fond qui défilent avec le scroll */}
       <div className="pointer-events-none fixed inset-0 z-0">
         {/* Halo bleu en haut à gauche */}
@@ -319,192 +396,112 @@ export default function HelpPage() {
         {/* Petit halo bleu */}
         <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
       </div>
-      
-      <div className="relative z-10 space-y-6">
-      <PageTitle title="Aide & Support" />
 
-      {/* Afficher un message d'erreur si les tables n'existent pas */}
-      {(error && error.includes('non configuré')) && (
-        <div className="rounded-xl border border-red-500/50 bg-red-500/20 p-6">
-          <h2 className="font-semibold mb-2 text-red-200">⚠️ Configuration requise</h2>
-          <p className="text-red-200 text-sm mb-2">{error}</p>
-          <p className="text-red-200/80 text-xs">
-            Pour activer le système de chat support, veuillez exécuter le script SQL{' '}
-            <code className="bg-red-500/30 px-2 py-1 rounded">create_support_chat_system.sql</code>{' '}
-            dans Supabase SQL Editor.
-          </p>
+      <div className="relative z-10 flex flex-col flex-1 px-4 pb-24">
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-transparent backdrop-blur-sm py-4 mb-4">
+          <PageTitle title="Aide & Support" />
         </div>
-      )}
 
-      {/* Formulaire d'envoi de nouveau message - EN HAUT */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-        <h2 className="font-semibold mb-4">Envoyer un nouveau message</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="message" className="block text-sm font-medium text-white/90 mb-2">
-              Votre message
-            </label>
-            <textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Écrivez votre message ici..."
-              rows={6}
-              required
-              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            />
+        {/* Container principal avec conversation et formulaire */}
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
+          {/* Zone de messages scrollable */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full py-12">
+                <MessageCircle size={48} className="text-white/30 mb-4" />
+                <p className="text-sm text-white/60 text-center">
+                  Aucun message pour le moment.
+                </p>
+                <p className="text-xs text-white/40 mt-2 text-center">
+                  Envoyez un message pour commencer la conversation
+                </p>
+              </div>
+            ) : (
+              messages
+                .filter((msg, index, self) => index === self.findIndex((m) => m.id === msg.id))
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((msg) => {
+                  const myUserId = userIdRef.current || userId;
+                  const isSentByMe = myUserId !== null && myUserId !== "" && String(msg.sender_id).trim() === String(myUserId).trim();
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${
+                          isSentByMe
+                            ? "bg-blue-500 text-white rounded-br-sm"
+                            : "bg-white/10 border border-white/20 text-white/90 rounded-bl-sm"
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                          {msg.content}
+                        </p>
+                        <p
+                          className={`text-[10px] mt-1.5 ${
+                            isSentByMe ? "text-blue-100" : "text-white/50"
+                          }`}
+                        >
+                          {new Date(msg.created_at).toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+            <div ref={messagesEndRef} />
           </div>
-          {error && !error.includes('non configuré') && (
-            <div className="px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
-              {error}
+
+          {/* Messages d'erreur/succès */}
+          {error && (
+            <div className="px-6 pt-2 pb-0">
+              <div className="px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+                {error}
+              </div>
             </div>
           )}
           {success && (
-            <div className="px-4 py-3 rounded-xl bg-green-500/20 border border-green-500/50 text-green-200 text-sm">
-              ✓ Message envoyé avec succès ! Un nouveau bloc a été créé dans l'historique.
+            <div className="px-6 pt-2 pb-0">
+              <div className="px-4 py-3 rounded-xl bg-green-500/20 border border-green-500/50 text-green-200 text-sm">
+                ✓ Message envoyé avec succès !
+              </div>
             </div>
           )}
-          <button
-            type="submit"
-            disabled={loading || !message.trim()}
-            className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:shadow-[0_6px_16px_rgba(59,130,246,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none active:scale-[0.98]"
-          >
-            {loading ? 'Envoi en cours...' : 'Envoyer'}
-          </button>
-        </form>
-      </div>
 
-      {/* Historique des conversations - EN DESSOUS */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-        <h2 className="font-semibold mb-4">Historique des conversations</h2>
-        <div className="space-y-4">
-          {loadingMessages && isInitialLoad ? (
-            <div className="text-center text-white/50 py-8">
-              Chargement des conversations...
-            </div>
-          ) : conversations.length > 0 ? (
-            conversations.map((conversation) => {
-              const firstMessage = getFirstClubMessage(conversation);
-              const unreadCount = getUnreadRepliesCount(conversation);
-              const isOpen = openConversations.has(conversation.id);
-              
-              // Trier tous les messages par ordre chronologique (sauf le premier message du club qui est déjà affiché dans l'en-tête)
-              const allMessages = (conversation.messages || [])
-                .filter(m => m.id !== firstMessage?.id) // Exclure le premier message du club
-                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-              if (!firstMessage) return null;
-
-              return (
-                <div
-                  key={conversation.id}
-                  className="rounded-lg border border-white/10 bg-white/5 p-4"
-                >
-                  {/* En-tête du bloc avec le premier message */}
-                  <div
-                    className="cursor-pointer flex items-start justify-between gap-4"
-                    onClick={() => toggleConversation(conversation.id)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-white/60 mb-1">
-                        Vous · {formatDate(firstMessage.created_at)}
-                      </div>
-                      <div className="text-white/90 whitespace-pre-wrap break-words line-clamp-2">
-                        {firstMessage.message_text}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 flex items-center gap-2">
-                      {/* Badge de messages non lus - n'apparaît que s'il y a des messages non lus */}
-                      {unreadCount > 0 && (
-                        <span className="px-2 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold">
-                          {unreadCount}
-                        </span>
-                      )}
-                      {/* Flèche pour ouvrir/fermer la conversation */}
-                      <svg
-                        className={`w-5 h-5 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Contenu du bloc (réponses et formulaire de réponse) */}
-                  {isOpen && (
-                    <div className="mt-4 pt-4 border-t border-white/10 space-y-4">
-                      {/* Afficher tous les messages dans l'ordre chronologique */}
-                      {allMessages.length > 0 && (
-                        <div className="space-y-3">
-                          {allMessages.map((msg) => (
-                            <div
-                              key={msg.id}
-                              className={`flex ${msg.sender_type === 'club' ? 'justify-end' : 'justify-start'}`}
-                            >
-                              <div
-                                className={`max-w-[80%] rounded-xl ${
-                                  msg.sender_type === 'club'
-                                    ? 'bg-blue-600 text-white px-4 py-3.5 border-2 border-blue-400'
-                                    : 'bg-white/10 border border-white/20 rounded-lg p-3'
-                                }`}
-                              >
-                                <div className={`text-xs mb-2 font-medium ${
-                                  msg.sender_type === 'club' ? 'text-white/90' : 'text-white/60'
-                                }`}>
-                                  {msg.sender_type === 'club' ? 'Vous' : 'Support PadelXP'} · {formatDate(msg.created_at)}
-                                </div>
-                                <div className={`whitespace-pre-wrap break-words leading-relaxed ${
-                                  msg.sender_type === 'club' ? 'text-white font-normal' : 'text-white/90'
-                                }`}>
-                                  {msg.message_text}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Formulaire de réponse dans le bloc */}
-                      <form
-                        ref={(el) => {
-                          if (el) {
-                            replyFormRefs.current[conversation.id] = el;
-                          }
-                        }}
-                        onSubmit={(e) => handleReply(conversation.id, e)}
-                        className="space-y-3 pt-3 border-t border-white/10"
-                      >
-                        <textarea
-                          value={replyMessage[conversation.id] || ''}
-                          onChange={(e) => setReplyMessage(prev => ({ ...prev, [conversation.id]: e.target.value }))}
-                          placeholder="Écrivez votre réponse ici..."
-                          rows={3}
-                          className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                          type="submit"
-                          disabled={!replyMessage[conversation.id]?.trim() || replyingTo[conversation.id]}
-                          className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-[0_2px_8px_rgba(59,130,246,0.25)] hover:shadow-[0_4px_12px_rgba(59,130,246,0.35)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none active:scale-[0.98] text-sm"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {replyingTo[conversation.id] ? 'Envoi...' : 'Répondre'}
-                        </button>
-                      </form>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center text-white/50 py-8">
-              Aucune conversation active. Envoyez un message ci-dessus pour commencer.
-            </div>
-          )}
+          {/* Formulaire d'envoi fixé en bas du container */}
+          <div className="border-t border-white/10 p-4 bg-white/5">
+            <form onSubmit={handleSubmit} className="flex gap-3">
+              <input
+                type="text"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Votre message..."
+                className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[44px]"
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading || !message.trim()}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg px-6 py-3 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-indigo-600 flex items-center gap-2 font-medium min-h-[44px] active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:shadow-[0_6px_16px_rgba(59,130,246,0.35)] disabled:hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)]"
+              >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>
+                    <Send size={20} />
+                    <span className="hidden sm:inline">Envoyer</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

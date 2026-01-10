@@ -90,7 +90,12 @@ export default async function HomePage({
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     profile = data ?? null;
     
-    // Vérifier si l'onboarding est complété
+    // Si l'utilisateur est admin, rediriger vers l'interface admin (pas d'onboarding, pas de page home joueur)
+    if (profile?.is_admin) {
+      redirect("/admin/messages");
+    }
+    
+    // Vérifier si l'onboarding est complété (uniquement pour les non-admins)
     if (profile && !profile.has_completed_onboarding) {
       redirect("/player/onboarding");
     }

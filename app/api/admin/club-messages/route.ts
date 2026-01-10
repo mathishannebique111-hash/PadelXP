@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      logger.warn({ error: authError }, "[AdminMessages] Pas d'utilisateur connecté");
+      logger.warn("[AdminClubMessages] Pas d'utilisateur connecté", { error: authError });
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (!profile?.is_admin) {
-      logger.warn({ userId: user.id.substring(0, 8) }, "[AdminMessages] Utilisateur non-admin");
+      logger.warn("[AdminClubMessages] Utilisateur non-admin", { userId: user.id.substring(0, 8) });
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
@@ -49,18 +49,18 @@ export async function GET(request: Request) {
 
     // Utiliser le client admin pour contourner RLS et récupérer tous les messages
     const { data: messages, error: messagesError } = await supabaseAdmin
-      .from("messages")
+      .from("club_messages")
       .select("*")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true });
 
     if (messagesError) {
-      logger.error({ error: messagesError }, "[AdminMessages] Erreur récupération messages");
+      logger.error("[AdminClubMessages] Erreur récupération messages", { error: messagesError });
       return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 
     logger.info(
-      "[AdminMessages] Messages récupérés",
+      "[AdminClubMessages] Messages récupérés",
       {
         conversationId: conversationId.substring(0, 8),
         messageCount: messages?.length || 0,
@@ -70,8 +70,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ messages: messages || [] });
   } catch (error) {
     logger.error(
+      "[AdminClubMessages] Erreur inattendue",
       { error, errorMessage: error instanceof Error ? error.message : String(error) },
-      "[AdminMessages] Erreur inattendue"
     );
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

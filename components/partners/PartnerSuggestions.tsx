@@ -26,11 +26,14 @@ export default function PartnerSuggestions() {
 
   const fetchSuggestions = useCallback(async () => {
     try {
-      // Ne pas mettre setLoading(true) si on a déjà des données (stale-while-revalidate)
-      if (suggestions.length === 0) {
-        setLoading(true);
-      }
       setError(null);
+      // Ne mettre loading que si on n'a pas encore de données
+      setLoading((prev) => {
+        if (prev === false && suggestions.length === 0) {
+          return true;
+        }
+        return prev;
+      });
 
       // Utiliser stale-while-revalidate pour un chargement instantané
       const response = await fetch(
@@ -63,7 +66,7 @@ export default function PartnerSuggestions() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [suggestions.length]);
 
   // Charger les suggestions au montage
   useEffect(() => {
@@ -72,16 +75,21 @@ export default function PartnerSuggestions() {
 
   // Recharger automatiquement quand un match est soumis ou qu'un questionnaire est complété
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let timeoutId1: NodeJS.Timeout;
+    let timeoutId2: NodeJS.Timeout;
+
     const handleMatchSubmitted = () => {
       // Délai réduit pour une mise à jour plus rapide
-      setTimeout(() => {
+      timeoutId1 = setTimeout(() => {
         fetchSuggestions();
       }, 1000);
     };
 
     const handleQuestionnaireCompleted = () => {
       // Délai réduit pour une mise à jour plus rapide
-      setTimeout(() => {
+      timeoutId2 = setTimeout(() => {
         fetchSuggestions();
       }, 1000);
     };
@@ -95,31 +103,34 @@ export default function PartnerSuggestions() {
       }
     };
 
-    if (typeof window !== "undefined") {
-      window.addEventListener("matchSubmitted", handleMatchSubmitted);
-      window.addEventListener("questionnaireCompleted", handleQuestionnaireCompleted);
-      window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("matchSubmitted", handleMatchSubmitted);
+    window.addEventListener("questionnaireCompleted", handleQuestionnaireCompleted);
+    window.addEventListener("storage", handleStorageChange);
 
-      return () => {
-        window.removeEventListener("matchSubmitted", handleMatchSubmitted);
-        window.removeEventListener("questionnaireCompleted", handleQuestionnaireCompleted);
-        window.removeEventListener("storage", handleStorageChange);
-      };
-    }
+    return () => {
+      window.removeEventListener("matchSubmitted", handleMatchSubmitted);
+      window.removeEventListener("questionnaireCompleted", handleQuestionnaireCompleted);
+      window.removeEventListener("storage", handleStorageChange);
+      if (timeoutId1) clearTimeout(timeoutId1);
+      if (timeoutId2) clearTimeout(timeoutId2);
+    };
   }, [fetchSuggestions]);
 
   // Polling périodique réduit - les événements prennent le relais pour les mises à jour immédiates
   // On utilise stale-while-revalidate donc le cache permet un chargement instantané
   useEffect(() => {
     const interval = setInterval(() => {
-      // Recharger seulement si pas en cours de chargement et si on a des données
-      if (!loading && suggestions.length > 0) {
-        fetchSuggestions();
-      }
+      // Recharger seulement si pas en cours de chargement
+      setLoading((currentLoading) => {
+        if (!currentLoading) {
+          fetchSuggestions();
+        }
+        return currentLoading;
+      });
     }, 120000); // 2 minutes - les événements gèrent les mises à jour immédiates
 
     return () => clearInterval(interval);
-  }, [fetchSuggestions, loading, suggestions.length]);
+  }, [fetchSuggestions]);
 
   if (loading && suggestions.length === 0) {
     return (

@@ -16,14 +16,17 @@ const supabaseAdmin = createAdminClient(
   }
 );
 
-export async function GET(request: Request) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     // Vérifier que l'utilisateur est authentifié et admin
     const supabase = await createServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      logger.warn({ error: authError }, "[AdminMessages] Pas d'utilisateur connecté");
+      logger.warn("[DeleteClubConversation] Pas d'utilisateur connecté", { error: authError });
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -35,44 +38,42 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (!profile?.is_admin) {
-      logger.warn({ userId: user.id.substring(0, 8) }, "[AdminMessages] Utilisateur non-admin");
+      logger.warn("[DeleteClubConversation] Utilisateur non-admin", { userId: user.id.substring(0, 8) });
       return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
     }
 
-    // Récupérer le conversation_id depuis les query params
-    const { searchParams } = new URL(request.url);
-    const conversationId = searchParams.get("conversation_id");
+    const conversationId = params.id;
 
     if (!conversationId) {
       return NextResponse.json({ error: "conversation_id requis" }, { status: 400 });
     }
 
-    // Utiliser le client admin pour contourner RLS et récupérer tous les messages
-    const { data: messages, error: messagesError } = await supabaseAdmin
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
+    // Utiliser le client admin pour contourner RLS et supprimer la conversation
+    // Les messages seront automatiquement supprimés grâce à ON DELETE CASCADE
+    const { error: deleteError } = await supabaseAdmin
+      .from("club_conversations")
+      .delete()
+      .eq("id", conversationId);
 
-    if (messagesError) {
-      logger.error({ error: messagesError }, "[AdminMessages] Erreur récupération messages");
+    if (deleteError) {
+      logger.error("[DeleteClubConversation] Erreur suppression conversation", { 
+        error: deleteError,
+        conversationId: conversationId.substring(0, 8)
+      });
       return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 
-    logger.info(
-      "[AdminMessages] Messages récupérés",
-      {
-        conversationId: conversationId.substring(0, 8),
-        messageCount: messages?.length || 0,
-      }
-    );
+    logger.info("[DeleteClubConversation] Conversation supprimée", {
+      conversationId: conversationId.substring(0, 8),
+      adminId: user.id.substring(0, 8),
+    });
 
-    return NextResponse.json({ messages: messages || [] });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error(
-      { error, errorMessage: error instanceof Error ? error.message : String(error) },
-      "[AdminMessages] Erreur inattendue"
-    );
+    logger.error("[DeleteClubConversation] Erreur inattendue", { 
+      error, 
+      errorMessage: error instanceof Error ? error.message : String(error) 
+    });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

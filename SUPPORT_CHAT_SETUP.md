@@ -1,122 +1,130 @@
-# Configuration du système de chat support
+# SYSTÈME DE CHAT INTERNE JOUEUR ↔ ADMIN
 
-Ce document explique comment configurer le système de chat intégré dans la page "Aide & Support" qui permet aux clubs de voir les réponses par email dans l'interface.
+## 📋 CHECKLIST D'INSTALLATION
 
-## 📋 Prérequis
+### ÉTAPE 1 : MARQUER LE COMPTE ADMIN
 
-1. Avoir exécuté le script SQL `create_support_chat_system.sql` dans Supabase SQL Editor
-2. Avoir configuré Resend avec une clé API valide
-3. Avoir un domaine vérifié dans Resend (pour recevoir les emails entrants)
+Exécuter dans **Supabase SQL Editor** :
 
-## 🗄️ Structure de la base de données
+```sql
+-- 1. Récupérer l'UUID du compte admin
+SELECT id, email FROM auth.users WHERE email = 'contactpadelxp@gmail.com';
 
-Le système utilise deux tables :
+-- 2. COPIER L'UUID RETOURNÉ et l'utiliser dans la commande suivante :
+-- REMPLACER 'REMPLACER-PAR-UUID-DU-COMPTE-ADMIN' par l'UUID réel
+UPDATE profiles 
+SET is_admin = true 
+WHERE id = 'REMPLACER-PAR-UUID-DU-COMPTE-ADMIN';
 
-- `support_conversations` : Stocke les conversations de support entre un club et l'admin
-- `support_messages` : Stocke tous les messages d'une conversation
-
-## 📧 Configuration Resend
-
-### 1. Configurer Inbound Email dans Resend
-
-1. Connectez-vous à [resend.com](https://resend.com)
-2. Allez dans **Settings** → **Domains**
-3. Vérifiez votre domaine (par exemple : `padelleague.com`)
-4. Allez dans **Settings** → **Inbound Email**
-5. Activez "Inbound Email" pour votre domaine
-6. Configurez le webhook vers : `https://votredomaine.com/api/webhooks/resend`
-
-### 2. Variables d'environnement
-
-Ajoutez dans `.env.local` :
-
-```bash
-RESEND_API_KEY=re_votre_cle_api
-RESEND_FROM_EMAIL="PadelXP <noreply@padelleague.com>"
-RESEND_REPLY_DOMAIN=padelleague.com  # Votre domaine vérifié
+-- 3. Vérifier que ça a fonctionné :
+SELECT p.id, p.email, p.is_admin 
+FROM profiles p
+JOIN auth.users u ON p.id = u.id
+WHERE u.email = 'contactpadelxp@gmail.com';
+-- Devrait retourner is_admin = true
 ```
 
-### 3. Configuration du domaine pour les réponses
+### ÉTAPE 2 : CRÉER LES TABLES ET RLS
 
-Pour que les réponses soient correctement routées vers votre webhook, vous devez :
+Exécuter le fichier SQL complet :
+- **Fichier** : `supabase/migrations/create_support_chat_system.sql`
 
-1. Configurer un catch-all email sur votre domaine qui redirige vers Resend
-2. Ou configurer spécifiquement les emails `reply+*@votredomaine.com` vers Resend
+Ce fichier crée :
+- ✅ Table `conversations` (une par joueur)
+- ✅ Table `messages` (contenu des échanges)
+- ✅ Fonction trigger pour mettre à jour automatiquement les conversations
+- ✅ Row Level Security (RLS) pour joueurs et admin
+- ✅ Vue `admin_conversations_view` pour l'interface admin
+- ✅ Index pour optimiser les performances
 
-## 🔄 Fonctionnement
+### ÉTAPE 3 : ACTIVER REALTIME (IMPORTANT)
 
-### Flux d'un nouveau message
+Dans **Supabase Dashboard** → **Database** → **Replication** :
 
-1. Le club envoie un message via le formulaire sur `/dashboard/aide`
-2. L'API `/api/contact` :
-   - Crée ou récupère une conversation active pour ce club
-   - Envoie un email à `contactpadelxp@gmail.com` avec un header `X-Conversation-ID`
-   - Enregistre le message dans `support_messages`
-3. Le message apparaît immédiatement dans la conversation de la page
+1. Activer la réplication pour la table `conversations`
+2. Activer la réplication pour la table `messages`
 
-### Flux d'une réponse par email
+Ou exécuter dans **Supabase SQL Editor** (nécessite privilèges superuser) :
 
-1. L'admin répond à l'email depuis `contactpadelxp@gmail.com`
-2. Resend reçoit l'email via Inbound Email
-3. Resend envoie un webhook à `/api/webhooks/resend`
-4. Le webhook :
-   - Extrait l'ID de conversation depuis les headers ou le Reply-To
-   - Enregistre le message dans `support_messages` avec `sender_type = 'admin'`
-   - Met à jour `last_message_at` de la conversation
-5. La page recharge automatiquement toutes les 5 secondes et affiche le nouveau message
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE conversations;
+ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+```
 
-## 🔍 Identification des conversations
+### ÉTAPE 4 : VÉRIFIER LES FICHIERS CRÉÉS
 
-Le système identifie la conversation de plusieurs façons :
+✅ **Migrations SQL** : `supabase/migrations/create_support_chat_system.sql`
+✅ **API Route** : `app/api/messages/send/route.ts`
+✅ **Interface Joueur** : `app/(protected)/contact/page.tsx`
+✅ **Interface Admin** : `app/(admin)/admin/messages/page.tsx`
+✅ **Layout Admin** : `app/(admin)/layout.tsx`
+✅ **Lien Navigation** : Ajouté dans `components/PlayerSidebar.tsx`
 
-1. **Header `X-Conversation-ID`** : Le plus fiable, ajouté dans chaque email envoyé
-2. **Reply-To header** : Format `reply+TOKEN@domain.com` où TOKEN est l'ID de conversation encodé
-3. **In-Reply-To / References** : Headers standards des emails
-4. **Sujet de l'email** : Format `[Conversation-ID] Sujet`
+## 🎯 FONCTIONNALITÉS IMPLÉMENTÉES
 
-## 📱 Interface utilisateur
+### Côté Joueur (`/contact`)
+- ✅ Interface de chat mobile-first
+- ✅ Création automatique de conversation au premier message
+- ✅ Messages en temps réel (Supabase Realtime)
+- ✅ Affichage des messages admin/joueur différenciés
+- ✅ Marquage automatique des messages comme lus
 
-La page `/dashboard/aide` affiche :
+### Côté Admin (`/admin/messages`)
+- ✅ Dashboard desktop-first avec 2 colonnes
+- ✅ Liste des conversations avec :
+  - Avatar + Nom + Prénom + Club
+  - Badge "non lu" pour messages non lus
+  - Aperçu du dernier message
+- ✅ Filtrage par club
+- ✅ Recherche par nom/email/club
+- ✅ Messages en temps réel
+- ✅ Compteur de conversations non lues
+- ✅ Lien "Voir profil" vers le profil joueur
 
-- **Mini-FAQ** : Questions fréquentes
-- **Conversation de support** : Si une conversation existe avec des messages
-  - Messages du club alignés à droite (bleu)
-  - Messages du support alignés à gauche (gris)
-  - Rafraîchissement automatique toutes les 5 secondes
-  - Scroll automatique vers les nouveaux messages
-- **Formulaire de contact** : Pour envoyer un nouveau message
+## 🔒 SÉCURITÉ
 
-## 🐛 Dépannage
+- ✅ **RLS activé** : Les joueurs ne voient que leur conversation
+- ✅ **Admin uniquement** : Layout admin vérifie `is_admin = true`
+- ✅ **Validation** : Messages non vides uniquement
+- ✅ **Protection routes** : Redirection si non-admin tente d'accéder à `/admin/*`
 
-### Les réponses n'apparaissent pas dans la conversation
+## 🧪 TESTS À EFFECTUER
 
-1. Vérifiez que le webhook Resend est bien configuré
-2. Vérifiez les logs du serveur pour voir si le webhook est appelé
-3. Vérifiez que l'ID de conversation est bien présent dans les headers de l'email
-4. Vérifiez les logs de Resend dans leur dashboard
+1. **Test joueur** :
+   - Se connecter comme joueur
+   - Aller sur `/contact`
+   - Envoyer un message
+   - Vérifier que la conversation est créée
 
-### Les messages ne s'enregistrent pas
+2. **Test admin** :
+   - Se connecter avec `contactpadelxp@gmail.com`
+   - Aller sur `/admin/messages`
+   - Voir la conversation du joueur
+   - Répondre au message
+   - Vérifier que le message arrive en temps réel côté joueur
 
-1. Vérifiez que les tables `support_conversations` et `support_messages` existent
-2. Vérifiez que les RLS policies permettent l'insertion
-3. Vérifiez les logs du serveur pour les erreurs de base de données
+3. **Test filtrage** :
+   - Admin : Filtrer par club
+   - Admin : Rechercher un joueur par nom
 
-### Les emails ne sont pas reçus par Resend
+4. **Test temps réel** :
+   - Ouvrir 2 onglets (joueur + admin)
+   - Envoyer un message depuis l'un
+   - Vérifier qu'il apparaît instantanément dans l'autre
 
-1. Vérifiez que Inbound Email est activé pour votre domaine
-2. Vérifiez la configuration DNS de votre domaine
-3. Vérifiez que le domaine est bien vérifié dans Resend
+## 📝 NOTES IMPORTANTES
 
-## 🔐 Sécurité
+- ⚠️ **Realtime** : Doit être activé dans Supabase Dashboard pour que les messages en temps réel fonctionnent
+- ⚠️ **Admin account** : Le compte `contactpadelxp@gmail.com` doit exister et être marqué `is_admin = true`
+- ⚠️ **Club ID** : Si un joueur n'a pas de `club_id`, une valeur par défaut est utilisée (`00000000-0000-0000-0000-000000000000`)
 
-- Le webhook devrait vérifier la signature de Resend (optionnel mais recommandé)
-- Les RLS policies assurent que les clubs ne peuvent voir que leurs propres conversations
-- L'API utilise Supabase Admin uniquement pour écrire, pas pour lire
+## 🐛 DÉPANNAGE
 
-## 📝 Notes importantes
+**Problème** : Les messages ne s'affichent pas en temps réel
+- **Solution** : Vérifier que Realtime est activé pour `conversations` et `messages` dans Supabase Dashboard
 
-- Une seule conversation "ouverte" est maintenue par club
-- Les nouvelles conversations sont créées si la précédente est fermée
-- Les messages sont ordonnés par date de création
-- Le système évite les doublons grâce à `email_message_id`
+**Problème** : L'admin ne voit pas les conversations
+- **Solution** : Vérifier que `is_admin = true` dans la table `profiles` pour le compte admin
 
+**Problème** : Erreur 403 lors de l'accès à `/admin/messages`
+- **Solution** : Vérifier que le compte connecté a `is_admin = true`

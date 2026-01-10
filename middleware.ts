@@ -448,7 +448,24 @@ export async function middleware(req: NextRequest) {
 
   // Admin redirection logic
   if (user) {
-    const userIsAdmin = isAdmin(user.email);
+    // Vérifier si l'utilisateur est admin via la base de données (plus fiable que juste l'email)
+    let userIsAdmin = false;
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .maybeSingle();
+      userIsAdmin = profile?.is_admin || false;
+      
+      // Fallback sur la fonction isAdmin basée sur l'email si pas de profil ou is_admin null
+      if (!userIsAdmin) {
+        userIsAdmin = isAdmin(user.email);
+      }
+    } catch (e) {
+      // En cas d'erreur, utiliser la fonction basée sur l'email
+      userIsAdmin = isAdmin(user.email);
+    }
     
     // Protect admin routes - rediriger uniquement si vraiment non-admin
     if (normalizedPathname.startsWith('/admin')) {
@@ -460,22 +477,24 @@ export async function middleware(req: NextRequest) {
       // Si admin et sur route admin, continuer normalement (pas de redirection)
     }
     
-    // Redirect admin users to admin dashboard when accessing player entry pages
+    // Redirect admin users to admin messages when accessing player entry pages
     // MAIS seulement si l'admin n'est pas déjà en train de naviguer dans l'admin
     // (vérifier le referer pour éviter les redirections lors de la navigation admin)
     const referer = req.headers.get('referer') || '';
     const isComingFromAdmin = referer.includes('/admin');
     
+    // Rediriger les admins vers /admin/messages au lieu de /home ou autres pages joueur
     if (
       userIsAdmin &&
       !isComingFromAdmin &&
       (normalizedPathname === "/player/login" ||
         normalizedPathname === "/player/signup" ||
         normalizedPathname === "/player/dashboard" ||
+        normalizedPathname === "/player/onboarding" ||
         normalizedPathname === "/home")
     ) {
       const url = req.nextUrl.clone();
-      url.pathname = "/admin/dashboard";
+      url.pathname = "/admin/messages";
       return NextResponse.redirect(url);
     }
     
@@ -483,7 +502,7 @@ export async function middleware(req: NextRequest) {
     if (normalizedPathname === "/signup" || normalizedPathname === "/login") {
       if (userIsAdmin) {
         const url = req.nextUrl.clone();
-        url.pathname = "/admin/dashboard";
+        url.pathname = "/admin/messages";
         return NextResponse.redirect(url);
       } else {
         const url = req.nextUrl.clone();

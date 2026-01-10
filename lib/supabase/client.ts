@@ -1,25 +1,15 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "@/lib/types_db";
 
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      realtime: {
-        params: {
-          eventsPerSecond: 10,
-        },
-      },
-      // Force WSS (WebSocket Secure) en production pour éviter les erreurs d'insécurité sur HTTPS
-      ...(typeof window !== 'undefined' && window.location.protocol === 'https:' ? {
-        global: {
-          headers: {
-            'X-WebSocket-Protocol': 'wss'
-          }
-        }
-      } : {})
-    }
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+  
+  if (!url || !anon) {
+    throw new Error("Supabase env vars are missing (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY)");
+  }
+
+  return createBrowserClient<Database>(url, anon);
 }

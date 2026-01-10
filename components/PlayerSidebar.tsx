@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import LogoutButton from './LogoutButton';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import { MessageCircle } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 type NavKey =
@@ -15,7 +16,8 @@ type NavKey =
   | "challenges"
   | "reviews"
   | "boost"
-  | "club";
+  | "club"
+  | "contact";
 
 interface MenuItem {
   href: string;
@@ -119,6 +121,7 @@ export default function PlayerSidebar() {
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
     { href: '/club', label: 'Mon club', icon: getIconPath('mon-club.png'), navKey: 'club' },
+    { href: '/contact', label: 'Contact Support', icon: getIconPath('Avis.png', 9), navKey: 'contact' },
   ];
 
   // Déterminer la page active
@@ -139,6 +142,7 @@ export default function PlayerSidebar() {
     if (pathname === '/reviews') return 'reviews';
     if (pathname === '/boost') return 'boost';
     if (pathname === '/club') return 'club';
+    if (pathname === '/contact') return 'contact';
     return undefined;
   };
 
@@ -249,26 +253,30 @@ export default function PlayerSidebar() {
                 <div
                   className="flex-shrink-0 flex items-center justify-center w-5 h-5"
                 >
-                  <Image 
-                    key={`${item.navKey}-${item.icon}`}
-                    src={item.icon} 
-                    alt={item.label} 
-                    width={20}
-                    height={20}
-                    className="object-contain w-5 h-5"
-                    unoptimized
-                    style={{ 
-                      opacity: 1,
-                      imageRendering: 'crisp-edges'
-                    }}
-                    onError={(e) => {
-                      logger.error(`Failed to load icon for ${item.label}:`, item.icon);
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                    onLoad={() => {
-                      logger.info(`Successfully loaded icon for ${item.label}:`, item.icon);
-                    }}
-                  />
+                  {item.navKey === 'contact' ? (
+                    <MessageCircle size={20} className="text-white" />
+                  ) : (
+                    <Image 
+                      key={`${item.navKey}-${item.icon}`}
+                      src={item.icon} 
+                      alt={item.label} 
+                      width={20}
+                      height={20}
+                      className="object-contain w-5 h-5"
+                      unoptimized
+                      style={{ 
+                        opacity: 1,
+                        imageRendering: 'crisp-edges'
+                      }}
+                      onError={(e) => {
+                        logger.error(`Failed to load icon for ${item.label}:`, item.icon);
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                      onLoad={() => {
+                        logger.info(`Successfully loaded icon for ${item.label}:`, item.icon);
+                      }}
+                    />
+                  )}
                 </div>
                 <span className="font-semibold text-sm">{item.label}</span>
               </Link>
