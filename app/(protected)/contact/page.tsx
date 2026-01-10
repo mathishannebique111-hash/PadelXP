@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 import { Send, Loader2, MessageCircle } from "lucide-react";
 import { logger } from "@/lib/logger";
 
+// Forcer le rendu dynamique pour éviter les erreurs de prerender
+export const dynamic = 'force-dynamic';
+
 interface Message {
   id: string;
   content: string;

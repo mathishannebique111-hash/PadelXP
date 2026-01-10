@@ -2,6 +2,7 @@
 // Ce fichier assure une typographie cohérente sur toutes les pages
 // TOUJOURS afficher le menu hamburger et le logo du club sur TOUS les formats
 // Même pour les nouveaux joueurs qui viennent de s'inscrire
+import { Suspense } from 'react';
 import PlayerSidebar from '@/components/PlayerSidebar';
 import PlayerClubLogo from '@/components/PlayerClubLogo';
 import PlayerSafeAreaColor from '@/components/PlayerSafeAreaColor';
@@ -171,7 +172,10 @@ export default function PlayerAccountLayout({
       <PopupQueueProvider>
         {/* Menu hamburger - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
         {/* Composant client, s'affiche immédiatement sans attendre la vérification du club_id */}
-        <PlayerSidebar />
+        {/* Enveloppé dans Suspense car utilise useSearchParams() */}
+        <Suspense fallback={null}>
+          <PlayerSidebar />
+        </Suspense>
         {/* Conteneur principal avec fond bleu (blue-950) qui s'étend dans toute la safe area pour les pages joueur */}
         <div 
           className="relative min-h-screen"
