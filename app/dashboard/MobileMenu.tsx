@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import ClientLogout from './ClientLogout';
+import { useUnreadClubMessages } from '@/lib/hooks/useUnreadClubMessages';
+import { NotificationBadge } from '@/components/NotificationBadge';
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { hasUnread } = useUnreadClubMessages();
 
   // Fermer le menu quand on change de page
   useEffect(() => {
@@ -91,6 +94,8 @@ export default function MobileMenu() {
         <nav className="p-4 pt-20 md:pt-6 space-y-4 text-sm flex-1 h-full overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
+            const isAideSupport = item.href === '/dashboard/aide';
+            
             return (
               <Link
                 key={item.href}
@@ -101,17 +106,21 @@ export default function MobileMenu() {
                 }`}
               >
                 <span className="flex items-center gap-3 font-semibold">
-                  {item.iconSrc ? (
-                    <Image 
-                      src={item.iconSrc.replace(/\s/g, '%20')} 
-                      alt={item.label} 
-                      width={16} 
-                      height={16} 
-                      className="w-4 h-4 object-contain flex-shrink-0" 
-                      unoptimized 
-                    />
-                  ) : (
-                    <span className="text-base">{item.icon}</span>
+                  {item.iconSrc && (
+                    <span className="relative flex-shrink-0">
+                      <Image 
+                        src={item.iconSrc.replace(/\s/g, '%20')} 
+                        alt={item.label} 
+                        width={16} 
+                        height={16} 
+                        className="w-4 h-4 object-contain" 
+                        unoptimized 
+                      />
+                      {/* Badge de notification pour Aide & Support */}
+                      {isAideSupport && (
+                        <NotificationBadge show={hasUnread} />
+                      )}
+                    </span>
                   )}
                   <span>{item.label}</span>
                 </span>

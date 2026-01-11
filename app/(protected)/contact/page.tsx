@@ -249,8 +249,8 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col px-4 pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800 py-4 mb-4">
+      {/* Header - Padding-top sur mobile pour commencer en dessous du hamburger et du logo, et sur desktop pour espacer du haut */}
+      <div className="pt-20 md:pt-4 lg:pt-6 md:sticky md:top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800 py-4 mb-4">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <MessageCircle size={24} className="text-blue-500" />

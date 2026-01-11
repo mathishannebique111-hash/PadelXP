@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye } from 'lucide-react';
+import { Eye, User } from 'lucide-react';
 import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
@@ -45,7 +45,7 @@ export default function LeaderboardContent({
   const reloadLeaderboard = useCallback(async () => {
     try {
       console.log('[LeaderboardContent] 🔄 Rechargement du classement...');
-      
+
       // Utiliser un timestamp unique pour éviter tout cache
       const timestamp = Date.now();
       const response = await fetch(`/api/leaderboard?t=${timestamp}&_=${Math.random()}`, {
@@ -64,8 +64,8 @@ export default function LeaderboardContent({
       }
 
       const data = await response.json();
-      console.log('[LeaderboardContent] 📊 Réponse API:', { 
-        hasLeaderboard: !!data.leaderboard, 
+      console.log('[LeaderboardContent] 📊 Réponse API:', {
+        hasLeaderboard: !!data.leaderboard,
         count: data.leaderboard?.length || 0,
         sample: data.leaderboard?.[0] ? {
           user_id: data.leaderboard[0].user_id.substring(0, 8),
@@ -75,10 +75,10 @@ export default function LeaderboardContent({
           matches: data.leaderboard[0].matches
         } : null
       });
-      
+
       if (data.leaderboard && Array.isArray(data.leaderboard)) {
         console.log('[LeaderboardContent] ✅ Données reçues:', data.leaderboard.length, 'joueurs');
-        
+
         // Ajouter le rang à chaque joueur
         const leaderboardWithRank = data.leaderboard.map((player: LeaderboardEntry, index: number) => ({
           ...player,
@@ -88,7 +88,7 @@ export default function LeaderboardContent({
         // Extraire les noms depuis player_name
         const firstNameMap = new Map<string, string>();
         const lastNameMap = new Map<string, string>();
-        
+
         leaderboardWithRank.forEach((player: LeaderboardEntry) => {
           if (player.player_name) {
             const nameParts = player.player_name.trim().split(' ');
@@ -100,13 +100,13 @@ export default function LeaderboardContent({
             }
           }
         });
-        
+
         // Forcer la mise à jour avec un nouveau tableau pour garantir le re-render
         console.log('[LeaderboardContent] 🔄 Mise à jour de l\'état React...');
         setLeaderboard([...leaderboardWithRank]);
         setProfilesFirstNameMap(new Map(firstNameMap));
         setProfilesLastNameMap(new Map(lastNameMap));
-        
+
         console.log('[LeaderboardContent] ✅ Classement mis à jour ! Points du premier joueur:', leaderboardWithRank[0]?.points);
       } else {
         console.warn('[LeaderboardContent] ⚠️ Données invalides:', data);
@@ -119,16 +119,16 @@ export default function LeaderboardContent({
   // Écouter l'événement de match enregistré + polling + storage events
   useEffect(() => {
     console.log('[LeaderboardContent] 🎬 Configuration des listeners...');
-    
+
     let reloadTimeout: NodeJS.Timeout | null = null;
-    
+
     const doReload = () => {
       console.log('[LeaderboardContent] 🔄 Rechargement du classement...');
       // Annuler le timeout précédent si existe
       if (reloadTimeout) {
         clearTimeout(reloadTimeout);
       }
-      
+
       // Attendre 2 secondes pour laisser le temps au match d'être sauvegardé en DB
       reloadTimeout = setTimeout(() => {
         console.log('[LeaderboardContent] ⏱️ Timeout terminé, rechargement...');
@@ -137,12 +137,12 @@ export default function LeaderboardContent({
         router.refresh();
       }, 2000);
     };
-    
+
     const handleMatchSubmitted = () => {
       console.log('[LeaderboardContent] 🎉 Match enregistré détecté (event) !');
       doReload();
     };
-    
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'matchSubmitted' && e.newValue === 'true') {
         console.log('[LeaderboardContent] 🎉 Match enregistré détecté (storage cross-tab) !');
@@ -154,7 +154,7 @@ export default function LeaderboardContent({
     window.addEventListener('matchSubmitted', handleMatchSubmitted);
     // Écouter les événements storage (cross-tab)
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Vérifier au montage si un match vient d'être enregistré
     const checkForRecentMatch = () => {
       const lastMatchTime = localStorage.getItem('lastMatchTime');
@@ -167,16 +167,16 @@ export default function LeaderboardContent({
         }
       }
     };
-    
+
     checkForRecentMatch();
-    
+
     // Vérifier aussi quand la fenêtre reprend le focus (si on revient de la page Matchs)
     const handleFocus = () => {
       console.log('[LeaderboardContent] 👁️ Fenêtre reprend le focus, vérification match récent...');
       checkForRecentMatch();
     };
     window.addEventListener('focus', handleFocus);
-    
+
     // Polling de secours : vérifier toutes les 2 secondes si un match a été enregistré
     const pollingInterval = setInterval(() => {
       const lastMatchTime = localStorage.getItem('lastMatchTime');
@@ -189,7 +189,7 @@ export default function LeaderboardContent({
         }
       }
     }, 2000);
-    
+
     console.log('[LeaderboardContent] ✅ Listeners configurés');
 
     return () => {
@@ -232,80 +232,74 @@ export default function LeaderboardContent({
                 // L'index réel dans le classement (0=1er, 1=2ème, 2=3ème)
                 const realIndex = displayIndex === 0 ? 1 : displayIndex === 1 ? 0 : 2;
                 const index = realIndex; // Utiliser realIndex pour les styles (medal, couleur, etc.)
-              const medalEmojis = ['🥇', '🥈', '🥉'];
-              const borderColors = [
-                'border-yellow-500/80',
-                'border-slate-400/80',
-                'border-orange-600/80'
-              ];
-              const borderWidth = 'border-2 sm:border-2 md:border-2';
-              const shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
-              const bgGradients = [
-                { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
-                { background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' },
-                { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
-              ];
-              
-              // Extraire prénom et nom de famille
-              const firstName = profilesFirstNameMap.get(player.user_id) || '';
-              const lastName = profilesLastNameMap.get(player.user_id) || '';
-              const nameParts = player.player_name ? player.player_name.trim().split(' ') : [];
-              const finalFirstName = firstName || nameParts[0] || '';
-              const finalLastName = lastName || nameParts.slice(1).join(' ');
-              const lastNameInitial = finalLastName ? finalLastName.charAt(0).toUpperCase() : '';
-              
-              // Taille différente pour le top 1 (au milieu)
-              const sizeClass = index === 0 
-                ? 'max-w-[120px] sm:max-w-[160px] md:max-w-[200px] lg:max-w-[240px]' 
-                : 'max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]';
-              
-              return (
-                <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-xl sm:rounded-xl md:rounded-2xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 ' + sizeClass)} style={bgGradients[index]}>
-                  <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
-                    <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl">{medalEmojis[index]}</span>
-                  </div>
-                  <div className="relative z-10 pt-3 sm:pt-4 md:pt-5">
-                    {/* Photo de profil - taille différente pour le top 1 */}
-                    <div className="flex justify-center mb-2 sm:mb-3">
-                      {player.avatar_url ? (
-                        <div className={`relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/80 shadow-lg ${
-                          index === 0 
-                            ? 'w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24' 
-                            : 'w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20'
-                        }`}>
-                          <img
-                            src={player.avatar_url}
-                            alt={finalFirstName || 'Joueur'}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className={`relative flex-shrink-0 ${
-                          index === 0 
-                            ? 'w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24' 
-                            : 'w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20'
-                        }`}>
-                          <img
-                            src="/images/Sans pdp.png"
-                            alt="Pas de photo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      )}
+                const medalEmojis = ['🥇', '🥈', '🥉'];
+                const borderColors = [
+                  'border-yellow-500/80',
+                  'border-slate-400/80',
+                  'border-orange-600/80'
+                ];
+                const borderWidth = 'border-2 sm:border-2 md:border-2';
+                const shineClass = index === 0 ? 'podium-gold' : index === 1 ? 'podium-silver' : 'podium-bronze';
+                const bgGradients = [
+                  { background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(255, 215, 0, 0.35), inset 0 2px 4px rgba(255,255,255,0.6)' },
+                  { background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(192, 192, 192, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' },
+                  { background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04), inset 0 0 120px rgba(205, 127, 50, 0.32), inset 0 2px 4px rgba(255,255,255,0.5)' }
+                ];
+
+                // Extraire prénom et nom de famille
+                const firstName = profilesFirstNameMap.get(player.user_id) || '';
+                const lastName = profilesLastNameMap.get(player.user_id) || '';
+                const nameParts = player.player_name ? player.player_name.trim().split(' ') : [];
+                const finalFirstName = firstName || nameParts[0] || '';
+                const finalLastName = lastName || nameParts.slice(1).join(' ');
+                const lastNameInitial = finalLastName ? finalLastName.charAt(0).toUpperCase() : '';
+
+                // Taille différente pour le top 1 (au milieu)
+                const sizeClass = index === 0
+                  ? 'max-w-[120px] sm:max-w-[160px] md:max-w-[200px] lg:max-w-[240px]'
+                  : 'max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]';
+
+                return (
+                  <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl sm:rounded-2xl md:rounded-3xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 ' + sizeClass)} style={bgGradients[index]}>
+                    <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
+                      <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl">{medalEmojis[index]}</span>
                     </div>
-                    
-                    {/* Prénom + première lettre du nom de famille - taille différente pour le top 1 */}
-                    <h3 className={`font-extrabold mb-2 sm:mb-3 md:mb-4 text-center text-gray-900 leading-tight line-clamp-2 ${
-                      index === 0 
-                        ? 'text-sm sm:text-base md:text-lg lg:text-xl' 
+                    <div className="relative z-10 pt-3 sm:pt-4 md:pt-5">
+                      {/* Photo de profil - taille différente pour le top 1 */}
+                      <div className="flex justify-center mb-2 sm:mb-3">
+                        {player.avatar_url ? (
+                          <div className={`relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/80 shadow-lg ${index === 0
+                            ? 'w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24'
+                            : 'w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20'
+                            }`}>
+                            <img
+                              src={player.avatar_url}
+                              alt={finalFirstName || 'Joueur'}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className={`relative flex-shrink-0 flex items-center justify-center bg-slate-200 rounded-full overflow-hidden shadow-lg ${index === 0
+                            ? 'w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24'
+                            : 'w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20'
+                            }`}>
+                            <User className="text-slate-400 w-2/3 h-2/3" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Prénom + première lettre du nom de famille - taille différente pour le top 1 */}
+                      <h3 className={`font-extrabold mb-2 sm:mb-3 md:mb-4 text-center text-gray-900 leading-tight line-clamp-2 ${index === 0
+                        ? 'text-sm sm:text-base md:text-lg lg:text-xl'
                         : 'text-xs sm:text-sm md:text-base lg:text-lg'
-                    }`}>
-                      {finalFirstName || 'Joueur'}{lastNameInitial ? ' ' + lastNameInitial + '.' : ''}
-                    </h3>
+                        }`}>
+                        {finalFirstName || 'Joueur'}{lastNameInitial ? ' ' + lastNameInitial + '.' : ''}
+                      </h3>
+                    </div>
                   </div>
-                </div>
-              );
-            })})()}
+                );
+              })
+            })()}
           </div>
         </div>
       )}
@@ -365,12 +359,8 @@ export default function LeaderboardContent({
                               />
                             </div>
                           ) : (
-                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
-                              <img
-                                src="/images/Sans pdp.png"
-                                alt="Pas de photo"
-                                className="w-full h-full object-contain"
-                              />
+                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center border border-gray-200">
+                              <User className="text-slate-400 w-2/3 h-2/3" />
                             </div>
                           )}
                           {/* Nom du joueur */}

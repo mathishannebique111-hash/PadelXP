@@ -13,7 +13,7 @@ interface PlayerProfileTabsProps {
   padelContent?: React.ReactNode;
 }
 
-function PlayerProfileTabsContent({ 
+function PlayerProfileTabsContent({
   activeTab = 'stats',
   statsContent,
   leaderboardContent,
@@ -45,12 +45,17 @@ function PlayerProfileTabsContent({
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setCurrentTab(tab.id)}
-            className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${
-              currentTab === tab.id
+            onClick={() => {
+              setCurrentTab(tab.id);
+              // Mettre à jour l'URL sans recharger la page pour que le reload() garde l'onglet
+              const newUrl = new URL(window.location.href);
+              newUrl.searchParams.set('tab', tab.id);
+              window.history.replaceState(null, '', newUrl.toString());
+            }}
+            className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${currentTab === tab.id
                 ? 'text-white border-b-2 border-blue-400'
                 : 'text-white/60 hover:text-white/80'
-            }`}
+              }`}
           >
             {tab.label}
             {currentTab === tab.id && (

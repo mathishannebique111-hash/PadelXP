@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Eye } from "lucide-react";
+import { MessageCircle, Eye, User } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -220,8 +220,8 @@ export default function PartnerSuggestions() {
                     />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-lg md:text-xl flex-shrink-0 border-2 border-white/20">
-                    {initials}
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
+                    <User size={24} />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">

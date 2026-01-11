@@ -113,7 +113,7 @@ export default function PlayerProfileView({
         <div className="px-4 py-3">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => router.push('/home')}
             className="p-2 -ml-2 rounded-lg active:bg-slate-800/50 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <ArrowLeft size={22} className="text-gray-300" />

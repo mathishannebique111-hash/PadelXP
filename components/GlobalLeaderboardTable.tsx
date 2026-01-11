@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
+import { User } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
@@ -14,6 +15,7 @@ interface LeaderboardEntry {
   losses: number;
   matches: number;
   isGuest: boolean;
+  avatar_url?: string | null;
 }
 
 interface GlobalLeaderboardTableProps {
@@ -47,7 +49,7 @@ export default function GlobalLeaderboardTable({
         if (response.ok) {
           const data = await response.json();
           if (data.leaderboard) {
-            logger.info("[GlobalLeaderboardTable] Leaderboard data received:", data.leaderboard.length, "players");
+            logger.info(`[GlobalLeaderboardTable] Leaderboard data received: ${data.leaderboard.length} players`);
             // Ajouter le rang à chaque joueur (l'API retourne déjà les données triées)
             const leaderboardWithRank = data.leaderboard.map((player: LeaderboardEntry, index: number) => ({
               ...player,
@@ -185,12 +187,28 @@ export default function GlobalLeaderboardTable({
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0">
                     <RankBadge rank={player.rank} size="md" />
                   </td>
-                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 text-center border-l border-gray-200 first:border-l-0">
-                    <span className="truncate block max-w-[100px] sm:max-w-[150px] md:max-w-none">
-                      <strong>{finalFirstName || 'Joueur'}</strong>
-                      {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
-                      {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
-                    </span>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0">
+                    <div className="flex items-center gap-2 sm:gap-3 justify-start sm:justify-center">
+                      {/* Photo de profil */}
+                      {player.avatar_url ? (
+                        <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
+                          <img
+                            src={player.avatar_url}
+                            alt={finalFirstName || 'Joueur'}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center border border-gray-200">
+                          <User className="text-slate-400 w-2/3 h-2/3" />
+                        </div>
+                      )}
+                      <span className="truncate block max-w-[100px] sm:max-w-[150px] md:max-w-none text-left">
+                        <strong>{finalFirstName || 'Joueur'}</strong>
+                        {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
+                        {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
                     <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />

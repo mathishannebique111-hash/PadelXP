@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
-import { calculateCompatibility } from "@/lib/matching/partnerCompatibility";
+import { getCategorieFromLevel } from "@/lib/padel/levelUtils";
 
 // Créer un client admin pour bypass RLS
 const supabaseAdmin = createAdminClient(
@@ -21,6 +21,10 @@ export const dynamic = "force-dynamic";
 // Revalidation rapide pour permettre un chargement quasi-instantané avec stale-while-revalidate
 export const revalidate = 10; // Revalider toutes les 10 secondes côté serveur
 
+import { calculateCompatibility } from "@/lib/matching/partnerCompatibility";
+
+// ... (keep imports)
+
 export async function GET(req: Request) {
   try {
     const supabase = await createClient();
@@ -33,202 +37,119 @@ export async function GET(req: Request) {
 
     if (userError || !user) {
       logger.warn(
-        { error: userError },
-        "[PartnersSuggestions] Pas d'utilisateur connecté"
+        "[PartnersSuggestions] Pas d'utilisateur connecté",
+        { error: userError }
       );
       return NextResponse.json({ suggestions: [] }, { status: 401 });
     }
 
-    // 2. Récupérer le profil complet de l'utilisateur connecté
+    // 2. Récupérer le profil COMPLET de l'utilisateur (pour le calcul de compatibilité)
     const { data: currentUserProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("*") // On a besoin de tout: hand, side, frequency, etc.
       .eq("id", user.id)
       .maybeSingle();
 
     if (profileError || !currentUserProfile) {
       logger.error(
-        { error: profileError },
-        "[PartnersSuggestions] Erreur récupération profil utilisateur"
+        "[PartnersSuggestions] Erreur récupération profil utilisateur",
+        { error: profileError }
       );
       return NextResponse.json({ suggestions: [] }, { status: 500 });
     }
 
-    // 3. Vérifier que l'utilisateur a un club_id
     if (!currentUserProfile.club_id) {
       logger.warn(
-        { userId: user.id },
-        "[PartnersSuggestions] Utilisateur sans club_id"
+        "[PartnersSuggestions] Utilisateur sans club_id",
+        { userId: user.id }
       );
       return NextResponse.json({ suggestions: [] });
     }
 
-    // 4. Récupérer tous les joueurs du même club (avec client admin pour bypass RLS)
-    const { data: allPlayers, error: playersError } = await supabaseAdmin
-      .from("profiles")
-      .select(
-        `
-        id,
-        first_name,
-        last_name,
-        display_name,
-        avatar_url,
-        niveau_padel,
-        niveau_categorie,
-        hand,
-        preferred_side,
-        frequency,
-        best_shot,
-        level,
-        club_id
-      `
-      )
-      .eq("club_id", currentUserProfile.club_id)
-      .neq("id", user.id); // Exclure l'utilisateur lui-même
+    // 3. Récupérer les partenaires habituels actuels pour les exclure
+    const { data: existingPartnerships } = await supabaseAdmin
+      .from("player_partnerships")
+      .select("player_id, partner_id")
+      .eq("status", "accepted")
+      .or(`player_id.eq.${user.id},partner_id.eq.${user.id}`);
 
-    if (playersError) {
-      logger.error(
-        { error: playersError },
-        "[PartnersSuggestions] Erreur récupération joueurs du club"
+    const existingPartnerIds = new Set(
+      existingPartnerships?.map(p => p.player_id === user.id ? p.partner_id : p.player_id) || []
+    );
+
+    // 4. Récupérer les candidats depuis la vue (pour le filtrage de base: club, niveau, etc.)
+    const { data: candidates, error: viewError } = await supabaseAdmin
+      .from("suggested_partners")
+      .select("partner_id") // On a juste besoin des IDs
+      .eq("player_id", user.id)
+      .not("partner_id", "in", `(${Array.from(existingPartnerIds).join(",") || "00000000-0000-0000-0000-000000000000"})`)
+      .limit(20); // On en prend un peu plus pour filtrer après recalcul
+
+    if (viewError) {
+      logger.warn(
+        "[PartnersSuggestions] Vue suggested_partners non trouvée",
+        { error: viewError }
       );
       return NextResponse.json({ suggestions: [] }, { status: 500 });
     }
 
-    if (!allPlayers || allPlayers.length === 0) {
-      logger.info(
-        { clubId: currentUserProfile.club_id },
-        "[PartnersSuggestions] Aucun autre joueur dans le club"
-      );
+    if (!candidates || candidates.length === 0) {
       return NextResponse.json({ suggestions: [] });
     }
 
-    // 5. Filtrer et calculer la compatibilité pour chaque joueur
-    const suggestionsWithScore: Array<{
-      player: typeof allPlayers[0];
-      compatibility: { score: number; tags: string[] } | null;
-    }> = [];
+    // 4. Récupérer les profils COMPLETS des candidats
+    const candidateIds = candidates.map(c => c.partner_id);
+    const { data: fullProfiles, error: candidatesError } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .in("id", candidateIds);
 
-    for (const player of allPlayers) {
-      // Exclure les joueurs qui jouent du même côté (sauf si l'un est indifférent)
-      // Si les deux ont un côté défini et que c'est le même, on exclut
-      if (
-        currentUserProfile.preferred_side &&
-        player.preferred_side &&
-        currentUserProfile.preferred_side === player.preferred_side &&
-        currentUserProfile.preferred_side !== "indifferent" &&
-        player.preferred_side !== "indifferent"
-      ) {
-        logger.info(
-          {
-            userId: user.id.substring(0, 8),
-            playerId: player.id.substring(0, 8),
-            userSide: currentUserProfile.preferred_side,
-            playerSide: player.preferred_side,
-          },
-          "[PartnersSuggestions] Joueur exclu : même côté"
-        );
-        continue; // Skip ce joueur
-      }
-
-      // Calculer la compatibilité uniquement si les deux ont un niveau évalué
-      let compatibility = null;
-      if (
-        currentUserProfile.niveau_padel &&
-        player.niveau_padel
-      ) {
-        compatibility = calculateCompatibility(
-          currentUserProfile,
-          player
-        );
-      }
-
-      // Inclure le joueur même sans compatibilité calculée (pour afficher les profils)
-      suggestionsWithScore.push({
-        player,
-        compatibility,
-      });
+    if (candidatesError || !fullProfiles) {
+      logger.error("[PartnersSuggestions] Erreur fetch profils candidats", { error: candidatesError });
+      return NextResponse.json({ suggestions: [] });
     }
 
-    // 6. Filtrer les suggestions
-    // Si un joueur n'a pas de compatibilité calculée (pas de niveau évalué), on l'exclut
-    // Sinon, on garde ceux avec >= 60% OU ceux qui ont un niveau similaire (différence <= 0.5)
-    const filteredSuggestions = suggestionsWithScore.filter((item) => {
-      // Si pas de compatibilité calculée, exclure
-      if (!item.compatibility) {
-        return false;
-      }
-      
-      const score = item.compatibility.score;
-      const levelDiff = Math.abs(
-        (currentUserProfile.niveau_padel || 0) - (item.player.niveau_padel || 0)
-      );
-      
-      // Inclure si score >= 60 OU si niveau très similaire (différence <= 0.5) même avec score < 60
-      // Cela permet d'inclure des joueurs similaires même si certains facteurs ne sont pas optimaux
-      return score >= 60 || (levelDiff <= 0.5 && score >= 40);
-    });
+    // 6. Calculer la compatibilité via TS et formater
+    const suggestions = fullProfiles
+      .map(partnerProfile => {
+        const compatibility = calculateCompatibility(currentUserProfile, partnerProfile);
 
-    // 7. Trier par score de compatibilité (décroissant), puis par niveau évalué
-    filteredSuggestions.sort((a, b) => {
-      const scoreA = a.compatibility?.score || 0;
-      const scoreB = b.compatibility?.score || 0;
+        // Si pas de compatibilité calculable (ex: pas de niveau), on ignore
+        if (!compatibility) return null;
 
-      if (scoreA !== scoreB) {
-        return scoreB - scoreA; // Décroissant
-      }
+        const partnerLevel = partnerProfile.niveau_padel || null;
+        const niveauCategorie = getCategorieFromLevel(partnerLevel);
 
-      // En cas d'égalité, trier par niveau évalué (décroissant)
-      const levelA = a.player.niveau_padel || 0;
-      const levelB = b.player.niveau_padel || 0;
-      return levelB - levelA;
-    });
-
-    // 8. Prendre les 4 meilleurs (ou moins s'il y en a moins de 4 avec 60%+)
-    const topSuggestions = filteredSuggestions.slice(0, 4);
-
-    // 9. Formater les résultats
-    const suggestions = topSuggestions.map(({ player, compatibility }) => ({
-      id: player.id,
-      first_name: player.first_name,
-      last_name: player.last_name,
-      display_name: player.display_name,
-      avatar_url: player.avatar_url,
-      niveau_padel: player.niveau_padel,
-      niveau_categorie: player.niveau_categorie,
-      compatibilityScore: compatibility?.score || null,
-      compatibilityTags: compatibility?.tags || [],
-    }));
+        return {
+          id: partnerProfile.id,
+          first_name: partnerProfile.first_name,
+          last_name: partnerProfile.last_name,
+          display_name: `${partnerProfile.first_name || ''} ${partnerProfile.last_name || ''}`.trim() || null,
+          avatar_url: partnerProfile.avatar_url,
+          niveau_padel: partnerLevel,
+          niveau_categorie: niveauCategorie,
+          compatibilityScore: compatibility.score,
+          compatibilityTags: compatibility.tags,
+        };
+      })
+      .filter(s => s !== null) // Enlever les nulls
+      .sort((a, b) => (b!.compatibilityScore || 0) - (a!.compatibilityScore || 0)) // Trier par nouveau score
+      .slice(0, 10); // Garder le top 10
 
     logger.info(
+      "[PartnersSuggestions] Suggestions recalculées et renvoyées",
       {
         userId: user.id.substring(0, 8),
-        clubId: currentUserProfile.club_id.substring(0, 8),
-        totalPlayers: allPlayers.length,
-        filteredCount: filteredSuggestions.length,
         suggestionsCount: suggestions.length,
-        excludedBySide: allPlayers.length - suggestionsWithScore.length,
-      },
-      "[PartnersSuggestions] Suggestions générées"
+      }
     );
-    
-    // Log détaillé pour chaque suggestion retenue
-    suggestions.forEach((s, index) => {
-      logger.info(
-        {
-          rank: index + 1,
-          playerId: s.id.substring(0, 8),
-          score: s.compatibilityScore,
-          tags: s.compatibilityTags,
-        },
-        "[PartnersSuggestions] Suggestion retenue"
-      );
-    });
 
     return NextResponse.json({ suggestions });
   } catch (error) {
+    // ... (keep error handling)
     logger.error(
-      { error, errorMessage: error instanceof Error ? error.message : String(error) },
-      "[PartnersSuggestions] Erreur inattendue"
+      "[PartnersSuggestions] Erreur inattendue",
+      { error, errorMessage: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       { suggestions: [], error: "Erreur serveur" },

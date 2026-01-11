@@ -24,7 +24,6 @@ interface Conversation {
 export default function HelpPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -72,6 +71,7 @@ export default function HelpPage() {
         clubId = profile?.club_id || null;
 
         // Si pas de club_id dans profiles, essayer via club_admins
+        // club_admins.club_id peut être TEXT (slug ou UUID en texte), il faut convertir en UUID
         if (!clubId) {
           const { data: adminEntry } = await supabase
             .from("club_admins")
@@ -79,7 +79,24 @@ export default function HelpPage() {
             .eq("user_id", user.id)
             .maybeSingle();
           
-          clubId = adminEntry?.club_id || null;
+          if (adminEntry?.club_id) {
+            // club_admins.club_id peut être TEXT (slug ou UUID en texte)
+            // Chercher le club correspondant pour obtenir son UUID
+            const { data: clubs } = await supabase
+              .from('clubs')
+              .select('id')
+              .or(`id.eq.${adminEntry.club_id},slug.eq.${adminEntry.club_id}`);
+            
+            if (clubs && clubs.length > 0) {
+              clubId = clubs[0].id;
+            } else {
+              // Si pas trouvé par id ou slug, vérifier si c'est déjà un UUID valide
+              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+              if (uuidRegex.test(adminEntry.club_id)) {
+                clubId = adminEntry.club_id;
+              }
+            }
+          }
         }
 
         if (!clubId || !isMounted) {
@@ -235,7 +252,6 @@ export default function HelpPage() {
 
     setLoading(true);
     setError(null);
-    setSuccess(false);
 
     try {
       // L'API créera automatiquement la conversation si elle n'existe pas
@@ -257,7 +273,6 @@ export default function HelpPage() {
         throw new Error(errorMessage);
       }
 
-      setSuccess(true);
       setMessage("");
 
       // Si la conversation n'existait pas, elle a été créée par l'API
@@ -279,7 +294,25 @@ export default function HelpPage() {
             .select("club_id")
             .eq("user_id", userId || "")
             .maybeSingle();
-          clubId = adminEntry?.club_id || null;
+          
+          if (adminEntry?.club_id) {
+            // club_admins.club_id peut être TEXT (slug ou UUID en texte)
+            // Chercher le club correspondant pour obtenir son UUID
+            const { data: clubs } = await supabase
+              .from('clubs')
+              .select('id')
+              .or(`id.eq.${adminEntry.club_id},slug.eq.${adminEntry.club_id}`);
+            
+            if (clubs && clubs.length > 0) {
+              clubId = clubs[0].id;
+            } else {
+              // Si pas trouvé par id ou slug, vérifier si c'est déjà un UUID valide
+              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+              if (uuidRegex.test(adminEntry.club_id)) {
+                clubId = adminEntry.club_id;
+              }
+            }
+          }
         }
 
         if (clubId) {
@@ -354,7 +387,6 @@ export default function HelpPage() {
         });
       }
 
-      setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'envoi du message");
     } finally {
@@ -463,13 +495,6 @@ export default function HelpPage() {
             <div className="px-6 pt-2 pb-0">
               <div className="px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
                 {error}
-              </div>
-            </div>
-          )}
-          {success && (
-            <div className="px-6 pt-2 pb-0">
-              <div className="px-4 py-3 rounded-xl bg-green-500/20 border border-green-500/50 text-green-200 text-sm">
-                ✓ Message envoyé avec succès !
               </div>
             </div>
           )}

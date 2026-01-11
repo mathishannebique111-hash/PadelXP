@@ -5,6 +5,8 @@ import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
 import LevelBadge from "@/components/padel-level/LevelBadge";
 import PartnerSuggestions from "@/components/partners/PartnerSuggestions";
+import SuggestedMatches from "@/components/partners/SuggestedMatches";
+import { PlayerPartnerCard } from "@/components/mobile/PlayerPartnerCard";
 import { Lightbulb, ArrowRight } from "lucide-react";
 
 interface Props {
@@ -26,12 +28,16 @@ export default function PadelTabContent({ profile }: Props) {
         <PadelProfileSection userId={profile.id} />
         {/* Suggestions de partenaires */}
         <PartnerSuggestions />
+        {/* Matchs suggérés (paires) */}
+        <SuggestedMatches />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+
+
       {/* Résumé niveau + progression + recommandations */}
       <div className="mb-2">
         <div className="bg-white/5 rounded-2xl border border-white/80 p-4 sm:p-5">
@@ -124,8 +130,14 @@ export default function PadelTabContent({ profile }: Props) {
         </div>
       </div>
 
+      {/* Partenaire habituel */}
+      <PlayerPartnerCard />
+
       {/* Suggestions de partenaires */}
       <PartnerSuggestions />
+
+      {/* Matchs suggérés (paires) */}
+      <SuggestedMatches />
 
       {/* Profil padel détaillé */}
       <PadelProfileSection userId={profile.id} />

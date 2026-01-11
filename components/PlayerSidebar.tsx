@@ -8,16 +8,21 @@ import LogoutButton from './LogoutButton';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { MessageCircle } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { useUnreadPlayerMessages } from '@/lib/hooks/useUnreadPlayerMessages';
+import { NotificationBadge } from '@/components/NotificationBadge';
 
-type NavKey =
-  | "home"
-  | "match"
-  | "tournaments"
-  | "challenges"
-  | "reviews"
-  | "boost"
-  | "club"
-  | "contact";
+  type NavKey =
+    | "home"
+    | "match"
+    | "tournaments"
+    | "challenges"
+    | "reviews"
+    | "boost"
+    | "club"
+    | "find-match"
+    | "contact"
+    | "badges"
+    | "history";
 
 interface MenuItem {
   href: string;
@@ -30,6 +35,7 @@ export default function PlayerSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { hasUnread } = useUnreadPlayerMessages();
 
   // FORCER l'affichage immédiatement, y compris avant l'hydratation complète
   // Utiliser plusieurs timers pour garantir l'affichage même si l'un échoue
@@ -121,6 +127,7 @@ export default function PlayerSidebar() {
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
     { href: '/club', label: 'Mon club', icon: getIconPath('mon-club.png'), navKey: 'club' },
+    { href: '/find-match', label: 'Trouver un match', icon: getIconPath('Avis.png', 9), navKey: 'find-match' },
     { href: '/contact', label: 'Contact Support', icon: getIconPath('Avis.png', 9), navKey: 'contact' },
   ];
 
@@ -142,6 +149,7 @@ export default function PlayerSidebar() {
     if (pathname === '/reviews') return 'reviews';
     if (pathname === '/boost') return 'boost';
     if (pathname === '/club') return 'club';
+    if (pathname === '/find-match') return 'find-match';
     if (pathname === '/contact') return 'contact';
     return undefined;
   };
@@ -251,10 +259,14 @@ export default function PlayerSidebar() {
                 }`}
               >
                 <div
-                  className="flex-shrink-0 flex items-center justify-center w-5 h-5"
+                  className="flex-shrink-0 flex items-center justify-center w-5 h-5 relative"
                 >
                   {item.navKey === 'contact' ? (
-                    <MessageCircle size={20} className="text-white" />
+                    <>
+                      <MessageCircle size={20} className="text-white" />
+                      {/* Badge de notification pour Contact Support */}
+                      <NotificationBadge show={hasUnread} />
+                    </>
                   ) : (
                     <Image 
                       key={`${item.navKey}-${item.icon}`}

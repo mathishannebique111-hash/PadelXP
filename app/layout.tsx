@@ -23,13 +23,13 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className="bg-black">
+    <html lang="fr" className="bg-black" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content="#000000" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        
+
         {/* Style inline pour forcer la couleur de fond et éviter les Safe Areas blanches */}
         <style
           dangerouslySetInnerHTML={{
@@ -52,7 +52,7 @@ export default function RootLayout({
             `,
           }}
         />
-        
+
         {/* Script pour forcer la couleur NOIRE des Safe Areas AVANT l'hydratation React */}
         <script
           dangerouslySetInnerHTML={{
@@ -121,7 +121,7 @@ export default function RootLayout({
             `,
           }}
         />
-        
+
         {/* Script de détection app/web et gestion de la safe area */}
         <script
           dangerouslySetInnerHTML={{
@@ -159,7 +159,7 @@ export default function RootLayout({
             `,
           }}
         />
-        
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -333,7 +333,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-black text-white min-h-screen" style={{ backgroundColor: '#000' }}>
+      <body className="bg-black text-white min-h-screen" style={{ backgroundColor: '#000' }} suppressHydrationWarning>
         <SafeAreas />
         {children}
         <CookieConsent />
