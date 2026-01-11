@@ -28,13 +28,16 @@ export async function POST(request: Request) {
       recommendations?: string[];
     };
 
+    // Convertir les recommandations en tableau pour la sauvegarde (compatibilité)
+    const recommendationsArray = recommendations || [];
+
     const { error } = await supabase
       .from("profiles")
       .update({
         niveau_padel: niveau,
         niveau_categorie: categorie,
         niveau_breakdown: breakdown,
-        niveau_recommendations: recommendations || null,
+        niveau_recommendations: recommendationsArray.length > 0 ? recommendationsArray : null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);

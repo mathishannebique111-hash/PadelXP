@@ -1,5 +1,5 @@
 import { CATEGORY_INFO } from "./levelQuestions";
-import { generateSmartRecommendations } from "./levelRecommendations";
+import { selectThreeTips } from "./padelTips";
 
 export interface AssessmentResponses {
   vitres: number;
@@ -40,7 +40,11 @@ export interface LevelResult {
   };
   strengths: string[];
   weaknesses: string[];
-  recommendations: string[];
+  tips: {
+    technique: string;
+    tactique: string;
+    mental: string;
+  };
   /**
    * Progression vers le niveau suivant (0-100).
    */
@@ -105,14 +109,18 @@ export function calculatePadelLevel(
   const strengths = identifyStrengths(breakdown);
   const weaknesses = identifyWeaknesses(breakdown);
   
-  // Utiliser le nouveau système de recommandations intelligentes
-  const recommendations = generateSmartRecommendations({
+  // Utiliser le nouveau système de conseils (3 conseils distincts)
+  const selectedTips = selectThreeTips(
     niveau,
     breakdown,
-    // On peut ajouter plus d'infos si disponibles dans responses
-    // frequenceJeu: responses.frequence > 5 ? 'weekly' : 'monthly',
-    // hasTournamentExperience: responses.tournois > 0
-  });
+    {
+      vitres: responses.vitres,
+      coupsBase: responses.coupsBase,
+      service: responses.service,
+      volee: responses.volee,
+      smash: responses.smash,
+    }
+  );
   
   const nextLevelProgress = calculateNextLevelProgress(scoreGlobal, niveau);
 
@@ -123,7 +131,11 @@ export function calculatePadelLevel(
     breakdown,
     strengths,
     weaknesses,
-    recommendations,
+    tips: {
+      technique: selectedTips.technique.text,
+      tactique: selectedTips.tactique.text,
+      mental: selectedTips.mental.text,
+    },
     nextLevelProgress,
   };
 }

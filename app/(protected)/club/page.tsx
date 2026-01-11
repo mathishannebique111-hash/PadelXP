@@ -39,7 +39,7 @@ export default async function ClubPage() {
   }
 
   // Récupérer les informations du club de l'utilisateur
-  const { clubId: userClubId, clubName, clubLogoUrl } = await getUserClubInfo(user.id);
+  const { clubId: userClubId, clubName, clubLogoUrl } = await getUserClubInfo();
   const hasNoClub = !userClubId;
 
   // Récupérer les données du club
@@ -82,6 +82,11 @@ export default async function ClubPage() {
             clubLogoUrlForPage = getClubLogoPublicUrl(rawLogoUrl);
           }
         }
+      }
+      
+      // Si le logo n'a pas encore été converti en URL publique, le convertir maintenant
+      if (clubLogoUrlForPage && !clubLogoUrlForPage.startsWith('http://') && !clubLogoUrlForPage.startsWith('https://')) {
+        clubLogoUrlForPage = getClubLogoPublicUrl(clubLogoUrlForPage);
       }
 
       const addressValue = clubRecord?.address ?? extras.address ?? null;

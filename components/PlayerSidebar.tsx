@@ -19,7 +19,6 @@ import { NotificationBadge } from '@/components/NotificationBadge';
     | "reviews"
     | "boost"
     | "club"
-    | "find-match"
     | "contact"
     | "badges"
     | "history";
@@ -122,13 +121,12 @@ export default function PlayerSidebar() {
   const menuItems: MenuItem[] = [
     { href: '/home', label: 'Profil', icon: getIconPath('Profil.png'), navKey: 'home' },
     { href: '/match/new', label: 'Enregistrer un match', icon: getIconPath('Enregistrer un match.png', 8), navKey: 'match' },
+    { href: '/club', label: 'Mon club', icon: getIconPath('mon-club.png'), navKey: 'club' },
     { href: '/tournaments', label: 'Tournois', icon: getIconPath('Trophée page badges.png'), navKey: 'tournaments' },
     { href: '/challenges', label: 'Challenges', icon: getIconPath('Objectif page avis.png', 9), navKey: 'challenges' },
     { href: '/reviews', label: 'Avis', icon: getIconPath('Avis.png', 9), navKey: 'reviews' },
     { href: '/boost', label: 'Boost', icon: getIconPath('Boost.png'), navKey: 'boost' },
-    { href: '/club', label: 'Mon club', icon: getIconPath('mon-club.png'), navKey: 'club' },
-    { href: '/find-match', label: 'Trouver un match', icon: getIconPath('Avis.png', 9), navKey: 'find-match' },
-    { href: '/contact', label: 'Contact Support', icon: getIconPath('Avis.png', 9), navKey: 'contact' },
+    { href: '/contact', label: 'Support PadelXP', icon: getIconPath('Avis.png', 9), navKey: 'contact' },
   ];
 
   // Déterminer la page active
@@ -149,7 +147,6 @@ export default function PlayerSidebar() {
     if (pathname === '/reviews') return 'reviews';
     if (pathname === '/boost') return 'boost';
     if (pathname === '/club') return 'club';
-    if (pathname === '/find-match') return 'find-match';
     if (pathname === '/contact') return 'contact';
     return undefined;
   };

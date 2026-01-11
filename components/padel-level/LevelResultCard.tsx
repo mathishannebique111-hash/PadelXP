@@ -11,6 +11,8 @@ import {
   Award,
   Lightbulb,
   ArrowRight,
+  Brain,
+  Zap,
 } from "lucide-react";
 import type { LevelResult } from "@/lib/padel/levelCalculator";
 import LevelRadarChart from "./LevelRadarChart";
@@ -36,7 +38,7 @@ export default function LevelResultCard({ result, onRetake }: Props) {
           niveau: result.niveau,
           categorie: result.categorie,
           breakdown: result.breakdown,
-          recommendations: result.recommendations,
+          recommendations: [result.tips.technique, result.tips.tactique, result.tips.mental],
         }),
       });
 
@@ -175,45 +177,73 @@ export default function LevelResultCard({ result, onRetake }: Props) {
           </div>
         </div>
 
-        {/* Recommandations - Plan d'action personnalisé */}
-        <div className="bg-slate-800 rounded-2xl p-4 md:p-6 shadow-xl">
-          <h3 className="text-base md:text-lg font-bold text-white mb-2 flex items-center gap-2">
+        {/* Conseils - 3 cartes distinctes */}
+        <div className="space-y-4">
+          <h3 className="text-base md:text-lg font-bold text-white mb-4 flex items-center gap-2">
             <Lightbulb size={20} className="text-yellow-400" />
-            Plan d&apos;action personnalisé
+            Tes conseils personnalisés
           </h3>
-          <p className="text-xs md:text-sm text-gray-400 mb-4">
-            Basé sur votre profil et vos points faibles
-          </p>
-          <ul className="space-y-3">
-            {result.recommendations.map((rec, i) => (
-              <motion.li
-                // eslint-disable-next-line react/no-array-index-key
-                key={i}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: i * 0.15 }}
-                className="bg-slate-700/50 rounded-xl p-3 md:p-4 border border-slate-600"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 font-bold text-white text-xs md:text-sm mt-0.5">
-                    {i + 1}
-                  </div>
-                  <p className="text-xs md:text-sm text-gray-200 leading-relaxed flex-1">
-                    {rec}
-                  </p>
-                </div>
-              </motion.li>
-            ))}
-          </ul>
           
-          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-            <p className="text-xs text-blue-300 flex items-start gap-2">
-              <span className="text-blue-400 flex-shrink-0">💡</span>
-              <span>
-                Ces recommandations sont conçues pour être réalisables en 2-4 semaines. 
-                Réévalue ton niveau dans 1 mois pour suivre ta progression !
-              </span>
-            </p>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Conseil Technique */}
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-2xl p-4 md:p-6 border border-blue-500/30 shadow-xl"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <Target size={20} className="text-blue-400" />
+                </div>
+                <h4 className="text-base md:text-lg font-bold text-blue-300">
+                  Ton Focus Technique
+                </h4>
+              </div>
+              <p className="text-sm md:text-base text-gray-200 leading-relaxed">
+                {result.tips.technique}
+              </p>
+            </motion.div>
+
+            {/* Conseil Tactique */}
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-2xl p-4 md:p-6 border border-purple-500/30 shadow-xl"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                  <Brain size={20} className="text-purple-400" />
+                </div>
+                <h4 className="text-base md:text-lg font-bold text-purple-300">
+                  Ton Focus Tactique
+                </h4>
+              </div>
+              <p className="text-sm md:text-base text-gray-200 leading-relaxed">
+                {result.tips.tactique}
+              </p>
+            </motion.div>
+
+            {/* Conseil Mental */}
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-2xl p-4 md:p-6 border border-green-500/30 shadow-xl"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                  <Zap size={20} className="text-green-400" />
+                </div>
+                <h4 className="text-base md:text-lg font-bold text-green-300">
+                  Ton Focus Mental
+                </h4>
+              </div>
+              <p className="text-sm md:text-base text-gray-200 leading-relaxed">
+                {result.tips.mental}
+              </p>
+            </motion.div>
           </div>
         </div>
 

@@ -380,10 +380,10 @@ export default function PadelProfileSection({
     if (!isEditing) {
       if (!currentValue) return null;
       return (
-        <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group">
-          <div className="flex items-start gap-4">
+        <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
+          <div className="flex items-center gap-4">
             {Icon && (
-              <Icon className={`w-7 h-7 text-white flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform ${iconClassName}`} />
+              <Icon className={`w-7 h-7 text-white flex-shrink-0 ${iconClassName}`} />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
@@ -406,7 +406,7 @@ export default function PadelProfileSection({
         className="relative"
       >
         <div
-          className={`rounded-xl border border-white/30 bg-white/5 p-5 transition-all ${
+          className={`rounded-xl border border-white/30 bg-white/5 p-5 ${
             isOpen ? "bg-white/[0.1] border-white/50" : "hover:bg-white/[0.07] cursor-pointer"
           }`}
           onClick={(e) => {
@@ -473,7 +473,7 @@ export default function PadelProfileSection({
                         e.stopPropagation();
                         handleFieldChange(fieldKey, option.value);
                       }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg text-left ${
                         isSelected
                           ? "bg-white/20 border border-white/40"
                           : "hover:bg-white/10 border border-transparent"
@@ -516,7 +516,7 @@ export default function PadelProfileSection({
         {!isEditing ? (
           <button
             onClick={handleStartEdit}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium"
           >
             <Edit2 className="w-4 h-4" />
             <span className="hidden sm:inline">Modifier</span>
@@ -526,7 +526,7 @@ export default function PadelProfileSection({
             <button
               onClick={handleCancelEdit}
               disabled={isSaving}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 text-white text-sm font-medium transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 text-white text-sm font-medium disabled:opacity-50"
             >
               Annuler
             </button>
@@ -555,9 +555,9 @@ export default function PadelProfileSection({
         {renderEditableField("level", "Niveau", LevelIcon)}
         
         {/* Partenaire Habituel */}
-        <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] transition-all group relative">
+        <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group relative">
           <div className="flex items-center gap-4">
-            <Users className="w-7 h-7 text-white flex-shrink-0 group-hover:scale-110 transition-transform" />
+            <Users className="w-7 h-7 text-white flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="text-xs text-white/50 uppercase tracking-wider font-medium">

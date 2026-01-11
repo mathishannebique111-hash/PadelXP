@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Send, Loader2, MessageCircle } from "lucide-react";
 import { logger } from "@/lib/logger";
+import PageTitle from "@/components/PageTitle";
 
 interface Message {
   id: string;
@@ -238,7 +239,7 @@ export default function ContactPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 pb-24">
+      <div className="h-screen bg-slate-950 flex items-center justify-center px-4">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="animate-spin text-blue-500" size={32} />
           <p className="text-sm text-gray-400">Chargement du chat...</p>
@@ -248,22 +249,20 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col px-4 pb-24">
-      {/* Header - Padding-top sur mobile pour commencer en dessous du hamburger et du logo, et sur desktop pour espacer du haut */}
-      <div className="pt-20 md:pt-4 lg:pt-6 md:sticky md:top-0 z-10 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800 py-4 mb-4">
+    <div className="h-screen bg-slate-950 flex flex-col overflow-hidden">
+      {/* Header avec PageTitle - Padding-top sur mobile pour commencer en dessous du hamburger et du logo */}
+      <div className="pt-20 md:pt-4 lg:pt-6 px-4 pb-4 flex-shrink-0">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <MessageCircle size={24} className="text-blue-500" />
-            Support PadelXP
-          </h1>
-          <p className="text-xs text-gray-400 mt-1">
-            Posez-nous vos questions, nous vous répondrons rapidement
-          </p>
+          <PageTitle 
+            title="Support PadelXP" 
+            subtitle="Posez-nous vos questions, nous vous répondrons rapidement"
+          />
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 max-w-4xl mx-auto w-full space-y-4 mb-4">
+      {/* Messages - Zone scrollable uniquement */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 min-h-0">
+        <div className="max-w-4xl mx-auto space-y-4">
         {messages.length === 0 ? (
           <div className="text-center py-12">
             <MessageCircle size={48} className="text-gray-600 mx-auto mb-4" />
@@ -323,10 +322,11 @@ export default function ContactPage() {
           })
         )}
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
-      {/* Input */}
-      <div className="sticky bottom-0 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800 py-4">
+      {/* Input - Fixe en bas */}
+      <div className="bg-slate-950 border-t border-slate-800 py-4 px-4 flex-shrink-0">
         <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-3">
           <input
             type="text"
