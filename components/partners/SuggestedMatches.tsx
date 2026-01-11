@@ -98,14 +98,11 @@ export default function SuggestedMatches() {
 
     return (
         <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4">
                 <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
                     <Swords className="text-blue-400 w-5 h-5" />
                     Matchs suggérés
                 </h3>
-                <span className="text-[10px] uppercase tracking-wider text-blue-400 font-semibold px-2 py-0.5 bg-blue-500/10 rounded-full border border-blue-500/20">
-                    BETA
-                </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

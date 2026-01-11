@@ -48,9 +48,16 @@ export default function PadelTabContent({ profile }: Props) {
               <p className="text-lg font-semibold text-white mb-2">
                 {profile.niveau_padel.toFixed(1)}/10
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 mb-3">
                 {profile.niveau_categorie}
               </p>
+              <button
+                type="button"
+                onClick={() => setShowWizard(true)}
+                className="w-full px-2 py-1.5 text-[10px] rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10"
+              >
+                Refaire l&apos;évaluation
+              </button>
             </div>
 
             {/* Progression + recommandations à droite */}
@@ -141,15 +148,6 @@ export default function PadelTabContent({ profile }: Props) {
 
       {/* Profil padel détaillé */}
       <PadelProfileSection userId={profile.id} />
-
-      {/* Bouton pour relancer l'évaluation */}
-      <button
-        type="button"
-        onClick={() => setShowWizard(true)}
-        className="w-full px-4 py-3 rounded-xl border border-white/20 text-white text-sm font-semibold active:bg-white/10 min-h-[44px]"
-      >
-        Refaire l&apos;évaluation
-      </button>
 
       {showWizard && <LevelAssessmentWizard />}
     </div>

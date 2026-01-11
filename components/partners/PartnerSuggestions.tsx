@@ -71,6 +71,18 @@ export default function PartnerSuggestions() {
   // Charger les suggestions au montage
   useEffect(() => {
     fetchSuggestions();
+    
+    // Écouter les événements de mise à jour de profil pour rafraîchir les suggestions
+    const handleProfileUpdate = () => {
+      fetchSuggestions();
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('profileUpdated', handleProfileUpdate);
+      return () => {
+        window.removeEventListener('profileUpdated', handleProfileUpdate);
+      };
+    }
   }, [fetchSuggestions]);
 
   // Recharger automatiquement quand un match est soumis ou qu'un questionnaire est complété

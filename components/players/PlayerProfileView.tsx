@@ -130,15 +130,6 @@ export default function PlayerProfileView({
         >
           {/* Card principale avec effet de profondeur */}
           <div className="relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-3xl p-5 md:p-8 shadow-2xl border-2 border-slate-700/80">
-            {/* Badge "Vérifié" si niveau évalué - Mobile optimized */}
-            {player.niveau_padel && (
-              <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-blue-500/20 border border-blue-400/40 rounded-full px-2.5 py-1 md:px-3 md:py-1.5 flex items-center gap-1">
-                <Shield size={12} className="text-blue-400 md:hidden" />
-                <Shield size={14} className="text-blue-400 hidden md:block" />
-                <span className="text-xs font-semibold text-blue-300">Vérifié</span>
-              </div>
-            )}
-
             {/* Avatar + Infos principales - Mobile centered */}
             <div className="flex flex-col items-center text-center">
               {/* Avatar avec anneau de niveau - Taille mobile */}
