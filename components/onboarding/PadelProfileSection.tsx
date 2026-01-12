@@ -159,14 +159,10 @@ export default function PadelProfileSection({
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [partnerPhone, setPartnerPhone] = useState<string | null>(null);
   const [isLoadingPartnerPhone, setIsLoadingPartnerPhone] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
-  const [isLoadingPhone, setIsLoadingPhone] = useState(false);
-  const [isDeletingPhone, setIsDeletingPhone] = useState(false);
 
   useEffect(() => {
     loadProfile();
     loadPartner();
-    loadPhoneSettings();
   }, [userId]);
 
   // Fermer les dropdowns en cliquant à l'extérieur
@@ -262,90 +258,6 @@ export default function PadelProfileSection({
     }
   };
 
-  const loadPhoneSettings = async () => {
-    try {
-      setIsLoadingPhone(true);
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || user.id !== userId) {
-        setPhoneNumber(null);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("phone_number")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("[PadelProfileSection] Erreur chargement numéro WhatsApp", error);
-        setPhoneNumber(null);
-        return;
-      }
-
-      setPhoneNumber((data as any)?.phone_number || null);
-    } catch (error) {
-      console.error("[PadelProfileSection] Erreur inattendue chargement numéro WhatsApp", error);
-      setPhoneNumber(null);
-    } finally {
-      setIsLoadingPhone(false);
-    }
-  };
-
-  const formatWhatsappNumber = (raw: string | null): string => {
-    if (!raw) return "Non renseigné";
-    const digits = raw.replace(/\\D/g, "");
-
-    if (digits.startsWith("33") && digits.length >= 11) {
-      const firstDigit = digits[2];
-      return `+33 ${firstDigit} XX XX XX XX`;
-    }
-
-    // fallback générique : masquer tout sauf les 2 derniers chiffres
-    const visible = digits.slice(-2);
-    return `••••••••${visible}`;
-  };
-
-  const handleDeletePhone = async () => {
-    try {
-      setIsDeletingPhone(true);
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || user.id !== userId) return;
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          phone_number: null,
-          phone_consent_at: null,
-          whatsapp_enabled: false,
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      setPhoneNumber(null);
-      showToast("Votre numéro WhatsApp a bien été supprimé.", "success");
-    } catch (error) {
-      console.error("[PadelProfileSection] Erreur suppression numéro WhatsApp", error);
-      showToast("Impossible de supprimer votre numéro pour le moment.", "error");
-    } finally {
-      setIsDeletingPhone(false);
-    }
-  };
 
   const loadProfile = async () => {
     try {
@@ -761,42 +673,6 @@ export default function PadelProfileSection({
         {renderEditableField("frequency", "Fréquence", FrequencyIcon)}
       </div>
 
-      {/* Section Paramètres WhatsApp */}
-      <div className="mt-6 rounded-xl border border-white/30 bg-white/5 p-5">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
-              Coordination WhatsApp
-            </div>
-            <div className="text-sm text-white/80">
-              Numéro WhatsApp :{" "}
-              <span className="font-semibold">
-                {isLoadingPhone ? "Chargement..." : formatWhatsappNumber(phoneNumber)}
-              </span>
-            </div>
-          </div>
-          {phoneNumber && !isLoadingPhone && (
-            <button
-              type="button"
-              onClick={handleDeletePhone}
-              disabled={isDeletingPhone}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-[11px] font-medium text-red-200 hover:bg-red-500/20 disabled:opacity-60"
-            >
-              {isDeletingPhone ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="w-3.5 h-3.5" />
-              )}
-              <span>Supprimer mon numéro</span>
-            </button>
-          )}
-        </div>
-        {!phoneNumber && !isLoadingPhone && (
-          <p className="mt-1 text-[11px] text-slate-300">
-            Vous pouvez activer ou modifier votre numéro lors de l&apos;envoi d&apos;une invitation partenaire.
-          </p>
-        )}
-      </div>
 
       {/* Dialog de confirmation de suppression du partenaire */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

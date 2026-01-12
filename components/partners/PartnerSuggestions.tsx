@@ -390,7 +390,7 @@ export default function PartnerSuggestions() {
                   className="flex-1 py-2 px-3 border border-white/20 text-gray-300 rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 active:bg-slate-700/50 min-h-[44px]"
                 >
                   <Eye size={14} />
-                  <span className="hidden sm:inline">Profil</span>
+                  <span>Voir le profil</span>
                 </button>
                 <button
                   type="button"

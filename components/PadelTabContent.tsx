@@ -57,7 +57,7 @@ export default function PadelTabContent({ profile }: Props) {
               <button
                 type="button"
                 onClick={() => setShowWizard(true)}
-                className="w-full px-2 py-1.5 text-[10px] rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10"
+                className="hidden md:block w-full px-2 py-1.5 text-[10px] rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10"
               >
                 Refaire l&apos;évaluation
               </button>
@@ -135,6 +135,15 @@ export default function PadelTabContent({ profile }: Props) {
                     </ul>
                   </div>
                 )}
+              
+              {/* Bouton "Refaire l'évaluation" en bas sur mobile */}
+              <button
+                type="button"
+                onClick={() => setShowWizard(true)}
+                className="md:hidden w-full px-4 py-2.5 text-xs rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10"
+              >
+                Refaire l&apos;évaluation
+              </button>
             </div>
           </div>
         </div>

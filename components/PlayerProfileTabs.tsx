@@ -30,8 +30,16 @@ function PlayerProfileTabsContent({
 
   useEffect(() => {
     loadPendingInvitationsCount();
-    const interval = setInterval(loadPendingInvitationsCount, 30000);
-    return () => clearInterval(interval);
+    // Écouter les événements de création/suppression d'invitation (sans polling)
+    const handleInvitationEvent = () => {
+      loadPendingInvitationsCount();
+    };
+    window.addEventListener("matchInvitationCreated", handleInvitationEvent);
+    window.addEventListener("matchInvitationDeleted", handleInvitationEvent);
+    return () => {
+      window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
+      window.removeEventListener("matchInvitationDeleted", handleInvitationEvent);
+    };
   }, []);
 
   const loadPendingInvitationsCount = async () => {
@@ -67,7 +75,7 @@ function PlayerProfileTabsContent({
     { id: 'stats' as TabType, label: 'Mes stats' },
     { id: 'leaderboard' as TabType, label: 'Classement global' },
     { id: 'badges' as TabType, label: 'Mes badges' },
-    { id: 'padel' as TabType, label: 'Mon Profil Padel', badge: pendingInvitationsCount },
+    { id: 'padel' as TabType, label: 'Mon Profil', badge: pendingInvitationsCount },
   ];
 
   return (
@@ -133,7 +141,7 @@ export default function PlayerProfileTabs(props: PlayerProfileTabsProps) {
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes stats</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Classement global</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon Profil Padel</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon Profil</div>
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center">
           <div className="text-white/60">Chargement...</div>

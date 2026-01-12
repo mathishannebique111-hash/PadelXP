@@ -8,6 +8,7 @@ import Image from "next/image";
 import { showToast } from "@/components/ui/Toast";
 import AddPhoneModal from "@/components/AddPhoneModal";
 import WhatsAppModal from "@/components/profile/WhatsAppModal";
+import { openWhatsApp } from "@/lib/utils/whatsapp";
 
 interface MatchInvitation {
   id: string;
@@ -46,9 +47,8 @@ export default function MatchInvitationsReceived() {
 
   useEffect(() => {
     loadInvitations();
-    const interval = setInterval(loadInvitations, 30000);
     
-    // Écouter les événements de création/suppression d'invitation
+    // Écouter les événements de création/suppression d'invitation (sans polling)
     const handleInvitationEvent = () => {
       loadInvitations();
     };
@@ -56,7 +56,6 @@ export default function MatchInvitationsReceived() {
     window.addEventListener("matchInvitationDeleted", handleInvitationEvent);
     
     return () => {
-      clearInterval(interval);
       window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
       window.removeEventListener("matchInvitationDeleted", handleInvitationEvent);
     };
@@ -476,11 +475,10 @@ export default function MatchInvitationsReceived() {
         }}
         onOpenWhatsApp={() => {
           if (whatsAppData?.phoneNumber) {
-            const message = encodeURIComponent(
+            openWhatsApp(
+              whatsAppData.phoneNumber,
               "Salut ! C'est parti pour notre match de padel 🎾"
             );
-            const whatsappUrl = `https://wa.me/${whatsAppData.phoneNumber}?text=${message}`;
-            window.open(whatsappUrl, "_blank", "noopener,noreferrer");
           }
         }}
       />

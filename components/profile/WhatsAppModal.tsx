@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
+import { openWhatsApp } from "@/lib/utils/whatsapp";
 
 interface WhatsAppModalProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ export default function WhatsAppModal({
             <button
               type="button"
               onClick={() => {
-                onOpenWhatsApp();
+                openWhatsApp(phoneNumber, "Salut ! C'est parti pour notre match de padel 🎾");
                 onClose();
               }}
               className="w-full inline-flex items-center justify-center gap-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 py-4 text-base font-semibold text-white transition-colors shadow-lg"

@@ -203,7 +203,8 @@ export default function AddPhoneModal({
                 <div className="flex gap-2">
                   {/* Sélecteur d'indicatif pays */}
                   <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                    {/* Drapeau caché sur mobile */}
+                    <div className="hidden md:flex pointer-events-none absolute inset-y-0 left-3 items-center">
                       <span className="text-sm">{country.flag}</span>
                     </div>
                     <select
@@ -214,7 +215,7 @@ export default function AddPhoneModal({
                         );
                         if (next) setCountry(next);
                       }}
-                      className="appearance-none pr-6 pl-8 py-2.5 rounded-lg border border-white/10 bg-slate-900/80 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-400"
+                      className="appearance-none pr-6 md:pl-8 pl-3 py-2.5 rounded-lg border border-white/10 bg-slate-900/80 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-400"
                     >
                       {COUNTRY_OPTIONS.map((opt) => (
                         <option key={opt.code} value={opt.code}>

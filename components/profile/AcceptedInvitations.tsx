@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { MessageCircle, Loader2, User, CheckCircle2 } from "lucide-react";
+import { MessageCircle, Loader2, User, CheckCircle2, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { showToast } from "@/components/ui/Toast";
+import { openWhatsApp } from "@/lib/utils/whatsapp";
 
 interface AcceptedInvitation {
   id: string;
@@ -26,23 +27,26 @@ export default function AcceptedInvitations() {
   const [invitations, setInvitations] = useState<AcceptedInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingPhones, setLoadingPhones] = useState<Set<string>>(new Set());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const supabase = createClient();
 
   useEffect(() => {
     loadInvitations();
-    
-    // Recharger toutes les minutes pour vérifier les invitations expirées (24h)
-    const interval = setInterval(loadInvitations, 60000);
-    
-    // Écouter les événements de mise à jour
+
+    // Mettre à jour le temps actuel toutes les secondes pour le compteur (sans recharger les données)
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    // Écouter les événements de mise à jour (création / acceptation / suppression)
     const handleInvitationEvent = () => {
       loadInvitations();
     };
     window.addEventListener("matchInvitationUpdated", handleInvitationEvent);
     window.addEventListener("matchInvitationDeleted", handleInvitationEvent);
-    
+
     return () => {
-      clearInterval(interval);
+      clearInterval(timeInterval);
       window.removeEventListener("matchInvitationUpdated", handleInvitationEvent);
       window.removeEventListener("matchInvitationDeleted", handleInvitationEvent);
     };
@@ -126,6 +130,23 @@ export default function AcceptedInvitations() {
     }
   };
 
+  const getTimeRemaining = (respondedAt: string | null): string => {
+    if (!respondedAt) return "";
+    
+    const responded = new Date(respondedAt);
+    // L'invitation expire 24h après l'acceptation
+    const expiresAt = new Date(responded.getTime() + 24 * 60 * 60 * 1000);
+    const diff = expiresAt.getTime() - currentTime.getTime();
+
+    if (diff <= 0) return "Expirée";
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) return `${hours}h restantes`;
+    return `${minutes}min restantes`;
+  };
+
   const handleOpenWhatsApp = async (partnerId: string) => {
     try {
       setLoadingPhones((prev) => new Set(prev).add(partnerId));
@@ -175,12 +196,10 @@ export default function AcceptedInvitations() {
         if (profileError) {
           console.error("[AcceptedInvitations] Erreur récupération profil:", profileError);
         } else if (profileData?.phone_number) {
-          const phone = profileData.phone_number.replace(/[^0-9]/g, "");
-          const message = encodeURIComponent(
+          openWhatsApp(
+            profileData.phone_number,
             "Salut ! Organisons notre match de padel 🎾"
           );
-          const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
-          window.open(whatsappUrl, "_blank", "noopener,noreferrer");
           return;
         }
       }
@@ -189,12 +208,10 @@ export default function AcceptedInvitations() {
       if (Array.isArray(data) && data.length > 0) {
         const phoneData = data[0] as { phone: string; whatsapp_enabled: boolean };
         if (phoneData.phone) {
-          const phone = phoneData.phone.replace(/[^0-9]/g, "");
-          const message = encodeURIComponent(
+          openWhatsApp(
+            phoneData.phone,
             "Salut ! Organisons notre match de padel 🎾"
           );
-          const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
-          window.open(whatsappUrl, "_blank", "noopener,noreferrer");
           return;
         }
       }
@@ -253,8 +270,18 @@ export default function AcceptedInvitations() {
               key={invitation.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-emerald-500/20"
+              className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-emerald-500/20 relative"
             >
+              {/* Compteur de temps restant en haut à droite */}
+              {invitation.responded_at && (
+                <div className="absolute top-3 right-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-400/40 px-2.5 py-1 text-[10px] font-medium text-amber-200">
+                    <Clock className="w-3 h-3" />
+                    {getTimeRemaining(invitation.responded_at)}
+                  </span>
+                </div>
+              )}
+              
               <div className="flex items-center gap-3 mb-3">
                 {partner.avatar_url ? (
                   <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">

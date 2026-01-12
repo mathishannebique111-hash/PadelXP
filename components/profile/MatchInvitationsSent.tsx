@@ -6,6 +6,7 @@ import { Send, Clock, CheckCircle2, XCircle, MessageCircle, Loader2, User, Trash
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { showToast } from "@/components/ui/Toast";
+import { openWhatsApp } from "@/lib/utils/whatsapp";
 
 interface MatchInvitation {
   id: string;
@@ -220,12 +221,10 @@ export default function MatchInvitationsSent() {
         if (profileError) {
           console.error("[MatchInvitationsSent] Erreur récupération profil:", profileError);
         } else if (profileData?.phone_number) {
-          const phone = profileData.phone_number.replace(/[^0-9]/g, "");
-          const message = encodeURIComponent(
+          openWhatsApp(
+            profileData.phone_number,
             "Salut ! Organisons notre match de padel 🎾"
           );
-          const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
-          window.open(whatsappUrl, "_blank", "noopener,noreferrer");
           return;
         }
       }
@@ -234,12 +233,10 @@ export default function MatchInvitationsSent() {
       if (Array.isArray(data) && data.length > 0) {
         const phoneData = data[0] as { phone: string; whatsapp_enabled: boolean };
         if (phoneData.phone) {
-          const phone = phoneData.phone.replace(/[^0-9]/g, "");
-          const message = encodeURIComponent(
+          openWhatsApp(
+            phoneData.phone,
             "Salut ! Organisons notre match de padel 🎾"
           );
-          const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
-          window.open(whatsappUrl, "_blank", "noopener,noreferrer");
           return;
         }
       }
@@ -282,13 +279,15 @@ export default function MatchInvitationsSent() {
         throw error;
       }
 
-      showToast("Invitation supprimée", "success");
-      
-      // Recharger les invitations
-      await loadInvitations();
-      
-      // Déclencher un événement pour que le receiver voie aussi la suppression
+      // Déclencher l'événement AVANT de recharger pour synchronisation
       window.dispatchEvent(new CustomEvent("matchInvitationDeleted"));
+      
+      // Recharger les invitations après un court délai pour laisser le temps à l'événement de se propager
+      setTimeout(async () => {
+        await loadInvitations();
+      }, 100);
+      
+      showToast("Invitation supprimée", "success");
     } catch (error) {
       console.error("[MatchInvitationsSent] Erreur suppression invitation", error);
       showToast("Impossible de supprimer l'invitation", "error");

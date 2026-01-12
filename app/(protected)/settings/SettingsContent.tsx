@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import PageTitle from "@/components/PageTitle";
 import DeleteAccountButton from "@/components/settings/DeleteAccountButton";
 import ProfilePhotoUpload from "@/components/settings/ProfilePhotoUpload";
+import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
 
 export default function SettingsContent() {
   return (
@@ -19,6 +20,9 @@ export default function SettingsContent() {
         <div className="mt-6 sm:mt-8 space-y-6">
           {/* Section Photo de profil */}
           <ProfilePhotoUpload />
+
+          {/* Section Coordination WhatsApp */}
+          <WhatsAppSettings />
 
           {/* Section Suppression de compte */}
           <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-red-500/50 bg-red-500/10 p-4 sm:p-5 md:p-6">
