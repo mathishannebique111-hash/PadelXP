@@ -58,11 +58,12 @@ export default function MatchInvitationsSent() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Récupérer les invitations
+      // Récupérer les invitations (uniquement celles qui ne sont pas acceptées)
       const { data: invitationsData, error: invitationsError } = await supabase
         .from("match_invitations")
         .select("*")
         .eq("sender_id", user.id)
+        .neq("status", "accepted")
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -319,7 +320,7 @@ export default function MatchInvitationsSent() {
       <div className="flex items-center gap-2 mb-4">
         <Send className="w-5 h-5 text-blue-400" />
         <h3 className="text-base md:text-lg font-bold text-white">
-          Propositions de partie envoyées
+          Propositions de paire envoyées
         </h3>
       </div>
 
@@ -366,26 +367,6 @@ export default function MatchInvitationsSent() {
                 </div>
                 {getStatusBadge(invitation)}
               </div>
-
-              {invitation.status === "accepted" && (
-                <div className="mt-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-400/20">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenWhatsApp(invitation.receiver_id)}
-                    disabled={loadingPhones.has(invitation.receiver_id)}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500/15 border border-emerald-400/40 px-4 py-2.5 text-sm font-medium text-emerald-100 hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
-                  >
-                    {loadingPhones.has(invitation.receiver_id) ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <MessageCircle className="w-4 h-4" />
-                    )}
-                    <span>
-                      Envoyez un message à {receiverName} pour organiser votre match !
-                    </span>
-                  </button>
-                </div>
-              )}
 
               {invitation.status !== "accepted" && (
                 <div className="flex gap-2 mt-2">
