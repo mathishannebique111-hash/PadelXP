@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -14,7 +14,7 @@ import {
   MessageCircle,
   Loader2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import AddPhoneModal from "@/components/AddPhoneModal";
@@ -83,9 +83,14 @@ export default function PlayerProfileView({
   compatibilityTags,
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  
+  // Récupérer le paramètre 'from' pour savoir d'où vient l'utilisateur
+  const fromTab = searchParams?.get('from');
   const [isInviting, setIsInviting] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [invitationStatus, setInvitationStatus] = useState<{ sent: boolean; received: boolean; senderName?: string; isAccepted?: boolean } | null>(null);
 
   const playerName =
     player.first_name && player.last_name
@@ -116,6 +121,93 @@ export default function PlayerProfileView({
   const niveauOnboarding = player.level
     ? levelLabels[player.level] || player.level
     : "Non renseigné";
+
+  // Vérifier le statut des invitations au chargement
+  useEffect(() => {
+    const checkInvitationStatus = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Vérifier si une invitation a été envoyée (pending ou accepted)
+        const { data: sentInvitation } = await supabase
+          .from("match_invitations")
+          .select("id, status")
+          .eq("sender_id", user.id)
+          .eq("receiver_id", player.id)
+          .in("status", ["pending", "accepted"])
+          .gt("expires_at", new Date().toISOString())
+          .maybeSingle();
+
+        // Vérifier si une invitation a été reçue (pending ou accepted)
+        const { data: receivedInvitation } = await supabase
+          .from("match_invitations")
+          .select("sender_id, status")
+          .eq("receiver_id", user.id)
+          .eq("sender_id", player.id)
+          .in("status", ["pending", "accepted"])
+          .gt("expires_at", new Date().toISOString())
+          .maybeSingle();
+
+        // Récupérer le profil de l'expéditeur si une invitation a été reçue
+        let senderName: string | undefined = undefined;
+        if (receivedInvitation) {
+          const { data: senderProfile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, display_name")
+            .eq("id", player.id)
+            .maybeSingle();
+          
+          if (senderProfile) {
+            senderName = senderProfile.first_name && senderProfile.last_name
+              ? `${senderProfile.first_name} ${senderProfile.last_name}`
+              : senderProfile.display_name || senderProfile.first_name || playerName;
+          } else {
+            senderName = playerName;
+          }
+        }
+
+        const isAccepted = (sentInvitation?.status === "accepted") || (receivedInvitation?.status === "accepted");
+        
+        setInvitationStatus({
+          sent: !!sentInvitation,
+          received: !!receivedInvitation,
+          senderName,
+          isAccepted,
+        });
+      } catch (error) {
+        console.error("[PlayerProfileView] Erreur vérification invitations", error);
+      }
+    };
+
+    checkInvitationStatus();
+    
+    // Écouter les événements d'invitations
+    const handleInvitationEvent = (event?: Event) => {
+      // Si c'est une suppression et que c'est pour ce joueur, réinitialiser le statut immédiatement
+      if (event && 'detail' in event && (event as CustomEvent).detail) {
+        const detail = (event as CustomEvent).detail as { invitationId?: string; receiverId?: string };
+        // Si l'invitation supprimée concerne ce joueur (en tant que receiver), réinitialiser le statut
+        if (detail.receiverId === player.id) {
+          setInvitationStatus({ sent: false, received: false, isAccepted: false });
+          return;
+        }
+      }
+      checkInvitationStatus();
+    };
+    
+    window.addEventListener("matchInvitationCreated", handleInvitationEvent);
+    window.addEventListener("matchInvitationUpdated", handleInvitationEvent);
+    window.addEventListener("matchInvitationDeleted", handleInvitationEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
+      window.removeEventListener("matchInvitationUpdated", handleInvitationEvent);
+      window.removeEventListener("matchInvitationDeleted", handleInvitationEvent as EventListener);
+    };
+  }, [player.id, playerName, supabase]);
 
   const createMatchInvitation = useCallback(async () => {
     try {
@@ -162,6 +254,10 @@ export default function PlayerProfileView({
       }
 
       showToast(`Invitation envoyée à ${firstName} ! Valable 24h.`, "success");
+      
+      // Mettre à jour le statut local
+      setInvitationStatus({ sent: true, received: false });
+      
       // Déclencher un événement pour recharger les composants d'invitations
       window.dispatchEvent(new CustomEvent("matchInvitationCreated"));
     } catch (e) {
@@ -212,7 +308,16 @@ export default function PlayerProfileView({
         <div className="px-4 py-3">
           <button
             type="button"
-            onClick={() => router.push("/home")}
+            onClick={() => {
+              // Retourner à l'onglet d'origine si spécifié, sinon /home
+              if (fromTab === 'leaderboard') {
+                router.push("/home?tab=leaderboard");
+              } else if (fromTab === 'partners') {
+                router.push("/home?tab=partners");
+              } else {
+                router.push("/home");
+              }
+            }}
             className="p-2 -ml-2 rounded-lg active:bg-slate-800/50 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <ArrowLeft size={22} className="text-gray-300" />
@@ -338,9 +443,32 @@ export default function PlayerProfileView({
             <div className="flex gap-3 mt-5">
               <button
                 type="button"
-                onClick={handleProposeMatch}
-                disabled={isInviting}
+                onClick={() => {
+                  if (invitationStatus?.isAccepted) {
+                    showToast("Une invitation de paire acceptée existe déjà avec ce joueur", "error");
+                    return;
+                  }
+                  if (invitationStatus?.sent) {
+                    showToast("Une proposition de paire a déjà été envoyée à ce joueur", "error");
+                    return;
+                  }
+                  if (invitationStatus?.received) {
+                    showToast(`Vous avez déjà une proposition de paire de ${invitationStatus.senderName || playerName}`, "error");
+                    return;
+                  }
+                  handleProposeMatch();
+                }}
+                disabled={isInviting || invitationStatus?.sent || invitationStatus?.received || invitationStatus?.isAccepted}
                 className="flex-1 py-3.5 md:py-4 px-4 bg-gradient-to-r from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  invitationStatus?.isAccepted
+                    ? "Une invitation de paire acceptée existe déjà avec ce joueur"
+                    : invitationStatus?.sent
+                    ? "Une proposition de paire a déjà été envoyée à ce joueur"
+                    : invitationStatus?.received
+                    ? `Vous avez déjà une proposition de paire de ${invitationStatus.senderName || playerName}`
+                    : undefined
+                }
               >
                 {isInviting ? (
                   <>
@@ -350,6 +478,24 @@ export default function PlayerProfileView({
                       className="hidden md:block animate-spin"
                     />
                     <span>Envoi...</span>
+                  </>
+                ) : invitationStatus?.isAccepted ? (
+                  <>
+                    <MessageCircle size={18} className="md:hidden" />
+                    <MessageCircle size={20} className="hidden md:block" />
+                    <span>Acceptée</span>
+                  </>
+                ) : invitationStatus?.sent ? (
+                  <>
+                    <MessageCircle size={18} className="md:hidden" />
+                    <MessageCircle size={20} className="hidden md:block" />
+                    <span>Déjà envoyée</span>
+                  </>
+                ) : invitationStatus?.received ? (
+                  <>
+                    <MessageCircle size={18} className="md:hidden" />
+                    <MessageCircle size={20} className="hidden md:block" />
+                    <span>Reçue</span>
                   </>
                 ) : (
                   <>

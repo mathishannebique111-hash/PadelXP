@@ -163,6 +163,18 @@ export default function PadelProfileSection({
   useEffect(() => {
     loadProfile();
     loadPartner();
+    
+    // Écouter les événements profileUpdated pour recharger les données
+    const handleProfileUpdate = () => {
+      loadProfile();
+      loadPartner();
+    };
+    
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+    
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
   }, [userId]);
 
   // Fermer les dropdowns en cliquant à l'extérieur
@@ -357,7 +369,14 @@ export default function PadelProfileSection({
 
       setShowDeleteDialog(false);
       setPartnerData(null);
-      window.location.reload();
+      
+      // Recharger les données du partenaire sans recharger la page
+      await loadPartner();
+      
+      // Notifier les autres composants
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
+      }
     } catch (error) {
       console.error("Erreur lors de la suppression du partenaire:", error);
       alert("Erreur lors de la suppression");

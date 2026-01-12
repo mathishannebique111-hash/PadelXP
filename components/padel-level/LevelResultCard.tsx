@@ -20,9 +20,10 @@ import LevelRadarChart from "./LevelRadarChart";
 interface Props {
   result: LevelResult;
   onRetake: () => void;
+  onSaved?: () => void;
 }
 
-export default function LevelResultCard({ result, onRetake }: Props) {
+export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -61,8 +62,18 @@ export default function LevelResultCard({ result, onRetake }: Props) {
             // Ignorer les erreurs localStorage
           }
           
-          // Rafraîchir le profil pour afficher le niveau sauvegardé
-          window.location.reload();
+          // Notifier les composants pour mettre à jour le profil sans recharger
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("profileUpdated"));
+            window.dispatchEvent(new CustomEvent("questionnaireCompleted"));
+          }
+        }
+
+        // Fermer le wizard après un court délai pour laisser voir le message "Niveau sauvegardé !"
+        if (onSaved) {
+          setTimeout(() => {
+            onSaved();
+          }, 1500);
         }
       }
     } catch (error) {

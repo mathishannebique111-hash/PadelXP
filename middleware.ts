@@ -18,7 +18,7 @@ const generalRatelimit = new Ratelimit({
 
 const loginRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(15, "15 m"), // Augmenté de 5 à 15 tentatives
+  limiter: Ratelimit.slidingWindow(20, "15 m"), // 20 tentatives / 15 minutes
   analytics: true,
   prefix: "ratelimit:login",
 });

@@ -16,9 +16,9 @@ import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils
 import Image from "next/image";
 import { logger } from '@/lib/logger';
 import PlayerProfileTabs from "@/components/PlayerProfileTabs";
-import BadgesContent from "@/components/BadgesContent";
 import LeaderboardContent from "@/components/LeaderboardContent";
 import PadelTabContent from "@/components/PadelTabContent";
+import FindPartnersTabContent from "@/components/FindPartnersTabContent";
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -45,11 +45,12 @@ const supabaseAdmin = createAdminClient(
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams?: { tab?: string };
+  searchParams?: Promise<{ tab?: string }>;
 }) {
   const supabase = await createClient();
-  const activeTab = (searchParams?.tab === 'leaderboard' || searchParams?.tab === 'badges' || searchParams?.tab === 'padel') 
-    ? (searchParams.tab as 'leaderboard' | 'badges' | 'padel') 
+  const resolvedSearchParams = await searchParams;
+  const activeTab: 'stats' | 'leaderboard' | 'padel' | 'partners' = (resolvedSearchParams?.tab === 'leaderboard' || resolvedSearchParams?.tab === 'padel' || resolvedSearchParams?.tab === 'partners') 
+    ? (resolvedSearchParams.tab as 'leaderboard' | 'padel' | 'partners') 
     : 'stats';
   
   // Vérifier d'abord la session pour éviter les déconnexions inattendues
@@ -411,7 +412,7 @@ export default async function HomePage({
                 currentUserId={profile?.id}
               />
             }
-            badgesContent={<BadgesContent />}
+            partnersContent={<FindPartnersTabContent />}
             padelContent={profile ? <PadelTabContent profile={profile} /> : null}
           />
         ) : null}

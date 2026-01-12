@@ -156,6 +156,13 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
           setCurrentQuestion(0);
           setResponses({});
         }}
+        onSaved={() => {
+          // Fermer le wizard après sauvegarde
+          setIsCompleted(false);
+          setHasStarted(false);
+          setCurrentQuestion(0);
+          setResponses({});
+        }}
       />
     );
   }

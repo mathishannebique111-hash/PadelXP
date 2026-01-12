@@ -1,40 +1,144 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
 import LevelBadge from "@/components/padel-level/LevelBadge";
-import PartnerSuggestions from "@/components/partners/PartnerSuggestions";
-import SuggestedMatches from "@/components/partners/SuggestedMatches";
 import { PlayerPartnerCard } from "@/components/mobile/PlayerPartnerCard";
 import { Lightbulb, ArrowRight } from "lucide-react";
-import MatchInvitationsReceived from "@/components/profile/MatchInvitationsReceived";
-import MatchInvitationsSent from "@/components/profile/MatchInvitationsSent";
-import AcceptedInvitations from "@/components/profile/AcceptedInvitations";
-import ChallengesReceived from "@/components/profile/ChallengesReceived";
-import ChallengesSent from "@/components/profile/ChallengesSent";
 
 interface Props {
   profile: any;
 }
 
-export default function PadelTabContent({ profile }: Props) {
+export default function PadelTabContent({ profile: initialProfile }: Props) {
   const [showWizard, setShowWizard] = useState(false);
+  const [profile, setProfile] = useState(initialProfile);
+  const [pendingPartnershipRequest, setPendingPartnershipRequest] = useState<{ first_name: string; last_name: string } | null>(null);
+  const supabase = createClient();
+
+  // Charger les demandes de partenaires reçues
+  useEffect(() => {
+    const loadPendingPartnershipRequest = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const response = await fetch('/api/partnerships/list');
+        if (response.ok) {
+          const { partnerships } = await response.json();
+          const receivedRequest = partnerships.find((p: any) => p.status === 'pending' && p.partner_id === user.id);
+          
+          if (receivedRequest) {
+            // Récupérer le profil du joueur qui a envoyé la demande
+            const profileResponse = await fetch('/api/profiles/batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids: [receivedRequest.player_id] })
+            });
+            
+            if (profileResponse.ok) {
+              const { profiles } = await profileResponse.json();
+              const senderProfile = profiles?.find((p: any) => p.id === receivedRequest.player_id);
+              if (senderProfile) {
+                setPendingPartnershipRequest({
+                  first_name: senderProfile.first_name || '',
+                  last_name: senderProfile.last_name || ''
+                });
+              } else {
+                setPendingPartnershipRequest(null);
+              }
+            } else {
+              setPendingPartnershipRequest(null);
+            }
+          } else {
+            setPendingPartnershipRequest(null);
+          }
+        }
+      } catch (error) {
+        console.error("[PadelTabContent] Erreur chargement demande partenaire:", error);
+      }
+    };
+
+    loadPendingPartnershipRequest();
+
+    const handleProfileUpdate = () => {
+      loadPendingPartnershipRequest();
+    };
+
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
+  }, [supabase]);
+
+  // Écouter les événements de mise à jour du profil
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("niveau_padel, niveau_categorie, niveau_recommendations")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("[PadelTabContent] Erreur chargement profil:", error);
+          return;
+        }
+
+        if (profileData) {
+          setProfile((prev: any) => ({
+            ...prev,
+            niveau_padel: profileData.niveau_padel,
+            niveau_categorie: profileData.niveau_categorie,
+            niveau_recommendations: profileData.niveau_recommendations,
+          }));
+        }
+      } catch (error) {
+        console.error("[PadelTabContent] Erreur inattendue:", error);
+      }
+    };
+
+    const handleProfileUpdate = () => {
+      loadProfile();
+    };
+
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+    window.addEventListener("questionnaireCompleted", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+      window.removeEventListener("questionnaireCompleted", handleProfileUpdate);
+    };
+  }, [supabase]);
+
   const hasLevel =
     typeof profile.niveau_padel === "number" && profile.niveau_categorie;
 
-  // Cas sans niveau : on affiche uniquement le wizard + le profil padel
+  // Cas sans niveau : on affiche le wizard + le cadre partenaire habituel (bloqué) + le profil padel
   if (!hasLevel) {
     return (
       <div className="space-y-4">
         <div className="mb-6">
-          <LevelAssessmentWizard />
+          <LevelAssessmentWizard 
+            onComplete={() => {
+              // Le wizard se fermera automatiquement après sauvegarde
+              // L'événement profileUpdated déclenchera le rechargement du profil
+            }}
+          />
         </div>
+
+        {/* Partenaire habituel - toujours affiché, même sans niveau (bloqué) */}
+        <PlayerPartnerCard hasLevel={false} pendingRequestSender={pendingPartnershipRequest} />
+
+        {/* Profil padel détaillé */}
         <PadelProfileSection userId={profile.id} />
-        {/* Suggestions de partenaires */}
-        <PartnerSuggestions />
-        {/* Matchs suggérés (paires) */}
-        <SuggestedMatches />
       </div>
     );
   }
@@ -152,28 +256,7 @@ export default function PadelTabContent({ profile }: Props) {
       </div>
 
       {/* Partenaire habituel */}
-      <PlayerPartnerCard />
-
-      {/* Invitations acceptées */}
-      <AcceptedInvitations />
-
-      {/* Invitations reçues */}
-      <MatchInvitationsReceived />
-
-      {/* Propositions de paire envoyées */}
-      <MatchInvitationsSent />
-
-      {/* Suggestions de partenaires */}
-      <PartnerSuggestions />
-
-      {/* Défis envoyés (Suivi) */}
-      <ChallengesSent />
-
-      {/* Défis reçus (Priorité haute - Action requise) */}
-      <ChallengesReceived />
-
-      {/* Matchs suggérés (paires) */}
-      <SuggestedMatches />
+      <PlayerPartnerCard hasLevel={true} />
 
       {/* Profil padel détaillé */}
       <PadelProfileSection userId={profile.id} />

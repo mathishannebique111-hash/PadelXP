@@ -13,7 +13,7 @@ try {
 export const loginRateLimit = redisClient
   ? new Ratelimit({
       redis: redisClient,
-      limiter: Ratelimit.slidingWindow(5, "15 m"), // 5 tentatives / 15 minutes
+      limiter: Ratelimit.slidingWindow(20, "15 m"), // 20 tentatives / 15 minutes
       analytics: true,
       prefix: "@upstash/ratelimit/login",
     })

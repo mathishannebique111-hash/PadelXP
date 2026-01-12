@@ -4,42 +4,63 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-type TabType = 'stats' | 'leaderboard' | 'badges' | 'padel';
+type TabType = 'stats' | 'leaderboard' | 'padel' | 'partners';
 
 interface PlayerProfileTabsProps {
   activeTab?: TabType;
   statsContent: React.ReactNode;
   leaderboardContent: React.ReactNode;
-  badgesContent: React.ReactNode;
   padelContent?: React.ReactNode;
+  partnersContent?: React.ReactNode;
 }
 
 function PlayerProfileTabsContent({
   activeTab = 'stats',
   statsContent,
   leaderboardContent,
-  badgesContent,
-  padelContent
+  padelContent,
+  partnersContent
 }: PlayerProfileTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
-  const initialTab = tabFromUrl && ['stats', 'leaderboard', 'badges', 'padel'].includes(tabFromUrl) ? tabFromUrl : activeTab;
+  const initialTab = tabFromUrl && ['stats', 'leaderboard', 'padel', 'partners'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
+  const [pendingChallengesCount, setPendingChallengesCount] = useState(0);
+  const [pendingPartnershipRequestsCount, setPendingPartnershipRequestsCount] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
     loadPendingInvitationsCount();
+    loadPendingChallengesCount();
+    loadPendingPartnershipRequestsCount();
     // Écouter les événements de création/suppression d'invitation (sans polling)
     const handleInvitationEvent = () => {
       loadPendingInvitationsCount();
     };
+    const handleChallengeEvent = () => {
+      loadPendingChallengesCount();
+    };
+    const handlePartnershipEvent = () => {
+      loadPendingPartnershipRequestsCount();
+    };
     window.addEventListener("matchInvitationCreated", handleInvitationEvent);
     window.addEventListener("matchInvitationDeleted", handleInvitationEvent);
+    window.addEventListener("matchInvitationUpdated", handleInvitationEvent);
+    window.addEventListener("teamChallengeCreated", handleChallengeEvent);
+    window.addEventListener("teamChallengeUpdated", handleChallengeEvent);
+    window.addEventListener("teamChallengeDeleted", handleChallengeEvent);
+    window.addEventListener("profileUpdated", handlePartnershipEvent);
     return () => {
       window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
       window.removeEventListener("matchInvitationDeleted", handleInvitationEvent);
+      window.removeEventListener("matchInvitationUpdated", handleInvitationEvent);
+      window.removeEventListener("teamChallengeCreated", handleChallengeEvent);
+      window.removeEventListener("teamChallengeUpdated", handleChallengeEvent);
+      window.removeEventListener("teamChallengeDeleted", handleChallengeEvent);
+      window.removeEventListener("profileUpdated", handlePartnershipEvent);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPendingInvitationsCount = async () => {
@@ -47,26 +68,81 @@ function PlayerProfileTabsContent({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { count, error } = await supabase
+      // Compter uniquement les invitations de paires reçues (pas les demandes de partenaires habituels)
+      const { count: matchInvitationsCount, error: matchInvitationsError } = await supabase
         .from('match_invitations')
         .select('*', { count: 'exact', head: true })
         .eq('receiver_id', user.id)
         .eq('status', 'pending')
         .gt('expires_at', new Date().toISOString());
 
-      if (error) {
-        console.error('[PlayerProfileTabs] Erreur count invitations', error);
+      if (matchInvitationsError) {
+        console.error('[PlayerProfileTabs] Erreur count invitations', matchInvitationsError);
         return;
       }
 
-      setPendingInvitationsCount(count || 0);
+      setPendingInvitationsCount(matchInvitationsCount || 0);
     } catch (error) {
       console.error('[PlayerProfileTabs] Erreur inattendue', error);
     }
   };
 
+  const loadPendingChallengesCount = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Compter les défis reçus où l'utilisateur est un defender avec status pending
+      const { data: challenges, error } = await supabase
+        .from('team_challenges')
+        .select('id, defender_player_1_id, defender_player_2_id, defender_1_status, defender_2_status, status')
+        .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString());
+
+      if (error) {
+        console.error('[PlayerProfileTabs] Erreur count challenges', error);
+        return;
+      }
+
+      // Compter uniquement les défis où l'utilisateur n'a pas encore répondu (status pending pour lui)
+      const pendingCount = (challenges || []).filter((challenge: any) => {
+        const isDefender1 = challenge.defender_player_1_id === user.id;
+        const myStatus = isDefender1 ? challenge.defender_1_status : challenge.defender_2_status;
+        return myStatus === 'pending';
+      }).length;
+
+      setPendingChallengesCount(pendingCount);
+    } catch (error) {
+      console.error('[PlayerProfileTabs] Erreur chargement défis', error);
+    }
+  };
+
+  const loadPendingPartnershipRequestsCount = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Compter les invitations de partenaires habituels reçues
+      const { count: partnershipInvitationsCount, error: partnershipInvitationsError } = await supabase
+        .from('player_partnerships')
+        .select('*', { count: 'exact', head: true })
+        .eq('partner_id', user.id)
+        .eq('status', 'pending');
+
+      if (partnershipInvitationsError) {
+        console.error('[PlayerProfileTabs] Erreur count partnership requests', partnershipInvitationsError);
+        return;
+      }
+
+      setPendingPartnershipRequestsCount(partnershipInvitationsCount || 0);
+    } catch (error) {
+      console.error('[PlayerProfileTabs] Erreur chargement demandes partenaires', error);
+    }
+  };
+
   useEffect(() => {
-    if (tabFromUrl && ['stats', 'leaderboard', 'badges', 'padel'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['stats', 'leaderboard', 'padel', 'partners'].includes(tabFromUrl)) {
       setCurrentTab(tabFromUrl);
     }
   }, [tabFromUrl]);
@@ -74,8 +150,8 @@ function PlayerProfileTabsContent({
   const tabs = [
     { id: 'stats' as TabType, label: 'Mes stats' },
     { id: 'leaderboard' as TabType, label: 'Classement global' },
-    { id: 'badges' as TabType, label: 'Mes badges' },
-    { id: 'padel' as TabType, label: 'Mon Profil', badge: pendingInvitationsCount },
+    { id: 'partners' as TabType, label: 'Trouve tes partenaires', badge: pendingInvitationsCount + pendingChallengesCount },
+    { id: 'padel' as TabType, label: 'Mon Profil', badge: pendingPartnershipRequestsCount },
   ];
 
   return (
@@ -120,9 +196,11 @@ function PlayerProfileTabsContent({
         <div style={{ display: currentTab === 'leaderboard' ? 'block' : 'none' }}>
           {leaderboardContent}
         </div>
-        <div style={{ display: currentTab === 'badges' ? 'block' : 'none' }}>
-          {badgesContent}
-        </div>
+        {partnersContent && (
+          <div style={{ display: currentTab === 'partners' ? 'block' : 'none' }}>
+            {partnersContent}
+          </div>
+        )}
         {padelContent && (
           <div style={{ display: currentTab === 'padel' ? 'block' : 'none' }}>
             {padelContent}
@@ -140,7 +218,7 @@ export default function PlayerProfileTabs(props: PlayerProfileTabsProps) {
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes stats</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Classement global</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Trouve tes partenaires</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon Profil</div>
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center">

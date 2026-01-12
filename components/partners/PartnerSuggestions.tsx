@@ -31,6 +31,73 @@ export default function PartnerSuggestions() {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [pendingInvitePlayer, setPendingInvitePlayer] =
     useState<SuggestedPlayer | null>(null);
+  const [invitationStatuses, setInvitationStatuses] = useState<Map<string, { sent: boolean; received: boolean; senderName?: string; isAccepted?: boolean }>>(new Map());
+
+  const checkInvitationStatuses = useCallback(async (players: SuggestedPlayer[]) => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const playerIds = players.map(p => p.id);
+      
+      // Vérifier les invitations envoyées (sender_id = user, receiver_id = player) - pending ou accepted
+      const { data: sentInvitations } = await supabase
+        .from("match_invitations")
+        .select("receiver_id, status")
+        .eq("sender_id", user.id)
+        .in("receiver_id", playerIds)
+        .in("status", ["pending", "accepted"])
+        .gt("expires_at", new Date().toISOString());
+      
+      // Vérifier les invitations reçues (sender_id = player, receiver_id = user) - pending ou accepted
+      const { data: receivedInvitations } = await supabase
+        .from("match_invitations")
+        .select("sender_id, status")
+        .eq("receiver_id", user.id)
+        .in("sender_id", playerIds)
+        .in("status", ["pending", "accepted"])
+        .gt("expires_at", new Date().toISOString());
+      
+      // Récupérer les profils des expéditeurs pour obtenir leurs noms
+      const senderIds = receivedInvitations?.map(inv => inv.sender_id) || [];
+      let senderProfilesMap = new Map();
+      if (senderIds.length > 0) {
+        const { data: senderProfiles } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, display_name")
+          .in("id", senderIds);
+        
+        if (senderProfiles) {
+          senderProfilesMap = new Map(senderProfiles.map(p => [p.id, p]));
+        }
+      }
+      
+      const statusMap = new Map<string, { sent: boolean; received: boolean; senderName?: string }>();
+      
+      players.forEach(player => {
+        const sentInv = sentInvitations?.find(inv => inv.receiver_id === player.id);
+        const receivedInv = receivedInvitations?.find(inv => inv.sender_id === player.id);
+        const sent = !!sentInv;
+        const received = !!receivedInv;
+        const isAccepted = (sentInv?.status === "accepted") || (receivedInv?.status === "accepted");
+        
+        const senderProfile = received ? senderProfilesMap.get(player.id) : null;
+        const senderName = senderProfile ? (
+          senderProfile.first_name && senderProfile.last_name
+            ? `${senderProfile.first_name} ${senderProfile.last_name}`
+            : senderProfile.display_name || senderProfile.first_name || "ce joueur"
+        ) : undefined;
+        
+        statusMap.set(player.id, { sent, received, senderName, isAccepted });
+      });
+      
+      setInvitationStatuses(statusMap);
+    } catch (error) {
+      console.error("[PartnerSuggestions] Erreur vérification invitations", error);
+    }
+  }, [supabase]);
 
   const fetchSuggestions = useCallback(async () => {
     try {
@@ -62,11 +129,25 @@ export default function PartnerSuggestions() {
           setSuggestions([]);
           return;
         }
-        throw new Error(`Erreur ${response.status}`);
+        if (response.status === 429) {
+          setError("Trop de requêtes. Veuillez patienter quelques instants.");
+          setSuggestions([]);
+          return;
+        }
+        console.error('[PartnerSuggestions] Erreur fetch suggestions:', response.status, response.statusText);
+        setError(`Erreur ${response.status}`);
+        setSuggestions([]);
+        return;
       }
 
       const data = await response.json();
-      setSuggestions(data.suggestions || []);
+      const fetchedSuggestions = data.suggestions || [];
+      setSuggestions(fetchedSuggestions);
+      
+      // Vérifier les invitations existantes pour chaque suggestion
+      if (fetchedSuggestions.length > 0) {
+        await checkInvitationStatuses(fetchedSuggestions);
+      }
     } catch (err) {
       console.error("[PartnerSuggestions] Erreur:", err);
       setError("Erreur lors du chargement des suggestions");
@@ -74,7 +155,7 @@ export default function PartnerSuggestions() {
     } finally {
       setLoading(false);
     }
-  }, [suggestions.length]);
+  }, [suggestions.length, checkInvitationStatuses]);
 
   const createMatchInvitation = useCallback(
     async (receiverId: string) => {
@@ -122,6 +203,14 @@ export default function PartnerSuggestions() {
         }
 
         showToast("Invitation envoyée ! Valable 24h.", "success");
+        
+        // Mettre à jour le statut local
+        setInvitationStatuses(prev => {
+          const next = new Map(prev);
+          next.set(receiverId, { sent: true, received: false });
+          return next;
+        });
+        
         fetchSuggestions();
         // Déclencher un événement pour recharger les composants d'invitations
         window.dispatchEvent(new CustomEvent("matchInvitationCreated"));
@@ -182,13 +271,38 @@ export default function PartnerSuggestions() {
       fetchSuggestions();
     };
     
+    // Écouter les événements d'invitations pour mettre à jour les statuts
+    const handleInvitationEvent = (event?: Event) => {
+      if (suggestions.length > 0) {
+        // Si c'est une suppression, mettre à jour immédiatement le statut pour le joueur concerné
+        if (event && 'detail' in event && (event as CustomEvent).detail) {
+          const detail = (event as CustomEvent).detail as { invitationId?: string; receiverId?: string };
+          if (detail.receiverId) {
+            setInvitationStatuses((prev) => {
+              const next = new Map(prev);
+              next.delete(detail.receiverId!);
+              return next;
+            });
+          }
+        }
+        // Recharger tous les statuts
+        checkInvitationStatuses(suggestions);
+      }
+    };
+    
     if (typeof window !== 'undefined') {
       window.addEventListener('profileUpdated', handleProfileUpdate);
+      window.addEventListener('matchInvitationCreated', handleInvitationEvent);
+      window.addEventListener('matchInvitationUpdated', handleInvitationEvent);
+      window.addEventListener('matchInvitationDeleted', handleInvitationEvent as EventListener);
       return () => {
         window.removeEventListener('profileUpdated', handleProfileUpdate);
+        window.removeEventListener('matchInvitationCreated', handleInvitationEvent);
+        window.removeEventListener('matchInvitationUpdated', handleInvitationEvent);
+        window.removeEventListener('matchInvitationDeleted', handleInvitationEvent as EventListener);
       };
     }
-  }, [fetchSuggestions]);
+  }, [fetchSuggestions, suggestions, checkInvitationStatuses]);
 
   // Recharger automatiquement quand un match est soumis ou qu'un questionnaire est complété
   useEffect(() => {
@@ -317,6 +431,12 @@ export default function PartnerSuggestions() {
             player.first_name && player.last_name
               ? `${player.first_name[0]}${player.last_name[0]}`
               : player.display_name?.[0]?.toUpperCase() || "J";
+          
+          const invitationStatus = invitationStatuses.get(player.id);
+          const hasSentInvitation = invitationStatus?.sent || false;
+          const hasReceivedInvitation = invitationStatus?.received || false;
+          const isAccepted = invitationStatus?.isAccepted || false;
+          const senderName = invitationStatus?.senderName;
 
           return (
             <motion.div
@@ -386,7 +506,7 @@ export default function PartnerSuggestions() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => router.push(`/players/${player.id}`)}
+                  onClick={() => router.push(`/players/${player.id}?from=partners`)}
                   className="flex-1 py-2 px-3 border border-white/20 text-gray-300 rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 active:bg-slate-700/50 min-h-[44px]"
                 >
                   <Eye size={14} />
@@ -394,14 +514,52 @@ export default function PartnerSuggestions() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleInviteClick(player)}
-                  disabled={isInvitingId === player.id}
+                  onClick={() => {
+                    if (isAccepted) {
+                      showToast("Une invitation de paire acceptée existe déjà avec ce joueur", "error");
+                      return;
+                    }
+                    if (hasSentInvitation) {
+                      showToast("Une proposition de paire a déjà été envoyée à ce joueur", "error");
+                      return;
+                    }
+                    if (hasReceivedInvitation) {
+                      showToast(`Vous avez déjà une proposition de paire de ${senderName || "ce joueur"}`, "error");
+                      return;
+                    }
+                    handleInviteClick(player);
+                  }}
+                  disabled={isInvitingId === player.id || hasSentInvitation || hasReceivedInvitation || isAccepted}
                   className="flex-1 py-2 px-3 bg-blue-500 text-white rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 active:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                  title={
+                    isAccepted
+                      ? "Une invitation de paire acceptée existe déjà avec ce joueur"
+                      : hasSentInvitation
+                      ? "Une proposition de paire a déjà été envoyée à ce joueur"
+                      : hasReceivedInvitation
+                      ? `Vous avez déjà une proposition de paire de ${senderName || "ce joueur"}`
+                      : undefined
+                  }
                 >
                   {isInvitingId === player.id ? (
                     <>
                       <Loader2 size={14} className="animate-spin" />
                       <span>Envoi...</span>
+                    </>
+                  ) : isAccepted ? (
+                    <>
+                      <MessageCircle size={14} />
+                      <span>Acceptée</span>
+                    </>
+                  ) : hasSentInvitation ? (
+                    <>
+                      <MessageCircle size={14} />
+                      <span>Déjà envoyée</span>
+                    </>
+                  ) : hasReceivedInvitation ? (
+                    <>
+                      <MessageCircle size={14} />
+                      <span>Reçue</span>
                     </>
                   ) : (
                     <>

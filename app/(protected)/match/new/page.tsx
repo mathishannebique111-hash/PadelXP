@@ -4,6 +4,7 @@ import MatchForm from "@/components/MatchForm";
 import PageTitle from "@/components/PageTitle";
 import MatchTabs from "@/components/MatchTabs";
 import MatchHistoryContent from "@/components/MatchHistoryContent";
+import BadgesContent from "@/components/BadgesContent";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
 
@@ -27,7 +28,7 @@ export default async function NewMatchPage({
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = searchParams?.tab === 'history' ? 'history' : 'record';
+  const activeTab = searchParams?.tab === 'history' ? 'history' : searchParams?.tab === 'badges' ? 'badges' : 'record';
   
   if (!user) {
     return (
@@ -118,6 +119,7 @@ export default async function NewMatchPage({
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
               <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
               <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
+              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
             </div>
             <div className="mt-4 sm:mt-6 flex items-center justify-center">
               <div className="text-white/60">Chargement...</div>
@@ -128,6 +130,7 @@ export default async function NewMatchPage({
             activeTab={activeTab}
             recordContent={<MatchForm selfId={user.id} />}
             historyContent={<MatchHistoryContent />}
+            badgesContent={<BadgesContent />}
           />
         </Suspense>
       </div>

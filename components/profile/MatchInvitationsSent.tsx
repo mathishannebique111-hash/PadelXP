@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Send, Clock, CheckCircle2, XCircle, MessageCircle, Loader2, User, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
 import Image from "next/image";
 import { showToast } from "@/components/ui/Toast";
 import { openWhatsApp } from "@/lib/utils/whatsapp";
 
 interface MatchInvitation {
   id: string;
+  sender_id: string;
   receiver_id: string;
   status: "pending" | "accepted" | "refused" | "expired";
   created_at: string;
@@ -34,18 +34,17 @@ export default function MatchInvitationsSent() {
   useEffect(() => {
     loadInvitations();
     
-    // Écouter les événements de création/mise à jour/suppression d'invitation
+    // Écouter les événements de création/mise à jour d'invitation
+    // On n'écoute PAS matchInvitationDeleted car on met à jour l'état local directement
     const handleInvitationEvent = () => {
       loadInvitations();
     };
     window.addEventListener("matchInvitationCreated", handleInvitationEvent);
     window.addEventListener("matchInvitationUpdated", handleInvitationEvent);
-    window.addEventListener("matchInvitationDeleted", handleInvitationEvent);
     
     return () => {
       window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
       window.removeEventListener("matchInvitationUpdated", handleInvitationEvent);
-      window.removeEventListener("matchInvitationDeleted", handleInvitationEvent);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -61,7 +60,7 @@ export default function MatchInvitationsSent() {
       // Récupérer les invitations (uniquement celles qui ne sont pas acceptées)
       const { data: invitationsData, error: invitationsError } = await supabase
         .from("match_invitations")
-        .select("*")
+        .select("id, sender_id, receiver_id, status, created_at, expires_at, responded_at")
         .eq("sender_id", user.id)
         .neq("status", "accepted")
         .order("created_at", { ascending: false })
@@ -266,32 +265,75 @@ export default function MatchInvitationsSent() {
 
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from("match_invitations")
-        .delete()
-        .eq("id", invitationId)
-        .eq("sender_id", user.id); // Sécurité : on ne peut supprimer que ses propres invitations
-
-      if (error) {
-        console.error("[MatchInvitationsSent] Erreur suppression", error);
-        throw error;
+      
+      if (userError || !user) {
+        console.error("[MatchInvitationsSent] Erreur authentification", userError);
+        showToast("Vous devez être connecté", "error");
+        return;
       }
 
-      // Déclencher l'événement AVANT de recharger pour synchronisation
-      window.dispatchEvent(new CustomEvent("matchInvitationDeleted"));
+      console.log("[MatchInvitationsSent] Tentative suppression invitation:", invitationId);
+      console.log("[MatchInvitationsSent] User ID:", user.id);
+
+      // Récupérer l'ID du receiver avant suppression pour l'événement
+      const invitationToDelete = invitations.find(inv => inv.id === invitationId);
+      const receiverId = invitationToDelete?.receiver_id;
       
-      // Recharger les invitations après un court délai pour laisser le temps à l'événement de se propager
-      setTimeout(async () => {
-        await loadInvitations();
-      }, 100);
+      if (!invitationToDelete) {
+        console.warn("[MatchInvitationsSent] Invitation non trouvée dans l'état local");
+        showToast("Invitation non trouvée", "error");
+        return;
+      }
+
+      console.log("[MatchInvitationsSent] Invitation à supprimer:", {
+        id: invitationToDelete.id,
+        sender_id: invitationToDelete.sender_id || 'N/A',
+        receiver_id: invitationToDelete.receiver_id,
+        status: invitationToDelete.status
+      });
+
+      // Vérifier que l'utilisateur est bien le sender
+      if (invitationToDelete.sender_id && invitationToDelete.sender_id !== user.id) {
+        console.error("[MatchInvitationsSent] L'utilisateur n'est pas le sender de cette invitation");
+        showToast("Vous ne pouvez supprimer que vos propres invitations", "error");
+        return;
+      }
+
+      // Supprimer l'invitation via l'API pour éviter les problèmes de RLS
+      const response = await fetch(`/api/invitations/delete?id=${invitationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Erreur inconnue" }));
+        console.error("[MatchInvitationsSent] Erreur suppression API:", errorData);
+        showToast(errorData.error || "Impossible de supprimer l'invitation", "error");
+        return;
+      }
+
+      const result = await response.json();
+      console.log("[MatchInvitationsSent] Suppression réussie via API:", result);
+
+      // Mettre à jour l'état local APRÈS confirmation de la suppression
+      setInvitations((prev) => {
+        const filtered = prev.filter((inv) => inv.id !== invitationId);
+        console.log("[MatchInvitationsSent] État local mis à jour. Invitations restantes:", filtered.length);
+        return filtered;
+      });
+
+      // Déclencher l'événement pour synchroniser les autres composants
+      window.dispatchEvent(new CustomEvent("matchInvitationDeleted", { 
+        detail: { invitationId, receiverId } 
+      }));
       
       showToast("Invitation supprimée", "success");
     } catch (error) {
-      console.error("[MatchInvitationsSent] Erreur suppression invitation", error);
+      console.error("[MatchInvitationsSent] Erreur exception suppression invitation", error);
       showToast("Impossible de supprimer l'invitation", "error");
+      await loadInvitations(); // Recharger pour récupérer l'état correct
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);
@@ -333,10 +375,8 @@ export default function MatchInvitationsSent() {
               : receiver.first_name || receiver.last_name || "Joueur";
 
           return (
-            <motion.div
+            <div
               key={invitation.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
               className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-white/10"
             >
               <div className="flex items-center gap-3 mb-2">
@@ -374,7 +414,7 @@ export default function MatchInvitationsSent() {
                     type="button"
                     onClick={() => handleDeleteInvitation(invitation.id)}
                     disabled={deletingIds.has(invitation.id)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-500/15 border border-red-400/40 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/25 disabled:opacity-50 transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-500/15 border border-red-400/40 px-3 py-2 text-xs font-medium text-red-200 hover:bg-red-500/25 disabled:opacity-50"
                     title="Supprimer l'invitation"
                   >
                     {deletingIds.has(invitation.id) ? (
@@ -386,7 +426,7 @@ export default function MatchInvitationsSent() {
                   </button>
                 </div>
               )}
-            </motion.div>
+            </div>
           );
         })}
       </div>

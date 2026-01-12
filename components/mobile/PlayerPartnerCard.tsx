@@ -41,7 +41,12 @@ interface PendingRequest {
   };
 }
 
-export function PlayerPartnerCard() {
+interface PlayerPartnerCardProps {
+  hasLevel?: boolean;
+  pendingRequestSender?: { first_name: string; last_name: string } | null;
+}
+
+export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null }: PlayerPartnerCardProps) {
   const router = useRouter();
   const [partner, setPartner] = useState<Partner | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
@@ -75,7 +80,14 @@ export function PlayerPartnerCard() {
 
         // 1. Récupérer TOUTES les relations via API (bypass RLS)
         const response = await fetch('/api/partnerships/list');
-        if (!response.ok) throw new Error('Failed to fetch partnerships');
+        if (!response.ok) {
+          console.error('[PlayerPartnerCard] Erreur fetch partnerships:', response.status, response.statusText);
+          // Ne pas faire planter l'application, juste logger l'erreur
+          setPartner(null);
+          setPendingRequests([]);
+          setSentRequest(null);
+          return;
+        }
         const { partnerships } = await response.json();
 
         console.log('[PlayerPartnerCard] Partnerships fetched via API:', partnerships);
@@ -201,6 +213,12 @@ export function PlayerPartnerCard() {
 
       } catch (error) {
         console.error('[PlayerPartnerCard] Erreur chargement', error);
+        // En cas d'erreur, réinitialiser les états pour éviter un état incohérent
+        if (isMounted) {
+          setPartner(null);
+          setPendingRequests([]);
+          setSentRequest(null);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -241,9 +259,19 @@ export function PlayerPartnerCard() {
 
     init();
 
+    // Écouter les événements profileUpdated pour recharger les données
+    const handleProfileUpdate = () => {
+      if (isMounted) {
+        loadPartnerData();
+      }
+    };
+    
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+
     return () => {
       isMounted = false;
       if (channel) supabase.removeChannel(channel);
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
     };
   }, []);
 
@@ -269,8 +297,12 @@ export function PlayerPartnerCard() {
         throw new Error(error.error || 'Erreur lors de la réponse');
       }
 
-      // Reload to update the UI
-      window.location.reload();
+      // Notifier pour recharger les données sans recharger la page
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
+      }
+      
+      setResponding(null);
     } catch (error) {
       console.error('[PlayerPartnerCard] Erreur réponse partenariat', error);
       alert('Impossible de traiter la demande');
@@ -297,10 +329,14 @@ export function PlayerPartnerCard() {
         throw new Error('Erreur lors de l’annulation');
       }
 
-      // Fermer le dialog et recharger
+      // Fermer le dialog et notifier pour recharger les données
       setCancelDialogOpen(false);
       setRequestToCancel(null);
-      window.location.reload();
+      
+      // Notifier pour recharger les données sans recharger la page
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
+      }
     } catch (err) {
       console.error("Erreur annulation", err);
       alert("Impossible d'annuler la demande");
@@ -407,8 +443,10 @@ export function PlayerPartnerCard() {
       setShowDropdown(false);
       setShowAddPartner(false);
 
-      // Recharger les données
-      window.location.reload();
+      // Notifier pour recharger les données sans recharger la page
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
+      }
     } catch (error) {
       console.error('[PlayerPartnerCard] Erreur ajout partenaire', error);
       alert('Erreur réseau');
@@ -432,15 +470,33 @@ export function PlayerPartnerCard() {
             <Users size={18} className="text-blue-400" />
             <span className="text-sm font-semibold text-white">Mon partenaire habituel</span>
           </div>
-          <button
-            onClick={() => setShowAddPartner(!showAddPartner)}
-            className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-          >
-            {showAddPartner ? 'Annuler' : 'Ajouter'}
-          </button>
+          {hasLevel && (
+            <button
+              onClick={() => setShowAddPartner(!showAddPartner)}
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+            >
+              {showAddPartner ? 'Annuler' : 'Ajouter'}
+            </button>
+          )}
         </div>
 
         <div className="space-y-4">
+          {/* Message si pas de niveau */}
+          {!hasLevel && (
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 font-normal space-y-2">
+              {/* Message si demande reçue sans niveau */}
+              {pendingRequestSender && (
+                <p className="text-white/90">
+                  Tu as reçu une demande de partenaire habituel de la part de {pendingRequestSender.first_name} {pendingRequestSender.last_name}
+                </p>
+              )}
+              <p>Évalue ton niveau pour débloquer l'accès au partenaire habituel</p>
+            </div>
+          )}
+
+          {/* Contenu normal si niveau évalué */}
+          {hasLevel && (
+            <>
 
           {/* 1. SECTION INVITATIONS REÇUES */}
           {pendingRequests.length > 0 && (
@@ -464,7 +520,7 @@ export function PlayerPartnerCard() {
                         {req.partner.first_name} {req.partner.last_name}
                       </p>
                       <p className="text-xs text-blue-400 font-medium">
-                        Souhaite devenir votre partenaire
+                        Souhaite devenir votre partenaire habituel
                       </p>
                     </div>
                   </div>
@@ -609,6 +665,8 @@ export function PlayerPartnerCard() {
               <UserPlus size={20} />
               <p className="text-sm">Aucun partenaire pour le moment</p>
             </div>
+          )}
+            </>
           )}
         </div>
       </div>
