@@ -8,6 +8,7 @@ import PlayerClubLogo from '@/components/PlayerClubLogo';
 import PlayerSafeAreaColor from '@/components/PlayerSafeAreaColor';
 import { PopupQueueProvider } from '@/contexts/PopupQueueContext';
 import PopupQueueRenderer from '@/components/notifications/PopupQueueRenderer';
+import ToastContainer from '@/components/ui/Toast';
 
 export default function PlayerAccountLayout({
   children,
@@ -198,6 +199,8 @@ export default function PlayerAccountLayout({
           </div>
           {/* Renderer pour afficher les popups de la file d'attente */}
           <PopupQueueRenderer />
+          {/* Toast notifications */}
+          <ToastContainer />
         </div>
       </PopupQueueProvider>
     </>

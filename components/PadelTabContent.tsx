@@ -8,6 +8,9 @@ import PartnerSuggestions from "@/components/partners/PartnerSuggestions";
 import SuggestedMatches from "@/components/partners/SuggestedMatches";
 import { PlayerPartnerCard } from "@/components/mobile/PlayerPartnerCard";
 import { Lightbulb, ArrowRight } from "lucide-react";
+import MatchInvitationsReceived from "@/components/profile/MatchInvitationsReceived";
+import MatchInvitationsSent from "@/components/profile/MatchInvitationsSent";
+import AcceptedInvitations from "@/components/profile/AcceptedInvitations";
 
 interface Props {
   profile: any;
@@ -140,6 +143,12 @@ export default function PadelTabContent({ profile }: Props) {
       {/* Partenaire habituel */}
       <PlayerPartnerCard />
 
+      {/* Invitations acceptées */}
+      <AcceptedInvitations />
+
+      {/* Invitations reçues */}
+      <MatchInvitationsReceived />
+
       {/* Suggestions de partenaires */}
       <PartnerSuggestions />
 
@@ -148,6 +157,9 @@ export default function PadelTabContent({ profile }: Props) {
 
       {/* Profil padel détaillé */}
       <PadelProfileSection userId={profile.id} />
+
+      {/* Invitations envoyées */}
+      <MatchInvitationsSent />
 
       {showWizard && <LevelAssessmentWizard />}
     </div>

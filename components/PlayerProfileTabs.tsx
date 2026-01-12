@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 type TabType = 'stats' | 'leaderboard' | 'badges' | 'padel';
 
@@ -24,6 +25,37 @@ function PlayerProfileTabsContent({
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
   const initialTab = tabFromUrl && ['stats', 'leaderboard', 'badges', 'padel'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
+  const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
+  const supabase = createClient();
+
+  useEffect(() => {
+    loadPendingInvitationsCount();
+    const interval = setInterval(loadPendingInvitationsCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadPendingInvitationsCount = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { count, error } = await supabase
+        .from('match_invitations')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString());
+
+      if (error) {
+        console.error('[PlayerProfileTabs] Erreur count invitations', error);
+        return;
+      }
+
+      setPendingInvitationsCount(count || 0);
+    } catch (error) {
+      console.error('[PlayerProfileTabs] Erreur inattendue', error);
+    }
+  };
 
   useEffect(() => {
     if (tabFromUrl && ['stats', 'leaderboard', 'badges', 'padel'].includes(tabFromUrl)) {
@@ -35,7 +67,7 @@ function PlayerProfileTabsContent({
     { id: 'stats' as TabType, label: 'Mes stats' },
     { id: 'leaderboard' as TabType, label: 'Classement global' },
     { id: 'badges' as TabType, label: 'Mes badges' },
-    { id: 'padel' as TabType, label: 'Mon Profil Padel' },
+    { id: 'padel' as TabType, label: 'Mon Profil Padel', badge: pendingInvitationsCount },
   ];
 
   return (
@@ -57,7 +89,14 @@ function PlayerProfileTabsContent({
                 : 'text-white/60 hover:text-white/80'
               }`}
           >
-            {tab.label}
+            <span className="flex items-center gap-2">
+              {tab.label}
+              {tab.badge !== undefined && tab.badge > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                  {tab.badge}
+                </span>
+              )}
+            </span>
             {currentTab === tab.id && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />
             )}

@@ -1,10 +1,13 @@
-"use client";
+ "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Eye, User } from "lucide-react";
+import { MessageCircle, Eye, User, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
+import AddPhoneModal from "@/components/AddPhoneModal";
+import { showToast } from "@/components/ui/Toast";
 
 interface SuggestedPlayer {
   id: string;
@@ -20,9 +23,14 @@ interface SuggestedPlayer {
 
 export default function PartnerSuggestions() {
   const router = useRouter();
+  const supabase = createClient();
   const [suggestions, setSuggestions] = useState<SuggestedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInvitingId, setIsInvitingId] = useState<string | null>(null);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [pendingInvitePlayer, setPendingInvitePlayer] =
+    useState<SuggestedPlayer | null>(null);
 
   const fetchSuggestions = useCallback(async () => {
     try {
@@ -67,6 +75,103 @@ export default function PartnerSuggestions() {
       setLoading(false);
     }
   }, [suggestions.length]);
+
+  const createMatchInvitation = useCallback(
+    async (receiverId: string) => {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          router.push("/login");
+          return;
+        }
+
+        // Vérifier si une invitation existe déjà
+        const { data: existing } = await supabase
+          .from("match_invitations")
+          .select("id, status")
+          .eq("sender_id", user.id)
+          .eq("receiver_id", receiverId)
+          .eq("status", "pending")
+          .gt("expires_at", new Date().toISOString())
+          .maybeSingle();
+
+        if (existing) {
+          showToast("Invitation déjà envoyée", "error");
+          return;
+        }
+
+        // Créer l'invitation (expire après 24h)
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+
+        const { error } = await supabase.from("match_invitations").insert({
+          sender_id: user.id,
+          receiver_id: receiverId,
+          status: "pending",
+          expires_at: expiresAt.toISOString(),
+        });
+
+        if (error) {
+          console.error("[PartnerSuggestions] Erreur création invitation", error);
+          showToast("Invitation déjà envoyée", "error");
+          return;
+        }
+
+        showToast("Invitation envoyée ! Valable 24h.", "success");
+        fetchSuggestions();
+        // Déclencher un événement pour recharger les composants d'invitations
+        window.dispatchEvent(new CustomEvent("matchInvitationCreated"));
+      } catch (e) {
+        console.error("[PartnerSuggestions] Erreur création invitation", e);
+        showToast("Erreur réseau lors de l'envoi de l'invitation.", "error");
+      }
+    },
+    [supabase, router, fetchSuggestions]
+  );
+
+  const handleInviteClick = useCallback(
+    async (player: SuggestedPlayer) => {
+      try {
+        setIsInvitingId(player.id);
+
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          router.push("/login");
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("phone_number")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("[PartnerSuggestions] Erreur chargement profil", error);
+        }
+
+        if (!profile?.phone_number) {
+          // Demander d'abord le numéro avant de créer l'invitation
+          setPendingInvitePlayer(player);
+          setShowPhoneModal(true);
+          return;
+        }
+
+        await createMatchInvitation(player.id);
+      } finally {
+        setIsInvitingId(null);
+      }
+    },
+    [supabase, router, createMatchInvitation]
+  );
 
   // Charger les suggestions au montage
   useEffect(() => {
@@ -193,15 +298,16 @@ export default function PartnerSuggestions() {
   }
 
   return (
-    <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-      <div className="mb-4">
-        <h3 className="text-base md:text-lg font-bold text-white">
-          Partenaires suggérés
-        </h3>
-      </div>
+    <>
+      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
+        <div className="mb-4">
+          <h3 className="text-base md:text-lg font-bold text-white">
+            Partenaires suggérés
+          </h3>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {suggestions.map((player, index) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {suggestions.map((player, index) => {
           const playerName =
             player.first_name && player.last_name
               ? `${player.first_name} ${player.last_name}`
@@ -288,16 +394,46 @@ export default function PartnerSuggestions() {
                 </button>
                 <button
                   type="button"
-                  className="flex-1 py-2 px-3 bg-blue-500 text-white rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 active:bg-blue-600 min-h-[44px]"
+                  onClick={() => handleInviteClick(player)}
+                  disabled={isInvitingId === player.id}
+                  className="flex-1 py-2 px-3 bg-blue-500 text-white rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 active:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                 >
-                  <MessageCircle size={14} />
-                  <span>Inviter</span>
+                  {isInvitingId === player.id ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Envoi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle size={14} />
+                      <span>Inviter à jouer</span>
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
           );
         })}
+        </div>
       </div>
-    </div>
+
+      <AddPhoneModal
+        isOpen={showPhoneModal}
+        partnerFirstName={
+          pendingInvitePlayer?.first_name ||
+          pendingInvitePlayer?.display_name?.split(" ")[0]
+        }
+        onClose={() => {
+          setShowPhoneModal(false);
+          setPendingInvitePlayer(null);
+        }}
+        onActivated={async () => {
+          if (pendingInvitePlayer) {
+            await createMatchInvitation(pendingInvitePlayer.id);
+          }
+        }}
+      />
+    </>
   );
 }
+

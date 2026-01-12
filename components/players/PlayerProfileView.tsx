@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -11,9 +12,13 @@ import {
   Shield,
   Star,
   MessageCircle,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
+import AddPhoneModal from "@/components/AddPhoneModal";
+import { showToast } from "@/components/ui/Toast";
 
 interface Player {
   id: string;
@@ -78,13 +83,17 @@ export default function PlayerProfileView({
   compatibilityTags,
 }: Props) {
   const router = useRouter();
+  const supabase = createClient();
+  const [isInviting, setIsInviting] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
 
   const playerName =
     player.first_name && player.last_name
       ? `${player.first_name} ${player.last_name}`
       : player.display_name || "Joueur";
 
-  const firstName = player.first_name || player.display_name?.split(" ")[0] || "Joueur";
+  const firstName =
+    player.first_name || player.display_name?.split(" ")[0] || "Joueur";
 
   const initials =
     player.first_name && player.last_name
@@ -92,7 +101,9 @@ export default function PlayerProfileView({
       : player.display_name?.[0]?.toUpperCase() || "J";
 
   // Formater les valeurs pour l'affichage
-  const mainForte = player.hand ? handLabels[player.hand] || player.hand : "Non renseigné";
+  const mainForte = player.hand
+    ? handLabels[player.hand] || player.hand
+    : "Non renseigné";
   const cotePrefere = player.preferred_side
     ? sideLabels[player.preferred_side] || player.preferred_side
     : "Non renseigné";
@@ -106,6 +117,94 @@ export default function PlayerProfileView({
     ? levelLabels[player.level] || player.level
     : "Non renseigné";
 
+  const createMatchInvitation = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        router.push("/login");
+        return;
+      }
+
+      // Vérifier si une invitation existe déjà
+      const { data: existing } = await supabase
+        .from("match_invitations")
+        .select("id, status")
+        .eq("sender_id", user.id)
+        .eq("receiver_id", player.id)
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+
+      if (existing) {
+        showToast("Invitation déjà envoyée", "error");
+        return;
+      }
+
+      // Créer l'invitation (expire après 24h)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      const { error } = await supabase.from("match_invitations").insert({
+        sender_id: user.id,
+        receiver_id: player.id,
+        status: "pending",
+        expires_at: expiresAt.toISOString(),
+      });
+
+      if (error) {
+        console.error("[PlayerProfileView] Erreur création invitation", error);
+        showToast("Invitation déjà envoyée", "error");
+        return;
+      }
+
+      showToast(`Invitation envoyée à ${firstName} ! Valable 24h.`, "success");
+      // Déclencher un événement pour recharger les composants d'invitations
+      window.dispatchEvent(new CustomEvent("matchInvitationCreated"));
+    } catch (e) {
+      console.error("[PlayerProfileView] Erreur création invitation", e);
+      showToast("Erreur réseau lors de l'envoi de l'invitation.", "error");
+    }
+  }, [player.id, firstName, supabase, router]);
+
+  const handleProposeMatch = useCallback(async () => {
+    try {
+      setIsInviting(true);
+
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("phone_number")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("[PlayerProfileView] Erreur chargement profil", error);
+      }
+
+      if (!profile?.phone_number) {
+        setShowPhoneModal(true);
+        return;
+      }
+
+      await createMatchInvitation();
+    } finally {
+      setIsInviting(false);
+    }
+  }, [supabase, router, createMatchInvitation]);
+
   return (
     <div className="min-h-screen bg-slate-950">
       {/* HEADER FIXE - Mobile optimized */}
@@ -113,7 +212,7 @@ export default function PlayerProfileView({
         <div className="px-4 py-3">
           <button
             type="button"
-            onClick={() => router.push('/home')}
+            onClick={() => router.push("/home")}
             className="p-2 -ml-2 rounded-lg active:bg-slate-800/50 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <ArrowLeft size={22} className="text-gray-300" />
@@ -239,11 +338,26 @@ export default function PlayerProfileView({
             <div className="flex gap-3 mt-5">
               <button
                 type="button"
-                className="flex-1 py-3.5 md:py-4 px-4 bg-gradient-to-r from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all min-h-[44px]"
+                onClick={handleProposeMatch}
+                disabled={isInviting}
+                className="flex-1 py-3.5 md:py-4 px-4 bg-gradient-to-r from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <MessageCircle size={18} className="md:hidden" />
-                <MessageCircle size={20} className="hidden md:block" />
-                <span>Proposer une partie</span>
+                {isInviting ? (
+                  <>
+                    <Loader2 size={18} className="md:hidden animate-spin" />
+                    <Loader2
+                      size={20}
+                      className="hidden md:block animate-spin"
+                    />
+                    <span>Envoi...</span>
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle size={18} className="md:hidden" />
+                    <MessageCircle size={20} className="hidden md:block" />
+                    <span>Inviter à jouer</span>
+                  </>
+                )}
               </button>
               <button
                 type="button"
@@ -259,7 +373,11 @@ export default function PlayerProfileView({
       </div>
 
       {/* PROFIL PADEL - Version mobile épurée */}
-      {(player.hand || player.preferred_side || player.frequency || player.best_shot || player.level) && (
+      {(player.hand ||
+        player.preferred_side ||
+        player.frequency ||
+        player.best_shot ||
+        player.level) && (
         <div className="px-4 pb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -387,6 +505,15 @@ export default function PlayerProfileView({
           }
         }
       `}</style>
+
+      <AddPhoneModal
+        isOpen={showPhoneModal}
+        partnerFirstName={firstName}
+        onClose={() => setShowPhoneModal(false)}
+        onActivated={async () => {
+          await createMatchInvitation();
+        }}
+      />
     </div>
   );
 }
@@ -405,14 +532,13 @@ function InfoCard({
 }) {
   return (
     <div
-      className={`${full ? "col-span-2" : ""} border border-white/20 bg-white/5 rounded-xl p-3 md:p-3.5`}
+      className={`${
+        full ? "col-span-2" : ""
+      } border border-white/20 bg-white/5 rounded-xl p-3 md:p-3.5`}
     >
       <div className="flex items-center gap-2 md:gap-3">
         <Icon size={16} className="text-white flex-shrink-0 md:hidden" />
-        <Icon
-          size={18}
-          className="text-white flex-shrink-0 hidden md:block"
-        />
+        <Icon size={18} className="text-white flex-shrink-0 hidden md:block" />
         <div className="min-w-0 flex-1">
           <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 leading-tight">
             {label}
@@ -425,3 +551,4 @@ function InfoCard({
     </div>
   );
 }
+
