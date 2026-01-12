@@ -9,6 +9,19 @@ import { createClient } from "@/lib/supabase/client";
 import { showToast } from "@/components/ui/Toast";
 import AddPhoneModal from "@/components/AddPhoneModal";
 
+// Fonction pour calculer le temps restant avant expiration (48h)
+const getTimeRemaining = (expiresAt: string, currentTime: Date): { hours: number; minutes: number; expired: boolean } | null => {
+    const expires = new Date(expiresAt);
+    const diff = expires.getTime() - currentTime.getTime();
+
+    if (diff <= 0) return { hours: 0, minutes: 0, expired: true };
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    return { hours, minutes, expired: false };
+};
+
 interface SuggestedPair {
     id: string;
     player1: {
@@ -36,6 +49,8 @@ export default function SuggestedMatches() {
     const [showPhoneModal, setShowPhoneModal] = useState(false);
     const [pendingChallenge, setPendingChallenge] = useState<{ player1_id: string; player2_id: string } | null>(null);
     const [myPartner, setMyPartner] = useState<{ id: string; first_name: string | null } | null>(null);
+    const [existingChallenges, setExistingChallenges] = useState<Map<string, { expires_at: string; status: string }>>(new Map());
+    const [currentTime, setCurrentTime] = useState(new Date());
     const supabase = createClient();
 
     const fetchSuggestions = useCallback(async () => {
@@ -71,6 +86,59 @@ export default function SuggestedMatches() {
         fetchSuggestions();
         loadMyPartner();
     }, [fetchSuggestions]);
+
+    // Charger les défis existants et mettre à jour le temps toutes les secondes
+    useEffect(() => {
+        const loadExistingChallenges = async () => {
+            if (!myPartner) return;
+            
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const { data: challenges } = await supabase
+                    .from("team_challenges")
+                    .select("id, challenger_player_1_id, challenger_player_2_id, defender_player_1_id, defender_player_2_id, status, expires_at")
+                    .or(`and(challenger_player_1_id.eq.${user.id},challenger_player_2_id.eq.${myPartner.id}),and(challenger_player_1_id.eq.${myPartner.id},challenger_player_2_id.eq.${user.id})`)
+                    .in("status", ["pending", "accepted"]);
+
+                if (challenges) {
+                    const challengesMap = new Map();
+                    challenges.forEach((challenge) => {
+                        // Créer une clé unique pour identifier la paire défendue
+                        const defenderKey = `${challenge.defender_player_1_id}-${challenge.defender_player_2_id}`;
+                        challengesMap.set(defenderKey, {
+                            expires_at: challenge.expires_at,
+                            status: challenge.status
+                        });
+                    });
+                    setExistingChallenges(challengesMap);
+                }
+            } catch (error) {
+                console.error("[SuggestedMatches] Erreur chargement défis existants", error);
+            }
+        };
+
+        loadExistingChallenges();
+
+        // Écouter les événements de création/mise à jour de défi
+        const handleChallengeEvent = () => {
+            loadExistingChallenges();
+        };
+        window.addEventListener("teamChallengeCreated", handleChallengeEvent);
+        window.addEventListener("teamChallengeUpdated", handleChallengeEvent);
+
+        // Mettre à jour le temps toutes les secondes
+        const interval = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener("teamChallengeCreated", handleChallengeEvent);
+            window.removeEventListener("teamChallengeUpdated", handleChallengeEvent);
+        };
+    }, [myPartner, supabase]);
 
     const loadMyPartner = async () => {
         try {
@@ -114,10 +182,11 @@ export default function SuggestedMatches() {
                 return;
             }
 
-            // 0. Vérifier si un défi existe déjà entre ces deux paires
+            // 0. Vérifier si un défi existe déjà entre ces deux paires (dans les deux sens)
+            // A. Vérifier si j'ai déjà envoyé un défi à cette paire
             const { data: existingChallenge, error: checkError } = await supabase
                 .from("team_challenges")
-                .select("id, status")
+                .select("id, status, created_at, expires_at")
                 .eq("challenger_player_1_id", user.id)
                 .eq("challenger_player_2_id", myPartner.id)
                 .eq("defender_player_1_id", defenderPair.player1_id)
@@ -131,6 +200,27 @@ export default function SuggestedMatches() {
 
             if (existingChallenge) {
                 showToast("Vous défiez déjà cette paire actuellement", "info");
+                setChallenging(null);
+                return;
+            }
+
+            // B. Vérifier si cette paire a déjà envoyé un défi à ma paire
+            const { data: reverseChallenge, error: reverseCheckError } = await supabase
+                .from("team_challenges")
+                .select("id, status, created_at, expires_at")
+                .eq("challenger_player_1_id", defenderPair.player1_id)
+                .eq("challenger_player_2_id", defenderPair.player2_id)
+                .eq("defender_player_1_id", user.id)
+                .eq("defender_player_2_id", myPartner.id)
+                .in("status", ["pending", "accepted"])
+                .maybeSingle();
+
+            if (reverseCheckError) {
+                console.error("[SuggestedMatches] Erreur vérification défi inverse", reverseCheckError);
+            }
+
+            if (reverseChallenge) {
+                showToast("Cette paire vous a déjà défié. Répondez à leur défi d'abord.", "info");
                 setChallenging(null);
                 return;
             }
@@ -244,8 +334,27 @@ export default function SuggestedMatches() {
                             transition={{ delay: index * 0.1 }}
                             className="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl border border-white/10 overflow-hidden"
                         >
+                            {/* Compteur 48h en haut à droite si défi existant */}
+                            {(() => {
+                                const challengeKey = `${pair.player1.id}-${pair.player2.id}`;
+                                const challenge = existingChallenges.get(challengeKey);
+                                if (challenge) {
+                                    const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
+                                    if (timeRemaining && !timeRemaining.expired) {
+                                        return (
+                                            <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-20">
+                                                <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap">
+                                                    {timeRemaining.hours}h {timeRemaining.minutes}m
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+                                }
+                                return null;
+                            })()}
+                            
                             {/* Header de compatibilité */}
-                            <div className="absolute top-3 right-3 z-10">
+                            <div className={`absolute top-3 ${existingChallenges.has(`${pair.player1.id}-${pair.player2.id}`) ? 'right-20' : 'right-3'} z-10`}>
                                 <div className="bg-emerald-500/20 backdrop-blur-md px-2 py-1 rounded-lg border border-emerald-500/30 flex flex-col items-center">
                                     <span className="text-[10px] text-emerald-400 font-bold leading-none">
                                         {pair.compatibilityScore}%
@@ -312,24 +421,33 @@ export default function SuggestedMatches() {
                                 </div>
 
                                 {/* Action - Voir la paire / Défier */}
-                                <button
-                                    type="button"
-                                    onClick={() => handleChallenge({ player1_id: pair.player1.id, player2_id: pair.player2.id })}
-                                    disabled={challenging === `${pair.player1.id}-${pair.player2.id}` || !myPartner}
-                                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {challenging === `${pair.player1.id}-${pair.player2.id}` ? (
-                                        <>
-                                            <Loader2 size={14} className="animate-spin" />
-                                            Envoi...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Swords size={14} />
-                                            DÉFIER CETTE PAIRE
-                                        </>
-                                    )}
-                                </button>
+                                {(() => {
+                                    const challengeKey = `${pair.player1.id}-${pair.player2.id}`;
+                                    const hasExistingChallenge = existingChallenges.has(challengeKey);
+                                    
+                                    return (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleChallenge({ player1_id: pair.player1.id, player2_id: pair.player2.id })}
+                                            disabled={challenging === `${pair.player1.id}-${pair.player2.id}` || !myPartner || hasExistingChallenge}
+                                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {hasExistingChallenge ? (
+                                                "DÉFI EN COURS"
+                                            ) : challenging === `${pair.player1.id}-${pair.player2.id}` ? (
+                                                <>
+                                                    <Loader2 size={14} className="animate-spin" />
+                                                    Envoi...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Swords size={14} />
+                                                    DÉFIER CETTE PAIRE
+                                                </>
+                                            )}
+                                        </button>
+                                    );
+                                })()}
                             </div>
                         </motion.div>
                     ))}

@@ -13,6 +13,7 @@ import ChallengesReceived from "@/components/profile/ChallengesReceived";
 export default function FindPartnersTabContent() {
   const [hasLevel, setHasLevel] = useState<boolean | null>(null);
   const [hasPartner, setHasPartner] = useState<boolean>(false);
+  const [hasActiveChallenges, setHasActiveChallenges] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -63,12 +64,23 @@ export default function FindPartnersTabContent() {
       loadProfileData();
     };
 
+    // Écouter les événements de mise à jour des défis
+    const handleChallengeEvent = () => {
+      loadProfileData();
+    };
+
     window.addEventListener("profileUpdated", handleProfileUpdate);
     window.addEventListener("questionnaireCompleted", handleQuestionnaireCompleted);
+    window.addEventListener("teamChallengeCreated", handleChallengeEvent);
+    window.addEventListener("teamChallengeUpdated", handleChallengeEvent);
+    window.addEventListener("teamChallengeDeleted", handleChallengeEvent);
 
     return () => {
       window.removeEventListener("profileUpdated", handleProfileUpdate);
       window.removeEventListener("questionnaireCompleted", handleQuestionnaireCompleted);
+      window.removeEventListener("teamChallengeCreated", handleChallengeEvent);
+      window.removeEventListener("teamChallengeUpdated", handleChallengeEvent);
+      window.removeEventListener("teamChallengeDeleted", handleChallengeEvent);
     };
   }, [loadProfileData]);
 
@@ -115,14 +127,14 @@ export default function FindPartnersTabContent() {
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
             <p>Évalue ton niveau dans l'onglet "Mon profil" et ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs.</p>
           </div>
-        ) : !hasPartner ? (
+        ) : !hasPartner && !hasActiveChallenges ? (
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
             <p>Ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs.</p>
           </div>
         ) : (
           <>
-            {/* Matchs suggérés */}
-            <SuggestedMatches />
+            {/* Matchs suggérés - seulement si le joueur a un partenaire habituel */}
+            {hasPartner && <SuggestedMatches />}
 
             {/* Défis envoyés */}
             <ChallengesSent />

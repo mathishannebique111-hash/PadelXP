@@ -63,6 +63,25 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
+    // 1. Vérifier si le destinataire a DÉJÀ un partenaire habituel (STATUS = accepted)
+    const { data: recipientPartner, error: recipientPartnerError } = await supabaseAdmin
+      .from('player_partnerships')
+      .select('id')
+      .or(`player_id.eq.${partner_id},partner_id.eq.${partner_id}`)
+      .eq('status', 'accepted')
+      .maybeSingle();
+
+    if (recipientPartnerError) {
+      logger.error("[PartnershipCreate] Erreur vérification partenaire destinataire", { error: recipientPartnerError });
+      // Continuer quand même, ce n'est pas bloquant
+    }
+
+    if (recipientPartner) {
+      return NextResponse.json({
+        error: "Ce joueur a déjà un partenaire habituel !"
+      }, { status: 400 });
+    }
+
     // Vérifier si une demande existe déjà (avec client admin pour bypass RLS)
     const { data: existing, error: existingError } = await supabaseAdmin
       .from('player_partnerships')

@@ -49,8 +49,16 @@ export default function LevelRadarChart({ breakdown }: Props) {
       ctx.stroke();
     }
 
-    // Axes
-    categories.forEach((_, i) => {
+    // Axes avec initiales
+    const categoryInitials: Record<string, string> = {
+      technique: "T",
+      tactique: "TA",
+      experience: "E",
+      physique: "P",
+      situations: "S"
+    };
+
+    categories.forEach((cat, i) => {
       const angle = angleStep * i - Math.PI / 2;
       const x = centerX + Math.cos(angle) * maxRadius;
       const y = centerY + Math.sin(angle) * maxRadius;
@@ -60,6 +68,17 @@ export default function LevelRadarChart({ breakdown }: Props) {
       ctx.lineTo(x, y);
       ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
       ctx.stroke();
+
+      // Afficher l'initiale du domaine
+      const initial = categoryInitials[cat] || cat[0].toUpperCase();
+      const labelX = centerX + Math.cos(angle) * (maxRadius + 15);
+      const labelY = centerY + Math.sin(angle) * (maxRadius + 15);
+      
+      ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
+      ctx.font = isMobile ? "bold 12px sans-serif" : "bold 14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(initial, labelX, labelY);
     });
 
     // Polygone

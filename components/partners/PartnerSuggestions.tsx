@@ -27,6 +27,7 @@ export default function PartnerSuggestions() {
   const [suggestions, setSuggestions] = useState<SuggestedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isInvitingId, setIsInvitingId] = useState<string | null>(null);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [pendingInvitePlayer, setPendingInvitePlayer] =
@@ -102,13 +103,7 @@ export default function PartnerSuggestions() {
   const fetchSuggestions = useCallback(async () => {
     try {
       setError(null);
-      // Ne mettre loading que si on n'a pas encore de données
-      setLoading((prev) => {
-        if (prev === false && suggestions.length === 0) {
-          return true;
-        }
-        return prev;
-      });
+      setLoading(true);
 
       // Utiliser stale-while-revalidate pour un chargement instantané
       const response = await fetch(
@@ -127,22 +122,26 @@ export default function PartnerSuggestions() {
         if (response.status === 401) {
           setError("Vous devez être connecté");
           setSuggestions([]);
+          setLoading(false);
           return;
         }
         if (response.status === 429) {
           setError("Trop de requêtes. Veuillez patienter quelques instants.");
           setSuggestions([]);
+          setLoading(false);
           return;
         }
         console.error('[PartnerSuggestions] Erreur fetch suggestions:', response.status, response.statusText);
         setError(`Erreur ${response.status}`);
         setSuggestions([]);
+        setLoading(false);
         return;
       }
 
       const data = await response.json();
       const fetchedSuggestions = data.suggestions || [];
       setSuggestions(fetchedSuggestions);
+      setHasLoadedOnce(true);
       
       // Vérifier les invitations existantes pour chaque suggestion
       if (fetchedSuggestions.length > 0) {
@@ -152,10 +151,11 @@ export default function PartnerSuggestions() {
       console.error("[PartnerSuggestions] Erreur:", err);
       setError("Erreur lors du chargement des suggestions");
       setSuggestions([]);
+      setHasLoadedOnce(true);
     } finally {
       setLoading(false);
     }
-  }, [suggestions.length, checkInvitationStatuses]);
+  }, [checkInvitationStatuses]);
 
   const createMatchInvitation = useCallback(
     async (receiverId: string) => {
@@ -363,7 +363,9 @@ export default function PartnerSuggestions() {
     return () => clearInterval(interval);
   }, [fetchSuggestions]);
 
-  if (loading && suggestions.length === 0) {
+  // Afficher le chargement seulement lors du premier chargement
+  // Si on a déjà chargé une fois et qu'il n'y a pas de suggestions, afficher le message d'état vide
+  if (loading && !hasLoadedOnce) {
     return (
       <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
         <div className="mb-4">
@@ -475,13 +477,27 @@ export default function PartnerSuggestions() {
                     <div className="flex items-center gap-1.5 mt-1">
                       <div className="h-1.5 flex-1 bg-slate-700 rounded-full overflow-hidden max-w-[80px]">
                         <div
-                          className="h-full bg-gradient-to-r from-green-500 to-emerald-500"
+                          className={`h-full ${
+                            player.compatibilityScore >= 70
+                              ? "bg-gradient-to-r from-green-500 to-emerald-500"
+                              : player.compatibilityScore >= 50
+                              ? "bg-gradient-to-r from-orange-500 to-orange-400"
+                              : "bg-gradient-to-r from-gray-500 to-gray-400"
+                          }`}
                           style={{
                             width: `${player.compatibilityScore}%`,
                           }}
                         />
                       </div>
-                      <span className="text-[10px] text-green-400 font-semibold">
+                      <span
+                        className={`text-[10px] font-semibold ${
+                          player.compatibilityScore >= 70
+                            ? "text-green-400"
+                            : player.compatibilityScore >= 50
+                            ? "text-orange-400"
+                            : "text-gray-400"
+                        }`}
+                      >
                         {player.compatibilityScore}%
                       </span>
                     </div>

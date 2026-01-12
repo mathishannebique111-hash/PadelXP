@@ -130,21 +130,20 @@ export default function AcceptedInvitations() {
     }
   };
 
-  const getTimeRemaining = (respondedAt: string | null): string => {
-    if (!respondedAt) return "";
+  const getTimeRemaining = (respondedAt: string | null): { hours: number; minutes: number; expired: boolean } | null => {
+    if (!respondedAt) return null;
     
     const responded = new Date(respondedAt);
     // L'invitation expire 24h après l'acceptation
     const expiresAt = new Date(responded.getTime() + 24 * 60 * 60 * 1000);
     const diff = expiresAt.getTime() - currentTime.getTime();
 
-    if (diff <= 0) return "Expirée";
+    if (diff <= 0) return { hours: 0, minutes: 0, expired: true };
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (hours > 0) return `${hours}h restantes`;
-    return `${minutes}min restantes`;
+    return { hours, minutes, expired: false };
   };
 
   const handleOpenWhatsApp = async (partnerId: string) => {
@@ -273,14 +272,16 @@ export default function AcceptedInvitations() {
               className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-emerald-500/20 relative"
             >
               {/* Compteur de temps restant en haut à droite */}
-              {invitation.responded_at && (
-                <div className="absolute top-3 right-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-400/40 px-2.5 py-1 text-[10px] font-medium text-amber-200">
-                    <Clock className="w-3 h-3" />
-                    {getTimeRemaining(invitation.responded_at)}
-                  </span>
-                </div>
-              )}
+              {invitation.responded_at && (() => {
+                const timeRemaining = getTimeRemaining(invitation.responded_at);
+                return timeRemaining && !timeRemaining.expired ? (
+                  <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
+                    <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap">
+                      {timeRemaining.hours}h {timeRemaining.minutes}m
+                    </p>
+                  </div>
+                ) : null;
+              })()}
               
               <div className="flex items-center gap-3 mb-3">
                 {partner.avatar_url ? (

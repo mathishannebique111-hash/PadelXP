@@ -130,18 +130,17 @@ export default function MatchInvitationsReceived() {
     }
   };
 
-  const getTimeRemaining = (expiresAt: string): string => {
+  const getTimeRemaining = (expiresAt: string): { hours: number; minutes: number; expired: boolean } | null => {
     const now = new Date();
     const expires = new Date(expiresAt);
     const diff = expires.getTime() - now.getTime();
 
-    if (diff <= 0) return "Expirée";
+    if (diff <= 0) return { hours: 0, minutes: 0, expired: true };
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (hours > 0) return `Expire dans ${hours}h`;
-    return `Expire dans ${minutes}min`;
+    return { hours, minutes, expired: false };
   };
 
   const handleRefuse = async (invitationId: string) => {
@@ -380,8 +379,19 @@ export default function MatchInvitationsReceived() {
                 key={invitation.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-emerald-500/30"
+                className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-emerald-500/30 relative overflow-hidden"
               >
+                {/* Compteur de temps restant en haut à droite */}
+                {(() => {
+                  const timeRemaining = getTimeRemaining(invitation.expires_at);
+                  return timeRemaining && !timeRemaining.expired ? (
+                    <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
+                      <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap">
+                        {timeRemaining.hours}h {timeRemaining.minutes}m
+                      </p>
+                    </div>
+                  ) : null;
+                })()}
                 <div className="flex items-center gap-3 mb-3">
                   {sender.avatar_url ? (
                     <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
@@ -407,12 +417,6 @@ export default function MatchInvitationsReceived() {
                         Niveau {sender.niveau_padel.toFixed(1)}/10
                       </p>
                     )}
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <Clock className="w-3 h-3 text-amber-400" />
-                      <span className="text-[10px] text-amber-300">
-                        {getTimeRemaining(invitation.expires_at)}
-                      </span>
-                    </div>
                   </div>
                 </div>
 

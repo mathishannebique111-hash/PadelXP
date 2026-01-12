@@ -203,11 +203,11 @@ export const PADEL_QUESTIONS: Question[] = [
     question: "Meilleurs résultats ?",
     options: [
       { label: "Victoire en poules / quarts P25", points: 1 },
-      { label: "Victoire P25/Podium P100", points: 3 },
-      { label: "Victoire P100/Quarts P250", points: 5 },
-      { label: "Victoire P250/Quarts P500", points: 7 },
-      { label: "Victoire P500/Quarts P1000", points: 9 },
-      { label: "Performe en P1000/P1500", points: 10 },
+      { label: "Victoire P25 / Podium P100", points: 3 },
+      { label: "Victoire P100 / Quarts P250", points: 5 },
+      { label: "Victoire P250 / Quarts P500", points: 7 },
+      { label: "Victoire P500 / Quarts P1000", points: 9 },
+      { label: "Performe en P1000 / P1500", points: 10 },
     ],
   },
   {

@@ -93,12 +93,24 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
         }
 
         if (profileData) {
-          setProfile((prev: any) => ({
-            ...prev,
-            niveau_padel: profileData.niveau_padel,
-            niveau_categorie: profileData.niveau_categorie,
-            niveau_recommendations: profileData.niveau_recommendations,
-          }));
+          setProfile((prev: any) => {
+            // Ne mettre à jour que si les valeurs existent dans la DB
+            // Ne pas écraser avec null si on a déjà des valeurs
+            const updated = { ...prev };
+            
+            // Mettre à jour seulement si la valeur existe dans la DB
+            if (profileData.niveau_padel !== null && profileData.niveau_padel !== undefined) {
+              updated.niveau_padel = profileData.niveau_padel;
+            }
+            if (profileData.niveau_categorie !== null && profileData.niveau_categorie !== undefined) {
+              updated.niveau_categorie = profileData.niveau_categorie;
+            }
+            if (profileData.niveau_recommendations !== null && profileData.niveau_recommendations !== undefined) {
+              updated.niveau_recommendations = profileData.niveau_recommendations;
+            }
+            
+            return updated;
+          });
         }
       } catch (error) {
         console.error("[PadelTabContent] Erreur inattendue:", error);

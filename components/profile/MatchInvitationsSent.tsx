@@ -117,18 +117,17 @@ export default function MatchInvitationsSent() {
     }
   };
 
-  const getTimeRemaining = (expiresAt: string): string => {
+  const getTimeRemaining = (expiresAt: string): { hours: number; minutes: number; expired: boolean } | null => {
     const now = new Date();
     const expires = new Date(expiresAt);
     const diff = expires.getTime() - now.getTime();
 
-    if (diff <= 0) return "Expirée";
+    if (diff <= 0) return { hours: 0, minutes: 0, expired: true };
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (hours > 0) return `${hours}h restantes`;
-    return `${minutes}min restantes`;
+    return { hours, minutes, expired: false };
   };
 
   const getStatusBadge = (invitation: MatchInvitation) => {
@@ -147,10 +146,11 @@ export default function MatchInvitationsSent() {
 
     switch (invitation.status) {
       case "pending":
+        const timeRemaining = getTimeRemaining(invitation.expires_at);
         return (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 border border-amber-400/40 px-2.5 py-1 text-[10px] font-medium text-amber-200">
             <Clock className="w-3 h-3" />
-            En attente ({getTimeRemaining(invitation.expires_at)})
+            En attente {timeRemaining && !timeRemaining.expired ? `(${timeRemaining.hours}h ${timeRemaining.minutes}m)` : ''}
           </span>
         );
       case "accepted":
