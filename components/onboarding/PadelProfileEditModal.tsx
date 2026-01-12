@@ -56,7 +56,7 @@ const handLabels: Record<string, string> = {
 };
 
 const frequencyLabels: Record<string, string> = {
-  monthly: "1x / mois",
+  monthly: "1-2x par mois",
   weekly: "1x / semaine",
   "2-3weekly": "2-3x / semaine",
   "3+weekly": "+ de 3x / semaine",
@@ -66,7 +66,7 @@ const shotLabels: Record<string, string> = {
   smash: "Smash",
   vibora: "Vibora",
   lob: "Lob",
-  defense: "Défense",
+  defense: "Bajada",
 };
 
 const levelIcons: Record<string, React.ComponentType<{ className?: string }>> = {

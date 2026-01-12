@@ -123,7 +123,7 @@ const questions: Question[] = [
     options: [
       {
         value: "monthly",
-        label: "1x / mois",
+        label: "1-2x par mois",
         icon: Calendar,
       },
       {
@@ -168,9 +168,9 @@ const questions: Question[] = [
       },
       {
         value: "defense",
-        label: "Défense",
+        label: "Bajada",
         icon: Shield,
-        description: "Solidité et réactivité",
+        description: "Force et équilibre",
       },
     ],
   },

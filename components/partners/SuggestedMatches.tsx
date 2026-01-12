@@ -219,7 +219,7 @@ export default function SuggestedMatches() {
                     Matchs suggérés
                 </h3>
                 <p className="text-xs md:text-sm text-gray-400">
-                    Aucune paire compatible trouvée dans votre club pour le moment.
+                    Aucun match correspondant à votre paire n'a été trouvé pour le moment.
                 </p>
             </div>
         );

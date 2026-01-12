@@ -405,7 +405,7 @@ export default function PartnerSuggestions() {
           Partenaires suggérés
         </h3>
         <p className="text-xs md:text-sm text-gray-400">
-          Aucun partenaire suggéré pour le moment.
+          Aucun partenaire correspondant à votre profil n'a été trouvé pour le moment.
         </p>
       </div>
     );

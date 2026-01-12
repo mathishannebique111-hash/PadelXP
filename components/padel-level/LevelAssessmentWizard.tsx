@@ -28,22 +28,8 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
   const [isCompleted, setIsCompleted] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  // Cacher le menu hamburger et le logo du club pendant le questionnaire
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const root = document.documentElement;
-    const shouldHideNav = hasStarted || isCompleted;
-
-    if (shouldHideNav) {
-      root.classList.add("px-hide-player-nav");
-    } else {
-      root.classList.remove("px-hide-player-nav");
-    }
-
-    return () => {
-      root.classList.remove("px-hide-player-nav");
-    };
-  }, [hasStarted, isCompleted]);
+  // Ne pas cacher le menu hamburger pendant le questionnaire pour mobile
+  // Le menu reste visible et la barre de progression commence en dessous
   const question = PADEL_QUESTIONS[currentQuestion];
   const progress = ((currentQuestion + 1) / PADEL_QUESTIONS.length) * 100;
   const canGoNext = responses[question.id] !== undefined;
@@ -174,27 +160,27 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="fixed inset-0 z-50 flex flex-col bg-slate-900"
     >
-      {/* Header fixe - mobile first */}
-      <div className="sticky top-0 z-20 bg-slate-900 px-4 py-4 border-b border-slate-800">
+      {/* Header fixe - mobile first, commence en dessous du menu hamburger */}
+      <div className="sticky z-20 bg-slate-900 px-4 py-2.5 sm:py-4 border-b border-slate-800 top-[60px] sm:top-0">
         <LevelProgressBar
           progress={progress}
           currentStep={currentQuestion + 1}
           totalSteps={PADEL_QUESTIONS.length}
         />
 
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-2 sm:mt-3 flex items-center gap-2">
           {(() => {
             const CategoryIcon = CATEGORY_INFO[question.category].Icon;
-            return <CategoryIcon size={20} className="text-blue-400" />;
+            return <CategoryIcon size={18} className="sm:w-5 sm:h-5 text-blue-400" />;
           })()}
-          <span className="text-xs md:text-sm font-medium text-gray-400">
+          <span className="text-[11px] sm:text-xs md:text-sm font-medium text-gray-400">
             {CATEGORY_INFO[question.category].label}
           </span>
         </div>
       </div>
 
       {/* Zone scrollable pour la question */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:py-6" style={{ paddingBottom: '100px' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion}
@@ -212,17 +198,17 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
         </AnimatePresence>
       </div>
 
-      {/* Boutons fixés en bas - mobile-first */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900 border-t border-slate-800 px-4 py-4">
-        <div className="flex gap-3 max-w-3xl mx-auto">
+      {/* Boutons fixés en bas - mobile-first, taille réduite sur mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900 border-t border-slate-800 px-3 sm:px-4 py-2 sm:py-4">
+        <div className="flex gap-2 sm:gap-3 max-w-3xl mx-auto">
           <motion.button
             type="button"
             whileTap={{ scale: 0.95 }}
             onClick={handleBack}
             disabled={!canGoBack}
-            className="px-4 py-4 rounded-xl border border-gray-700 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[44px]"
+            className="px-3 sm:px-4 py-2 sm:py-4 rounded-xl border border-gray-700 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[40px] sm:min-w-[44px]"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
             <span className="hidden sm:inline">Retour</span>
           </motion.button>
 
@@ -231,17 +217,17 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
             whileTap={{ scale: 0.95 }}
             onClick={handleNext}
             disabled={!canGoNext}
-            className="flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 py-2 sm:py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-xs sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {currentQuestion === PADEL_QUESTIONS.length - 1 ? (
               <>
-                <span>Voir mon niveau</span>
-                <Check size={18} />
+                <span className="text-xs sm:text-base">Voir mon niveau</span>
+                <Check size={16} className="sm:w-[18px] sm:h-[18px]" />
               </>
             ) : (
               <>
-                <span>Suivant</span>
-                <ChevronRight size={18} />
+                <span className="text-xs sm:text-base">Suivant</span>
+                <ChevronRight size={16} className="sm:w-[18px] sm:h-[18px]" />
               </>
             )}
           </motion.button>
@@ -249,7 +235,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
         <button
           type="button"
           onClick={() => setHasStarted(false)}
-          className="mt-3 w-full text-xs sm:text-sm text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200 min-h-[36px]"
+          className="mt-1.5 sm:mt-3 w-full text-[10px] sm:text-xs md:text-sm text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200 py-1"
         >
           Poursuivre plus tard
         </button>
