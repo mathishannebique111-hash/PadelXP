@@ -1,30 +1,34 @@
 import { CATEGORY_INFO } from "./levelQuestions";
-import { selectThreeTips } from "./padelTips";
+import { selectThreeTips, type QuestionnaireAnswers, type UserProfile } from "./padelTips";
 
 export interface AssessmentResponses {
-  vitres: number;
-  coupsBase: number;
-  service: number;
-  volee: number;
-  smash: number;
-  coupsTechniques: number[];
-  transitions: number;
-  lectureJeu: number;
-  communication: number;
-  tempo: number;
-  strategie: number;
-  tournois: number;
-  classementFFT: number;
-  resultats: number;
-  frequence: number;
-  statutPro: number;
-  classementIntl: number;
-  revenus: number;
-  endurance: number;
-  pression: number;
-  doublesVitres: number;
-  retourService: number;
-  adversaireSup: number;
+  // Technique (Questions 1-7)
+  vitres: number; // Q1: Gestion des balles après rebond sur la vitre de fond
+  coupsBase: number; // Q2: Régularité en fond de court
+  service: number; // Q3: Qualité de votre service
+  volee: number; // Q4: Niveau à la volée
+  smash: number; // Q5: Gestion des lobs adverses
+  lobs: number; // Q6: Qualité et fréquence de vos lobs
+  coupFiable: number; // Q7: Quel est votre coup le plus fiable sous pression
+  // Tactique (Questions 8-13)
+  transitions: number; // Q8: Zone de confort et positionnement
+  lectureJeu: number; // Q9: Anticipation et lecture du jeu
+  communication: number; // Q10: Communication avec le partenaire
+  tempo: number; // Q11: Contrôle du tempo
+  strategie: number; // Q12: Construction des points
+  ratioRisque: number; // Q13: Votre ratio Risque / Réussite
+  // Expérience (Questions 14-18)
+  passeSportif: number; // Q14: Quel est votre passé sportif
+  frequence: number; // Q15: Fréquence de jeu
+  tournois: number; // Q16: Niveau de tournoi le plus élevé joué
+  resultats: number; // Q17: Meilleurs résultats
+  classementFFT: number; // Q18: Votre classement FFT
+  // Physique (Questions 19-20)
+  endurance: number; // Q19: Endurance sur match long
+  pression: number; // Q20: Gestion de la pression
+  // Situations (Questions 21-22)
+  doublesVitres: number; // Q21: Balles en double vitre
+  adversaireSup: number; // Q22: Contre niveau supérieur
 }
 
 export interface LevelResult {
@@ -52,41 +56,47 @@ export interface LevelResult {
 }
 
 export function calculatePadelLevel(
-  responses: AssessmentResponses
+  responses: AssessmentResponses,
+  userProfile?: UserProfile
 ): LevelResult {
+  // Technique (7 questions) - 32% du score
   const scoreTechnique =
     (responses.vitres +
       responses.coupsBase +
       responses.service +
       responses.volee +
       responses.smash +
-      responses.coupsTechniques.reduce((sum, val) => sum + val, 0) / 2) /
-    6;
+      responses.lobs +
+      responses.coupFiable) /
+    7;
 
+  // Tactique (6 questions) - 28% du score
   const scoreTactique =
     (responses.transitions +
       responses.lectureJeu +
       responses.communication +
       responses.tempo +
-      responses.strategie) /
+      responses.strategie +
+      responses.ratioRisque) /
+    6;
+
+  // Expérience (5 questions) - 30% du score
+  const scoreExperience =
+    (responses.passeSportif +
+      responses.frequence +
+      responses.tournois +
+      responses.resultats +
+      responses.classementFFT) /
     5;
 
-  const scoreExperience =
-    (responses.tournois +
-      responses.classementFFT +
-      responses.resultats +
-      responses.frequence +
-      responses.statutPro +
-      responses.classementIntl +
-      responses.revenus) /
-    7;
-
+  // Physique (2 questions) - 7% du score
   const scorePhysique = (responses.endurance + responses.pression) / 2;
+
+  // Situations (2 questions) - 3% du score
   const scoreSituations =
     (responses.doublesVitres +
-      responses.retourService +
       responses.adversaireSup) /
-    3;
+    2;
 
   const scoreGlobal =
     scoreTechnique * CATEGORY_INFO.technique.weight +
@@ -109,18 +119,34 @@ export function calculatePadelLevel(
   const strengths = identifyStrengths(breakdown);
   const weaknesses = identifyWeaknesses(breakdown);
   
-  // Utiliser le nouveau système de conseils (3 conseils distincts)
-  const selectedTips = selectThreeTips(
-    niveau,
-    breakdown,
-    {
-      vitres: responses.vitres,
-      coupsBase: responses.coupsBase,
-      service: responses.service,
-      volee: responses.volee,
-      smash: responses.smash,
-    }
-  );
+  // Convertir AssessmentResponses en QuestionnaireAnswers pour le nouveau système
+  const answers: QuestionnaireAnswers = {
+    q1: responses.vitres,
+    q2: responses.coupsBase,
+    q3: responses.service,
+    q4: responses.volee,
+    q5: responses.smash,
+    q6: responses.lobs,
+    q7: responses.coupFiable,
+    q8: responses.transitions,
+    q9: responses.lectureJeu,
+    q10: responses.communication,
+    q11: responses.tempo,
+    q12: responses.strategie,
+    q13: responses.ratioRisque,
+    q14: responses.passeSportif,
+    q15: responses.frequence,
+    q16: responses.tournois,
+    q17: responses.resultats,
+    q18: responses.classementFFT,
+    q19: responses.endurance,
+    q20: responses.pression,
+    q21: responses.doublesVitres,
+    q22: responses.adversaireSup,
+  };
+  
+  // Utiliser le nouveau système de conseils ultra-personnalisés
+  const personalizedTips = selectThreeTips(answers, userProfile);
   
   const nextLevelProgress = calculateNextLevelProgress(scoreGlobal, niveau);
 
@@ -132,9 +158,9 @@ export function calculatePadelLevel(
     strengths,
     weaknesses,
     tips: {
-      technique: selectedTips.technique.text,
-      tactique: selectedTips.tactique.text,
-      mental: selectedTips.mental.text,
+      technique: personalizedTips[0],
+      tactique: personalizedTips[1],
+      mental: personalizedTips[2],
     },
     nextLevelProgress,
   };
@@ -157,10 +183,11 @@ function validateHighLevel(
   niveau: number,
   responses: AssessmentResponses
 ): number {
-  if (niveau === 10 && (responses.statutPro < 9 || responses.classementIntl < 8)) {
+  // Validation basée sur le classement FFT et les résultats en tournois
+  if (niveau === 10 && (responses.classementFFT < 9 || responses.tournois < 8)) {
     return 9;
   }
-  if (niveau === 9 && responses.statutPro < 6 && responses.classementIntl < 6) {
+  if (niveau === 9 && responses.classementFFT < 7 && responses.tournois < 6) {
     return 8;
   }
   return niveau;

@@ -77,40 +77,31 @@ export async function GET(req: Request) {
       existingPartnerships?.map(p => p.player_id === user.id ? p.partner_id : p.player_id) || []
     );
 
-    // 4. Récupérer les candidats depuis la vue (pour le filtrage de base: club, niveau, etc.)
-    const { data: candidates, error: viewError } = await supabaseAdmin
-      .from("suggested_partners")
-      .select("partner_id") // On a juste besoin des IDs
-      .eq("player_id", user.id)
-      .not("partner_id", "in", `(${Array.from(existingPartnerIds).join(",") || "00000000-0000-0000-0000-000000000000"})`)
-      .limit(20); // On en prend un peu plus pour filtrer après recalcul
-
-    if (viewError) {
-      logger.warn(
-        "[PartnersSuggestions] Vue suggested_partners non trouvée",
-        { error: viewError }
-      );
-      return NextResponse.json({ suggestions: [] }, { status: 500 });
-    }
-
-    if (!candidates || candidates.length === 0) {
-      return NextResponse.json({ suggestions: [] });
-    }
-
-    // 4. Récupérer les profils COMPLETS des candidats
-    const candidateIds = candidates.map(c => c.partner_id);
-    const { data: fullProfiles, error: candidatesError } = await supabaseAdmin
+    // 4. Récupérer TOUS les autres joueurs du même club (hors soi et partenaires habituels)
+    const { data: clubPlayers, error: clubPlayersError } = await supabaseAdmin
       .from("profiles")
       .select("*")
-      .in("id", candidateIds);
+      .eq("club_id", currentUserProfile.club_id)
+      .neq("id", user.id);
 
-    if (candidatesError || !fullProfiles) {
-      logger.error("[PartnersSuggestions] Erreur fetch profils candidats", { error: candidatesError });
+    if (clubPlayersError || !clubPlayers) {
+      logger.error("[PartnersSuggestions] Erreur fetch joueurs du club", {
+        error: clubPlayersError,
+      });
       return NextResponse.json({ suggestions: [] });
     }
 
-    // 6. Calculer la compatibilité via TS et formater
-    const suggestions = fullProfiles
+    // Exclure les partenaires habituels déjà acceptés
+    const candidateProfiles = clubPlayers.filter(
+      (p) => !existingPartnerIds.has(p.id)
+    );
+
+    if (candidateProfiles.length === 0) {
+      return NextResponse.json({ suggestions: [] });
+    }
+
+    // 5. Calculer la compatibilité via TS et formater
+    const suggestions = candidateProfiles
       .map(partnerProfile => {
         const compatibility = calculateCompatibility(currentUserProfile, partnerProfile);
 
@@ -133,8 +124,8 @@ export async function GET(req: Request) {
         };
       })
       .filter(s => s !== null) // Enlever les nulls
-      .sort((a, b) => (b!.compatibilityScore || 0) - (a!.compatibilityScore || 0)) // Trier par nouveau score
-      .slice(0, 10); // Garder le top 10
+      .sort((a, b) => (b!.compatibilityScore || 0) - (a!.compatibilityScore || 0)) // Trier par score de compatibilité
+      .slice(0, 6); // Garder le top 6
 
     logger.info(
       "[PartnersSuggestions] Suggestions recalculées et renvoyées",

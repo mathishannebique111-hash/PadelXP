@@ -121,12 +121,13 @@ export default function SuggestedMatches() {
 
         loadExistingChallenges();
 
-        // Écouter les événements de création/mise à jour de défi
+        // Écouter les événements de création/mise à jour/suppression de défi
         const handleChallengeEvent = () => {
             loadExistingChallenges();
         };
         window.addEventListener("teamChallengeCreated", handleChallengeEvent);
         window.addEventListener("teamChallengeUpdated", handleChallengeEvent);
+        window.addEventListener("teamChallengeDeleted", handleChallengeEvent);
 
         // Mettre à jour le temps toutes les secondes
         const interval = setInterval(() => {
@@ -137,6 +138,7 @@ export default function SuggestedMatches() {
             clearInterval(interval);
             window.removeEventListener("teamChallengeCreated", handleChallengeEvent);
             window.removeEventListener("teamChallengeUpdated", handleChallengeEvent);
+            window.removeEventListener("teamChallengeDeleted", handleChallengeEvent);
         };
     }, [myPartner, supabase]);
 

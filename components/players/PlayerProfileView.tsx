@@ -122,6 +122,46 @@ export default function PlayerProfileView({
     ? levelLabels[player.level] || player.level
     : "Non renseigné";
 
+  const hasCompatibility =
+    compatibilityScore !== null && compatibilityScore !== undefined;
+
+  const compatibilityColor =
+    hasCompatibility && typeof compatibilityScore === "number"
+      ? compatibilityScore >= 70
+        ? "green"
+        : compatibilityScore >= 40
+        ? "orange"
+        : "red"
+      : "green";
+
+  const compatibilityBarClass =
+    compatibilityColor === "green"
+      ? "bg-gradient-to-r from-green-500 to-emerald-500"
+      : compatibilityColor === "orange"
+      ? "bg-gradient-to-r from-orange-500 to-orange-400"
+      : "bg-gradient-to-r from-red-500 to-red-400";
+
+  const compatibilityTextClass =
+    compatibilityColor === "green"
+      ? "text-green-400"
+      : compatibilityColor === "orange"
+      ? "text-orange-400"
+      : "text-red-400";
+
+  const compatibilityCardClass =
+    compatibilityColor === "green"
+      ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30"
+      : compatibilityColor === "orange"
+      ? "bg-gradient-to-r from-orange-500/10 to-orange-500/10 border border-orange-500/30"
+      : "bg-gradient-to-r from-red-500/10 to-red-500/10 border border-red-500/30";
+
+  const compatibilityLabelClass =
+    compatibilityColor === "green"
+      ? "text-green-300"
+      : compatibilityColor === "orange"
+      ? "text-orange-300"
+      : "text-red-300";
+
   // Vérifier le statut des invitations au chargement
   useEffect(() => {
     const checkInvitationStatus = async () => {
@@ -399,41 +439,50 @@ export default function PlayerProfileView({
             </div>
 
             {/* SCORE DE COMPATIBILITÉ - Mobile optimized */}
-            {compatibilityScore !== null &&
-              compatibilityScore !== undefined &&
-              compatibilityScore > 0 && (
+            {hasCompatibility && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="mt-5 p-3.5 md:p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30"
+                  className={`mt-5 p-3.5 md:p-4 rounded-2xl ${compatibilityCardClass}`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs md:text-sm font-semibold text-green-300">
+                    <span className={`text-xs md:text-sm font-semibold ${compatibilityLabelClass}`}>
                       Compatibilité avec vous
                     </span>
-                    <span className="text-xl md:text-2xl font-black text-green-400">
-                      {compatibilityScore}%
+                    <span
+                      className={`text-xl md:text-2xl font-black ${compatibilityTextClass}`}
+                    >
+                      {compatibilityScore ?? 0}%
                     </span>
                   </div>
                   <div className="h-2 bg-slate-700 rounded-full overflow-hidden mb-2.5">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${compatibilityScore}%` }}
+                      animate={{ width: `${compatibilityScore ?? 0}%` }}
                       transition={{ duration: 1, delay: 0.3 }}
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500"
+                      className={`h-full ${compatibilityBarClass}`}
                     />
                   </div>
                   {compatibilityTags && compatibilityTags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                      {compatibilityTags.map((tag, i) => (
-                        <span
-                          key={i}
-                          className="text-[11px] md:text-xs px-2 md:px-2.5 py-1 bg-green-500/20 text-green-300 rounded-full font-medium"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                      {compatibilityTags.map((tag, i) => {
+                        const isSameSideOrHand = tag.toLowerCase().includes("même côté") || 
+                                                 tag.toLowerCase().includes("mains similaires") || 
+                                                 tag.toLowerCase().includes("même main");
+                        return (
+                          <span
+                            key={i}
+                            className={`text-[11px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-medium ${
+                              isSameSideOrHand
+                                ? "bg-orange-500/20 text-orange-300"
+                                : "bg-green-500/20 text-green-300"
+                            }`}
+                          >
+                            {tag}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                 </motion.div>
@@ -504,14 +553,6 @@ export default function PlayerProfileView({
                     <span>Inviter à jouer</span>
                   </>
                 )}
-              </button>
-              <button
-                type="button"
-                className="py-3.5 md:py-4 px-4 bg-slate-700/50 border border-slate-600 active:bg-slate-700 text-gray-300 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all min-h-[44px] min-w-[44px]"
-              >
-                <Users size={18} className="md:hidden" />
-                <Users size={20} className="hidden md:block" />
-                <span className="hidden md:inline">Favoris</span>
               </button>
             </div>
           </div>

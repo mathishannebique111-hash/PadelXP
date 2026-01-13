@@ -33,6 +33,20 @@ export function calculateCompatibility(
   let score = 0;
   let factors = 0;
 
+  const currentSide = currentUser.preferred_side;
+  const otherSide = otherPlayer.preferred_side;
+  const hasBothSides =
+    typeof currentSide === "string" &&
+    currentSide !== "" &&
+    typeof otherSide === "string" &&
+    otherSide !== "";
+  const hasComplementarySides =
+    hasBothSides &&
+    ((currentSide === "left" && otherSide === "right") ||
+      (currentSide === "right" && otherSide === "left"));
+  const hasFlexibleSide =
+    currentSide === "indifferent" || otherSide === "indifferent";
+
   // 1. Compatibilité de niveau (40% du score)
   // Idéal : différence de 0.5 à 1.5 points
   const levelDiff = Math.abs(
@@ -70,23 +84,18 @@ export function calculateCompatibility(
 
   // 3. Compatibilité côté préféré (15% du score)
   // Idéal : un gauche + un droite, ou un indifférent
-  if (currentUser.preferred_side && otherPlayer.preferred_side) {
-    if (
-      (currentUser.preferred_side === "left" &&
-        otherPlayer.preferred_side === "right") ||
-      (currentUser.preferred_side === "right" &&
-        otherPlayer.preferred_side === "left")
-    ) {
+  if (hasBothSides) {
+    if (hasComplementarySides) {
       score += 15;
       tags.push("Côtés complémentaires");
-    } else if (
-      currentUser.preferred_side === "indifferent" ||
-      otherPlayer.preferred_side === "indifferent"
-    ) {
-      score += 12;
+    } else if (hasFlexibleSide) {
+      score += 10;
       tags.push("Côté flexible");
     } else {
-      score += 5;
+      // Même côté non indifférent : très peu complémentaire
+      // On donne un tout petit score et on limitera plus bas le score global.
+      score += 2;
+      tags.push("Même côté");
     }
     factors++;
   }
@@ -138,18 +147,34 @@ export function calculateCompatibility(
     factors++;
   }
 
-  // Normaliser le score sur 100
-  // Le score brut est déjà entre 0 et 100 (max: 40+15+15+20+10 = 100)
-  // Donc on n'a pas besoin de diviser par factors, juste s'assurer qu'il est entre 0 et 100
+  // Pénalité forte si les deux jouent strictement du même côté (et pas "indifférent")
+  if (
+    hasBothSides &&
+    currentSide === otherSide &&
+    currentSide !== "indifferent"
+  ) {
+    // On plafonne la compatibilité globale pour refléter la faible complémentarité
+    score = Math.min(score, 55);
+  }
+
+  // Normaliser le score brut (avant bonus) sur [0, 100]
   score = Math.round(score);
   score = Math.min(100, Math.max(0, score));
-  
-  // Boost si les joueurs ont le même niveau (compatibilité très forte même sans complémentarité parfaite)
-  // Par exemple, deux joueurs de même niveau mais même main/côté sont quand même très compatibles
-  if (Math.abs((currentUser.niveau_padel || 0) - (otherPlayer.niveau_padel || 0)) <= 0.5) {
-    // Ajouter un bonus de 15-20 points pour les joueurs de même niveau
-    // Cela garantit qu'ils auront au moins 60% de compatibilité
-    score = Math.min(100, score + 18);
+
+  // Boost si les joueurs ont le même niveau, mais seulement si les côtés sont complémentaires ou au moins flexibles.
+  const levelDiffForBoost = Math.abs(
+    (currentUser.niveau_padel || 0) - (otherPlayer.niveau_padel || 0)
+  );
+  const canBoostWithLevel = hasComplementarySides || hasFlexibleSide;
+
+  if (levelDiffForBoost <= 0.5) {
+    if (canBoostWithLevel) {
+      // Très bon match : même niveau + côtés complémentaires/flexibles
+      score = Math.min(100, score + 10);
+    } else {
+      // Même niveau mais même côté strict : petit bonus seulement
+      score = Math.min(100, score + 4);
+    }
   }
 
   return {

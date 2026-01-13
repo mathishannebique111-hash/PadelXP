@@ -45,6 +45,27 @@ export default function FindPartnersTabContent() {
         const hasAcceptedPartner = partnerships.some((p: any) => p.status === 'accepted');
         setHasPartner(hasAcceptedPartner);
       }
+
+      // Vérifier s'il a des défis actifs (envoyés ou reçus)
+      const { data: sentChallenges } = await supabase
+        .from("team_challenges")
+        .select("id")
+        .or(`challenger_player_1_id.eq.${user.id},challenger_player_2_id.eq.${user.id}`)
+        .in("status", ["pending", "accepted"])
+        .gt("expires_at", new Date().toISOString())
+        .limit(1);
+
+      const { data: receivedChallenges } = await supabase
+        .from("team_challenges")
+        .select("id")
+        .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
+        .in("status", ["pending", "accepted"])
+        .gt("expires_at", new Date().toISOString())
+        .limit(1);
+
+      const hasActiveChallengesResult = (sentChallenges && sentChallenges.length > 0) || 
+                                       (receivedChallenges && receivedChallenges.length > 0);
+      setHasActiveChallenges(hasActiveChallengesResult);
     } catch (error) {
       console.error("[FindPartnersTabContent] Erreur chargement profil:", error);
     } finally {
@@ -125,21 +146,29 @@ export default function FindPartnersTabContent() {
         
         {!hasLevel ? (
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
-            <p>Évalue ton niveau dans l'onglet "Mon profil" et ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs.</p>
-          </div>
-        ) : !hasPartner && !hasActiveChallenges ? (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
-            <p>Ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs.</p>
+            <p>Évalue ton niveau dans l'onglet "Mon profil" et ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs personnalisées.</p>
           </div>
         ) : (
           <>
             {/* Matchs suggérés - seulement si le joueur a un partenaire habituel */}
-            {hasPartner && <SuggestedMatches />}
+            {hasPartner ? (
+              <div className="border-2 border-blue-500/40 rounded-2xl overflow-hidden bg-blue-500/5">
+                <SuggestedMatches />
+              </div>
+            ) : hasActiveChallenges ? (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
+                <p>Ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs personnalisées.</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
+                <p>Ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs personnalisées.</p>
+              </div>
+            )}
 
-            {/* Défis envoyés */}
+            {/* Défis envoyés - toujours visible si le joueur a un niveau évalué */}
             <ChallengesSent />
 
-            {/* Défis reçus */}
+            {/* Défis reçus - toujours visible si le joueur a un niveau évalué */}
             <ChallengesReceived />
           </>
         )}

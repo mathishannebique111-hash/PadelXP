@@ -200,40 +200,63 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
     setCurrentQuestion((prev) => prev - 1);
   };
 
-  const calculateResult = () => {
+  const calculateResult = async () => {
     const get = (id: number): number =>
       (responses[id] as number | undefined) ?? 0;
 
     const mappedResponses: AssessmentResponses = {
-      vitres: get(1),
-      coupsBase: get(2),
-      service: get(3),
-      volee: get(4),
-      smash: get(5),
-      coupsTechniques: (responses[6] as number[]) ?? [],
-      transitions: get(7),
-      lectureJeu: get(8),
-      communication: get(9),
-      tempo: get(10),
-      strategie: get(11),
-      tournois: get(12),
-      classementFFT: get(13),
-      resultats: get(14),
-      frequence: get(15),
-      // 16,17 physiques
-      endurance: get(16),
-      pression: get(17),
-      // 18-20 situations
-      doublesVitres: get(18),
-      retourService: get(19),
-      adversaireSup: get(20),
-      // 21-23 expérience avancée
-      statutPro: get(21),
-      classementIntl: get(22),
-      revenus: get(23),
+      // Technique (Questions 1-7)
+      vitres: get(1), // Gestion des balles après rebond sur la vitre de fond
+      coupsBase: get(2), // Régularité en fond de court
+      service: get(3), // Qualité de votre service
+      volee: get(4), // Niveau à la volée
+      smash: get(5), // Gestion des lobs adverses
+      lobs: get(6), // Qualité et fréquence de vos lobs
+      coupFiable: get(7), // Quel est votre coup le plus fiable sous pression
+      // Tactique (Questions 8-13)
+      transitions: get(8), // Zone de confort et positionnement
+      lectureJeu: get(9), // Anticipation et lecture du jeu
+      communication: get(10), // Communication avec le partenaire
+      tempo: get(11), // Contrôle du tempo
+      strategie: get(12), // Construction des points
+      ratioRisque: get(13), // Votre ratio Risque / Réussite
+      // Expérience (Questions 14-18)
+      passeSportif: get(14), // Quel est votre passé sportif
+      frequence: get(15), // Fréquence de jeu
+      tournois: get(16), // Niveau de tournoi le plus élevé joué
+      resultats: get(17), // Meilleurs résultats
+      classementFFT: get(18), // Votre classement FFT
+      // Physique (Questions 19-20)
+      endurance: get(19), // Endurance sur match long
+      pression: get(20), // Gestion de la pression
+      // Situations (Questions 21-22)
+      doublesVitres: get(21), // Balles en double vitre
+      adversaireSup: get(22), // Contre niveau supérieur
     };
 
-    const calculatedResult = calculatePadelLevel(mappedResponses);
+    // Récupérer le profil utilisateur pour obtenir le côté préféré
+    let userProfile: { preferred_side?: "left" | "right" | "indifferent" | null } | undefined;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("preferred_side")
+          .eq("id", user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          userProfile = {
+            preferred_side: profile.preferred_side as "left" | "right" | "indifferent" | null,
+          };
+        }
+      }
+    } catch (error) {
+      console.error("[LevelAssessmentWizard] Erreur récupération profil:", error);
+      // Continuer sans le profil si erreur
+    }
+
+    const calculatedResult = calculatePadelLevel(mappedResponses, userProfile);
     setResult(calculatedResult);
     setIsCompleted(true);
 
@@ -262,7 +285,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
           </p>
         ) : (
           <p className="text-xs sm:text-sm text-gray-400 mb-4">
-            23 questions rapides pour estimer précisément ton niveau de padel de
+            22 questions rapides pour estimer précisément ton niveau de padel de
             1 à 10. Vous pouvez interrompre et reprendre plus tard.
           </p>
         )}

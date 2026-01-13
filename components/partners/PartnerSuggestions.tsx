@@ -106,17 +106,14 @@ export default function PartnerSuggestions() {
       setLoading(true);
 
       // Utiliser stale-while-revalidate pour un chargement instantané
-      const response = await fetch(
-        `/api/partners/suggestions`,
-        {
-          method: "GET",
-          credentials: "include",
-          // Cache avec stale-while-revalidate pour un chargement quasi-instantané
-          headers: {
-            "Cache-Control": "max-age=10, stale-while-revalidate=60",
-          },
-        }
-      );
+      const response = await fetch(`/api/partners/suggestions`, {
+        method: "GET",
+        credentials: "include",
+        // Cache avec stale-while-revalidate pour un chargement quasi-instantané
+        headers: {
+          "Cache-Control": "max-age=10, stale-while-revalidate=60",
+        },
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -204,14 +201,13 @@ export default function PartnerSuggestions() {
 
         showToast("Invitation envoyée ! Valable 24h.", "success");
         
-        // Mettre à jour le statut local
+        // Mettre à jour le statut local (sans refetch pour éviter les "sauts" visuels)
         setInvitationStatuses(prev => {
           const next = new Map(prev);
           next.set(receiverId, { sent: true, received: false });
           return next;
         });
-        
-        fetchSuggestions();
+
         // Déclencher un événement pour recharger les composants d'invitations
         window.dispatchEvent(new CustomEvent("matchInvitationCreated"));
       } catch (e) {
@@ -273,36 +269,47 @@ export default function PartnerSuggestions() {
     
     // Écouter les événements d'invitations pour mettre à jour les statuts
     const handleInvitationEvent = (event?: Event) => {
-      if (suggestions.length > 0) {
-        // Si c'est une suppression, mettre à jour immédiatement le statut pour le joueur concerné
-        if (event && 'detail' in event && (event as CustomEvent).detail) {
-          const detail = (event as CustomEvent).detail as { invitationId?: string; receiverId?: string };
-          if (detail.receiverId) {
-            setInvitationStatuses((prev) => {
-              const next = new Map(prev);
-              next.delete(detail.receiverId!);
-              return next;
-            });
-          }
+      // Si c'est une suppression, mettre à jour immédiatement le statut pour le joueur concerné
+      if (event && "detail" in event && (event as CustomEvent).detail) {
+        const detail = (event as CustomEvent).detail as {
+          invitationId?: string;
+          receiverId?: string;
+        };
+        if (detail.receiverId) {
+          setInvitationStatuses((prev) => {
+            const next = new Map(prev);
+            next.delete(detail.receiverId!);
+            return next;
+          });
         }
-        // Recharger tous les statuts
-        checkInvitationStatuses(suggestions);
       }
     };
     
-    if (typeof window !== 'undefined') {
-      window.addEventListener('profileUpdated', handleProfileUpdate);
-      window.addEventListener('matchInvitationCreated', handleInvitationEvent);
-      window.addEventListener('matchInvitationUpdated', handleInvitationEvent);
-      window.addEventListener('matchInvitationDeleted', handleInvitationEvent as EventListener);
+    if (typeof window !== "undefined") {
+      window.addEventListener("profileUpdated", handleProfileUpdate);
+      window.addEventListener("matchInvitationCreated", handleInvitationEvent);
+      window.addEventListener("matchInvitationUpdated", handleInvitationEvent);
+      window.addEventListener(
+        "matchInvitationDeleted",
+        handleInvitationEvent as EventListener
+      );
       return () => {
-        window.removeEventListener('profileUpdated', handleProfileUpdate);
-        window.removeEventListener('matchInvitationCreated', handleInvitationEvent);
-        window.removeEventListener('matchInvitationUpdated', handleInvitationEvent);
-        window.removeEventListener('matchInvitationDeleted', handleInvitationEvent as EventListener);
+        window.removeEventListener("profileUpdated", handleProfileUpdate);
+        window.removeEventListener(
+          "matchInvitationCreated",
+          handleInvitationEvent
+        );
+        window.removeEventListener(
+          "matchInvitationUpdated",
+          handleInvitationEvent
+        );
+        window.removeEventListener(
+          "matchInvitationDeleted",
+          handleInvitationEvent as EventListener
+        );
       };
     }
-  }, [fetchSuggestions, suggestions, checkInvitationStatuses]);
+  }, [fetchSuggestions, checkInvitationStatuses]);
 
   // Recharger automatiquement quand un match est soumis ou qu'un questionnaire est complété
   useEffect(() => {
@@ -423,7 +430,7 @@ export default function PartnerSuggestions() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {suggestions.map((player, index) => {
+          {suggestions.map((player) => {
           const playerName =
             player.first_name && player.last_name
               ? `${player.first_name} ${player.last_name}`
@@ -445,7 +452,6 @@ export default function PartnerSuggestions() {
               key={player.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-white/10"
             >
               <div className="flex items-center gap-3 mb-3">
@@ -480,9 +486,9 @@ export default function PartnerSuggestions() {
                           className={`h-full ${
                             player.compatibilityScore >= 70
                               ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                              : player.compatibilityScore >= 50
+                              : player.compatibilityScore >= 40
                               ? "bg-gradient-to-r from-orange-500 to-orange-400"
-                              : "bg-gradient-to-r from-gray-500 to-gray-400"
+                              : "bg-gradient-to-r from-red-500 to-red-400"
                           }`}
                           style={{
                             width: `${player.compatibilityScore}%`,
@@ -493,9 +499,9 @@ export default function PartnerSuggestions() {
                         className={`text-[10px] font-semibold ${
                           player.compatibilityScore >= 70
                             ? "text-green-400"
-                            : player.compatibilityScore >= 50
+                            : player.compatibilityScore >= 40
                             ? "text-orange-400"
-                            : "text-gray-400"
+                            : "text-red-400"
                         }`}
                       >
                         {player.compatibilityScore}%
@@ -508,14 +514,23 @@ export default function PartnerSuggestions() {
               {/* Tags de compatibilité */}
               {player.compatibilityTags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {player.compatibilityTags.slice(0, 2).map((tag, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-300 rounded-full font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {player.compatibilityTags.slice(0, 2).map((tag, i) => {
+                    const isSameSideOrHand = tag.toLowerCase().includes("même côté") || 
+                                             tag.toLowerCase().includes("mains similaires") || 
+                                             tag.toLowerCase().includes("même main");
+                    return (
+                      <span
+                        key={i}
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          isSameSideOrHand
+                            ? "bg-orange-500/20 text-orange-300"
+                            : "bg-green-500/20 text-green-300"
+                        }`}
+                      >
+                        {tag}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
 
