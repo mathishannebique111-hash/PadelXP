@@ -85,50 +85,6 @@ class BridgeViewController: CAPBridgeViewController {
         
         // Écouter les messages JavaScript pour changer la couleur
         self.setupColorListener()
-        
-        // Configurer la redirection après le splash screen
-        self.setupInitialRedirect()
-    }
-    
-    private func setupInitialRedirect() {
-        // Attendre que la WebView soit complètement chargée
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            guard let webView = self.webView as? WKWebView else { return }
-            
-            // Vérifier si c'est la première connexion avec UserDefaults
-            let userDefaults = UserDefaults.standard
-            let hasLaunched = userDefaults.bool(forKey: "hasLaunched")
-            
-            let redirectPath: String
-            if !hasLaunched {
-                // Première fois → rediriger vers /sign-up
-                userDefaults.set(true, forKey: "hasLaunched")
-                redirectPath = "/sign-up"
-            } else {
-                // Déjà lancé → rediriger vers /login
-                redirectPath = "/login"
-            }
-            
-            // Injecter du JavaScript pour rediriger uniquement depuis la landing page
-            let redirectScript = """
-                (function() {
-                    const currentPath = window.location.pathname;
-                    
-                    // Ne rediriger que si on est sur la landing page (/)
-                    if (currentPath === '/') {
-                        window.location.href = '\(redirectPath)';
-                    }
-                })();
-            """
-            
-            webView.evaluateJavaScript(redirectScript) { (result, error) in
-                if let error = error {
-                    print("[BridgeViewController] Erreur redirection: \(error.localizedDescription)")
-                } else {
-                    print("[BridgeViewController] Redirection vers: \(redirectPath)")
-                }
-            }
-        }
     }
     
     private func setupColorListener() {

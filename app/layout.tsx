@@ -1,6 +1,4 @@
-'use client';
-import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import type { Metadata } from "next";
 import "./globals.css";
 import CookieConsent from "@/components/cookies/CookieConsent";
 import SafeAreas from './components/SafeAreas';
@@ -8,7 +6,15 @@ import SafeAreas from './components/SafeAreas';
 
 
 
-// Metadata déplacée dans le composant car 'use client' ne permet pas export const metadata
+export const metadata: Metadata = {
+  title: "PadelXP",
+  description: "Leaderboards, rangs, badges et ligues pour complexes de padel",
+  icons: {
+    icon: "/images/flavicon.png",
+    shortcut: "/images/flavicon.png",
+    apple: "/images/flavicon.png",
+  },
+};
 
 
 
@@ -16,35 +22,9 @@ import SafeAreas from './components/SafeAreas';
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    // Ne pas rediriger si on est déjà sur sign-up ou login
-    if (pathname === '/sign-up' || pathname === '/login') {
-      return;
-    }
-
-    const hasLaunched = localStorage.getItem('hasLaunched');
-    
-    if (hasLaunched === null) {
-      // Première fois
-      localStorage.setItem('hasLaunched', 'true');
-      router.push('/sign-up');
-    } else {
-      // Déjà lancé
-      router.push('/login');
-    }
-  }, [router, pathname]);
-
   return (
     <html lang="fr" className="bg-black" suppressHydrationWarning>
       <head>
-        <title>PadelXP</title>
-        <meta name="description" content="Leaderboards, rangs, badges et ligues pour complexes de padel" />
-        <link rel="icon" href="/images/flavicon.png" />
-        <link rel="shortcut icon" href="/images/flavicon.png" />
-        <link rel="apple-touch-icon" href="/images/flavicon.png" />
         <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content="#000000" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
