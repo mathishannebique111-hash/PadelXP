@@ -1,8 +1,8 @@
 "use client";
 
-import { usePopupQueue, BadgePopupData, LevelUpPopupData, Top3PopupData } from "@/contexts/PopupQueueContext";
+import { usePopupQueue, BadgePopupData, LevelUpPopupData } from "@/contexts/PopupQueueContext";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
-import NotificationModal from "@/components/NotificationModal";
+import { Award, Trophy, Medal, Crown, Gem, X } from "lucide-react";
 
 export default function PopupQueueRenderer() {
   const { currentPopup, isShowing, closeCurrentPopup } = usePopupQueue();
@@ -14,18 +14,19 @@ export default function PopupQueueRenderer() {
     const badgeData = currentPopup as BadgePopupData;
     return (
       <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl mx-4">
           <button
             aria-label="Fermer"
             onClick={closeCurrentPopup}
-            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <X size={20} />
           </button>
-          <div className="mb-3 text-center text-5xl">🎉</div>
+          <div className="mb-3 flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+              <Award size={32} className="text-white" />
+            </div>
+          </div>
           <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Badge débloqué !</h3>
           <div className="mx-auto mt-3 flex w-full max-w-sm items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
             <BadgeIconDisplay icon={badgeData.icon} size={32} />
@@ -35,7 +36,7 @@ export default function PopupQueueRenderer() {
             </div>
           </div>
           <button
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md"
+            className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md transition-all"
             onClick={closeCurrentPopup}
           >
             Parfait
@@ -47,28 +48,70 @@ export default function PopupQueueRenderer() {
 
   if (currentPopup.type === "level_up") {
     const levelData = currentPopup as LevelUpPopupData;
-    const emoji = levelData.tier === "Champion" ? "👑" : levelData.tier === "Diamant" ? "💎" : levelData.tier === "Or" ? "🥇" : levelData.tier === "Argent" ? "🥈" : "🥉";
+
+    // Icône et couleurs selon le tier
+    const getTierConfig = (tier: string) => {
+      switch (tier) {
+        case "Champion":
+          return {
+            Icon: Crown,
+            gradient: "from-yellow-400 via-amber-500 to-yellow-600",
+            bgGradient: "from-yellow-50 to-amber-50"
+          };
+        case "Diamant":
+          return {
+            Icon: Gem,
+            gradient: "from-cyan-400 via-blue-500 to-purple-500",
+            bgGradient: "from-cyan-50 to-purple-50"
+          };
+        case "Or":
+          return {
+            Icon: Trophy,
+            gradient: "from-yellow-400 to-amber-500",
+            bgGradient: "from-yellow-50 to-amber-50"
+          };
+        case "Argent":
+          return {
+            Icon: Medal,
+            gradient: "from-gray-300 to-gray-400",
+            bgGradient: "from-gray-50 to-gray-100"
+          };
+        default: // Bronze
+          return {
+            Icon: Medal,
+            gradient: "from-orange-400 to-orange-600",
+            bgGradient: "from-orange-50 to-amber-50"
+          };
+      }
+    };
+
+    const config = getTierConfig(levelData.tier);
+    const TierIcon = config.Icon;
 
     return (
       <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl mx-4">
           <button
             aria-label="Fermer"
             onClick={closeCurrentPopup}
-            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <X size={20} />
           </button>
-          <div className="mb-3 text-center text-5xl">{emoji}</div>
+          <div className="mb-3 flex justify-center">
+            <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-lg`}>
+              <TierIcon size={32} className="text-white" />
+            </div>
+          </div>
           <h3 className="mb-2 text-center text-xl font-extrabold text-gray-900">Niveau atteint !</h3>
-          <p className="text-center text-gray-700">
-            Félicitations, vous avez atteint le niveau <span className="font-bold">{levelData.tier}</span>.
-          </p>
+          <div className={`mx-auto mt-3 rounded-xl bg-gradient-to-r ${config.bgGradient} p-4 text-center`}>
+            <p className="text-gray-700">
+              Félicitations, vous avez atteint le niveau
+            </p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{levelData.tier}</p>
+          </div>
           <button
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md"
+            className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md transition-all"
             onClick={closeCurrentPopup}
           >
             Super !
@@ -76,11 +119,6 @@ export default function PopupQueueRenderer() {
         </div>
       </div>
     );
-  }
-
-  if (currentPopup.type === "top3") {
-    const top3Data = currentPopup as Top3PopupData;
-    return <NotificationModal type={top3Data.notificationType} onClose={closeCurrentPopup} />;
   }
 
   return null;

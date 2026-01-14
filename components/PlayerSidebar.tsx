@@ -119,15 +119,15 @@ export default function PlayerSidebar() {
       >
         <div className="flex flex-col gap-1.5 w-6">
           <span
-            className={`block h-0.5 w-full bg-white transition-all duration-300 ${isOpen ? 'rotate-45 translate-y-2' : ''
+            className={`block h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${isOpen ? 'rotate-45 translate-y-2 w-full' : 'w-full'
               }`}
           />
           <span
-            className={`block h-0.5 w-full bg-white transition-all duration-300 ${isOpen ? 'opacity-0' : 'opacity-100'
+            className={`block h-0.5 bg-white rounded-full transition-all ${isOpen ? 'opacity-0 scale-0 duration-100' : 'opacity-100 scale-100 duration-300 w-full'
               }`}
           />
           <span
-            className={`block h-0.5 w-full bg-white transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-2' : ''
+            className={`block h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${isOpen ? '-rotate-45 -translate-y-2 w-full' : 'w-full'
               }`}
           />
         </div>

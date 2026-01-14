@@ -115,7 +115,7 @@ export default function ContactPage() {
               }
               return acc;
             }, [] as Message[])
-            .sort((a, b) => 
+            .sort((a, b) =>
               new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
             );
           setMessages(uniqueMessages);
@@ -171,7 +171,7 @@ export default function ContactPage() {
     };
 
     init();
-    
+
     // Écouter les changements d'authentification pour mettre à jour userId
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user && isMounted) {
@@ -239,8 +239,10 @@ export default function ContactPage() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-slate-950 flex items-center justify-center px-4">
-        <div className="flex flex-col items-center gap-4">
+      <div className="h-screen relative overflow-hidden bg-[#172554] flex items-center justify-center px-4">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
           <Loader2 className="animate-spin text-blue-500" size={32} />
           <p className="text-sm text-gray-400">Chargement du chat...</p>
         </div>
@@ -249,84 +251,86 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="h-screen bg-slate-950 flex flex-col overflow-hidden">
+    <div className="h-screen relative overflow-hidden bg-[#172554] flex flex-col">
+      {/* Background avec overlay - même dégradé que les autres pages joueur */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
       {/* Header avec PageTitle - Padding-top sur mobile pour commencer en dessous du hamburger et du logo */}
-      <div className="pt-20 md:pt-4 lg:pt-6 px-4 pb-4 flex-shrink-0">
+      {/* Header avec PageTitle */}
+      <div className="relative z-10 pt-20 md:pt-4 lg:pt-6 px-4 pb-4 flex-shrink-0">
         <div className="max-w-4xl mx-auto">
-          <PageTitle 
-            title="Support PadelXP" 
+          <PageTitle
+            title="Support PadelXP"
             subtitle="Posez-nous vos questions, nous vous répondrons rapidement"
           />
         </div>
       </div>
 
       {/* Messages - Zone scrollable uniquement */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 min-h-0">
+      <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-4 min-h-0">
         <div className="max-w-4xl mx-auto space-y-4">
-        {messages.length === 0 ? (
-          <div className="text-center py-12">
-            <MessageCircle size={48} className="text-gray-600 mx-auto mb-4" />
-            <p className="text-sm text-gray-400">
-              Aucun message pour le moment.
-            </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Envoyez un message pour commencer la conversation
-            </p>
-          </div>
-        ) : (
-          messages
-            .filter((msg, index, self) => 
-              // Filtrer les doublons par ID (au cas où)
-              index === self.findIndex((m) => m.id === msg.id)
-            )
-            .sort((a, b) => 
-              // Trier par date pour garantir l'ordre même après déduplication
-              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            )
-            .map((msg) => {
-              // Déterminer si le message a été envoyé par l'utilisateur actuel
-              // Utiliser userIdRef pour avoir une valeur synchrone, sinon userId state
-              const myUserId = userIdRef.current || userId;
-              const isSentByMe = myUserId !== null && myUserId !== "" && String(msg.sender_id).trim() === String(myUserId).trim();
-              
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}
-                >
-                <div
-                  className={`max-w-[80%] sm:max-w-[60%] rounded-2xl px-4 py-3 ${
-                    isSentByMe
-                      ? "bg-blue-500 text-white rounded-br-sm"
-                      : "bg-slate-700 text-gray-200 rounded-bl-sm"
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap break-words">
-                    {msg.content}
-                  </p>
-                  <p
-                    className={`text-[10px] mt-1 ${
-                      isSentByMe ? "text-blue-100" : "text-gray-400"
-                    }`}
+          {messages.length === 0 ? (
+            <div className="text-center py-12">
+              <MessageCircle size={48} className="text-gray-600 mx-auto mb-4" />
+              <p className="text-sm text-gray-400">
+                Aucun message pour le moment.
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Envoyez un message pour commencer la conversation
+              </p>
+            </div>
+          ) : (
+            messages
+              .filter((msg, index, self) =>
+                // Filtrer les doublons par ID (au cas où)
+                index === self.findIndex((m) => m.id === msg.id)
+              )
+              .sort((a, b) =>
+                // Trier par date pour garantir l'ordre même après déduplication
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              )
+              .map((msg) => {
+                // Déterminer si le message a été envoyé par l'utilisateur actuel
+                // Utiliser userIdRef pour avoir une valeur synchrone, sinon userId state
+                const myUserId = userIdRef.current || userId;
+                const isSentByMe = myUserId !== null && myUserId !== "" && String(msg.sender_id).trim() === String(myUserId).trim();
+
+                return (
+                  <div
+                    key={msg.id}
+                    className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}
                   >
-                    {new Date(msg.created_at).toLocaleTimeString("fr-FR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </p>
-                </div>
-              </div>
-            );
-          })
-        )}
-        <div ref={messagesEndRef} />
+                    <div
+                      className={`max-w-[80%] sm:max-w-[60%] rounded-2xl px-4 py-3 ${isSentByMe
+                          ? "bg-blue-500 text-white rounded-br-sm"
+                          : "bg-slate-700 text-gray-200 rounded-bl-sm"
+                        }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap break-words">
+                        {msg.content}
+                      </p>
+                      <p
+                        className={`text-[10px] mt-1 ${isSentByMe ? "text-blue-100" : "text-gray-400"
+                          }`}
+                      >
+                        {new Date(msg.created_at).toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+          )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
       {/* Input - Fixe en bas */}
-      <div className="bg-slate-950 border-t border-slate-800 py-4 px-4 flex-shrink-0">
+      <div className="relative z-10 bg-black/50 backdrop-blur-sm border-t border-white/10 py-4 px-4 flex-shrink-0">
         <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-3">
           <input
             type="text"

@@ -3,14 +3,14 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { logger } from "@/lib/logger";
 
-export type PopupType = "badge" | "level_up" | "top3";
+export type PopupType = "badge" | "level_up";
 
 export interface BadgePopupData {
   type: "badge";
   icon: string;
   title: string;
   description: string;
-  badgeId: string; // Identifiant unique pour éviter les doublons
+  badgeId: string;
 }
 
 export interface LevelUpPopupData {
@@ -19,12 +19,7 @@ export interface LevelUpPopupData {
   previousTier?: string;
 }
 
-export interface Top3PopupData {
-  type: "top3";
-  notificationType: "dethroned_from_1" | "dethroned_from_2" | "dethroned_from_3";
-}
-
-export type PopupData = BadgePopupData | LevelUpPopupData | Top3PopupData;
+export type PopupData = BadgePopupData | LevelUpPopupData;
 
 interface PopupQueueContextType {
   enqueuePopup: (popup: PopupData) => void;
@@ -50,13 +45,9 @@ function hasBeenShown(popup: PopupData): boolean {
     if (popup.type === "badge") {
       key = `${STORAGE_KEY_PREFIX}badge.${popup.badgeId}`;
       value = `${popup.icon}|${popup.title}`;
-    } else if (popup.type === "level_up") {
+    } else {
       key = `${STORAGE_KEY_PREFIX}level.${popup.tier}`;
       value = popup.tier;
-    } else {
-      // top3 - utiliser un timestamp pour permettre de réafficher si nécessaire
-      key = `${STORAGE_KEY_PREFIX}top3.${popup.notificationType}`;
-      value = popup.notificationType;
     }
 
     const stored = localStorage.getItem(key);
@@ -80,12 +71,9 @@ function markAsShown(popup: PopupData): void {
     if (popup.type === "badge") {
       key = `${STORAGE_KEY_PREFIX}badge.${popup.badgeId}`;
       value = `${popup.icon}|${popup.title}`;
-    } else if (popup.type === "level_up") {
+    } else {
       key = `${STORAGE_KEY_PREFIX}level.${popup.tier}`;
       value = popup.tier;
-    } else {
-      key = `${STORAGE_KEY_PREFIX}top3.${popup.notificationType}`;
-      value = popup.notificationType;
     }
 
     localStorage.setItem(key, value);
@@ -116,9 +104,7 @@ export function PopupQueueProvider({ children }: { children: React.ReactNode }) 
     // Vérifier si ce popup a déjà été affiché
     if (hasBeenShown(nextPopup)) {
       logger.info("Popup déjà affiché, ignoré", { popup: nextPopup });
-      // Retirer de la file et passer au suivant
       setQueue((prev) => prev.slice(1));
-      // Traiter le suivant immédiatement
       setTimeout(() => processQueue(), 0);
       return;
     }
@@ -152,16 +138,12 @@ export function PopupQueueProvider({ children }: { children: React.ReactNode }) 
 
     // Vérifier si déjà dans la file
     setQueue((prev) => {
-      // Éviter les doublons dans la file
       const isDuplicate = prev.some((p) => {
         if (p.type === "badge" && popup.type === "badge") {
           return p.badgeId === popup.badgeId;
         }
         if (p.type === "level_up" && popup.type === "level_up") {
           return p.tier === popup.tier;
-        }
-        if (p.type === "top3" && popup.type === "top3") {
-          return p.notificationType === popup.notificationType;
         }
         return false;
       });
@@ -182,7 +164,6 @@ export function PopupQueueProvider({ children }: { children: React.ReactNode }) 
     setIsShowing(false);
     processingRef.current = false;
     setCurrentPopup(null);
-    // Traiter le suivant après un court délai
     setTimeout(() => {
       processQueue();
     }, 300);

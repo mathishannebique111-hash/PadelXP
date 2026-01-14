@@ -38,7 +38,6 @@ public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandl
         } else if message.name == "hideSplash" {
             print("PadelXP Native: Page is ready, showing WebView")
             DispatchQueue.main.async {
-                // Rendre la WebView visible avec un fondu
                 UIView.animate(withDuration: 0.2) {
                     self.webView?.alpha = 1.0
                 }
@@ -72,19 +71,18 @@ public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandl
         super.viewDidLoad()
         self.view.backgroundColor = UIColor(red: 0.09, green: 0.145, blue: 0.33, alpha: 1.0)
         
-        let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "HasLaunchedBefore")
-        let targetPath = hasLaunchedBefore ? "/login" : "/register"
+        // NE PLUS UTILISER de flag HasLaunchedBefore
+        // Laisser Next.js gérer la redirection basée sur l'état d'authentification réel
+        // - Si connecté → /home
+        // - Si pas connecté → /player/signup
+        // - Si déconnecté volontairement → /login (via un flag dans le storage)
         
-        print("PadelXP Native: First launch: \(!hasLaunchedBefore). Redirecting to \(targetPath)")
+        print("PadelXP Native: App launched, letting Next.js handle auth-based routing")
         
         let scriptSource = """
         (function() {
             document.documentElement.classList.add('is-app');
-            
-            if (window.location.pathname === '/' || window.location.pathname === '' || window.location.pathname === '/index.html') {
-                console.log('PadelXP: Redirection to \(targetPath)');
-                window.location.replace('\(targetPath)');
-            }
+            // La page racine "/" fera la vérification d'auth et redirigera vers la bonne page
         })();
         """
         
@@ -100,11 +98,6 @@ public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandl
             
             // CACHER la WebView au départ - le LaunchScreen iOS reste visible
             webView.alpha = 0.0
-        }
-        
-        if !hasLaunchedBefore {
-            UserDefaults.standard.set(true, forKey: "HasLaunchedBefore")
-            UserDefaults.standard.synchronize()
         }
     }
 }

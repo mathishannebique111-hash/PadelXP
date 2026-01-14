@@ -42,7 +42,7 @@ export default async function LoginPage({
   return (
     <>
       <HideSplashScreen />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#172554] text-white px-6">
         <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-6">
           <h1 className="text-xl font-extrabold mb-2">Connexion</h1>
           <p className="text-white/70 mb-5 text-xs opacity-70">Bon retour sur PadelXP !</p>

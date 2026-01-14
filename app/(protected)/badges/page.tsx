@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import PageTitle from "@/components/PageTitle";
 import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
-import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
+
 import BadgeIcon from "@/components/icons/BadgeIcon";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import BadgesPageClient from '@/components/BadgesPageClient'
@@ -283,8 +283,6 @@ export default async function BadgesPage() {
         </div>
 
         <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-4 md:pt-8 pb-8">
-          {/* Pop-up de célébration pour les nouveaux badges */}
-          <BadgesUnlockNotifier obtained={obtainedBadges} />
           <div className="mb-6">
             <PageTitle title="Badges" />
           </div>
@@ -368,8 +366,8 @@ export default async function BadgesPage() {
               <div
                 key={idx}
                 className={`rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center ${badge.obtained
-                    ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
-                    : "border-gray-200 bg-gray-50 opacity-75"
+                  ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
+                  : "border-gray-200 bg-gray-50 opacity-75"
                   }`}
               >
                 {/* Icône - hauteur fixe */}

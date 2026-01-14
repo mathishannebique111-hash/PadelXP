@@ -6,6 +6,7 @@ import PageTitle from "@/components/PageTitle";
 import DeleteAccountButton from "@/components/settings/DeleteAccountButton";
 import ProfilePhotoUpload from "@/components/settings/ProfilePhotoUpload";
 import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
+import NameSettings from "@/components/settings/NameSettings";
 
 export default function SettingsContent() {
   return (
@@ -20,6 +21,9 @@ export default function SettingsContent() {
         <div className="mt-6 sm:mt-8 space-y-6">
           {/* Section Photo de profil */}
           <ProfilePhotoUpload />
+
+          {/* Section Nom et prénom (temporaire) */}
+          <NameSettings />
 
           {/* Section Coordination WhatsApp */}
           <WhatsAppSettings />

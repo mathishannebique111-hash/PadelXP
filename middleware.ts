@@ -88,23 +88,58 @@ export async function middleware(req: NextRequest) {
 
   // Normaliser le pathname
   const { pathname } = req.nextUrl;
-  const normalizedPathname = pathname.endsWith("/") && pathname !== "/" 
-    ? pathname.slice(0, -1) 
+  const normalizedPathname = pathname.endsWith("/") && pathname !== "/"
+    ? pathname.slice(0, -1)
     : pathname;
 
 
   // BLOQUER LES URLs CLUB DANS L'APP MOBILE
   const userAgent = req.headers.get('user-agent') || '';
   if (isCapacitorApp(userAgent)) {
-    const isClubUrl = CLUB_ONLY_URLS.some(url => 
+    const isClubUrl = CLUB_ONLY_URLS.some(url =>
       normalizedPathname === url || normalizedPathname.startsWith(url + '/')
     );
-    
+
     if (isClubUrl) {
       logger.info({ path: normalizedPathname }, "[Middleware] Club URL blocked in mobile app");
       const url = req.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);
+    }
+
+    // LOGIQUE DE REDIRECTION POUR L'APP iOS
+    // Sur la page racine "/", vérifier l'auth et rediriger
+    if (normalizedPathname === "/" || normalizedPathname === "") {
+      // Créer un client Supabase pour vérifier l'authentification
+      const supabaseForApp = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return req.cookies.get(name)?.value;
+            },
+            set() { },
+            remove() { },
+          },
+        }
+      );
+
+      const { data: { user } } = await supabaseForApp.auth.getUser();
+
+      if (user) {
+        // Utilisateur connecté → aller vers /home
+        logger.info({ userId: user.id }, "[Middleware] iOS app: User authenticated, redirecting to /home");
+        const url = req.nextUrl.clone();
+        url.pathname = "/home";
+        return NextResponse.redirect(url);
+      } else {
+        // Pas connecté → aller vers /player/signup (inscription)
+        logger.info("[Middleware] iOS app: User not authenticated, redirecting to /player/signup");
+        const url = req.nextUrl.clone();
+        url.pathname = "/player/signup";
+        return NextResponse.redirect(url);
+      }
     }
   }
 
@@ -112,12 +147,12 @@ export async function middleware(req: NextRequest) {
   if (!isCapacitorApp(userAgent)) {
     // Vérifier si le blocage est activé (true en production, false en local/preview)
     const blockPlayersOnWeb = process.env.BLOCK_PLAYERS_ON_WEB === 'true';
-    
+
     if (blockPlayersOnWeb) {
-      const isPlayerUrl = PLAYER_ONLY_URLS.some(url => 
+      const isPlayerUrl = PLAYER_ONLY_URLS.some(url =>
         normalizedPathname === url || normalizedPathname.startsWith(url + '/')
       );
-      
+
       if (isPlayerUrl) {
         logger.info({ path: normalizedPathname }, "[Middleware] Player URL blocked on website");
         const url = req.nextUrl.clone();
@@ -143,11 +178,11 @@ export async function middleware(req: NextRequest) {
   try {
     // Rate limiting pour les tentatives de connexion (uniquement POST vers les API d'auth)
     // Ne pas appliquer aux visites simples de pages (GET) ni aux pages de réinitialisation
-    const isLoginApiCall = 
-      (pathnameForRateLimit.startsWith("/api/auth/login") || 
-       pathnameForRateLimit.startsWith("/api/auth/callback")) &&
+    const isLoginApiCall =
+      (pathnameForRateLimit.startsWith("/api/auth/login") ||
+        pathnameForRateLimit.startsWith("/api/auth/callback")) &&
       req.method === "POST";
-    
+
     // Ne pas appliquer le rate limiting aux visites simples de la page /login (GET)
     // ni aux pages de réinitialisation de mot de passe
     if (isLoginApiCall) {
@@ -176,7 +211,7 @@ export async function middleware(req: NextRequest) {
                 getAll() {
                   return req.cookies.getAll();
                 },
-                setAll() {},
+                setAll() { },
               },
             }
           );
@@ -243,48 +278,48 @@ export async function middleware(req: NextRequest) {
 
   // Définir les routes publiques AVANT toute vérification d'authentification
   const PUBLIC_PREFIXES = [
-    "/api/auth/", 
-    "/api/leaderboard/", 
-    "/api/players/", 
-    "/api/clubs/", 
-    "/api/public/", 
-    "/api/challenges/", 
-    "/api/player/", 
+    "/api/auth/",
+    "/api/leaderboard/",
+    "/api/players/",
+    "/api/clubs/",
+    "/api/public/",
+    "/api/challenges/",
+    "/api/player/",
     "/api/referrals/",
-    "/_next/", 
-    "/images/", 
+    "/_next/",
+    "/images/",
     "/onboarding/"
   ];
-  
+
   const PUBLIC_PATHS = new Set([
-    "/", 
-    "/login", 
-    "/signup", 
-    "/clubs", 
-    "/clubs/login", 
-    "/clubs/signup", 
-    "/favicon.ico", 
-    "/onboarding", 
-    "/onboarding/club", 
-    "/dashboard", 
-    "/player/login", 
+    "/",
+    "/login",
+    "/signup",
+    "/clubs",
+    "/clubs/login",
+    "/clubs/signup",
+    "/favicon.ico",
+    "/onboarding",
+    "/onboarding/club",
+    "/dashboard",
+    "/player/login",
     "/player/signup",
     "/download",  // NOUVEAU : page de téléchargement app
     "/forgot-password",  // Page de réinitialisation de mot de passe
     "/reset-password",  // Page de définition du nouveau mot de passe
-    "/terms", 
-    "/privacy", 
-    "/legal", 
-    "/cgv", 
+    "/terms",
+    "/privacy",
+    "/legal",
+    "/cgv",
     "/cookies",
     "/player/legal",
     "/player/terms",
     "/player/privacy",
     "/player/cookies",
-    "/about", 
+    "/about",
     "/contact"
   ]);
-  
+
   const API_ROUTES_THAT_HANDLE_AUTH = ["/api/matches/", "/api/reviews"];
   const isApiRouteThatHandlesAuth = API_ROUTES_THAT_HANDLE_AUTH.some((p) => normalizedPathname.startsWith(p));
   const isPublic = PUBLIC_PATHS.has(normalizedPathname) || PUBLIC_PREFIXES.some((p) => normalizedPathname.startsWith(p));
@@ -307,7 +342,7 @@ export async function middleware(req: NextRequest) {
 
 
   const res = NextResponse.next();
-  
+
   if (rateLimitInfo) {
     res.headers.set("X-RateLimit-Limit", rateLimitInfo.limit);
     res.headers.set("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
@@ -347,12 +382,12 @@ export async function middleware(req: NextRequest) {
   if (session) {
     const now = Date.now();
     const lastActivityCookie = req.cookies.get("last_activity")?.value;
-    
+
     if (lastActivityCookie) {
       const lastActivity = parseInt(lastActivityCookie, 10);
       if (!isNaN(lastActivity)) {
         const inactiveMinutes = (now - lastActivity) / (1000 * 60);
-        
+
         if (inactiveMinutes > 29) {
           await supabase.auth.signOut();
           res.cookies.set("last_activity", "", { expires: new Date(0) });
@@ -368,7 +403,7 @@ export async function middleware(req: NextRequest) {
         }
       }
     }
-    
+
     if (isProtected) {
       res.cookies.set("last_activity", now.toString(), {
         httpOnly: true,
@@ -387,7 +422,7 @@ export async function middleware(req: NextRequest) {
     const now = Math.floor(Date.now() / 1000);
     const expiresAt = session.expires_at;
     const expiresIn = expiresAt - now;
-    
+
     if (expiresIn < 60) {
       await supabase.auth.signOut();
       res.cookies.set("last_activity", "", { expires: new Date(0) });
@@ -439,7 +474,7 @@ export async function middleware(req: NextRequest) {
     }
     return res;
   }
-  
+
   if (!session && req.cookies.get("last_activity")) {
     res.cookies.set("last_activity", "", { expires: new Date(0), path: "/" });
   }
@@ -457,7 +492,7 @@ export async function middleware(req: NextRequest) {
         .eq("id", user.id)
         .maybeSingle();
       userIsAdmin = profile?.is_admin || false;
-      
+
       // Fallback sur la fonction isAdmin basée sur l'email si pas de profil ou is_admin null
       if (!userIsAdmin) {
         userIsAdmin = isAdmin(user.email);
@@ -466,7 +501,7 @@ export async function middleware(req: NextRequest) {
       // En cas d'erreur, utiliser la fonction basée sur l'email
       userIsAdmin = isAdmin(user.email);
     }
-    
+
     // Protect admin routes - rediriger uniquement si vraiment non-admin
     if (normalizedPathname.startsWith('/admin')) {
       if (!userIsAdmin) {
@@ -476,13 +511,13 @@ export async function middleware(req: NextRequest) {
       }
       // Si admin et sur route admin, continuer normalement (pas de redirection)
     }
-    
+
     // Redirect admin users to admin messages when accessing player entry pages
     // MAIS seulement si l'admin n'est pas déjà en train de naviguer dans l'admin
     // (vérifier le referer pour éviter les redirections lors de la navigation admin)
     const referer = req.headers.get('referer') || '';
     const isComingFromAdmin = referer.includes('/admin');
-    
+
     // Rediriger les admins vers /admin/messages au lieu de /home ou autres pages joueur
     if (
       userIsAdmin &&
@@ -497,7 +532,7 @@ export async function middleware(req: NextRequest) {
       url.pathname = "/admin/messages";
       return NextResponse.redirect(url);
     }
-    
+
     // Redirect logged-in users away from login/signup pages
     if (normalizedPathname === "/signup" || normalizedPathname === "/login") {
       if (userIsAdmin) {

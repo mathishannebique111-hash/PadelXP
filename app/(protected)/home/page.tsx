@@ -3,7 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import PlayerSummary from "@/components/PlayerSummary";
 import LogoutButton from "@/components/LogoutButton";
-import Top3Notification from "@/components/Top3Notification";
+
 import ReferralNotifier from "@/components/ReferralNotifier";
 import ReferralSection from "@/components/ReferralSection";
 import TierBadge from "@/components/TierBadge";
@@ -378,7 +378,6 @@ export default async function HomePage({
         {/* Afficher le contenu seulement si profile et user existent */}
         {profile && user && (
           <>
-            <Top3Notification currentUserId={profile.id} />
             <ReferralNotifier />
             <div className="mb-4 sm:mb-6">
               <PageTitle title={`Bienvenue ${profile.display_name} !`} subtitle={clubName ? `Club : ${clubName}` : undefined} />

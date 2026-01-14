@@ -25,7 +25,7 @@ export default async function PlayerLoginPage() {
   return (
     <>
       <HideSplashScreen />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#172554] text-white px-6">
         <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white p-8">
           <h1 className="text-2xl font-extrabold mb-2">Connexion joueur</h1>
           <p className="text-white/60 mb-6 text-sm">

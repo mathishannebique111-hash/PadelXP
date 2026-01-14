@@ -14,18 +14,23 @@ export default function LogoutButton({ variant = "dark" }: { variant?: "dark" | 
     try {
       const supabase = supabaseClient();
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
         logger.error("Error logging out:", error);
-        // Même en cas d'erreur, rediriger vers la page d'accueil
+        // Même en cas d'erreur, rediriger vers la page de connexion
       }
-      
-      // Rediriger vers la page d'accueil du site
-      router.push("/");
+
+      // Marquer comme déconnexion volontaire (pour l'app iOS)
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('voluntary_logout', 'true');
+      }
+
+      // Rediriger vers la page de connexion (pas d'inscription)
+      router.push("/login");
       router.refresh();
     } catch (error) {
       logger.error("Error logging out:", error);
-      router.push("/");
+      router.push("/login");
     } finally {
       setLoading(false);
     }
