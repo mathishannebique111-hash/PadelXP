@@ -342,133 +342,136 @@ export default function ChallengesSent() {
         <div className="space-y-2.5 sm:space-y-3">
           {challenges
             .filter((challenge) => {
+              // Afficher les défis non expirés OU les défis refusés (pour pouvoir les supprimer)
               const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
-              return timeRemaining && !timeRemaining.expired;
+              const isNotExpired = timeRemaining && !timeRemaining.expired;
+              const isRefused = challenge.status === "refused";
+              return isNotExpired || isRefused;
             })
             .map((challenge) => {
-            const defender1Name =
-              challenge.defender_1.first_name && challenge.defender_1.last_name
-                ? `${challenge.defender_1.first_name} ${challenge.defender_1.last_name}`
-                : challenge.defender_1.first_name ||
+              const defender1Name =
+                challenge.defender_1.first_name && challenge.defender_1.last_name
+                  ? `${challenge.defender_1.first_name} ${challenge.defender_1.last_name}`
+                  : challenge.defender_1.first_name ||
                   challenge.defender_1.last_name ||
                   "Joueur 1";
-            const defender2Name =
-              challenge.defender_2.first_name && challenge.defender_2.last_name
-                ? `${challenge.defender_2.first_name} ${challenge.defender_2.last_name}`
-                : challenge.defender_2.first_name ||
+              const defender2Name =
+                challenge.defender_2.first_name && challenge.defender_2.last_name
+                  ? `${challenge.defender_2.first_name} ${challenge.defender_2.last_name}`
+                  : challenge.defender_2.first_name ||
                   challenge.defender_2.last_name ||
                   "Joueur 2";
 
-            const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
+              const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
 
-            return (
-              <motion.div
-                key={challenge.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-blue-500/20 p-2.5 sm:p-3 relative"
-              >
-                {/* Compteur en haut à droite */}
-                {timeRemaining && !timeRemaining.expired && (
-                  <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
-                    <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap flex items-center gap-1">
-                      <Clock size={10} />
-                      {timeRemaining.hours}h {timeRemaining.minutes}m
-                    </p>
-                  </div>
-                )}
+              return (
+                <motion.div
+                  key={challenge.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-blue-500/20 p-2.5 sm:p-3 relative"
+                >
+                  {/* Compteur en haut à droite */}
+                  {timeRemaining && !timeRemaining.expired && (
+                    <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
+                      <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap flex items-center gap-1">
+                        <Clock size={10} />
+                        {timeRemaining.hours}h {timeRemaining.minutes}m
+                      </p>
+                    </div>
+                  )}
 
-                {/* Status badge */}
-                <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    {getStatusBadge(challenge)}
+                  {/* Status badge */}
+                  <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      {getStatusBadge(challenge)}
+                    </div>
+                    {(challenge.status === "pending" || challenge.status === "refused") && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteClick(challenge.id)}
+                        disabled={deleting === challenge.id}
+                        className="p-1.5 sm:p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50 flex-shrink-0"
+                      >
+                        {deleting === challenge.id ? (
+                          <Loader2 size={14} className="sm:w-4 sm:h-4 animate-spin" />
+                        ) : (
+                          <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                        )}
+                      </button>
+                    )}
                   </div>
-                  {challenge.status === "pending" && (
+
+                  {/* Defenders */}
+                  <div className="mb-3 sm:mb-4">
+                    <p className="text-[10px] sm:text-xs text-gray-400 mb-2">Vous avez défié :</p>
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                      {challenge.defender_1.avatar_url ? (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
+                          <Image
+                            src={challenge.defender_1.avatar_url}
+                            alt=""
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
+                          <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white text-xs sm:text-sm truncate">
+                          {defender1Name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      {challenge.defender_2.avatar_url ? (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
+                          <Image
+                            src={challenge.defender_2.avatar_url}
+                            alt=""
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
+                          <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white text-xs sm:text-sm truncate">
+                          {defender2Name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action button if accepted */}
+                  {challenge.status === "accepted" && (
                     <button
                       type="button"
-                      onClick={() => handleDeleteClick(challenge.id)}
-                      disabled={deleting === challenge.id}
-                      className="p-1.5 sm:p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50 flex-shrink-0"
+                      onClick={() => handleOpenWhatsApp(challenge)}
+                      disabled={loadingPhones.has(challenge.id)}
+                      className="w-full py-2.5 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-emerald-500/30"
                     >
-                      {deleting === challenge.id ? (
-                        <Loader2 size={14} className="sm:w-4 sm:h-4 animate-spin" />
+                      {loadingPhones.has(challenge.id) ? (
+                        <Loader2 size={16} className="animate-spin" />
                       ) : (
-                        <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                        <>
+                          <MessageCircle size={16} />
+                          Contacter le capitaine adverse sur WhatsApp
+                        </>
                       )}
                     </button>
                   )}
-                </div>
-
-                {/* Defenders */}
-                <div className="mb-3 sm:mb-4">
-                  <p className="text-[10px] sm:text-xs text-gray-400 mb-2">Vous avez défié :</p>
-                  <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                    {challenge.defender_1.avatar_url ? (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
-                        <Image
-                          src={challenge.defender_1.avatar_url}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
-                        <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white text-xs sm:text-sm truncate">
-                        {defender1Name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    {challenge.defender_2.avatar_url ? (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
-                        <Image
-                          src={challenge.defender_2.avatar_url}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
-                        <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white text-xs sm:text-sm truncate">
-                        {defender2Name}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action button if accepted */}
-                {challenge.status === "accepted" && (
-                  <button
-                    type="button"
-                    onClick={() => handleOpenWhatsApp(challenge)}
-                    disabled={loadingPhones.has(challenge.id)}
-                    className="w-full py-2.5 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-emerald-500/30"
-                  >
-                    {loadingPhones.has(challenge.id) ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <>
-                        <MessageCircle size={16} />
-                        Contacter le capitaine adverse sur WhatsApp
-                      </>
-                    )}
-                  </button>
-                )}
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
         </div>
       </div>
 

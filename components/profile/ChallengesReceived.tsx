@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { CheckCircle2, XCircle, Loader2, User, MessageCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, User, MessageCircle, Clock, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { showToast } from "@/components/ui/Toast";
@@ -72,6 +72,7 @@ export default function ChallengesReceived() {
     avatar_url: string | null;
   } | null>(null);
   const [loadingPhones, setLoadingPhones] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const supabase = createClient();
 
@@ -130,8 +131,7 @@ export default function ChallengesReceived() {
         .from("team_challenges")
         .select("*")
         .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
-        .in("status", ["pending", "accepted"])
-        .gt("expires_at", new Date().toISOString())
+        .in("status", ["pending", "accepted", "refused"])
         .order("created_at", { ascending: false });
 
       if (challengesError) {
@@ -389,19 +389,47 @@ export default function ChallengesReceived() {
     }
   };
 
+  const handleDeleteChallenge = async (challengeId: string) => {
+    try {
+      setDeleting(challengeId);
+
+      const { error } = await supabase
+        .from("team_challenges")
+        .delete()
+        .eq("id", challengeId);
+
+      if (error) {
+        console.error("[ChallengesReceived] Erreur suppression", error);
+        showToast("Erreur lors de la suppression", "error");
+        return;
+      }
+
+      showToast("Défi supprimé", "success");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("teamChallengeDeleted"));
+      }
+      loadChallenges();
+    } catch (error) {
+      console.error("[ChallengesReceived] Erreur suppression", error);
+      showToast("Erreur lors de la suppression", "error");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   const getChallengerNames = (challenge: TeamChallenge): string => {
     const name1 =
       challenge.challenger_1.first_name && challenge.challenger_1.last_name
         ? `${challenge.challenger_1.first_name} ${challenge.challenger_1.last_name}`
         : challenge.challenger_1.first_name ||
-          challenge.challenger_1.last_name ||
-          "Joueur 1";
+        challenge.challenger_1.last_name ||
+        "Joueur 1";
     const name2 =
       challenge.challenger_2.first_name && challenge.challenger_2.last_name
         ? `${challenge.challenger_2.first_name} ${challenge.challenger_2.last_name}`
         : challenge.challenger_2.first_name ||
-          challenge.challenger_2.last_name ||
-          "Joueur 2";
+        challenge.challenger_2.last_name ||
+        "Joueur 2";
     return `${name1} et ${name2}`;
   };
 
@@ -427,214 +455,240 @@ export default function ChallengesReceived() {
         <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
           {challenges
             .filter((challenge) => {
+              // Afficher les défis non expirés OU les défis refusés (pour pouvoir les supprimer)
               const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
-              return timeRemaining && !timeRemaining.expired;
+              const isNotExpired = timeRemaining && !timeRemaining.expired;
+              const isRefused = challenge.status === "refused";
+              return isNotExpired || isRefused;
             })
             .map((challenge) => {
-            if (!currentUserId) return null;
-            
-            const isDefender1 = challenge.defender_player_1_id === currentUserId;
-            const myStatus = isDefender1
-              ? challenge.defender_1_status
-              : challenge.defender_2_status;
-            const partnerStatus = isDefender1
-              ? challenge.defender_2_status
-              : challenge.defender_1_status;
-            const partnerProfile = isDefender1
-              ? challenge.defender_2
-              : challenge.defender_1;
-            const partnerName =
-              partnerProfile.first_name && partnerProfile.last_name
-                ? `${partnerProfile.first_name} ${partnerProfile.last_name}`
-                : partnerProfile.first_name || partnerProfile.last_name || "Joueur";
+              if (!currentUserId) return null;
 
-            const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
+              const isDefender1 = challenge.defender_player_1_id === currentUserId;
+              const myStatus = isDefender1
+                ? challenge.defender_1_status
+                : challenge.defender_2_status;
+              const partnerStatus = isDefender1
+                ? challenge.defender_2_status
+                : challenge.defender_1_status;
+              const partnerProfile = isDefender1
+                ? challenge.defender_2
+                : challenge.defender_1;
+              const partnerName =
+                partnerProfile.first_name && partnerProfile.last_name
+                  ? `${partnerProfile.first_name} ${partnerProfile.last_name}`
+                  : partnerProfile.first_name || partnerProfile.last_name || "Joueur";
 
-            return (
-              <motion.div
-                key={challenge.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-orange-500/20 p-2.5 sm:p-3 md:p-4 relative"
-              >
-                {/* Compteur en haut à droite */}
-                {timeRemaining && !timeRemaining.expired && (
-                  <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
-                    <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap flex items-center gap-1">
-                      <Clock size={10} />
-                      {timeRemaining.hours}h {timeRemaining.minutes}m
-                    </p>
-                  </div>
-                )}
+              const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
 
-                {/* Layout côte à côte : Challengers à gauche, Defenders à droite */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  {/* Challengers (gauche) */}
-                  <div>
-                    <p className="text-[10px] sm:text-xs text-gray-400 mb-2">Vous êtes défiés par :</p>
-                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                      {challenge.challenger_1.avatar_url ? (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
-                          <Image
-                            src={challenge.challenger_1.avatar_url}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="w-full h-full object-cover"
-                          />
+              return (
+                <motion.div
+                  key={challenge.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-orange-500/20 p-2.5 sm:p-3 md:p-4 relative"
+                >
+                  {/* Compteur en haut à droite */}
+                  {timeRemaining && !timeRemaining.expired && (
+                    <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
+                      <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap flex items-center gap-1">
+                        <Clock size={10} />
+                        {timeRemaining.hours}h {timeRemaining.minutes}m
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Layout côte à côte : Challengers à gauche, Defenders à droite */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                    {/* Challengers (gauche) */}
+                    <div>
+                      <p className="text-[10px] sm:text-xs text-gray-400 mb-2">Vous êtes défiés par :</p>
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        {challenge.challenger_1.avatar_url ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
+                            <Image
+                              src={challenge.challenger_1.avatar_url}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
+                            <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-xs sm:text-sm truncate">
+                            {challenge.challenger_1.first_name} {challenge.challenger_1.last_name}
+                          </p>
                         </div>
-                      ) : (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
-                          <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        {challenge.challenger_2.avatar_url ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
+                            <Image
+                              src={challenge.challenger_2.avatar_url}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
+                            <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-xs sm:text-sm truncate">
+                            {challenge.challenger_2.first_name} {challenge.challenger_2.last_name}
+                          </p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-xs sm:text-sm truncate">
-                          {challenge.challenger_1.first_name} {challenge.challenger_1.last_name}
-                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      {challenge.challenger_2.avatar_url ? (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
-                          <Image
-                            src={challenge.challenger_2.avatar_url}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
-                          <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-xs sm:text-sm truncate">
-                          {challenge.challenger_2.first_name} {challenge.challenger_2.last_name}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Defenders avec statuts (droite) */}
-                  <div>
-                    <p className="text-[10px] sm:text-xs text-gray-400 mb-2">Votre équipe :</p>
-                    {/* Moi */}
-                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                      {(isDefender1 ? challenge.defender_1.avatar_url : challenge.defender_2.avatar_url) || currentUserProfile?.avatar_url ? (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
-                          <Image
-                            src={(isDefender1 ? challenge.defender_1.avatar_url : challenge.defender_2.avatar_url) || currentUserProfile?.avatar_url || ""}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
-                          <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-xs sm:text-sm truncate">
-                          {isDefender1
-                            ? (challenge.defender_1.first_name && challenge.defender_1.last_name
+                    {/* Defenders avec statuts (droite) */}
+                    <div>
+                      <p className="text-[10px] sm:text-xs text-gray-400 mb-2">Votre équipe :</p>
+                      {/* Moi */}
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        {(isDefender1 ? challenge.defender_1.avatar_url : challenge.defender_2.avatar_url) || currentUserProfile?.avatar_url ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
+                            <Image
+                              src={(isDefender1 ? challenge.defender_1.avatar_url : challenge.defender_2.avatar_url) || currentUserProfile?.avatar_url || ""}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
+                            <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-xs sm:text-sm truncate">
+                            {isDefender1
+                              ? (challenge.defender_1.first_name && challenge.defender_1.last_name
                                 ? `${challenge.defender_1.first_name} ${challenge.defender_1.last_name}`
                                 : challenge.defender_1.first_name || challenge.defender_1.last_name || currentUserProfile?.first_name || "Vous")
-                            : (challenge.defender_2.first_name && challenge.defender_2.last_name
+                              : (challenge.defender_2.first_name && challenge.defender_2.last_name
                                 ? `${challenge.defender_2.first_name} ${challenge.defender_2.last_name}`
                                 : challenge.defender_2.first_name || challenge.defender_2.last_name || currentUserProfile?.first_name || "Vous")}
-                        </p>
-                      </div>
-                      {myStatus === "accepted" ? (
-                        <CheckCircle2 size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-emerald-400 flex-shrink-0" />
-                      ) : (
-                        <Clock size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-yellow-400 flex-shrink-0" />
-                      )}
-                    </div>
-                    {/* Mon partenaire */}
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      {partnerProfile.avatar_url ? (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
-                          <Image
-                            src={partnerProfile.avatar_url}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="w-full h-full object-cover"
-                          />
+                          </p>
                         </div>
-                      ) : (
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
-                          <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-xs sm:text-sm truncate">
-                          {partnerName}
-                        </p>
+                        {myStatus === "accepted" ? (
+                          <CheckCircle2 size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-emerald-400 flex-shrink-0" />
+                        ) : (
+                          <Clock size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-yellow-400 flex-shrink-0" />
+                        )}
                       </div>
-                      {partnerStatus === "accepted" ? (
-                        <CheckCircle2 size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-emerald-400 flex-shrink-0" />
-                      ) : (
-                        <Clock size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-yellow-400 flex-shrink-0" />
-                      )}
+                      {/* Mon partenaire */}
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        {partnerProfile.avatar_url ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 flex-shrink-0">
+                            <Image
+                              src={partnerProfile.avatar_url}
+                              alt=""
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-500/20 flex items-center justify-center border border-gray-500/30 flex-shrink-0">
+                            <User size={14} className="sm:w-4 sm:h-4 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-xs sm:text-sm truncate">
+                            {partnerName}
+                          </p>
+                        </div>
+                        {partnerStatus === "accepted" ? (
+                          <CheckCircle2 size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-emerald-400 flex-shrink-0" />
+                        ) : (
+                          <Clock size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-yellow-400 flex-shrink-0" />
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bouton WhatsApp si défi accepté */}
-                {challenge.status === "accepted" && (
-                  <button
-                    type="button"
-                    onClick={() => handleOpenWhatsApp(challenge)}
-                    disabled={loadingPhones.has(challenge.id)}
-                    className="w-full py-2.5 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-emerald-500/30"
-                  >
-                    {loadingPhones.has(challenge.id) ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <>
-                        <MessageCircle size={16} />
-                        Contactez le capitaine adverse sur WhatsApp
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {/* Actions (Refuser/Accepter) - uniquement si pas encore accepté */}
-                {challenge.status !== "accepted" && (
-                  <div className="flex gap-2">
+                  {/* Bouton WhatsApp si défi accepté */}
+                  {challenge.status === "accepted" && (
                     <button
                       type="button"
-                      onClick={() => handleRefuseChallenge(challenge.id)}
-                      disabled={!!responding || myStatus === "accepted"}
-                      className="flex-1 py-2 sm:py-2.5 px-2 sm:px-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 min-h-[40px] sm:min-h-[44px]"
+                      onClick={() => handleOpenWhatsApp(challenge)}
+                      disabled={loadingPhones.has(challenge.id)}
+                      className="w-full py-2.5 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-emerald-500/30"
                     >
-                      <XCircle size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
-                      <span className="text-[11px] sm:text-xs">Refuser</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAcceptChallenge(challenge.id, challenge)}
-                      disabled={!!responding || myStatus === "accepted"}
-                      className="flex-1 py-2 sm:py-2.5 px-2 sm:px-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 min-h-[40px] sm:min-h-[44px]"
-                    >
-                      {responding === challenge.id ? (
-                        <Loader2 size={14} className="sm:w-4 sm:h-4 animate-spin flex-shrink-0" />
+                      {loadingPhones.has(challenge.id) ? (
+                        <Loader2 size={16} className="animate-spin" />
                       ) : (
-                        <CheckCircle2 size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                        <>
+                          <MessageCircle size={16} />
+                          Contactez le capitaine adverse sur WhatsApp
+                        </>
                       )}
-                      <span className="text-[11px] sm:text-xs">Accepter</span>
                     </button>
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
+                  )}
+
+                  {/* Actions (Refuser/Accepter) - uniquement si pending */}
+                  {challenge.status === "pending" && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleRefuseChallenge(challenge.id)}
+                        disabled={!!responding || myStatus === "accepted"}
+                        className="flex-1 py-2 sm:py-2.5 px-2 sm:px-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 min-h-[40px] sm:min-h-[44px]"
+                      >
+                        <XCircle size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="text-[11px] sm:text-xs">Refuser</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAcceptChallenge(challenge.id, challenge)}
+                        disabled={!!responding || myStatus === "accepted"}
+                        className="flex-1 py-2 sm:py-2.5 px-2 sm:px-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 min-h-[40px] sm:min-h-[44px]"
+                      >
+                        {responding === challenge.id ? (
+                          <Loader2 size={14} className="sm:w-4 sm:h-4 animate-spin flex-shrink-0" />
+                        ) : (
+                          <CheckCircle2 size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                        )}
+                        <span className="text-[11px] sm:text-xs">Accepter</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Bouton supprimer pour les défis refusés */}
+                  {challenge.status === "refused" && (
+                    <div className="flex gap-2">
+                      <span className="flex-1 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs font-medium border border-red-500/30">
+                        <XCircle size={12} />
+                        Refusé
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteChallenge(challenge.id)}
+                        disabled={deleting === challenge.id}
+                        className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 min-h-[40px]"
+                      >
+                        {deleting === challenge.id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={14} />
+                        )}
+                        <span>Supprimer</span>
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
         </div>
       </div>
 
