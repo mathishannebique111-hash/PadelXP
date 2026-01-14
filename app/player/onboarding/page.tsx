@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
+import HideSplashScreen from "@/components/HideSplashScreen";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +31,11 @@ export default async function PlayerOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-950 via-black to-black">
-      <OnboardingWizard />
-    </div>
+    <>
+      <HideSplashScreen />
+      <div className="min-h-screen bg-gradient-to-b from-blue-950 via-black to-black">
+        <OnboardingWizard />
+      </div>
+    </>
   );
 }

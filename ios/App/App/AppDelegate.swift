@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import WebKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,49 +8,103 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
-        
-        // S'assurer que la fenêtre principale a un fond noir pour éviter les safe areas blanches
         if let window = self.window {
-            window.backgroundColor = UIColor.black
+            window.backgroundColor = UIColor(red: 0.09, green: 0.145, blue: 0.33, alpha: 1.0)
         }
-        
         return true
     }
 
-    func applicationWillResignActive(_ application: UIApplication) {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
-    }
-
-    func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-    }
-
-    func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
-    }
-
-    func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    }
-
-    func applicationWillTerminate(_ application: UIApplication) {
-        // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-    }
-
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        // Called when the app was launched with a url. Feel free to add additional processing here,
-        // but if you want the App API to support tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
     }
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
-        // Called when the app was launched with an activity, including Universal Links.
-        // Feel free to add additional processing here, but if you want the App API to support
-        // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
+}
 
+@objc(BridgeViewController)
+public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
+    
+    public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "updateSafeAreaColor", let colorHex = message.body as? String {
+            print("PadelXP Native: Updating safe area color to \(colorHex)")
+            DispatchQueue.main.async {
+                let color = self.colorFromHex(colorHex)
+                self.view.backgroundColor = color
+                self.webView?.backgroundColor = color
+                self.webView?.isOpaque = false
+            }
+        } else if message.name == "hideSplash" {
+            print("PadelXP Native: Page is ready, showing WebView")
+            DispatchQueue.main.async {
+                // Rendre la WebView visible avec un fondu
+                UIView.animate(withDuration: 0.2) {
+                    self.webView?.alpha = 1.0
+                }
+            }
+        }
+    }
+    
+    private func colorFromHex(_ hex: String) -> UIColor {
+        var cString: String = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if cString.hasPrefix("#") { cString.remove(at: cString.startIndex) }
+        if cString.count != 6 { return .black }
+        var rgbValue: UInt64 = 0
+        Scanner(string: cString).scanHexInt64(&rgbValue)
+        return UIColor(
+            red: CGFloat((rgbValue & 0xFF0000) >> 16) / 255.0,
+            green: CGFloat((rgbValue & 0x00FF00) >> 8) / 255.0,
+            blue: CGFloat(rgbValue & 0x0000FF) / 255.0,
+            alpha: 1.0
+        )
+    }
+    
+    public required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+    
+    public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    }
+    
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+        self.view.backgroundColor = UIColor(red: 0.09, green: 0.145, blue: 0.33, alpha: 1.0)
+        
+        let hasLaunchedBefore = UserDefaults.standard.bool(forKey: "HasLaunchedBefore")
+        let targetPath = hasLaunchedBefore ? "/login" : "/register"
+        
+        print("PadelXP Native: First launch: \(!hasLaunchedBefore). Redirecting to \(targetPath)")
+        
+        let scriptSource = """
+        (function() {
+            document.documentElement.classList.add('is-app');
+            
+            if (window.location.pathname === '/' || window.location.pathname === '' || window.location.pathname === '/index.html') {
+                console.log('PadelXP: Redirection to \(targetPath)');
+                window.location.replace('\(targetPath)');
+            }
+        })();
+        """
+        
+        let script = WKUserScript(source: scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        
+        if let webView = self.webView {
+            webView.configuration.userContentController.addUserScript(script)
+            webView.configuration.userContentController.add(self, name: "updateSafeAreaColor")
+            webView.configuration.userContentController.add(self, name: "hideSplash")
+            webView.backgroundColor = UIColor(red: 0.09, green: 0.145, blue: 0.33, alpha: 1.0)
+            webView.isOpaque = false
+            webView.scrollView.contentInsetAdjustmentBehavior = .never
+            
+            // CACHER la WebView au départ - le LaunchScreen iOS reste visible
+            webView.alpha = 0.0
+        }
+        
+        if !hasLaunchedBefore {
+            UserDefaults.standard.set(true, forKey: "HasLaunchedBefore")
+            UserDefaults.standard.synchronize()
+        }
+    }
 }

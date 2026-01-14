@@ -29,7 +29,7 @@ export default async function NewMatchPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const activeTab = searchParams?.tab === 'history' ? 'history' : searchParams?.tab === 'badges' ? 'badges' : 'record';
-  
+
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-10">
@@ -75,18 +75,18 @@ export default async function NewMatchPage({
 
   if (!clubId) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+      <div className="relative min-h-screen overflow-hidden bg-[#172554]">
+        {/* Background avec overlay - Transparent en haut pour fusionner */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        
+
         {/* Pattern animé */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-20 sm:pt-8 pb-8 text-white">
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-4 sm:pt-8 pb-8 text-white">
           <div className="mb-6">
             <PageTitle title="Matchs" />
           </div>
@@ -99,18 +99,18 @@ export default async function NewMatchPage({
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-      {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+    <div className="relative min-h-screen overflow-hidden bg-[#172554]">
+      {/* Background avec overlay - Transparent en haut pour fusionner */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-      
+
       {/* Pattern animé - halos de la landing page */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-20 md:pt-8 pb-8">
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-4 md:pt-8 pb-8">
         <div className="mb-6">
           <PageTitle title="Matchs" />
         </div>

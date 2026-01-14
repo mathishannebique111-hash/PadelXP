@@ -11,17 +11,17 @@ import { logger } from '@/lib/logger';
 import { useUnreadPlayerMessages } from '@/lib/hooks/useUnreadPlayerMessages';
 import { NotificationBadge } from '@/components/NotificationBadge';
 
-  type NavKey =
-    | "home"
-    | "match"
-    | "tournaments"
-    | "challenges"
-    | "reviews"
-    | "boost"
-    | "club"
-    | "contact"
-    | "badges"
-    | "history";
+type NavKey =
+  | "home"
+  | "match"
+  | "tournaments"
+  | "challenges"
+  | "reviews"
+  | "boost"
+  | "club"
+  | "contact"
+  | "badges"
+  | "history";
 
 interface MenuItem {
   href: string;
@@ -39,59 +39,7 @@ export default function PlayerSidebar() {
   // FORCER l'affichage immédiatement, y compris avant l'hydratation complète
   // Utiliser plusieurs timers pour garantir l'affichage même si l'un échoue
   useEffect(() => {
-    logger.info('[PlayerSidebar] Component mounted - TOUJOURS VISIBLE (même pour nouveaux joueurs)');
-    
-    // Fonction pour forcer l'affichage du bouton (responsive)
-    const forceButtonDisplay = () => {
-      const button = document.querySelector('[data-hamburger-button]') as HTMLElement;
-      if (button) {
-        const isMobile = window.innerWidth < 640;
-        const top = isMobile ? '0.75rem' : '1rem';
-        const left = isMobile ? '0.75rem' : '1rem';
-        const size = isMobile ? '2.5rem' : '3rem';
-        button.style.cssText = `
-          position: fixed !important;
-          top: ${top} !important;
-          left: ${left} !important;
-          width: ${size} !important;
-          height: ${size} !important;
-          min-width: ${size} !important;
-          min-height: ${size} !important;
-          z-index: 100000 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          visibility: visible !important;
-          opacity: 1 !important;
-          pointer-events: auto !important;
-          border: 1px solid rgba(255, 255, 255, 0.2) !important;
-          border-radius: 0.75rem !important;
-          background-color: rgba(255, 255, 255, 0.1) !important;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-        `;
-        logger.info('[PlayerSidebar] Button display forced (responsive)');
-      }
-    };
-    
-    // Forcer immédiatement
-    forceButtonDisplay();
-    
-    // Forcer après des délais multiples pour garantir l'affichage même avec des problèmes de timing
-    const timers = [
-      setTimeout(forceButtonDisplay, 0),
-      setTimeout(forceButtonDisplay, 50),
-      setTimeout(forceButtonDisplay, 100),
-      setTimeout(forceButtonDisplay, 200),
-      setTimeout(forceButtonDisplay, 500),
-    ];
-    
-    // Vérifier aussi sur le prochain frame
-    requestAnimationFrame(forceButtonDisplay);
-    requestAnimationFrame(() => requestAnimationFrame(forceButtonDisplay));
-    
-    return () => {
-      timers.forEach(timer => clearTimeout(timer));
-    };
+    logger.info('[PlayerSidebar] Component mounted - Navigation ready');
   }, []);
 
   // Fermer le menu quand on change de page
@@ -160,45 +108,27 @@ export default function PlayerSidebar() {
       {/* Utiliser suppressHydrationWarning pour éviter les warnings lors de l'hydratation */}
       <button
         data-hamburger-button
+        data-is-app={typeof window !== 'undefined' && (window.navigator.userAgent.toLowerCase().includes('capacitor') || (window as any).Capacitor?.isNative)}
         suppressHydrationWarning
         onClick={() => {
           setIsOpen(prev => !prev);
         }}
-        className="fixed top-3 left-3 sm:top-4 sm:left-4 z-[100000] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 cursor-pointer backdrop-blur shadow-sm"
-        style={{
-          position: 'fixed',
-          top: '0.75rem',
-          left: '0.75rem',
-          width: '2.5rem',
-          height: '2.5rem',
-          minWidth: '2.5rem',
-          minHeight: '2.5rem',
-          zIndex: 100000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto',
-          visibility: 'visible',
-          opacity: 1,
-        } as React.CSSProperties}
+        className="fixed z-[100000] flex items-center justify-center rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 hover:border-white/30 transition-all duration-300 cursor-pointer backdrop-blur shadow-sm"
         aria-label="Menu"
         type="button"
       >
         <div className="flex flex-col gap-1.5 w-6">
           <span
-            className={`block h-0.5 w-full bg-white transition-all duration-300 ${
-              isOpen ? 'rotate-45 translate-y-2' : ''
-            }`}
+            className={`block h-0.5 w-full bg-white transition-all duration-300 ${isOpen ? 'rotate-45 translate-y-2' : ''
+              }`}
           />
           <span
-            className={`block h-0.5 w-full bg-white transition-all duration-300 ${
-              isOpen ? 'opacity-0' : 'opacity-100'
-            }`}
+            className={`block h-0.5 w-full bg-white transition-all duration-300 ${isOpen ? 'opacity-0' : 'opacity-100'
+              }`}
           />
           <span
-            className={`block h-0.5 w-full bg-white transition-all duration-300 ${
-              isOpen ? '-rotate-45 -translate-y-2' : ''
-            }`}
+            className={`block h-0.5 w-full bg-white transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-2' : ''
+              }`}
           />
         </div>
       </button>
@@ -222,9 +152,8 @@ export default function PlayerSidebar() {
       {/* Menu latéral - toujours caché par défaut, s'ouvre avec le bouton */}
       {/* TOUJOURS présent dans le DOM pour garantir l'affichage même pour nouveaux joueurs */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 sm:w-72 bg-black/95 border-r border-white/10 transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 sm:w-72 bg-black/95 border-r border-white/10 transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
         style={{
           position: 'fixed',
           top: 0,
@@ -233,14 +162,19 @@ export default function PlayerSidebar() {
           width: '16rem',
           zIndex: 99999,
           visibility: 'visible',
-          display: 'block',
+          display: 'flex',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header avec notifications en haut à droite */}
-        <div className="flex items-center justify-end gap-2 px-4 pt-5 pb-4 sm:pt-7">
+        <div
+          className="flex items-center justify-end gap-2 px-4 pb-4 w-full"
+          style={{
+            paddingTop: 'calc(var(--sat, 20px) + 1rem)'
+          }}
+        >
           <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
-          <NotificationCenter />
+            <NotificationCenter />
           </div>
         </div>
         <nav className="p-4 pt-4 space-y-2 text-sm flex-1 h-full overflow-y-auto">
@@ -251,9 +185,8 @@ export default function PlayerSidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300 ${
-                  isActive ? 'from-blue-500/20 to-indigo-600/20 border-blue-400/40 shadow-[0_6px_24px_rgba(37,99,235,0.35)]' : ''
-                }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-white/5 to-white/5 text-white/90 border border-white/10 hover:from-blue-500/20 hover:to-indigo-600/20 hover:border-blue-400/40 hover:text-white hover:shadow-[0_4px_12px_rgba(59,130,246,0.25)] hover:scale-[1.02] active:scale-100 transition-all duration-300 ${isActive ? 'from-blue-500/20 to-indigo-600/20 border-blue-400/40 shadow-[0_6px_24px_rgba(37,99,235,0.35)]' : ''
+                  }`}
               >
                 <div
                   className="flex-shrink-0 flex items-center justify-center w-5 h-5 relative"
@@ -265,15 +198,15 @@ export default function PlayerSidebar() {
                       <NotificationBadge show={hasUnread} />
                     </>
                   ) : (
-                    <Image 
+                    <Image
                       key={`${item.navKey}-${item.icon}`}
-                      src={item.icon} 
-                      alt={item.label} 
+                      src={item.icon}
+                      alt={item.label}
                       width={20}
                       height={20}
                       className="object-contain w-5 h-5"
                       unoptimized
-                      style={{ 
+                      style={{
                         opacity: 1,
                         imageRendering: 'crisp-edges'
                       }}

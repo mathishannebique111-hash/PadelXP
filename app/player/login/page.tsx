@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import EmailLoginForm from "@/components/auth/EmailLoginForm";
 import Link from "next/link";
+import HideSplashScreen from "@/components/HideSplashScreen";
 
 export default async function PlayerLoginPage() {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export default async function PlayerLoginPage() {
       .select("club_slug")
       .eq("id", user.id)
       .maybeSingle();
-    
+
     if (profile) {
       // L'utilisateur a un profil joueur, le rediriger vers l'espace joueur
       // TOUJOURS rediriger vers /home pour garantir l'affichage du menu hamburger et du logo du club
@@ -22,39 +23,40 @@ export default async function PlayerLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6">
-      <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white p-8">
-        <h1 className="text-2xl font-extrabold mb-2">Connexion joueur</h1>
-        <p className="text-white/60 mb-6 text-sm">
-          Connectez-vous avec votre email et mot de passe pour accéder à votre club.
-        </p>
-        <EmailLoginForm />
-        <div className="mt-4 text-center text-sm text-white/70">
-          Pas encore de compte ?{" "}
-          <Link href="/player/signup" prefetch={false} className="underline">
-            Créer un compte joueur
+    <>
+      <HideSplashScreen />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-6">
+        <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white p-8">
+          <h1 className="text-2xl font-extrabold mb-2">Connexion joueur</h1>
+          <p className="text-white/60 mb-6 text-sm">
+            Connectez-vous avec votre email et mot de passe pour accéder à votre club.
+          </p>
+          <EmailLoginForm />
+          <div className="mt-4 text-center text-sm text-white/70">
+            Pas encore de compte ?{" "}
+            <Link href="/player/signup" prefetch={false} className="underline">
+              Créer un compte joueur
+            </Link>
+          </div>
+        </div>
+        <div className="mt-6 text-[11px] text-white/50 flex flex-wrap justify-center gap-3">
+          <Link href="/player/legal" className="hover:text-white underline-offset-2 hover:underline">
+            Mentions légales joueurs
+          </Link>
+          <span>•</span>
+          <Link href="/player/terms" className="hover:text-white underline-offset-2 hover:underline">
+            CGU joueurs
+          </Link>
+          <span>•</span>
+          <Link href="/player/privacy" className="hover:text-white underline-offset-2 hover:underline">
+            Confidentialité joueurs
+          </Link>
+          <span>•</span>
+          <Link href="/player/cookies" className="hover:text-white underline-offset-2 hover:underline">
+            Cookies joueurs
           </Link>
         </div>
       </div>
-      <div className="mt-6 text-[11px] text-white/50 flex flex-wrap justify-center gap-3">
-        <Link href="/player/legal" className="hover:text-white underline-offset-2 hover:underline">
-          Mentions légales joueurs
-        </Link>
-        <span>•</span>
-        <Link href="/player/terms" className="hover:text-white underline-offset-2 hover:underline">
-          CGU joueurs
-        </Link>
-        <span>•</span>
-        <Link href="/player/privacy" className="hover:text-white underline-offset-2 hover:underline">
-          Confidentialité joueurs
-        </Link>
-        <span>•</span>
-        <Link href="/player/cookies" className="hover:text-white underline-offset-2 hover:underline">
-          Cookies joueurs
-        </Link>
-      </div>
-    </div>
+    </>
   );
 }
-
-

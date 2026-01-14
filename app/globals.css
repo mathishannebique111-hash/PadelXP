@@ -32,23 +32,55 @@
     /* Mode sombre = design ACTUEL, ne rien casser visuellement */
 
     /* Fonds - RGB nues */
-    --theme-page: 0 0 0;                /* #000000 - bg-black (fond général) */
-    --theme-player-page: 23 37 84;     /* #172554 - blue-950 (pages joueurs) */
-    --theme-card: 2 6 23;               /* #020617 - slate-950 (cartes) */
-    --theme-secondary: 2 6 23;          /* #020617 - slate-950 (éléments secondaires) */
+    --theme-page: 7 21 84;
+    /* #071554 - Bleu Splash (fond général) */
+    --theme-player-page: 23 37 84;
+    /* #172554 - blue-950 (pages joueurs) */
+    --theme-card: 2 6 23;
+    /* #020617 - slate-950 (cartes) */
+    --theme-secondary: 2 6 23;
+    /* #020617 - slate-950 (éléments secondaires) */
 
     /* Texte - RGB nues */
-    --theme-text: 255 255 255;          /* #FFFFFF - text-white */
-    --theme-text-muted: 156 163 184;    /* #9CA3AF - slate-400 */
-    --theme-text-secondary: 107 114 128; /* #6B7280 - gray-500 */
+    --theme-text: 255 255 255;
+    /* #FFFFFF - text-white */
+    --theme-text-muted: 156 163 184;
+    /* #9CA3AF - slate-400 */
+    --theme-text-secondary: 107 114 128;
+    /* #6B7280 - gray-500 */
 
     /* Bordures - RGB nues */
-    --theme-border: 31 41 55;           /* #1F2937 - slate-800 */
-    --theme-border-light: 255 255 255;  /* blanc pour opacité (border-white/10 = 0.1) */
+    --theme-border: 31 41 55;
+    /* #1F2937 - slate-800 */
+    --theme-border-light: 255 255 255;
+    /* blanc pour opacité (border-white/10 = 0.1) */
 
     /* Accents (bleu de marque) - RGB nues */
-    --theme-accent: 37 99 235;          /* #2563EB - blue-600 */
-    --theme-accent-hover: 29 78 216;    /* #1D4ED8 - blue-700 */
+    --theme-accent: 37 99 235;
+    /* #2563EB - blue-600 */
+    --theme-accent-hover: 29 78 216;
+    /* #1D4ED8 - blue-700 */
+
+    /* Safe Area Controls (Couleurs en HEX pour le JS) */
+    --safe-area-top: #172554;
+    --safe-area-bottom: #172554;
+
+    /* Safe Area Insets (Valeurs pour le CSS) */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Force le minimum pour l'App sur iPhone (encoche) */
+  html.is-app {
+    --sat: 50px;
+    --sab: 20px;
+  }
+
+  /* Si l'OS fournit une valeur réelle supérieure, on la prend */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    html.is-app {
+      --sat: max(50px, env(safe-area-inset-top));
+    }
   }
 
   /* Palette "dark" pour les composants qui utilisent la variante .dark (générique) */
@@ -76,6 +108,19 @@
 
 }
 
+/* Padding du contenu - UNIQUEMENT dans l'app iOS */
+/* Sur le web (localhost), padding léger pour être sous le menu hamburger */
+.app-content-padding {
+  padding-top: 4rem;
+}
+
+/* Dans l'app iOS, appliquer le padding pour le safe area */
+html.is-app .app-content-padding,
+body.is-app .app-content-padding,
+[data-is-app="true"] .app-content-padding {
+  padding-top: calc(var(--sat, 65px) + 4.0rem);
+}
+
 /* Améliorer le rendu des polices */
 * {
   -webkit-font-smoothing: antialiased;
@@ -84,7 +129,8 @@
 }
 
 
-html, body {
+html,
+body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
@@ -92,33 +138,36 @@ html, body {
 
 /* Pour iOS spécifiquement */
 @supports (-webkit-touch-callout: none) {
-  html, body {
+
+  html,
+  body {
     min-height: -webkit-fill-available;
     height: -webkit-fill-available;
   }
 }
 
 /* Couleur de fond par défaut */
-html, body {
+html,
+body {
   background-color: rgb(var(--theme-page));
 }
 
 /* Pages joueurs */
-html.player-page, body.player-page {
+html.player-page,
+body.player-page {
   background-color: rgb(var(--theme-player-page));
+  --safe-area-top: #172554;
+  --safe-area-bottom: #172554;
 }
 
-/* Safe Area SUPÉRIEURE bleue pour pages joueurs */
+/* Safe Area INFÉRIEURE uniquement sur le body */
+body {
+  padding-bottom: var(--sab);
+}
+
+/* Éviter les doubles Safe Areas si elles étaient déjà gérées */
 body.player-page::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background-color: rgb(var(--theme-player-page));
-  z-index: 9999;
-  pointer-events: none;
+  display: none !important;
 }
 
 /* Safe Area INFÉRIEURE reste noire partout (défaut capacitor) */
@@ -128,16 +177,19 @@ body {
   /* Couleur par défaut = thème sombre (historique) */
   color: rgb(var(--theme-text));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
+  /* 14px */
   font-weight: 400;
   line-height: 1.5;
-  font-feature-settings: 'tnum' 1; /* Chiffres tabulaires */
+  font-feature-settings: 'tnum' 1;
+  /* Chiffres tabulaires */
 }
 
 /* Éviter le zoom automatique sur iOS lors du focus des champs de formulaire
    en s'assurant que les inputs ont une taille de police minimale de 16px.
    On utilise !important pour passer devant les classes Tailwind (text-sm, etc.). */
 @supports (-webkit-touch-callout: none) {
+
   input,
   textarea,
   select {
@@ -147,27 +199,33 @@ body {
 
 /* Hiérarchie typographique */
 h1 {
-  font-size: 2rem; /* 32px */
-  font-weight: 700; /* Bold */
+  font-size: 2rem;
+  /* 32px */
+  font-weight: 700;
+  /* Bold */
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
 
 h2 {
-  font-size: 1.5rem; /* 24px */
-  font-weight: 600; /* Semibold */
+  font-size: 1.5rem;
+  /* 24px */
+  font-weight: 600;
+  /* Semibold */
   line-height: 1.3;
   letter-spacing: -0.01em;
 }
 
 h3 {
-  font-size: 1.25rem; /* 20px */
+  font-size: 1.25rem;
+  /* 20px */
   font-weight: 600;
   line-height: 1.4;
 }
 
 p {
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
+  /* 14px */
   font-weight: 400;
   line-height: 1.5;
 }
@@ -180,11 +238,13 @@ p {
 .stat-number {
   font-size: 1.5rem;
   font-weight: 700;
-  font-feature-settings: 'tnum' 1; /* Chiffres tabulaires */
+  font-feature-settings: 'tnum' 1;
+  /* Chiffres tabulaires */
 }
 
 .text-secondary {
-  font-size: 0.75rem; /* 12px */
+  font-size: 0.75rem;
+  /* 12px */
   font-weight: 400;
   color: #6b7280;
 }
@@ -193,6 +253,7 @@ p {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -203,6 +264,7 @@ p {
     transform: scale(0.8);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -210,9 +272,12 @@ p {
 }
 
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -226,29 +291,12 @@ html.px-hide-player-nav [data-club-logo-container="true"] {
   pointer-events: none !important;
 }
 
-[data-hamburger-button] {
-  position: fixed !important;
-  top: 0.75rem !important;
-  left: 0.75rem !important;
-  z-index: 100000 !important;
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  width: 2.5rem !important;
-  height: 2.5rem !important;
-  min-width: 2.5rem !important;
-  min-height: 2.5rem !important;
-  pointer-events: auto !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 0.75rem !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
+/* Les styles Safe Area et Navigation sont gérés à la fin du fichier pour priorité maximale */
 
 /* Tablette et desktop */
 @media (min-width: 640px) {
   [data-hamburger-button] {
-    top: 1rem !important;
+    top: calc(1rem + var(--sat)) !important;
     left: 1rem !important;
     width: 3rem !important;
     height: 3rem !important;
@@ -259,6 +307,7 @@ html.px-hide-player-nav [data-club-logo-container="true"] {
 
 /* FORCER l'affichage du conteneur du logo du club */
 /* Responsive: mobile -> tablette -> desktop */
+/* WEB: positionnement simple en haut */
 .absolute.top-4.right-4,
 [data-club-logo-container="true"] {
   position: absolute !important;
@@ -278,10 +327,17 @@ html.px-hide-player-nav [data-club-logo-container="true"] {
   opacity: 1 !important;
 }
 
+/* APP iOS: ajouter le safe area offset */
+html.is-app [data-club-logo-container="true"],
+body.is-app [data-club-logo-container="true"],
+[data-is-app="true"] [data-club-logo-container="true"] {
+  top: calc(0.75rem + var(--sat, 65px)) !important;
+}
+
 /* Tablette */
 @media (min-width: 640px) {
   [data-club-logo-container="true"] {
-    top: 1rem !important;
+    top: calc(1rem + var(--sat)) !important;
     right: 1rem !important;
     width: 5rem !important;
     height: 5rem !important;
@@ -349,9 +405,12 @@ html {
 
 /* Landing page specific styles */
 @keyframes gradient {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -363,28 +422,67 @@ html {
 }
 
 /* Reviews page animations */
-.animate-slide-in { animation: slide-in 600ms ease-out both; }
-@keyframes slide-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.animate-fade-in { animation: fadein 600ms ease-out forwards; }
-@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.animate-bounce-slow { animation: bounce 2.2s infinite; }
+.animate-slide-in {
+  animation: slide-in 600ms ease-out both;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadein 600ms ease-out forwards;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce 2.2s infinite;
+}
 
 /* Tier badge shimmer animation */
 @keyframes shimmer {
-  0% { transform: translateX(-100%) skewX(-15deg); }
-  100% { transform: translateX(200%) skewX(-15deg); }
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
 }
+
 .animate-shimmer {
   animation: shimmer 3s infinite;
 }
 
 /* Glow pulsé bleu pour la raquette */
 @keyframes glow-pulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 20px rgba(0,102,255,0.4));
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 20px rgba(0, 102, 255, 0.4));
   }
+
   50% {
-    filter: drop-shadow(0 0 60px rgba(0,102,255,0.8));
+    filter: drop-shadow(0 0 60px rgba(0, 102, 255, 0.8));
   }
 }
 
@@ -393,26 +491,39 @@ html {
 }
 
 /* Glowing frame for top 3 cards */
-.glow-frame{position:relative}
-.glow-frame::before{
-  content:"";
-  position:absolute;
-  inset:-4px;
-  border-radius:inherit;
-  background:conic-gradient(from 0deg, #06b6d4, #3b82f6, #8b5cf6, #bfff00, #06b6d4);
-  filter:blur(14px);
-  opacity:.35;
-  z-index:0;
-  animation:glow-rotate 8s linear infinite;
+.glow-frame {
+  position: relative
 }
-.glow-frame > *{position:relative; z-index:1}
-@keyframes glow-rotate{to{transform:rotate(360deg)}}
+
+.glow-frame::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, #06b6d4, #3b82f6, #8b5cf6, #bfff00, #06b6d4);
+  filter: blur(14px);
+  opacity: .35;
+  z-index: 0;
+  animation: glow-rotate 8s linear infinite;
+}
+
+.glow-frame>* {
+  position: relative;
+  z-index: 1
+}
+
+@keyframes glow-rotate {
+  to {
+    transform: rotate(360deg)
+  }
+}
 
 /* ===== Podium shine animations ===== */
 @keyframes shine-gold {
   0% {
     transform: translate(-150%, -150%);
   }
+
   100% {
     transform: translate(150%, 150%);
   }
@@ -422,6 +533,7 @@ html {
   0% {
     transform: translate(-150%, -150%);
   }
+
   100% {
     transform: translate(150%, 150%);
   }
@@ -431,6 +543,7 @@ html {
   0% {
     transform: translate(-150%, -150%);
   }
+
   100% {
     transform: translate(150%, 150%);
   }
@@ -448,14 +561,12 @@ html {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(
-    135deg,
-    transparent 30%,
-    rgba(255, 215, 0, 0.3) 45%,
-    rgba(255, 215, 0, 0.6) 50%,
-    rgba(255, 215, 0, 0.3) 55%,
-    transparent 70%
-  );
+  background: linear-gradient(135deg,
+      transparent 30%,
+      rgba(255, 215, 0, 0.3) 45%,
+      rgba(255, 215, 0, 0.6) 50%,
+      rgba(255, 215, 0, 0.3) 55%,
+      transparent 70%);
   animation: shine-gold 3s infinite linear;
   pointer-events: none;
   z-index: 0;
@@ -473,14 +584,12 @@ html {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(
-    135deg,
-    transparent 30%,
-    rgba(192, 192, 192, 0.3) 45%,
-    rgba(192, 192, 192, 0.6) 50%,
-    rgba(192, 192, 192, 0.3) 55%,
-    transparent 70%
-  );
+  background: linear-gradient(135deg,
+      transparent 30%,
+      rgba(192, 192, 192, 0.3) 45%,
+      rgba(192, 192, 192, 0.6) 50%,
+      rgba(192, 192, 192, 0.3) 55%,
+      transparent 70%);
   animation: shine-silver 3s infinite linear;
   pointer-events: none;
   z-index: 0;
@@ -498,91 +607,126 @@ html {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(
-    135deg,
-    transparent 30%,
-    rgba(205, 127, 50, 0.3) 45%,
-    rgba(205, 127, 50, 0.6) 50%,
-    rgba(205, 127, 50, 0.3) 55%,
-    transparent 70%
-  );
+  background: linear-gradient(135deg,
+      transparent 30%,
+      rgba(205, 127, 50, 0.3) 45%,
+      rgba(205, 127, 50, 0.6) 50%,
+      rgba(205, 127, 50, 0.3) 55%,
+      transparent 70%);
   animation: shine-bronze 3s infinite linear;
   pointer-events: none;
   z-index: 0;
 }
 
 /* ===== Podium diagonal shimmer layers ===== */
-.shimmer-layer{
-  position:absolute; 
-  inset:-30%; 
-  border-radius:inherit; 
-  pointer-events:none; 
-  z-index:2; 
-  background:linear-gradient(
-    135deg, 
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0) 25%,
-    var(--shimmer) 40%,
-    var(--shimmer) 50%,
-    var(--shimmer) 60%,
-    rgba(255,255,255,0) 75%,
-    rgba(255,255,255,0) 100%
-  ); 
-  filter:blur(20px); 
-  transform:translate(-150%, -150%) scale(1.2); 
-  animation:shimmer-move var(--shimmer-duration,3s) linear infinite;
+.shimmer-layer {
+  position: absolute;
+  inset: -30%;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0) 25%,
+      var(--shimmer) 40%,
+      var(--shimmer) 50%,
+      var(--shimmer) 60%,
+      rgba(255, 255, 255, 0) 75%,
+      rgba(255, 255, 255, 0) 100%);
+  filter: blur(20px);
+  transform: translate(-150%, -150%) scale(1.2);
+  animation: shimmer-move var(--shimmer-duration, 3s) linear infinite;
   opacity: 0.8;
 }
+
 .shimmer-layer::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(
-    ellipse 100% 200% at 50% 50%,
-    var(--shimmer) 0%,
-    rgba(255,255,255,0) 70%
-  );
+  background: radial-gradient(ellipse 100% 200% at 50% 50%,
+      var(--shimmer) 0%,
+      rgba(255, 255, 255, 0) 70%);
   opacity: 0.4;
-  animation: shimmer-pulse var(--shimmer-duration,3s) ease-in-out infinite;
+  animation: shimmer-pulse var(--shimmer-duration, 3s) ease-in-out infinite;
 }
-.shimmer-gold{ --shimmer: rgba(255, 215, 0, 0.6); --shimmer-duration: 2.5s; }
-.shimmer-silver{ --shimmer: rgba(192, 192, 192, 0.5); --shimmer-duration: 3s; }
-.shimmer-bronze{ --shimmer: rgba(205, 127, 50, 0.5); --shimmer-duration: 3.5s; }
-@keyframes shimmer-move{ 
-  0% { transform: translate(-150%, -150%) scale(1.2); }
-  50% { transform: translate(0%, 0%) scale(1.3); }
-  100% { transform: translate(150%, 150%) scale(1.2); }
+
+.shimmer-gold {
+  --shimmer: rgba(255, 215, 0, 0.6);
+  --shimmer-duration: 2.5s;
 }
+
+.shimmer-silver {
+  --shimmer: rgba(192, 192, 192, 0.5);
+  --shimmer-duration: 3s;
+}
+
+.shimmer-bronze {
+  --shimmer: rgba(205, 127, 50, 0.5);
+  --shimmer-duration: 3.5s;
+}
+
+@keyframes shimmer-move {
+  0% {
+    transform: translate(-150%, -150%) scale(1.2);
+  }
+
+  50% {
+    transform: translate(0%, 0%) scale(1.3);
+  }
+
+  100% {
+    transform: translate(150%, 150%) scale(1.2);
+  }
+}
+
 @keyframes shimmer-pulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.95); }
-  50% { opacity: 0.6; transform: scale(1.05); }
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
 }
 
 
 /* Animations pour le header du classement */
 @keyframes shimmer {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(-100%);
   }
+
   50% {
     transform: translateX(100%);
   }
 }
 
 @keyframes gradient-shift {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
 }
 
 @keyframes bounce-slow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-4px);
   }
@@ -593,36 +737,48 @@ html {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 8px rgba(255, 221, 68, 0.4), 0 0 16px rgba(255, 221, 68, 0.2);
   }
+
   50% {
     box-shadow: 0 0 16px rgba(255, 221, 68, 0.6), 0 0 32px rgba(255, 221, 68, 0.3);
   }
 }
 
 @keyframes pulse-glow-silver {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 8px rgba(184, 184, 184, 0.4), 0 0 16px rgba(184, 184, 184, 0.2);
   }
+
   50% {
     box-shadow: 0 0 16px rgba(184, 184, 184, 0.6), 0 0 32px rgba(184, 184, 184, 0.3);
   }
 }
 
 @keyframes pulse-glow-bronze {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 8px rgba(255, 192, 133, 0.4), 0 0 16px rgba(255, 192, 133, 0.2);
   }
+
   50% {
     box-shadow: 0 0 16px rgba(255, 192, 133, 0.6), 0 0 32px rgba(255, 192, 133, 0.3);
   }
 }
 
 @keyframes pulse-glow-dark {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 8px rgba(31, 41, 55, 0.4), 0 0 16px rgba(31, 41, 55, 0.2);
   }
+
   50% {
     box-shadow: 0 0 16px rgba(31, 41, 55, 0.6), 0 0 32px rgba(31, 41, 55, 0.3);
   }
@@ -650,6 +806,7 @@ html {
     opacity: 0;
     transform: scale(0.8) translateY(-20px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -661,6 +818,7 @@ html {
   0% {
     transform: translate(-150%, -150%);
   }
+
   100% {
     transform: translate(150%, 150%);
   }
@@ -671,14 +829,12 @@ html {
 }
 
 .challenge-shine-gradient {
-  background: linear-gradient(
-    135deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.1) 45%,
-    rgba(255, 255, 255, 0.25) 50%,
-    rgba(255, 255, 255, 0.1) 55%,
-    transparent 70%
-  );
+  background: linear-gradient(135deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.1) 45%,
+      rgba(255, 255, 255, 0.25) 50%,
+      rgba(255, 255, 255, 0.1) 55%,
+      transparent 70%);
 }
 
 /* Animation brillante au hover pour les badges débloqués (style challenges) */
@@ -686,6 +842,7 @@ html {
   0% {
     transform: translate(-150%, -150%);
   }
+
   100% {
     transform: translate(150%, 150%);
   }
@@ -696,31 +853,129 @@ html {
 }
 
 .badge-shine-hover {
-  background: linear-gradient(
-    135deg,
-    transparent 30%,
-    rgba(59, 130, 246, 0.15) 45%,
-    rgba(59, 130, 246, 0.35) 50%,
-    rgba(59, 130, 246, 0.15) 55%,
-    transparent 70%
-  );
+  background: linear-gradient(135deg,
+      transparent 30%,
+      rgba(59, 130, 246, 0.15) 45%,
+      rgba(59, 130, 246, 0.35) 50%,
+      rgba(59, 130, 246, 0.15) 55%,
+      transparent 70%);
 }
 
 /* ===== Dynamic drift used on club dashboard background ===== */
 @keyframes drift {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(2%, -3%, 0) scale(1.03); }
-  100% { transform: translate3d(-1%, 2%, 0) scale(1); }
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(2%, -3%, 0) scale(1.03);
+  }
+
+  100% {
+    transform: translate3d(-1%, 2%, 0) scale(1);
+  }
 }
-.animate-drift-slow { animation: drift 18s ease-in-out infinite alternate; }
-.animate-drift-medium { animation: drift 14s ease-in-out infinite alternate; }
-.animate-drift-fast { animation: drift 11s ease-in-out infinite alternate; }
+
+.animate-drift-slow {
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.animate-drift-medium {
+  animation: drift 14s ease-in-out infinite alternate;
+}
+
+.animate-drift-fast {
+  animation: drift 11s ease-in-out infinite alternate;
+}
 
 /* ===== Scrollbar hide utility for mobile navigation ===== */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ==========================================================================
+   SYSTÈME DE NAVIGATION ET SAFE AREAS (DÉFINITIF)
+   ========================================================================== */
+
+/* 1. Définition des variables Safe Area */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+/* 2. Forçage pour l'application native (65px pour dégager l'horloge/Dynamic Island) */
+html.is-app,
+body.is-app,
+[data-is-app="true"] {
+  --sat: 65px !important;
+  --sab: 20px !important;
+  background-color: #172554 !important;
+}
+
+/* 3. Positionnement du bouton Menu (Hamburger) - DIMENSIONS ET POSITION FIXÉES */
+/* WEB: positionnement simple */
+[data-hamburger-button] {
+  position: fixed !important;
+  top: 0.75rem !important;
+  left: 0.75rem !important;
+  z-index: 100000 !important;
+  display: flex !important;
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  min-width: 2.5rem !important;
+  min-height: 2.5rem !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 0.75rem !important;
+}
+
+/* APP iOS: ajouter le safe area offset */
+html.is-app [data-hamburger-button],
+body.is-app [data-hamburger-button],
+[data-is-app="true"] [data-hamburger-button] {
+  top: calc(0.75rem + var(--sat, 65px)) !important;
+}
+
+@media (min-width: 640px) {
+  [data-hamburger-button] {
+    top: 1rem !important;
+    left: 1rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+    min-height: 3rem !important;
+  }
+
+  /* APP iOS: safe area offset pour tablette */
+  html.is-app [data-hamburger-button],
+  body.is-app [data-hamburger-button],
+  [data-is-app="true"] [data-hamburger-button] {
+    top: calc(1rem + var(--sat, 65px)) !important;
+  }
+}
+
+/* 4. Positionnement du Logo du club */
+[data-club-logo-container="true"] {
+  position: absolute !important;
+  top: calc(0.75rem + var(--sat, 65px)) !important;
+  right: 0.75rem !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  width: 4rem !important;
+  height: 4rem !important;
+}
+
+@media (min-width: 640px) {
+  [data-club-logo-container="true"] {
+    top: calc(1rem + var(--sat, 65px)) !important;
+    right: 1rem !important;
+    width: 5rem !important;
+    height: 5rem !important;
+  }
 }

@@ -6,15 +6,26 @@ const config: CapacitorConfig = {
   appName: 'PadelXP',
   webDir: 'public',
   server: {
-    url: 'https://padelxp.eu',
+    url: 'http://localhost:3000',
     cleartext: true,
-    allowNavigation: ['padelxp.eu']
+    allowNavigation: ['*']
   },
   appendUserAgent: 'PadelXPCapacitor',
   ios: {
     contentInset: 'always',
-    backgroundColor: '#000000'
-  }
+    backgroundColor: '#172554'
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0,
+      launchAutoHide: true,
+      backgroundColor: "#172554",
+      showSpinner: false,
+      androidScaleType: "CENTER_CROP",
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+  },
 };
 
 

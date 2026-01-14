@@ -96,7 +96,7 @@ export default async function ReviewsPage() {
         .from("profiles")
         .select("id, display_name")
         .in("id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]); // Fallback si pas d'IDs
-      
+
       if (profilesError) {
         const errorDetails = {
           message: profilesError.message || "Unknown error",
@@ -110,7 +110,7 @@ export default async function ReviewsPage() {
           logger.error("❌ Error fetching profiles:", errorDetails);
         }
       }
-      
+
       if (profiles) {
         const profilesMap = profiles.reduce((acc, profile) => {
           if (profile.id && profile.display_name) {
@@ -118,7 +118,7 @@ export default async function ReviewsPage() {
           }
           return acc;
         }, {} as Record<string, { display_name: string }>);
-        
+
         // Enrichir tous les avis avec les profils (pas de filtre par club)
         enrichedReviews = reviews.map(review => ({
           ...review,
@@ -138,61 +138,61 @@ export default async function ReviewsPage() {
       .from("reviews")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id);
-    
+
     const hasUserReview = (userReviewsCount || 0) > 0;
 
-  return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-      {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-      
-      {/* Pattern animé - halos de la landing page */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-      </div>
+    return (
+      <div className="relative min-h-screen overflow-hidden bg-[#172554]">
+        {/* Background avec overlay - Transparent en haut pour fusionner */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-20 md:pt-8 pb-8">
-        {/* HEADER */}
-        <div className="mb-6">
-          <PageTitle title="Avis et Notes" />
+        {/* Pattern animé - halos de la landing page */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-      {/* FORMULAIRE */}
-      <div className="mb-10 rounded-2xl bg-white p-6 sm:p-8 shadow-[0_40px_90px_rgba(4,16,46,0.5)] border-2 border-white/30 relative scale-[1.01] z-10">
-        <div className="mb-5">
-          <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Donner votre avis</h2>
-        </div>
-        {!hasUserReview && (
-          <div className="mb-5 rounded-xl border border-[#10B981]/20 bg-[#ECFDF5] px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-[#10B981] font-medium flex items-center gap-2">
-            <Image 
-              src="/images/Cadeau page avis.gif" 
-              alt="Cadeau" 
-              width={20} 
-              height={20} 
-              className="flex-shrink-0 mix-blend-multiply"
-              unoptimized
-            />
-            <span><span className="font-semibold">10 points</span> offerts pour votre premier avis</span>
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-4 md:pt-8 pb-8">
+          {/* HEADER */}
+          <div className="mb-6">
+            <PageTitle title="Avis et Notes" />
           </div>
-        )}
-        <ReviewForm />
-      </div>
 
-      {/* Stats et Progression */}
-      <ReviewsStats 
-        initialReviews={enrichedReviews || []} 
-        initialAverageRating={averageRating}
-      />
+          {/* FORMULAIRE */}
+          <div className="mb-10 rounded-2xl bg-white p-6 sm:p-8 shadow-[0_40px_90px_rgba(4,16,46,0.5)] border-2 border-white/30 relative scale-[1.01] z-10">
+            <div className="mb-5">
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">Donner votre avis</h2>
+            </div>
+            {!hasUserReview && (
+              <div className="mb-5 rounded-xl border border-[#10B981]/20 bg-[#ECFDF5] px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-[#10B981] font-medium flex items-center gap-2">
+                <Image
+                  src="/images/Cadeau page avis.gif"
+                  alt="Cadeau"
+                  width={20}
+                  height={20}
+                  className="flex-shrink-0 mix-blend-multiply"
+                  unoptimized
+                />
+                <span><span className="font-semibold">10 points</span> offerts pour votre premier avis</span>
+              </div>
+            )}
+            <ReviewForm />
+          </div>
 
-      {/* Liste des avis */}
-      <ReviewsList 
-        initialReviews={enrichedReviews || []} 
-        initialAverageRating={averageRating}
-      />
+          {/* Stats et Progression */}
+          <ReviewsStats
+            initialReviews={enrichedReviews || []}
+            initialAverageRating={averageRating}
+          />
+
+          {/* Liste des avis */}
+          <ReviewsList
+            initialReviews={enrichedReviews || []}
+            initialAverageRating={averageRating}
+          />
+        </div>
       </div>
-    </div>
     );
   } catch (error) {
     logger.error("❌ Unexpected error in ReviewsPage:", error);

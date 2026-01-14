@@ -64,7 +64,7 @@ export default async function ClubPage() {
 
       // Récupérer les extras du club
       const extras = await getClubPublicExtras(finalClubId);
-      
+
       // Récupérer les données du club depuis la table clubs
       let clubRecord: any = null;
       if (supabaseAdmin) {
@@ -73,7 +73,7 @@ export default async function ClubPage() {
           .select("name, logo_url, address, postal_code, city, phone, website, number_of_courts, court_type")
           .eq("id", finalClubId)
           .maybeSingle();
-        
+
         if (clubDataFromDB) {
           clubRecord = clubDataFromDB;
           clubNameForPage = (clubDataFromDB.name as string) || clubNameForPage;
@@ -83,7 +83,7 @@ export default async function ClubPage() {
           }
         }
       }
-      
+
       // Si le logo n'a pas encore été converti en URL publique, le convertir maintenant
       if (clubLogoUrlForPage && !clubLogoUrlForPage.startsWith('http://') && !clubLogoUrlForPage.startsWith('https://')) {
         clubLogoUrlForPage = getClubLogoPublicUrl(clubLogoUrlForPage);
@@ -116,12 +116,12 @@ export default async function ClubPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-blue-950 via-black to-black">
-      {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/30 via-black/80 to-black z-0" />
+    <div className="relative min-h-screen overflow-hidden bg-[#172554]">
+      {/* Background avec overlay - Transparent en haut pour fusionner */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 lg:pt-12 pb-4 sm:pb-6 md:pb-8">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-4 md:pt-8 pb-4 sm:pb-6 md:pb-8">
         <PageTitle title="Mon club" subtitle="Informations sur votre club" />
 
         {hasNoClub && (

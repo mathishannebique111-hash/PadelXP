@@ -48,17 +48,13 @@
 	<key>CFBundleGetInfoString</key>
 	<string></string>
 	<key>UILaunchStoryboardName</key>
-	<string>Launchscreen</string>
-	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIImageRespectsSafeAreaInsets</key>
-		<false/>
-		<key>UIColorName</key>
-		<string>LaunchBackground</string>
-		<key>UIImageName</key>
-		<string>Splash</string>
-	</dict>
+	<string>LaunchScreen</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
