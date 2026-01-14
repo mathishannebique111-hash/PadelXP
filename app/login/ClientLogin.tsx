@@ -13,7 +13,7 @@ export default function ClientLogin() {
   const [clubInfo, setClubInfo] = useState<{ name: string; slug: string; invitationCode: string; code: string }>({ name: "", slug: "", invitationCode: "", code: "" });
   const [showClubInvalid, setShowClubInvalid] = useState(false);
   const [showReferralCode, setShowReferralCode] = useState(false);
-  
+
   // Données de l'étape 1 stockées localement
   const [step1Data, setStep1Data] = useState<{
     firstName: string;
@@ -75,17 +75,17 @@ export default function ClientLogin() {
     const croppedFile = new File([croppedImageBlob], "profile-photo.png", {
       type: "image/png",
     });
-    
+
     // Mettre à jour les données
     setStep1Data({ ...step1Data, profilePhoto: croppedFile });
-    
+
     // Créer une preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setProfilePhotoPreview(reader.result as string);
     };
     reader.readAsDataURL(croppedFile);
-    
+
     // Fermer le modal
     setShowCropModal(false);
     setImageToCrop(null);
@@ -151,7 +151,7 @@ export default function ClientLogin() {
   // Gestion de la soumission de l'étape 1
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!step1Data.firstName.trim() || !step1Data.lastName.trim() || !step1Data.email.trim() || !step1Data.password.trim()) {
       return;
     }
@@ -181,7 +181,7 @@ export default function ClientLogin() {
 
       if (signUpError) {
         logger.error("[ClientLogin] SignUp error at step 1:", signUpError);
-        
+
         // Vérifier si l'erreur indique que l'email existe déjà
         const errorMessage = signUpError.message?.toLowerCase() || '';
         if (
@@ -209,11 +209,11 @@ export default function ClientLogin() {
       // Si le compte a été créé avec succès, on stocke la session pour l'étape 2
       // Si l'email nécessite une confirmation, data.session sera null mais le compte est créé
       // Dans ce cas, on passera quand même à l'étape 2 et on se reconnectera à l'étape 2
-      
+
       if (data) {
         setStep1Session(data);
       }
-      
+
       setStep(2);
       setLoading(false);
     } catch (e: any) {
@@ -280,7 +280,7 @@ export default function ClientLogin() {
       // Obtenir le token d'accès
       // Si le compte a déjà été créé à l'étape 1, utiliser la session existante
       let accessToken: string | null = null;
-      
+
       if (step1Session?.session?.access_token) {
         // Utiliser la session de l'étape 1
         accessToken = step1Session.session.access_token;
@@ -288,9 +288,9 @@ export default function ClientLogin() {
         // Le compte a été créé à l'étape 1 mais sans session (email confirmation requise)
         // Se connecter pour obtenir le token
         const supabase = createClient();
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
-          email: step1Data.email, 
-          password: step1Data.password 
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: step1Data.email,
+          password: step1Data.password
         });
         if (signInError || !signInData.session) {
           throw new Error("Connexion nécessaire pour finaliser l'inscription");
@@ -330,7 +330,7 @@ export default function ClientLogin() {
       }
 
       const attachData = await response.json();
-      
+
       // Uploader la photo de profil
       if (step1Data.profilePhoto && accessToken) {
         try {
@@ -379,14 +379,13 @@ export default function ClientLogin() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-6">
+    <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white p-6">
       {/* Stepper */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-              step >= 1 ? 'bg-[#0066FF] text-white' : 'bg-white/10 text-white/50'
-            }`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${step >= 1 ? 'bg-[#0066FF] text-white' : 'bg-white/10 text-white/50'
+              }`}>
               1
             </div>
             <span className={`text-sm font-medium transition-colors duration-300 ${step >= 1 ? 'text-white' : 'text-white/50'}`}>
@@ -397,15 +396,14 @@ export default function ClientLogin() {
             <span className={`text-sm font-medium transition-colors duration-300 ${step >= 2 ? 'text-white' : 'text-white/50'}`}>
               Votre club
             </span>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-              step >= 2 ? 'bg-[#0066FF] text-white' : 'bg-white/10 text-white/50'
-            }`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${step >= 2 ? 'bg-[#0066FF] text-white' : 'bg-white/10 text-white/50'
+              }`}>
               2
             </div>
           </div>
         </div>
         <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-[#0066FF] to-[#003D99] transition-all duration-300 ease-out"
             style={{ width: `${(step / 2) * 100}%` }}
           />
@@ -419,8 +417,8 @@ export default function ClientLogin() {
         {step === 1 ? "Vos informations" : "Votre club"}
       </h1>
       <p className="text-white/70 mb-5 text-xs opacity-70">
-        {step === 1 
-          ? "Créez votre compte en quelques secondes" 
+        {step === 1
+          ? "Créez votre compte en quelques secondes"
           : "Associez votre compte à votre club / complexe"}
       </p>
 
@@ -513,9 +511,9 @@ export default function ClientLogin() {
           style={{ animation: 'fadeIn 0.3s ease-out' }}
         >
           {/* Club / complexe */}
-          <PlayerClubGate 
-            onChange={setClubInfo} 
-            showInvalidState={showClubInvalid} 
+          <PlayerClubGate
+            onChange={setClubInfo}
+            showInvalidState={showClubInvalid}
           />
 
           {/* Code d'invitation */}
@@ -595,13 +593,12 @@ export default function ClientLogin() {
               <input
                 type="text"
                 placeholder="Code de parrainage"
-                className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-                  referralCodeStatus?.valid
+                className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${referralCodeStatus?.valid
                     ? "border-green-500/50 focus:ring-green-500"
                     : referralCodeStatus?.valid === false
-                    ? "border-red-500/50 focus:ring-red-500"
-                    : "border-white/10 focus:ring-[#0066FF]"
-                }`}
+                      ? "border-red-500/50 focus:ring-red-500"
+                      : "border-white/10 focus:ring-[#0066FF]"
+                  }`}
                 value={referralCode}
                 onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
                 maxLength={8}

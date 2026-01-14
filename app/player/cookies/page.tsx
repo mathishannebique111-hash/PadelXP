@@ -11,11 +11,8 @@ export default function PlayerCookiesPage() {
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-4xl mx-auto px-8 py-16">
         <div className="mb-8">
-          <Link 
-            href="/" 
-            className="text-white/60 hover:text-white transition-colors text-sm"
-          >
-            ← Retour à l'accueil
+          <Link href="/settings" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            ← Retour aux réglages
           </Link>
         </div>
 
@@ -30,8 +27,8 @@ export default function PlayerCookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">1. Qu'est-ce qu'un cookie ?</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette, 
-                smartphone) lors de la visite d'un site web. Il permet au site de reconnaître votre 
+                Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette,
+                smartphone) lors de la visite d'un site web. Il permet au site de reconnaître votre
                 navigateur et de conserver certaines informations vous concernant.
               </p>
               <p>
@@ -51,7 +48,7 @@ export default function PlayerCookiesPage() {
               <p>
                 En tant que joueur utilisant gratuitement PadelXP, les cookies suivants sont utilisés :
               </p>
-              
+
               <div className="overflow-x-auto mt-6">
                 <table className="w-full border-collapse border border-white/20">
                   <thead>
@@ -97,14 +94,14 @@ export default function PlayerCookiesPage() {
               </div>
 
               <p className="bg-emerald-500/10 border border-emerald-400/30 rounded-lg p-4 mt-4">
-                <strong className="text-emerald-300">✓ Service gratuit :</strong> En tant que joueur, 
-                vous n'avez pas besoin de cookies liés aux paiements. Tous les cookies utilisés sont 
+                <strong className="text-emerald-300">✓ Service gratuit :</strong> En tant que joueur,
+                vous n'avez pas besoin de cookies liés aux paiements. Tous les cookies utilisés sont
                 strictement nécessaires au fonctionnement gratuit de la plateforme.
               </p>
 
               <p className="mt-4 text-sm text-white/60">
-                <strong>Note :</strong> Actuellement, nous n'utilisons pas de cookies analytiques 
-                (tels que Google Analytics) ni de cookies marketing. Si cela venait à changer, nous 
+                <strong>Note :</strong> Actuellement, nous n'utilisons pas de cookies analytiques
+                (tels que Google Analytics) ni de cookies marketing. Si cela venait à changer, nous
                 vous en informerions et mettrions à jour cette page.
               </p>
             </div>
@@ -114,7 +111,7 @@ export default function PlayerCookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">3. Gestion de vos préférences</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Lors de votre première visite, un bandeau vous permet de gérer vos préférences de 
+                Lors de votre première visite, un bandeau vous permet de gérer vos préférences de
                 cookies. Vous pouvez :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -123,13 +120,13 @@ export default function PlayerCookiesPage() {
                 <li>Personnaliser vos préférences par catégorie</li>
               </ul>
               <p>
-                Vous pouvez modifier vos préférences à tout moment en cliquant sur le lien 
-                "Gérer les cookies" disponible en bas de chaque page, ou en supprimant les cookies 
+                Vous pouvez modifier vos préférences à tout moment en cliquant sur le lien
+                "Gérer les cookies" disponible en bas de chaque page, ou en supprimant les cookies
                 de votre navigateur.
               </p>
               <p className="mt-4">
-                <Link 
-                  href="/cookies/gestion" 
+                <Link
+                  href="/cookies/gestion"
                   className="inline-block rounded-lg bg-white/10 hover:bg-white/20 px-4 py-2 text-white transition-colors"
                 >
                   Gérer mes préférences de cookies
@@ -142,9 +139,9 @@ export default function PlayerCookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">4. Désactivation des cookies via votre navigateur</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Vous pouvez configurer votre navigateur pour refuser les cookies. Cependant, 
-                <strong> la désactivation des cookies strictement nécessaires peut affecter le 
-                fonctionnement du site</strong>, notamment :
+                Vous pouvez configurer votre navigateur pour refuser les cookies. Cependant,
+                <strong> la désactivation des cookies strictement nécessaires peut affecter le
+                  fonctionnement du site</strong>, notamment :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>L'impossibilité de vous connecter à votre compte joueur</li>
@@ -152,7 +149,7 @@ export default function PlayerCookiesPage() {
                 <li>L'impossibilité d'enregistrer vos matchs</li>
                 <li>La perte de votre progression dans les classements</li>
               </ul>
-              
+
               <h3 className="text-xl font-semibold text-white mt-6 mb-2">Comment désactiver les cookies :</h3>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li><strong>Chrome :</strong> Paramètres → Confidentialité et sécurité → Cookies et autres données de sites</li>
@@ -167,8 +164,8 @@ export default function PlayerCookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">5. Cookies strictement nécessaires</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Conformément à la réglementation (Directive ePrivacy et CNIL), les cookies 
-                strictement nécessaires au fonctionnement du site ne nécessitent pas votre 
+                Conformément à la réglementation (Directive ePrivacy et CNIL), les cookies
+                strictement nécessaires au fonctionnement du site ne nécessitent pas votre
                 consentement. Il s'agit notamment de :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -178,8 +175,8 @@ export default function PlayerCookiesPage() {
                 <li>Données stockées localement (localStorage) - pour améliorer votre expérience (badges vus, préférences)</li>
               </ul>
               <p className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 mt-4">
-                <strong className="text-blue-300">ℹ️ Information :</strong> Les cookies techniques 
-                utilisés pour les joueurs sont uniquement destinés à garantir le bon fonctionnement 
+                <strong className="text-blue-300">ℹ️ Information :</strong> Les cookies techniques
+                utilisés pour les joueurs sont uniquement destinés à garantir le bon fonctionnement
                 gratuit de la plateforme. Aucun cookie lié aux paiements n'est utilisé pour les joueurs.
               </p>
             </div>
@@ -189,7 +186,7 @@ export default function PlayerCookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">6. Stockage local (localStorage)</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                En plus des cookies, PadelXP utilise également le stockage local de votre navigateur 
+                En plus des cookies, PadelXP utilise également le stockage local de votre navigateur
                 (localStorage) pour améliorer votre expérience en tant que joueur :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -198,12 +195,12 @@ export default function PlayerCookiesPage() {
                 <li><strong>Préférences de session :</strong> Vos paramètres et préférences temporaires</li>
               </ul>
               <p>
-                Ces données sont stockées localement sur votre appareil et ne sont pas envoyées à 
-                nos serveurs, sauf lorsque nécessaire pour le fonctionnement du service (comme votre 
+                Ces données sont stockées localement sur votre appareil et ne sont pas envoyées à
+                nos serveurs, sauf lorsque nécessaire pour le fonctionnement du service (comme votre
                 consentement aux cookies).
               </p>
               <p>
-                Vous pouvez supprimer ces données à tout moment en vidant le cache de votre navigateur 
+                Vous pouvez supprimer ces données à tout moment en vidant le cache de votre navigateur
                 ou en utilisant les outils de développement de votre navigateur.
               </p>
             </div>

@@ -32,8 +32,8 @@ export default function FindPartnersTabContent() {
         .eq("id", user.id)
         .maybeSingle();
 
-      const hasEvaluatedLevel = 
-        typeof profile?.niveau_padel === "number" && 
+      const hasEvaluatedLevel =
+        typeof profile?.niveau_padel === "number" &&
         profile?.niveau_categorie;
 
       setHasLevel(hasEvaluatedLevel || false);
@@ -63,8 +63,8 @@ export default function FindPartnersTabContent() {
         .gt("expires_at", new Date().toISOString())
         .limit(1);
 
-      const hasActiveChallengesResult = (sentChallenges && sentChallenges.length > 0) || 
-                                       (receivedChallenges && receivedChallenges.length > 0);
+      const hasActiveChallengesResult = (sentChallenges && sentChallenges.length > 0) ||
+        (receivedChallenges && receivedChallenges.length > 0);
       setHasActiveChallenges(hasActiveChallengesResult);
     } catch (error) {
       console.error("[FindPartnersTabContent] Erreur chargement profil:", error);
@@ -118,7 +118,7 @@ export default function FindPartnersTabContent() {
       {/* Section "Trouve ton partenaire" */}
       <div className="space-y-4">
         <h2 className="text-xl sm:text-2xl font-bold text-white">Trouve ton partenaire</h2>
-        
+
         {!hasLevel ? (
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
             <p>Évalue ton niveau dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de partenaires.</p>
@@ -143,10 +143,10 @@ export default function FindPartnersTabContent() {
       {/* Section "Trouve ton match" */}
       <div className="space-y-4">
         <h2 className="text-xl sm:text-2xl font-bold text-white">Trouve ton match</h2>
-        
+
         {!hasLevel ? (
           <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">
-            <p>Évalue ton niveau dans l'onglet "Mon profil" et ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs personnalisées.</p>
+            <p>Évalue ton niveau et ajoute un partenaire habituel dans l'onglet "Mon profil" pour pouvoir accéder aux suggestions de matchs personnalisées.</p>
           </div>
         ) : (
           <>

@@ -29,7 +29,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
         if (response.ok) {
           const { partnerships } = await response.json();
           const receivedRequest = partnerships.find((p: any) => p.status === 'pending' && p.partner_id === user.id);
-          
+
           if (receivedRequest) {
             // Récupérer le profil du joueur qui a envoyé la demande
             const profileResponse = await fetch('/api/profiles/batch', {
@@ -37,7 +37,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ ids: [receivedRequest.player_id] })
             });
-            
+
             if (profileResponse.ok) {
               const { profiles } = await profileResponse.json();
               const senderProfile = profiles?.find((p: any) => p.id === receivedRequest.player_id);
@@ -97,7 +97,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
             // Ne mettre à jour que si les valeurs existent dans la DB
             // Ne pas écraser avec null si on a déjà des valeurs
             const updated = { ...prev };
-            
+
             // Mettre à jour seulement si la valeur existe dans la DB
             if (profileData.niveau_padel !== null && profileData.niveau_padel !== undefined) {
               updated.niveau_padel = profileData.niveau_padel;
@@ -108,7 +108,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
             if (profileData.niveau_recommendations !== null && profileData.niveau_recommendations !== undefined) {
               updated.niveau_recommendations = profileData.niveau_recommendations;
             }
-            
+
             return updated;
           });
         }
@@ -138,7 +138,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
     return (
       <div className="space-y-4">
         <div className="mb-6">
-          <LevelAssessmentWizard 
+          <LevelAssessmentWizard
             onComplete={() => {
               // Le wizard se fermera automatiquement après sauvegarde
               // L'événement profileUpdated déclenchera le rechargement du profil
@@ -175,7 +175,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
               <button
                 type="button"
                 onClick={() => setShowWizard(true)}
-                className="hidden md:block w-full px-2 py-1.5 text-[10px] rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10"
+                className="w-full px-2 py-2 text-xs rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10 mt-1"
               >
                 Refaire l&apos;évaluation
               </button>
@@ -253,15 +253,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
                     </ul>
                   </div>
                 )}
-              
-              {/* Bouton "Refaire l'évaluation" en bas sur mobile */}
-              <button
-                type="button"
-                onClick={() => setShowWizard(true)}
-                className="md:hidden w-full px-4 py-2.5 text-xs rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10"
-              >
-                Refaire l&apos;évaluation
-              </button>
+
             </div>
           </div>
         </div>

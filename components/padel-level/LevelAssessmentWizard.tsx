@@ -49,10 +49,10 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
         }
 
         if (profile?.questionnaire_progress) {
-          const dbProgress = typeof profile.questionnaire_progress === 'string' 
+          const dbProgress = typeof profile.questionnaire_progress === 'string'
             ? JSON.parse(profile.questionnaire_progress)
             : profile.questionnaire_progress;
-          
+
           if (dbProgress.currentQuestion !== undefined && dbProgress.responses) {
             setCurrentQuestion(dbProgress.currentQuestion);
             setResponses(dbProgress.responses);
@@ -244,7 +244,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
           .select("preferred_side")
           .eq("id", user.id)
           .maybeSingle();
-        
+
         if (profile) {
           userProfile = {
             preferred_side: profile.preferred_side as "left" | "right" | "indifferent" | null,
@@ -353,7 +353,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       `}</style>
 
       {/* Header fixe - mobile first, commence en dessous du menu hamburger */}
-      <div className="sticky z-20 bg-slate-900/95 backdrop-blur-sm px-4 py-3 sm:py-4 border-b border-slate-800/50 top-[60px] sm:top-0 flex-shrink-0">
+      <div className="sticky z-20 bg-slate-900/95 backdrop-blur-sm px-4 pt-4 pb-4 border-b border-slate-800/50 top-[130px] flex-shrink-0">
         <LevelProgressBar
           progress={progress}
           currentStep={currentQuestion + 1}
@@ -372,7 +372,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       </div>
 
       {/* Zone pour la question - entre la barre de progression et la barre fixe du bas */}
-      <div 
+      <div
         className="flex-1 overflow-y-auto px-4 py-3 sm:py-4 md:py-6 flex items-center justify-center"
         style={{
           minHeight: 0,
@@ -380,14 +380,14 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
           paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
         }}
       >
-        <div className="w-full max-w-3xl mx-auto">
+        <div className="w-full max-w-3xl mx-auto -translate-y-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentQuestion}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ 
+              transition={{
                 duration: 0.3,
                 ease: [0.4, 0, 0.2, 1]
               }}
@@ -404,7 +404,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       </div>
 
       {/* Boutons fixés en bas - mobile-first, taille augmentée pour "Suivant" */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 px-3 sm:px-4 py-2.5 sm:py-3 md:py-4 flex-shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 px-3 sm:px-4 py-4 sm:py-5 md:py-6 flex-shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] pb-8">
         <div className="flex gap-2 sm:gap-3 max-w-3xl mx-auto w-full">
           <motion.button
             type="button"

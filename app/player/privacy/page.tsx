@@ -11,11 +11,8 @@ export default function PlayerPrivacyPage() {
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-4xl mx-auto px-8 py-16">
         <div className="mb-8">
-          <Link 
-            href="/" 
-            className="text-white/60 hover:text-white transition-colors text-sm"
-          >
-            ← Retour à l'accueil
+          <Link href="/settings" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            ← Retour aux réglages
           </Link>
         </div>
 
@@ -39,7 +36,7 @@ export default function PlayerPrivacyPage() {
                 [Téléphone - À compléter]
               </p>
               <p>
-                Pour toute question relative à la protection de vos données personnelles en tant que 
+                Pour toute question relative à la protection de vos données personnelles en tant que
                 joueur, vous pouvez nous contacter à l'adresse email ci-dessus.
               </p>
             </div>
@@ -49,7 +46,7 @@ export default function PlayerPrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">2. Données collectées pour les joueurs</h2>
             <div className="space-y-2 text-white/80">
               <p>En tant que joueur utilisant gratuitement PadelXP, nous collectons les données personnelles suivantes :</p>
-              
+
               <h3 className="text-xl font-semibold text-white mt-4 mb-2">2.1. Données d'identification</h3>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li><strong>Nom et prénom :</strong> Pour vous identifier dans les classements et matchs</li>
@@ -85,9 +82,9 @@ export default function PlayerPrivacyPage() {
               </ul>
 
               <p className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 mt-4">
-                <strong className="text-blue-300">ℹ️ Important :</strong> Les données de matchs et statistiques 
-                que vous enregistrez sont visibles par les autres membres de votre club et les administrateurs 
-                du club, conformément aux règles de votre club. Elles sont utilisées pour générer les classements 
+                <strong className="text-blue-300">ℹ️ Important :</strong> Les données de matchs et statistiques
+                que vous enregistrez sont visibles par les autres membres de votre club et les administrateurs
+                du club, conformément aux règles de votre club. Elles sont utilisées pour générer les classements
                 et leaderboards.
               </p>
             </div>
@@ -106,7 +103,7 @@ export default function PlayerPrivacyPage() {
                 <li><strong>Obligations légales :</strong> Conservation des données conformément aux obligations légales</li>
               </ul>
               <p>
-                <strong>Marketing :</strong> Nous n'utilisons vos données à des fins de marketing que si vous y avez 
+                <strong>Marketing :</strong> Nous n'utilisons vos données à des fins de marketing que si vous y avez
                 consenti explicitement.
               </p>
             </div>
@@ -135,8 +132,8 @@ export default function PlayerPrivacyPage() {
                 <li><strong>Les autorités compétentes :</strong> En cas d'obligation légale ou de réquisition judiciaire</li>
               </ul>
               <p className="bg-orange-500/10 border border-orange-400/30 rounded-lg p-4 mt-4">
-                <strong className="text-orange-300">⚠️ Information importante :</strong> Vos données de matchs 
-                et statistiques sont publiques au sein de votre club. Tous les membres de votre club peuvent 
+                <strong className="text-orange-300">⚠️ Information importante :</strong> Vos données de matchs
+                et statistiques sont publiques au sein de votre club. Tous les membres de votre club peuvent
                 les consulter dans les classements et leaderboards.
               </p>
             </div>
@@ -185,7 +182,7 @@ export default function PlayerPrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">8. Sécurité des données</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger 
+                Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger
                 vos données personnelles contre tout accès non autorisé, perte, destruction ou altération :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -202,9 +199,9 @@ export default function PlayerPrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">9. Transfert de données hors UE</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Vos données sont hébergées par des prestataires techniques (Vercel, Supabase) qui peuvent 
-                stocker vos données en dehors de l'Union Européenne. Ces transferts sont encadrés par des 
-                garanties appropriées (clauses contractuelles types, Privacy Shield, etc.) conformément 
+                Vos données sont hébergées par des prestataires techniques (Vercel, Supabase) qui peuvent
+                stocker vos données en dehors de l'Union Européenne. Ces transferts sont encadrés par des
+                garanties appropriées (clauses contractuelles types, Privacy Shield, etc.) conformément
                 au RGPD.
               </p>
             </div>
@@ -214,7 +211,7 @@ export default function PlayerPrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">10. Cookies</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Nous utilisons des cookies pour le fonctionnement du service. Pour plus d'informations, 
+                Nous utilisons des cookies pour le fonctionnement du service. Pour plus d'informations,
                 consultez notre{" "}
                 <Link href="/cookies" className="text-white underline hover:text-white/80">
                   Politique des Cookies
@@ -232,8 +229,8 @@ export default function PlayerPrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">11. Réclamations</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Si vous estimez que le traitement de vos données personnelles constitue une violation du RGPD, 
-                vous avez le droit d'introduire une réclamation auprès de la Commission Nationale de 
+                Si vous estimez que le traitement de vos données personnelles constitue une violation du RGPD,
+                vous avez le droit d'introduire une réclamation auprès de la Commission Nationale de
                 l'Informatique et des Libertés (CNIL) :
               </p>
               <p>
@@ -250,11 +247,11 @@ export default function PlayerPrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">12. Modifications</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. 
+                Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment.
                 Les modifications seront publiées sur cette page avec mention de la date de mise à jour.
               </p>
               <p>
-                En cas de modification substantielle, nous vous informerons par email ou via une notification 
+                En cas de modification substantielle, nous vous informerons par email ou via une notification
                 sur la plateforme.
               </p>
             </div>
@@ -262,7 +259,7 @@ export default function PlayerPrivacyPage() {
 
           <section>
             <p className="text-sm text-white/60 mt-12">
-              Pour toute question relative à cette politique de confidentialité, vous pouvez nous contacter 
+              Pour toute question relative à cette politique de confidentialité, vous pouvez nous contacter
               à contact@padelxp.com.
             </p>
           </section>

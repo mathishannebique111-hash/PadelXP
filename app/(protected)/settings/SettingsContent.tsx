@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import PageTitle from "@/components/PageTitle";
 import DeleteAccountButton from "@/components/settings/DeleteAccountButton";
 import ProfilePhotoUpload from "@/components/settings/ProfilePhotoUpload";
@@ -35,6 +36,25 @@ export default function SettingsContent() {
               La suppression de votre compte est irréversible. Toutes vos données seront définitivement supprimées.
             </p>
             <DeleteAccountButton />
+          </div>
+
+          {/* Section Informations Légales */}
+          <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Informations légales</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Link href="/player/legal" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline flex items-center gap-2">
+                <span>Mentions légales joueurs</span>
+              </Link>
+              <Link href="/player/terms" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline flex items-center gap-2">
+                <span>CGU joueurs</span>
+              </Link>
+              <Link href="/player/privacy" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline flex items-center gap-2">
+                <span>Confidentialité joueurs</span>
+              </Link>
+              <Link href="/player/cookies" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline flex items-center gap-2">
+                <span>Cookies joueurs</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

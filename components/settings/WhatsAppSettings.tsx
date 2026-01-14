@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, Check, Phone } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
 
 export default function WhatsAppSettings() {
-  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [savedPhoneNumber, setSavedPhoneNumber] = useState<string | null>(null);
   const [isLoadingPhone, setIsLoadingPhone] = useState(false);
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
   const [isDeletingPhone, setIsDeletingPhone] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -34,7 +37,9 @@ export default function WhatsAppSettings() {
         return;
       }
 
-      setPhoneNumber(data?.phone_number || null);
+      const phone = data?.phone_number || "";
+      setPhoneNumber(phone);
+      setSavedPhoneNumber(phone || null);
     } catch (error) {
       console.error("[WhatsAppSettings] Erreur inattendue", error);
     } finally {
@@ -42,28 +47,66 @@ export default function WhatsAppSettings() {
     }
   };
 
-  const formatWhatsappNumber = (raw: string | null): string => {
-    if (!raw) return "Non renseigné";
-    // Format français : +33 6 XX XX XX XX
-    if (raw.startsWith("+33")) {
-      const digits = raw.replace(/[^0-9]/g, "").slice(2); // Enlever +33
-      if (digits.length === 9) {
-        return `+33 ${digits.slice(0, 1)} ${digits.slice(1, 3)} ${digits.slice(3, 5)} ${digits.slice(5, 7)} ${digits.slice(7, 9)}`;
+  const handleSavePhone = async () => {
+    // Validation basique
+    if (!phoneNumber.trim()) {
+      showToast("Veuillez saisir un numéro", "error");
+      return;
+    }
+
+    // Nettoyer le numéro (garder seulement les chiffres et le +)
+    let cleaned = phoneNumber.replace(/[^0-9+]/g, "");
+
+    // Si ça commence par 0, on assume France (+33)
+    if (cleaned.startsWith("0")) {
+      cleaned = "+33" + cleaned.slice(1);
+    }
+
+    // Vérifier si ça ressemble à un numéro
+    if (cleaned.length < 8) {
+      showToast("Numéro invalide", "error");
+      return;
+    }
+
+    try {
+      setIsSavingPhone(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          phone_number: cleaned,
+          whatsapp_enabled: true,
+          phone_consent_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      if (error) {
+        showToast("Erreur lors de l'enregistrement", "error");
+        return;
       }
+
+      setSavedPhoneNumber(cleaned);
+      setPhoneNumber(cleaned);
+      setIsEditing(false);
+      showToast("Numéro enregistré", "success");
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
+      }
+    } catch (error) {
+      showToast("Erreur inattendue", "error");
+    } finally {
+      setIsSavingPhone(false);
     }
-    // Format générique : masquer les chiffres sauf les 2 derniers
-    const digits = raw.replace(/[^0-9]/g, "");
-    if (digits.length >= 2) {
-      const masked = "•".repeat(Math.max(0, digits.length - 2)) + digits.slice(-2);
-      return `+${raw.replace(/[^0-9+]/g, "").replace(/^\+/, "").slice(0, -digits.length)}${masked}`;
-    }
-    return raw;
   };
 
   const handleDeletePhone = async () => {
     try {
       setIsDeletingPhone(true);
-
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -79,19 +122,18 @@ export default function WhatsAppSettings() {
         .eq("id", user.id);
 
       if (error) {
-        console.error("[WhatsAppSettings] Erreur suppression", error);
         showToast("Impossible de supprimer le numéro", "error");
         return;
       }
 
-      setPhoneNumber(null);
+      setPhoneNumber("");
+      setSavedPhoneNumber(null);
       showToast("Numéro supprimé", "success");
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("profileUpdated"));
       }
     } catch (error) {
-      console.error("[WhatsAppSettings] Erreur inattendue", error);
       showToast("Erreur lors de la suppression", "error");
     } finally {
       setIsDeletingPhone(false);
@@ -100,10 +142,10 @@ export default function WhatsAppSettings() {
 
   return (
     <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/30 bg-white/5 p-4 sm:p-5 md:p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="inline-flex items-center justify-center w-10 h-10">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="inline-flex items-center justify-center w-10 h-10 text-green-500">
           <svg
-            className="w-6 h-6"
+            className="w-8 h-8"
             viewBox="0 0 24 24"
             fill="currentColor"
             xmlns="http://www.w3.org/2000/svg"
@@ -113,46 +155,97 @@ export default function WhatsAppSettings() {
         </div>
         <div className="flex-1">
           <h2 className="text-lg sm:text-xl font-semibold text-white mb-1">
-            Coordination WhatsApp
+            WhatsApp
           </h2>
           <p className="text-xs sm:text-sm text-white/60">
-            Gérez votre numéro de téléphone pour coordonner vos matchs
+            {savedPhoneNumber
+              ? "Gérez votre numéro pour coordonner vos matchs"
+              : "Ajoutez votre numéro pour coordonner vos matchs"}
           </p>
         </div>
       </div>
 
-      <div className="mt-4 space-y-4">
-        <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 border border-white/10">
-          <div>
-            <p className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
-              Numéro WhatsApp
-            </p>
-            <p className="text-sm text-white/80">
-              <span className="font-semibold">
-                {isLoadingPhone ? "Chargement..." : formatWhatsappNumber(phoneNumber)}
-              </span>
-            </p>
+      <div className="mt-4">
+        {isLoadingPhone ? (
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 text-white/50 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Chargement...
           </div>
-          {phoneNumber && !isLoadingPhone && (
-            <button
-              type="button"
-              onClick={handleDeletePhone}
-              disabled={isDeletingPhone}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-[11px] font-medium text-red-200 hover:bg-red-500/20 disabled:opacity-60 transition-colors"
-            >
-              {isDeletingPhone ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="w-3.5 h-3.5" />
+        ) : !savedPhoneNumber || isEditing ? (
+          <div className="space-y-4">
+            <div className="relative">
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Votre numéro (ex: 06 12 34 56 78)"
+                className="w-full bg-white/5 border border-white/20 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
+              />
+            </div>
+            <div className="flex gap-2">
+              {isEditing && (
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setPhoneNumber(savedPhoneNumber || "");
+                  }}
+                  className="flex-1 py-3 rounded-xl border border-white/10 text-white/70 font-medium hover:bg-white/5 transition-colors"
+                >
+                  Annuler
+                </button>
               )}
-              <span>Supprimer</span>
-            </button>
-          )}
-        </div>
-        {!phoneNumber && !isLoadingPhone && (
-          <p className="text-xs text-slate-300/80">
-            Vous pouvez activer votre numéro lors de l&apos;envoi d&apos;une invitation à jouer.
-          </p>
+              <button
+                onClick={handleSavePhone}
+                disabled={isSavingPhone || !phoneNumber.trim()}
+                className="flex-[2] bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg shadow-green-600/20 transition-all flex items-center justify-center gap-2"
+              >
+                {isSavingPhone ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Check className="w-5 h-5" />
+                )}
+                {isEditing ? "Mettre à jour" : "Ajouter mon numéro"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-between group">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Phone className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">
+                  Numéro actif
+                </p>
+                <p className="text-white font-medium">{savedPhoneNumber}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                title="Modifier"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+              <button
+                onClick={handleDeletePhone}
+                disabled={isDeletingPhone}
+                className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all"
+                title="Supprimer"
+              >
+                {isDeletingPhone ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

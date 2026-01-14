@@ -192,21 +192,38 @@ export default function OnboardingWizard() {
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const hasAnswer = answers[question.id === 0 ? "level" : question.id === 1 ? "preferred_side" : question.id === 2 ? "hand" : question.id === 3 ? "frequency" : "best_shot"] !== null;
 
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const getQuestionKey = (id: QuestionId): keyof OnboardingAnswers => {
+    const keys: Record<QuestionId, keyof OnboardingAnswers> = {
+      0: "level",
+      1: "preferred_side",
+      2: "hand",
+      3: "frequency",
+      4: "best_shot",
+    };
+    return keys[id];
+  };
+
   const handleAnswer = (value: string) => {
-    const key = question.id === 0 ? "level" : question.id === 1 ? "preferred_side" : question.id === 2 ? "hand" : question.id === 3 ? "frequency" : "best_shot";
+    if (isTransitioning) return;
+
+    const key = getQuestionKey(currentQuestion);
     setAnswers((prev) => ({
       ...prev,
       [key]: value as any,
     }));
-    
-    // Passer automatiquement à la question suivante après un court délai pour l'animation
-    // Sauf pour la dernière question où on affiche le bouton "Enregistrer"
+
+    setIsTransitioning(true);
+
     setTimeout(() => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion((prev) => (prev + 1) as QuestionId);
+        setIsTransitioning(false);
+      } else {
+        setIsTransitioning(false);
       }
-      // Pour la dernière question, on ne soumet pas automatiquement, on attend le clic sur "Enregistrer"
-    }, 300);
+    }, 400);
   };
 
   const handlePrevious = () => {
@@ -252,11 +269,12 @@ export default function OnboardingWizard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
+    <div className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{ WebkitTapHighlightColor: 'transparent' }}>
       {/* Barre de progression */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-white/10 z-50">
+      <div className="absolute top-24 left-6 right-6 h-2 bg-white/10 z-50 rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-gradient-to-r from-blue-500 to-indigo-600"
+          className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.3 }}
@@ -267,7 +285,7 @@ export default function OnboardingWizard() {
       {currentQuestion > 0 && (
         <button
           onClick={handlePrevious}
-          className="absolute top-4 left-4 z-50 p-2 text-white/60 hover:text-white/90 transition-colors flex items-center gap-2"
+          className="absolute top-12 left-4 z-50 p-2 text-white/60 hover:text-white/90 transition-colors flex items-center gap-2"
           aria-label="Question précédente"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -279,7 +297,7 @@ export default function OnboardingWizard() {
       <div className="flex-1 flex items-center justify-center px-4 py-20">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentQuestion}
+            key={`question-container-${currentQuestion}`}
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
@@ -302,34 +320,33 @@ export default function OnboardingWizard() {
             <div className="space-y-3">
               {question.options.map((option) => {
                 const Icon = option.icon;
-                const key = question.id === 0 ? "level" : question.id === 1 ? "preferred_side" : question.id === 2 ? "hand" : question.id === 3 ? "frequency" : "best_shot";
-                const isSelected = answers[key as keyof OnboardingAnswers] === option.value;
-                const isHandLeft = question.id === 2 && option.value === "left";
+                const currentKey = getQuestionKey(currentQuestion);
+                const isSelected = answers[currentKey] === option.value;
+                const isHandLeft = currentQuestion === 2 && option.value === "left";
 
                 return (
                   <motion.button
                     key={`${currentQuestion}-${option.value}`}
                     onClick={() => handleAnswer(option.value)}
-                    className={`w-full p-4 sm:p-5 rounded-2xl border-2 transition-all ${
-                      isSelected
+                    className={`w-full p-4 sm:p-5 rounded-2xl border-2 transition-all outline-none select-none ${isTransitioning ? "pointer-events-none" : ""
+                      } ${isSelected
                         ? "border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/20"
-                        : "border-white/20 bg-white/5 hover:border-white/40 hover:bg-white/10"
-                    }`}
+                        : "border-white/20 bg-white/5 md:hover:border-white/40 md:hover:bg-white/10"
+                      }`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center ${
-                          isSelected
-                            ? "bg-blue-500 text-white"
-                            : "bg-white/10 text-white/70"
-                        }`}
+                        className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center ${isSelected
+                          ? "bg-blue-500 text-white"
+                          : "bg-white/10 text-white/70"
+                          }`}
                       >
                         <Icon
-                          className={`w-6 h-6 sm:w-7 sm:h-7 ${
-                            isHandLeft ? "rotate-180" : ""
-                          }`}
+                          className={`w-6 h-6 sm:w-7 sm:h-7 ${isHandLeft ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                       <div className="flex-1 text-left">
@@ -412,7 +429,7 @@ export default function OnboardingWizard() {
       </div>
 
       {/* Indicateur de progression (numéro de question) */}
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+      <div className="absolute bottom-12 left-0 right-0 flex justify-center">
         <div className="text-sm text-white/60">
           {currentQuestion + 1} / {questions.length}
         </div>

@@ -11,11 +11,8 @@ export default function PlayerLegalPage() {
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-4xl mx-auto px-8 py-16">
         <div className="mb-8">
-          <Link 
-            href="/" 
-            className="text-white/60 hover:text-white transition-colors text-sm"
-          >
-            ← Retour à l'accueil
+          <Link href="/settings" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            ← Retour aux réglages
           </Link>
         </div>
 
@@ -79,8 +76,8 @@ export default function PlayerLegalPage() {
                 <li>Laisser des avis sur votre club</li>
               </ul>
               <p>
-                Le service est fourni "en l'état" et nous nous efforçons d'assurer une disponibilité 
-                maximale. Toutefois, des interruptions de service peuvent survenir pour maintenance 
+                Le service est fourni "en l'état" et nous nous efforçons d'assurer une disponibilité
+                maximale. Toutefois, des interruptions de service peuvent survenir pour maintenance
                 ou en cas de force majeure.
               </p>
             </div>
@@ -90,12 +87,12 @@ export default function PlayerLegalPage() {
             <h2 className="text-2xl font-bold text-white mb-4">5. Propriété intellectuelle</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                L'ensemble du contenu de ce site (textes, images, logos, design) est la propriété 
-                exclusive de PadelXP, sauf mention contraire. Toute reproduction ou utilisation sans 
+                L'ensemble du contenu de ce site (textes, images, logos, design) est la propriété
+                exclusive de PadelXP, sauf mention contraire. Toute reproduction ou utilisation sans
                 autorisation préalable est interdite.
               </p>
               <p>
-                Les données que vous saisissez sur la plateforme (matchs, statistiques) restent votre 
+                Les données que vous saisissez sur la plateforme (matchs, statistiques) restent votre
                 propriété. Vous pouvez les consulter à tout moment via votre espace personnel.
               </p>
             </div>
@@ -105,8 +102,8 @@ export default function PlayerLegalPage() {
             <h2 className="text-2xl font-bold text-white mb-4">6. Protection des données</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Les données personnelles collectées sur ce site sont traitées conformément au 
-                Règlement Général sur la Protection des Données (RGPD). Pour plus d'informations, 
+                Les données personnelles collectées sur ce site sont traitées conformément au
+                Règlement Général sur la Protection des Données (RGPD). Pour plus d'informations,
                 consultez notre{" "}
                 <Link href="/player/privacy" className="text-white underline hover:text-white/80">
                   Politique de Confidentialité pour joueurs
@@ -120,11 +117,11 @@ export default function PlayerLegalPage() {
             <h2 className="text-2xl font-bold text-white mb-4">7. Réclamations et litiges</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Pour toute réclamation ou litige, vous pouvez nous contacter à l'adresse email 
+                Pour toute réclamation ou litige, vous pouvez nous contacter à l'adresse email
                 indiquée ci-dessus ou vous adresser à un médiateur de la consommation.
               </p>
               <p>
-                Le droit applicable est le droit français. Les tribunaux français sont compétents 
+                Le droit applicable est le droit français. Les tribunaux français sont compétents
                 pour connaître de tout litige relatif à l'utilisation du site.
               </p>
             </div>
