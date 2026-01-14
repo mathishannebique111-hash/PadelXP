@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import CookieConsent from "@/components/cookies/CookieConsent";
 import SafeAreas from './components/SafeAreas';
+import OfflineWrapper from "@/components/OfflineWrapper";
 
 export const metadata: Metadata = {
   title: "PadelXP",
@@ -69,6 +70,7 @@ export default async function RootLayout({
       </head>
       <body className={`${isApp ? 'is-app' : ''} bg-[#172554] text-white min-h-screen`} style={{ backgroundColor: '#172554' }} data-is-app={isApp ? 'true' : 'false'} suppressHydrationWarning>
         <SafeAreas />
+        <OfflineWrapper />
         {children}
         <CookieConsent />
       </body>

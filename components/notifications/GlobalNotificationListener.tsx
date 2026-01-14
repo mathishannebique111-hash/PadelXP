@@ -5,6 +5,7 @@ import { useUser } from "@/lib/hooks/useUser";
 import { usePopupQueue } from "@/contexts/PopupQueueContext";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
+import { PushNotificationsService } from "@/lib/notifications/push-notifications";
 
 /**
  * Composant global qui écoute les événements de badges et de niveau
@@ -139,8 +140,12 @@ export default function GlobalNotificationListener() {
             )
             .subscribe();
 
+        // Initialiser les notifications push
+        PushNotificationsService.initialize(user.id);
+
         return () => {
             supabase.removeChannel(channel);
+            PushNotificationsService.unregister();
         };
     }, [user?.id, enqueuePopup, supabase]);
 
