@@ -369,23 +369,23 @@ export default function ChallengesSent() {
                   key={challenge.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-blue-500/20 p-2.5 sm:p-3 relative"
+                  className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-xl border border-blue-500/20 p-2.5 sm:p-3"
                 >
-                  {/* Compteur en haut à droite */}
-                  {timeRemaining && !timeRemaining.expired && (
-                    <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
-                      <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap flex items-center gap-1">
-                        <Clock size={10} />
-                        {timeRemaining.hours}h {timeRemaining.minutes}m
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Status badge */}
-                  <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
+                  {/* Status badge + compteur + poubelle sur une même ligne */}
+                  <div className="mb-3 sm:mb-4 flex items-center gap-2">
                     <div className="flex-1 min-w-0">
                       {getStatusBadge(challenge)}
                     </div>
+                    {/* Compteur */}
+                    {timeRemaining && !timeRemaining.expired && (
+                      <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 flex-shrink-0">
+                        <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap flex items-center gap-1">
+                          <Clock size={10} />
+                          {timeRemaining.hours}h {timeRemaining.minutes}m
+                        </p>
+                      </div>
+                    )}
+                    {/* Bouton supprimer */}
                     {(challenge.status === "pending" || challenge.status === "refused") && (
                       <button
                         type="button"

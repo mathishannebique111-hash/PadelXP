@@ -91,7 +91,7 @@ export default function SuggestedMatches() {
     useEffect(() => {
         const loadExistingChallenges = async () => {
             if (!myPartner) return;
-            
+
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
@@ -152,7 +152,7 @@ export default function SuggestedMatches() {
 
             const { partnerships } = await response.json();
             const accepted = partnerships.find((p: any) => p.status === "accepted");
-            
+
             if (accepted) {
                 const partnerId = accepted.player_id === user.id ? accepted.partner_id : accepted.player_id;
                 const { data: partnerProfile } = await supabase
@@ -160,7 +160,7 @@ export default function SuggestedMatches() {
                     .select("id, first_name")
                     .eq("id", partnerId)
                     .maybeSingle();
-                
+
                 if (partnerProfile) {
                     setMyPartner({ id: partnerProfile.id, first_name: partnerProfile.first_name });
                 }
@@ -336,27 +336,8 @@ export default function SuggestedMatches() {
                             transition={{ delay: index * 0.1 }}
                             className="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl border border-white/10 overflow-hidden"
                         >
-                            {/* Compteur 48h en haut à droite si défi existant */}
-                            {(() => {
-                                const challengeKey = `${pair.player1.id}-${pair.player2.id}`;
-                                const challenge = existingChallenges.get(challengeKey);
-                                if (challenge) {
-                                    const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
-                                    if (timeRemaining && !timeRemaining.expired) {
-                                        return (
-                                            <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-20">
-                                                <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap">
-                                                    {timeRemaining.hours}h {timeRemaining.minutes}m
-                                                </p>
-                                            </div>
-                                        );
-                                    }
-                                }
-                                return null;
-                            })()}
-                            
                             {/* Header de compatibilité */}
-                            <div className={`absolute top-3 ${existingChallenges.has(`${pair.player1.id}-${pair.player2.id}`) ? 'right-20' : 'right-3'} z-10`}>
+                            <div className="absolute top-3 right-3 z-10">
                                 <div className="bg-emerald-500/20 backdrop-blur-md px-2 py-1 rounded-lg border border-emerald-500/30 flex flex-col items-center">
                                     <span className="text-[10px] text-emerald-400 font-bold leading-none">
                                         {pair.compatibilityScore}%
@@ -426,7 +407,7 @@ export default function SuggestedMatches() {
                                 {(() => {
                                     const challengeKey = `${pair.player1.id}-${pair.player2.id}`;
                                     const hasExistingChallenge = existingChallenges.has(challengeKey);
-                                    
+
                                     return (
                                         <button
                                             type="button"
