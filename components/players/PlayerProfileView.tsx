@@ -85,7 +85,7 @@ export default function PlayerProfileView({
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-  
+
   // Récupérer le paramètre 'from' pour savoir d'où vient l'utilisateur
   const fromTab = searchParams?.get('from');
   const [isInviting, setIsInviting] = useState(false);
@@ -130,37 +130,37 @@ export default function PlayerProfileView({
       ? compatibilityScore >= 70
         ? "green"
         : compatibilityScore >= 40
-        ? "orange"
-        : "red"
+          ? "orange"
+          : "red"
       : "green";
 
   const compatibilityBarClass =
     compatibilityColor === "green"
       ? "bg-gradient-to-r from-green-500 to-emerald-500"
       : compatibilityColor === "orange"
-      ? "bg-gradient-to-r from-orange-500 to-orange-400"
-      : "bg-gradient-to-r from-red-500 to-red-400";
+        ? "bg-gradient-to-r from-orange-500 to-orange-400"
+        : "bg-gradient-to-r from-red-500 to-red-400";
 
   const compatibilityTextClass =
     compatibilityColor === "green"
       ? "text-green-400"
       : compatibilityColor === "orange"
-      ? "text-orange-400"
-      : "text-red-400";
+        ? "text-orange-400"
+        : "text-red-400";
 
   const compatibilityCardClass =
     compatibilityColor === "green"
       ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30"
       : compatibilityColor === "orange"
-      ? "bg-gradient-to-r from-orange-500/10 to-orange-500/10 border border-orange-500/30"
-      : "bg-gradient-to-r from-red-500/10 to-red-500/10 border border-red-500/30";
+        ? "bg-gradient-to-r from-orange-500/10 to-orange-500/10 border border-orange-500/30"
+        : "bg-gradient-to-r from-red-500/10 to-red-500/10 border border-red-500/30";
 
   const compatibilityLabelClass =
     compatibilityColor === "green"
       ? "text-green-300"
       : compatibilityColor === "orange"
-      ? "text-orange-300"
-      : "text-red-300";
+        ? "text-orange-300"
+        : "text-red-300";
 
   // Vérifier le statut des invitations au chargement
   useEffect(() => {
@@ -199,7 +199,7 @@ export default function PlayerProfileView({
             .select("first_name, last_name, display_name")
             .eq("id", player.id)
             .maybeSingle();
-          
+
           if (senderProfile) {
             senderName = senderProfile.first_name && senderProfile.last_name
               ? `${senderProfile.first_name} ${senderProfile.last_name}`
@@ -210,7 +210,7 @@ export default function PlayerProfileView({
         }
 
         const isAccepted = (sentInvitation?.status === "accepted") || (receivedInvitation?.status === "accepted");
-        
+
         setInvitationStatus({
           sent: !!sentInvitation,
           received: !!receivedInvitation,
@@ -223,7 +223,7 @@ export default function PlayerProfileView({
     };
 
     checkInvitationStatus();
-    
+
     // Écouter les événements d'invitations
     const handleInvitationEvent = (event?: Event) => {
       // Si c'est une suppression et que c'est pour ce joueur, réinitialiser le statut immédiatement
@@ -237,11 +237,11 @@ export default function PlayerProfileView({
       }
       checkInvitationStatus();
     };
-    
+
     window.addEventListener("matchInvitationCreated", handleInvitationEvent);
     window.addEventListener("matchInvitationUpdated", handleInvitationEvent);
     window.addEventListener("matchInvitationDeleted", handleInvitationEvent as EventListener);
-    
+
     return () => {
       window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
       window.removeEventListener("matchInvitationUpdated", handleInvitationEvent);
@@ -294,10 +294,10 @@ export default function PlayerProfileView({
       }
 
       showToast(`Invitation envoyée à ${firstName} ! Valable 24h.`, "success");
-      
+
       // Mettre à jour le statut local
       setInvitationStatus({ sent: true, received: false });
-      
+
       // Déclencher un événement pour recharger les composants d'invitations
       window.dispatchEvent(new CustomEvent("matchInvitationCreated"));
     } catch (e) {
@@ -342,9 +342,13 @@ export default function PlayerProfileView({
   }, [supabase, router, createMatchInvitation]);
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="relative min-h-screen overflow-hidden bg-[#172554]">
+      {/* Background avec overlay - même dégradé que les autres pages joueur */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+
       {/* HEADER FIXE - Mobile optimized */}
-      <div className="sticky top-0 z-20 bg-slate-950 safe-area-top">
+      <div className="sticky top-0 z-20 safe-area-top">
         <div className="px-4 py-3">
           <button
             type="button"
@@ -366,7 +370,7 @@ export default function PlayerProfileView({
       </div>
 
       {/* HERO SECTION - MISE EN VALEUR DU JOUEUR */}
-      <div className="px-4 pt-4 pb-6">
+      <div className="relative z-10 px-4 pt-4 pb-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -440,53 +444,52 @@ export default function PlayerProfileView({
 
             {/* SCORE DE COMPATIBILITÉ - Mobile optimized */}
             {hasCompatibility && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className={`mt-5 p-3.5 md:p-4 rounded-2xl ${compatibilityCardClass}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs md:text-sm font-semibold ${compatibilityLabelClass}`}>
-                      Compatibilité avec vous
-                    </span>
-                    <span
-                      className={`text-xl md:text-2xl font-black ${compatibilityTextClass}`}
-                    >
-                      {compatibilityScore ?? 0}%
-                    </span>
-                  </div>
-                  <div className="h-2 bg-slate-700 rounded-full overflow-hidden mb-2.5">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${compatibilityScore ?? 0}%` }}
-                      transition={{ duration: 1, delay: 0.3 }}
-                      className={`h-full ${compatibilityBarClass}`}
-                    />
-                  </div>
-                  {compatibilityTags && compatibilityTags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {compatibilityTags.map((tag, i) => {
-                        const isSameSideOrHand = tag.toLowerCase().includes("même côté") || 
-                                                 tag.toLowerCase().includes("mains similaires") || 
-                                                 tag.toLowerCase().includes("même main");
-                        return (
-                          <span
-                            key={i}
-                            className={`text-[11px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-medium ${
-                              isSameSideOrHand
-                                ? "bg-orange-500/20 text-orange-300"
-                                : "bg-green-500/20 text-green-300"
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className={`mt-5 p-3.5 md:p-4 rounded-2xl ${compatibilityCardClass}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-xs md:text-sm font-semibold ${compatibilityLabelClass}`}>
+                    Compatibilité avec vous
+                  </span>
+                  <span
+                    className={`text-xl md:text-2xl font-black ${compatibilityTextClass}`}
+                  >
+                    {compatibilityScore ?? 0}%
+                  </span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden mb-2.5">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${compatibilityScore ?? 0}%` }}
+                    transition={{ duration: 1, delay: 0.3 }}
+                    className={`h-full ${compatibilityBarClass}`}
+                  />
+                </div>
+                {compatibilityTags && compatibilityTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {compatibilityTags.map((tag, i) => {
+                      const isSameSideOrHand = tag.toLowerCase().includes("même côté") ||
+                        tag.toLowerCase().includes("mains similaires") ||
+                        tag.toLowerCase().includes("même main");
+                      return (
+                        <span
+                          key={i}
+                          className={`text-[11px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-medium ${isSameSideOrHand
+                            ? "bg-orange-500/20 text-orange-300"
+                            : "bg-green-500/20 text-green-300"
                             }`}
-                          >
-                            {tag}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                </motion.div>
-              )}
+                        >
+                          {tag}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            )}
 
             {/* BOUTONS D'ACTION - Mobile first (44px min) */}
             <div className="flex gap-3 mt-5">
@@ -513,10 +516,10 @@ export default function PlayerProfileView({
                   invitationStatus?.isAccepted
                     ? "Une invitation de paire acceptée existe déjà avec ce joueur"
                     : invitationStatus?.sent
-                    ? "Une proposition de paire a déjà été envoyée à ce joueur"
-                    : invitationStatus?.received
-                    ? `Vous avez déjà une proposition de paire de ${invitationStatus.senderName || playerName}`
-                    : undefined
+                      ? "Une proposition de paire a déjà été envoyée à ce joueur"
+                      : invitationStatus?.received
+                        ? `Vous avez déjà une proposition de paire de ${invitationStatus.senderName || playerName}`
+                        : undefined
                 }
               >
                 {isInviting ? (
@@ -565,76 +568,76 @@ export default function PlayerProfileView({
         player.frequency ||
         player.best_shot ||
         player.level) && (
-        <div className="px-4 pb-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-slate-800/50"
-          >
-            <h2 className="text-base md:text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Target size={18} className="text-white md:hidden" />
-              <Target size={20} className="text-white hidden md:block" />
-              <span>Profil Padel</span>
-            </h2>
+          <div className="relative z-10 px-4 pb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-slate-800/50"
+            >
+              <h2 className="text-base md:text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Target size={18} className="text-white md:hidden" />
+                <Target size={20} className="text-white hidden md:block" />
+                <span>Profil Padel</span>
+              </h2>
 
-            {/* Grid mobile 1 colonne, desktop 2 colonnes */}
-            <div className="space-y-3">
-              {/* Main forte + Côté - 2 colonnes sur mobile aussi */}
-              <div className="grid grid-cols-2 gap-2 md:gap-3">
-                {player.hand && (
+              {/* Grid mobile 1 colonne, desktop 2 colonnes */}
+              <div className="space-y-3">
+                {/* Main forte + Côté - 2 colonnes sur mobile aussi */}
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  {player.hand && (
+                    <InfoCard
+                      icon={Hand}
+                      label="Main forte"
+                      value={mainForte}
+                    />
+                  )}
+                  {player.preferred_side && (
+                    <InfoCard
+                      icon={Target}
+                      label="Côté préféré"
+                      value={cotePrefere}
+                    />
+                  )}
+                </div>
+
+                {/* Fréquence - Pleine largeur */}
+                {player.frequency && (
                   <InfoCard
-                    icon={Hand}
-                    label="Main forte"
-                    value={mainForte}
+                    icon={Users}
+                    label="Fréquence de jeu"
+                    value={frequenceJeu}
+                    full
                   />
                 )}
-                {player.preferred_side && (
+
+                {/* Coups signature - Pleine largeur */}
+                {player.best_shot && (
                   <InfoCard
-                    icon={Target}
-                    label="Côté préféré"
-                    value={cotePrefere}
+                    icon={Zap}
+                    label="Coup signature"
+                    value={coupSignature}
+                    full
+                  />
+                )}
+
+                {/* Niveau (onboarding) - Pleine largeur */}
+                {player.level && (
+                  <InfoCard
+                    icon={Shield}
+                    label="Niveau"
+                    value={niveauOnboarding}
+                    full
                   />
                 )}
               </div>
-
-              {/* Fréquence - Pleine largeur */}
-              {player.frequency && (
-                <InfoCard
-                  icon={Users}
-                  label="Fréquence de jeu"
-                  value={frequenceJeu}
-                  full
-                />
-              )}
-
-              {/* Coups signature - Pleine largeur */}
-              {player.best_shot && (
-                <InfoCard
-                  icon={Zap}
-                  label="Coup signature"
-                  value={coupSignature}
-                  full
-                />
-              )}
-
-              {/* Niveau (onboarding) - Pleine largeur */}
-              {player.level && (
-                <InfoCard
-                  icon={Shield}
-                  label="Niveau"
-                  value={niveauOnboarding}
-                  full
-                />
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        )}
 
       {/* SECTION "POURQUOI JOUER ENSEMBLE" - Mobile optimized */}
       {player.niveau_padel && (
-        <div className="px-4 pb-24 md:pb-8">
+        <div className="relative z-10 px-4 pb-24 md:pb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -719,9 +722,8 @@ function InfoCard({
 }) {
   return (
     <div
-      className={`${
-        full ? "col-span-2" : ""
-      } border border-white/20 bg-white/5 rounded-xl p-3 md:p-3.5`}
+      className={`${full ? "col-span-2" : ""
+        } border border-white/20 bg-white/5 rounded-xl p-3 md:p-3.5`}
     >
       <div className="flex items-center gap-2 md:gap-3">
         <Icon size={16} className="text-white flex-shrink-0 md:hidden" />

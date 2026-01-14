@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Clock, CheckCircle2, XCircle, Loader2, MessageCircle, User } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Loader2, MessageCircle, User, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { showToast } from "@/components/ui/Toast";
@@ -43,18 +43,20 @@ export default function MatchInvitationsReceived() {
   } | null>(null);
   const [pendingAcceptance, setPendingAcceptance] =
     useState<PendingAcceptance | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [refusedInvitations, setRefusedInvitations] = useState<MatchInvitation[]>([]);
   const supabase = createClient();
 
   useEffect(() => {
     loadInvitations();
-    
+
     // Écouter les événements de création/suppression d'invitation (sans polling)
     const handleInvitationEvent = () => {
       loadInvitations();
     };
     window.addEventListener("matchInvitationCreated", handleInvitationEvent);
     window.addEventListener("matchInvitationDeleted", handleInvitationEvent);
-    
+
     return () => {
       window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
       window.removeEventListener("matchInvitationDeleted", handleInvitationEvent);
@@ -79,49 +81,81 @@ export default function MatchInvitationsReceived() {
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false });
 
+      // Récupérer aussi les invitations refusées (pour permettre de les supprimer)
+      const { data: refusedData, error: refusedError } = await supabase
+        .from("match_invitations")
+        .select("*")
+        .eq("receiver_id", user.id)
+        .eq("status", "refused")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
       if (invitationsError) {
         console.error("[MatchInvitationsReceived] Erreur Supabase:", invitationsError);
         throw invitationsError;
       }
 
-      if (!invitationsData || invitationsData.length === 0) {
+      // Traiter les invitations pending
+      const allSenderIds = [
+        ...((invitationsData || []).map((inv: any) => inv.sender_id)),
+        ...((refusedData || []).map((inv: any) => inv.sender_id)),
+      ];
+
+      const uniqueSenderIds = [...new Set(allSenderIds)];
+
+      let profilesData: any[] = [];
+      if (uniqueSenderIds.length > 0) {
+        const { data, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, avatar_url, niveau_padel")
+          .in("id", uniqueSenderIds);
+
+        if (profilesError) {
+          console.error("[MatchInvitationsReceived] Erreur récupération profils:", profilesError);
+          throw profilesError;
+        }
+        profilesData = data || [];
+      }
+
+      // Combiner les données pour les invitations pending
+      if (invitationsData && invitationsData.length > 0) {
+        const invitationsWithProfiles = invitationsData.map((invitation: any) => {
+          const profile = profilesData?.find((p: any) => p.id === invitation.sender_id);
+          return {
+            ...invitation,
+            sender: profile || {
+              id: invitation.sender_id,
+              first_name: null,
+              last_name: null,
+              avatar_url: null,
+              niveau_padel: null,
+            },
+          };
+        });
+        setInvitations(invitationsWithProfiles);
+      } else {
         setInvitations([]);
-        return;
       }
 
-      // Récupérer les profils des senders
-      const senderIds = invitationsData.map((inv) => inv.sender_id);
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, avatar_url, niveau_padel")
-        .in("id", senderIds);
-
-      if (profilesError) {
-        console.error("[MatchInvitationsReceived] Erreur récupération profils:", profilesError);
-        throw profilesError;
+      // Combiner les données pour les invitations refusées
+      if (refusedData && refusedData.length > 0) {
+        const refusedWithProfiles = refusedData.map((invitation: any) => {
+          const profile = profilesData?.find((p: any) => p.id === invitation.sender_id);
+          return {
+            ...invitation,
+            sender: profile || {
+              id: invitation.sender_id,
+              first_name: null,
+              last_name: null,
+              avatar_url: null,
+              niveau_padel: null,
+            },
+          };
+        });
+        setRefusedInvitations(refusedWithProfiles);
+      } else {
+        setRefusedInvitations([]);
       }
-
-      console.log("[MatchInvitationsReceived] Profils récupérés:", profilesData);
-      console.log("[MatchInvitationsReceived] IDs senders:", senderIds);
-
-      // Combiner les données
-      const invitationsWithProfiles = invitationsData.map((invitation) => {
-        const profile = profilesData?.find((p) => p.id === invitation.sender_id);
-        console.log(`[MatchInvitationsReceived] Invitation ${invitation.id} - Profile trouvé:`, profile);
-        return {
-          ...invitation,
-          sender: profile || {
-            id: invitation.sender_id,
-            first_name: null,
-            last_name: null,
-            avatar_url: null,
-            niveau_padel: null,
-          },
-        };
-      });
-
-      console.log("[MatchInvitationsReceived] Invitations avec profils:", invitationsWithProfiles);
-      setInvitations(invitationsWithProfiles);
     } catch (error) {
       console.error("[MatchInvitationsReceived] Erreur chargement", error);
       showToast("Impossible de charger les invitations reçues", "error");
@@ -169,6 +203,52 @@ export default function MatchInvitationsReceived() {
       showToast("Impossible de refuser l'invitation", "error");
     } finally {
       setResponding(null);
+    }
+  };
+
+  const handleDeleteRefused = async (invitationId: string) => {
+    try {
+      setDeletingIds((prev) => new Set(prev).add(invitationId));
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        showToast("Vous devez être connecté", "error");
+        return;
+      }
+
+      // Supprimer l'invitation via l'API
+      const response = await fetch(`/api/invitations/delete?id=${invitationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Erreur inconnue" }));
+        showToast(errorData.error || "Impossible de supprimer", "error");
+        return;
+      }
+
+      // Mettre à jour l'état local
+      setRefusedInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
+
+      window.dispatchEvent(new CustomEvent("matchInvitationDeleted", {
+        detail: { invitationId }
+      }));
+
+      showToast("Invitation supprimée", "success");
+    } catch (error) {
+      console.error("[MatchInvitationsReceived] Erreur suppression", error);
+      showToast("Impossible de supprimer l'invitation", "error");
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(invitationId);
+        return next;
+      });
     }
   };
 
@@ -262,7 +342,7 @@ export default function MatchInvitationsReceived() {
       // Le numéro vient d'être ajouté, on peut maintenant accepter et ouvrir WhatsApp
       const { invitationId, senderId } = pendingAcceptance;
       setPendingAcceptance(null);
-      
+
       try {
         setResponding(invitationId);
 
@@ -345,7 +425,7 @@ export default function MatchInvitationsReceived() {
     );
   }
 
-  if (invitations.length === 0) {
+  if (invitations.length === 0 && refusedInvitations.length === 0) {
     return null;
   }
 
@@ -455,6 +535,75 @@ export default function MatchInvitationsReceived() {
           })}
         </div>
       </div>
+
+      {/* Section des invitations refusées */}
+      {refusedInvitations.length > 0 && (
+        <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20 mt-4">
+          <div className="flex items-center gap-2 mb-4">
+            <XCircle className="w-5 h-5 text-red-400" />
+            <h3 className="text-base md:text-lg font-bold text-white">
+              Invitations refusées
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {refusedInvitations.map((invitation) => {
+              const sender = invitation.sender || {};
+              const senderName =
+                sender.first_name && sender.last_name
+                  ? `${sender.first_name} ${sender.last_name}`
+                  : sender.first_name || sender.last_name || "Joueur";
+
+              return (
+                <div
+                  key={invitation.id}
+                  className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-red-500/20"
+                >
+                  <div className="flex items-center gap-3">
+                    {sender.avatar_url ? (
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
+                        <Image
+                          src={sender.avatar_url}
+                          alt={senderName}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
+                        <User size={20} />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-white truncate text-sm md:text-base">
+                        {senderName}
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-xs text-red-300">
+                        <XCircle className="w-3 h-3" />
+                        Refusée
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRefused(invitation.id)}
+                      disabled={deletingIds.has(invitation.id)}
+                      className="p-2 rounded-lg bg-red-500/15 border border-red-400/40 text-red-200 hover:bg-red-500/25 disabled:opacity-50 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+                      title="Supprimer"
+                    >
+                      {deletingIds.has(invitation.id) ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <AddPhoneModal
         isOpen={showPhoneModal}
