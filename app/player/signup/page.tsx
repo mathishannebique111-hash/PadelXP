@@ -15,8 +15,16 @@ export default async function PlayerSignupPage() {
   return (
     <>
       <HideSplashScreen />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#172554] text-white px-6">
-        <ClientLogin />
+      <div className="relative min-h-screen flex flex-col items-center justify-center text-white px-6 overflow-hidden">
+        {/* Halos vert et bleu - Fond layout suffisant */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
+        </div>
+
+        <div className="relative z-10 w-full flex flex-col items-center">
+          <ClientLogin />
+        </div>
       </div>
     </>
   );

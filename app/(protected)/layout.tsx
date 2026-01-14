@@ -27,24 +27,20 @@ export default function PlayerAccountLayout({
         <Suspense fallback={null}>
           <PlayerSidebar />
         </Suspense>
-        {/* Conteneur principal avec fond bleu (blue-950) qui s'étend dans toute la safe area pour les pages joueur */}
         <div
-          className="relative min-h-screen"
+          className="relative min-h-screen overflow-hidden bg-[#172554]"
           style={{
             minHeight: '100vh',
-            backgroundColor: '#172554', // blue-950 de Tailwind
           }}
         >
-          {/* Logo du club - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
-          {/* NE PLUS utiliser Suspense - afficher directement pour garantir la visibilité immédiate */}
+          {/* Background global pour toutes les pages joueur */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
+
+          {/* Logo du club - TOUJOURS visible sur TOUS les formats */}
           <PlayerClubLogo />
+
           {/* Contenu des pages - démarre sous la barre de statut avec padding-top (app uniquement) */}
-          <div
-            className="relative min-h-screen app-content-padding"
-            style={{
-              backgroundColor: '#172554'
-            }}
-          >
+          <div className="relative z-10 min-h-screen app-content-padding">
             {children}
           </div>
           {/* Écouteur global pour les notifications de badges et niveaux */}

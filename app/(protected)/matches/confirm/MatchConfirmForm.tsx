@@ -89,16 +89,16 @@ export default function MatchConfirmForm() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-black">
-      {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
-      
-      {/* Pattern animé - halos de la landing page */}
-      <div className="absolute inset-0 opacity-20">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] p-4 relative">
+      {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
+
+      {/* Halos vert et bleu animés */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
+
 
       <div className="relative z-10 mx-auto w-full max-w-2xl px-4 py-16">
         <div className="rounded-2xl bg-white p-8 shadow-lg">

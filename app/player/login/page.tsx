@@ -25,8 +25,14 @@ export default async function PlayerLoginPage() {
   return (
     <>
       <HideSplashScreen />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#172554] text-white px-6">
-        <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white p-8">
+      <div className="relative min-h-screen flex flex-col items-center justify-center text-white px-6 overflow-hidden">
+        {/* Background avec halos vert et bleu - Fond du layout utilisé s'il existe (sur web), sinon transparent */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
+        </div>
+
+        <div className="relative z-10 w-full max-w-md rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md p-6">
           <h1 className="text-2xl font-extrabold mb-2">Connexion joueur</h1>
           <p className="text-white/60 mb-6 text-sm">
             Connectez-vous avec votre email et mot de passe pour accéder à votre club.

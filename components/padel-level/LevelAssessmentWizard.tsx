@@ -147,23 +147,49 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
     return () => clearTimeout(timeoutId);
   }, [currentQuestion, responses, hasStarted, supabase]);
 
-  // Masquer le logo du club quand le questionnaire est ouvert
+  // Masquer le logo du club quand le questionnaire est ouvert ET visible
+  // Vérifier que le conteneur parent est visible (onglet Padel actif) et que l'utilisateur a commencé
   useEffect(() => {
-    if (hasStarted) {
-      // Ajouter une classe au body pour masquer le logo
-      document.body.classList.add('questionnaire-open');
-      // Masquer directement le conteneur du logo
+    const updateLogoVisibility = () => {
       const logoContainer = document.querySelector('[data-club-logo-container="true"]');
-      if (logoContainer) {
+      if (!logoContainer) return;
+
+      // Vérifier si l'onglet Padel est visible (notre parent a display: block)
+      const padelTabContent = document.querySelector('[style*="display: block"]');
+      const isWizardVisible = padelTabContent?.textContent?.includes('Commencer le questionnaire') ||
+        padelTabContent?.textContent?.includes('Évaluez votre niveau');
+
+      // Ne masquer le logo QUE si hasStarted ET le wizard est réellement visible (onglet actif)
+      const searchParams = new URLSearchParams(window.location.search);
+      const currentTab = searchParams.get('tab') || 'stats';
+      const isPadelTabActive = currentTab === 'padel';
+
+      if (hasStarted && isPadelTabActive) {
+        document.body.classList.add('questionnaire-open');
         (logoContainer as HTMLElement).style.display = 'none';
-      }
-    } else {
-      document.body.classList.remove('questionnaire-open');
-      const logoContainer = document.querySelector('[data-club-logo-container="true"]');
-      if (logoContainer) {
+      } else {
+        document.body.classList.remove('questionnaire-open');
         (logoContainer as HTMLElement).style.display = '';
       }
-    }
+    };
+
+    updateLogoVisibility();
+
+    // Écouter les changements d'URL (changement d'onglet)
+    const handleUrlChange = () => updateLogoVisibility();
+    window.addEventListener('popstate', handleUrlChange);
+
+    // Observer les changements d'onglet via l'historique
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+    window.history.pushState = function (...args) {
+      originalPushState.apply(this, args);
+      updateLogoVisibility();
+    };
+    window.history.replaceState = function (...args) {
+      originalReplaceState.apply(this, args);
+      updateLogoVisibility();
+    };
 
     return () => {
       document.body.classList.remove('questionnaire-open');
@@ -171,6 +197,9 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       if (logoContainer) {
         (logoContainer as HTMLElement).style.display = '';
       }
+      window.removeEventListener('popstate', handleUrlChange);
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
     };
   }, [hasStarted]);
 

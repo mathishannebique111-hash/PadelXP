@@ -143,15 +143,15 @@ export default async function ReviewsPage() {
 
     return (
       <div className="relative min-h-screen overflow-hidden bg-[#172554]">
-        {/* Background avec overlay - Transparent en haut pour fusionner */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
+        {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
 
-        {/* Pattern animé - halos de la landing page */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        {/* Halos vert et bleu animés */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
+
 
         <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-4 md:pt-8 pb-8">
           {/* HEADER */}

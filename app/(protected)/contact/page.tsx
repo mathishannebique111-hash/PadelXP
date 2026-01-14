@@ -239,35 +239,47 @@ export default function ContactPage() {
 
   if (loading) {
     return (
-      <div className="h-screen relative overflow-hidden bg-[#172554] flex items-center justify-center px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <Loader2 className="animate-spin text-blue-500" size={32} />
-          <p className="text-sm text-gray-400">Chargement du chat...</p>
+      <div className="relative min-h-screen overflow-hidden">
+        {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
+
+        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-4 md:pt-8 pb-8">
+          <div className="mb-6">
+            <PageTitle title="Support PadelXP" />
+          </div>
+          <div className="flex flex-col items-center gap-4 mt-8">
+            <Loader2 className="animate-spin text-blue-500" size={32} />
+            <p className="text-sm text-gray-400">Chargement du chat...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen relative overflow-hidden bg-[#172554] flex flex-col">
-      {/* Background avec overlay - même dégradé que les autres pages joueur */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-      {/* Header avec PageTitle - Padding-top sur mobile pour commencer en dessous du hamburger et du logo */}
+    <div className="relative min-h-screen overflow-hidden flex flex-col">
+      {/* Background avec overlay - Utiliser le fond du layout */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
+
+      {/* Halos vert et bleu animés */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+      </div>
       {/* Header avec PageTitle */}
-      <div className="relative z-10 pt-20 md:pt-4 lg:pt-6 px-4 pb-4 flex-shrink-0">
-        <div className="max-w-4xl mx-auto">
-          <PageTitle
-            title="Support PadelXP"
-            subtitle="Posez-nous vos questions, nous vous répondrons rapidement"
-          />
+      <div className="relative z-10 px-4 pt-4 md:pt-8 pb-4 flex-shrink-0">
+        <div className="max-w-4xl mx-auto w-full">
+          <div className="mb-6">
+            <PageTitle
+              title="Support PadelXP"
+              subtitle="Posez-nous vos questions, nous vous répondrons rapidement"
+            />
+          </div>
         </div>
       </div>
 
       {/* Messages - Zone scrollable uniquement */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-4 min-h-0">
+      <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-24 min-h-0">
         <div className="max-w-4xl mx-auto space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-12">
@@ -301,9 +313,9 @@ export default function ContactPage() {
                     className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] sm:max-w-[60%] rounded-2xl px-4 py-3 ${isSentByMe
-                          ? "bg-blue-500 text-white rounded-br-sm"
-                          : "bg-slate-700 text-gray-200 rounded-bl-sm"
+                      className={`max-w-[80%] sm:max-w-[60%] rounded-2xl px-4 py-3 backdrop-blur-sm ${isSentByMe
+                        ? "bg-blue-500/60 text-white rounded-br-sm border border-blue-400/30"
+                        : "bg-white/10 text-gray-200 rounded-bl-sm border border-white/20"
                         }`}
                     >
                       <p className="text-sm whitespace-pre-wrap break-words">
@@ -329,8 +341,8 @@ export default function ContactPage() {
         </div>
       </div>
 
-      {/* Input - Fixe en bas */}
-      <div className="relative z-10 bg-black/50 backdrop-blur-sm border-t border-white/10 py-4 px-4 flex-shrink-0">
+      {/* Input - Fixe en bas avec safe area */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-black/30 backdrop-blur-md border-t border-white/10 py-4 px-4 safe-area-bottom">
         <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-3">
           <input
             type="text"
