@@ -15,23 +15,23 @@ export type PlayerStats = {
 
 // Tous les badges disponibles
 export const ALL_BADGES: Badge[] = [
-  { icon: "🏆", title: "Première victoire", description: "Obtenez votre première victoire" },
-  { icon: "🔥", title: "Série de 3", description: "Gagnez 3 matchs consécutifs" },
-  { icon: "🔥", title: "Série de 5", description: "Gagnez 5 matchs consécutifs" },
-  { icon: "🎖️", title: "Marathonien", description: "Jouez 50 matchs" },
-  { icon: "💯", title: "Meilleur scoreur", description: "Obtenez 100+ points" },
-  { icon: "🔥", title: "Série de 7", description: "Gagnez 7 matchs consécutifs" },
-  { icon: "🔥", title: "Série de 10", description: "Gagnez 10 matchs consécutifs" },
-  { icon: "🎯", title: "Précision", description: "Remportez 5 matchs sans en perdre aucun" },
-  { icon: "📈", title: "En progression", description: "Ayez 5 victoires de plus que de défaites" },
-  { icon: "🔥", title: "série de 15", description: "Gagnez 15 matchs consécutifs" },
-  { icon: "🔥", title: "série de 20", description: "Gagnez 20 matchs consécutifs" },
-  { icon: "🏅", title: "Centurion", description: "Jouez 100 matchs" },
-  { icon: "💎", title: "Diamant", description: "Atteignez 500 points" },
-  { icon: "🏆🏆🏆", title: "Légende", description: "Gagnez 200 matchs au total" },
-  { icon: "🎾", title: "Amour du padel", description: "Jouez 200 matchs au total" },
+  { icon: "Trophy", title: "Première victoire", description: "Obtenez votre première victoire" },
+  { icon: "Flame", title: "Série de 3", description: "Gagnez 3 matchs consécutifs" },
+  { icon: "Flame", title: "Série de 5", description: "Gagnez 5 matchs consécutifs" },
+  { icon: "Timer", title: "Marathonien", description: "Jouez 50 matchs" },
+  { icon: "Star", title: "Meilleur scoreur", description: "Obtenez 100+ points" },
+  { icon: "Flame", title: "Série de 7", description: "Gagnez 7 matchs consécutifs" },
+  { icon: "Flame", title: "Série de 10", description: "Gagnez 10 matchs consécutifs" },
+  { icon: "Target", title: "Précision", description: "Remportez 5 matchs sans en perdre aucun" },
+  { icon: "TrendingUp", title: "En progression", description: "Ayez 5 victoires de plus que de défaites" },
+  { icon: "Flame", title: "série de 15", description: "Gagnez 15 matchs consécutifs" },
+  { icon: "Flame", title: "série de 20", description: "Gagnez 20 matchs consécutifs" },
+  { icon: "Milestone", title: "Centurion", description: "Jouez 100 matchs" },
+  { icon: "Gem", title: "Diamant", description: "Atteignez 500 points" },
+  { icon: "Crown", title: "Légende", description: "Gagnez 200 matchs au total" },
+  { icon: "Heart", title: "Amour du padel", description: "Jouez 200 matchs au total" },
   // Badges liés aux avis
-  { icon: "💬", title: "Contributeur", description: "Laissez votre premier avis" },
+  { icon: "MessageSquare", title: "Contributeur", description: "Laissez votre premier avis" },
 ];
 
 export function getBadges(stats: PlayerStats): Badge[] {
