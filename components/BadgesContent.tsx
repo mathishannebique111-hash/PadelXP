@@ -31,7 +31,7 @@ async function calculateStreak(supabase: any, userId: string): Promise<number> {
 
   const matchIds = mp.map((m: any) => m.match_id);
   if (matchIds.length === 0) return 0;
-  
+
   const { data: ms } = await supabase
     .from("matches")
     .select("id, winner_team_id, team1_id, team2_id, created_at")
@@ -70,7 +70,7 @@ async function calculateStreak(supabase: any, userId: string): Promise<number> {
 export default async function BadgesContent() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) {
     return (
       <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
@@ -79,17 +79,17 @@ export default async function BadgesContent() {
       </div>
     );
   }
-  
+
   const { data: userProfile } = await supabase
     .from("profiles")
     .select("club_id, points")
     .eq("id", user.id)
     .maybeSingle();
-  
+
   let userClubId = userProfile?.club_id || null;
-  
-  const challengePoints = typeof userProfile?.points === 'number' 
-    ? userProfile.points 
+
+  const challengePoints = typeof userProfile?.points === 'number'
+    ? userProfile.points
     : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
 
   let finalChallengePoints = challengePoints;
@@ -112,10 +112,10 @@ export default async function BadgesContent() {
       if (adminProfile?.club_id) {
         userClubId = adminProfile.club_id;
       }
-      
+
       if (adminProfile?.points !== undefined) {
-        finalChallengePoints = typeof adminProfile.points === 'number' 
-          ? adminProfile.points 
+        finalChallengePoints = typeof adminProfile.points === 'number'
+          ? adminProfile.points
           : (typeof adminProfile.points === 'string' ? parseInt(adminProfile.points, 10) || 0 : 0);
       }
     } catch (e) {
@@ -130,7 +130,7 @@ export default async function BadgesContent() {
       </div>
     );
   }
-  
+
   // Calculer les stats du joueur
   const { data: mp } = await supabase
     .from("match_participants")
@@ -141,10 +141,10 @@ export default async function BadgesContent() {
   let wins = 0;
   let losses = 0;
   let matches = 0;
-  
+
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
-    
+
     let validMatchIds = matchIds;
     if (userClubId) {
       const { data: allParticipants } = await supabase
@@ -152,40 +152,40 @@ export default async function BadgesContent() {
         .select("match_id, user_id, player_type")
         .in("match_id", matchIds)
         .eq("player_type", "user");
-      
+
       const participantUserIds = [...new Set((allParticipants || []).map((p: any) => p.user_id).filter(Boolean))];
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
         .select("id, club_id")
         .in("id", participantUserIds)
         .eq("club_id", userClubId);
-      
+
       const validUserIds = new Set((profiles || []).map((p: any) => p.id));
-      
+
       validMatchIds = matchIds.filter(matchId => {
         const participants = (allParticipants || []).filter((p: any) => p.match_id === matchId);
-        return participants.every((p: any) => 
+        return participants.every((p: any) =>
           p.player_type === "guest" || validUserIds.has(p.user_id)
         );
       });
     }
-    
+
     const { data: ms } = await supabase
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id")
       .in("id", validMatchIds);
-      
+
     const byId: Record<string, number> = {};
     (ms || []).forEach((m: any) => {
       if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
       const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
       byId[m.id] = winner_team;
     });
-    
-    const filteredMp = userClubId 
+
+    const filteredMp = userClubId
       ? mp.filter((p: any) => validMatchIds.includes(p.match_id))
       : mp;
-    
+
     filteredMp.forEach((p: any) => {
       if (byId[p.match_id] === p.team) wins += 1;
       else if (byId[p.match_id]) losses += 1;
@@ -212,7 +212,7 @@ export default async function BadgesContent() {
     ...badge,
     obtained: obtainedBadgeKeys.has(`${badge.icon}|${badge.title}`) || extraObtained.has(`${badge.icon}|${badge.title}`),
   }));
-  
+
   badgesWithStatus = badgesWithStatus.sort((a, b) => {
     const weight = (bd: typeof a) => {
       if (bd.icon === "🏆") return 0;
@@ -237,7 +237,7 @@ export default async function BadgesContent() {
     <BadgesPageClient obtainedBadges={obtainedBadges}>
       {/* Pop-up de célébration pour les nouveaux badges */}
       <BadgesUnlockNotifier obtained={obtainedBadges} />
-      
+
       {/* Statistiques */}
       <div className="mb-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-4 sm:p-8 border-2 border-blue-400 shadow-xl">
         <div className="mb-3 sm:mb-4 text-center">
@@ -273,8 +273,7 @@ export default async function BadgesContent() {
       {/* Badges de challenges */}
       {challengeBadges && challengeBadges.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
-            <Image src="/images/Trophée page badges.png" alt="Trophée" width={24} height={24} className="flex-shrink-0" unoptimized />
+          <h2 className="text-2xl font-semibold text-white mb-4">
             <span>Badges de Challenges</span>
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
@@ -307,8 +306,7 @@ export default async function BadgesContent() {
 
       {/* Grille des badges standards */}
       <div className="mb-4">
-        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
-          <BadgeIconDisplay icon="🎯" size={24} className="flex-shrink-0" />
+        <h2 className="text-2xl font-semibold text-white mb-4">
           <span>Badges Standards</span>
         </h2>
       </div>
@@ -316,30 +314,28 @@ export default async function BadgesContent() {
         {badgesWithStatus.map((badge, idx) => (
           <div
             key={idx}
-            className={`rounded-xl border px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all flex flex-col h-[140px] sm:h-[180px] items-center text-center ${
-              badge.obtained
+            className={`rounded-xl border px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all flex flex-col h-[140px] sm:h-[180px] items-center text-center ${badge.obtained
                 ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
                 : "border-gray-200 bg-gray-50 opacity-75"
-            }`}
+              }`}
           >
             <div className="flex-shrink-0 mb-2 sm:mb-3 h-[36px] sm:h-[48px] flex items-center justify-center">
               <BadgeIconDisplay
                 icon={badge.icon}
                 title={badge.title}
-                className={`transition-all ${
-                  badge.obtained ? "" : "grayscale opacity-50"
-                }`}
+                className={`transition-all ${badge.obtained ? "" : "grayscale opacity-50"
+                  }`}
                 size={36}
               />
             </div>
-            
+
             <div className="flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[60px] sm:max-h-[70px] mb-1 sm:mb-2 px-1">
               <h3 className={`text-xs sm:text-sm font-semibold leading-tight mb-0.5 sm:mb-1 text-center ${badge.obtained ? "text-gray-900" : "text-gray-500"}`}>
-                  {badge.title}
-                </h3>
+                {badge.title}
+              </h3>
               <p className="text-[10px] sm:text-xs leading-relaxed text-gray-600 text-center line-clamp-2">{badge.description}</p>
             </div>
-            
+
             <div className="flex-shrink-0 w-full h-[24px] sm:h-[32px] flex items-center justify-center mt-auto">
               {badge.obtained ? (
                 <div className="w-full rounded-lg bg-green-50 px-2 py-1 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-green-700 tabular-nums">
