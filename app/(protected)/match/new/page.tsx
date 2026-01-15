@@ -44,11 +44,12 @@ export default async function NewMatchPage({
   // que le joueur n'est pas rattaché à un club alors qu'il l'est.
   let clubId: string | null = null;
   let clubSlug: string | null = null;
+  let clubName: string | null = null;
 
   try {
     const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
       .from("profiles")
-      .select("club_id, club_slug")
+      .select("club_id, club_slug, clubs(name)")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -64,6 +65,7 @@ export default async function NewMatchPage({
     if (adminProfile) {
       clubId = adminProfile.club_id || null;
       clubSlug = adminProfile.club_slug || null;
+      clubName = (adminProfile.clubs as any)?.name || null;
     } else {
       logger.warn("[Match/New] No profile found for user via admin client", {
         userId: user.id,
@@ -85,8 +87,8 @@ export default async function NewMatchPage({
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-4 sm:pt-8 pb-8 text-white">
-          <div className="mb-6">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8 text-white">
+          <div className="mb-4 sm:mb-6">
             <PageTitle title="Matchs" />
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
@@ -108,9 +110,9 @@ export default async function NewMatchPage({
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl px-4 pt-4 md:pt-8 pb-8 flex flex-col items-center is-app:items-start">
-        <div className="mb-6 w-full flex justify-center is-app:justify-start">
-          <PageTitle title="Matchs" />
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
+        <div className="mb-4 sm:mb-6">
+          <PageTitle title="Matchs" subtitle={clubName ? `Club : ${clubName}` : undefined} />
         </div>
         <Suspense fallback={
           <div className="w-full">

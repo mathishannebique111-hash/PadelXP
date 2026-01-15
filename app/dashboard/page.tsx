@@ -4,6 +4,7 @@ import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { redirect } from "next/navigation";
 import InvitationCodeCard from "./InvitationCodeCard";
 import PageTitle from "./PageTitle";
+import ClubNameChangeForm from "./ClubNameChangeForm";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import Image from "next/image";
 import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
@@ -15,8 +16,8 @@ const BUCKET_NAME = "club-challenges";
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
   : null;
 
 type ChallengeRecord = {
@@ -86,10 +87,10 @@ export default async function DashboardHome() {
 
   const { data: club, error: clubError } = await supabase
     .from("clubs")
-    .select("code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count, subscription_status, selected_plan, subscription_started_at, stripe_subscription_id")
+    .select("name, code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count, subscription_status, selected_plan, subscription_started_at, stripe_subscription_id")
     .eq("id", clubId)
     .maybeSingle();
-  
+
   // Log pour déboguer (à retirer en production)
   if (process.env.NODE_ENV === 'development' && club) {
     logger.info('[DashboardHome] Club data:', {
@@ -97,7 +98,7 @@ export default async function DashboardHome() {
       trial_end_date: club.trial_end_date,
       trial_current_end_date: club.trial_current_end_date,
       auto_extension_unlocked: club.auto_extension_unlocked,
-      total_days: club.trial_current_end_date && club.trial_start_date 
+      total_days: club.trial_current_end_date && club.trial_start_date
         ? Math.ceil((new Date(club.trial_current_end_date).getTime() - new Date(club.trial_start_date).getTime()) / (1000 * 60 * 60 * 24))
         : null
     });
@@ -123,51 +124,51 @@ export default async function DashboardHome() {
   // PRIORITÉ : trial_current_end_date (nouveau système) > trial_end_date (ancien) > calcul depuis trial_start
   const trialEndDate = club?.trial_current_end_date || club?.trial_end_date || null;
   const trialStartDate = club?.trial_start_date || club?.trial_start || null;
-  const daysRemaining = trialEndDate 
+  const daysRemaining = trialEndDate
     ? calculateDaysRemaining(trialEndDate)
     : trialStartDate
-    ? (() => {
+      ? (() => {
         const startDate = new Date(trialStartDate);
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 14); // 14 jours
         return calculateDaysRemaining(endDate.toISOString());
       })()
-    : null;
+      : null;
   const showTrialWarning = daysRemaining !== null && daysRemaining <= 10 && daysRemaining > 0;
 
   // Calculer le nombre total de jours d'essai (14 ou 30 selon l'extension)
   // IMPORTANT: Utiliser directement trial_current_end_date de la base de données
   const calculateTotalTrialDays = (): number => {
     if (!trialStartDate) return 14; // Par défaut 14 jours si pas de date de début
-    
+
     // PRIORITÉ ABSOLUE : trial_current_end_date de la base (prend en compte les extensions)
     // Ne pas utiliser trialEndDate qui peut être calculé avec fallback
     let effectiveEndDate: Date | null = null;
-    
+
     if (club?.trial_current_end_date) {
       effectiveEndDate = new Date(club.trial_current_end_date);
     } else if (club?.trial_end_date) {
       effectiveEndDate = new Date(club.trial_end_date);
     }
-    
+
     // Si aucune date de fin n'est trouvée, calculer depuis trial_start_date + 14 jours
     if (!effectiveEndDate) {
       const start = new Date(trialStartDate);
       start.setDate(start.getDate() + 14);
       effectiveEndDate = start;
     }
-    
+
     // Vérifier que la date est valide
     if (isNaN(effectiveEndDate.getTime())) {
       logger.error('[DashboardHome] Invalid effectiveEndDate:', effectiveEndDate);
       return 14; // Par défaut 14 jours si date invalide
     }
-    
+
     const start = new Date(trialStartDate);
     const end = new Date(effectiveEndDate);
     const diffTime = end.getTime() - start.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     // Log pour déboguer
     if (process.env.NODE_ENV === 'development') {
       logger.info('[DashboardHome] calculateTotalTrialDays:', {
@@ -181,7 +182,7 @@ export default async function DashboardHome() {
         raw_trial_end_date: club?.trial_end_date
       });
     }
-    
+
     return diffDays;
   };
   const totalTrialDays = calculateTotalTrialDays();
@@ -225,23 +226,23 @@ export default async function DashboardHome() {
   if (clubId) {
     try {
       const allChallenges = await loadChallenges(clubId);
-      
+
       // Calculer la date d'il y a 1 jour
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-      
+
       // Filtrer pour supprimer les challenges terminés depuis plus d'un jour
       const filteredChallenges = allChallenges.filter((record) => {
         const endDate = new Date(record.end_date);
         const status = computeStatus(record);
-        
+
         // Garder les challenges actifs, à venir, et terminés depuis moins d'un jour
         if (status === "completed") {
           return endDate >= oneDayAgo;
         }
         return true;
       });
-      
+
       // Si des challenges ont été supprimés, sauvegarder la liste mise à jour
       if (filteredChallenges.length < allChallenges.length && supabaseAdmin) {
         try {
@@ -254,7 +255,7 @@ export default async function DashboardHome() {
           logger.error("[dashboard/home] Erreur lors de la sauvegarde après nettoyage", error);
         }
       }
-      
+
       // Filtrer pour ne garder que les challenges actifs ou à venir pour l'affichage
       upcomingChallenges = filteredChallenges
         .map((record) => ({
@@ -285,11 +286,11 @@ export default async function DashboardHome() {
                 Essai gratuit : {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''}
               </h3>
               <p className="text-xs sm:text-sm text-orange-200/80">
-                Il ne reste que {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} avant la fin de votre essai gratuit. 
+                Il ne reste que {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} avant la fin de votre essai gratuit.
                 Vous pouvez activer votre abonnement dès maintenant pour qu'il démarre automatiquement à partir du mois prochain.
               </p>
-              <a 
-                href="/dashboard/facturation" 
+              <a
+                href="/dashboard/facturation"
                 className="inline-block mt-2 sm:mt-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-orange-500/20 border border-orange-500/50 text-orange-200 hover:bg-orange-500/30 transition-colors text-xs sm:text-sm font-semibold"
               >
                 Activer l'abonnement →
@@ -302,6 +303,11 @@ export default async function DashboardHome() {
       <header>
         <PageTitle title="Tableau de bord" subtitle="Bienvenue dans votre espace club / complexe" />
       </header>
+
+      {/* Formulaire temporaire de changement de nom */}
+      {clubId && club?.name && (
+        <ClubNameChangeForm clubId={clubId} initialName={club.name} />
+      )}
 
       {/* Progress bar pour débloquer l'extension automatique */}
       {daysRemaining !== null && daysRemaining > 0 && !club?.auto_extension_unlocked && (
@@ -339,8 +345,8 @@ export default async function DashboardHome() {
                     </div>
                     <p className="text-xs sm:text-sm text-white/60">Aucun challenge à venir</p>
                   </div>
-                  <a 
-                    href="/dashboard/challenges" 
+                  <a
+                    href="/dashboard/challenges"
                     className="mt-4 w-full rounded-lg border px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 text-center"
                     style={{ background: "linear-gradient(135deg, #0066FF 0%, #00CC99 100%)", boxShadow: "0 12px 24px rgba(0,102,255,0.35)", border: "1px solid rgba(255,255,255,0.25)" }}
                   >
@@ -354,7 +360,7 @@ export default async function DashboardHome() {
                     const endDate = new Date(c.end_date);
                     const isActive = c.status === "active";
                     const isFuture = c.status === "upcoming";
-                    
+
                     return (
                       <li key={c.id} className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2">
                         <div className="flex items-start justify-between gap-1.5 sm:gap-2">
@@ -403,7 +409,7 @@ export default async function DashboardHome() {
             Voir les détails →
           </a>
         </div>
-        
+
         {/* Vérifier si le club a un abonnement actif ou a choisi un plan */}
         {club?.subscription_status === "active" || (club?.selected_plan && daysRemaining !== null && daysRemaining === 0) ? (
           // Abonnement actif ou plan choisi après l'essai
@@ -429,7 +435,7 @@ export default async function DashboardHome() {
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-white/70 mt-2 sm:mt-3">
-                  {club?.subscription_status === "active" 
+                  {club?.subscription_status === "active"
                     ? "Votre abonnement est actif et vous donne accès à toutes les fonctionnalités de la plateforme."
                     : "Votre abonnement a été choisi et sera activé prochainement. Vous avez accès à toutes les fonctionnalités de la plateforme."
                   }
@@ -462,11 +468,10 @@ export default async function DashboardHome() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 sm:gap-3 mb-2">
                   <span className="font-semibold text-base sm:text-lg text-white">Essai gratuit — {totalTrialDays} jours</span>
-                  <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold border ${
-                    showTrialWarning
-                      ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
-                      : "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
-                  }`}>
+                  <span className={`inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-semibold border ${showTrialWarning
+                    ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
+                    : "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
+                    }`}>
                     {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}
                   </span>
                 </div>
