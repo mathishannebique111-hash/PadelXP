@@ -283,9 +283,13 @@ export default async function BadgesContent() {
                 className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[140px] sm:h-[180px] items-center text-center"
               >
                 <div className="mb-2 sm:mb-3 flex flex-col items-center gap-2 sm:gap-3 flex-1">
-                  <span className="text-2xl sm:text-3xl">
-                    {badge.badge_emoji}
-                  </span>
+                  <div className="h-[32px] sm:h-[40px] flex items-center justify-center mb-1">
+                    <BadgeIconDisplay
+                      icon={badge.badge_emoji}
+                      title={badge.badge_name}
+                      size={32}
+                    />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xs sm:text-sm font-semibold leading-tight text-gray-900">
                       {badge.badge_name}
@@ -315,8 +319,8 @@ export default async function BadgesContent() {
           <div
             key={idx}
             className={`rounded-xl border px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all flex flex-col h-[140px] sm:h-[180px] items-center text-center ${badge.obtained
-                ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
-                : "border-gray-200 bg-gray-50 opacity-75"
+              ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
+              : "border-gray-200 bg-gray-50 opacity-75"
               }`}
           >
             <div className="flex-shrink-0 mb-2 sm:mb-3 h-[36px] sm:h-[48px] flex items-center justify-center">

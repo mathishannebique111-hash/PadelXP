@@ -25,14 +25,50 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
     if (iconName === "Crown") return "#A855F7"; // Pourpre
     if (iconName === "Heart") return "#EC4899"; // Rose
     if (iconName === "MessageSquare") return "#6366F1"; // Indigo
+    if (iconName === "Medal") return "#FBBF24"; // Ambre/Or
+    if (iconName === "Zap") return "#FACC15"; // Jaune vif
+    if (iconName === "Users") return "#60A5FA"; // Bleu clair
+    if (iconName === "Calendar") return "#94A3B8"; // Ardoise
+    if (iconName === "Award") return "#F59E0B"; // Ambre
+    if (iconName === "Dumbbell") return "#64748B"; // Gris acier
+    if (iconName === "Sparkles") return "#EAB308"; // Jaune doré
     return "currentColor";
   };
 
   // Tenter de récupérer l'icône Lucide
-  const LucideIcon = (LucideIcons as any)[icon];
+  // Si c'est un emoji, on le mappe vers un nom d'icône Lucide
+  const getLucideIconName = (nameOrEmoji: string) => {
+    const emojiMap: Record<string, string> = {
+      "🏆": "Trophy",
+      "🔥": "Flame",
+      "🎾": "Ball",
+      "🎯": "Target",
+      "💬": "MessageSquare",
+      "📈": "TrendingUp",
+      "💎": "Gem",
+      "🏅": "Medal",
+      "🎖️": "Medal",
+      "💯": "Zap",
+      "⚡": "Zap",
+      "🤝": "Users",
+      "📅": "Calendar",
+      "🗓️": "Calendar",
+      "🔝": "ChevronUp",
+      "👑": "Crown",
+      "✨": "Sparkles",
+      "💪": "Dumbbell",
+      "🥇": "Award",
+      "🥈": "Award",
+      "🥉": "Award",
+    };
+    return emojiMap[nameOrEmoji] || nameOrEmoji;
+  };
+
+  const lucideIconName = getLucideIconName(icon);
+  const LucideIcon = (LucideIcons as any)[lucideIconName];
 
   if (LucideIcon) {
-    const color = getIconColor(icon, title);
+    const color = getIconColor(lucideIconName, title);
     return (
       <LucideIcon
         size={size}
