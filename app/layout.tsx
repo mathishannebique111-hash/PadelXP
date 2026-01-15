@@ -69,6 +69,31 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${isApp ? 'is-app' : ''} bg-[#172554] text-white min-h-screen`} style={{ backgroundColor: '#172554' }} data-is-app={isApp ? 'true' : 'false'} suppressHydrationWarning>
+        {/* CSS Splash Overlay - visible until page is ready */}
+        {isApp && (
+          <div
+            id="css-splash-overlay"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#071554',
+              zIndex: 999999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'opacity 0.2s ease-out',
+            }}
+          >
+            <img
+              src="/images/Logo sans fond.png"
+              alt="PadelXP"
+              style={{ width: '280px', height: 'auto' }}
+            />
+          </div>
+        )}
         <SafeAreas />
         <OfflineWrapper />
         {children}

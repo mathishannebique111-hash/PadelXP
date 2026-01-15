@@ -42,7 +42,7 @@ export default function CookieConsent() {
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(prefs));
     setShowBanner(false);
     setShowPreferences(false);
-    
+
     // Appliquer les cookies selon les préférences
     if (prefs.analytics) {
       // Ici, vous pourriez initialiser Google Analytics ou autre outil analytique
@@ -84,46 +84,49 @@ export default function CookieConsent() {
     <>
       {/* Bandeau de consentement */}
       {showBanner && !showPreferences && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10 p-4 shadow-2xl">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-              <div className="flex-1">
-                <p className="text-white text-sm md:text-base mb-2">
-                  🍪 Nous utilisons des cookies pour améliorer votre expérience sur PadelXP.
-                  Certains cookies sont strictement nécessaires au fonctionnement du site, 
-                  d'autres nécessitent votre consentement.
-                </p>
-                <p className="text-white/60 text-xs">
-                  En continuant, vous acceptez notre{" "}
-                  <Link href="/cookies" className="text-white underline hover:text-white/80">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end p-4 bg-black/60 backdrop-blur-[2px]">
+          <div className="flex justify-center w-full mb-4 is-app:mb-12">
+            <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl max-w-md w-full backdrop-blur-xl bg-opacity-95 ring-1 ring-white/20">
+              <div className="text-center space-y-4">
+                <div className="space-y-2">
+                  <p className="text-white text-base font-bold leading-relaxed">
+                    🍪 Vos préférences de cookies
+                  </p>
+                  <p className="text-white/70 text-xs leading-relaxed">
+                    Nous utilisons des cookies pour assurer le bon fonctionnement du site et améliorer votre expérience.
+                    Merci de faire votre choix avant de continuer.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <button
+                    onClick={handleAcceptAll}
+                    className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold transition-all shadow-lg active:scale-95"
+                  >
+                    Tout accepter
+                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setShowPreferences(true)}
+                      className="py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 text-xs font-semibold transition-colors border border-white/10"
+                    >
+                      Personnaliser
+                    </button>
+                    <button
+                      onClick={handleRejectAll}
+                      className="py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 text-xs font-semibold transition-colors border border-white/10"
+                    >
+                      Tout refuser
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-white/40 text-[10px]">
+                  En acceptant, vous consentez à notre{" "}
+                  <Link href="/cookies" className="text-white/60 underline hover:text-white/80">
                     Politique des Cookies
-                  </Link>
-                  {" "}et notre{" "}
-                  <Link href="/privacy" className="text-white underline hover:text-white/80">
-                    Politique de Confidentialité
-                  </Link>
-                  .
+                  </Link>.
                 </p>
-              </div>
-              <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                <button
-                  onClick={() => setShowPreferences(true)}
-                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/20"
-                >
-                  Personnaliser
-                </button>
-                <button
-                  onClick={handleRejectAll}
-                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/20"
-                >
-                  Refuser tout
-                </button>
-                <button
-                  onClick={handleAcceptAll}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-sm font-semibold transition-all shadow-lg"
-                >
-                  Accepter tout
-                </button>
               </div>
             </div>
           </div>
@@ -138,7 +141,7 @@ export default function CookieConsent() {
               Gérer vos préférences de cookies
             </h2>
             <p className="text-white/60 text-sm mb-6">
-              Vous pouvez accepter ou refuser les cookies par catégorie. Les cookies 
+              Vous pouvez accepter ou refuser les cookies par catégorie. Les cookies
               strictement nécessaires ne peuvent pas être désactivés.
             </p>
 
@@ -220,28 +223,30 @@ export default function CookieConsent() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-4 border-t border-white/20">
-              <button
-                onClick={() => {
-                  setShowPreferences(false);
-                  setShowBanner(true);
-                }}
-                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/20"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleRejectAll}
-                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/20"
-              >
-                Tout refuser
-              </button>
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/20">
               <button
                 onClick={handleSavePreferences}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-sm font-semibold transition-all shadow-lg"
+                className="w-full sm:flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold transition-all shadow-lg active:scale-95 order-1 sm:order-2"
               >
-                Enregistrer mes préférences
+                Confirmer mes choix
               </button>
+              <div className="flex gap-2 w-full sm:w-auto order-2 sm:order-1">
+                <button
+                  onClick={handleRejectAll}
+                  className="flex-1 sm:px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-medium transition-colors border border-white/10"
+                >
+                  Refuser
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPreferences(false);
+                    setShowBanner(true);
+                  }}
+                  className="flex-1 sm:px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-medium transition-colors border border-white/10"
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
 
             <p className="text-xs text-white/40 mt-4">

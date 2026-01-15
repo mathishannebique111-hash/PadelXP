@@ -46,7 +46,8 @@ export default function ClientLogin() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step1Session, setStep1Session] = useState<any>(null); // Session créée à l'étape 1
+  // Note: step1Session n'est plus utilisé car le compte est créé à l'étape 2
+
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -149,6 +150,8 @@ export default function ClientLogin() {
   };
 
   // Gestion de la soumission de l'étape 1
+  // NOTE: Le compte n'est PAS créé ici - juste validation et passage à l'étape 2
+  // La création du compte se fait à l'étape 2 pour éviter les comptes en double si email modifié
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -156,69 +159,42 @@ export default function ClientLogin() {
       return;
     }
 
+    // Validation basique de l'email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(step1Data.email.trim())) {
+      setError("Veuillez entrer une adresse email valide.");
+      return;
+    }
+
+    // Validation du mot de passe (minimum 6 caractères pour Supabase)
+    if (step1Data.password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      // Capitaliser les noms
+      // Capitaliser les noms et passer à l'étape 2
       const { firstName: capitalizedFirstName, lastName: capitalizedLastName } = capitalizeFullName(
         step1Data.firstName.trim(),
         step1Data.lastName.trim()
       );
 
-      // Essayer de créer le compte pour vérifier si l'email existe déjà
-      const supabase = createClient();
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: step1Data.email.trim(),
-        password: step1Data.password,
-        options: {
-          data: {
-            first_name: capitalizedFirstName,
-            last_name: capitalizedLastName,
-          },
-        },
+      // Mettre à jour les données avec les noms capitalisés
+      setStep1Data({
+        ...step1Data,
+        firstName: capitalizedFirstName,
+        lastName: capitalizedLastName
       });
 
-      if (signUpError) {
-        logger.error("[ClientLogin] SignUp error at step 1:", signUpError);
-
-        // Vérifier si l'erreur indique que l'email existe déjà
-        const errorMessage = signUpError.message?.toLowerCase() || '';
-        if (
-          errorMessage.includes('user already registered') ||
-          errorMessage.includes('email already registered') ||
-          errorMessage.includes('already registered') ||
-          errorMessage.includes('user already exists') ||
-          errorMessage.includes('email already exists')
-        ) {
-          setError("Un compte est déjà associé à cette adresse email.");
-          setLoading(false);
-          return;
-        }
-
-        // Pour les autres erreurs, on affiche le message d'erreur générique
-        if (signUpError.message?.includes("Database") || signUpError.message?.includes("database")) {
-          setError("Erreur lors de la vérification. Veuillez réessayer ou contacter le support.");
-        } else {
-          setError(signUpError.message || "Erreur lors de la vérification. Veuillez réessayer.");
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Si le compte a été créé avec succès, on stocke la session pour l'étape 2
-      // Si l'email nécessite une confirmation, data.session sera null mais le compte est créé
-      // Dans ce cas, on passera quand même à l'étape 2 et on se reconnectera à l'étape 2
-
-      if (data) {
-        setStep1Session(data);
-      }
-
+      // Passer à l'étape 2 sans créer le compte
       setStep(2);
       setLoading(false);
     } catch (e: any) {
       logger.error("[ClientLogin] Unexpected error at step 1:", e);
-      setError(e?.message || "Erreur lors de la vérification. Veuillez réessayer.");
+      setError(e?.message || "Erreur lors de la validation.");
       setLoading(false);
     }
   };
@@ -277,31 +253,57 @@ export default function ClientLogin() {
         step1Data.lastName.trim()
       );
 
-      // Obtenir le token d'accès
-      // Si le compte a déjà été créé à l'étape 1, utiliser la session existante
-      let accessToken: string | null = null;
+      // Créer le compte auth Supabase (le compte est créé ici, pas à l'étape 1)
+      const supabase = createClient();
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: step1Data.email.trim(),
+        password: step1Data.password,
+        options: {
+          data: {
+            first_name: capitalizedFirstName,
+            last_name: capitalizedLastName,
+          },
+        },
+      });
 
-      if (step1Session?.session?.access_token) {
-        // Utiliser la session de l'étape 1
-        accessToken = step1Session.session.access_token;
-      } else {
-        // Le compte a été créé à l'étape 1 mais sans session (email confirmation requise)
-        // Se connecter pour obtenir le token
-        const supabase = createClient();
+      if (signUpError) {
+        logger.error("[ClientLogin] SignUp error at final submit:", signUpError);
+
+        // Vérifier si l'erreur indique que l'email existe déjà
+        const errorMessage = signUpError.message?.toLowerCase() || '';
+        if (
+          errorMessage.includes('user already registered') ||
+          errorMessage.includes('email already registered') ||
+          errorMessage.includes('already registered') ||
+          errorMessage.includes('user already exists') ||
+          errorMessage.includes('email already exists')
+        ) {
+          setError("Un compte est déjà associé à cette adresse email.");
+        } else {
+          setError(signUpError.message || "Erreur lors de la création du compte.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        throw new Error("Erreur lors de la création du compte");
+      }
+
+      // Obtenir le token d'accès
+      let accessToken: string | null = authData.session?.access_token || null;
+
+      if (!accessToken) {
+        // Si pas de session immédiate (email confirmation requise), se connecter
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: step1Data.email,
+          email: step1Data.email.trim(),
           password: step1Data.password
         });
+
         if (signInError || !signInData.session) {
           throw new Error("Connexion nécessaire pour finaliser l'inscription");
         }
         accessToken = signInData.session?.access_token || null;
-      }
-
-      if (!accessToken) {
-        const supabase = createClient();
-        const { data: sessionData } = await supabase.auth.getSession();
-        accessToken = sessionData.session?.access_token || null;
       }
 
       // Attacher le club
@@ -379,9 +381,9 @@ export default function ClientLogin() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white p-6">
+    <div className={`w-full max-w-md rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xl transition-all duration-300 ${step === 1 ? 'p-8' : 'p-6'}`}>
       {/* Stepper */}
-      <div className="mb-6">
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${step >= 1 ? 'bg-[#0066FF] text-white' : 'bg-white/10 text-white/50'
@@ -408,19 +410,8 @@ export default function ClientLogin() {
             style={{ width: `${(step / 2) * 100}%` }}
           />
         </div>
-        <p className="text-center text-xs text-white/50 mt-2">
-          Étape {step}/2
-        </p>
       </div>
 
-      <h1 className={`text-xl font-extrabold mb-2 transition-all duration-300 ${step === 1 ? 'opacity-100' : 'opacity-70'}`}>
-        {step === 1 ? "Vos informations" : "Votre club"}
-      </h1>
-      <p className="text-white/70 mb-5 text-xs opacity-70">
-        {step === 1
-          ? "Créez votre compte en quelques secondes"
-          : "Associez votre compte à votre club / complexe"}
-      </p>
 
       {error && (
         <div className="rounded-md border border-red-400 bg-red-900/20 px-3 py-2 text-xs text-red-400 mb-4">
@@ -495,19 +486,21 @@ export default function ClientLogin() {
           </div>
 
           {/* Bouton Continuer */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105 disabled:opacity-60"
-            style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}
-          >
-            {loading ? "Vérification..." : "Continuer"}
-          </button>
+          <div className="pt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105 disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}
+            >
+              {loading ? "Vérification..." : "Continuer"}
+            </button>
+          </div>
         </form>
       ) : (
         <form
           onSubmit={handleFinalSubmit}
-          className="space-y-4 transition-all duration-300"
+          className="space-y-3 transition-all duration-300"
           style={{ animation: 'fadeIn 0.3s ease-out' }}
         >
           {/* Club / complexe */}
@@ -594,10 +587,10 @@ export default function ClientLogin() {
                 type="text"
                 placeholder="Code de parrainage"
                 className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${referralCodeStatus?.valid
-                    ? "border-green-500/50 focus:ring-green-500"
-                    : referralCodeStatus?.valid === false
-                      ? "border-red-500/50 focus:ring-red-500"
-                      : "border-white/10 focus:ring-[#0066FF]"
+                  ? "border-green-500/50 focus:ring-green-500"
+                  : referralCodeStatus?.valid === false
+                    ? "border-red-500/50 focus:ring-red-500"
+                    : "border-white/10 focus:ring-[#0066FF]"
                   }`}
                 value={referralCode}
                 onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
@@ -628,18 +621,18 @@ export default function ClientLogin() {
           )}
 
           {/* Boutons Retour et Créer mon compte */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="flex-1 rounded-xl px-4 py-3 font-semibold text-white/70 hover:text-white border border-white/20 hover:border-white/30 transition-all"
+              className="flex-1 rounded-xl px-3 py-2 text-sm font-semibold text-white/70 hover:text-white border border-white/20 hover:border-white/30 transition-all"
             >
               Retour
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105 disabled:opacity-60"
+              className="flex-1 rounded-xl px-3 py-2 text-sm font-semibold text-white transition-all hover:scale-105 disabled:opacity-60"
               style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}
             >
               {loading ? "Création…" : "Créer mon compte"}

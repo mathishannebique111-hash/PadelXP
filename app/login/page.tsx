@@ -25,6 +25,13 @@ export default async function LoginPage({
         redirect("/admin/messages");
       }
 
+      // IMPORTANT: Vérifier que le joueur a un club assigné
+      // Si l'inscription a été interrompue après l'étape 1, le profil existe mais sans club_slug
+      if (!profile.club_slug) {
+        // Inscription incomplète - rediriger vers signup pour terminer l'étape 2
+        redirect("/player/signup");
+      }
+
       // Vérifier si l'onboarding est complété (uniquement pour les non-admins)
       if (!profile.has_completed_onboarding) {
         // Rediriger vers l'onboarding si pas encore complété
@@ -43,13 +50,19 @@ export default async function LoginPage({
     <>
       <HideSplashScreen />
       <div className="relative min-h-screen flex flex-col items-center justify-center text-white px-6 overflow-hidden">
-        {/* Halos vert et bleu - Ne pas remettre le fond bleu ni le dégradé car ils sont dans le layout (pour éviter le décalage de couleur) */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
+        {/* Background global pour correspondre aux pages joueur */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
+
+        {/* Logo en haut de la page */}
+        <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20">
+          <img
+            src="/images/Logo sans fond.png"
+            alt="PadelXP Logo"
+            className="w-28 h-auto object-contain opacity-90 drop-shadow-2xl"
+          />
         </div>
 
-        <div className="relative z-10 w-full max-w-md rounded-2xl bg-white/15 border border-white/20 backdrop-blur-md p-6">
+        <div className="relative z-10 w-full max-w-md rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md p-6 shadow-xl">
           <h1 className="text-xl font-extrabold mb-2">Connexion</h1>
           <p className="text-white/70 mb-5 text-xs opacity-70">Bon retour sur PadelXP !</p>
           {showPasswordResetSuccess && <LoginSuccessMessage />}

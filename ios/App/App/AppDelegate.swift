@@ -26,6 +26,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 @objc(BridgeViewController)
 public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     
+    // Native splash overlay that stays on top until JS signals ready
+    private var splashOverlay: UIView?
+    
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "updateSafeAreaColor", let colorHex = message.body as? String {
             print("PadelXP Native: Updating safe area color to \(colorHex)")
@@ -36,11 +39,15 @@ public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandl
                 self.webView?.isOpaque = false
             }
         } else if message.name == "hideSplash" {
-            print("PadelXP Native: Page is ready, showing WebView")
+            print("PadelXP Native: Page is ready, hiding splash overlay")
             DispatchQueue.main.async {
-                UIView.animate(withDuration: 0.2) {
-                    self.webView?.alpha = 1.0
-                }
+                // Fade out and remove the splash overlay
+                UIView.animate(withDuration: 0.3, animations: {
+                    self.splashOverlay?.alpha = 0.0
+                }, completion: { _ in
+                    self.splashOverlay?.removeFromSuperview()
+                    self.splashOverlay = nil
+                })
             }
         }
     }
@@ -69,13 +76,13 @@ public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandl
     
     public override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.backgroundColor = UIColor(red: 0.09, green: 0.145, blue: 0.33, alpha: 1.0)
         
-        // NE PLUS UTILISER de flag HasLaunchedBefore
-        // Laisser Next.js gérer la redirection basée sur l'état d'authentification réel
-        // - Si connecté → /home
-        // - Si pas connecté → /player/signup
-        // - Si déconnecté volontairement → /login (via un flag dans le storage)
+        // Background color matching the splash
+        let splashColor = UIColor(red: 0.027, green: 0.082, blue: 0.329, alpha: 1.0)
+        self.view.backgroundColor = splashColor
+        
+        // Create native splash overlay that covers everything
+        createSplashOverlay()
         
         print("PadelXP Native: App launched, letting Next.js handle auth-based routing")
         
@@ -92,12 +99,40 @@ public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandl
             webView.configuration.userContentController.addUserScript(script)
             webView.configuration.userContentController.add(self, name: "updateSafeAreaColor")
             webView.configuration.userContentController.add(self, name: "hideSplash")
-            webView.backgroundColor = UIColor(red: 0.09, green: 0.145, blue: 0.33, alpha: 1.0)
+            webView.backgroundColor = splashColor
             webView.isOpaque = false
             webView.scrollView.contentInsetAdjustmentBehavior = .never
             
-            // CACHER la WebView au départ - le LaunchScreen iOS reste visible
-            webView.alpha = 0.0
+            // WebView is now visible (no alpha 0), the splash overlay covers it
         }
+    }
+    
+    private func createSplashOverlay() {
+        // Create the overlay
+        let overlay = UIView(frame: self.view.bounds)
+        overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        overlay.backgroundColor = UIColor(red: 0.027, green: 0.082, blue: 0.329, alpha: 1.0)
+        
+        // Add the logo
+        if let logoImage = UIImage(named: "Splash") {
+            let logoView = UIImageView(image: logoImage)
+            logoView.contentMode = .scaleAspectFit
+            logoView.translatesAutoresizingMaskIntoConstraints = false
+            overlay.addSubview(logoView)
+            
+            // Center the logo
+            NSLayoutConstraint.activate([
+                logoView.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+                logoView.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
+                logoView.widthAnchor.constraint(equalToConstant: 560),
+                logoView.heightAnchor.constraint(equalToConstant: 300)
+            ])
+        }
+        
+        // Add to view hierarchy on top of everything
+        self.view.addSubview(overlay)
+        self.splashOverlay = overlay
+        
+        print("PadelXP Native: Splash overlay created")
     }
 }
