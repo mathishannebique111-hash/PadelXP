@@ -10,23 +10,8 @@ export default function HideSplashScreen() {
     useEffect(() => {
         const hide = () => {
             if (typeof window !== 'undefined') {
-                // 1. Cacher le CSS splash overlay avec une animation
-                const cssOverlay = document.getElementById('css-splash-overlay');
-                if (cssOverlay && cssOverlay.parentNode) {
-                    cssOverlay.style.opacity = '0';
-                    cssOverlay.style.pointerEvents = 'none';
-                    // Supprimer l'overlay après l'animation
-                    setTimeout(() => {
-                        try {
-                            // Vérifier que l'overlay existe toujours et est dans le DOM
-                            if (cssOverlay && cssOverlay.parentNode) {
-                                cssOverlay.remove();
-                            }
-                        } catch (e) {
-                            // Ignorer les erreurs si l'élément a déjà été supprimé
-                        }
-                    }, 300);
-                }
+                // 1. Déclencher la disparition de l'overlay React via un événement
+                window.dispatchEvent(new CustomEvent('hide-splash-overlay'));
 
                 // 2. Cacher le splash natif Swift via WebKit message handler
                 if ((window as any).webkit?.messageHandlers?.hideSplash) {
