@@ -5,6 +5,7 @@ import PageTitle from "../PageTitle";
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Send, MessageCircle } from "lucide-react";
+import { getAuthenticatedUserClubId } from "../../actions";
 
 interface Message {
   id: string;
@@ -59,34 +60,8 @@ export default function HelpPage() {
         setUserId(user.id);
 
         // Récupérer le club_id de l'utilisateur (via profiles OU club_admins)
-        let clubId: string | null = null;
-
-        // Essayer d'abord via profiles
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("club_id")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        clubId = profile?.club_id || null;
-
-        // Si pas de club_id dans profiles, essayer via club_admins
-        if (!clubId) {
-          const { data: adminEntries, error: adminError } = await supabase
-            .from("club_admins")
-            .select("club_id")
-            .eq("user_id", user.id); // Pas de maybeSingle pour éviter l'erreur si multiples
-
-          if (adminError) {
-            logger.error("[ClubSupport] Erreur récupération club_admins", adminError);
-          }
-
-          if (adminEntries && adminEntries.length > 0) {
-            // On prend le premier club trouvé si l'utilisateur est admin de plusieurs
-            clubId = adminEntries[0].club_id;
-            logger.info("[ClubSupport] Club ID trouvé via club_admins", { clubId });
-          }
-        }
+        // Récupérer le club_id via Server Action pour contourner les problèmes de RLS
+        const clubId = await getAuthenticatedUserClubId();
 
         if (!clubId || !isMounted) {
           if (!clubId) {
@@ -270,23 +245,8 @@ export default function HelpPage() {
 
       if (!conversation && newConversationId) {
         // Recharger les données de la conversation
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("club_id")
-          .eq("id", userId || "")
-          .maybeSingle();
-
-        let clubId: string | null = profile?.club_id || null;
-        if (!clubId) {
-          const { data: adminEntries } = await supabase
-            .from("club_admins")
-            .select("club_id")
-            .eq("user_id", userId || "");
-
-          if (adminEntries && adminEntries.length > 0) {
-            clubId = adminEntries[0].club_id;
-          }
-        }
+        // Utiliser Server Action pour récupérer clubId de manière sécurisée
+        const clubId = await getAuthenticatedUserClubId();
 
         if (clubId) {
           const { data: newConv } = await supabase
