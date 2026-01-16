@@ -141,7 +141,7 @@ export async function POST(request: Request) {
     let inviteData: any = null;
     let inviteError: any = null;
 
-    // Essayer d'abord avec inviteUserByEmail (fonctionne pour nouveaux et existants)
+    // Essayer d'abord avec inviteUserByEmail (fonctionne pour nouveaux utilisateurs)
     const { data: inviteByEmailData, error: inviteByEmailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       normalizedEmail,
       {
@@ -156,59 +156,67 @@ export async function POST(request: Request) {
     );
 
     if (inviteByEmailError) {
-      // Si inviteUserByEmail échoue (par exemple "already registered"), utiliser generateLink
-      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: inviteByEmailError.message }, `[invite-admin] inviteUserByEmail échoué, utilisation de generateLink`);
+      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: inviteByEmailError.message }, `[invite-admin] inviteUserByEmail échoué, tentative alternative`);
 
-      let linkData: any = null;
-      let linkError: any = null;
+      // Si inviteUserByEmail échoue, essayer de créer l'utilisateur d'abord
+      // puis générer un lien de récupération
+      let targetUserId: string | null = existingUser?.id ?? null;
 
-      // Essayer d'abord avec "recovery" pour permettre la définition/réinitialisation du mot de passe
-      const recoveryParams: any = {
-        type: "recovery",
-        email: normalizedEmail,
-        options: {
-          redirectTo: inviteLink,
-          data: {
+      // Si l'utilisateur n'existe pas, le créer
+      if (!targetUserId) {
+        const randomPassword = crypto.randomUUID(); // Mot de passe aléatoire temporaire
+        const { data: createUserData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+          email: normalizedEmail,
+          password: randomPassword,
+          email_confirm: false, // Important: ne pas confirmer l'email
+          user_metadata: {
             club_id: clubId,
             club_slug: clubSlug,
             role: "admin",
             invited_by: user.email,
           },
-        },
-      };
-      if (existingUser?.id) {
-        recoveryParams.user_id = existingUser.id;
-      }
-      const { data: recoveryLink, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink(recoveryParams);
+        });
 
-      if (recoveryError) {
-        // Si recovery échoue, essayer avec magiclink
-        const magiclinkParams: any = {
-          type: "magiclink",
+        if (createUserError) {
+          logger.warn({ email: normalizedEmail.substring(0, 5) + "…", error: createUserError.message }, "[invite-admin] createUser échoué");
+        } else if (createUserData?.user) {
+          targetUserId = createUserData.user.id;
+          invitedUserId = targetUserId;
+          logger.info({ userId: targetUserId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Utilisateur créé avec succès");
+        }
+      }
+
+      // Maintenant générer un lien de récupération pour ce utilisateur
+      if (targetUserId) {
+        const { data: recoveryLink, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
+          type: "recovery",
           email: normalizedEmail,
           options: {
             redirectTo: inviteLink,
-            data: {
-              club_id: clubId,
-              club_slug: clubSlug,
-              role: "admin",
-              invited_by: user.email,
-            },
           },
-        };
-        if (existingUser?.id) {
-          magiclinkParams.user_id = existingUser.id;
-        }
-        const { data: magicLink, error: magicError } = await supabaseAdmin.auth.admin.generateLink(magiclinkParams);
-        linkData = magicLink;
-        linkError = magicError;
-      } else {
-        linkData = recoveryLink;
-        linkError = null;
-      }
+        });
 
-      inviteData = linkData;
-      inviteError = linkError;
+        if (recoveryError) {
+          logger.warn({ email: normalizedEmail.substring(0, 5) + "…", error: recoveryError.message }, "[invite-admin] generateLink recovery échoué, essai magiclink");
+
+          // Essayer avec magiclink
+          const { data: magicLink, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
+            type: "magiclink",
+            email: normalizedEmail,
+            options: {
+              redirectTo: inviteLink,
+            },
+          });
+
+          inviteData = magicLink;
+          inviteError = magicError;
+        } else {
+          inviteData = recoveryLink;
+          inviteError = null;
+        }
+      } else {
+        inviteError = new Error("Impossible de créer l'utilisateur pour l'invitation");
+      }
     } else {
       // inviteUserByEmail a réussi
       inviteData = inviteByEmailData;
