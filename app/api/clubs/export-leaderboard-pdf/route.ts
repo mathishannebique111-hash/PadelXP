@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getUserClubInfo, getClubDashboardData, getClubMatchHistory } from "@/lib/utils/club-utils";
+import { getUserClubInfo } from "@/lib/utils/club-utils";
+import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import puppeteer from "puppeteer";
 import chromium from "@sparticuz/chromium";
 import { logger } from "@/lib/logger";
@@ -25,7 +26,7 @@ export async function GET() {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    const { clubId, clubSlug } = await getUserClubInfo();
+    const { clubId } = await getUserClubInfo();
 
     if (!clubId) {
       return NextResponse.json(
@@ -34,8 +35,12 @@ export async function GET() {
       );
     }
 
-    const { leaderboard } = await getClubDashboardData(clubId, clubSlug);
-    const history = await getClubMatchHistory(clubId, clubSlug);
+    // Utiliser la MÊME fonction de calcul que la page classement
+    const leaderboardRaw = await calculatePlayerLeaderboard(clubId);
+    const leaderboard = leaderboardRaw.map((player, index) => ({
+      ...player,
+      rank: index + 1,
+    }));
 
     if (!leaderboard || leaderboard.length === 0) {
       return NextResponse.json(
@@ -45,7 +50,7 @@ export async function GET() {
     }
 
     const totalPlayers = leaderboard.length;
-    const totalMatches = history.matches.length;
+    const totalMatches = leaderboard.reduce((sum, p) => sum + p.matches, 0);
 
     // Top 3 pour le podium
     const top3 = leaderboard.slice(0, 3);
@@ -406,7 +411,7 @@ export async function GET() {
 
     const fileName = `classement_${new Date().toISOString().slice(0, 10)}.pdf`;
 
-    return new Response(pdfBuffer, {
+    return new Response(pdfBuffer as unknown as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

@@ -405,12 +405,14 @@ export default function ClientAdminInvite() {
         logger.warn("[clubs/signup] profile init after admin invite warning", profileErr);
       }
 
-      // Garder l'utilisateur connecté et le rediriger directement vers le dashboard club
+      // Déconnecter l'utilisateur et le rediriger vers la page de connexion
+      // pour qu'il se connecte avec son propre compte (et non celui du propriétaire)
+      await supabase.auth.signOut();
+
       setStatus("success");
       setTimeout(() => {
-        router.replace("/dashboard");
-        router.refresh();
-      }, 1000);
+        router.replace("/clubs/login?message=Compte créé avec succès. Connectez-vous avec votre nouvelle adresse email.");
+      }, 1500);
     } catch (err: any) {
       logger.error("[clubs/signup] Password setup error:", err);
       setError(err?.message || "Impossible d'enregistrer le mot de passe. Réessayez plus tard.");
