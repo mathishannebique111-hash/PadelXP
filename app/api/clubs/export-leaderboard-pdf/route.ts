@@ -3,16 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserClubInfo, getClubDashboardData, getClubMatchHistory } from "@/lib/utils/club-utils";
 import puppeteer from "puppeteer";
 import chromium from "@sparticuz/chromium";
-import fs from "fs";
-import path from "path";
 import { logger } from "@/lib/logger";
 
-function tierForPoints(points: number): "Bronze" | "Argent" | "Or" | "Diamant" | "Champion" {
-  if (points >= 500) return "Champion";
-  if (points >= 300) return "Diamant";
-  if (points >= 200) return "Or";
-  if (points >= 100) return "Argent";
-  return "Bronze";
+function tierForPoints(points: number): { tier: string; color: string; bg: string } {
+  if (points >= 500) return { tier: "Champion", color: "#fff", bg: "linear-gradient(135deg, #A855F7, #EC4899)" };
+  if (points >= 300) return { tier: "Diamant", color: "#fff", bg: "linear-gradient(135deg, #22D3EE, #3B82F6)" };
+  if (points >= 200) return { tier: "Or", color: "#fff", bg: "linear-gradient(135deg, #FBBF24, #D97706)" };
+  if (points >= 100) return { tier: "Argent", color: "#fff", bg: "linear-gradient(135deg, #94A3B8, #64748B)" };
+  return { tier: "Bronze", color: "#fff", bg: "linear-gradient(135deg, #FB923C, #EA580C)" };
 }
 
 export async function GET() {
@@ -49,19 +47,35 @@ export async function GET() {
     const totalPlayers = leaderboard.length;
     const totalMatches = history.matches.length;
 
-    // Lire l'image de médaille et la convertir en base64
-    const medal1Path = path.join(process.cwd(), "public/images/Médaille top1.png");
-    const medal1Base64 = fs.existsSync(medal1Path) ? fs.readFileSync(medal1Path).toString("base64") : "";
-    const medal1Src = medal1Base64 ? `data:image/png;base64,${medal1Base64}` : "";
+    // Top 3 pour le podium
+    const top3 = leaderboard.slice(0, 3);
 
-    // Le top joueur
-    const topPlayer = leaderboard[0];
+    // Ordre d'affichage du podium: [2ème, 1er, 3ème]
+    const podiumOrder = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3;
 
-    // Icônes SVG
-    const usersIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
-    const chartIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>`;
+    // Styles du podium selon la position
+    const podiumStyles = [
+      { // 2ème place (argent)
+        border: "3px solid #94A3B8",
+        bg: "linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 50%, #CBD5E1 100%)",
+        shadow: "0 8px 24px rgba(148, 163, 184, 0.3)",
+      },
+      { // 1ère place (or)
+        border: "3px solid #F59E0B",
+        bg: "linear-gradient(180deg, #FFFBEB 0%, #FDE68A 50%, #FCD34D 100%)",
+        shadow: "0 12px 32px rgba(234, 179, 8, 0.4)",
+      },
+      { // 3ème place (bronze)
+        border: "3px solid #F97316",
+        bg: "linear-gradient(180deg, #FFF7ED 0%, #FED7AA 50%, #FDBA74 100%)",
+        shadow: "0 8px 24px rgba(249, 115, 22, 0.3)",
+      },
+    ];
 
-    // HTML qui reproduit EXACTEMENT le design de la page classement
+    // Icône utilisateur SVG pour les joueurs sans avatar
+    const userIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>`;
+
+    // HTML qui reproduit exactement le design du classement
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -75,42 +89,13 @@ export async function GET() {
     
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #000000;
+      background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
       color: #fff;
       padding: 40px;
+      min-height: 100vh;
     }
     
     .container { max-width: 900px; margin: 0 auto; }
-    
-    /* Header */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 40px;
-    }
-    .title {
-      font-size: 26px;
-      font-weight: 800;
-      color: #fff;
-    }
-    .badges {
-      display: flex;
-      gap: 12px;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 18px;
-      border-radius: 9999px;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(124, 58, 237, 0.3) 100%);
-      border: 1px solid rgba(255,255,255,0.15);
-      font-size: 14px;
-      font-weight: 600;
-      color: #fff;
-    }
-    .badge svg { opacity: 0.9; }
     
     /* Section dividers */
     .section-header {
@@ -122,85 +107,84 @@ export async function GET() {
     }
     .section-line {
       height: 1px;
-      width: 60px;
-      background: rgba(255,255,255,0.25);
+      width: 80px;
+      background: rgba(255,255,255,0.2);
     }
     .section-title {
-      padding: 6px 18px;
+      padding: 8px 20px;
       border-radius: 9999px;
       border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.05);
       font-size: 14px;
       font-weight: 600;
       color: #fff;
     }
     
-    /* Top player card - EXACT match to screenshot */
-    .top-card-container {
+    /* Podium */
+    .podium-container {
       display: flex;
+      align-items: flex-end;
       justify-content: center;
+      gap: 20px;
       margin-bottom: 40px;
     }
-    .top-card {
-      position: relative;
-      width: 280px;
-      padding: 28px 24px 24px;
-      border-radius: 20px;
-      border: 3px solid rgba(234, 179, 8, 0.7);
-      background: linear-gradient(180deg, #FFF9E6 0%, #FFE9A0 50%, #FFD644 100%);
-      box-shadow: 0 0 40px rgba(234, 179, 8, 0.25), 0 8px 32px rgba(0,0,0,0.2);
+    .podium-card {
+      width: 180px;
+      padding: 24px 16px 20px;
+      border-radius: 16px;
       text-align: center;
+      position: relative;
     }
-    .top-badge {
+    .podium-card.first {
+      width: 200px;
+      padding: 28px 20px 24px;
+      transform: translateY(-10px);
+    }
+    .podium-medal {
       position: absolute;
+      top: -8px;
+      right: 8px;
+      font-size: 32px;
+    }
+    .podium-card.first .podium-medal {
+      font-size: 40px;
       top: -12px;
-      left: 20px;
-      padding: 5px 14px;
-      border-radius: 9999px;
-      background: #FEF3C7;
-      color: #92400E;
-      font-size: 13px;
-      font-weight: 700;
-      border: 2px solid #FCD34D;
     }
-    .top-medal {
-      position: absolute;
-      top: 8px;
-      right: 12px;
-      width: 52px;
-      height: 52px;
-    }
-    .top-name {
-      font-size: 22px;
-      font-weight: 800;
-      color: #1F2937;
-      margin: 12px 0 20px;
-    }
-    .top-points {
-      display: inline-flex;
+    .podium-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      border: 3px solid rgba(255,255,255,0.5);
+      overflow: hidden;
+      background: #f1f5f9;
+      display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 24px;
-      border-radius: 9999px;
-      background: #fff;
-      border: 2px solid rgba(0,0,0,0.08);
-      font-size: 18px;
-      font-weight: 800;
-      color: #1F2937;
+      justify-content: center;
     }
-    .top-points-label {
-      font-size: 11px;
+    .podium-card.first .podium-avatar {
+      width: 100px;
+      height: 100px;
+    }
+    .podium-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .podium-name {
+      font-size: 16px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #6B7280;
+      color: #1F2937;
+      margin-top: 8px;
+    }
+    .podium-card.first .podium-name {
+      font-size: 18px;
     }
     
     /* Table */
     .table-wrapper {
-      border-radius: 16px;
+      border-radius: 12px;
       overflow: hidden;
-      border: 3px solid rgba(255,255,255,0.6);
       background: #fff;
     }
     table {
@@ -209,6 +193,7 @@ export async function GET() {
     }
     thead tr {
       background: #F8FAFC;
+      border-bottom: 2px solid #E2E8F0;
     }
     th {
       padding: 14px 12px;
@@ -216,81 +201,80 @@ export async function GET() {
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #374151;
+      color: #64748B;
       text-align: center;
-      border-left: 1px solid #E5E7EB;
     }
-    th:first-child { border-left: none; }
-    th.v-col { color: #10B981; background: #F0FDF4; }
-    th.d-col { color: #EF4444; background: #FEF2F2; }
+    th.joueur { text-align: left; padding-left: 20px; }
+    th.v-col { color: #10B981; }
+    th.d-col { color: #EF4444; }
     
     tbody tr {
-      border-bottom: 1px solid #E5E7EB;
+      border-bottom: 1px solid #E2E8F0;
     }
     tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #F8FAFC; }
     td {
-      padding: 14px 12px;
+      padding: 12px;
       font-size: 14px;
       color: #1F2937;
       text-align: center;
-      border-left: 1px solid #E5E7EB;
+      vertical-align: middle;
     }
-    td:first-child { border-left: none; }
-    td.player-cell { text-align: left; font-weight: 600; }
-    td.v-cell { color: #10B981; background: #F0FDF4; font-weight: 600; }
-    td.d-cell { color: #EF4444; background: #FEF2F2; font-weight: 600; }
-    td.points-cell { font-weight: 700; }
-    td.matches-cell { font-weight: 600; color: #6B7280; }
-    
-    /* Rank badge */
-    .rank {
-      display: inline-flex;
+    td.joueur-cell { 
+      text-align: left; 
+      padding-left: 20px;
+    }
+    .joueur-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .joueur-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #f1f5f9;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      font-size: 13px;
-      font-weight: 800;
-      color: #fff;
+      flex-shrink: 0;
     }
-    .rank-1 { background: linear-gradient(135deg, #FBBF24, #F59E0B); }
-    .rank-2 { background: linear-gradient(135deg, #CBD5E1, #94A3B8); }
-    .rank-3 { background: linear-gradient(135deg, #FB923C, #EA580C); }
-    .rank-default { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+    .joueur-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .joueur-name {
+      font-weight: 600;
+      color: #1F2937;
+    }
     
-    /* Tier badge */
-    .tier {
+    .rang-num {
+      font-weight: 700;
+      color: #475569;
+    }
+    
+    .tier-badge {
       display: inline-block;
-      padding: 4px 14px;
+      padding: 4px 12px;
       border-radius: 9999px;
       font-size: 11px;
       font-weight: 700;
       color: #fff;
     }
-    .tier-Bronze { background: linear-gradient(135deg, #FB923C, #EA580C); }
-    .tier-Argent { background: linear-gradient(135deg, #94A3B8, #64748B); }
-    .tier-Or { background: linear-gradient(135deg, #FBBF24, #D97706); }
-    .tier-Diamant { background: linear-gradient(135deg, #22D3EE, #0EA5E9); }
-    .tier-Champion { background: linear-gradient(135deg, #A855F7, #EC4899); }
     
-    /* Winrate colors */
-    .winrate-good { color: #10B981; font-weight: 600; }
-    .winrate-bad { color: #EF4444; font-weight: 600; }
-    .winrate-neutral { color: #3B82F6; font-weight: 600; }
+    td.points-cell { font-weight: 700; color: #1F2937; }
+    td.winrate-good { color: #10B981; font-weight: 600; }
+    td.winrate-bad { color: #EF4444; font-weight: 600; }
+    td.winrate-neutral { color: #3B82F6; font-weight: 600; }
+    td.v-cell { color: #10B981; font-weight: 600; background: #F0FDF4; }
+    td.d-cell { color: #EF4444; font-weight: 600; background: #FEF2F2; }
+    td.matches-cell { font-weight: 500; color: #64748B; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <h1 class="title">Classement</h1>
-      <div class="badges">
-        <span class="badge">${usersIcon} ${totalPlayers} joueur${totalPlayers > 1 ? 's' : ''}</span>
-        <span class="badge">${chartIcon} ${totalMatches} match${totalMatches > 1 ? 's' : ''} comptabilisé${totalMatches > 1 ? 's' : ''}</span>
-      </div>
-    </div>
-    
     <!-- Top joueurs section -->
     <div class="section-header">
       <span class="section-line"></span>
@@ -298,16 +282,33 @@ export async function GET() {
       <span class="section-line"></span>
     </div>
     
-    <div class="top-card-container">
-      <div class="top-card">
-        <div class="top-badge">Meilleur joueur</div>
-        ${medal1Src ? `<img src="${medal1Src}" alt="" class="top-medal" />` : ''}
-        <h2 class="top-name">${topPlayer.player_name}</h2>
-        <div class="top-points">
-          <span>${topPlayer.points}</span>
-          <span class="top-points-label">POINTS</span>
+    <div class="podium-container">
+      ${podiumOrder.map((player, displayIndex) => {
+      // Déterminer la vraie position (displayIndex 0=2ème, 1=1er, 2=3ème)
+      const realRank = displayIndex === 0 ? 2 : displayIndex === 1 ? 1 : 3;
+      const styleIndex = displayIndex;
+      const style = podiumStyles[styleIndex];
+      const isFirst = realRank === 1;
+      const medal = realRank === 1 ? "🥇" : realRank === 2 ? "🥈" : "🥉";
+
+      // Extraire prénom et initiale du nom
+      const nameParts = player.player_name.trim().split(' ');
+      const firstName = nameParts[0] || 'Joueur';
+      const lastInitial = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + '.' : '';
+
+      return `
+        <div class="podium-card ${isFirst ? 'first' : ''}" style="border: ${style.border}; background: ${style.bg}; box-shadow: ${style.shadow};">
+          <span class="podium-medal">${medal}</span>
+          <div class="podium-avatar">
+            ${player.avatar_url
+          ? `<img src="${player.avatar_url}" alt="${firstName}" />`
+          : userIconSvg
+        }
+          </div>
+          <div class="podium-name">${firstName} ${lastInitial}</div>
         </div>
-      </div>
+        `;
+    }).join('')}
     </div>
     
     <!-- Classement global section -->
@@ -322,7 +323,7 @@ export async function GET() {
         <thead>
           <tr>
             <th>Rang</th>
-            <th>Joueur</th>
+            <th class="joueur">Joueur</th>
             <th>Niveau</th>
             <th>Points</th>
             <th>Winrate</th>
@@ -334,14 +335,29 @@ export async function GET() {
         <tbody>
           ${leaderboard.map((player) => {
       const winRate = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
-      const tier = tierForPoints(player.points);
-      const rankClass = player.rank <= 3 ? `rank-${player.rank}` : 'rank-default';
-      const winrateClass = winRate >= 51 ? 'winrate-good' : winRate === 50 ? 'winrate-neutral' : 'winrate-bad';
+      const tierInfo = tierForPoints(player.points);
+      const winrateClass = winRate >= 51 ? 'winrate-good' : winRate <= 49 && winRate > 0 ? 'winrate-bad' : 'winrate-neutral';
+
+      // Extraire prénom et initiale du nom
+      const nameParts = player.player_name.trim().split(' ');
+      const firstName = nameParts[0] || 'Joueur';
+      const lastInitial = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + '.' : '';
+
       return `
             <tr>
-              <td><span class="rank ${rankClass}">#${player.rank}</span></td>
-              <td class="player-cell">${player.player_name}</td>
-              <td><span class="tier tier-${tier}">${tier}</span></td>
+              <td class="rang-num">${player.rank}</td>
+              <td class="joueur-cell">
+                <div class="joueur-info">
+                  <div class="joueur-avatar">
+                    ${player.avatar_url
+          ? `<img src="${player.avatar_url}" alt="${firstName}" />`
+          : userIconSvg
+        }
+                  </div>
+                  <span class="joueur-name">${firstName} ${lastInitial}</span>
+                </div>
+              </td>
+              <td><span class="tier-badge" style="background: ${tierInfo.bg};">${tierInfo.tier}</span></td>
               <td class="points-cell">${player.points}</td>
               <td class="${winrateClass}">${winRate}%</td>
               <td class="v-cell">${player.wins}</td>

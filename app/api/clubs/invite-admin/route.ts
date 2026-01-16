@@ -36,28 +36,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    // Récupérer les infos du club
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("club_id, club_slug")
-      .eq("id", user.id)
+    // Récupérer les infos du club via club_admins
+    const { data: currentUserAdmin } = await supabaseAdmin
+      .from("club_admins")
+      .select("club_id, role, clubs(name, slug)")
+      .eq("user_id", user.id)
       .maybeSingle();
 
-    let clubId = profile?.club_id || user.user_metadata?.club_id;
-    let clubSlug = profile?.club_slug || user.user_metadata?.club_slug;
+    const clubId = currentUserAdmin?.club_id || user.user_metadata?.club_id;
+    const clubSlug = (currentUserAdmin?.clubs as any)?.slug || user.user_metadata?.club_slug;
+    const clubName = (currentUserAdmin?.clubs as any)?.name || "votre club";
 
     if (!clubId) {
       return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
     }
-
-    // Récupérer le nom du club
-    const { data: club } = await supabaseAdmin
-      .from("clubs")
-      .select("name")
-      .eq("id", clubId)
-      .maybeSingle();
-
-    const clubName = club?.name || "votre club";
 
     const parsedBody = inviteAdminSchema.safeParse(await request.json());
     if (!parsedBody.success) {
@@ -69,8 +61,7 @@ export async function POST(request: Request) {
 
     const normalizedEmail = parsedBody.data.email;
 
-    // 1. D'abord, supprimer toute invitation PENDANTE (non activée) pour cet email dans ce club
-    // Cela permet de "nettoyer" les anciennes invitations et d'en créer une nouvelle
+    // 1. Supprimer toute invitation PENDANTE (non activée) pour cet email dans ce club
     const { data: existingPendingInvites } = await supabaseAdmin
       .from("club_admins")
       .select("id, user_id, activated_at")
@@ -79,13 +70,11 @@ export async function POST(request: Request) {
       .is("activated_at", null);
 
     if (existingPendingInvites && existingPendingInvites.length > 0) {
-      // Supprimer les invitations pendantes
       for (const invite of existingPendingInvites) {
         await supabaseAdmin.from("club_admins").delete().eq("id", invite.id);
         logger.info({ inviteId: invite.id.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Ancienne invitation pendante supprimée");
 
         // Si l'invitation avait un user_id, supprimer aussi l'utilisateur de auth.users
-        // (seulement s'il n'a pas d'autres rôles admin)
         if (invite.user_id) {
           const { data: otherRoles } = await supabaseAdmin
             .from("club_admins")
@@ -105,9 +94,6 @@ export async function POST(request: Request) {
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
 
-    let responseMessage = `Invitation envoyée à ${normalizedEmail}`;
-    let invitedUserId: string | null = null;
-
     if (existingUser) {
       const { data: existingAdmin } = await supabaseAdmin
         .from("club_admins")
@@ -117,303 +103,125 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (existingAdmin && existingAdmin.activated_at) {
-        // Déjà admin activé de ce club → erreur
         return NextResponse.json(
           { error: "Cet utilisateur est déjà administrateur de ce club" },
           { status: 400 }
         );
       }
-
-      // L'utilisateur existe mais n'est pas admin activé de ce club
-      // On va pouvoir l'inviter
-      invitedUserId = existingUser.id;
     }
 
-    // Créer le lien d'invitation (l'utilisateur devra créer un compte avec accès admin)
-    // S'assurer d'utiliser l'URL de production
+    // 3. URL de base pour les redirections
     const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://padelxp.eu").replace("http://localhost:3000", "https://padelxp.eu");
-    const inviteLink = `${baseUrl}/clubs/signup?invite=admin${normalizedEmail ? `&email=${encodeURIComponent(normalizedEmail)}` : ""
-      }`;
+    const redirectTo = `${baseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}`;
 
-    // Envoyer l'email d'invitation via Supabase Auth
-    // Pour tous les utilisateurs (nouveaux ou existants), on essaie d'abord inviteUserByEmail
-    // qui envoie automatiquement un email. Si ça échoue, on utilise generateLink en fallback
-    let inviteData: any = null;
-    let inviteError: any = null;
+    // 4. Créer ou trouver l'utilisateur, et générer un lien
+    let invitedUserId: string | null = existingUser?.id ?? null;
+    let invitationUrl: string | null = null;
 
-    // Essayer d'abord avec inviteUserByEmail (fonctionne pour nouveaux utilisateurs)
-    const { data: inviteByEmailData, error: inviteByEmailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      normalizedEmail,
-      {
-        redirectTo: inviteLink,
-        data: {
+    // Si l'utilisateur n'existe pas, le créer d'abord
+    if (!invitedUserId) {
+      const randomPassword = crypto.randomUUID();
+      const { data: createUserData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password: randomPassword,
+        email_confirm: false,
+        user_metadata: {
           club_id: clubId,
           club_slug: clubSlug,
           role: "admin",
           invited_by: user.email,
         },
-      }
-    );
+      });
 
-    if (inviteByEmailError) {
-      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: inviteByEmailError.message }, `[invite-admin] inviteUserByEmail échoué, tentative alternative`);
-
-      // Si inviteUserByEmail échoue, essayer de créer l'utilisateur d'abord
-      // puis générer un lien de récupération
-      let targetUserId: string | null = existingUser?.id ?? null;
-
-      // Si l'utilisateur n'existe pas, le créer
-      if (!targetUserId) {
-        const randomPassword = crypto.randomUUID(); // Mot de passe aléatoire temporaire
-        const { data: createUserData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-          email: normalizedEmail,
-          password: randomPassword,
-          email_confirm: false, // Important: ne pas confirmer l'email
-          user_metadata: {
-            club_id: clubId,
-            club_slug: clubSlug,
-            role: "admin",
-            invited_by: user.email,
-          },
-        });
-
-        if (createUserError) {
-          logger.warn({ email: normalizedEmail.substring(0, 5) + "…", error: createUserError.message }, "[invite-admin] createUser échoué");
-        } else if (createUserData?.user) {
-          targetUserId = createUserData.user.id;
-          invitedUserId = targetUserId;
-          logger.info({ userId: targetUserId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Utilisateur créé avec succès");
-        }
+      if (createUserError) {
+        logger.error({ email: normalizedEmail.substring(0, 5) + "…", error: createUserError.message }, "[invite-admin] createUser échoué");
+        return NextResponse.json({ error: "Impossible de créer l'invitation" }, { status: 500 });
       }
 
-      // Maintenant générer un lien de récupération pour ce utilisateur
-      if (targetUserId) {
-        const { data: recoveryLink, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email: normalizedEmail,
-          options: {
-            redirectTo: inviteLink,
-          },
-        });
+      invitedUserId = createUserData.user?.id ?? null;
+      logger.info({ userId: invitedUserId?.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Utilisateur créé");
+    }
 
-        if (recoveryError) {
-          logger.warn({ email: normalizedEmail.substring(0, 5) + "…", error: recoveryError.message }, "[invite-admin] generateLink recovery échoué, essai magiclink");
+    // 5. Générer un lien de récupération (recovery) pour permettre de définir le mot de passe
+    const { data: recoveryLink, error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email: normalizedEmail,
+      options: {
+        redirectTo,
+      },
+    });
 
-          // Essayer avec magiclink
-          const { data: magicLink, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
-            type: "magiclink",
-            email: normalizedEmail,
-            options: {
-              redirectTo: inviteLink,
-            },
-          });
+    if (recoveryError) {
+      logger.warn({ email: normalizedEmail.substring(0, 5) + "…", error: recoveryError.message }, "[invite-admin] generateLink recovery échoué, essai magiclink");
 
-          inviteData = magicLink;
-          inviteError = magicError;
-        } else {
-          inviteData = recoveryLink;
-          inviteError = null;
-        }
-      } else {
-        inviteError = new Error("Impossible de créer l'utilisateur pour l'invitation");
+      // Essayer avec magiclink
+      const { data: magicLink, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
+        email: normalizedEmail,
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (magicError) {
+        logger.error({ email: normalizedEmail.substring(0, 5) + "…", error: magicError.message }, "[invite-admin] generateLink magiclink aussi échoué");
+        return NextResponse.json({ error: "Impossible de générer le lien d'invitation" }, { status: 500 });
       }
+
+      // Utiliser directement l'action_link de Supabase (qui redirigera vers notre page)
+      invitationUrl = (magicLink as any)?.properties?.action_link || null;
     } else {
-      // inviteUserByEmail a réussi
-      inviteData = inviteByEmailData;
-      inviteError = null;
-      invitedUserId = inviteData?.user?.id ?? existingUser?.id ?? null;
+      // Utiliser directement l'action_link de Supabase
+      invitationUrl = (recoveryLink as any)?.properties?.action_link || null;
     }
 
-    if (inviteError) {
-      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: inviteError }, "[invite-admin] Erreur Supabase");
-      return NextResponse.json(
-        { error: "Erreur lors de l'envoi de l'invitation" },
-        { status: 500 }
-      );
+    if (!invitationUrl) {
+      logger.error({ email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Aucun lien d'invitation généré");
+      return NextResponse.json({ error: "Impossible de générer le lien d'invitation" }, { status: 500 });
     }
 
-    // Extraire le lien d'invitation depuis les données Supabase
-    // IMPORTANT: On construit TOUJOURS notre propre URL vers /clubs/signup
-    // au lieu d'utiliser le action_link de Supabase qui pointe vers supabase.co
-    // Cela évite les problèmes de configuration de redirect URLs dans Supabase
-    let invitationUrl: string | null = null;
-    if (inviteData) {
-      // Extraire le token depuis les données Supabase
-      const token =
-        inviteData.properties?.email_otp ||
-        inviteData.properties?.hashed_token ||
-        inviteData.email_otp ||
-        inviteData.hashed_token ||
-        null;
+    logger.info({ email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl.length }, "[invite-admin] Lien d'invitation généré");
 
-      // Aussi essayer d'extraire le token depuis l'action_link si disponible
-      let tokenFromActionLink: string | null = null;
-      const actionLink =
-        inviteData.properties?.action_link ||
-        inviteData.action_link ||
-        null;
-
-      if (actionLink && !token) {
-        try {
-          const actionUrl = new URL(actionLink);
-          tokenFromActionLink =
-            actionUrl.searchParams.get("token") ||
-            actionUrl.searchParams.get("token_hash") ||
-            null;
-
-          // Aussi vérifier dans le hash
-          if (!tokenFromActionLink && actionUrl.hash) {
-            const hashParams = new URLSearchParams(actionUrl.hash.slice(1));
-            tokenFromActionLink =
-              hashParams.get("token") ||
-              hashParams.get("token_hash") ||
-              null;
-          }
-        } catch (parseError) {
-          logger.warn({ userId: user.id.substring(0, 8) + "…", error: parseError }, "[invite-admin] Unable to parse action_link for token");
-        }
-      }
-
-      const finalToken = token || tokenFromActionLink;
-
-      if (finalToken) {
-        // Construire notre propre URL vers /clubs/signup avec le token
-        const tokenBaseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://padelxp.eu").replace("http://localhost:3000", "https://padelxp.eu");
-        invitationUrl = `${tokenBaseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(finalToken)}`;
-        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl.length }, `[invite-admin] Lien d'invitation généré avec token`);
-      } else {
-        // Fallback sur le lien de base (sans token, mais avec email)
-        invitationUrl = inviteLink;
-        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, `[invite-admin] Utilisation du lien de base (fallback sans token)`);
-      }
-    } else {
-      // Aucune donnée Supabase, utiliser le lien de base
-      invitationUrl = inviteLink;
-      logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, `[invite-admin] Aucune donnée Supabase, utilisation du lien de base`);
-    }
-
-    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl?.length || 0 }, `[invite-admin] Lien d'invitation généré`);
-
-    // TOUJOURS envoyer l'email d'invitation via Resend
-    // Même si Supabase a envoyé un email, on envoie aussi via Resend pour garantir la réception
-    // et avoir un email personnalisé avec le bon format
+    // 6. Envoyer l'email d'invitation via Resend
     try {
       const inviterName = user.user_metadata?.first_name
         ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ""}`.trim()
         : user.email;
 
-      if (!invitationUrl) {
-        logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Aucun lien d'invitation généré, impossible d'envoyer l'email");
-      } else {
-        await sendAdminInvitationEmail(
-          normalizedEmail,
-          clubName,
-          inviterName || null,
-          invitationUrl
-        );
-        const emailPreview = normalizedEmail.substring(0, 5) + "…";
-        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: emailPreview }, `[invite-admin] ✅ Email d'invitation envoyé via Resend`);
-      }
+      await sendAdminInvitationEmail(
+        normalizedEmail,
+        clubName,
+        inviterName || null,
+        invitationUrl
+      );
+      logger.info({ email: normalizedEmail.substring(0, 5) + "…", clubName }, "[invite-admin] ✅ Email d'invitation envoyé via Resend");
     } catch (emailError: any) {
-      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: emailError }, "[invite-admin] ❌ Erreur lors de l'envoi de l'email via Resend");
-      // On ne bloque pas l'invitation si l'email échoue, mais on log l'erreur
-      // L'utilisateur pourra toujours utiliser le lien généré par Supabase
+      logger.error({ email: normalizedEmail.substring(0, 5) + "…", error: emailError }, "[invite-admin] ❌ Erreur lors de l'envoi de l'email via Resend");
     }
 
-    // Enregistrer ou mettre à jour l'invitation dans la table club_admins
-    // Toujours avec activated_at: null pour que ce soit une invitation en attente
+    // 7. Enregistrer l'invitation dans la table club_admins
     if (invitedUserId) {
-      // Vérifier si une entrée existe déjà pour ce user_id
-      const { data: existingEntry } = await supabaseAdmin
+      const { error: insertError } = await supabaseAdmin
         .from("club_admins")
-        .select("id")
-        .eq("user_id", invitedUserId)
-        .eq("club_id", clubId)
-        .maybeSingle();
+        .insert({
+          club_id: clubId,
+          user_id: invitedUserId,
+          email: normalizedEmail,
+          role: "admin",
+          invited_by: user.id,
+          activated_at: null,
+        });
 
-      if (existingEntry) {
-        // Mettre à jour l'invitation existante (réinitialiser invited_at)
-        const { error: updateError } = await supabaseAdmin
-          .from("club_admins")
-          .update({
-            invited_at: new Date().toISOString(),
-            activated_at: null, // S'assurer que c'est toujours en attente
-            email: normalizedEmail,
-            invited_by: user.id,
-          })
-          .eq("id", existingEntry.id);
-
-        if (updateError) {
-          logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", invitedUserId: invitedUserId.substring(0, 8) + "…", error: updateError }, "[invite-admin] Erreur lors de la mise à jour dans club_admins");
-        }
-      } else {
-        // Créer une nouvelle invitation en attente liée à ce user_id
-        const { error: insertError } = await supabaseAdmin
-          .from("club_admins")
-          .insert({
-            club_id: clubId,
-            user_id: invitedUserId,
-            email: normalizedEmail,
-            role: "admin",
-            invited_by: user.id,
-            activated_at: null, // Toujours null pour une invitation en attente
-          });
-
-        if (insertError && insertError.code !== "23505") {
-          logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", invitedUserId: invitedUserId.substring(0, 8) + "…", error: insertError }, "[invite-admin] Erreur lors de l'ajout dans club_admins");
-          // On ne bloque pas l'invitation même si l'ajout échoue
-        }
-      }
-    } else {
-      // Cas où Supabase n'a pas encore d'user_id (nouvel utilisateur invité).
-      // On crée tout de même une entrée club_admins basée sur l'email,
-      // pour que /api/clubs/admin-invite/reissue puisse la retrouver et régénérer un lien.
-      const { data: existingByEmail } = await supabaseAdmin
-        .from("club_admins")
-        .select("id")
-        .eq("club_id", clubId)
-        .eq("email", normalizedEmail)
-        .maybeSingle();
-
-      if (existingByEmail) {
-        const { error: updateError } = await supabaseAdmin
-          .from("club_admins")
-          .update({
-            invited_at: new Date().toISOString(),
-            activated_at: null,
-            invited_by: user.id,
-          })
-          .eq("id", existingByEmail.id);
-
-        if (updateError) {
-          logger.error({ clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: updateError }, "[invite-admin] Erreur lors de la mise à jour club_admins par email");
-        }
-      } else {
-        const { error: insertError } = await supabaseAdmin
-          .from("club_admins")
-          .insert({
-            club_id: clubId,
-            user_id: null,
-            email: normalizedEmail,
-            role: "admin",
-            invited_by: user.id,
-            activated_at: null,
-          });
-
-        if (insertError && insertError.code !== "23505") {
-          logger.error({ clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: insertError }, "[invite-admin] Erreur lors de la création club_admins par email (sans user_id)");
-        }
+      if (insertError && insertError.code !== "23505") {
+        logger.error({ invitedUserId: invitedUserId.substring(0, 8) + "…", error: insertError }, "[invite-admin] Erreur lors de l'ajout dans club_admins");
       }
     }
 
-    // Logger l'invitation
-    const emailPreview2 = normalizedEmail.substring(0, 5) + "…";
-    const clubIdPreview = clubId.substring(0, 8) + "…";
-    logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubIdPreview, email: emailPreview2, clubName }, `[invite-admin] Invitation envoyée pour le club`);
+    logger.info({ userId: user.id.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", clubId: clubId.substring(0, 8) + "…" }, "[invite-admin] Invitation envoyée avec succès");
 
     return NextResponse.json({
       success: true,
-      message: responseMessage,
+      message: `Invitation envoyée à ${normalizedEmail}`,
     });
   } catch (error: any) {
     logger.error({ error }, "[invite-admin] Erreur");
@@ -423,4 +231,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
