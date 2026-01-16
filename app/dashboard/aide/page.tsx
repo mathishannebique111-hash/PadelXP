@@ -5,7 +5,7 @@ import PageTitle from "../PageTitle";
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Send, MessageCircle } from "lucide-react";
-import { getAuthenticatedUserClubId } from "../../actions";
+import { getAuthenticatedUserClubId } from "../actions";
 
 interface Message {
   id: string;
