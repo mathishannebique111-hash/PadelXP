@@ -24,23 +24,22 @@ export default function DPAPage() {
           {/* Section 1 */}
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">1. Responsable de traitement & sous-traitants</h2>
-            
+
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">1.1. Responsable de traitement</h3>
             <div className="space-y-2 text-white/80">
               <p>Le responsable du traitement des données personnelles est l'éditeur du service SaaS PadelXP.</p>
               <p>
-                <strong>Raison sociale :</strong> [Raison sociale à compléter]<br />
-                <strong>Siège social :</strong> [Adresse complète à compléter]<br />
-                <strong>Email de contact :</strong> contact@padelxp.com<br />
-                <strong>Email de contact RGPD/DPO :</strong> [Email du DPO à compléter - si DPO désigné, sinon utiliser contact@padelxp.com]<br />
-                <strong>Téléphone :</strong> [Téléphone à compléter]
+                <strong>Nom :</strong> Mathis Hannebique<br />
+                <strong>Adresse :</strong> 6 rue Pino, 20200 Bastia, France<br />
+                <strong>Email de contact :</strong> contactpadelxp@gmail.com<br />
+                <strong>Email de contact RGPD :</strong> contactpadelxp@gmail.com
               </p>
             </div>
 
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">1.2. Sous-traitants techniques</h3>
             <div className="space-y-4 text-white/80">
               <p>Les sous-traitants suivants sont utilisés pour l'exécution du service :</p>
-              
+
               <div className="space-y-3">
                 <p>
                   <strong>Supabase Inc.</strong> (Europe / États-Unis)<br />
@@ -90,7 +89,7 @@ export default function DPAPage() {
           {/* Section 2 */}
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">2. Données personnelles et finalités</h2>
-            
+
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">2.1. Catégories de personnes concernées</h3>
             <ul className="list-disc list-inside ml-4 space-y-1 text-white/80">
               <li><strong>Clubs / Responsables de clubs</strong> : Administrateurs de complexes de padel qui souscrivent à un abonnement pour gérer leur club et leurs membres.</li>
@@ -169,7 +168,7 @@ export default function DPAPage() {
           {/* Section 3 */}
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">3. Mesures techniques de sécurité</h2>
-            
+
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">3.1. Contrôle d'accès & authentification</h3>
             <div className="space-y-3 text-white/80">
               <p><strong>Authentification :</strong></p>
@@ -266,7 +265,7 @@ export default function DPAPage() {
           {/* Section 4 */}
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">4. Mesures organisationnelles</h2>
-            
+
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">4.1. Gestion des accès internes</h3>
             <ul className="list-disc list-inside ml-4 space-y-1 text-white/80">
               <li>Accès à la production limité aux personnes autorisées (développeurs et administrateurs techniques).</li>
@@ -300,7 +299,7 @@ export default function DPAPage() {
           {/* Section 5 */}
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">5. Conservation des données</h2>
-            
+
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">5.1. Comptes & données métiers</h3>
             <ul className="list-disc list-inside ml-4 space-y-1 text-white/80">
               <li><strong>Comptes clubs/joueurs</strong> : Conservés tant que le compte est actif. Après résiliation ou inactivité prolongée, suppression ou anonymisation après 3 ans d'inactivité (conformément à la prescription civile de 3 ans pour les actions en responsabilité contractuelle).</li>
@@ -323,7 +322,7 @@ export default function DPAPage() {
           {/* Section 6 */}
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">6. Analyse d'impact et conformité</h2>
-            
+
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">6.1. Analyse d'impact relative à la protection des données (AIPD/DPIA)</h3>
             <div className="space-y-2 text-white/80">
               <p>Une analyse d'impact relative à la protection des données (AIPD/DPIA) a été réalisée pour évaluer les risques liés au traitement des données personnelles, notamment concernant :</p>
@@ -332,7 +331,7 @@ export default function DPAPage() {
                 <li>Les transferts de données hors UE (vers les États-Unis via les sous-traitants).</li>
                 <li>Les traitements automatisés (calcul des classements, gestion des abonnements).</li>
               </ul>
-              <p className="mt-3"><strong>Référence de l'AIPD/DPIA</strong> : AIPD en cours de rédaction – à finaliser avant mise en production générale. [Date de finalisation prévue et version à compléter]</p>
+              <p className="mt-3"><strong>Référence de l'AIPD/DPIA</strong> : AIPD en cours de rédaction.</p>
               <p>Si le service traite un volume très important de données personnelles ou vise particulièrement des mineurs, une AIPD/DPIA approfondie sera réalisée conformément aux recommandations de la CNIL.</p>
             </div>
           </section>
@@ -340,7 +339,7 @@ export default function DPAPage() {
           {/* Section 7 */}
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">7. Droits des personnes & contacts</h2>
-            
+
             <h3 className="text-xl font-semibold text-white mt-6 mb-3">7.1. Droits RGPD</h3>
             <div className="space-y-3 text-white/80">
               <p>Conformément au Règlement Général sur la Protection des Données (RGPD), les utilisateurs disposent des droits suivants :</p>
@@ -368,10 +367,8 @@ export default function DPAPage() {
             <div className="space-y-2 text-white/80">
               <p>Pour toute question relative à la protection des données personnelles ou pour exercer vos droits RGPD, vous pouvez contacter :</p>
               <p>
-                <strong>Email de contact général :</strong> contact@padelxp.com<br />
-                <strong>Email de contact RGPD/DPO :</strong> [Email du DPO à compléter - si DPO désigné, sinon utiliser contact@padelxp.com]<br />
-                <strong>Adresse postale :</strong> [Adresse complète à compléter]<br />
-                <strong>Téléphone :</strong> [Téléphone à compléter]
+                <strong>Email de contact :</strong> contactpadelxp@gmail.com<br />
+                <strong>Adresse postale :</strong> 6 rue Pino, 20200 Bastia, France
               </p>
               <p className="mt-3">
                 Nous nous engageons à répondre à votre demande dans un délai maximum d'<strong>1 mois</strong> (délai pouvant être porté à 2 mois en cas de demande complexe, conformément à l'article 12.3 RGPD). Nous pouvons être amenés à vous demander une pièce d'identité pour vérifier votre identité avant de traiter votre demande.

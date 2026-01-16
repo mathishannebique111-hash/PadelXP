@@ -29,13 +29,12 @@ export default function PrivacyPage() {
                 Le responsable du traitement des données personnelles collectées sur ce site est :
               </p>
               <p>
-                <strong>PadelXP</strong><br />
-                [Adresse complète]<br />
-                Email : contact@padelxp.com<br />
-                [Téléphone - À compléter]
+                <strong>Mathis Hannebique</strong><br />
+                6 rue Pino, 20200 Bastia, France<br />
+                Email : contactpadelxp@gmail.com
               </p>
               <p>
-                Pour toute question relative à la protection de vos données personnelles, vous pouvez 
+                Pour toute question relative à la protection de vos données personnelles, vous pouvez
                 nous contacter à l'adresse email ci-dessus.
               </p>
             </div>
@@ -45,7 +44,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">2. Données collectées</h2>
             <div className="space-y-2 text-white/80">
               <p>Nous collectons les données personnelles suivantes :</p>
-              
+
               <h3 className="text-xl font-semibold text-white mt-4 mb-2">2.1. Données d'identification</h3>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>Pour les clubs : nom du club, email, téléphone, adresse</li>
@@ -118,7 +117,7 @@ export default function PrivacyPage() {
                 <li>Notre équipe autorisée (personnel technique et support client)</li>
                 <li>Nos sous-traitants, dans le cadre strict de l'exécution du service :</li>
               </ul>
-              
+
               <div className="ml-8 mt-2 space-y-2">
                 <p>
                   <strong>Stripe (paiements) :</strong> États-Unis<br />
@@ -151,8 +150,8 @@ export default function PrivacyPage() {
               </div>
 
               <p className="mt-4">
-                Nous ne vendons jamais vos données personnelles à des tiers. Elles ne sont communiquées 
-                qu'aux seules personnes et entités mentionnées ci-dessus, dans le cadre strict de 
+                Nous ne vendons jamais vos données personnelles à des tiers. Elles ne sont communiquées
+                qu'aux seules personnes et entités mentionnées ci-dessus, dans le cadre strict de
                 l'exécution du service.
               </p>
             </div>
@@ -162,7 +161,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">6. Transferts hors Union Européenne</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Certains de nos sous-traitants sont situés en dehors de l'Union Européenne (notamment 
+                Certains de nos sous-traitants sont situés en dehors de l'Union Européenne (notamment
                 aux États-Unis). Ces transferts sont encadrés par des garanties appropriées :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -170,7 +169,7 @@ export default function PrivacyPage() {
                 <li>Certifications de conformité (Privacy Shield invalide depuis 2020, remplacé par SCC)</li>
               </ul>
               <p>
-                Vous pouvez obtenir une copie de ces garanties en nous contactant à contact@padelxp.com.
+                Vous pouvez obtenir une copie de ces garanties en nous contactant à contactpadelxp@gmail.com.
               </p>
             </div>
           </section>
@@ -186,7 +185,7 @@ export default function PrivacyPage() {
                 <li><strong>Données de paiement (Stripe) :</strong> 13 mois selon les obligations Stripe / DSP2</li>
               </ul>
               <p>
-                À l'expiration de ces durées, vos données sont supprimées définitivement ou anonymisées 
+                À l'expiration de ces durées, vos données sont supprimées définitivement ou anonymisées
                 de manière irréversible (pour les données statistiques).
               </p>
             </div>
@@ -196,10 +195,10 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">8. Vos droits (RGPD)</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez 
+                Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez
                 des droits suivants :
               </p>
-              
+
               <h3 className="text-xl font-semibold text-white mt-4 mb-2">8.1. Droit d'accès (Article 15 RGPD)</h3>
               <p>
                 Vous pouvez obtenir une copie de toutes les données personnelles que nous détenons sur vous.
@@ -212,7 +211,7 @@ export default function PrivacyPage() {
 
               <h3 className="text-xl font-semibold text-white mt-4 mb-2">8.3. Droit à l'effacement (Article 17 RGPD) - "Droit à l'oubli"</h3>
               <p>
-                Vous pouvez demander la suppression de vos données personnelles, sous réserve des 
+                Vous pouvez demander la suppression de vos données personnelles, sous réserve des
                 obligations légales de conservation (notamment les données de facturation).
               </p>
 
@@ -223,13 +222,13 @@ export default function PrivacyPage() {
 
               <h3 className="text-xl font-semibold text-white mt-4 mb-2">8.5. Droit à la portabilité (Article 20 RGPD)</h3>
               <p>
-                Vous pouvez récupérer vos données dans un format structuré et couramment utilisé 
+                Vous pouvez récupérer vos données dans un format structuré et couramment utilisé
                 (JSON ou CSV).
               </p>
 
               <h3 className="text-xl font-semibold text-white mt-4 mb-2">8.6. Droit d'opposition (Article 21 RGPD)</h3>
               <p>
-                Vous pouvez vous opposer au traitement de vos données pour des motifs légitimes, 
+                Vous pouvez vous opposer au traitement de vos données pour des motifs légitimes,
                 notamment pour le marketing.
               </p>
 
@@ -243,12 +242,12 @@ export default function PrivacyPage() {
                 Pour exercer l'un de ces droits, vous pouvez :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>Nous contacter par email à : contact@padelxp.com</li>
+                <li>Nous contacter par email à : contactpadelxp@gmail.com</li>
                 <li>Utiliser les fonctionnalités disponibles dans votre espace client (export de données, modification du profil)</li>
               </ul>
               <p>
-                Nous nous engageons à répondre à votre demande dans un délai maximum d'<strong>1 mois</strong> 
-                (délai pouvant être porté à 2 mois en cas de demande complexe). Nous pouvons être amenés 
+                Nous nous engageons à répondre à votre demande dans un délai maximum d'<strong>1 mois</strong>
+                (délai pouvant être porté à 2 mois en cas de demande complexe). Nous pouvons être amenés
                 à vous demander une pièce d'identité pour vérifier votre identité.
               </p>
             </div>
@@ -272,7 +271,7 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">10. Cookies et traceurs</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Notre site utilise des cookies et traceurs. Pour plus d'informations sur les cookies 
+                Notre site utilise des cookies et traceurs. Pour plus d'informations sur les cookies
                 utilisés et la gestion de vos préférences, consultez notre{" "}
                 <Link href="/cookies" className="text-white underline hover:text-white/80">
                   Politique des Cookies
@@ -286,8 +285,8 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">11. Réclamation auprès de la CNIL</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Si vous estimez que le traitement de vos données personnelles constitue une violation 
-                du RGPD, vous avez le droit d'introduire une réclamation auprès de la CNIL (Commission 
+                Si vous estimez que le traitement de vos données personnelles constitue une violation
+                du RGPD, vous avez le droit d'introduire une réclamation auprès de la CNIL (Commission
                 Nationale de l'Informatique et des Libertés) :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -302,8 +301,8 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">12. Modifications de cette politique</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. 
-                Toute modification substantielle vous sera communiquée par email ou via une notification 
+                Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment.
+                Toute modification substantielle vous sera communiquée par email ou via une notification
                 sur notre site.
               </p>
               <p>
@@ -316,12 +315,12 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">13. Contact</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Pour toute question relative à cette politique de confidentialité ou au traitement 
+                Pour toute question relative à cette politique de confidentialité ou au traitement
                 de vos données personnelles, vous pouvez nous contacter à :
               </p>
               <p>
-                <strong>Email :</strong> contact@padelxp.com<br />
-                <strong>Adresse :</strong> [À compléter]
+                <strong>Email :</strong> contactpadelxp@gmail.com<br />
+                <strong>Adresse :</strong> 6 rue Pino, 20200 Bastia, France
               </p>
             </div>
           </section>

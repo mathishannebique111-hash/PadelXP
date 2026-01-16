@@ -26,13 +26,13 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 1 - Objet et champ d'application</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Les présentes Conditions Générales de Vente (CGV) régissent la vente d'abonnements 
-                au service PadelXP, une plateforme SaaS destinée à la gestion de leaderboards, 
+                Les présentes Conditions Générales de Vente (CGV) régissent la vente d'abonnements
+                au service PadelXP, une plateforme SaaS destinée à la gestion de leaderboards,
                 classements et ligues pour complexes de padel.
               </p>
               <p>
-                L'acceptation des présentes CGV est matérialisée par une case à cocher lors de 
-                la souscription de l'abonnement. En cas de modification des CGV, vous en serez 
+                L'acceptation des présentes CGV est matérialisée par une case à cocher lors de
+                la souscription de l'abonnement. En cas de modification des CGV, vous en serez
                 informé par email au moins 1 mois avant leur entrée en vigueur.
               </p>
             </div>
@@ -42,11 +42,11 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 2 - Description du service</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                PadelXP propose une période d'essai gratuite de 30 jours permettant de découvrir 
+                PadelXP propose une période d'essai gratuite de 30 jours permettant de découvrir
                 toutes les fonctionnalités de la plateforme.
               </p>
               <p>
-                À l'issue de cette période, vous pouvez souscrire à un abonnement selon l'une des 
+                À l'issue de cette période, vous pouvez souscrire à un abonnement selon l'une des
                 formules suivantes :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -64,16 +64,16 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 3 - Tarifs et modalités de paiement</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Les prix sont indiqués en euros TTC (Toutes Taxes Comprises). La TVA applicable 
+                Les prix sont indiqués en euros TTC (Toutes Taxes Comprises). La TVA applicable
                 est de 20% en France.
               </p>
               <p>
-                Le paiement s'effectue par carte bancaire via notre partenaire de paiement Stripe, 
-                certifié PCI-DSS niveau 1. Les données de carte bancaire ne sont jamais stockées 
+                Le paiement s'effectue par carte bancaire via notre partenaire de paiement Stripe,
+                certifié PCI-DSS niveau 1. Les données de carte bancaire ne sont jamais stockées
                 sur nos serveurs.
               </p>
               <p>
-                Pour les abonnements mensuels et trimestriels, le paiement est effectué au début 
+                Pour les abonnements mensuels et trimestriels, le paiement est effectué au début
                 de chaque période. Pour l'abonnement annuel, le paiement est effectué une fois par an.
               </p>
             </div>
@@ -83,12 +83,12 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 4 - Commande et conclusion du contrat</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                La commande est passée en ligne via notre site web. Vous devez cocher explicitement 
+                La commande est passée en ligne via notre site web. Vous devez cocher explicitement
                 une case indiquant que vous acceptez les présentes CGV.
               </p>
               <p>
-                Une confirmation de commande vous sera envoyée par email immédiatement après votre 
-                souscription, comprenant le numéro de commande, le récapitulatif de votre abonnement 
+                Une confirmation de commande vous sera envoyée par email immédiatement après votre
+                souscription, comprenant le numéro de commande, le récapitulatif de votre abonnement
                 et les modalités de rétractation.
               </p>
             </div>
@@ -98,17 +98,17 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 5 - Abonnement et renouvellement</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                L'abonnement est conclu pour une durée déterminée (1 mois, 3 mois ou 1 an) et se 
-                renouvelle automatiquement par tacite reconduction pour la même durée, sauf résiliation 
+                L'abonnement est conclu pour une durée déterminée (1 mois, 3 mois ou 1 an) et se
+                renouvelle automatiquement par tacite reconduction pour la même durée, sauf résiliation
                 de votre part ou de la nôtre.
               </p>
               <p>
-                Vous serez informé par email au moins 7 jours avant chaque renouvellement automatique, 
+                Vous serez informé par email au moins 7 jours avant chaque renouvellement automatique,
                 indiquant la date de prélèvement et le montant.
               </p>
               <p>
-                Le renouvellement est effectué automatiquement à la date d'échéance de votre abonnement. 
-                Si vous souhaitez éviter le renouvellement, vous devez résilier votre abonnement avant 
+                Le renouvellement est effectué automatiquement à la date d'échéance de votre abonnement.
+                Si vous souhaitez éviter le renouvellement, vous devez résilier votre abonnement avant
                 cette date.
               </p>
             </div>
@@ -118,21 +118,21 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 6 - Résiliation par le client</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                <strong>Vous pouvez résilier votre abonnement à tout moment, sans préavis, gratuitement,</strong> 
+                <strong>Vous pouvez résilier votre abonnement à tout moment, sans préavis, gratuitement,</strong>
                 via votre compte club dans la section "Abonnement et essai" ou par email à contactpadelxp@gmail.com.
               </p>
               <p>
-                La résiliation prend effet à la date de renouvellement prévue. Vous conservez l'accès 
-                à la plateforme jusqu'à la fin de la période déjà payée. Aucun prélèvement supplémentaire 
+                La résiliation prend effet à la date de renouvellement prévue. Vous conservez l'accès
+                à la plateforme jusqu'à la fin de la période déjà payée. Aucun prélèvement supplémentaire
                 ne sera effectué.
               </p>
               <p>
-                La résiliation n'entraîne aucun remboursement de la période en cours, sauf dans le cadre 
+                La résiliation n'entraîne aucun remboursement de la période en cours, sauf dans le cadre
                 du droit de rétractation (voir Article 7).
               </p>
               <p>
-                Si vous avez résilié votre abonnement mais que la période payée n'est pas encore terminée, 
-                vous pouvez réactiver votre abonnement à tout moment via votre espace client. 
+                Si vous avez résilié votre abonnement mais que la période payée n'est pas encore terminée,
+                vous pouvez réactiver votre abonnement à tout moment via votre espace client.
                 L'abonnement reprendra automatiquement au prochain cycle de facturation.
               </p>
             </div>
@@ -142,22 +142,22 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 7 - Droit de rétractation</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Conformément à l'article L.221-18 du Code de la consommation, vous disposez d'un 
-                droit de rétractation de 14 jours calendaires à compter de la conclusion du contrat 
+                Conformément à l'article L.221-18 du Code de la consommation, vous disposez d'un
+                droit de rétractation de 14 jours calendaires à compter de la conclusion du contrat
                 (souscription de l'abonnement).
               </p>
               <p>
-                <strong>Exception :</strong> Si vous avez expressément consenti et reconnu perdre 
-                votre droit de rétractation dès le début de l'exécution du service, et que le service 
+                <strong>Exception :</strong> Si vous avez expressément consenti et reconnu perdre
+                votre droit de rétractation dès le début de l'exécution du service, et que le service
                 a été entièrement exécuté, le droit de rétractation ne s'applique pas.
               </p>
               <p>
-                Pour exercer votre droit de rétractation, vous devez nous notifier votre décision 
-                via le formulaire disponible sur notre site ou par email à contact@padelxp.com.
+                Pour exercer votre droit de rétractation, vous devez nous notifier votre décision
+                via le formulaire disponible sur notre site ou par email à contactpadelxp@gmail.com.
               </p>
               <p>
-                En cas de rétractation, nous procéderons au remboursement de toutes les sommes reçues 
-                dans un délai de 14 jours, par le même moyen de paiement que celui utilisé pour la 
+                En cas de rétractation, nous procéderons au remboursement de toutes les sommes reçues
+                dans un délai de 14 jours, par le même moyen de paiement que celui utilisé pour la
                 transaction initiale.
               </p>
             </div>
@@ -194,12 +194,12 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 10 - Propriété intellectuelle</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                La plateforme PadelXP, son design, son code source et tous les éléments qui la composent 
-                sont la propriété exclusive de PadelXP. Vous disposez d'un droit d'utilisation personnelle 
+                La plateforme PadelXP, son design, son code source et tous les éléments qui la composent
+                sont la propriété exclusive de PadelXP. Vous disposez d'un droit d'utilisation personnelle
                 et non exclusive pour la durée de votre abonnement.
               </p>
               <p>
-                Les données que vous saisissez sur la plateforme (matchs, membres, etc.) restent votre 
+                Les données que vous saisissez sur la plateforme (matchs, membres, etc.) restent votre
                 propriété. Vous pouvez les exporter à tout moment via votre espace client.
               </p>
             </div>
@@ -209,16 +209,16 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 11 - Responsabilité et garanties</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                PadelXP s'efforce d'assurer une disponibilité continue du service. Toutefois, des 
+                PadelXP s'efforce d'assurer une disponibilité continue du service. Toutefois, des
                 interruptions peuvent survenir pour maintenance ou en cas de force majeure.
               </p>
               <p>
-                Notre responsabilité est limitée aux dommages directs et prévisibles. Nous ne saurions 
-                être tenus responsables de dommages indirects (perte de données, perte de chiffre 
+                Notre responsabilité est limitée aux dommages directs et prévisibles. Nous ne saurions
+                être tenus responsables de dommages indirects (perte de données, perte de chiffre
                 d'affaires, etc.).
               </p>
               <p>
-                Vous bénéficiez de la garantie légale de conformité (2 ans) et de la garantie des 
+                Vous bénéficiez de la garantie légale de conformité (2 ans) et de la garantie des
                 vices cachés, conformément au Code de la consommation.
               </p>
             </div>
@@ -228,7 +228,7 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 12 - Protection des données</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Le traitement de vos données personnelles est conforme au Règlement Général sur la 
+                Le traitement de vos données personnelles est conforme au Règlement Général sur la
                 Protection des Données (RGPD). Pour plus d'informations, consultez notre{" "}
                 <Link href="/privacy" className="text-white underline hover:text-white/80">
                   Politique de Confidentialité
@@ -242,16 +242,16 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 13 - Résolution des litiges</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                En cas de litige, nous vous invitons à nous contacter en priorité à contact@padelxp.com 
+                En cas de litige, nous vous invitons à nous contacter en priorité à contactpadelxp@gmail.com
                 pour trouver une solution amiable.
               </p>
               <p>
-                Conformément à l'article L.612-1 du Code de la consommation, vous avez la possibilité 
-                de saisir un médiateur de la consommation, dont les coordonnées vous seront communiquées 
+                Conformément à l'article L.612-1 du Code de la consommation, vous avez la possibilité
+                de saisir un médiateur de la consommation, dont les coordonnées vous seront communiquées
                 sur demande.
               </p>
               <p>
-                À défaut de résolution amiable, tout litige relatif à l'interprétation ou à l'exécution 
+                À défaut de résolution amiable, tout litige relatif à l'interprétation ou à l'exécution
                 des présentes CGV sera soumis aux tribunaux français compétents.
               </p>
             </div>
@@ -264,13 +264,13 @@ export default function CGVPage() {
                 <strong>Droit applicable :</strong> Les présentes CGV sont régies par le droit français.
               </p>
               <p>
-                <strong>Modification des CGV :</strong> Nous nous réservons le droit de modifier les 
-                présentes CGV à tout moment. Vous en serez informé par email au moins 1 mois avant 
-                leur entrée en vigueur. Vous disposez de la possibilité de résilier votre abonnement 
+                <strong>Modification des CGV :</strong> Nous nous réservons le droit de modifier les
+                présentes CGV à tout moment. Vous en serez informé par email au moins 1 mois avant
+                leur entrée en vigueur. Vous disposez de la possibilité de résilier votre abonnement
                 sans frais si vous n'acceptez pas les nouvelles conditions.
               </p>
               <p>
-                <strong>Nullité partielle :</strong> Si une clause des présentes CGV est déclarée 
+                <strong>Nullité partielle :</strong> Si une clause des présentes CGV est déclarée
                 nulle ou inapplicable, les autres clauses restent en vigueur.
               </p>
             </div>

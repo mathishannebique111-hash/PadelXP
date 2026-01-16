@@ -26,8 +26,8 @@ export default function CookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">1. Qu'est-ce qu'un cookie ?</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette, 
-                smartphone) lors de la visite d'un site web. Il permet au site de reconnaître votre 
+                Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette,
+                smartphone) lors de la visite d'un site web. Il permet au site de reconnaître votre
                 navigateur et de conserver certaines informations vous concernant.
               </p>
               <p>
@@ -45,7 +45,7 @@ export default function CookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">2. Cookies utilisés sur notre site</h2>
             <div className="space-y-4 text-white/80">
               <p>Le tableau ci-dessous détaille les cookies que nous utilisons :</p>
-              
+
               <div className="overflow-x-auto mt-6">
                 <table className="w-full border-collapse border border-white/20">
                   <thead>
@@ -91,8 +91,8 @@ export default function CookiesPage() {
               </div>
 
               <p className="mt-4 text-sm text-white/60">
-                <strong>Note :</strong> Actuellement, nous n'utilisons pas de cookies analytiques 
-                (tels que Google Analytics) ni de cookies marketing. Si cela venait à changer, nous 
+                <strong>Note :</strong> Actuellement, nous n'utilisons pas de cookies analytiques
+                (tels que Google Analytics) ni de cookies marketing. Si cela venait à changer, nous
                 vous en informerions et mettrions à jour cette page.
               </p>
             </div>
@@ -102,7 +102,7 @@ export default function CookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">3. Gestion de vos préférences</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Lors de votre première visite, un bandeau vous permet de gérer vos préférences de 
+                Lors de votre première visite, un bandeau vous permet de gérer vos préférences de
                 cookies. Vous pouvez :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -111,13 +111,13 @@ export default function CookiesPage() {
                 <li>Personnaliser vos préférences par catégorie</li>
               </ul>
               <p>
-                Vous pouvez modifier vos préférences à tout moment en cliquant sur le lien 
-                "Gérer les cookies" disponible en bas de chaque page, ou en supprimant les cookies 
+                Vous pouvez modifier vos préférences à tout moment en cliquant sur le lien
+                "Gérer les cookies" disponible en bas de chaque page, ou en supprimant les cookies
                 de votre navigateur.
               </p>
               <p className="mt-4">
-                <Link 
-                  href="/cookies/gestion" 
+                <Link
+                  href="/cookies/gestion"
                   className="inline-block rounded-lg bg-white/10 hover:bg-white/20 px-4 py-2 text-white transition-colors"
                 >
                   Gérer mes préférences de cookies
@@ -130,9 +130,9 @@ export default function CookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">4. Cookies tiers</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                <strong>Stripe :</strong> Notre partenaire de paiement utilise des cookies techniques 
-                nécessaires au traitement sécurisé des paiements. Ces cookies sont strictement 
-                nécessaires et ne peuvent pas être désactivés sans affecter le fonctionnement du 
+                <strong>Stripe :</strong> Notre partenaire de paiement utilise des cookies techniques
+                nécessaires au traitement sécurisé des paiements. Ces cookies sont strictement
+                nécessaires et ne peuvent pas être désactivés sans affecter le fonctionnement du
                 service de paiement.
               </p>
             </div>
@@ -142,16 +142,16 @@ export default function CookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">5. Désactivation des cookies via votre navigateur</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Vous pouvez configurer votre navigateur pour refuser les cookies. Cependant, 
-                <strong> la désactivation des cookies strictement nécessaires peut affecter le 
-                fonctionnement du site</strong>, notamment :
+                Vous pouvez configurer votre navigateur pour refuser les cookies. Cependant,
+                <strong> la désactivation des cookies strictement nécessaires peut affecter le
+                  fonctionnement du site</strong>, notamment :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li>L'impossibilité de vous connecter à votre compte</li>
                 <li>La perte de vos préférences</li>
                 <li>Des dysfonctionnements dans le processus de paiement</li>
               </ul>
-              
+
               <h3 className="text-xl font-semibold text-white mt-6 mb-2">Comment désactiver les cookies :</h3>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li><strong>Chrome :</strong> Paramètres → Confidentialité et sécurité → Cookies et autres données de sites</li>
@@ -166,8 +166,8 @@ export default function CookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">6. Cookies strictement nécessaires</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Conformément à la réglementation (Directive ePrivacy et CNIL), les cookies 
-                strictement nécessaires au fonctionnement du site ne nécessitent pas votre 
+                Conformément à la réglementation (Directive ePrivacy et CNIL), les cookies
+                strictement nécessaires au fonctionnement du site ne nécessitent pas votre
                 consentement. Il s'agit notamment de :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -204,7 +204,7 @@ export default function CookiesPage() {
                 Pour toute question relative aux cookies, vous pouvez nous contacter à :
               </p>
               <p>
-                <strong>Email :</strong> contact@padelxp.com
+                <strong>Email :</strong> contactpadelxp@gmail.com
               </p>
             </div>
           </section>
