@@ -7,10 +7,12 @@ import Benefits from "@/components/landing/Benefits";
 import ClubsPromo from "@/components/landing/ClubsPromo";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
+import AuthRedirectHandler from "@/components/AuthRedirectHandler";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
+      <AuthRedirectHandler />
       <HeroSection />
       <SocialProof />
       <FeaturesGrid />
@@ -23,4 +25,3 @@ export default function Home() {
     </div>
   );
 }
-

@@ -69,14 +69,45 @@ export async function POST(request: Request) {
 
     const normalizedEmail = parsedBody.data.email;
 
-    // Vérifier si l'utilisateur existe déjà dans auth.users
+    // 1. D'abord, supprimer toute invitation PENDANTE (non activée) pour cet email dans ce club
+    // Cela permet de "nettoyer" les anciennes invitations et d'en créer une nouvelle
+    const { data: existingPendingInvites } = await supabaseAdmin
+      .from("club_admins")
+      .select("id, user_id, activated_at")
+      .eq("club_id", clubId)
+      .eq("email", normalizedEmail)
+      .is("activated_at", null);
+
+    if (existingPendingInvites && existingPendingInvites.length > 0) {
+      // Supprimer les invitations pendantes
+      for (const invite of existingPendingInvites) {
+        await supabaseAdmin.from("club_admins").delete().eq("id", invite.id);
+        logger.info({ inviteId: invite.id.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Ancienne invitation pendante supprimée");
+
+        // Si l'invitation avait un user_id, supprimer aussi l'utilisateur de auth.users
+        // (seulement s'il n'a pas d'autres rôles admin)
+        if (invite.user_id) {
+          const { data: otherRoles } = await supabaseAdmin
+            .from("club_admins")
+            .select("id")
+            .eq("user_id", invite.user_id);
+
+          if (!otherRoles || otherRoles.length === 0) {
+            await supabaseAdmin.auth.admin.deleteUser(invite.user_id).catch((err: any) => {
+              logger.warn({ userId: invite.user_id.substring(0, 8) + "…", error: err }, "[invite-admin] Impossible de supprimer l'ancien utilisateur");
+            });
+          }
+        }
+      }
+    }
+
+    // 2. Vérifier si l'utilisateur existe déjà dans auth.users ET est admin ACTIVÉ de ce club
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
 
     let responseMessage = `Invitation envoyée à ${normalizedEmail}`;
     let invitedUserId: string | null = null;
 
-    // Vérifier si l'utilisateur est déjà admin de ce club
     if (existingUser) {
       const { data: existingAdmin } = await supabaseAdmin
         .from("club_admins")
@@ -85,20 +116,17 @@ export async function POST(request: Request) {
         .eq("club_id", clubId)
         .maybeSingle();
 
-      if (existingAdmin) {
-        // Si déjà admin et activé, retourner une erreur
-        if (existingAdmin.activated_at) {
-          return NextResponse.json(
-            { error: "Cet utilisateur est déjà administrateur de ce club" },
-            { status: 400 }
-          );
-        }
-        // Si invitation en attente, on va régénérer l'invitation
-        invitedUserId = existingUser.id;
-      } else {
-        // L'utilisateur existe mais n'est pas admin de ce club
-        invitedUserId = existingUser.id;
+      if (existingAdmin && existingAdmin.activated_at) {
+        // Déjà admin activé de ce club → erreur
+        return NextResponse.json(
+          { error: "Cet utilisateur est déjà administrateur de ce club" },
+          { status: 400 }
+        );
       }
+
+      // L'utilisateur existe mais n'est pas admin activé de ce club
+      // On va pouvoir l'inviter
+      invitedUserId = existingUser.id;
     }
 
     // Créer le lien d'invitation (l'utilisateur devra créer un compte avec accès admin)
@@ -197,39 +225,58 @@ export async function POST(request: Request) {
     }
 
     // Extraire le lien d'invitation depuis les données Supabase
+    // IMPORTANT: On construit TOUJOURS notre propre URL vers /clubs/signup
+    // au lieu d'utiliser le action_link de Supabase qui pointe vers supabase.co
+    // Cela évite les problèmes de configuration de redirect URLs dans Supabase
     let invitationUrl: string | null = null;
     if (inviteData) {
-      // Pour inviteUserByEmail, le lien est dans properties.action_link ou properties.redirect_to
-      // Pour generateLink, le lien est dans properties.action_link
+      // Extraire le token depuis les données Supabase
+      const token =
+        inviteData.properties?.email_otp ||
+        inviteData.properties?.hashed_token ||
+        inviteData.email_otp ||
+        inviteData.hashed_token ||
+        null;
+
+      // Aussi essayer d'extraire le token depuis l'action_link si disponible
+      let tokenFromActionLink: string | null = null;
       const actionLink =
         inviteData.properties?.action_link ||
-        inviteData.properties?.redirect_to ||
         inviteData.action_link ||
         null;
 
-      if (actionLink) {
-        // Si on a un action_link complet, l'utiliser directement
-        invitationUrl = actionLink;
-        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", actionLinkPreview: actionLink.substring(0, 20) + "…" }, `[invite-admin] Action link trouvé`);
-      } else {
-        // Sinon, construire le lien avec le token si disponible
-        const token =
-          inviteData.properties?.email_otp ||
-          inviteData.properties?.hashed_token ||
-          inviteData.email_otp ||
-          inviteData.hashed_token ||
-          null;
+      if (actionLink && !token) {
+        try {
+          const actionUrl = new URL(actionLink);
+          tokenFromActionLink =
+            actionUrl.searchParams.get("token") ||
+            actionUrl.searchParams.get("token_hash") ||
+            null;
 
-        if (token) {
-          // Construire l'URL avec le token - utiliser l'URL de production
-          const tokenBaseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://padelxp.eu").replace("http://localhost:3000", "https://padelxp.eu");
-          invitationUrl = `${tokenBaseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(token)}`;
-          logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl.length }, `[invite-admin] Lien d'invitation généré`);
-        } else {
-          // Fallback sur le lien de base (sans token, mais avec email)
-          invitationUrl = inviteLink;
-          logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, `[invite-admin] Utilisation du lien de base (fallback)`);
+          // Aussi vérifier dans le hash
+          if (!tokenFromActionLink && actionUrl.hash) {
+            const hashParams = new URLSearchParams(actionUrl.hash.slice(1));
+            tokenFromActionLink =
+              hashParams.get("token") ||
+              hashParams.get("token_hash") ||
+              null;
+          }
+        } catch (parseError) {
+          logger.warn({ userId: user.id.substring(0, 8) + "…", error: parseError }, "[invite-admin] Unable to parse action_link for token");
         }
+      }
+
+      const finalToken = token || tokenFromActionLink;
+
+      if (finalToken) {
+        // Construire notre propre URL vers /clubs/signup avec le token
+        const tokenBaseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://padelxp.eu").replace("http://localhost:3000", "https://padelxp.eu");
+        invitationUrl = `${tokenBaseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(finalToken)}`;
+        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl.length }, `[invite-admin] Lien d'invitation généré avec token`);
+      } else {
+        // Fallback sur le lien de base (sans token, mais avec email)
+        invitationUrl = inviteLink;
+        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, `[invite-admin] Utilisation du lien de base (fallback sans token)`);
       }
     } else {
       // Aucune donnée Supabase, utiliser le lien de base

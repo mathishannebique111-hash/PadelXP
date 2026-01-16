@@ -9,6 +9,7 @@ import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import Image from "next/image";
 import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
 import { logger } from '@/lib/logger';
+import { AlertTriangle, Clock, CreditCard, ClipboardList } from 'lucide-react';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -280,7 +281,7 @@ export default async function DashboardHome() {
       {showTrialWarning && (
         <div className="rounded-lg sm:rounded-xl border border-orange-500/50 bg-orange-500/10 p-3 sm:p-4">
           <div className="flex items-start gap-2 sm:gap-3">
-            <div className="text-xl sm:text-2xl flex-shrink-0">⚠️</div>
+            <AlertTriangle className="w-6 h-6 sm:w-7 sm:h-7 text-orange-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-orange-300 mb-1 text-sm sm:text-base">
                 Essai gratuit : {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''}
@@ -486,7 +487,8 @@ export default async function DashboardHome() {
                       href="/dashboard/facturation"
                       className="inline-flex items-center gap-2 rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 border border-orange-400/50 shadow-[0_6px_20px_rgba(249,115,22,0.3)] hover:shadow-[0_8px_24px_rgba(249,115,22,0.4)] hover:scale-105 active:scale-100 transition-all duration-300"
                     >
-                      <span>📋 Choisir une offre</span>
+                      <ClipboardList className="w-4 h-4" />
+                      <span>Choisir une offre</span>
                     </a>
                   </div>
                 )}
@@ -496,7 +498,7 @@ export default async function DashboardHome() {
         ) : daysRemaining !== null && daysRemaining === 0 ? (
           // Essai expiré
           <div className="flex items-start gap-3 sm:gap-4">
-            <div className="text-2xl sm:text-3xl flex-shrink-0">⏰</div>
+            <Clock className="w-7 h-7 sm:w-8 sm:h-8 text-rose-300 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs sm:text-sm text-rose-200/90 mb-3 sm:mb-4">
                 Votre période d'essai est terminée. Sélectionnez une offre pour continuer à utiliser la plateforme.
@@ -505,14 +507,15 @@ export default async function DashboardHome() {
                 href="/dashboard/facturation"
                 className="inline-flex items-center gap-2 rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-green-600 border border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-100 transition-all duration-300"
               >
-                <span>📋 Choisir une offre</span>
+                <ClipboardList className="w-4 h-4" />
+                <span>Choisir une offre</span>
               </a>
             </div>
           </div>
         ) : (
           // Pas d'essai
           <div className="flex items-start gap-3 sm:gap-4">
-            <div className="text-2xl sm:text-3xl flex-shrink-0">💳</div>
+            <CreditCard className="w-7 h-7 sm:w-8 sm:h-8 text-white/70 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs sm:text-sm text-white/70">
                 Profitez de {totalTrialDays} jours d'essai gratuit pour découvrir toutes les fonctionnalités.

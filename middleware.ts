@@ -388,7 +388,7 @@ export async function middleware(req: NextRequest) {
       if (!isNaN(lastActivity)) {
         const inactiveMinutes = (now - lastActivity) / (1000 * 60);
 
-        if (inactiveMinutes > 29) {
+        if (inactiveMinutes > 120) {
           await supabase.auth.signOut();
           res.cookies.set("last_activity", "", { expires: new Date(0) });
           if (isProtected && !isApiRoute) {
@@ -409,7 +409,7 @@ export async function middleware(req: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 30 * 60,
+        maxAge: 120 * 60,
         path: "/",
       });
     }
