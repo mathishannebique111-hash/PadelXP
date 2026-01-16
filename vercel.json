@@ -5,12 +5,8 @@
       "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/cron/suspend-expired-clubs",
+      "path": "/api/cron/club-lifecycle",
       "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/delete-suspended-clubs",
-      "schedule": "0 2 * * *"
     }
   ],
   "functions": {
