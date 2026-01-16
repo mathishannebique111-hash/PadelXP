@@ -48,8 +48,8 @@ export async function POST(request: Request) {
     (user.email ? user.email.split("@")[0] : "Joueur");
 
   // Log pour diagnostic
-  logger.info({ 
-    userId: user.id.substring(0, 8) + "…", 
+  logger.info({
+    userId: user.id.substring(0, 8) + "…",
     email: user.email?.substring(0, 10) + "…",
     hasMetadata: !!user.user_metadata,
     metadataClubId: user.user_metadata?.club_id || null
@@ -74,24 +74,24 @@ export async function POST(request: Request) {
   // Vérifier d'abord les métadonnées utilisateur pour club_id (cas où le club a été créé mais club_admins n'existe pas encore)
   const userMetadata = user.user_metadata || {};
   const metadataClubId = userMetadata.club_id as string | null | undefined;
-  
-  logger.info({ 
-    userId: user.id.substring(0, 8) + "…", 
+
+  logger.info({
+    userId: user.id.substring(0, 8) + "…",
     email: user.email?.substring(0, 10) + "…",
     metadataClubId: metadataClubId || null
   }, "[api/profile/init] Checking club association");
-  
+
   // PRIORITÉ 1: Vérifier dans club_admins par user_id
   const { data: clubAdmin, error: clubAdminError } = await serviceClient
     .from("club_admins")
     .select("club_id, activated_at, email")
     .eq("user_id", user.id)
     .maybeSingle();
-  
+
   if (clubAdminError) {
     logger.error({ error: clubAdminError, userId: user.id.substring(0, 8) + "…", email: user.email?.substring(0, 10) + "…" }, "[api/profile/init] Error fetching club_admins by user_id");
   }
-  
+
   // PRIORITÉ 2: Si pas trouvé par user_id, chercher par email (cas où l'email existe mais user_id est différent ou NULL)
   let clubAdminByEmail = null;
   if (!clubAdmin && user.email) {
@@ -100,21 +100,21 @@ export async function POST(request: Request) {
       .select("club_id, activated_at, email, user_id")
       .eq("email", user.email.toLowerCase())
       .maybeSingle();
-    
+
     if (emailAdminError) {
       logger.error({ error: emailAdminError, email: user.email.substring(0, 10) + "…" }, "[api/profile/init] Error fetching club_admins by email");
     } else if (emailAdmin) {
       clubAdminByEmail = emailAdmin;
-      logger.info({ 
+      logger.info({
         email: user.email.substring(0, 10) + "…",
         foundClubId: emailAdmin.club_id?.substring(0, 8) + "…",
         existingUserId: emailAdmin.user_id?.substring(0, 8) + "…" || "NULL"
       }, "[api/profile/init] Found club_admins entry by email");
     }
   }
-  
-  logger.info({ 
-    userId: user.id.substring(0, 8) + "…", 
+
+  logger.info({
+    userId: user.id.substring(0, 8) + "…",
     email: user.email?.substring(0, 10) + "…",
     hasClubAdminByUserId: !!clubAdmin,
     hasClubAdminByEmail: !!clubAdminByEmail,
@@ -128,42 +128,42 @@ export async function POST(request: Request) {
   } else if (clubAdminByEmail?.club_id) {
     // Trouvé par email, mettre à jour avec le user_id actuel
     clubIdForUser = clubAdminByEmail.club_id;
-    
-    logger.info({ 
-      userId: user.id.substring(0, 8) + "…", 
+
+    logger.info({
+      userId: user.id.substring(0, 8) + "…",
       email: user.email?.substring(0, 10) + "…",
       clubId: clubIdForUser.substring(0, 8) + "…"
     }, "[api/profile/init] Updating club_admins with current user_id");
-    
+
     // Récupérer les infos du club d'abord
     const { data: clubRow } = await serviceClient
       .from("clubs")
       .select("id, slug, name, logo_url")
       .eq("id", clubIdForUser)
       .maybeSingle();
-    
+
     if (clubRow) {
       clubSlugForUser = clubRow.slug ?? null;
       clubNameForUser = clubRow.name ?? null;
       clubLogoForUser = clubRow.logo_url ?? null;
     }
-    
+
     // Mettre à jour l'entrée club_admins avec le user_id actuel
     const { error: updateAdminError } = await serviceClient
       .from("club_admins")
-      .update({ 
+      .update({
         user_id: user.id,
         activated_at: clubAdminByEmail.activated_at || new Date().toISOString()
       })
       .eq("club_id", clubIdForUser)
       .eq("email", user.email!.toLowerCase());
-    
+
     if (updateAdminError) {
       logger.error({ error: updateAdminError, email: user.email?.substring(0, 10) + "…" }, "[api/profile/init] Error updating club_admins with user_id");
       // Ne pas bloquer, continuer avec le club_id trouvé
     } else {
-      logger.info({ 
-        userId: user.id.substring(0, 8) + "…", 
+      logger.info({
+        userId: user.id.substring(0, 8) + "…",
         clubId: clubIdForUser.substring(0, 8) + "…"
       }, "[api/profile/init] Successfully updated club_admins with user_id");
     }
@@ -174,13 +174,13 @@ export async function POST(request: Request) {
       .select("id, slug, name, logo_url")
       .eq("id", metadataClubId)
       .maybeSingle();
-    
+
     if (clubFromMetadata) {
       clubIdForUser = clubFromMetadata.id;
       clubSlugForUser = clubFromMetadata.slug ?? null;
       clubNameForUser = clubFromMetadata.name ?? null;
       clubLogoForUser = clubFromMetadata.logo_url ?? null;
-      
+
       // Créer ou activer l'entrée club_admins si elle n'existe pas
       if (!clubAdmin) {
         // Déterminer le rôle adéquat : "owner" par défaut, mais respecter un éventuel rôle "admin"
@@ -196,7 +196,7 @@ export async function POST(request: Request) {
             invited_by: user.id,
             activated_at: new Date().toISOString(),
           });
-        
+
         if (createAdminError) {
           logger.warn({ error: createAdminError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] Could not create club_admins entry (non-blocking)");
         }
@@ -207,7 +207,7 @@ export async function POST(request: Request) {
           .update({ activated_at: new Date().toISOString() })
           .eq("user_id", user.id)
           .eq("club_id", clubIdForUser);
-        
+
         if (activationError) {
           logger.warn({ error: activationError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] Could not activate club_admins entry (non-blocking)");
         }
@@ -238,6 +238,86 @@ export async function POST(request: Request) {
     if (activationRow?.club_id) {
       clubIdForUser = activationRow.club_id;
     }
+  }
+
+  // NOUVEAU: Vérifier si l'utilisateur est un administrateur de club
+  // Les admins ne doivent PAS être enregistrés comme joueurs dans leur propre club
+  let isClubAdministrator = false;
+  let adminRole: string | null = null;
+
+  if (clubIdForUser) {
+    // Vérifier le rôle dans club_admins
+    const { data: adminCheck } = await serviceClient
+      .from("club_admins")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("club_id", clubIdForUser)
+      .maybeSingle();
+
+    if (adminCheck) {
+      adminRole = adminCheck.role;
+      isClubAdministrator = adminRole === "owner" || adminRole === "admin";
+
+      logger.info({
+        userId: user.id.substring(0, 8) + "…",
+        clubId: clubIdForUser.substring(0, 8) + "…",
+        role: adminRole,
+        isAdmin: isClubAdministrator
+      }, "[api/profile/init] Club admin role check");
+    }
+  }
+
+  // Si l'utilisateur est un admin de club, ne PAS créer/mettre à jour son profil joueur
+  // Mettre seulement à jour ses métadonnées et rediriger vers le dashboard
+  if (isClubAdministrator && clubIdForUser) {
+    logger.info({
+      userId: user.id.substring(0, 8) + "…",
+      clubId: clubIdForUser.substring(0, 8) + "…",
+      role: adminRole
+    }, "[api/profile/init] User is club admin, skipping player profile creation");
+
+    // Récupérer les infos du club pour les métadonnées
+    if (!clubSlugForUser || !clubNameForUser || !clubLogoForUser) {
+      const { data: clubRow } = await serviceClient
+        .from("clubs")
+        .select("slug, name, logo_url")
+        .eq("id", clubIdForUser)
+        .maybeSingle();
+      if (clubRow) {
+        clubSlugForUser = clubSlugForUser ?? (clubRow.slug ?? null);
+        clubNameForUser = clubNameForUser ?? (clubRow.name ?? null);
+        clubLogoForUser = clubLogoForUser ?? (clubRow.logo_url ?? null);
+      }
+    }
+
+    // Mettre à jour les métadonnées de l'utilisateur pour le dashboard
+    try {
+      const { data: existingUser } = await serviceClient.auth.admin.getUserById(user.id);
+      const mergedMetadata = {
+        ...(existingUser?.user?.user_metadata || {}),
+        club_id: clubIdForUser,
+        club_slug: clubSlugForUser,
+        club_name: clubNameForUser ?? (existingUser?.user?.user_metadata?.club_name as string | null) ?? null,
+        club_logo_url: clubLogoForUser ?? (existingUser?.user?.user_metadata?.club_logo_url as string | null) ?? null,
+      };
+      await serviceClient.auth.admin.updateUserById(user.id, {
+        user_metadata: mergedMetadata,
+      });
+
+      logger.info({
+        userId: user.id.substring(0, 8) + "…",
+        clubId: clubIdForUser.substring(0, 8) + "…"
+      }, "[api/profile/init] Updated admin metadata, redirecting to dashboard");
+    } catch (metadataError) {
+      logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (club admin)");
+    }
+
+    // Retourner sans profil joueur - l'admin accède seulement au dashboard
+    return NextResponse.json({
+      ok: true,
+      redirect: "/dashboard",
+      profile: null, // Pas de profil joueur pour les admins
+    });
   }
 
   if (clubIdForUser) {
@@ -429,13 +509,13 @@ export async function POST(request: Request) {
   // On ne crée pas de profil joueur automatiquement, on le redirige vers le dashboard
   // Vérifier aussi si l'utilisateur a un club_id dans ses métadonnées (même sans club_admins)
   if (clubIdForUser) {
-    logger.info({ 
-      userId: user.id.substring(0, 8) + "…", 
+    logger.info({
+      userId: user.id.substring(0, 8) + "…",
       email: user.email?.substring(0, 10) + "…",
       clubId: clubIdForUser.substring(0, 8) + "…",
       clubSlug: clubSlugForUser || null
     }, "[api/profile/init] Club found, redirecting to dashboard");
-    
+
     try {
       const { data: existingUser } = await serviceClient.auth.admin.getUserById(user.id);
       const mergedMetadata = {
@@ -451,7 +531,7 @@ export async function POST(request: Request) {
     } catch (metadataError) {
       logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (admin without profile)");
     }
-    
+
     return NextResponse.json({
       ok: true,
       redirect: "/dashboard",
@@ -461,8 +541,8 @@ export async function POST(request: Request) {
 
 
   // Log détaillé avant de retourner l'erreur
-  logger.warn({ 
-    userId: user.id.substring(0, 8) + "…", 
+  logger.warn({
+    userId: user.id.substring(0, 8) + "…",
     email: user.email || "no email",
     hasProfile: !!existing,
     hasMetadataClubId: !!metadataClubId,

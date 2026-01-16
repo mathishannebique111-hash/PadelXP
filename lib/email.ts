@@ -80,6 +80,9 @@ export async function sendAdminInvitationEmail(
   }
 
   try {
+    // S'assurer que l'URL utilise le site de production
+    const productionUrl = invitationUrl.replace('http://localhost:3000', 'https://padelxp.eu');
+
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "PadelXP <noreply@padelleague.com>",
       to,
@@ -89,25 +92,16 @@ export async function sendAdminInvitationEmail(
         <html>
           <head>
             <meta charset="utf-8">
-            <style>
-              body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #0066FF, #0052CC); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-              .button { display: inline-block; background: #0066FF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
-              .button:hover { background: #0052CC; }
-              .info-box { background: white; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0066FF; }
-            </style>
           </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>🎾 Invitation administrateur</h1>
+          <body style="font-family: Inter, Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(135deg, #0066FF, #0052CC); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="margin: 0; font-size: 24px;">🎾 Invitation administrateur</h1>
               </div>
-              <div class="content">
+              <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
                 <p>Bonjour,</p>
                 ${inviterName ? `<p><strong>${inviterName}</strong> vous invite à devenir administrateur du club <strong>${clubName}</strong> sur PadelXP.</p>` : `<p>Vous avez été invité à devenir administrateur du club <strong>${clubName}</strong> sur PadelXP.</p>`}
-                <div class="info-box">
+                <div style="background: white; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0066FF;">
                   <p style="margin: 0;">En tant qu'administrateur, vous pourrez :</p>
                   <ul style="margin: 10px 0 0 20px;">
                     <li>Gérer les membres du club</li>
@@ -117,13 +111,15 @@ export async function sendAdminInvitationEmail(
                   </ul>
                 </div>
                 <p>Pour accepter cette invitation et définir votre mot de passe, cliquez sur le bouton ci-dessous :</p>
-                <a href="${invitationUrl}" class="button">Accepter l'invitation</a>
+                <table border="0" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+                  <tr>
+                    <td align="center" bgcolor="#0066FF" style="border-radius: 6px;">
+                      <a href="${productionUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; font-family: Inter, Arial, sans-serif; font-size: 16px; font-weight: bold; color: #FFFFFF; text-decoration: none; border-radius: 6px;">Accepter l'invitation</a>
+                    </td>
+                  </tr>
+                </table>
                 <p style="margin-top: 30px; font-size: 12px; color: #666;">
                   Ce lien est valide pendant 48 heures. Si vous n'avez pas demandé cette invitation, vous pouvez ignorer cet email.
-                </p>
-                <p style="font-size: 12px; color: #666;">
-                  Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :<br>
-                  <a href="${invitationUrl}" style="color: #0066FF; word-break: break-all;">${invitationUrl}</a>
                 </p>
               </div>
             </div>
@@ -157,17 +153,17 @@ export async function sendModeratedReviewEmail(
 
   try {
     const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
-    
+
     // Utiliser le système d'inbound email comme pour le support club
     // Envoyer l'email à l'inbound email qui sera transféré à Gmail
     const INBOUND_EMAIL = process.env.RESEND_INBOUND_EMAIL || 'contact@updates.padelxp.eu';
     const FORWARD_TO_EMAIL = process.env.FORWARD_TO_EMAIL || adminEmail;
-    
+
     // Préparer les options d'email
     const emailOptions: any = {
       from: process.env.RESEND_FROM_EMAIL || "PadelXP <noreply@padelleague.com>",
       to: INBOUND_EMAIL, // Envoyer à l'inbound email pour être capturé par le webhook et transféré à Gmail
-      subject: conversationId 
+      subject: conversationId
         ? `⚠️ Avis modéré - ${playerName} (${rating}/5 étoiles) [${conversationId}]`
         : `⚠️ Avis modéré - ${playerName} (${rating}/5 étoiles) [${reviewId}]`,
       headers: {
@@ -178,7 +174,7 @@ export async function sendModeratedReviewEmail(
         'X-Sender-Type': 'moderated-review', // Identifier que c'est un avis modéré
       },
     };
-    
+
     emailOptions.html = `
         <!DOCTYPE html>
         <html>
@@ -255,10 +251,10 @@ export async function sendModeratedReviewEmail(
           </body>
         </html>
       `;
-    
+
     // Envoyer à l'inbound email pour être capturé par le webhook et transféré à Gmail
     await resend.emails.send(emailOptions);
-    
+
     logger.info({ reviewId: reviewId.substring(0, 8) + "…", playerEmail: playerEmail.substring(0, 5) + "…", conversationId: conversationId?.substring(0, 8) + "…" || null }, "✅ Moderated review email sent via inbound email");
   } catch (error) {
     logger.error({ reviewId: reviewId.substring(0, 8) + "…", playerEmail: playerEmail.substring(0, 5) + "…", error }, "❌ Error sending moderated review email");

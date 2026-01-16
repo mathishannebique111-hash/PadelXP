@@ -10,8 +10,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
   : null;
 
 /**
@@ -102,9 +102,10 @@ export async function POST(request: Request) {
     }
 
     // Créer le lien d'invitation (l'utilisateur devra créer un compte avec accès admin)
-    const inviteLink = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/clubs/signup?invite=admin${
-      normalizedEmail ? `&email=${encodeURIComponent(normalizedEmail)}` : ""
-    }`;
+    // S'assurer d'utiliser l'URL de production
+    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://padelxp.eu").replace("http://localhost:3000", "https://padelxp.eu");
+    const inviteLink = `${baseUrl}/clubs/signup?invite=admin${normalizedEmail ? `&email=${encodeURIComponent(normalizedEmail)}` : ""
+      }`;
 
     // Envoyer l'email d'invitation via Supabase Auth
     // Pour tous les utilisateurs (nouveaux ou existants), on essaie d'abord inviteUserByEmail
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
     if (inviteByEmailError) {
       // Si inviteUserByEmail échoue (par exemple "already registered"), utiliser generateLink
       logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: inviteByEmailError.message }, `[invite-admin] inviteUserByEmail échoué, utilisation de generateLink`);
-      
+
       let linkData: any = null;
       let linkError: any = null;
 
@@ -220,9 +221,9 @@ export async function POST(request: Request) {
           null;
 
         if (token) {
-          // Construire l'URL avec le token
-          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-          invitationUrl = `${baseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(token)}`;
+          // Construire l'URL avec le token - utiliser l'URL de production
+          const tokenBaseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://padelxp.eu").replace("http://localhost:3000", "https://padelxp.eu");
+          invitationUrl = `${tokenBaseUrl}/clubs/signup?invite=admin&email=${encodeURIComponent(normalizedEmail)}&token=${encodeURIComponent(token)}`;
           logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", urlLength: invitationUrl.length }, `[invite-admin] Lien d'invitation généré`);
         } else {
           // Fallback sur le lien de base (sans token, mais avec email)
@@ -242,10 +243,10 @@ export async function POST(request: Request) {
     // Même si Supabase a envoyé un email, on envoie aussi via Resend pour garantir la réception
     // et avoir un email personnalisé avec le bon format
     try {
-      const inviterName = user.user_metadata?.first_name 
+      const inviterName = user.user_metadata?.first_name
         ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ""}`.trim()
         : user.email;
-      
+
       if (!invitationUrl) {
         logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…" }, "[invite-admin] Aucun lien d'invitation généré, impossible d'envoyer l'email");
       } else {
@@ -257,7 +258,7 @@ export async function POST(request: Request) {
         );
         const emailPreview = normalizedEmail.substring(0, 5) + "…";
         logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: emailPreview }, `[invite-admin] ✅ Email d'invitation envoyé via Resend`);
-              }
+      }
     } catch (emailError: any) {
       logger.error({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: normalizedEmail.substring(0, 5) + "…", error: emailError }, "[invite-admin] ❌ Erreur lors de l'envoi de l'email via Resend");
       // On ne bloque pas l'invitation si l'email échoue, mais on log l'erreur
@@ -354,7 +355,7 @@ export async function POST(request: Request) {
     const emailPreview2 = normalizedEmail.substring(0, 5) + "…";
     const clubIdPreview = clubId.substring(0, 8) + "…";
     logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubIdPreview, email: emailPreview2, clubName }, `[invite-admin] Invitation envoyée pour le club`);
-    
+
     return NextResponse.json({
       success: true,
       message: responseMessage,

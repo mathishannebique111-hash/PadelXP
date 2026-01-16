@@ -36,7 +36,7 @@ export default function ClientAdminInvite() {
 
       const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token") || queryParams.get("refresh_token");
-        const typeFromHash = (hashParams.get("type") || queryParams.get("type") || "magiclink").toLowerCase();
+      const typeFromHash = (hashParams.get("type") || queryParams.get("type") || "magiclink").toLowerCase();
       const code = searchParams?.get("code") || hashParams.get("code") || queryParams.get("code");
       const inviteToken =
         searchParams?.get("token") ||
@@ -215,7 +215,7 @@ export default function ClientAdminInvite() {
             logger.error("[clubs/signup] invite session not established after retry", lastError);
             throw new Error(
               lastError?.message ||
-                "Lien d'invitation expiré ou déjà utilisé. Demandez-en un nouveau."
+              "Lien d'invitation expiré ou déjà utilisé. Demandez-en un nouveau."
             );
           }
 
@@ -263,7 +263,7 @@ export default function ClientAdminInvite() {
 
           // Si la session courante est sur un autre compte (ex: propriétaire déjà connecté),
           // on la ferme pour éviter d'écraser son mot de passe.
-          await supabase.auth.signOut().catch(() => {});
+          await supabase.auth.signOut().catch(() => { });
         }
 
         // Cas de lien sans token ni access_token (ex: ancien lien ou lien copié sans le hash)
@@ -329,7 +329,7 @@ export default function ClientAdminInvite() {
             logger.error("[clubs/signup] Reissue (no token) error", reissueError);
             throw new Error(
               reissueError?.message ||
-                "Lien d'invitation expiré ou déjà utilisé. Demandez-en un nouveau."
+              "Lien d'invitation expiré ou déjà utilisé. Demandez-en un nouveau."
             );
           }
         }
@@ -423,15 +423,8 @@ export default function ClientAdminInvite() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
         <div className="max-w-md text-center">
-          <div className="mb-4 flex justify-center animate-pulse">
-            <Image 
-              src="/images/fusée page boost.png" 
-              alt="Invitation en cours" 
-              width={40} 
-              height={40} 
-              className="flex-shrink-0"
-              unoptimized
-            />
+          <div className="mb-6 flex justify-center">
+            <div className="w-12 h-12 border-4 border-white/20 border-t-[#0066FF] rounded-full animate-spin"></div>
           </div>
           <p className="text-white/70">Validation de votre invitation en cours...</p>
         </div>
