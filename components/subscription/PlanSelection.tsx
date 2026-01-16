@@ -50,7 +50,7 @@ export default function PlanSelection({
     }
   };
 
-  const plans: PlanType[] = ['annual', 'quarterly', 'monthly'];
+  const plans: PlanType[] = ['annual', 'monthly'];
 
   return (
     <div className="space-y-6">
@@ -64,7 +64,7 @@ export default function PlanSelection({
       )}
 
       {/* Grille des plans */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {plans.map((plan) => {
           const monthlyPrice = getMonthlyPrice(plan);
           const totalPrice = getTotalPrice(plan);
@@ -75,13 +75,12 @@ export default function PlanSelection({
           return (
             <div
               key={plan}
-              className={`relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
-                isSelected
+              className={`relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 hover:scale-105 ${isSelected
                   ? 'border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]'
                   : isPopular
-                  ? 'border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]'
-                  : 'border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]'
-              }`}
+                    ? 'border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]'
+                    : 'border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]'
+                }`}
             >
               {/* Badge "PLUS POPULAIRE" pour l'annuel */}
               {isPopular && !isSelected && (
@@ -126,7 +125,7 @@ export default function PlanSelection({
                 </div>
                 {plan !== 'monthly' && (
                   <div className="text-white/60 text-sm mt-1">
-                    {totalPrice}€ {plan === 'quarterly' ? 'tous les 3 mois' : 'par an'}
+                    {totalPrice}€ par an
                   </div>
                 )}
               </div>
@@ -149,15 +148,14 @@ export default function PlanSelection({
               <button
                 onClick={() => handleSelectPlan(plan)}
                 disabled={isSelected || loading !== null}
-                className={`w-full rounded-xl px-6 py-3 text-sm font-bold transition-all duration-300 mt-auto ${
-                  isSelected
+                className={`w-full rounded-xl px-6 py-3 text-sm font-bold transition-all duration-300 mt-auto ${isSelected
                     ? 'bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed'
                     : loading === plan
-                    ? 'bg-white/10 border-2 border-white/20 text-white/50 cursor-wait'
-                    : isPopular
-                    ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100'
-                    : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100'
-                }`}
+                      ? 'bg-white/10 border-2 border-white/20 text-white/50 cursor-wait'
+                      : isPopular
+                        ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100'
+                        : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100'
+                  }`}
               >
                 {loading === plan ? (
                   'Chargement...'

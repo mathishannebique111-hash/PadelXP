@@ -26,17 +26,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // 2. Cliquez sur un produit (ou créez-en un)
 // 3. Dans la section "Pricing", vous verrez les Price IDs (commencent par price_)
 // 4. Copiez les Price IDs de test (pas ceux en mode live)
+// This tool call is just a placeholder because I realized I should use multi_replace_file_content.
+// I will cancel this tool call logic by returning empty or proceed with multi_replace_file_content directly.
+// Wait, I cannot cancel a tool call once started in thought.
+// I will use replace_file_content but carefully.
+
+// Logic for modifying STRIPE_PRICE_IDS
 const STRIPE_PRICE_IDS = {
   monthly: process.env.STRIPE_PRICE_MONTHLY || process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || '',
-  quarterly: process.env.STRIPE_PRICE_QUARTERLY || process.env.NEXT_PUBLIC_STRIPE_PRICE_QUARTERLY || '',
   annual: process.env.STRIPE_PRICE_ANNUAL || process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || '',
 };
 
 // Vérifier que les Price IDs sont configurés
-if (!STRIPE_PRICE_IDS.monthly || !STRIPE_PRICE_IDS.quarterly || !STRIPE_PRICE_IDS.annual) {
+if (!STRIPE_PRICE_IDS.monthly || !STRIPE_PRICE_IDS.annual) {
   console.warn('⚠️ STRIPE_PRICE_IDS non configurés. Ajoutez-les dans .env.local :');
   console.warn('STRIPE_PRICE_MONTHLY=price_xxxxx');
-  console.warn('STRIPE_PRICE_QUARTERLY=price_xxxxx');
   console.warn('STRIPE_PRICE_ANNUAL=price_xxxxx');
 }
 
@@ -48,7 +52,7 @@ export const dynamic = 'force-dynamic';
  */
 async function getOrCreateStripeCustomer(club: any): Promise<string> {
   let customerId = club.stripe_customer_id;
-  
+
   if (customerId) {
     // Vérifier que le customer existe toujours sur Stripe
     try {
@@ -85,11 +89,11 @@ async function getOrCreateStripeCustomer(club: any): Promise<string> {
  */
 async function createOrUpdateStripeSubscription(
   customerId: string,
-  planCycle: 'monthly' | 'quarterly' | 'annual',
+  planCycle: 'monthly' | 'annual',
   existingSubscriptionId?: string | null
 ): Promise<Stripe.Subscription> {
   const priceId = STRIPE_PRICE_IDS[planCycle];
-  
+
   if (!priceId) {
     throw new Error(
       `Price ID not configured for ${planCycle} plan. ` +
@@ -103,19 +107,19 @@ async function createOrUpdateStripeSubscription(
     try {
       // Récupérer l'abonnement existant
       const existingSub = await stripe.subscriptions.retrieve(existingSubscriptionId);
-      
+
       // Mettre à jour l'item d'abonnement pour prolonger la période
       const subscriptionItemId = existingSub.items.data[0]?.id;
-      
+
       if (subscriptionItemId) {
         // Calculer la nouvelle date de fin en prolongeant depuis current_period_end
         const currentPeriodEnd = existingSub.current_period_end;
         const now = Math.floor(Date.now() / 1000);
-        
+
         // Si l'abonnement est encore actif, prolonger depuis current_period_end
         // Sinon, commencer maintenant
-        const billingCycleAnchor = existingSub.status === 'active' 
-          ? currentPeriodEnd 
+        const billingCycleAnchor = existingSub.status === 'active'
+          ? currentPeriodEnd
           : now;
 
         // Mettre à jour le price et prolonger la période
@@ -169,7 +173,7 @@ async function createOrUpdateStripeSubscription(
     // Si trial_period_days ne fonctionne pas, essayer avec payment_behavior: 'default_incomplete'
     if (error?.code === 'resource_missing' || error?.message?.includes('payment method')) {
       console.log('Trial method failed, trying with payment_behavior: default_incomplete');
-      
+
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: priceId }],
@@ -183,15 +187,15 @@ async function createOrUpdateStripeSubscription(
 
       // Marquer l'invoice comme payée "hors bande" (offert par l'admin)
       if (subscription.latest_invoice) {
-        const invoiceId = typeof subscription.latest_invoice === 'string' 
-          ? subscription.latest_invoice 
+        const invoiceId = typeof subscription.latest_invoice === 'string'
+          ? subscription.latest_invoice
           : subscription.latest_invoice.id;
-        
+
         try {
           await stripe.invoices.pay(invoiceId, {
             paid_out_of_band: true,
           });
-          
+
           console.log('Invoice marked as paid (admin gift)');
           const updatedSub = await stripe.subscriptions.retrieve(subscription.id);
           return updatedSub;
@@ -203,7 +207,7 @@ async function createOrUpdateStripeSubscription(
 
       return subscription;
     }
-    
+
     throw error;
   }
 }
@@ -214,18 +218,16 @@ export async function PATCH(
 ) {
   try {
     // Vérifier que les Price IDs sont configurés
-    if (!STRIPE_PRICE_IDS.monthly || !STRIPE_PRICE_IDS.quarterly || !STRIPE_PRICE_IDS.annual) {
+    if (!STRIPE_PRICE_IDS.monthly || !STRIPE_PRICE_IDS.annual) {
       console.error('❌ STRIPE_PRICE_IDS non configurés:', {
         monthly: STRIPE_PRICE_IDS.monthly || 'MANQUANT',
-        quarterly: STRIPE_PRICE_IDS.quarterly || 'MANQUANT',
         annual: STRIPE_PRICE_IDS.annual || 'MANQUANT',
       });
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Configuration Stripe incomplète',
         details: 'Les Price IDs Stripe ne sont pas configurés. Vérifiez votre fichier .env.local et redémarrez le serveur.',
         missing: {
           monthly: !STRIPE_PRICE_IDS.monthly,
-          quarterly: !STRIPE_PRICE_IDS.quarterly,
           annual: !STRIPE_PRICE_IDS.annual,
         }
       }, { status: 500 });
@@ -273,10 +275,10 @@ export async function PATCH(
     switch (action) {
       case 'extend_trial_14d': {
         // Prolonger l'essai de 14 jours
-        const currentTrialEnd = existingSubscription?.trial_end_at 
+        const currentTrialEnd = existingSubscription?.trial_end_at
           ? new Date(existingSubscription.trial_end_at)
           : (club.trial_end_date ? new Date(club.trial_end_date) : now);
-        
+
         const newTrialEnd = new Date(currentTrialEnd);
         newTrialEnd.setDate(newTrialEnd.getDate() + 14);
 
@@ -312,22 +314,17 @@ export async function PATCH(
       }
 
       case 'add_1_month':
-      case 'add_3_months':
       case 'add_1_year': {
         try {
-          const planCycle = action === 'add_1_month' ? 'monthly' 
-            : action === 'add_3_months' ? 'quarterly' 
-            : 'annual';
-          
-          const periodMonths = action === 'add_1_month' ? 1 
-            : action === 'add_3_months' ? 3 
-            : 12;
+          const planCycle = action === 'add_1_month' ? 'monthly' : 'annual';
+
+          const periodMonths = action === 'add_1_month' ? 1 : 12;
 
           console.log('Processing subscription:', { planCycle, periodMonths, existingSubscription: !!existingSubscription });
 
           // Calculer la nouvelle date de fin
           let newPeriodEnd: Date;
-          
+
           if (existingSubscription?.current_period_end) {
             // Prolonger depuis la fin de la période actuelle
             newPeriodEnd = new Date(existingSubscription.current_period_end);
@@ -357,83 +354,81 @@ export async function PATCH(
             planCycle,
             existingSubscriptionId: existingSubscription?.stripe_subscription_id || club.stripe_subscription_id,
           });
-          
+
           stripeSubscription = await createOrUpdateStripeSubscription(
             customerId,
             planCycle,
             existingSubscription?.stripe_subscription_id || club.stripe_subscription_id
           );
-          
+
           console.log('Stripe subscription created/updated:', stripeSubscription.id);
 
-        // Mettre à jour ou créer l'abonnement dans la table subscriptions
-        const subscriptionData: any = {
-          status: 'active',
-          plan_cycle: planCycle,
-          current_period_start: existingSubscription?.current_period_start || now.toISOString(),
-          current_period_end: newPeriodEnd.toISOString(),
-          next_renewal_at: newPeriodEnd.toISOString(),
-          stripe_customer_id: customerId,
-          stripe_subscription_id: stripeSubscription.id,
-          cancel_at_period_end: false, // Réactiver l'abonnement si il était annulé
-        };
-
-        console.log('Updating subscriptions table with:', subscriptionData);
-
-        if (existingSubscription) {
-          const { error: updateSubError } = await supabaseAdmin
-            .from('subscriptions')
-            .update(subscriptionData)
-            .eq('id', existingSubscription.id);
-          
-          if (updateSubError) {
-            console.error('Error updating subscription:', updateSubError);
-            throw new Error(`Failed to update subscription: ${updateSubError.message}`);
-          }
-          console.log('Subscription updated successfully');
-        } else {
-          const { error: insertSubError } = await supabaseAdmin.from('subscriptions').insert({
-            club_id: clubId,
-            ...subscriptionData,
-          });
-          
-          if (insertSubError) {
-            console.error('Error inserting subscription:', insertSubError);
-            throw new Error(`Failed to create subscription: ${insertSubError.message}`);
-          }
-          console.log('Subscription created successfully');
-        }
-
-        // Mettre à jour clubs pour compatibilité
-        console.log('Updating clubs table...');
-        const { error: updateClubError } = await supabaseAdmin
-          .from('clubs')
-          .update({
+          // Mettre à jour ou créer l'abonnement dans la table subscriptions
+          const subscriptionData: any = {
+            status: 'active',
+            plan_cycle: planCycle,
+            current_period_start: existingSubscription?.current_period_start || now.toISOString(),
+            current_period_end: newPeriodEnd.toISOString(),
+            next_renewal_at: newPeriodEnd.toISOString(),
             stripe_customer_id: customerId,
             stripe_subscription_id: stripeSubscription.id,
-            subscription_status: 'active',
-            selected_plan: planCycle,
-            subscription_started_at: now.toISOString(),
-          })
-          .eq('id', clubId);
-        
-        if (updateClubError) {
-          console.error('Error updating club:', updateClubError);
-          throw new Error(`Failed to update club: ${updateClubError.message}`);
-        }
-        console.log('Club updated successfully');
+            cancel_at_period_end: false, // Réactiver l'abonnement si il était annulé
+          };
 
-        newValue = {
-          status: 'active',
-          plan_cycle: planCycle,
-          current_period_end: newPeriodEnd.toISOString(),
-          stripe_subscription_id: stripeSubscription.id,
-        };
+          console.log('Updating subscriptions table with:', subscriptionData);
 
-          actionDescription = action === 'add_1_month' 
+          if (existingSubscription) {
+            const { error: updateSubError } = await supabaseAdmin
+              .from('subscriptions')
+              .update(subscriptionData)
+              .eq('id', existingSubscription.id);
+
+            if (updateSubError) {
+              console.error('Error updating subscription:', updateSubError);
+              throw new Error(`Failed to update subscription: ${updateSubError.message}`);
+            }
+            console.log('Subscription updated successfully');
+          } else {
+            const { error: insertSubError } = await supabaseAdmin.from('subscriptions').insert({
+              club_id: clubId,
+              ...subscriptionData,
+            });
+
+            if (insertSubError) {
+              console.error('Error inserting subscription:', insertSubError);
+              throw new Error(`Failed to create subscription: ${insertSubError.message}`);
+            }
+            console.log('Subscription created successfully');
+          }
+
+          // Mettre à jour clubs pour compatibilité
+          console.log('Updating clubs table...');
+          const { error: updateClubError } = await supabaseAdmin
+            .from('clubs')
+            .update({
+              stripe_customer_id: customerId,
+              stripe_subscription_id: stripeSubscription.id,
+              subscription_status: 'active',
+              selected_plan: planCycle,
+              subscription_started_at: now.toISOString(),
+            })
+            .eq('id', clubId);
+
+          if (updateClubError) {
+            console.error('Error updating club:', updateClubError);
+            throw new Error(`Failed to update club: ${updateClubError.message}`);
+          }
+          console.log('Club updated successfully');
+
+          newValue = {
+            status: 'active',
+            plan_cycle: planCycle,
+            current_period_end: newPeriodEnd.toISOString(),
+            stripe_subscription_id: stripeSubscription.id,
+          };
+
+          actionDescription = action === 'add_1_month'
             ? 'Ajout de 1 mois d\'abonnement'
-            : action === 'add_3_months'
-            ? 'Ajout de 3 mois d\'abonnement'
             : 'Ajout de 1 an d\'abonnement';
         } catch (subscriptionError) {
           console.error('Error in subscription action:', subscriptionError);
@@ -544,8 +539,8 @@ export async function PATCH(
       admin_name: insertedAction.admin_profiles?.display_name || insertedAction.admin_profiles?.email || 'Admin',
     } : null;
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       subscription: newValue,
       stripe_subscription_id: stripeSubscription?.id,
       action_logged: !logError, // Indiquer si l'action a été loggée
@@ -555,14 +550,14 @@ export async function PATCH(
     console.error('Unexpected error in subscription API:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     console.error('Error details:', {
       message: errorMessage,
       stack: errorStack,
       name: error instanceof Error ? error.name : undefined,
     });
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       error: 'Internal Server Error',
       details: process.env.NODE_ENV === 'development' ? errorMessage : 'Une erreur est survenue lors de la mise à jour de l\'abonnement',
       stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,

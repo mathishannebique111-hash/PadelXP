@@ -14,8 +14,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
   : null;
 
 export const dynamic = 'force-dynamic';
@@ -73,21 +73,21 @@ export async function POST(req: NextRequest) {
     let subscriptionId: string | null = null;
     let customerId: string | null = null;
     let priceId: string | null = null;
-    let planCycle: 'monthly' | 'quarterly' | 'annual' | null = null;
+    let planCycle: 'monthly' | 'annual' | null = null;
 
     if (session.subscription && typeof session.subscription === 'string') {
       subscriptionId = session.subscription;
       const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
       customerId = typeof stripeSubscription.customer === 'string' ? stripeSubscription.customer : stripeSubscription.customer.id;
-      
+
       // Déterminer le cycle du plan
       if (stripeSubscription.items.data.length > 0) {
         priceId = stripeSubscription.items.data[0].price.id;
         const interval = stripeSubscription.items.data[0].price.recurring?.interval;
         const intervalCount = stripeSubscription.items.data[0].price.recurring?.interval_count || 1;
-        
+
         if (interval === 'month') {
-          planCycle = intervalCount === 1 ? 'monthly' : intervalCount === 3 ? 'quarterly' : 'monthly';
+          planCycle = 'monthly';
         } else if (interval === 'year') {
           planCycle = 'annual';
         }
@@ -104,18 +104,18 @@ export async function POST(req: NextRequest) {
         // Le premier paiement sera après trial_end
         const trialEnd = new Date(stripeSubscription.trial_end * 1000);
         currentPeriodStart = trialEnd;
-        
+
         // Calculer current_period_end selon le cycle du plan
         const interval = stripeSubscription.items.data[0]?.price?.recurring?.interval;
         const intervalCount = stripeSubscription.items.data[0]?.price?.recurring?.interval_count || 1;
-        
+
         currentPeriodEnd = new Date(trialEnd);
         if (interval === 'month') {
           currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + intervalCount);
         } else if (interval === 'year') {
           currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + intervalCount);
         }
-        
+
         nextRenewal = new Date(currentPeriodEnd);
       } else {
         // Abonnement actif normal
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       subscriptionId,
       customerId,

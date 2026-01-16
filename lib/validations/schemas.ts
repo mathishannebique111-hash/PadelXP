@@ -8,7 +8,7 @@ export const ReferralSchema = z.object({
 
 // 2. Billing update
 export const BillingUpdateSchema = z.object({
-  plan: z.enum(["monthly", "quarterly", "annual"]),
+  plan: z.enum(["monthly", "annual"]),
   clubId: z.string().uuid(),
 });
 

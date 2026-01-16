@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const supabase = await createClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       logger.warn("[ClubMessagesSend] Pas d'utilisateur connecté", { error: authError });
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -31,8 +31,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Message vide" }, { status: 400 });
     }
 
-    // Vérifier si l'utilisateur est admin
-    const { data: profile, error: profileError } = await supabase
+    // Initialiser le client Admin pour les opérations privilégiées (contournement RLS)
+    const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Vérifier si l'utilisateur est admin via le client Admin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('is_admin, club_id')
       .eq('id', user.id)
@@ -45,34 +58,20 @@ export async function POST(request: Request) {
 
     const isAdmin = profile?.is_admin || false;
 
-    // Récupérer le club_id UUID depuis profiles OU club_admins
+    // Récupérer le club_id UUID depuis profiles OU club_admins via le client Admin
     let clubId: string | null = profile?.club_id || null;
-    
-    // Si pas de club_id dans profiles, chercher dans club_admins et convertir en UUID
+
+    // Si pas de club_id dans profiles, chercher dans club_admins
     if (!clubId) {
-      const { data: adminEntry } = await supabase
+      const { data: adminEntry } = await supabaseAdmin
         .from('club_admins')
         .select('club_id')
         .eq('user_id', user.id)
+        .limit(1)
         .maybeSingle();
-      
+
       if (adminEntry?.club_id) {
-        // club_admins.club_id peut être TEXT (slug ou UUID en texte)
-        // Chercher le club correspondant pour obtenir son UUID
-        const { data: clubs } = await supabase
-          .from('clubs')
-          .select('id')
-          .or(`id.eq.${adminEntry.club_id},slug.eq.${adminEntry.club_id}`);
-        
-        if (clubs && clubs.length > 0) {
-          clubId = clubs[0].id;
-        } else {
-          // Si pas trouvé par id ou slug, vérifier si c'est déjà un UUID valide
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          if (uuidRegex.test(adminEntry.club_id)) {
-            clubId = adminEntry.club_id;
-          }
-        }
+        clubId = adminEntry.club_id;
       }
     }
 
@@ -104,7 +103,7 @@ export async function POST(request: Request) {
       if (!conversation) {
         let newConv;
         let createError;
-        
+
         const createResult = await supabase
           .from('club_conversations')
           .insert({
@@ -125,17 +124,7 @@ export async function POST(request: Request) {
             userId: user.id.substring(0, 8)
           });
 
-          const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-          const adminSupabase = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!,
-            {
-              auth: {
-                autoRefreshToken: false,
-                persistSession: false,
-              },
-            }
-          ) as any;
+          const adminSupabase = supabaseAdmin;
 
           const retryResult = await adminSupabase
             .from('club_conversations')
@@ -151,14 +140,14 @@ export async function POST(request: Request) {
         }
 
         if (createError) {
-          logger.error("[ClubMessagesSend] Erreur création conversation", { 
+          logger.error("[ClubMessagesSend] Erreur création conversation", {
             error: createError,
             errorCode: createError.code,
             errorMessage: createError.message,
             clubId: clubId.substring(0, 8),
             userId: user.id.substring(0, 8)
           });
-          return NextResponse.json({ 
+          return NextResponse.json({
             error: "Erreur lors de la création de la conversation",
             details: createError.message,
             code: createError.code
@@ -185,25 +174,15 @@ export async function POST(request: Request) {
 
     // Pour les admins, utiliser le service role key pour contourner RLS si nécessaire
     let insertSupabase = supabase;
-    
+
     if (isAdmin) {
-      const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-      insertSupabase = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        }
-      ) as any;
+      insertSupabase = supabaseAdmin as any;
     }
 
     // Insérer le message dans club_messages
     let message;
     let msgError;
-    
+
     const insertResult = await insertSupabase
       .from('club_messages')
       .insert({
@@ -227,17 +206,7 @@ export async function POST(request: Request) {
         clubId: clubId?.substring(0, 8),
       });
 
-      const { createClient: createAdminClient } = await import("@supabase/supabase-js");
-      const adminSupabase = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        }
-      ) as any;
+      const adminSupabase = supabaseAdmin;
 
       const retryResult = await adminSupabase
         .from('club_messages')
@@ -265,9 +234,9 @@ export async function POST(request: Request) {
         clubId: clubId?.substring(0, 8),
         userId: user.id.substring(0, 8),
       });
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: msgError.message || "Erreur lors de l'envoi du message",
-        code: msgError.code 
+        code: msgError.code
       }, { status: 500 });
     }
 
@@ -277,8 +246,8 @@ export async function POST(request: Request) {
       isAdmin,
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message,
       conversation_id: conversationId // Inclure l'ID de conversation dans la réponse
     });

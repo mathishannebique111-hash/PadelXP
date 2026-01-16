@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
 
 interface NewSubscriptionCheckoutButtonProps {
-  plan: 'monthly' | 'quarterly' | 'annual';
+  plan: 'monthly' | 'annual';
   disabled?: boolean;
   className?: string;
   children: React.ReactNode;

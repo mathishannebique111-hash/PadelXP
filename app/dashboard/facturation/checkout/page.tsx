@@ -10,9 +10,9 @@ import PageTitle from '../../PageTitle';
 import { logger } from '@/lib/logger';
 
 // Récupérer la clé publique Stripe (supporte les deux noms de variables)
-const stripePublishableKey = 
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 
-  process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || 
+const stripePublishableKey =
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY ||
   '';
 
 if (!stripePublishableKey) {
@@ -98,7 +98,7 @@ function CheckoutForm({ subscriptionId, plan, trialEndDate, clientSecret, isSetu
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
-      
+
       {error && (
         <div className="bg-red-500/20 border border-red-400/50 rounded-lg p-4 text-red-300 text-sm">
           {error}
@@ -252,7 +252,7 @@ function CheckoutContent() {
           {/* Résumé */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-4">Résumé de votre abonnement</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <div className="text-white/60 text-sm mb-1">Plan sélectionné</div>
@@ -265,7 +265,7 @@ function CheckoutContent() {
                   {getMonthlyPrice(plan)}€/mois
                   {plan !== 'monthly' && (
                     <span className="text-white/60 text-sm ml-2">
-                      ({getTotalPrice(plan)}€ {plan === 'quarterly' ? 'tous les 3 mois' : 'par an'})
+                      ({getTotalPrice(plan)}€ par an)
                     </span>
                   )}
                 </div>
@@ -316,7 +316,7 @@ function CheckoutContent() {
           {/* Formulaire de paiement */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-4">Méthode de paiement</h3>
-            
+
             {!stripePublishableKey ? (
               <div className="bg-red-500/20 border border-red-400/50 rounded-lg p-4 text-red-300">
                 <p className="font-semibold mb-2">Erreur de configuration</p>

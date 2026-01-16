@@ -17,8 +17,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
   : null;
 
 async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
@@ -55,14 +55,14 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
     let customerId: string | null = null;
 
     if (session.subscription) {
-      subscriptionId = typeof session.subscription === 'string' 
-        ? session.subscription 
+      subscriptionId = typeof session.subscription === 'string'
+        ? session.subscription
         : session.subscription.id;
     }
 
     if (session.customer) {
-      customerId = typeof session.customer === 'string' 
-        ? session.customer 
+      customerId = typeof session.customer === 'string'
+        ? session.customer
         : session.customer.id;
     }
 
@@ -78,16 +78,16 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
 
     // Récupérer l'abonnement Stripe complet
     const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-    
+
     // Déterminer le cycle du plan
-    let planCycle: 'monthly' | 'quarterly' | 'annual' | null = null;
+    let planCycle: 'monthly' | 'annual' | null = null;
     if (stripeSubscription.items.data.length > 0) {
       const price = stripeSubscription.items.data[0].price;
       const interval = price.recurring?.interval;
       const intervalCount = price.recurring?.interval_count || 1;
-      
+
       if (interval === 'month') {
-        planCycle = intervalCount === 1 ? 'monthly' : intervalCount === 3 ? 'quarterly' : 'monthly';
+        planCycle = 'monthly';
       } else if (interval === 'year') {
         planCycle = 'annual';
       }
@@ -100,37 +100,37 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
       });
     }
 
-      // Dates importantes
-      // Si l'abonnement est en période d'essai, utiliser trial_end comme current_period_start
-      // Sinon, utiliser current_period_start normal
-      let currentPeriodStart: Date;
-      let currentPeriodEnd: Date;
-      let nextRenewal: Date;
+    // Dates importantes
+    // Si l'abonnement est en période d'essai, utiliser trial_end comme current_period_start
+    // Sinon, utiliser current_period_start normal
+    let currentPeriodStart: Date;
+    let currentPeriodEnd: Date;
+    let nextRenewal: Date;
 
-      if (stripeSubscription.status === 'trialing' && stripeSubscription.trial_end) {
-        // L'abonnement est en période d'essai Stripe
-        // Le premier paiement sera après trial_end
-        const trialEnd = new Date(stripeSubscription.trial_end * 1000);
-        currentPeriodStart = trialEnd;
-        
-        // Calculer current_period_end selon le cycle du plan
-        const interval = stripeSubscription.items.data[0]?.price?.recurring?.interval;
-        const intervalCount = stripeSubscription.items.data[0]?.price?.recurring?.interval_count || 1;
-        
-        currentPeriodEnd = new Date(trialEnd);
-        if (interval === 'month') {
-          currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + intervalCount);
-        } else if (interval === 'year') {
-          currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + intervalCount);
-        }
-        
-        nextRenewal = new Date(currentPeriodEnd);
-      } else {
-        // Abonnement actif normal
-        currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
-        currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
-        nextRenewal = new Date(stripeSubscription.current_period_end * 1000);
+    if (stripeSubscription.status === 'trialing' && stripeSubscription.trial_end) {
+      // L'abonnement est en période d'essai Stripe
+      // Le premier paiement sera après trial_end
+      const trialEnd = new Date(stripeSubscription.trial_end * 1000);
+      currentPeriodStart = trialEnd;
+
+      // Calculer current_period_end selon le cycle du plan
+      const interval = stripeSubscription.items.data[0]?.price?.recurring?.interval;
+      const intervalCount = stripeSubscription.items.data[0]?.price?.recurring?.interval_count || 1;
+
+      currentPeriodEnd = new Date(trialEnd);
+      if (interval === 'month') {
+        currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + intervalCount);
+      } else if (interval === 'year') {
+        currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + intervalCount);
       }
+
+      nextRenewal = new Date(currentPeriodEnd);
+    } else {
+      // Abonnement actif normal
+      currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
+      currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+      nextRenewal = new Date(stripeSubscription.current_period_end * 1000);
+    }
 
     // Récupérer l'abonnement existant du club
     const { data: existingSubscription, error: fetchError } = await supabaseAdmin
@@ -149,7 +149,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
 
     if (existingSubscription) {
       logger.info('[SuccessPage] Updating existing subscription:', existingSubscription.id);
-      
+
       // Mettre à jour l'abonnement existant
       const { error: updateError } = await supabaseAdmin
         .from('subscriptions')
@@ -178,7 +178,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
       }
     } else {
       logger.info('[SuccessPage] Creating new subscription for club:', clubId);
-      
+
       // Créer un nouvel abonnement
       const { error: insertError } = await supabaseAdmin
         .from('subscriptions')
@@ -218,7 +218,7 @@ async function verifyAndUpdateSubscription(sessionId: string, clubId: string) {
 async function SuccessContent({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   const params = await searchParams;
   const sessionId = params?.session_id;
-  
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -227,7 +227,7 @@ async function SuccessContent({ searchParams }: { searchParams: Promise<{ sessio
   }
 
   let updateSuccess = false;
-  
+
   // Si on a un session_id, vérifier et mettre à jour l'abonnement
   if (sessionId) {
     const { clubId } = await getUserClubInfo();

@@ -13,11 +13,12 @@ import { redirect } from "next/navigation";
 import CancelSubscriptionButton from "@/components/billing/CancelSubscriptionButton";
 import ReactivateSubscriptionButton from "@/components/billing/ReactivateSubscriptionButton";
 import SubscriptionConfirmationBanner from "@/components/billing/SubscriptionConfirmationBanner";
+import GracePeriodTimer from "@/components/billing/GracePeriodTimer";
 import { logger } from '@/lib/logger';
 import { AlertTriangle, Clock, CreditCard, ClipboardList, Info, Check } from 'lucide-react';
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
-type PlanType = "monthly" | "quarterly" | "annual" | null;
+type PlanType = "monthly" | "annual" | null;
 
 // Forcer le rechargement dynamique pour éviter le cache
 export const dynamic = 'force-dynamic';
@@ -134,7 +135,21 @@ export default async function BillingPage() {
 
   const daysRemaining = calculateDaysRemaining(trialEndDate?.toISOString() || null);
   const isTrialActive = daysRemaining !== null && daysRemaining > 0;
-  const isTrialExpired = daysRemaining !== null && daysRemaining === 0;
+  /*
+   * PÉRIODE DE GRÂCE (48h après la fin de l'essai)
+   * On considère que l'essai est "fini mais en grâce" si daysRemaining == 0 (ou < 0)
+   * et que moins de 48h se sont écoulées depuis le trialEndDate.
+   */
+  const msSinceTrialEnd = trialEndDate ? Date.now() - trialEndDate.getTime() : 0;
+  // 48h en ms = 48 * 60 * 60 * 1000 = 172800000
+  const isGracePeriod =
+    !isTrialActive &&
+    trialEndDate &&
+    msSinceTrialEnd >= 0 &&
+    msSinceTrialEnd < 172800000;
+
+  const isTrialFullyExpired = !isTrialActive && !isGracePeriod;
+
   const showWarning = isTrialActive && daysRemaining <= 10;
 
   // Calculer le nombre total de jours d'essai (14 ou 30 selon l'extension)
@@ -214,13 +229,13 @@ export default async function BillingPage() {
     } else if (newSubscriptionStatus === "past_due") {
       subscriptionStatus = "payment_failed";
     } else if (newSubscriptionStatus === "trial_expired") {
-      subscriptionStatus = "trial_expired";
+      subscriptionStatus = isGracePeriod ? "trial_active" : "trial_expired";
     }
   } else if (isTrialActive) {
     // Fallback sur l'ancien système
     subscriptionStatus = "trial_active";
-  } else if (isTrialExpired && !subscription) {
-    subscriptionStatus = "trial_expired";
+  } else if ((isTrialFullyExpired || isGracePeriod) && !subscription) {
+    subscriptionStatus = isGracePeriod ? "trial_active" : "trial_expired";
   } else if (subscription) {
     if (subscription.status === "scheduled_activation") {
       subscriptionStatus = "payment_pending";
@@ -228,8 +243,8 @@ export default async function BillingPage() {
       subscriptionStatus = "active";
     } else if (subscription.status === "canceled") {
       subscriptionStatus = "cancelled";
-    } else if (subscription.status === "trialing" && isTrialExpired) {
-      subscriptionStatus = "trial_expired";
+    } else if (subscription.status === "trialing" && (isTrialFullyExpired || isGracePeriod)) {
+      subscriptionStatus = isGracePeriod ? "trial_active" : "trial_expired";
     }
   }
 
@@ -337,11 +352,7 @@ export default async function BillingPage() {
 
   // Calculer les prix automatiquement
   const MONTHLY_PRICE = 79;
-  const QUARTERLY_DISCOUNT = 0.10; // 10%
   const ANNUAL_DISCOUNT = 0.15; // 15%
-
-  const quarterlyMonthlyPrice = 71; // 71€/mois
-  const quarterlyTotalPrice = 237; // 237€ pour 3 mois
 
   const annualMonthlyPrice = 67; // 67€/mois
   const annualTotalPrice = 804; // 804€ par an
@@ -358,9 +369,7 @@ export default async function BillingPage() {
   const scheduledPlanLabel: string | null = subscription?.plan_cycle
     ? subscription.plan_cycle === "monthly"
       ? "abonnement mensuel"
-      : subscription.plan_cycle === "quarterly"
-        ? "abonnement trimestriel"
-        : "abonnement annuel"
+      : "abonnement annuel"
     : null;
 
   const formatDate = (date: Date | null): string => {
@@ -374,7 +383,6 @@ export default async function BillingPage() {
 
   // Price IDs (Stripe) depuis variables d'environnement publiques
   const PRICE_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "";
-  const PRICE_QUARTERLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_QUARTERLY || "";
   const PRICE_ANNUAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || "";
 
   return (
@@ -397,297 +405,6 @@ export default async function BillingPage() {
         {/* Bannière de confirmation */}
         <SubscriptionConfirmationBanner />
 
-        {/* Bandeau Essai */}
-        <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-gradient-to-br from-blue-500/10 via-indigo-600/5 to-purple-600/10 p-4 sm:p-5 md:p-6">
-          <div className="flex items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-base sm:text-lg md:text-xl font-extrabold text-white mb-1">
-                {/* Afficher "Abonnement actif" si le club a un abonnement actif ou a choisi un plan après l'essai, sinon "Essai gratuit" */}
-                {newSubscriptionStatus === "active" || (club?.selected_plan && isTrialExpired) ? (
-                  <>
-                    <span className="block sm:inline">
-                      Abonnement {currentPlan === "monthly" ? "mensuel" : currentPlan === "quarterly" ? "trimestriel" : currentPlan === "annual" ? "annuel" : ""}
-                    </span>{" "}
-                    <span className="ml-0 sm:ml-2 mt-1 sm:mt-0 inline-block align-middle rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold border-emerald-400/50 bg-emerald-500/20 text-emerald-300">
-                      {newSubscriptionStatus === "active" ? "Actif" : "En cours d'activation"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="block sm:inline">Essai gratuit — {totalTrialDays} jours</span>{" "}
-                    {isTrialActive && daysRemaining !== null && (
-                      <span className={`ml-0 sm:ml-2 mt-1 sm:mt-0 inline-block align-middle rounded-full border px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold ${showWarning
-                        ? "border-orange-400/50 bg-orange-500/20 text-orange-300"
-                        : "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
-                        }`}>
-                        {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </>
-                )}
-              </h2>
-            </div>
-            {/* Afficher l'icône appropriée selon le statut */}
-            {newSubscriptionStatus === "active" || (club?.selected_plan && isTrialExpired) ? (
-              <div className="flex-shrink-0">
-                <Image src="/images/Facturation et essai club.png" alt="Abonnement" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 object-contain" />
-              </div>
-            ) : isTrialActive && (
-              <div className="flex-shrink-0">
-                <Image src="/images/Cadeau accueil club.png" alt="Cadeau" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 object-contain" />
-              </div>
-            )}
-          </div>
-
-          {/* Afficher les informations selon le statut */}
-          {newSubscriptionStatus === "active" || (club?.selected_plan && isTrialExpired) ? (
-            // Abonnement actif ou plan choisi après l'essai
-            <div className="space-y-2 sm:space-y-3">
-              <p className="text-xs sm:text-sm text-white/80">
-                {newSubscriptionStatus === "active"
-                  ? "Votre abonnement est actif et vous donne accès à toutes les fonctionnalités de la plateforme."
-                  : "Votre abonnement a été choisi et sera activé prochainement. Vous avez accès à toutes les fonctionnalités de la plateforme."
-                }
-              </p>
-            </div>
-          ) : isTrialActive ? (
-            // Essai actif
-            <div className="space-y-2 sm:space-y-3">
-              <p className="text-xs sm:text-sm text-white/80">
-                {showWarning
-                  ? `Votre essai se termine dans ${daysRemaining} jour${daysRemaining > 1 ? "s" : ""}. Choisissez une offre pour continuer à utiliser la plateforme après le ${formatDate(trialEndDate)}.`
-                  : `Votre essai gratuit se termine le ${formatDate(trialEndDate)}.`}
-              </p>
-
-              {hasScheduledActivation && scheduledStartDate && (
-                <div className="rounded-lg border border-emerald-400/50 bg-emerald-500/15 p-2.5 sm:p-3">
-                  <p className="text-xs text-emerald-200">
-                    {`Vous avez déjà choisi un ${scheduledPlanLabel ?? "abonnement"}. Il sera activé automatiquement le ${formatDate(
-                      scheduledStartDate
-                    )}, à la fin de votre période d'essai gratuite. Vous ne serez prélevé qu'à partir de cette date.`}
-                  </p>
-                </div>
-              )}
-
-              {showWarning && (
-                <div className="rounded-lg border border-orange-400/40 bg-orange-500/10 p-2.5 sm:p-3">
-                  <p className="text-xs text-orange-200 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-orange-300 flex-shrink-0" />
-                    <span>Votre essai se termine bientôt. Sélectionnez une offre pour continuer sans interruption.</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : isTrialExpired ? (
-            // Essai expiré
-            <div className="space-y-2 sm:space-y-3">
-              <div className="flex items-start gap-3 sm:gap-4">
-                <Clock className="w-8 h-8 sm:w-10 sm:h-10 text-rose-300 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm text-rose-200/90 mb-2 sm:mb-3">
-                    Votre période d'essai est terminée. Sélectionnez une offre ci-dessous pour continuer à utiliser la plateforme.
-                  </p>
-                  <button className="inline-flex items-center gap-2 rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-green-600 border border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-100 transition-all duration-300">
-                    <ClipboardList className="w-4 h-4 inline mr-1" />
-                    <span>Choisir une offre pour continuer</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Pas d'essai
-            <div className="flex items-start gap-3 sm:gap-4">
-              <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 text-white/70 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm text-white/80">
-                  Profitez de {totalTrialDays} jours d'essai gratuit pour découvrir toutes les fonctionnalités.
-                </p>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Cartes Offres */}
-        <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
-          <div className="mb-4 sm:mb-5 md:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-1">Choisissez l'offre qui vous convient</h2>
-            <p className="text-xs sm:text-sm text-white/60">Les réductions s'appliquent automatiquement.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-            {/* Mensuel */}
-            {/*
-            Plan actuel n'apparaît que si l'abonnement est réellement actif (ou paiement en attente).
-          */}
-            <div
-              className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled
-                ? "border-white/70 bg-gradient-to-br from-white/20 via-slate-100/10 to-white/20 shadow-[0_10px_35px_rgba(255,255,255,0.25)]"
-                : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
-                }`}
-            >
-              {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled && (
-                <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                  <span className="rounded-full border-2 border-white/80 bg-gradient-to-r from-white to-slate-200 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-slate-800 shadow-lg">
-                    <Check className="w-3 h-3 inline mr-1" /> Plan actuel
-                  </span>
-                </div>
-              )}
-              <div className="mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl font-extrabold text-white">Mensuel</h3>
-              </div>
-              <div className="mb-4 sm:mb-5">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-white">{MONTHLY_PRICE}€</span>
-                  <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
-                </div>
-              </div>
-              <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-                <div className="flex items-center">
-                  <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
-                  <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation mensuelle</div>
-                </div>
-              </div>
-              {isTrialActive && !hasChosenPlan ? (
-                <NewSubscriptionCheckoutButton
-                  plan="monthly"
-                  disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </NewSubscriptionCheckoutButton>
-              ) : (
-                <StripeCheckoutButton
-                  priceId={PRICE_MONTHLY}
-                  mode="subscription"
-                  disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </StripeCheckoutButton>
-              )}
-            </div>
-
-            {/* Trimestriel */}
-            <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled
-              ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
-              : "border-emerald-400/60 bg-gradient-to-br from-emerald-500/15 via-green-600/10 to-emerald-500/15 shadow-[0_12px_40px_rgba(16,185,129,0.3)]"
-              }`}>
-              {currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled && (
-                <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                  <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                    <Check className="w-3 h-3 inline mr-1" /> Plan actuel
-                  </span>
-                </div>
-              )}
-              <div className="mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl font-extrabold text-white">Trimestriel</h3>
-              </div>
-              <div className="mb-4 sm:mb-5">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-white">{Math.round(quarterlyMonthlyPrice)}€</span>
-                  <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
-                </div>
-                <div className="text-[10px] sm:text-xs text-white/60 mt-0.5 sm:mt-1">
-                  {Math.round(quarterlyTotalPrice)}€ tous les 3 mois
-                </div>
-              </div>
-              <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-                <div className="text-xs sm:text-sm text-emerald-300 font-extrabold">Économisez {Math.round((1 - quarterlyMonthlyPrice / MONTHLY_PRICE) * 100)}% par rapport à l'offre mensuelle</div>
-                <div className="flex items-center">
-                  <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
-                  <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation tous les 3 mois</div>
-                </div>
-              </div>
-              {isTrialActive && !hasChosenPlan ? (
-                <NewSubscriptionCheckoutButton
-                  plan="quarterly"
-                  disabled={((currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_QUARTERLY}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_QUARTERLY
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-2 border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_28px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </NewSubscriptionCheckoutButton>
-              ) : (
-                <StripeCheckoutButton
-                  priceId={PRICE_QUARTERLY}
-                  mode="subscription"
-                  disabled={((currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_QUARTERLY}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_QUARTERLY
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-2 border-emerald-400/50 shadow-[0_6px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_28px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "quarterly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </StripeCheckoutButton>
-              )}
-            </div>
-
-            {/* Annuel */}
-            <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled
-              ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
-              : "border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]"
-              }`}>
-              {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled && (
-                <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                  <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                    <Check className="w-3 h-3 inline mr-1" /> Plan actuel
-                  </span>
-                </div>
-              )}
-              <div className="mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl font-extrabold text-white">Annuel</h3>
-              </div>
-              <div className="mb-4 sm:mb-5">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-white">{Math.round(annualMonthlyPrice)}€</span>
-                  <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
-                </div>
-                <div className="text-[10px] sm:text-xs text-white/60 mt-0.5 sm:mt-1">
-                  {Math.round(annualTotalPrice)}€ par an
-                </div>
-              </div>
-              <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-                <div className="text-xs sm:text-sm text-yellow-300 font-extrabold">Économisez {Math.round((1 - annualMonthlyPrice / MONTHLY_PRICE) * 100)}% par rapport à l'offre mensuelle</div>
-                <div className="flex items-center">
-                  <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
-                  <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation annuelle</div>
-                </div>
-              </div>
-              {isTrialActive && !hasChosenPlan ? (
-                <NewSubscriptionCheckoutButton
-                  plan="annual"
-                  disabled={((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </NewSubscriptionCheckoutButton>
-              ) : (
-                <StripeCheckoutButton
-                  priceId={PRICE_ANNUAL}
-                  mode="subscription"
-                  disabled={((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </StripeCheckoutButton>
-              )}
-            </div>
-          </div>
-        </section>
 
         {/* Bloc Statut d'Abonnement */}
         <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
@@ -728,12 +445,18 @@ export default async function BillingPage() {
                       Essai expiré
                     </span>
                   )}
+                  {/* Cas spécial : Période de grâce (48h) */}
+                  {!isCanceled && isGracePeriod && !hasChosenPlan && !hasChosenPlanDuringTrial && (
+                    <span className="rounded-full border border-red-500 bg-red-500/20 px-3 py-1 text-sm font-bold text-red-400 animate-pulse">
+                      Action requise
+                    </span>
+                  )}
                   {!isCanceled && subscriptionStatus === "active" && (
                     <span className="rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-300">
                       Abonnement actif
                       {currentPlan && (
                         <span className="ml-2 text-xs">
-                          ({currentPlan === "monthly" ? "Mensuel" : currentPlan === "quarterly" ? "Trimestriel" : currentPlan === "annual" ? "Annuel" : ""})
+                          ({currentPlan === "monthly" ? "Mensuel" : "Annuel"})
                         </span>
                       )}
                     </span>
@@ -778,10 +501,20 @@ export default async function BillingPage() {
             {/* Échéance / Expiration */}
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <div className="text-xs text-white/60 mb-1">
-                {/* Si annulé pendant l'essai : afficher "Votre abonnement expire dans" (car on garde l'accès jusqu'à la fin de l'abonnement) */}
+                {/* Si annulé pendant l'essai : afficher "Votre abonnement expire dans" */}
+                {/* Si période de grâce : Message urgent */}
+                {/* Si essai actif avec plan choisi : Message spécifique transition */}
                 {/* Sinon, si essai actif : afficher "Votre essai expire dans" */}
                 {/* Si annulé après l'essai : afficher "Votre abonnement expire dans" */}
-                {isCanceled && isTrialActive ? "Votre abonnement expire dans" : isTrialActive ? "Votre essai expire dans" : "Votre abonnement expire dans"}
+                {isCanceled && isTrialActive
+                  ? "Votre abonnement expire dans"
+                  : isGracePeriod && !hasChosenPlan && !hasChosenPlanDuringTrial
+                    ? "Choisir un abonnement avant la coupure de vos accès"
+                    : isTrialActive && (hasChosenPlan || hasChosenPlanDuringTrial)
+                      ? "Temps restant avant le début de votre abonnement"
+                      : isTrialActive
+                        ? "Votre essai expire dans"
+                        : "Votre abonnement expire dans"}
               </div>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
@@ -809,6 +542,16 @@ export default async function BillingPage() {
                         </div>
                       );
                     })()
+                  ) : isGracePeriod && !hasChosenPlan && !hasChosenPlanDuringTrial && trialEndDate ? (
+                    // Affichage Période de Grâce 48h
+                    <div className="space-y-2">
+                      <div className="text-xl sm:text-2xl text-white">
+                        <GracePeriodTimer trialEndDate={trialEndDate} />
+                      </div>
+                      <p className="text-xs text-red-300 font-semibold">
+                        Attention : Veuillez choisir une offre maintenant pour éviter toute interruption de service.
+                      </p>
+                    </div>
                   ) : isTrialActive && daysRemaining !== null ? (
                     <div className="space-y-2">
                       <div className="text-sm text-white">
@@ -819,7 +562,9 @@ export default async function BillingPage() {
                       <p className="text-xs text-white/60">
                         {isCanceled
                           ? "Vous êtes en période d'essai. À l'issue de l'essai, l'accès sera interrompu car votre abonnement a été annulé."
-                          : "Vous êtes en période d'essai. À l'issue de l'essai, l'accès sera interrompu sauf activation d'un abonnement."
+                          : (hasChosenPlan || hasChosenPlanDuringTrial)
+                            ? "Votre essai est toujours actif. Votre abonnement prendra le relais automatiquement à la fin de cette période."
+                            : "Vous êtes en période d'essai. À l'issue de l'essai, l'accès sera interrompu sauf activation d'un abonnement."
                         }
                       </p>
                       {/* Afficher les infos d'abonnement seulement si pas annulé */}
@@ -920,6 +665,133 @@ export default async function BillingPage() {
           </div>
         </section>
 
+        {/* Cartes Offres */}
+        <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+          <div className="mb-4 sm:mb-5 md:mb-6">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-1">Choisissez l'offre qui vous convient</h2>
+            <p className="text-xs sm:text-sm text-white/60">Les réductions s'appliquent automatiquement.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
+            {/* Mensuel */}
+            {/*
+            Plan actuel n'apparaît que si l'abonnement est réellement actif (ou paiement en attente).
+          */}
+            <div
+              className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled
+                ? "border-white/70 bg-gradient-to-br from-white/20 via-slate-100/10 to-white/20 shadow-[0_10px_35px_rgba(255,255,255,0.25)]"
+                : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
+                }`}
+            >
+              {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled && (
+                <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                  <span className="rounded-full border-2 border-white/80 bg-gradient-to-r from-white to-slate-200 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-slate-800 shadow-lg">
+                    <Check className="w-3 h-3 inline mr-1" /> Plan actuel
+                  </span>
+                </div>
+              )}
+              <div className="mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-extrabold text-white">Mensuel</h3>
+              </div>
+              <div className="mb-4 sm:mb-5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-white">{MONTHLY_PRICE}€</span>
+                  <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
+                </div>
+              </div>
+              <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
+                <div className="flex items-center">
+                  <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
+                  <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation mensuelle</div>
+                </div>
+              </div>
+              {isTrialActive && !hasChosenPlan ? (
+                <NewSubscriptionCheckoutButton
+                  plan="monthly"
+                  disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
+                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
+                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
+                    }`}
+                >
+                  {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
+                </NewSubscriptionCheckoutButton>
+              ) : (
+                <StripeCheckoutButton
+                  priceId={PRICE_MONTHLY}
+                  mode="subscription"
+                  disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
+                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
+                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
+                    }`}
+                >
+                  {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
+                </StripeCheckoutButton>
+              )}
+            </div>
+
+
+
+            {/* Annuel */}
+            <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled
+              ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
+              : "border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]"
+              }`}>
+              {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled && (
+                <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                  <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
+                    <Check className="w-3 h-3 inline mr-1" /> Plan actuel
+                  </span>
+                </div>
+              )}
+              <div className="mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-extrabold text-white">Annuel</h3>
+              </div>
+              <div className="mb-4 sm:mb-5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-white">{Math.round(annualMonthlyPrice)}€</span>
+                  <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
+                </div>
+                <div className="text-[10px] sm:text-xs text-white/60 mt-0.5 sm:mt-1">
+                  {Math.round(annualTotalPrice)}€ par an
+                </div>
+              </div>
+              <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
+                <div className="text-xs sm:text-sm text-yellow-300 font-extrabold">Économisez {Math.round((1 - annualMonthlyPrice / MONTHLY_PRICE) * 100)}% par rapport à l'offre mensuelle</div>
+                <div className="flex items-center">
+                  <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
+                  <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation annuelle</div>
+                </div>
+              </div>
+              {isTrialActive && !hasChosenPlan ? (
+                <NewSubscriptionCheckoutButton
+                  plan="annual"
+                  disabled={((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL}
+                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL
+                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
+                    : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
+                    }`}
+                >
+                  {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
+                </NewSubscriptionCheckoutButton>
+              ) : (
+                <StripeCheckoutButton
+                  priceId={PRICE_ANNUAL}
+                  mode="subscription"
+                  disabled={((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL}
+                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL
+                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
+                    : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
+                    }`}
+                >
+                  {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
+                </StripeCheckoutButton>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* Infos de Facturation */}
         <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
           <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Informations de facturation</h2>
@@ -947,7 +819,7 @@ export default async function BillingPage() {
               <div className="rounded-xl border border-white/10 bg-blue-500/10 p-4">
                 <div className="text-xs text-white/60 mb-1">Prochaine échéance</div>
                 <div className="text-sm text-white">
-                  {formatDate(nextBillingDate)} — {currentPlan === "monthly" ? "Mensuel" : currentPlan === "quarterly" ? "Trimestriel" : "Annuel"}
+                  {formatDate(nextBillingDate)} — {currentPlan === "monthly" ? "Mensuel" : "Annuel"}
                 </div>
                 <div className="text-xs text-white/60 mt-1">Taxes applicables selon votre pays</div>
               </div>

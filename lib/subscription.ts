@@ -2,7 +2,7 @@
  * Types pour le système d'abonnement des clubs
  */
 
-export type PlanType = 'monthly' | 'quarterly' | 'annual';
+export type PlanType = 'monthly' | 'annual';
 
 export type SubscriptionStatus =
   | 'trialing'
@@ -68,8 +68,6 @@ export function formatPlanName(plan: PlanType): string {
   switch (plan) {
     case 'monthly':
       return 'Mensuel';
-    case 'quarterly':
-      return 'Trimestriel';
     case 'annual':
       return 'Annuel';
   }
@@ -82,8 +80,6 @@ export function getMonthlyPrice(plan: PlanType): number {
   switch (plan) {
     case 'monthly':
       return 99;
-    case 'quarterly':
-      return 89; // 99 * 0.9
     case 'annual':
       return 82; // 99 * 0.83
   }
@@ -96,8 +92,6 @@ export function getTotalPrice(plan: PlanType): number {
   switch (plan) {
     case 'monthly':
       return 99;
-    case 'quarterly':
-      return 267; // 89 * 3
     case 'annual':
       return 982; // 82 * 12 (arrondi)
   }
@@ -167,9 +161,6 @@ export function calculateCycleEndDate(startDate: Date, plan: PlanType): Date {
     case 'monthly':
       endDate.setMonth(endDate.getMonth() + 1);
       break;
-    case 'quarterly':
-      endDate.setMonth(endDate.getMonth() + 3);
-      break;
     case 'annual':
       endDate.setFullYear(endDate.getFullYear() + 1);
       break;
@@ -185,10 +176,7 @@ export function getStripePriceId(plan: PlanType): string {
   switch (plan) {
     case 'monthly':
       return process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || '';
-    case 'quarterly':
-      return process.env.NEXT_PUBLIC_STRIPE_PRICE_QUARTERLY || '';
     case 'annual':
       return process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || '';
   }
 }
-

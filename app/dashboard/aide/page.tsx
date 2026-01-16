@@ -5,7 +5,7 @@ import PageTitle from "../PageTitle";
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Send, MessageCircle } from "lucide-react";
-import { getAuthenticatedUserClubId } from "../actions";
+import { getAuthenticatedUserClubId, getOrCreateSupportConversation } from "../actions";
 
 interface Message {
   id: string;
@@ -81,26 +81,16 @@ export default function HelpPage() {
           .eq("club_id", clubId)
           .maybeSingle();
 
-        // Si pas de conversation, essayer de la créer directement
-        // Si ça échoue à cause de RLS, la conversation sera créée automatiquement par l'API lors du premier message
         if (!conv && isMounted) {
-          const { data: newConv, error: createError } = await supabase
-            .from("club_conversations")
-            .insert({
-              club_id: clubId,
-              status: "open",
-            })
-            .select()
-            .single();
-
-          if (createError) {
-            logger.warn("[ClubSupport] Impossible de créer la conversation côté client (RLS?). Elle sera créée lors du premier message.", {
-              error: createError.message,
-              clubId: clubId.substring(0, 8)
-            });
-            // On continue sans conversation, elle sera créée par l'API lors du premier envoi
-          } else if (newConv) {
-            conv = newConv;
+          try {
+            const result = await getOrCreateSupportConversation(clubId);
+            if (result.error) {
+              logger.warn("[ClubSupport] Erreur récupération/création conversation server-side:", result.error);
+            } else if (result.conversation) {
+              conv = result.conversation;
+            }
+          } catch (err) {
+            logger.error("[ClubSupport] Exception lors de l'appel getOrCreateSupportConversation:", err);
           }
         }
 

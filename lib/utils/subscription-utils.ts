@@ -14,7 +14,7 @@ export type SubscriptionStatus =
   | "canceled"
   | "past_due";
 
-export type PlanCycle = "monthly" | "quarterly" | "annual";
+export type PlanCycle = "monthly" | "annual";
 
 /**
  * Structure d'un abonnement
@@ -112,9 +112,7 @@ export function calculateNextRenewalAt(startDate: Date, cycle: PlanCycle): Date 
     case "monthly":
       next.setMonth(next.getMonth() + 1);
       break;
-    case "quarterly":
-      next.setMonth(next.getMonth() + 3);
-      break;
+
     case "annual":
       next.setFullYear(next.getFullYear() + 1);
       break;
@@ -130,8 +128,7 @@ export function getCycleDays(cycle: PlanCycle): number {
   switch (cycle) {
     case "monthly":
       return 30;
-    case "quarterly":
-      return 90;
+
     case "annual":
       return 365;
   }
@@ -159,16 +156,16 @@ export async function getClubSubscription(clubId: string): Promise<Subscription 
         code: error?.code || 'No code',
         clubId,
       };
-      
+
       // Essayer de stringify l'erreur complète pour voir toutes les propriétés
       try {
         errorDetails.fullError = JSON.stringify(error, Object.getOwnPropertyNames(error));
       } catch (e) {
         errorDetails.fullError = String(error);
       }
-      
+
       logger.error({ clubId: clubId.substring(0, 8) + "…", errorDetails }, "[getClubSubscription] Error details");
-      
+
       // Si c'est juste qu'aucun abonnement n'existe, ce n'est pas une vraie erreur
       if (error?.code === 'PGRST116' || error?.message?.includes('No rows found') || error?.code === '42P01') {
         // PGRST116 = No rows returned, 42P01 = relation does not exist (table doesn't exist)
@@ -177,12 +174,12 @@ export async function getClubSubscription(clubId: string): Promise<Subscription 
         }
         return null;
       }
-      
+
       // Si la table n'existe pas (code 42P01)
       if (error?.code === '42P01') {
         logger.error({ clubId: clubId.substring(0, 8) + "…" }, "[getClubSubscription] Table 'subscriptions' does not exist. Please run the migration SQL in Supabase.");
       }
-      
+
       return null;
     }
 
@@ -215,12 +212,12 @@ export async function initializeSubscription(clubId: string): Promise<Subscripti
     if (error) {
       // Logger l'erreur complète, y compris les propriétés non-énumérables
       logger.error({ clubId: clubId.substring(0, 8) + "…", message: error?.message || 'No message', details: error?.details || 'No details', hint: error?.hint || 'No hint', code: error?.code || 'No code', error: JSON.stringify(error, Object.getOwnPropertyNames(error)) }, "[initializeSubscription] Error details");
-      
+
       // Si la fonction RPC n'existe pas, c'est probablement que la migration n'a pas été exécutée
       if (error?.code === '42883' || error?.message?.includes('function') || error?.message?.includes('does not exist')) {
         logger.error({ clubId: clubId.substring(0, 8) + "…" }, "[initializeSubscription] Function 'initialize_club_subscription' may not exist. Please run the migration SQL.");
       }
-      
+
       return null;
     }
 

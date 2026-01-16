@@ -64,3 +64,47 @@ export async function getAuthenticatedUserClubId() {
 
     return null;
 }
+
+export async function getOrCreateSupportConversation(clubId: string) {
+    if (!clubId) return { error: "Club ID manquant" };
+
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "Non authentifié" };
+    }
+
+    // Chercher une conversation existante
+    const { data: existingConv, error: fetchError } = await supabaseAdmin
+        .from("club_conversations")
+        .select("*")
+        .eq("club_id", clubId)
+        .maybeSingle();
+
+    if (fetchError) {
+        console.error("Erreur récupération conversation:", fetchError);
+        return { error: "Erreur lors de la récupération de la conversation" };
+    }
+
+    if (existingConv) {
+        return { conversation: existingConv };
+    }
+
+    // Créer une nouvelle conversation
+    const { data: newConv, error: createError } = await supabaseAdmin
+        .from("club_conversations")
+        .insert({
+            club_id: clubId,
+            status: "open",
+        })
+        .select()
+        .single();
+
+    if (createError) {
+        console.error("Erreur création conversation:", createError);
+        return { error: "Erreur lors de la création de la conversation" };
+    }
+
+    return { conversation: newConv };
+}

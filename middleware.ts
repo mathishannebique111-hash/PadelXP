@@ -545,6 +545,66 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(url);
       }
     }
+
+    // ========================================
+    // CLUB SUSPENSION CHECK
+    // ========================================
+    // Check if user's club is suspended and enforce access restrictions
+    // Skip for super admins and certain paths
+    if (!userIsAdmin && !normalizedPathname.startsWith('/player/club-suspended')) {
+      try {
+        // First, check if user is a club admin
+        const { data: clubAdmin } = await supabase
+          .from('club_admins')
+          .select('club_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (clubAdmin?.club_id) {
+          // User is a club admin - check if their club is suspended
+          const { data: club } = await supabase
+            .from('clubs')
+            .select('is_suspended')
+            .eq('id', clubAdmin.club_id)
+            .single();
+
+          if (club?.is_suspended) {
+            // Club is suspended - only allow access to /dashboard/facturation
+            if (normalizedPathname.startsWith('/dashboard') && !normalizedPathname.startsWith('/dashboard/facturation')) {
+              const url = req.nextUrl.clone();
+              url.pathname = '/dashboard/facturation';
+              return NextResponse.redirect(url);
+            }
+          }
+        } else {
+          // User is not a club admin - check if they are a player
+          const { data: playerProfile } = await supabase
+            .from('profiles')
+            .select('club_id')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (playerProfile?.club_id) {
+            // Check if their club is suspended
+            const { data: club } = await supabase
+              .from('clubs')
+              .select('is_suspended')
+              .eq('id', playerProfile.club_id)
+              .single();
+
+            if (club?.is_suspended) {
+              // Club is suspended - redirect player to suspension page
+              const url = req.nextUrl.clone();
+              url.pathname = '/player/club-suspended';
+              return NextResponse.redirect(url);
+            }
+          }
+        }
+      } catch (e) {
+        // Log error but don't block access in case of DB issues
+        logger.warn({ error: e instanceof Error ? e.message : String(e) }, "[Middleware] Error checking club suspension status");
+      }
+    }
   }
 
 
