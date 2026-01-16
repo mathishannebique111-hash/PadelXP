@@ -60,7 +60,7 @@ export default function HelpPage() {
 
         // Récupérer le club_id de l'utilisateur (via profiles OU club_admins)
         let clubId: string | null = null;
-        
+
         // Essayer d'abord via profiles
         const { data: profile } = await supabase
           .from("profiles")
@@ -71,31 +71,20 @@ export default function HelpPage() {
         clubId = profile?.club_id || null;
 
         // Si pas de club_id dans profiles, essayer via club_admins
-        // club_admins.club_id peut être TEXT (slug ou UUID en texte), il faut convertir en UUID
         if (!clubId) {
-          const { data: adminEntry } = await supabase
+          const { data: adminEntries, error: adminError } = await supabase
             .from("club_admins")
             .select("club_id")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          
-          if (adminEntry?.club_id) {
-            // club_admins.club_id peut être TEXT (slug ou UUID en texte)
-            // Chercher le club correspondant pour obtenir son UUID
-            const { data: clubs } = await supabase
-              .from('clubs')
-              .select('id')
-              .or(`id.eq.${adminEntry.club_id},slug.eq.${adminEntry.club_id}`);
-            
-            if (clubs && clubs.length > 0) {
-              clubId = clubs[0].id;
-            } else {
-              // Si pas trouvé par id ou slug, vérifier si c'est déjà un UUID valide
-              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-              if (uuidRegex.test(adminEntry.club_id)) {
-                clubId = adminEntry.club_id;
-              }
-            }
+            .eq("user_id", user.id); // Pas de maybeSingle pour éviter l'erreur si multiples
+
+          if (adminError) {
+            logger.error("[ClubSupport] Erreur récupération club_admins", adminError);
+          }
+
+          if (adminEntries && adminEntries.length > 0) {
+            // On prend le premier club trouvé si l'utilisateur est admin de plusieurs
+            clubId = adminEntries[0].club_id;
+            logger.info("[ClubSupport] Club ID trouvé via club_admins", { clubId });
           }
         }
 
@@ -130,7 +119,7 @@ export default function HelpPage() {
             .single();
 
           if (createError) {
-            logger.warn("[ClubSupport] Impossible de créer la conversation côté client (RLS?). Elle sera créée lors du premier message.", { 
+            logger.warn("[ClubSupport] Impossible de créer la conversation côté client (RLS?). Elle sera créée lors du premier message.", {
               error: createError.message,
               clubId: clubId.substring(0, 8)
             });
@@ -141,7 +130,7 @@ export default function HelpPage() {
         }
 
         if (!isMounted) return;
-        
+
         // Si on a une conversation, la charger et s'abonner aux messages
         if (conv) {
           setConversation(conv);
@@ -163,7 +152,7 @@ export default function HelpPage() {
                 }
                 return acc;
               }, [] as Message[])
-              .sort((a: Message, b: Message) => 
+              .sort((a: Message, b: Message) =>
                 new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
               );
             setMessages(uniqueMessages);
@@ -278,7 +267,7 @@ export default function HelpPage() {
       // Si la conversation n'existait pas, elle a été créée par l'API
       // Recharger la conversation pour avoir l'ID et s'abonner aux messages
       const newConversationId = data.conversation_id || data.message?.conversation_id;
-      
+
       if (!conversation && newConversationId) {
         // Recharger les données de la conversation
         const { data: profile } = await supabase
@@ -289,29 +278,13 @@ export default function HelpPage() {
 
         let clubId: string | null = profile?.club_id || null;
         if (!clubId) {
-          const { data: adminEntry } = await supabase
+          const { data: adminEntries } = await supabase
             .from("club_admins")
             .select("club_id")
-            .eq("user_id", userId || "")
-            .maybeSingle();
-          
-          if (adminEntry?.club_id) {
-            // club_admins.club_id peut être TEXT (slug ou UUID en texte)
-            // Chercher le club correspondant pour obtenir son UUID
-            const { data: clubs } = await supabase
-              .from('clubs')
-              .select('id')
-              .or(`id.eq.${adminEntry.club_id},slug.eq.${adminEntry.club_id}`);
-            
-            if (clubs && clubs.length > 0) {
-              clubId = clubs[0].id;
-            } else {
-              // Si pas trouvé par id ou slug, vérifier si c'est déjà un UUID valide
-              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-              if (uuidRegex.test(adminEntry.club_id)) {
-                clubId = adminEntry.club_id;
-              }
-            }
+            .eq("user_id", userId || "");
+
+          if (adminEntries && adminEntries.length > 0) {
+            clubId = adminEntries[0].club_id;
           }
         }
 
@@ -321,17 +294,17 @@ export default function HelpPage() {
             .select("*")
             .eq("club_id", clubId)
             .maybeSingle();
-          
+
           if (newConv) {
             setConversation(newConv);
-            
+
             // Charger les messages existants maintenant qu'on a la conversation
             const { data: msgs } = await supabase
               .from("club_messages")
               .select("*")
               .eq("conversation_id", newConv.id)
               .order("created_at", { ascending: true });
-            
+
             if (msgs) {
               const uniqueMessages = msgs
                 .reduce((acc: Message[], msg: Message) => {
@@ -340,12 +313,12 @@ export default function HelpPage() {
                   }
                   return acc;
                 }, [] as Message[])
-                .sort((a: Message, b: Message) => 
+                .sort((a: Message, b: Message) =>
                   new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                 );
               setMessages(uniqueMessages);
             }
-            
+
             // S'abonner aux nouveaux messages en temps réel
             const channel = supabase
               .channel(`club-conversation:${newConv.id}`)
@@ -463,19 +436,17 @@ export default function HelpPage() {
                       className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${
-                          isSentByMe
-                            ? "bg-blue-500 text-white rounded-br-sm"
-                            : "bg-white/10 border border-white/20 text-white/90 rounded-bl-sm"
-                        }`}
+                        className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${isSentByMe
+                          ? "bg-blue-500 text-white rounded-br-sm"
+                          : "bg-white/10 border border-white/20 text-white/90 rounded-bl-sm"
+                          }`}
                       >
                         <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                           {msg.content}
                         </p>
                         <p
-                          className={`text-[10px] mt-1.5 ${
-                            isSentByMe ? "text-blue-100" : "text-white/50"
-                          }`}
+                          className={`text-[10px] mt-1.5 ${isSentByMe ? "text-blue-100" : "text-white/50"
+                            }`}
                         >
                           {new Date(msg.created_at).toLocaleTimeString("fr-FR", {
                             hour: "2-digit",
