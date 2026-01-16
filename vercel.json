@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/suspend-expired-clubs",
-      "schedule": "0 * * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/cron/delete-suspended-clubs",
