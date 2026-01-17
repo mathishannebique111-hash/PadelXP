@@ -45,7 +45,7 @@ function ToastItem({ toast, onClose }: ToastProps) {
     <motion.div
       initial={{ opacity: 0, y: -20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
       transition={{ duration: 0.2 }}
       className={`relative flex items-center gap-3 rounded-xl ${colorClass} border px-4 py-3.5 shadow-lg backdrop-blur-sm min-w-[280px] max-w-[calc(100vw-2rem)]`}
     >
@@ -91,7 +91,7 @@ export default function ToastContainer() {
   };
 
   return (
-    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[100] pointer-events-none">
+    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[99999] pointer-events-none">
       <div className="flex flex-col gap-2 items-center">
         <AnimatePresence mode="popLayout">
           {toasts.map((toast) => (

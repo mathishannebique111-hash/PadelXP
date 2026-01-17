@@ -116,7 +116,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                 <div className="flex items-center gap-2">
                     <div className={`flex-shrink-0 rounded-full p-1.5 ${isUserConfirmed ? 'bg-blue-100' : 'bg-amber-100'}`}>
                         {isFullyConfirmed ? (
-                            <Check className="h-4 w-4 text-green-600 animate-bounce" />
+                            <Check className="h-4 w-4 text-green-600 animate-pulse" />
                         ) : isUserConfirmed ? (
                             <Clock className="h-4 w-4 text-blue-600" />
                         ) : (

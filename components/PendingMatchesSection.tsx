@@ -65,10 +65,10 @@ export default function PendingMatchesSection({ onPendingCountChange }: PendingM
                     return newList;
                 });
 
-                // Refresh the page content after 5s to show match in history
+                // Refresh the page content after 3s to show match in history
                 setTimeout(() => {
                     router.refresh();
-                }, 5000);
+                }, 3000);
             }
         };
         window.addEventListener('matchFullyConfirmed', handleMatchConfirmed);
