@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
+import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';
 
 const schema = z.object({
@@ -22,9 +23,9 @@ const schema = z.object({
   }).optional(),
 });
 
-export default function MatchForm({ 
+export default function MatchForm({
   selfId
-}: { 
+}: {
   selfId: string;
 }) {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function MatchForm({
   ]);
   const [hasTieBreak, setHasTieBreak] = useState(false);
   const [tieBreak, setTieBreak] = useState({ team1Score: "", team2Score: "" });
-  
+
   const [selectedPlayers, setSelectedPlayers] = useState<{
     partner: PlayerSearchResult | null;
     opp1: PlayerSearchResult | null;
@@ -59,7 +60,7 @@ export default function MatchForm({
   const [showMatchLimitInfo, setShowMatchLimitInfo] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
-  
+
   // Boost state
   const [useBoost, setUseBoost] = useState(false);
   const [boostStats, setBoostStats] = useState<{
@@ -166,11 +167,11 @@ export default function MatchForm({
 
     checkMatchLimitInfoStatus();
   }, [supabase]);
-  
+
   const handleUnderstoodClick = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
         // Sauvegarder dans la base de données (persistant même après déconnexion/reconnexion)
         const { error: updateError } = await supabase
@@ -228,7 +229,7 @@ export default function MatchForm({
   // Charger les stats de boost au montage et les recharger périodiquement
   useEffect(() => {
     let cancelled = false;
-    
+
     async function loadBoostStats() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -249,28 +250,28 @@ export default function MatchForm({
             'Expires': '0',
           },
         });
-        
+
         if (cancelled) return;
-        
+
         if (res.ok) {
           const data = await res.json();
           logger.info('[MatchForm] ===== RAW API RESPONSE =====');
           logger.info('[MatchForm] Raw boost stats response:', JSON.stringify(data, null, 2));
-          
+
           if (data && typeof data === 'object' && !cancelled) {
             // Utiliser directement les valeurs de l'API - FORCER LA CONVERSION EN NOMBRE
             const creditsAvailable = Number(data.creditsAvailable) || 0;
             const usedThisMonth = Number(data.usedThisMonth) || 0;
             const remainingThisMonth = Number(data.remainingThisMonth) || 0;
             const canUse = creditsAvailable > 0 && usedThisMonth < 10;
-            
+
             const stats = {
               creditsAvailable,
               usedThisMonth,
               remainingThisMonth,
               canUse,
             };
-            
+
             logger.info('[MatchForm] ===== BOOST STATS PARSED =====');
             logger.info('[MatchForm] creditsAvailable:', creditsAvailable, 'type:', typeof creditsAvailable);
             logger.info('[MatchForm] Number(creditsAvailable):', Number(creditsAvailable));
@@ -278,7 +279,7 @@ export default function MatchForm({
             logger.info('[MatchForm] Checkbox will be:', creditsAvailable >= 1 ? '✅ ENABLED' : '❌ DISABLED');
             logger.info('[MatchForm] Full stats:', stats);
             logger.info('[MatchForm] =============================');
-            
+
             if (!cancelled) {
               setBoostStats(stats);
               // Forcer un re-render en mettant à jour l'état
@@ -308,14 +309,14 @@ export default function MatchForm({
     }
 
     loadBoostStats();
-    
+
     // Recharger toutes les 2 secondes pour s'assurer que les données sont à jour
     const interval = setInterval(() => {
       if (!cancelled) {
         loadBoostStats();
       }
     }, 2000);
-    
+
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -346,7 +347,7 @@ export default function MatchForm({
 
     // Filtrer uniquement les chiffres
     const numericValue = value.replace(/\D/g, '');
-    
+
     // Validation : un set de padel ne peut pas dépasser 7
     if (numericValue) {
       const numValue = parseInt(numericValue);
@@ -360,30 +361,30 @@ export default function MatchForm({
 
     const newSets = [...sets];
     newSets[index] = { ...newSets[index], [field]: numericValue };
-    
+
     // Validation : si un set est à 7, l'autre doit être 5 ou 6
     const currentSet = newSets[index];
     const team1Score = parseInt(currentSet.team1Score) || 0;
     const team2Score = parseInt(currentSet.team2Score) || 0;
-    
+
     // Nettoyer toutes les erreurs de ce set pour réévaluer
     delete newErrors[`set${currentSet.setNumber}_team1`];
     delete newErrors[`set${currentSet.setNumber}_team2`];
     delete newErrors[`set${currentSet.setNumber}_min_score`];
     delete newErrors[`set${currentSet.setNumber}_tie`];
-    
+
     // Validation : au moins une équipe doit avoir 6 ou 7 jeux
     if (team1Score > 0 && team2Score > 0) {
       const hasValidScore = team1Score >= 6 || team2Score >= 6;
       if (!hasValidScore) {
         newErrors[`set${currentSet.setNumber}_min_score`] = "Au moins une des deux équipes doit avoir 6 ou 7 jeux";
       }
-      
+
       // Validation : les scores ne peuvent pas être de 6-6
       if (team1Score === 6 && team2Score === 6) {
         newErrors[`set${currentSet.setNumber}_tie`] = "Les scores ne peuvent pas être de 6-6";
       }
-      
+
       // Validation : si une équipe a 5, l'autre doit avoir 7
       if (team1Score === 5 && team2Score !== 7) {
         newErrors[`set${currentSet.setNumber}_team2`] = "Si une équipe a 5 jeux, l'autre équipe doit avoir 7 jeux";
@@ -391,14 +392,14 @@ export default function MatchForm({
         newErrors[`set${currentSet.setNumber}_team1`] = "Si une équipe a 5 jeux, l'autre équipe doit avoir 7 jeux";
       }
     }
-    
+
     // Validation : si un set est à 7, l'autre doit être au moins 5
     if (team1Score === 7 && team2Score > 0 && team2Score < 5) {
       newErrors[`set${currentSet.setNumber}_team2`] = "Si une des équipes a 7 jeux, l'autre équipe ne peut pas avoir moins de 5 jeux";
     } else if (team2Score === 7 && team1Score > 0 && team1Score < 5) {
       newErrors[`set${currentSet.setNumber}_team1`] = "Si une des équipes a 7 jeux, l'autre équipe ne peut pas avoir moins de 5 jeux";
     }
-    
+
     setSets(newSets);
     setErrors(newErrors);
 
@@ -432,7 +433,7 @@ export default function MatchForm({
     }
 
     const validation = await validateExactPlayer(playerName);
-    
+
     if (!validation.valid) {
       setErrors((prev) => ({ ...prev, [fieldName]: validation.error || `Aucun joueur trouvé avec le nom exact "${playerName}".` }));
       return;
@@ -484,7 +485,7 @@ export default function MatchForm({
     if (!name.trim()) {
       return { valid: false, error: "Le nom du joueur est requis" };
     }
-    
+
     try {
       const response = await fetch("/api/players/validate-exact", {
         method: "POST",
@@ -496,29 +497,29 @@ export default function MatchForm({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
         logger.error("Validate exact API error:", response.status, response.statusText, errorData);
-        
+
         if (response.status === 401) {
           return { valid: false, error: "Erreur d'authentification. Veuillez vous reconnecter." };
         }
-        
+
         const errorMessage = errorData.error || 'Erreur lors de la validation du joueur';
         return { valid: false, error: errorMessage };
       }
 
       const data = await response.json();
-      
+
       if (!data.valid || !data.player) {
         const errorMessage = data.error || `Aucun joueur trouvé avec le nom exact "${name.trim()}". Vérifiez l'orthographe (lettres, espaces, accents).`;
         return { valid: false, error: errorMessage };
       }
 
       const player = data.player;
-      
+
       // Utiliser UNIQUEMENT first_name et last_name de la base de données
       // Ne pas extraire depuis display_name - si ces champs sont vides, c'est une erreur
       const first_name = player.first_name || "";
       const last_name = player.last_name || "";
-      
+
       // Construire le nom complet avec prénom + nom
       const fullName = (first_name && first_name.trim() && last_name && last_name.trim())
         ? `${first_name.trim()} ${last_name.trim()}`.trim()
@@ -547,9 +548,9 @@ export default function MatchForm({
       };
     } catch (error) {
       logger.error("Error validating exact player:", error instanceof Error ? error.message : String(error));
-      return { 
-        valid: false, 
-        error: `Erreur lors de la validation du joueur "${name.trim()}". Veuillez réessayer.` 
+      return {
+        valid: false,
+        error: `Erreur lors de la validation du joueur "${name.trim()}". Veuillez réessayer.`
       };
     }
   };
@@ -563,7 +564,7 @@ export default function MatchForm({
 
     try {
       logger.info("📋 Current state:", { partnerName, opp1Name, opp2Name, selectedPlayers });
-      
+
       // Vérifier d'abord que le joueur connecté (selfId) a un prénom et un nom
       // Utiliser l'API pour récupérer le profil du joueur connecté AVANT de valider les autres joueurs
       try {
@@ -574,13 +575,13 @@ export default function MatchForm({
           setLoading(false);
           return;
         }
-        
+
         // Utiliser l'API pour récupérer le profil (évite les problèmes RLS)
         const profileRes = await fetch('/api/player/profile', {
           method: 'GET',
           credentials: 'include',
         });
-        
+
         if (!profileRes.ok) {
           logger.error("❌ Error fetching self profile from API:", profileRes.status, profileRes.statusText);
           if (profileRes.status === 404) {
@@ -591,9 +592,9 @@ export default function MatchForm({
           setLoading(false);
           return;
         }
-        
+
         const profileData = await profileRes.json();
-        
+
         logger.info("🔍 Self profile data received:", {
           id: profileData.id,
           first_name: profileData.first_name,
@@ -603,7 +604,7 @@ export default function MatchForm({
           hasLastName: profileData.hasLastName,
           hasCompleteName: profileData.hasCompleteName
         });
-        
+
         // Vérifier que le profil a un prénom ET un nom (non vides)
         if (!profileData.hasCompleteName) {
           logger.error("❌ Self profile missing first_name or last_name:", profileData);
@@ -611,7 +612,7 @@ export default function MatchForm({
           setLoading(false);
           return;
         }
-        
+
         logger.info("✅ Self profile validated:", {
           first_name: profileData.first_name,
           last_name: profileData.last_name
@@ -622,12 +623,12 @@ export default function MatchForm({
         setLoading(false);
         return;
       }
-      
+
       // Valider exactement chaque joueur (sans création automatique)
       let partner: PlayerSearchResult | null = null;
       let opp1: PlayerSearchResult | null = null;
       let opp2: PlayerSearchResult | null = null;
-      
+
       // Validation du partenaire
       if (!partnerName.trim()) {
         newErrors.partnerName = "Indiquez un partenaire (prénom et nom complet)";
@@ -641,7 +642,7 @@ export default function MatchForm({
           // Vérifier que le joueur a un prénom ET un nom dans la base de données
           const partnerFirstName = partnerValidation.player.first_name || '';
           const partnerLastName = partnerValidation.player.last_name || '';
-          
+
           // Vérifier que le joueur a un prénom ET un nom (non vides dans la DB)
           if (!partnerFirstName || !partnerFirstName.trim() || !partnerLastName || !partnerLastName.trim()) {
             newErrors.partnerName = "Ce joueur doit avoir un prénom et un nom complet. Veuillez compléter les informations du joueur dans son profil.";
@@ -662,7 +663,7 @@ export default function MatchForm({
           }
         }
       }
-      
+
       // Validation de l'opposant 1
       if (!opp1Name.trim()) {
         newErrors.opp1Name = "Indiquez un joueur (prénom et nom complet)";
@@ -676,7 +677,7 @@ export default function MatchForm({
           // Vérifier que le joueur a un prénom ET un nom dans la base de données
           const opp1FirstName = opp1Validation.player.first_name || '';
           const opp1LastName = opp1Validation.player.last_name || '';
-          
+
           // Vérifier que le joueur a un prénom ET un nom (non vides dans la DB)
           if (!opp1FirstName || !opp1FirstName.trim() || !opp1LastName || !opp1LastName.trim()) {
             newErrors.opp1Name = "Ce joueur doit avoir un prénom et un nom complet. Veuillez compléter les informations du joueur dans son profil.";
@@ -697,7 +698,7 @@ export default function MatchForm({
           }
         }
       }
-      
+
       // Validation de l'opposant 2
       if (!opp2Name.trim()) {
         newErrors.opp2Name = "Indiquez un joueur (prénom et nom complet)";
@@ -711,7 +712,7 @@ export default function MatchForm({
           // Vérifier que le joueur a un prénom ET un nom dans la base de données
           const opp2FirstName = opp2Validation.player.first_name || '';
           const opp2LastName = opp2Validation.player.last_name || '';
-          
+
           // Vérifier que le joueur a un prénom ET un nom (non vides dans la DB)
           if (!opp2FirstName || !opp2FirstName.trim() || !opp2LastName || !opp2LastName.trim()) {
             newErrors.opp2Name = "Ce joueur doit avoir un prénom et un nom complet. Veuillez compléter les informations du joueur dans son profil.";
@@ -732,11 +733,11 @@ export default function MatchForm({
           }
         }
       }
-      
+
       // Vérifier s'il y a des erreurs de validation
       const errorKeys = Object.keys(newErrors);
       const hasErrors = errorKeys.length > 0 && errorKeys.some(key => newErrors[key]);
-      
+
       if (hasErrors) {
         // Filtrer les erreurs vides avant de les logger
         const filteredErrors = Object.fromEntries(
@@ -751,7 +752,7 @@ export default function MatchForm({
       // S'assurer que tous les joueurs sont validés
       if (!partner || !opp1 || !opp2) {
         logger.error("❌ Some players are missing after validation");
-        setErrors({ 
+        setErrors({
           partnerName: !partner ? "Erreur de validation du partenaire" : "",
           opp1Name: !opp1 ? "Erreur de validation du joueur 1" : "",
           opp2Name: !opp2 ? "Erreur de validation du joueur 2" : "",
@@ -793,7 +794,7 @@ export default function MatchForm({
       }
 
       logger.info("🔧 Preparing players data...");
-      
+
       // Préparer les données pour l'API avec le nouveau format
       // Pour les joueurs invités, générer un UUID unique pour chaque user_id
       // pour éviter les violations de clé primaire (match_id, user_id)
@@ -819,7 +820,7 @@ export default function MatchForm({
           guest_player_id: opp2!.type === "guest" ? opp2!.id : null,
         },
       ];
-      
+
       logger.info("✅ Players data prepared:", players);
 
       // Validation des sets
@@ -840,23 +841,23 @@ export default function MatchForm({
         setLoading(false);
         return;
       }
-      
+
       // Validation : au moins une équipe doit avoir 6 ou 7 jeux
       sets.forEach((set) => {
         const team1Score = parseInt(set.team1Score);
         const team2Score = parseInt(set.team2Score);
-        
+
         if (team1Score > 0 && team2Score > 0) {
           const hasValidScore = team1Score >= 6 || team2Score >= 6;
           if (!hasValidScore) {
             setsErrors[`set${set.setNumber}_min_score`] = "Au moins une des deux équipes doit avoir 6 ou 7 jeux";
           }
-          
+
           // Validation : les scores ne peuvent pas être de 6-6
           if (team1Score === 6 && team2Score === 6) {
             setsErrors[`set${set.setNumber}_tie`] = "Les scores ne peuvent pas être de 6-6";
           }
-          
+
           // Validation : si une équipe a 5, l'autre doit avoir 7
           if (team1Score === 5 && team2Score !== 7) {
             setsErrors[`set${set.setNumber}_team2`] = "Si une équipe a 5 jeux, l'autre équipe doit avoir 7 jeux";
@@ -870,7 +871,7 @@ export default function MatchForm({
       sets.forEach((set) => {
         const team1Score = parseInt(set.team1Score);
         const team2Score = parseInt(set.team2Score);
-        
+
         if (team1Score === 7 && team2Score < 5) {
           setsErrors[`set${set.setNumber}_team2`] = "Si une des équipes a 7 jeux, l'autre équipe ne peut pas avoir moins de 5 jeux";
         } else if (team2Score === 7 && team1Score < 5) {
@@ -884,27 +885,27 @@ export default function MatchForm({
         setLoading(false);
         return;
       }
-      
+
       // Validation : l'équipe gagnante doit avoir gagné plus de sets
       let team1Wins = 0;
       let team2Wins = 0;
-      
+
       sets.forEach((set) => {
         const team1Score = parseInt(set.team1Score);
         const team2Score = parseInt(set.team2Score);
-        
+
         if (team1Score > team2Score) {
           team1Wins++;
         } else if (team2Score > team1Score) {
           team2Wins++;
         }
       });
-      
+
       // Validation du tie-break si activé
       if (hasTieBreak && tieBreak.team1Score && tieBreak.team2Score) {
         const tieBreakTeam1 = parseInt(tieBreak.team1Score);
         const tieBreakTeam2 = parseInt(tieBreak.team2Score);
-        
+
         // Validation : au moins un des deux scores doit être 7 ou plus
         if (tieBreakTeam1 > 0 && tieBreakTeam2 > 0) {
           const hasValidScore = tieBreakTeam1 >= 7 || tieBreakTeam2 >= 7;
@@ -913,15 +914,15 @@ export default function MatchForm({
           }
         }
       }
-      
+
       // Cas spécial : match décidé au tie-break (1-1 avec tie-break)
       const isTieBreakMatch = team1Wins === 1 && team2Wins === 1 && hasTieBreak && tieBreak.team1Score && tieBreak.team2Score;
-      
+
       if (isTieBreakMatch && !setsErrors.tieBreak) {
         // Vérifier que le tie-break est à l'avantage de l'équipe gagnante
         const tieBreakTeam1 = parseInt(tieBreak.team1Score);
         const tieBreakTeam2 = parseInt(tieBreak.team2Score);
-        
+
         if (winner === "1" && tieBreakTeam1 <= tieBreakTeam2) {
           setsErrors.tieBreak = "L'équipe 1 doit avoir un score supérieur à celui de l'équipe 2";
         } else if (winner === "2" && tieBreakTeam2 <= tieBreakTeam1) {
@@ -942,7 +943,7 @@ export default function MatchForm({
         setLoading(false);
         return;
       }
-      
+
       logger.info("✅ Sets validated successfully");
 
       // Vérifier que tous les sets ont des scores valides avant d'envoyer
@@ -953,7 +954,7 @@ export default function MatchForm({
         setLoading(false);
         return;
       }
-      
+
       // Préparer les données pour l'envoi
       const payload = {
         players,
@@ -962,7 +963,7 @@ export default function MatchForm({
         tieBreak: hasTieBreak && tieBreak.team1Score && tieBreak.team2Score ? tieBreak : undefined,
         useBoost: useBoost, // Envoyer la valeur de la case, la vérification se fera côté serveur
       };
-      
+
       logger.info("🔍 [MatchForm] useBoost value before sending:", useBoost, "type:", typeof useBoost);
       logger.info("📤 Données envoyées à l'API:", JSON.stringify(payload, null, 2));
       logger.info("📤 Structure détaillée:", {
@@ -981,32 +982,32 @@ export default function MatchForm({
         })),
         tieBreak: payload.tieBreak,
       });
-      
+
       const res = await fetch("/api/matches/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
         body: JSON.stringify(payload),
       });
-      
+
       logger.info("📥 Response status:", res.status, res.statusText);
-      
+
       if (res.ok) {
         const data = await res.json();
         logger.info("✅ Match submitted successfully:", data);
-        
+
         // Gérer les messages de boost
         if (data.boostApplied) {
           logger.info("⚡ Boost applied:", data.boostPointsInfo);
           // Le message de succès inclura les infos du boost
-          
+
           // Recharger immédiatement les stats de boost pour refléter la consommation
           // Cela mettra à jour le nombre de boosts disponibles et la case à cocher
           logger.info("🔄 Reloading boost stats after boost consumption...");
-          
+
           // Attendre un peu pour que la base de données soit mise à jour
           await new Promise(resolve => setTimeout(resolve, 500));
-          
+
           try {
             // Faire plusieurs tentatives pour s'assurer que les stats sont mises à jour
             for (let attempt = 0; attempt < 3; attempt++) {
@@ -1020,34 +1021,34 @@ export default function MatchForm({
                   'Expires': '0',
                 },
               });
-              
+
               if (boostRes.ok) {
                 const boostData = await boostRes.json();
                 logger.info(`[MatchForm] ✅ Boost stats reloaded after consumption (attempt ${attempt + 1}):`, boostData);
-                
+
                 const creditsAvailable = Number(boostData.creditsAvailable) || 0;
                 const usedThisMonth = Number(boostData.usedThisMonth) || 0;
                 const remainingThisMonth = Number(boostData.remainingThisMonth) || 0;
                 const canUse = creditsAvailable > 0 && usedThisMonth < 10;
-                
+
                 setBoostStats({
                   creditsAvailable,
                   usedThisMonth,
                   remainingThisMonth,
                   canUse,
                 });
-                
+
                 // Réinitialiser la case à cocher si plus de boosts disponibles
                 if (creditsAvailable === 0) {
                   setUseBoost(false);
                   logger.info('[MatchForm] ✅ Checkbox reset (no boosts remaining)');
                 }
-                
+
                 // Si on a trouvé la bonne valeur (boost consommé), arrêter les tentatives
                 if (attempt === 0 || creditsAvailable > 0) {
                   break;
                 }
-                
+
                 // Sinon, attendre un peu avant de réessayer
                 if (attempt < 2) {
                   await new Promise(resolve => setTimeout(resolve, 500));
@@ -1073,53 +1074,53 @@ export default function MatchForm({
           if (data.boostApplied && data.boostPointsInfo) {
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
-          
+
           // Forcer le rechargement du classement
           if (typeof window !== "undefined") {
             console.log('[MatchForm] ✅ Match enregistré ! Rechargement du classement...');
-            
+
             // Marquer le timestamp du match dans localStorage (pour le polling et cross-tab)
             const matchTime = Date.now();
             localStorage.setItem('lastMatchTime', matchTime.toString());
             localStorage.setItem('matchSubmitted', 'true');
-            
+
             // Dispatch l'événement custom (pour les composants sur la même page)
-            const event = new CustomEvent("matchSubmitted", { 
-              detail: { 
+            const event = new CustomEvent("matchSubmitted", {
+              detail: {
                 timestamp: matchTime,
-                matchId: data.match?.id 
-              } 
+                matchId: data.match?.id
+              }
             });
             window.dispatchEvent(event);
-            
+
             // Forcer le rechargement de toutes les pages Next.js
             router.refresh();
-            
+
             // Forcer le rechargement de la page /home si elle est ouverte dans un autre onglet
             // En utilisant un événement storage (fonctionne cross-tab)
             setTimeout(() => {
               localStorage.removeItem('matchSubmitted');
             }, 100);
-            
+
             console.log('[MatchForm] ✅ Rechargement déclenché');
           }
-          
+
           setShowSuccess(true);
           setLoading(false);
-          
+
           // Forcer le rechargement de la page /home pour mettre à jour le classement
           // Attendre un peu pour que le match soit bien sauvegardé en DB
           setTimeout(() => {
             router.refresh();
           }, 500);
-          
+
           // Redirection automatique seulement si pas d'avertissement
           setTimeout(() => {
             logger.info("🔄 Redirecting to match history...");
             window.location.href = "/match/new?tab=history";
           }, 2000);
         }
-        
+
         setLoading(false);
       } else {
         let errorMsg = "Erreur lors de l'enregistrement";
@@ -1132,12 +1133,12 @@ export default function MatchForm({
           logger.error("❌ Failed to parse error response:", parseError);
           errorMsg = `Erreur ${res.status}: ${res.statusText || "Erreur serveur"}`;
         }
-        
+
         // Afficher une notification d'erreur visible
         setErrorMessage(errorMsg);
         setErrors({ partnerName: errorMsg });
         setLoading(false);
-        
+
         // Fermer automatiquement la notification après 5 secondes
         setTimeout(() => {
           setErrorMessage(null);
@@ -1149,7 +1150,7 @@ export default function MatchForm({
       setErrorMessage(errorMsg);
       setErrors({ partnerName: errorMsg });
       setLoading(false);
-      
+
       // Fermer automatiquement la notification après 5 secondes
       setTimeout(() => {
         setErrorMessage(null);
@@ -1168,13 +1169,13 @@ export default function MatchForm({
                 <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
               </div>
               <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistré avec succès !</h2>
-              <p className="text-sm text-gray-500">Le classement a été mis à jour automatiquement.</p>
+              <p className="text-sm text-gray-500">Une notification a été envoyée aux joueurs de ce match.</p>
               <div className="mt-4 text-xs text-gray-400">Redirection vers l'historique...</div>
             </div>
           </div>
         </div>
       )}
-      
+
       {/* Notification d'avertissement */}
       {warningMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style={{ animation: "fadeIn 0.3s ease-in" }}>
@@ -1189,29 +1190,29 @@ export default function MatchForm({
                   // Forcer le rechargement du classement
                   if (typeof window !== "undefined") {
                     console.log('[MatchForm] ✅ Match confirmé ! Rechargement du classement...');
-                    
+
                     // Marquer le timestamp du match dans localStorage (pour le polling et cross-tab)
                     const matchTime = Date.now();
                     localStorage.setItem('lastMatchTime', matchTime.toString());
                     localStorage.setItem('matchSubmitted', 'true');
-                    
+
                     // Dispatch l'événement custom (pour les composants sur la même page)
-                    const event = new CustomEvent("matchSubmitted", { 
-                      detail: { 
+                    const event = new CustomEvent("matchSubmitted", {
+                      detail: {
                         timestamp: matchTime
-                      } 
+                      }
                     });
                     window.dispatchEvent(event);
-                    
+
                     // Forcer le rechargement de toutes les pages Next.js
                     router.refresh();
-                    
+
                     // Forcer le rechargement de la page /home si elle est ouverte dans un autre onglet
                     // En utilisant un événement storage (fonctionne cross-tab)
                     setTimeout(() => {
                       localStorage.removeItem('matchSubmitted');
                     }, 100);
-                    
+
                     console.log('[MatchForm] ✅ Rechargement déclenché');
                   }
                   // Rediriger vers l'historique après avoir cliqué sur "Compris"
@@ -1228,7 +1229,7 @@ export default function MatchForm({
           </div>
         </div>
       )}
-      
+
       {/* Notification d'erreur */}
       {errorMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style={{ animation: "fadeIn 0.3s ease-in" }}>
@@ -1255,11 +1256,11 @@ export default function MatchForm({
             <div className="flex-shrink-0 text-2xl">ℹ️</div>
             <div className="flex-1">
               <p className="text-sm text-white/90">
-                Pour <strong className="font-semibold text-amber-300">garder un classement fiable et équitable</strong>, vous pouvez enregistrer jusqu'à <strong className="font-semibold text-amber-300">2 matchs par jour</strong> qui comptent pour vos points. 
+                Pour <strong className="font-semibold text-amber-300">garder un classement fiable et équitable</strong>, vous pouvez enregistrer jusqu'à <strong className="font-semibold text-amber-300">2 matchs par jour</strong> qui comptent pour vos points.
                 Cette limite permet d'éviter que des joueurs n'enregistrent un nombre excessif de matchs en une seule journée, ce qui pourrait fausser le classement et rendre la compétition moins équitable pour tous.
               </p>
               <p className="mt-2 text-sm text-white/80">
-                Si vous enregistrez un 3<sup>ème</sup> match ou plus dans la même journée, celui-ci sera enregistré dans l'historique mais <strong className="font-semibold text-amber-300">aucun point ne sera ajouté à votre classement</strong>. 
+                Si vous enregistrez un 3<sup>ème</sup> match ou plus dans la même journée, celui-ci sera enregistré dans l'historique mais <strong className="font-semibold text-amber-300">aucun point ne sera ajouté à votre classement</strong>.
                 Les autres joueurs qui n'ont pas atteint la limite de 2 matchs recevront leurs points normalement.
               </p>
               <button
@@ -1272,369 +1273,342 @@ export default function MatchForm({
           </div>
         </div>
       )}
-      
+
       <form onSubmit={onSubmit} className="space-y-6">
-      <div>
-        <div className="mb-3 text-base font-semibold text-white">Équipe 1</div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">Vous</label>
-            <input className="w-full cursor-not-allowed rounded-md border bg-gray-100 px-4 py-3 text-sm text-gray-600" disabled value="Vous (connecté)" />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">Partenaire</label>
-            <input
-              type="text"
-              value={partnerName}
-              onChange={(e) => {
-                setPartnerName(e.target.value);
-                // Nettoyer l'erreur quand l'utilisateur tape
-                if (errors.partnerName) {
-                  setErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.partnerName;
-                    return newErrors;
-                  });
-                }
-              }}
-              onBlur={() => {
-                if (partnerName.trim()) {
-                  validatePlayerField('partnerName', partnerName);
-                }
-              }}
-              placeholder="Prénom et nom complet"
-              className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.partnerName ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.partnerName && (
-              <div className="mt-1 text-xs text-red-400">{errors.partnerName}</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-3 text-base font-semibold text-white">Équipe 2</div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">Joueur 1</label>
-            <input
-              type="text"
-              value={opp1Name}
-              onChange={(e) => {
-                setOpp1Name(e.target.value);
-                // Nettoyer l'erreur quand l'utilisateur tape
-                if (errors.opp1Name) {
-                  setErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.opp1Name;
-                    return newErrors;
-                  });
-                }
-              }}
-              onBlur={() => {
-                if (opp1Name.trim()) {
-                  validatePlayerField('opp1Name', opp1Name);
-                }
-              }}
-              placeholder="Prénom et nom complet"
-              className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.opp1Name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.opp1Name && (
-              <div className="mt-1 text-xs text-red-400">{errors.opp1Name}</div>
-            )}
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">Joueur 2</label>
-            <input
-              type="text"
-              value={opp2Name}
-              onChange={(e) => {
-                setOpp2Name(e.target.value);
-                // Nettoyer l'erreur quand l'utilisateur tape
-                if (errors.opp2Name) {
-                  setErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.opp2Name;
-                    return newErrors;
-                  });
-                }
-              }}
-              onBlur={() => {
-                if (opp2Name.trim()) {
-                  validatePlayerField('opp2Name', opp2Name);
-                }
-              }}
-              placeholder="Prénom et nom complet"
-              className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.opp2Name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.opp2Name && (
-              <div className="mt-1 text-xs text-red-400">{errors.opp2Name}</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-3 block text-sm font-medium text-white">Équipe gagnante</label>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setWinner("1")}
-              className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${
-                winner === "1"
+          <div className="mb-3 text-base font-semibold text-white">Équipe 1</div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-white">Vous</label>
+              <input className="w-full cursor-not-allowed rounded-md border bg-gray-100 px-4 py-3 text-sm text-gray-600" disabled value="Vous (connecté)" />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-white">Partenaire</label>
+              <PlayerAutocomplete
+                value={partnerName}
+                onChange={(value) => {
+                  setPartnerName(value);
+                  // Nettoyer l'erreur quand l'utilisateur tape
+                  if (errors.partnerName) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.partnerName;
+                      return newErrors;
+                    });
+                  }
+                }}
+                onSelect={(player) => {
+                  setSelectedPlayers((prev) => ({ ...prev, partner: player }));
+                }}
+                placeholder="Prénom et nom complet"
+                error={errors.partnerName}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-3 text-base font-semibold text-white">Équipe 2</div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-white">Joueur 1</label>
+              <PlayerAutocomplete
+                value={opp1Name}
+                onChange={(value) => {
+                  setOpp1Name(value);
+                  // Nettoyer l'erreur quand l'utilisateur tape
+                  if (errors.opp1Name) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.opp1Name;
+                      return newErrors;
+                    });
+                  }
+                }}
+                onSelect={(player) => {
+                  setSelectedPlayers((prev) => ({ ...prev, opp1: player }));
+                }}
+                placeholder="Prénom et nom complet"
+                error={errors.opp1Name}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-white">Joueur 2</label>
+              <PlayerAutocomplete
+                value={opp2Name}
+                onChange={(value) => {
+                  setOpp2Name(value);
+                  // Nettoyer l'erreur quand l'utilisateur tape
+                  if (errors.opp2Name) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.opp2Name;
+                      return newErrors;
+                    });
+                  }
+                }}
+                onSelect={(player) => {
+                  setSelectedPlayers((prev) => ({ ...prev, opp2: player }));
+                }}
+                placeholder="Prénom et nom complet"
+                error={errors.opp2Name}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-3 block text-sm font-medium text-white">Équipe gagnante</label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setWinner("1")}
+                className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${winner === "1"
                   ? "border-[#BFFF00] bg-[#BFFF00] text-black shadow-lg shadow-[#BFFF00]/50"
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
-              }`}
-            >
-              <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 1</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setWinner("2")}
-              className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${
-                winner === "2"
+                  }`}
+              >
+                <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 1</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setWinner("2")}
+                className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${winner === "2"
                   ? "border-[#BFFF00] bg-[#BFFF00] text-black shadow-lg shadow-[#BFFF00]/50"
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
-              }`}
+                  }`}
+              >
+                <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 2</span>
+              </button>
+            </div>
+            {errors.winner && (
+              <p className="mt-2 text-xs text-red-400">{errors.winner}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Section Sets */}
+        <div>
+          <label className="mb-3 block text-sm font-medium text-white">Scores des sets *</label>
+          <div className="space-y-4">
+            {sets.map((set, index) => (
+              <div key={set.setNumber} className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-white min-w-[80px]">Set {set.setNumber}</span>
+                  <input
+                    type="text"
+                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
+                    value={set.team1Score}
+                    onChange={(e) => updateSet(index, "team1Score", e.target.value)}
+                    placeholder="0"
+                    maxLength={2}
+                    ref={(el) => (setTeam1Refs.current[index] = el)}
+                  />
+                  <span className="text-white">-</span>
+                  <input
+                    type="text"
+                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
+                    value={set.team2Score}
+                    onChange={(e) => updateSet(index, "team2Score", e.target.value)}
+                    placeholder="0"
+                    maxLength={2}
+                    ref={(el) => (setTeam2Refs.current[index] = el)}
+                  />
+                  {errors[`set${set.setNumber}_team1`] && (
+                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_team1`]}</span>
+                  )}
+                  {errors[`set${set.setNumber}_team2`] && (
+                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_team2`]}</span>
+                  )}
+                  {errors[`set${set.setNumber}_min_score`] && (
+                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_min_score`]}</span>
+                  )}
+                  {errors[`set${set.setNumber}_tie`] && (
+                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_tie`]}</span>
+                  )}
+                </div>
+                {/* Bouton supprimer pour les sets ajoutés (3, 4, 5) */}
+                {index >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removeSet(index)}
+                    className="ml-auto rounded-md border border-red-300 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                  >
+                    ✕ Supprimer
+                  </button>
+                )}
+              </div>
+            ))}
+            {/* Bouton ajouter un set en dessous du 2e set */}
+            {sets.length < 5 && (
+              <div className="flex justify-start">
+                <button
+                  type="button"
+                  onClick={addSet}
+                  className="rounded-md border border-white/30 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 transition-all"
+                >
+                  + Ajouter un {sets.length === 2 ? "3e" : sets.length === 3 ? "4e" : "5e"} set
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tie Break */}
+        <div>
+          <div className="mb-3 flex items-center gap-3">
+            <label className="block text-sm font-medium text-white">Tie Break</label>
+            <button
+              type="button"
+              onClick={() => setHasTieBreak(!hasTieBreak)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${hasTieBreak
+                ? "border-[#BFFF00] bg-[#BFFF00] text-black"
+                : "border-white/30 bg-white/5 text-white hover:border-white/50"
+                }`}
             >
-              <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 2</span>
+              {hasTieBreak ? "✓ Activé" : "+ Ajouter"}
             </button>
           </div>
-          {errors.winner && (
-            <p className="mt-2 text-xs text-red-400">{errors.winner}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Section Sets */}
-      <div>
-        <label className="mb-3 block text-sm font-medium text-white">Scores des sets *</label>
-        <div className="space-y-4">
-          {sets.map((set, index) => (
-            <div key={set.setNumber} className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-white min-w-[80px]">Set {set.setNumber}</span>
+          {hasTieBreak && (
+            <div>
+              <div className="flex items-center gap-3">
                 <input
                   type="text"
                   className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
-                  value={set.team1Score}
-                  onChange={(e) => updateSet(index, "team1Score", e.target.value)}
+                  value={tieBreak.team1Score}
+                  onChange={(e) => {
+                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
+                    const v = e.target.value.replace(/\D/g, '');
+                    const newTieBreak = { ...tieBreak, team1Score: v };
+                    setTieBreak(newTieBreak);
+
+                    // Nettoyer et réévaluer les erreurs du tie-break
+                    const newErrors = { ...errors };
+                    delete newErrors.tieBreak;
+
+                    // Validation : au moins un des deux scores doit être 7 ou plus
+                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
+                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
+
+                    if (team1Score > 0 && team2Score > 0) {
+                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
+                      if (!hasValidScore) {
+                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
+                      }
+                    }
+
+                    setErrors(newErrors);
+
+                    if (v.length >= 1) {
+                      tieBreakTeam2Ref.current?.focus();
+                    }
+                  }}
                   placeholder="0"
-                  maxLength={2}
-                  ref={(el) => (setTeam1Refs.current[index] = el)}
+                  ref={tieBreakTeam1Ref}
                 />
                 <span className="text-white">-</span>
                 <input
                   type="text"
                   className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
-                  value={set.team2Score}
-                  onChange={(e) => updateSet(index, "team2Score", e.target.value)}
+                  value={tieBreak.team2Score}
+                  onChange={(e) => {
+                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
+                    const v = e.target.value.replace(/\D/g, '');
+                    const newTieBreak = { ...tieBreak, team2Score: v };
+                    setTieBreak(newTieBreak);
+
+                    // Nettoyer et réévaluer les erreurs du tie-break
+                    const newErrors = { ...errors };
+                    delete newErrors.tieBreak;
+
+                    // Validation : au moins un des deux scores doit être 7 ou plus
+                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
+                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
+
+                    if (team1Score > 0 && team2Score > 0) {
+                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
+                      if (!hasValidScore) {
+                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
+                      }
+                    }
+
+                    setErrors(newErrors);
+
+                    if (v.length >= 1) {
+                      const submitBtn = document.querySelector<HTMLButtonElement>('button[type="submit"]');
+                      submitBtn?.focus();
+                    }
+                  }}
                   placeholder="0"
-                  maxLength={2}
-                  ref={(el) => (setTeam2Refs.current[index] = el)}
+                  ref={tieBreakTeam2Ref}
                 />
-                {errors[`set${set.setNumber}_team1`] && (
-                  <span className="text-xs text-red-400">{errors[`set${set.setNumber}_team1`]}</span>
-                )}
-                {errors[`set${set.setNumber}_team2`] && (
-                  <span className="text-xs text-red-400">{errors[`set${set.setNumber}_team2`]}</span>
-                )}
-                {errors[`set${set.setNumber}_min_score`] && (
-                  <span className="text-xs text-red-400">{errors[`set${set.setNumber}_min_score`]}</span>
-                )}
-                {errors[`set${set.setNumber}_tie`] && (
-                  <span className="text-xs text-red-400">{errors[`set${set.setNumber}_tie`]}</span>
-                )}
               </div>
-              {/* Bouton supprimer pour les sets ajoutés (3, 4, 5) */}
-              {index >= 2 && (
-                <button
-                  type="button"
-                  onClick={() => removeSet(index)}
-                  className="ml-auto rounded-md border border-red-300 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-all"
-                >
-                  ✕ Supprimer
-                </button>
+              {errors.tieBreak && (
+                <p className="mt-2 text-xs text-red-400">{errors.tieBreak}</p>
               )}
-            </div>
-          ))}
-          {/* Bouton ajouter un set en dessous du 2e set */}
-          {sets.length < 5 && (
-            <div className="flex justify-start">
-              <button
-                type="button"
-                onClick={addSet}
-                className="rounded-md border border-white/30 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 transition-all"
-              >
-                + Ajouter un {sets.length === 2 ? "3e" : sets.length === 3 ? "4e" : "5e"} set
-              </button>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Tie Break */}
-      <div>
-        <div className="mb-3 flex items-center gap-3">
-          <label className="block text-sm font-medium text-white">Tie Break</label>
-          <button
-            type="button"
-            onClick={() => setHasTieBreak(!hasTieBreak)}
-            className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${
-              hasTieBreak
-                ? "border-[#BFFF00] bg-[#BFFF00] text-black"
-                : "border-white/30 bg-white/5 text-white hover:border-white/50"
-            }`}
-          >
-            {hasTieBreak ? "✓ Activé" : "+ Ajouter"}
-          </button>
-        </div>
-        {hasTieBreak && (
-          <div>
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
-                value={tieBreak.team1Score}
-              onChange={(e) => {
-                // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
-                const v = e.target.value.replace(/\D/g, '');
-                const newTieBreak = { ...tieBreak, team1Score: v };
-                setTieBreak(newTieBreak);
-                
-                // Nettoyer et réévaluer les erreurs du tie-break
-                const newErrors = { ...errors };
-                delete newErrors.tieBreak;
-                
-                // Validation : au moins un des deux scores doit être 7 ou plus
-                const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                const team2Score = parseInt(newTieBreak.team2Score) || 0;
-                
-                if (team1Score > 0 && team2Score > 0) {
-                  const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                  if (!hasValidScore) {
-                    newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                  }
-                }
-                
-                setErrors(newErrors);
-                
-                if (v.length >= 1) {
-                  tieBreakTeam2Ref.current?.focus();
-                }
-              }}
-                placeholder="0"
-                ref={tieBreakTeam1Ref}
-              />
-              <span className="text-white">-</span>
-              <input
-                type="text"
-                className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
-                value={tieBreak.team2Score}
-              onChange={(e) => {
-                // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
-                const v = e.target.value.replace(/\D/g, '');
-                const newTieBreak = { ...tieBreak, team2Score: v };
-                setTieBreak(newTieBreak);
-                
-                // Nettoyer et réévaluer les erreurs du tie-break
-                const newErrors = { ...errors };
-                delete newErrors.tieBreak;
-                
-                // Validation : au moins un des deux scores doit être 7 ou plus
-                const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                const team2Score = parseInt(newTieBreak.team2Score) || 0;
-                
-                if (team1Score > 0 && team2Score > 0) {
-                  const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                  if (!hasValidScore) {
-                    newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                  }
-                }
-                
-                setErrors(newErrors);
-                
-                if (v.length >= 1) {
-                  const submitBtn = document.querySelector<HTMLButtonElement>('button[type="submit"]');
-                  submitBtn?.focus();
-                }
-              }}
-                placeholder="0"
-                ref={tieBreakTeam2Ref}
-              />
+        {/* Option boost - placé juste avant le bouton Enregistrer */}
+        {!loadingBoostStats && boostStats && (
+          <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <Image
+                  src="/images/Éclair page avis.png"
+                  alt="Éclair"
+                  width={24}
+                  height={24}
+                  className="flex-shrink-0"
+                  unoptimized
+                />
+              </div>
+              <div className="flex-1">
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={useBoost}
+                    onChange={(e) => {
+                      setUseBoost(e.target.checked);
+                    }}
+                    disabled={!boostStats || boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) < 1}
+                    title={boostStats && boostStats.creditsAvailable >= 1 ? `Tu as ${boostStats.creditsAvailable} boost${boostStats.creditsAvailable > 1 ? 's' : ''} disponible${boostStats.creditsAvailable > 1 ? 's' : ''}` : 'Tu n\'as pas de boosts disponibles'}
+                    className="h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  <span className="text-sm font-semibold text-white">
+                    Appliquer un boost (+30% de points si tu gagnes)
+                  </span>
+                </label>
+                {boostStats && Number(boostStats.creditsAvailable) > 0 && (
+                  <p className="mt-2 text-xs text-white/70">
+                    Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}.
+                    {boostStats.usedThisMonth > 0 && (
+                      <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
+                    )}
+                    {boostStats.usedThisMonth >= 10 && (
+                      <span className="block mt-1 text-yellow-300">
+                        ⚠️ Tu as atteint la limite mensuelle de 10 boosts. Le boost ne sera pas appliqué.
+                      </span>
+                    )}
+                  </p>
+                )}
+                {boostStats && (boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) <= 0) && (
+                  <p className="mt-2 text-xs text-white/70">
+                    Tu n'as plus de boosts disponibles.{" "}
+                    <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
+                      Achète-en de nouveaux
+                    </a>
+                  </p>
+                )}
+              </div>
             </div>
-            {errors.tieBreak && (
-              <p className="mt-2 text-xs text-red-400">{errors.tieBreak}</p>
-            )}
           </div>
         )}
-      </div>
 
-      {/* Option boost - placé juste avant le bouton Enregistrer */}
-      {!loadingBoostStats && boostStats && (
-        <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 backdrop-blur-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 flex items-center justify-center">
-              <Image 
-                src="/images/Éclair page avis.png" 
-                alt="Éclair" 
-                width={24} 
-                height={24} 
-                className="flex-shrink-0"
-                unoptimized
-              />
-            </div>
-            <div className="flex-1">
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={useBoost}
-                  onChange={(e) => {
-                    setUseBoost(e.target.checked);
-                  }}
-                  disabled={!boostStats || boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) < 1}
-                  title={boostStats && boostStats.creditsAvailable >= 1 ? `Tu as ${boostStats.creditsAvailable} boost${boostStats.creditsAvailable > 1 ? 's' : ''} disponible${boostStats.creditsAvailable > 1 ? 's' : ''}` : 'Tu n\'as pas de boosts disponibles'}
-                  className="h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <span className="text-sm font-semibold text-white">
-                  Appliquer un boost (+30% de points si tu gagnes)
-                </span>
-              </label>
-              {boostStats && Number(boostStats.creditsAvailable) > 0 && (
-                <p className="mt-2 text-xs text-white/70">
-                  Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}. 
-                  {boostStats.usedThisMonth > 0 && (
-                    <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
-                  )}
-                  {boostStats.usedThisMonth >= 10 && (
-                    <span className="block mt-1 text-yellow-300">
-                      ⚠️ Tu as atteint la limite mensuelle de 10 boosts. Le boost ne sera pas appliqué.
-                    </span>
-                  )}
-                </p>
-              )}
-              {boostStats && (boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) <= 0) && (
-                <p className="mt-2 text-xs text-white/70">
-                  Tu n'as plus de boosts disponibles.{" "}
-                  <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
-                    Achète-en de nouveaux
-                  </a>
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <button disabled={loading} className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg disabled:opacity-50">Enregistrer</button>
-    </form>
+        <button disabled={loading} className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg disabled:opacity-50">Enregistrer</button>
+      </form>
     </>
   );
 }

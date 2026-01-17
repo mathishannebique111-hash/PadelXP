@@ -25,23 +25,23 @@ const supabaseAdmin = createAdminClient(
 
 export default async function PlayerSummary({ profileId }: { profileId: string }) {
   const supabase = await createClient();
-  
+
   // Récupérer le club_id ET les points de challenges du joueur (utiliser admin pour bypass RLS)
   const { data: playerProfile } = await supabaseAdmin
     .from("profiles")
     .select("club_id, points")
     .eq("id", profileId)
     .maybeSingle();
-  
+
   const playerClubId = playerProfile?.club_id || null;
   // S'assurer que challengePoints est un nombre (peut être string, null, undefined dans la DB)
-  const challengePoints = typeof playerProfile?.points === 'number' 
-    ? playerProfile.points 
+  const challengePoints = typeof playerProfile?.points === 'number'
+    ? playerProfile.points
     : (typeof playerProfile?.points === 'string' ? parseInt(playerProfile.points, 10) || 0 : 0);
-  
+
   logger.info(`[PlayerSummary] Player ${profileId.substring(0, 8)} - Challenge points from DB:`, challengePoints, `(type: ${typeof challengePoints})`);
   logger.info(`[PlayerSummary] Player profile data:`, playerProfile);
-  
+
   // Calcule les stats globales
   // Utiliser une approche en deux étapes pour éviter les problèmes RLS
   const { data: mp, error: mpError } = await supabase
@@ -49,7 +49,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     .select("match_id, team")
     .eq("user_id", profileId)
     .eq("player_type", "user");
-  
+
   if (mpError) {
     logger.error("[PlayerSummary] Error fetching participants:", mpError);
   }
@@ -59,27 +59,28 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   let setsWon = 0;
   let setsLost = 0;
   let matches = 0;
-  
+
   // Initialiser filteredMp et winMatches pour qu'ils soient toujours définis
   let filteredMp: any[] = [];
   let winMatches = new Set<string>();
   let validMatchIdsForPoints = new Set<string>(); // Déclarer en dehors pour être accessible dans le calcul de la série
-  
+
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
     logger.info("[PlayerSummary] Fetching matches for player:", profileId, "Match IDs:", matchIds.length);
-    
+
     // IMPORTANT: Récupérer TOUS les matchs du joueur d'abord pour appliquer la limite quotidienne
     // (comme dans home/page.tsx, on applique la limite quotidienne avant de filtrer par club)
     const { data: allMs, error: allMsError } = await supabase
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, played_at, created_at")
-      .in("id", matchIds);
-    
+      .in("id", matchIds)
+      .eq("status", "confirmed");
+
     if (allMsError) {
       logger.error("[PlayerSummary] Error fetching all matches:", allMsError);
     }
-    
+
     // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour sur TOUS les matchs
     // (tous clubs confondus, comme dans home/page.tsx)
     validMatchIdsForPoints = filterMatchesByDailyLimit(
@@ -87,10 +88,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       (allMs || []).map((m: any) => ({ id: m.id, played_at: m.played_at || m.created_at })),
       MAX_MATCHES_PER_DAY
     );
-    
+
     logger.info("[PlayerSummary] Valid matches after daily limit:", validMatchIdsForPoints.size);
     logger.info("[PlayerSummary] Valid match IDs for points:", Array.from(validMatchIdsForPoints));
-    
+
     // Si on a un club_id, filtrer les matchs pour ne garder que ceux du même club
     // IMPORTANT: Utiliser la même logique que home/page.tsx pour garantir la cohérence
     let validMatchIds = matchIds;
@@ -100,10 +101,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         .from("match_participants")
         .select("match_id, user_id, player_type, guest_player_id")
         .in("match_id", matchIds);
-      
+
       // Récupérer les profils pour vérifier les club_id - utiliser admin pour bypass RLS
       const participantUserIds = [...new Set((allParticipants || []).filter((p: any) => p.player_type === "user" && p.user_id).map((p: any) => p.user_id))];
-      
+
       let validUserIds = new Set<string>();
       if (participantUserIds.length > 0) {
         const { data: profiles } = await supabaseAdmin
@@ -111,10 +112,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           .select("id, club_id")
           .in("id", participantUserIds)
           .eq("club_id", playerClubId);
-        
+
         validUserIds = new Set((profiles || []).map((p: any) => p.id));
       }
-      
+
       // Grouper les participants par match (comme dans home/page.tsx)
       const participantsByMatch = new Map<string, any[]>();
       (allParticipants || []).forEach((p: any) => {
@@ -123,27 +124,27 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         }
         participantsByMatch.get(p.match_id)!.push(p);
       });
-      
+
       // Filtrer les matchs : ne garder que ceux où TOUS les participants users appartiennent au même club
       // (exactement comme dans home/page.tsx)
       validMatchIds = matchIds.filter(matchId => {
         const participants = participantsByMatch.get(matchId) || [];
         const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
-        
+
         // Si aucun participant user, exclure le match (ne devrait pas arriver)
         if (userParticipants.length === 0) {
           return false;
         }
-        
+
         // Vérifier que tous les participants users appartiennent au même club
         const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
         return allUsersInSameClub;
       });
-      
+
       logger.info("[PlayerSummary] Valid matches after club filtering:", validMatchIds.length);
       logger.info("[PlayerSummary] Valid match IDs after club filtering:", validMatchIds);
     }
-    
+
     // Construire byId à partir de tous les matchs (allMs) pour avoir toutes les données nécessaires
     const byId: Record<string, { winner_team: number; score_team1: number; score_team2: number }> = {};
     (allMs || []).forEach((m: any) => {
@@ -151,15 +152,15 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         logger.warn("[PlayerSummary] Skipping match without winner_team_id:", m.id);
         return;
       }
-      
+
       const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
-      byId[m.id] = { 
-        winner_team, 
-        score_team1: m.score_team1 || 0, 
-        score_team2: m.score_team2 || 0 
+      byId[m.id] = {
+        winner_team,
+        score_team1: m.score_team1 || 0,
+        score_team2: m.score_team2 || 0
       };
     });
-    
+
     // Filtrer mp pour ne garder que les matchs valides (même club) ET qui respectent la limite quotidienne
     // IMPORTANT: Appliquer le filtre club ET limite quotidienne (comme dans home/page.tsx)
     filteredMp = mp.filter((p: any) => {
@@ -168,26 +169,26 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       const matchExists = byId[p.match_id] !== undefined; // Le match doit exister dans byId et avoir des données valides
       const hasValidWinner = matchExists && byId[p.match_id]?.winner_team !== undefined;
       const shouldInclude = isValidForClub && isValidForDailyLimit && hasValidWinner;
-      
+
       if (!shouldInclude) {
         logger.info(`[PlayerSummary] Excluding match ${p.match_id}: club=${isValidForClub}, dailyLimit=${isValidForDailyLimit}, exists=${matchExists}, validWinner=${hasValidWinner}`);
       }
-      
+
       return shouldInclude;
     });
-    
+
     logger.info("[PlayerSummary] Filtered matches count:", filteredMp.length);
     logger.info("[PlayerSummary] Filtered match IDs:", filteredMp.map((p: any) => p.match_id));
-    
+
     // Collecter les matchs gagnés pour le calcul de boosts
     winMatches = new Set<string>();
 
     filteredMp.forEach((p: any) => {
       const match = byId[p.match_id];
       if (!match) return;
-      
+
       matches += 1;
-      
+
       const won = match.winner_team === p.team;
       if (won) {
         wins += 1;
@@ -195,7 +196,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       } else {
         losses += 1;
       }
-      
+
       if (p.team === 1) {
         setsWon += match.score_team1 || 0;
         setsLost += match.score_team2 || 0;
@@ -204,7 +205,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         setsLost += match.score_team1 || 0;
       }
     });
-    
+
     logger.info("[PlayerSummary] Player stats calculated:", { matches, wins, losses, setsWon, setsLost });
     logger.info("[PlayerSummary] Filtered matches count:", filteredMp.length);
     logger.info("[PlayerSummary] Win matches count:", winMatches.size);
@@ -218,20 +219,20 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       .from("reviews")
       .select("rating, comment")
       .eq("user_id", profileId);
-    
+
     if (myReviews && myReviews.length > 0) {
       // Vérifier si au moins un avis est valide
       const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
-      const hasValidReview = myReviews.some((r: any) => 
+      const hasValidReview = myReviews.some((r: any) =>
         isReviewValidForBonus(r.rating || 0, r.comment || null)
       );
-      
+
       if (hasValidReview) {
         reviewsBonus = 10;
       }
     }
   }
-  
+
   logger.info("[PlayerSummary] Before calculatePointsWithBoosts:", {
     wins,
     losses,
@@ -252,7 +253,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     reviewsBonus,
     challengePoints
   );
-  
+
   logger.info("[PlayerSummary] After calculatePointsWithBoosts - Final points:", points);
 
   function tierForPoints(p: number) {
@@ -270,13 +271,13 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   let currentWinStreak = 0;
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
-    
+
     const { data: ms, error: msStreakError } = await supabase
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, created_at, played_at")
       .in("id", matchIds)
       .order("created_at", { ascending: false });
-    
+
     if (msStreakError) {
       // Extraire les propriétés de l'erreur de manière sécurisée
       const errorDetails: Record<string, any> = {};
@@ -284,16 +285,16 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       if (msStreakError?.details) errorDetails.details = msStreakError.details;
       if (msStreakError?.hint) errorDetails.hint = msStreakError.hint;
       if (msStreakError?.code) errorDetails.code = msStreakError.code;
-      
+
       // Filtrer les valeurs null/undefined avant de logger
       const filteredDetails = Object.fromEntries(
         Object.entries(errorDetails).filter(([_, v]) => v != null && v !== "")
       );
-      
+
       // Ne logger que si on a des détails valides après filtrage
       // Éviter de logger des objets vides qui polluent la console
       const hasValidDetails = Object.keys(filteredDetails).length > 0;
-      
+
       if (hasValidDetails) {
         logger.error("[PlayerSummary] Error fetching matches for streak:", filteredDetails);
       } else {
@@ -301,7 +302,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         // on vérifie si c'est une vraie erreur ou juste un état vide
         const errorString = String(msStreakError);
         const isMeaningfulError = errorString !== "[object Object]" && errorString !== "null" && errorString !== "undefined";
-        
+
         // Ne logger que si l'erreur a un contenu significatif
         if (isMeaningfulError) {
           logger.warn("[PlayerSummary] Error fetching matches for streak (no standard properties):", errorString);
@@ -309,7 +310,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         // Sinon, on ignore silencieusement pour éviter la pollution de la console
       }
     }
-    
+
     if (ms && ms.length > 0) {
       // Filtrer les matchs pour ne garder que ceux qui respectent la limite quotidienne
       // Utiliser validMatchIdsForPoints qui a déjà été calculé plus haut
@@ -369,7 +370,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       }
     }
   }
-  
+
   logger.info("[PlayerSummary] Streak calculated:", { best: streak, current: currentWinStreak });
 
   // IMPORTANT: Calculer les stats pour les badges EXACTEMENT comme dans la page badges
@@ -384,7 +385,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   // Recalculer les stats SANS limite quotidienne (comme dans la page badges)
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
-    
+
     let validMatchIdsForBadges = matchIds;
     if (playerClubId) {
       // Récupérer tous les participants de ces matchs
@@ -393,7 +394,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         .select("match_id, user_id, player_type")
         .in("match_id", matchIds)
         .eq("player_type", "user");
-      
+
       // Récupérer les profils pour vérifier les club_id - utiliser admin pour bypass RLS
       const participantUserIds = [...new Set((allParticipants || []).map((p: any) => p.user_id).filter(Boolean))];
       const { data: profiles } = await supabaseAdmin
@@ -401,35 +402,35 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         .select("id, club_id")
         .in("id", participantUserIds)
         .eq("club_id", playerClubId);
-      
+
       const validUserIds = new Set((profiles || []).map((p: any) => p.id));
-      
+
       // Filtrer les matchs : ne garder que ceux où tous les participants users appartiennent au même club
       validMatchIdsForBadges = matchIds.filter(matchId => {
         const participants = (allParticipants || []).filter((p: any) => p.match_id === matchId);
-        return participants.every((p: any) => 
+        return participants.every((p: any) =>
           p.player_type === "guest" || validUserIds.has(p.user_id)
         );
       });
     }
-    
+
     const { data: msForBadges } = await supabase
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, created_at")
       .in("id", validMatchIdsForBadges);
-      
+
     const byIdForBadges: Record<string, number> = {};
     (msForBadges || []).forEach((m: any) => {
       if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
       const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
       byIdForBadges[m.id] = winner_team;
     });
-    
+
     // Filtrer mp pour ne garder que les matchs valides (sans limite quotidienne)
-    const filteredMpForBadges = playerClubId 
+    const filteredMpForBadges = playerClubId
       ? mp.filter((p: any) => validMatchIdsForBadges.includes(p.match_id))
       : mp;
-    
+
     filteredMpForBadges.forEach((p: any) => {
       if (byIdForBadges[p.match_id] === p.team) badgeWins += 1;
       else if (byIdForBadges[p.match_id]) badgeLosses += 1;
@@ -475,7 +476,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   let computedBadges = getBadges(statsForBadges);
   // Utiliser icon + title comme clé unique car plusieurs badges peuvent avoir la même icône
   const obtainedBadgeKeys = new Set(computedBadges.map(b => `${b.icon}|${b.title}`));
-  
+
   // Badges liés aux avis: Contributeur (premier avis valide du joueur)
   // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
   const { data: myReviewsForBadge } = await supabase
@@ -488,10 +489,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   if (myReviewsForBadge && myReviewsForBadge.length > 0) {
     // Vérifier si au moins un avis est valide
     const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
-    const hasValidReviewForBadge = myReviewsForBadge.some((r: any) => 
+    const hasValidReviewForBadge = myReviewsForBadge.some((r: any) =>
       isReviewValidForBonus(r.rating || 0, r.comment || null)
     );
-    
+
     if (hasValidReviewForBadge) {
       extraObtained.add("💬|Contributeur"); // Contributeur: au moins 1 avis valide
       // Ajouter le badge Contributeur à computedBadges pour BadgesUnlockNotifier
@@ -508,7 +509,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   // Calcul du winrate (utiliser les stats avec limite quotidienne pour l'affichage)
   const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
   const winrateColor = winrate > 60 ? "#10B981" : winrate >= 40 ? "#0066FF" : "#EF4444";
-  
+
   // Nombre total de badges standards
   const totalBadges = ALL_BADGES.length;
   // Nombre de badges standards obtenus (comptés de la même manière que dans la page badges)
@@ -528,7 +529,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/90 truncate">Vos statistiques</h3>
           <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="md" />
         </div>
-        
+
         {/* Série de victoires en cours - Cadre en longueur, séparé */}
         <div className="mb-3 sm:mb-4">
           <div
@@ -537,7 +538,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           >
             {/* Effet de brillance subtil */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer" />
-            
+
             <div className="relative z-10 flex items-center justify-between gap-3">
               <div className="flex-1">
                 <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] text-white/80 font-medium mb-1">
@@ -567,11 +568,11 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
             </div>
           </div>
         </div>
-        
+
         {/* Grid 2x4 compact pour les stats */}
         <div className="grid grid-cols-2 gap-4 sm:gap-5 md:gap-7 text-xs sm:text-sm">
           {/* Points - Stat principale */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '50ms', borderLeftWidth: '3px', borderLeftColor: '#0066FF' }}
           >
@@ -580,65 +581,65 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
               {typeof points === 'number' ? points : (typeof points === 'string' ? parseInt(String(points), 10) || 0 : 0)}
             </div>
           </div>
-          
+
           {/* Matchs - Stat principale */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '50ms', borderLeftWidth: '3px', borderLeftColor: '#9CA3AF' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Matchs</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">{matches}</div>
           </div>
-          
+
           {/* Victoires - Stat principale */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '100ms', borderLeftWidth: '3px', borderLeftColor: '#10B981' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Victoires</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">{wins}</div>
           </div>
-          
+
           {/* Défaites - Stat principale */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '150ms', borderLeftWidth: '3px', borderLeftColor: '#EF4444' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Défaites</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">{losses}</div>
           </div>
-          
+
           {/* Sets gagnés - Stat secondaire */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '200ms', borderLeftWidth: '3px', borderLeftColor: '#10B981' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Sets gagnés</div>
             <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsWon}</div>
           </div>
-          
+
           {/* Sets perdus - Stat secondaire */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '250ms', borderLeftWidth: '3px', borderLeftColor: '#EF4444' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Sets perdus</div>
             <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsLost}</div>
           </div>
-          
+
           {/* Winrate - Stat secondaire avec dégradé */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '300ms', borderLeftWidth: '3px', borderLeftColor: '#BFFF00' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Winrate</div>
-            <div 
+            <div
               className="text-xl sm:text-2xl md:text-3xl font-bold tabular-nums"
-              style={{ 
-                background: winrate > 60 
-                  ? "linear-gradient(to right, #10B981, #059669)" 
-                  : winrate >= 40 
-                    ? "linear-gradient(to right, #0066FF, #0052CC)" 
+              style={{
+                background: winrate > 60
+                  ? "linear-gradient(to right, #10B981, #059669)"
+                  : winrate >= 40
+                    ? "linear-gradient(to right, #0066FF, #0052CC)"
                     : "linear-gradient(to right, #EF4444, #DC2626)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -651,9 +652,9 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
               {winrate}%
             </div>
           </div>
-          
+
           {/* Badges - Stat secondaire */}
-          <div 
+          <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{ animationDelay: '350ms', borderLeftWidth: '3px', borderLeftColor: '#D1D5DB' }}
           >
@@ -661,7 +662,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
             <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{badgesObtained} / {totalBadges}</div>
           </div>
         </div>
-        
+
         {/* Badges en bas */}
         {computedBadges.length > 0 && (
           <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-white/20">

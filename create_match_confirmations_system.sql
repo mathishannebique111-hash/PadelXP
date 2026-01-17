@@ -83,9 +83,9 @@ BEGIN
   FROM public.match_participants
   WHERE match_id = NEW.match_id AND player_type = 'user';
   
-  -- Si on a au moins 2 confirmations ET qu'il y a au moins 3 joueurs users au total (créateur + 2 autres)
-  -- Alors on valide le match (2 confirmations sur les 3 autres joueurs)
-  IF confirmation_count >= 2 AND total_user_participants >= 3 THEN
+  -- On valide le match dès qu'on a 3 confirmations (sur 4 joueurs supposés)
+  -- Règle simplifiée selon demande client : tous les matchs sont considérés à 4 joueurs
+  IF confirmation_count >= 3 THEN
     UPDATE public.matches
     SET status = 'confirmed',
         confirmed_at = NOW()

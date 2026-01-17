@@ -12,7 +12,7 @@ interface MatchTabsProps {
   badgesContent?: React.ReactNode;
 }
 
-function MatchTabsContent({ 
+function MatchTabsContent({
   activeTab = 'record',
   recordContent,
   historyContent,
@@ -22,12 +22,42 @@ function MatchTabsContent({
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
   const initialTab = tabFromUrl && ['record', 'history', 'badges'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
+  const [pendingMatchesCount, setPendingMatchesCount] = useState(0);
 
   useEffect(() => {
     if (tabFromUrl && ['record', 'history', 'badges'].includes(tabFromUrl)) {
       setCurrentTab(tabFromUrl);
     }
   }, [tabFromUrl]);
+
+  // Fetch pending matches count for badge
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const res = await fetch('/api/matches/pending', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setPendingMatchesCount(data.totalPending || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching pending matches count:', error);
+      }
+    };
+
+    fetchPendingCount();
+
+    // Refresh when coming back to the tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchPendingCount();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const tabs = [
     { id: 'record' as TabType, label: 'Enregistrer' },
@@ -49,13 +79,19 @@ function MatchTabsContent({
               newUrl.searchParams.set('tab', tab.id);
               window.history.replaceState(null, '', newUrl.toString());
             }}
-            className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${
-              currentTab === tab.id
-                ? 'text-white border-b-2 border-blue-400'
-                : 'text-white/60 hover:text-white/80'
-            }`}
+            className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${currentTab === tab.id
+              ? 'text-white border-b-2 border-blue-400'
+              : 'text-white/60 hover:text-white/80'
+              }`}
           >
-            {tab.label}
+            <div className="flex items-center gap-1.5 px-3">
+              <span>{tab.label}</span>
+              {tab.id === 'history' && pendingMatchesCount > 0 && (
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {pendingMatchesCount > 9 ? '9+' : pendingMatchesCount}
+                </span>
+              )}
+            </div>
             {currentTab === tab.id && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />
             )}

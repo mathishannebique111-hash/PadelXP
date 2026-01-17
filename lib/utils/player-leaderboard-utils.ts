@@ -122,7 +122,8 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     const { data: allMatches, error: matchesError } = await supabaseAdmin
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, played_at, created_at")
-      .in("id", uniqueMatchIds);
+      .in("id", uniqueMatchIds)
+      .eq("status", "confirmed");
 
     if (matchesError) {
       logger.error("[calculatePlayerLeaderboard] Error fetching matches", { error: matchesError.message });

@@ -1,177 +1,169 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get("token");
-
-  if (!token) {
-    return NextResponse.json({ error: "Token de confirmation manquant" }, { status: 400 });
-  }
-
-  const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    // Rediriger vers la page de login avec le token en paramètre
-    return NextResponse.redirect(new URL(`/login?redirect=/matches/confirm?token=${token}`, req.url));
-  }
-
-  // Utiliser service_role pour récupérer la confirmation (bypass RLS)
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  
-  if (!serviceKey || !supabaseUrl) {
-    return NextResponse.json({ error: "Configuration manquante" }, { status: 500 });
-  }
-
-  const serviceSupabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false },
-  });
-
-  // Récupérer la confirmation avec le token
-  const { data: confirmation, error: confError } = await serviceSupabase
-    .from("match_confirmations")
-    .select("*, matches!inner(id, status)")
-    .eq("confirmation_token", token)
-    .single();
-
-  if (confError || !confirmation) {
-    return NextResponse.redirect(new URL(`/matches/confirm?token=${token}&status=invalid`, req.url));
-  }
-
-  // Vérifier que le token appartient à l'utilisateur connecté
-  if (confirmation.user_id !== user.id) {
-    return NextResponse.redirect(new URL(`/matches/confirm?token=${token}&status=unauthorized`, req.url));
-  }
-
-  // Vérifier si déjà confirmé
-  if (confirmation.confirmed) {
-    return NextResponse.redirect(new URL(`/matches/confirm?token=${token}&status=already-confirmed`, req.url));
-  }
-
-  // Mettre à jour la confirmation avec service_role
-  const { error: updateError } = await serviceSupabase
-    .from("match_confirmations")
-    .update({
-      confirmed: true,
-      confirmed_at: new Date().toISOString(),
-    })
-    .eq("id", confirmation.id);
-
-  if (updateError) {
-    return NextResponse.redirect(new URL(`/matches/confirm?token=${token}&status=error`, req.url));
-  }
-
-  // Vérifier si le match doit être validé (2 confirmations sur 3)
-  const { data: confirmations } = await serviceSupabase
-    .from("match_confirmations")
-    .select("user_id")
-    .eq("match_id", confirmation.matches.id)
-    .eq("confirmed", true);
-
-  const confirmedCount = confirmations?.length || 0;
-
-  // Si on a au moins 2 confirmations, valider le match
-  if (confirmedCount >= 2) {
-    const { error: matchUpdateError } = await serviceSupabase
-      .from("matches")
-      .update({
-        status: "confirmed",
-        confirmed_at: new Date().toISOString(),
-      })
-      .eq("id", confirmation.matches.id);
-
-    if (matchUpdateError) {
-      logger.error({ error: matchUpdateError, userId: user.id.substring(0, 8) + "…", matchId: confirmation.matches.id.substring(0, 8) + "…" }, "Error updating match status:");
-    }
-  }
-
-  return NextResponse.redirect(new URL(`/matches/confirm?token=${token}&status=success`, req.url));
+  return NextResponse.json({ message: "Use POST method" }, { status: 405 });
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { token, action } = body as { token: string; action: "confirm" | "reject" };
+  try {
+    logger.info("POST /api/matches/confirm - Starting");
 
-  if (!token) {
-    return NextResponse.json({ error: "Token de confirmation manquant" }, { status: 400 });
-  }
+    const body = await req.json();
+    const { matchId } = body as { matchId?: string };
 
-  const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user } } = await supabase.auth.getUser();
+    logger.info("POST /api/matches/confirm - Body parsed", { matchId });
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!matchId) {
+      return NextResponse.json({ error: "matchId requis" }, { status: 400 });
+    }
 
-  // Utiliser service_role pour récupérer la confirmation
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  
-  if (!serviceKey || !supabaseUrl) {
-    return NextResponse.json({ error: "Configuration manquante" }, { status: 500 });
-  }
+    // Get cookies and create auth client
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set(name, value, options);
+              });
+            } catch (error) {
+              // Ignore cookie setting errors
+            }
+          },
+        },
+      }
+    );
 
-  const serviceSupabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false },
-  });
+    logger.info("POST /api/matches/confirm - Getting user");
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  // Récupérer la confirmation
-  const { data: confirmation, error: confError } = await serviceSupabase
-    .from("match_confirmations")
-    .select("*, matches!inner(id, status)")
-    .eq("confirmation_token", token)
-    .single();
+    if (userError) {
+      logger.error("POST /api/matches/confirm - User error", { error: userError.message });
+      return NextResponse.json({ error: "Erreur d'authentification", details: userError.message }, { status: 401 });
+    }
 
-  if (confError || !confirmation) {
-    return NextResponse.json({ error: "Token de confirmation invalide" }, { status: 400 });
-  }
+    if (!user) {
+      logger.error("POST /api/matches/confirm - No user");
+      return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    }
 
-  if (confirmation.user_id !== user.id) {
-    return NextResponse.json({ error: "Ce lien de confirmation ne vous appartient pas" }, { status: 403 });
-  }
+    logger.info("POST /api/matches/confirm - User found", { userId: user.id.substring(0, 8) + "…" });
 
-  if (action === "confirm") {
-    // Confirmer le match
-    const { error: updateError } = await serviceSupabase
+    // Create admin client
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // Check if match exists
+    logger.info("POST /api/matches/confirm - Checking match exists");
+    const { data: match, error: matchError } = await adminClient
+      .from("matches")
+      .select("id, status")
+      .eq("id", matchId)
+      .maybeSingle();
+
+    if (matchError) {
+      logger.error("POST /api/matches/confirm - Match query error", { error: matchError.message });
+      return NextResponse.json({ error: "Erreur lors de la recherche du match", details: matchError.message }, { status: 500 });
+    }
+
+    if (!match) {
+      logger.error("POST /api/matches/confirm - Match not found");
+      return NextResponse.json({ error: "Match non trouvé" }, { status: 404 });
+    }
+
+    logger.info("POST /api/matches/confirm - Match found", { status: match.status });
+
+    if (match.status === 'confirmed') {
+      return NextResponse.json({
+        success: true,
+        message: "Ce match est déjà confirmé",
+        alreadyConfirmed: true
+      });
+    }
+
+    // Upsert the confirmation
+    logger.info("POST /api/matches/confirm - Upserting confirmation");
+    const { error: upsertError } = await adminClient
       .from("match_confirmations")
-      .update({
+      .upsert({
+        match_id: matchId,
+        user_id: user.id,
         confirmed: true,
         confirmed_at: new Date().toISOString(),
-      })
-      .eq("id", confirmation.id);
+        confirmation_token: crypto.randomUUID()
+      }, {
+        onConflict: 'match_id,user_id'
+      });
 
-    if (updateError) {
-      return NextResponse.json({ error: "Erreur lors de la confirmation" }, { status: 500 });
+    if (upsertError) {
+      logger.error("POST /api/matches/confirm - Upsert error", { error: upsertError.message });
+      return NextResponse.json({ error: "Erreur lors de la confirmation", details: upsertError.message }, { status: 500 });
     }
 
-    // Vérifier si le match doit être validé
-    const { data: confirmations } = await serviceSupabase
+    logger.info("POST /api/matches/confirm - Confirmation upserted");
+
+    // Count confirmations
+    const { data: confirmations } = await adminClient
       .from("match_confirmations")
-      .select("user_id")
-      .eq("match_id", confirmation.matches.id)
+      .select("id")
+      .eq("match_id", matchId)
       .eq("confirmed", true);
 
-    const confirmedCount = confirmations?.length || 0;
+    const confirmationCount = confirmations?.length || 0;
+    logger.info("POST /api/matches/confirm - Confirmation count", { count: confirmationCount });
 
-    if (confirmedCount >= 2) {
-      await serviceSupabase
-        .from("matches")
-        .update({
-          status: "confirmed",
-          confirmed_at: new Date().toISOString(),
-        })
-        .eq("id", confirmation.matches.id);
+    // Règle simplifiée : 3 confirmations requises (sur 4 joueurs)
+    const totalUserParticipants = 3;
+
+    // Fetch the updated match status (the trigger might have already confirmed it)
+    const { data: updatedMatch } = await adminClient
+      .from("matches")
+      .select("status")
+      .eq("id", matchId)
+      .maybeSingle();
+
+    const isConfirmed = updatedMatch?.status === 'confirmed';
+
+    if (isConfirmed) {
+      return NextResponse.json({
+        success: true,
+        message: "Match confirmé ! Les points ont été ajoutés au classement.",
+        matchConfirmed: true,
+        confirmationCount,
+        totalRequired: 3
+      });
     }
 
-    return NextResponse.json({ success: true, message: "Match confirmé avec succès" });
-  } else {
-    // Rejeter le match (optionnel, pour l'instant on ne fait rien)
-    return NextResponse.json({ success: true, message: "Match rejeté" });
+    return NextResponse.json({
+      success: true,
+      message: "Confirmation enregistrée. En attente des autres joueurs.",
+      matchConfirmed: false,
+      confirmationCount,
+      confirmationsNeeded: Math.max(0, 3 - confirmationCount),
+      totalRequired: 3
+    });
+
+  } catch (error) {
+    logger.error("POST /api/matches/confirm - Unexpected error", {
+      error: (error as Error).message,
+      stack: (error as Error).stack
+    });
+    return NextResponse.json({
+      error: "Erreur serveur inattendue",
+      details: (error as Error).message
+    }, { status: 500 });
   }
 }
-

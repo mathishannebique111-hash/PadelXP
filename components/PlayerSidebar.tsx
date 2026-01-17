@@ -32,6 +32,7 @@ interface MenuItem {
 
 export default function PlayerSidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingMatchesCount, setPendingMatchesCount] = useState(0);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { hasUnread } = useUnreadPlayerMessages();
@@ -46,6 +47,23 @@ export default function PlayerSidebar() {
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  // Fetch pending matches count for badge
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const res = await fetch('/api/matches/pending', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setPendingMatchesCount(data.totalPending || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching pending matches count:', error);
+      }
+    };
+
+    fetchPendingCount();
+  }, [pathname]); // Refetch when navigating
 
   // Empêcher le scroll du body quand le menu est ouvert
   useEffect(() => {
@@ -220,7 +238,14 @@ export default function PlayerSidebar() {
                     />
                   )}
                 </div>
-                <span className="font-semibold text-sm">{item.label}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-sm">{item.label}</span>
+                  {item.navKey === 'match' && pendingMatchesCount > 0 && (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                      {pendingMatchesCount > 9 ? '9+' : pendingMatchesCount}
+                    </span>
+                  )}
+                </div>
               </Link>
             );
           })}

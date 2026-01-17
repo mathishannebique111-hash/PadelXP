@@ -1,17 +1,19 @@
 -- ============================================
 -- MISE À JOUR DE LA VUE LEADERBOARD
 -- ============================================
--- Cette migration met à jour la vue leaderboard pour exclure les matchs
--- où un joueur a déjà fait 2 matchs dans la journée (limite quotidienne)
+-- Cette migration met à jour la vue leaderboard pour:
+-- 1. Exclure les matchs où un joueur a déjà fait 2 matchs dans la journée
+-- 2. Exclure les matchs non confirmés (status != 'confirmed')
 -- Exécutez ce script dans Supabase SQL Editor
 
 -- Drop existing view
 DROP VIEW IF EXISTS public.leaderboard;
 
--- Create new leaderboard view that excludes matches beyond the daily limit
+-- Create new leaderboard view that excludes matches beyond the daily limit AND non-confirmed matches
 CREATE OR REPLACE VIEW public.leaderboard AS
 WITH player_stats AS (
   -- Récupérer tous les matchs d'un joueur avec leur date de jeu
+  -- NOUVEAU: Filtrer uniquement les matchs confirmés
   SELECT 
     mp.user_id,
     mp.player_type,
@@ -30,6 +32,8 @@ WITH player_stats AS (
     AND m.team2_id IS NOT NULL
     -- Filtrer pour ne compter que les matchs où le joueur était un user authentifié
     AND mp.player_type = 'user'
+    -- NOUVEAU: Ne compter que les matchs confirmés
+    AND (m.status = 'confirmed' OR m.status IS NULL)
 ),
 ranked_matches AS (
   -- Ajouter un numéro de rang pour chaque match d'un joueur dans la journée

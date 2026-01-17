@@ -22,6 +22,8 @@ WITH player_stats AS (
     -- Filtrer pour ne compter que les matchs où le joueur était un user authentifié
     -- (comme PlayerSummary qui fait .eq("player_type", "user"))
     AND mp.player_type = 'user'
+    -- IMPORTANT: Ne compter que les matchs confirmés
+    AND m.status = 'confirmed'
 ),
 player_results AS (
   SELECT 
