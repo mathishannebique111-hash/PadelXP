@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import PendingMatchCard from "./PendingMatchCard";
 
 interface PendingMatch {
@@ -26,6 +27,7 @@ interface PendingMatchesSectionProps {
 export default function PendingMatchesSection({ onPendingCountChange }: PendingMatchesSectionProps) {
     const [pendingMatches, setPendingMatches] = useState<PendingMatch[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     const fetchPendingMatches = async () => {
         try {
@@ -49,12 +51,32 @@ export default function PendingMatchesSection({ onPendingCountChange }: PendingM
 
     useEffect(() => {
         fetchPendingMatches();
-    }, []);
 
-    const handleMatchConfirmed = () => {
-        // Recharger les matchs en attente
-        fetchPendingMatches();
-    };
+        // Listen for matchFullyConfirmed event to remove match from list
+        const handleMatchConfirmed = (event: Event) => {
+            const customEvent = event as CustomEvent<{ matchId: string }>;
+            const matchId = customEvent.detail?.matchId;
+            if (matchId) {
+                setPendingMatches(prev => {
+                    const newList = prev.filter(m => m.id !== matchId);
+                    if (onPendingCountChange) {
+                        onPendingCountChange(newList.length);
+                    }
+                    return newList;
+                });
+
+                // Refresh the page content after 5s to show match in history
+                setTimeout(() => {
+                    router.refresh();
+                }, 5000);
+            }
+        };
+        window.addEventListener('matchFullyConfirmed', handleMatchConfirmed);
+
+        return () => {
+            window.removeEventListener('matchFullyConfirmed', handleMatchConfirmed);
+        };
+    }, [onPendingCountChange, router]);
 
     if (loading) {
         return (
@@ -85,7 +107,6 @@ export default function PendingMatchesSection({ onPendingCountChange }: PendingM
                     <PendingMatchCard
                         key={match.id}
                         match={match}
-                        onConfirmed={handleMatchConfirmed}
                     />
                 ))}
             </div>

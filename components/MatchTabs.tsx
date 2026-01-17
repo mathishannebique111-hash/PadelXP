@@ -54,8 +54,15 @@ function MatchTabsContent({
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Listen for matchFullyConfirmed event to decrement badge
+    const handleMatchConfirmed = () => {
+      setPendingMatchesCount(prev => Math.max(0, prev - 1));
+    };
+    window.addEventListener('matchFullyConfirmed', handleMatchConfirmed);
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('matchFullyConfirmed', handleMatchConfirmed);
     };
   }, []);
 

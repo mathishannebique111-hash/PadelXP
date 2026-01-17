@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, FileText, Trophy, Check } from "lucide-react";
 
 interface Participant {
@@ -36,6 +36,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
     const [isConfirming, setIsConfirming] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isHiding, setIsHiding] = useState(false);
 
     const team1 = match.participants.filter(p => p.team === 1);
     const team2 = match.participants.filter(p => p.team === 2);
@@ -76,17 +77,39 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
     // Calculer le nombre de confirmations effectif (incluant la confirmation locale si applicable)
     const effectiveConfirmationCount = confirmed ? match.confirmation_count + 1 : match.confirmation_count;
     const isUserConfirmed = confirmed || match.current_user_confirmed;
-
     // Détecter si le match est entièrement confirmé (3 joueurs ou plus)
     const isFullyConfirmed = effectiveConfirmationCount >= 3;
+
+    // Auto-hide et notification après confirmation complète
+    useEffect(() => {
+        if (isFullyConfirmed && !isHiding) {
+            const timer = setTimeout(() => {
+                setIsHiding(true);
+                // Dispatch custom event pour notifier les autres composants
+                window.dispatchEvent(new CustomEvent('matchFullyConfirmed', {
+                    detail: { matchId: match.id }
+                }));
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isFullyConfirmed, isHiding, match.id]);
+
+    // Ne pas rendre si la carte est en train de disparaître (après l'animation)
+    if (isHiding) {
+        return (
+            <div className="rounded-2xl border-2 border-green-500 bg-green-50 p-3 sm:p-4 opacity-0 scale-95 transition-all duration-500">
+                {/* Contenu vide pendant le fade-out */}
+            </div>
+        );
+    }
 
     return (
         <div
             className={`rounded-2xl border-2 p-3 sm:p-4 transition-all duration-500 ease-in-out ${isFullyConfirmed
-                ? 'border-green-500 bg-green-50 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-[1.02]'
-                : isUserConfirmed
-                    ? 'border-blue-400 bg-blue-50'
-                    : 'border-amber-400 bg-amber-50'
+                    ? 'border-green-500 bg-green-50 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-[1.02]'
+                    : isUserConfirmed
+                        ? 'border-blue-400 bg-blue-50'
+                        : 'border-amber-400 bg-amber-50'
                 }`}
         >
             <div className="mb-3 flex items-center justify-between">
@@ -155,7 +178,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
             </div>
 
             {error && (
-                <div className="mb-3 rounded-md bg-red-100 p-2 text-xs text-red-700 animate-fadeIn">
+                <div className="mb-3 rounded-md bg-red-100 p-2 text-xs text-red-700">
                     {error}
                 </div>
             )}
@@ -169,7 +192,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
 
                 <div className="relative h-full flex items-center">
                     {isUserConfirmed ? (
-                        <div className="flex items-center gap-1.5 animate-fadeIn">
+                        <div className="flex items-center gap-1.5">
                             <span className="flex items-center gap-1.5 rounded-md bg-[#22c55e] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-300 hover:scale-105">
                                 Confirmé <Check className="h-3 w-3" strokeWidth={4} />
                             </span>
@@ -178,15 +201,10 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                         <button
                             onClick={handleConfirm}
                             disabled={isConfirming}
-                            className="rounded-md bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className={`rounded-md bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-150 hover:bg-blue-700 hover:shadow active:scale-95 disabled:cursor-not-allowed ${isConfirming ? 'scale-95 opacity-70' : ''
+                                }`}
                         >
-                            {isConfirming ? (
-                                <span className="flex items-center gap-1">
-                                    <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                    <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                    <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                                </span>
-                            ) : "Confirmer"}
+                            {isConfirming ? "Confirmation..." : "Confirmer"}
                         </button>
                     )}
                 </div>
