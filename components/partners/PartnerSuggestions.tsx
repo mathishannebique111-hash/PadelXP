@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock } from "lucide-react";
+import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -62,7 +62,7 @@ export default function PartnerSuggestions() {
         .gt("expires_at", new Date().toISOString());
 
       // Récupérer les profils des expéditeurs pour obtenir leurs noms
-      const senderIds = receivedInvitations?.map(inv => inv.sender_id) || [];
+      const senderIds = receivedInvitations?.map((inv: any) => inv.sender_id) || [];
       let senderProfilesMap = new Map();
       if (senderIds.length > 0) {
         const { data: senderProfiles } = await supabase
@@ -71,15 +71,15 @@ export default function PartnerSuggestions() {
           .in("id", senderIds);
 
         if (senderProfiles) {
-          senderProfilesMap = new Map(senderProfiles.map(p => [p.id, p]));
+          senderProfilesMap = new Map(senderProfiles.map((p: any) => [p.id, p]));
         }
       }
 
-      const statusMap = new Map<string, { sent: boolean; received: boolean; senderName?: string }>();
+      const statusMap = new Map<string, { sent: boolean; received: boolean; senderName?: string; isAccepted?: boolean }>();
 
       players.forEach(player => {
-        const sentInv = sentInvitations?.find(inv => inv.receiver_id === player.id);
-        const receivedInv = receivedInvitations?.find(inv => inv.sender_id === player.id);
+        const sentInv = sentInvitations?.find((inv: any) => inv.receiver_id === player.id);
+        const receivedInv = receivedInvitations?.find((inv: any) => inv.sender_id === player.id);
         const sent = !!sentInv;
         const received = !!receivedInv;
         const isAccepted = (sentInv?.status === "accepted") || (receivedInv?.status === "accepted");
@@ -514,13 +514,14 @@ export default function PartnerSuggestions() {
                 {player.compatibilityTags.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-1 mb-3 h-5 md:h-auto overflow-hidden">
                     {player.compatibilityTags.slice(0, 1).map((tag, i) => {
-                      const isSameSideOrHand = tag.toLowerCase().includes("même côté") ||
+                      const isNegativeOrWarning = tag.toLowerCase().includes("même côté") ||
                         tag.toLowerCase().includes("mains similaires") ||
-                        tag.toLowerCase().includes("même main");
+                        tag.toLowerCase().includes("même main") ||
+                        tag.toLowerCase().includes("niveau différent");
                       return (
                         <span
                           key={i}
-                          className={`text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full ${isSameSideOrHand
+                          className={`text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full ${isNegativeOrWarning
                             ? "bg-orange-500/10 text-orange-300/90 border border-orange-500/20"
                             : "bg-green-500/10 text-green-300/90 border border-green-500/20"
                             }`}
@@ -578,7 +579,7 @@ export default function PartnerSuggestions() {
                     ) : hasReceivedInvitation ? (
                       <MessageCircle size={16} />
                     ) : (
-                      <MessageCircle size={16} className="fill-current" />
+                      <UserPlus size={16} className="fill-current" />
                     )}
                   </button>
                 </div>
