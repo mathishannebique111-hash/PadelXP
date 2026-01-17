@@ -77,44 +77,56 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
     const effectiveConfirmationCount = confirmed ? match.confirmation_count + 1 : match.confirmation_count;
     const isUserConfirmed = confirmed || match.current_user_confirmed;
 
+    // Détecter si le match est entièrement confirmé (3 joueurs ou plus)
+    const isFullyConfirmed = effectiveConfirmationCount >= 3;
+
     return (
-        <div className={`rounded-2xl border-2 p-4 sm:p-6 ${isUserConfirmed ? 'border-blue-400 bg-blue-50' : 'border-amber-400 bg-amber-50'}`}>
-            <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`flex-shrink-0 rounded-full p-2 ${isUserConfirmed ? 'bg-blue-100' : 'bg-amber-100'}`}>
-                        {isUserConfirmed ? (
-                            <Clock className={`h-5 w-5 ${isUserConfirmed ? 'text-blue-600' : 'text-amber-600'}`} />
+        <div
+            className={`rounded-2xl border-2 p-3 sm:p-4 transition-all duration-500 ease-in-out ${isFullyConfirmed
+                ? 'border-green-500 bg-green-50 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-[1.02]'
+                : isUserConfirmed
+                    ? 'border-blue-400 bg-blue-50'
+                    : 'border-amber-400 bg-amber-50'
+                }`}
+        >
+            <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className={`flex-shrink-0 rounded-full p-1.5 ${isUserConfirmed ? 'bg-blue-100' : 'bg-amber-100'}`}>
+                        {isFullyConfirmed ? (
+                            <Check className="h-4 w-4 text-green-600 animate-bounce" />
+                        ) : isUserConfirmed ? (
+                            <Clock className="h-4 w-4 text-blue-600" />
                         ) : (
-                            <FileText className="h-5 w-5 text-amber-600" />
+                            <FileText className="h-4 w-4 text-amber-600" />
                         )}
                     </div>
                     <div>
-                        <div className="text-sm font-semibold text-gray-900">
-                            Match enregistré par {match.creator_name}
+                        <div className="text-xs font-semibold text-gray-900">
+                            Par {match.creator_name}
                         </div>
-                        <div className="text-xs text-gray-600">
-                            {dateStr} à {timeStr}
+                        <div className="text-[10px] text-gray-600">
+                            {dateStr} • {timeStr}
                         </div>
                     </div>
                 </div>
-                <div className="rounded-lg bg-white px-4 py-2 text-base font-bold text-gray-900 tabular-nums">
+                <div className="rounded-md bg-white px-2 py-1 text-sm font-bold text-gray-900 tabular-nums shadow-sm border border-gray-100">
                     {match.score_team1}-{match.score_team2}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
+            <div className="grid grid-cols-2 gap-2 mb-3">
                 {/* Équipe 1 */}
-                <div className={`rounded-lg border p-4 ${winnerTeam === 1 ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'}`}>
-                    <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600 flex items-center gap-1.5">
-                        Équipe 1 {winnerTeam === 1 && <Trophy className="h-4 w-4 text-amber-500" />}
+                <div className={`rounded-lg border p-2 transition-colors duration-300 ${winnerTeam === 1 ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-white/80'}`}>
+                    <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                        Équipe 1 {winnerTeam === 1 && <Trophy className="h-3 w-3 text-amber-500" />}
                     </div>
-                    <div className="divide-y divide-gray-100">
+                    <div className="space-y-1">
                         {team1.map((p) => (
-                            <div key={p.user_id} className="flex items-center gap-2 py-1.5">
-                                <span className="text-sm text-gray-900">{p.display_name}</span>
+                            <div key={p.user_id} className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">{p.display_name}</span>
                                 {(p.has_confirmed || (p.is_current_user && confirmed)) && (
-                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#22c55e] shadow-sm">
-                                        <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                                    <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
+                                        <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                                     </div>
                                 )}
                             </div>
@@ -123,17 +135,17 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                 </div>
 
                 {/* Équipe 2 */}
-                <div className={`rounded-lg border p-4 ${winnerTeam === 2 ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'}`}>
-                    <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600 flex items-center gap-1.5">
-                        Équipe 2 {winnerTeam === 2 && <Trophy className="h-4 w-4 text-amber-500" />}
+                <div className={`rounded-lg border p-2 transition-colors duration-300 ${winnerTeam === 2 ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-white/80'}`}>
+                    <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                        Équipe 2 {winnerTeam === 2 && <Trophy className="h-3 w-3 text-amber-500" />}
                     </div>
-                    <div className="divide-y divide-gray-100">
+                    <div className="space-y-1">
                         {team2.map((p) => (
-                            <div key={p.user_id} className="flex items-center gap-2 py-1.5">
-                                <span className="text-sm text-gray-900">{p.display_name}</span>
+                            <div key={p.user_id} className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">{p.display_name}</span>
                                 {(p.has_confirmed || (p.is_current_user && confirmed)) && (
-                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#22c55e] shadow-sm">
-                                        <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                                    <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
+                                        <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                                     </div>
                                 )}
                             </div>
@@ -143,34 +155,45 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
             </div>
 
             {error && (
-                <div className="mb-4 rounded-lg bg-red-100 p-3 text-sm text-red-700">
+                <div className="mb-3 rounded-md bg-red-100 p-2 text-xs text-red-700 animate-fadeIn">
                     {error}
                 </div>
             )}
 
-            <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600">
-                    {effectiveConfirmationCount}/3 confirmations
+            <div className="flex items-center justify-between h-9">
+                <div className="text-[10px] font-medium text-gray-500 bg-white/50 px-2 py-1 rounded-full">
+                    <span className={isFullyConfirmed ? "text-green-600 font-bold" : ""}>
+                        {effectiveConfirmationCount}/3 confirmations
+                    </span>
                 </div>
-                {isUserConfirmed ? (
-                    <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-2 rounded-lg bg-[#22c55e] px-6 py-3 text-sm font-semibold text-white">
-                            Confirmé <Check className="h-4 w-4" strokeWidth={3} />
-                        </span>
-                    </div>
-                ) : (
-                    <button
-                        onClick={handleConfirm}
-                        disabled={isConfirming}
-                        className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isConfirming ? "Confirmation..." : "Confirmer le match"}
-                    </button>
-                )}
+
+                <div className="relative h-full flex items-center">
+                    {isUserConfirmed ? (
+                        <div className="flex items-center gap-1.5 animate-fadeIn">
+                            <span className="flex items-center gap-1.5 rounded-md bg-[#22c55e] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-300 hover:scale-105">
+                                Confirmé <Check className="h-3 w-3" strokeWidth={4} />
+                            </span>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleConfirm}
+                            disabled={isConfirming}
+                            className="rounded-md bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isConfirming ? (
+                                <span className="flex items-center gap-1">
+                                    <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                    <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                    <span className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                </span>
+                            ) : "Confirmer"}
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {isUserConfirmed && (
-                <div className="mt-3 text-xs text-blue-600 text-center">
+            {isUserConfirmed && !isFullyConfirmed && (
+                <div className="mt-2 text-[10px] text-blue-600 text-center font-medium animate-pulse">
                     En attente des autres joueurs...
                 </div>
             )}

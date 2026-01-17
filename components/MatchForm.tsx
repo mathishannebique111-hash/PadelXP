@@ -1117,7 +1117,7 @@ export default function MatchForm({
           // Redirection automatique seulement si pas d'avertissement
           setTimeout(() => {
             logger.info("🔄 Redirecting to match history...");
-            window.location.href = "/match/new?tab=history";
+            router.push("/match/new?tab=history");
           }, 2000);
         }
 
@@ -1218,7 +1218,7 @@ export default function MatchForm({
                   // Rediriger vers l'historique après avoir cliqué sur "Compris"
                   setTimeout(() => {
                     logger.info("🔄 Redirecting to match history...");
-                    window.location.href = "/match/new?tab=history";
+                    router.push("/match/new?tab=history");
                   }, 300);
                 }}
                 className="rounded-xl bg-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/30 backdrop-blur-sm"
