@@ -43,8 +43,8 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
     const winnerTeam = match.winner_team_id === match.team1_id ? 1 : 2;
 
     const matchDate = new Date(match.created_at);
-    const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-    const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" });
+    const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 
     const handleConfirm = async () => {
         setIsConfirming(true);
@@ -106,10 +106,10 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
     return (
         <div
             className={`rounded-2xl border-2 p-3 sm:p-4 transition-all duration-500 ease-in-out ${isFullyConfirmed
-                    ? 'border-green-500 bg-green-50 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-[1.02]'
-                    : isUserConfirmed
-                        ? 'border-blue-400 bg-blue-50'
-                        : 'border-amber-400 bg-amber-50'
+                ? 'border-green-500 bg-green-50 shadow-[0_0_20px_rgba(34,197,94,0.3)] scale-[1.02]'
+                : isUserConfirmed
+                    ? 'border-blue-400 bg-blue-50'
+                    : 'border-amber-400 bg-amber-50'
                 }`}
         >
             <div className="mb-3 flex items-center justify-between">

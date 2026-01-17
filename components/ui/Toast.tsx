@@ -91,7 +91,7 @@ export default function ToastContainer() {
   };
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] pointer-events-none">
+    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[100] pointer-events-none">
       <div className="flex flex-col gap-2 items-center">
         <AnimatePresence mode="popLayout">
           {toasts.map((toast) => (

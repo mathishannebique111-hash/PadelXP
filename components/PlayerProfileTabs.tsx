@@ -169,15 +169,15 @@ function PlayerProfileTabsContent({
               window.history.replaceState(null, '', newUrl.toString());
             }}
             className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${currentTab === tab.id
-                ? 'text-white border-b-2 border-blue-400'
-                : 'text-white/60 hover:text-white/80'
+              ? 'text-white border-b-2 border-blue-400'
+              : 'text-white/60 hover:text-white/80'
               }`}
           >
             <span className="flex items-center gap-2">
               {tab.label}
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
-                  {tab.badge}
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {tab.badge > 9 ? '9+' : tab.badge}
                 </span>
               )}
             </span>

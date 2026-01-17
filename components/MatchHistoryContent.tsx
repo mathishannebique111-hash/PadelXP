@@ -318,16 +318,16 @@ export default async function MatchHistoryContent() {
           const team2 = participants.filter((p: any) => p.team === 2);
           const userTeam = userTeamByMatch[match.id];
           const won = match.winner_team === userTeam;
-          const matchDate = new Date(match.created_at);
-          const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-          const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+          const matchDate = new Date(match.played_at || match.created_at);
+          const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" });
+          const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
 
           return (
             <div
               key={match.id}
               className={`rounded-2xl border-2 p-6 transition-all ${won
-                  ? "border-green-500 bg-green-50"
-                  : "border-red-300 bg-red-50"
+                ? "border-green-500 bg-green-50"
+                : "border-red-300 bg-red-50"
                 }`}
             >
               <div className="mb-4 flex items-center justify-between">
@@ -344,8 +344,8 @@ export default async function MatchHistoryContent() {
                     </div>
                     {match.decided_by_tiebreak && (
                       <div className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${won
-                          ? "border-amber-300 bg-amber-50 text-amber-700"
-                          : "border-red-300 bg-red-50 text-red-700"
+                        ? "border-amber-300 bg-amber-50 text-amber-700"
+                        : "border-red-300 bg-red-50 text-red-700"
                         }`}>
                         <span>⚡</span>
                         <span>{won ? "Victoire au tie-break" : "Défaite au tie-break"}</span>
