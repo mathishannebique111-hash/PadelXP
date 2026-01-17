@@ -47,7 +47,8 @@ function ToastItem({ toast, onClose }: ToastProps) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className={`relative flex items-center gap-3 rounded-xl ${colorClass} border px-4 py-3.5 shadow-lg backdrop-blur-sm min-w-[280px] max-w-[calc(100vw-2rem)]`}
+      layout
+      className={`relative flex items-center gap-3 rounded-xl pointer-events-auto ${colorClass} border px-4 py-3.5 shadow-lg backdrop-blur-sm min-w-[280px] max-w-[calc(100vw-2rem)]`}
     >
       <Icon className="w-5 h-5 text-white flex-shrink-0" />
       <p className="flex-1 text-sm font-medium text-white pr-6">
@@ -95,9 +96,7 @@ export default function ToastContainer() {
       <div className="flex flex-col gap-2 items-center">
         <AnimatePresence mode="popLayout">
           {toasts.map((toast) => (
-            <div key={toast.id} className="pointer-events-auto">
-              <ToastItem toast={toast} onClose={handleClose} />
-            </div>
+            <ToastItem key={toast.id} toast={toast} onClose={handleClose} />
           ))}
         </AnimatePresence>
       </div>

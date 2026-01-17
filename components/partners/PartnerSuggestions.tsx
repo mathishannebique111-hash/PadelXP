@@ -1,8 +1,8 @@
- "use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Eye, User, Loader2 } from "lucide-react";
+import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -42,7 +42,7 @@ export default function PartnerSuggestions() {
       if (!user) return;
 
       const playerIds = players.map(p => p.id);
-      
+
       // Vérifier les invitations envoyées (sender_id = user, receiver_id = player) - pending ou accepted
       const { data: sentInvitations } = await supabase
         .from("match_invitations")
@@ -51,7 +51,7 @@ export default function PartnerSuggestions() {
         .in("receiver_id", playerIds)
         .in("status", ["pending", "accepted"])
         .gt("expires_at", new Date().toISOString());
-      
+
       // Vérifier les invitations reçues (sender_id = player, receiver_id = user) - pending ou accepted
       const { data: receivedInvitations } = await supabase
         .from("match_invitations")
@@ -60,7 +60,7 @@ export default function PartnerSuggestions() {
         .in("sender_id", playerIds)
         .in("status", ["pending", "accepted"])
         .gt("expires_at", new Date().toISOString());
-      
+
       // Récupérer les profils des expéditeurs pour obtenir leurs noms
       const senderIds = receivedInvitations?.map(inv => inv.sender_id) || [];
       let senderProfilesMap = new Map();
@@ -69,31 +69,31 @@ export default function PartnerSuggestions() {
           .from("profiles")
           .select("id, first_name, last_name, display_name")
           .in("id", senderIds);
-        
+
         if (senderProfiles) {
           senderProfilesMap = new Map(senderProfiles.map(p => [p.id, p]));
         }
       }
-      
+
       const statusMap = new Map<string, { sent: boolean; received: boolean; senderName?: string }>();
-      
+
       players.forEach(player => {
         const sentInv = sentInvitations?.find(inv => inv.receiver_id === player.id);
         const receivedInv = receivedInvitations?.find(inv => inv.sender_id === player.id);
         const sent = !!sentInv;
         const received = !!receivedInv;
         const isAccepted = (sentInv?.status === "accepted") || (receivedInv?.status === "accepted");
-        
+
         const senderProfile = received ? senderProfilesMap.get(player.id) : null;
         const senderName = senderProfile ? (
           senderProfile.first_name && senderProfile.last_name
             ? `${senderProfile.first_name} ${senderProfile.last_name}`
             : senderProfile.display_name || senderProfile.first_name || "ce joueur"
         ) : undefined;
-        
+
         statusMap.set(player.id, { sent, received, senderName, isAccepted });
       });
-      
+
       setInvitationStatuses(statusMap);
     } catch (error) {
       console.error("[PartnerSuggestions] Erreur vérification invitations", error);
@@ -139,7 +139,7 @@ export default function PartnerSuggestions() {
       const fetchedSuggestions = data.suggestions || [];
       setSuggestions(fetchedSuggestions);
       setHasLoadedOnce(true);
-      
+
       // Vérifier les invitations existantes pour chaque suggestion
       if (fetchedSuggestions.length > 0) {
         await checkInvitationStatuses(fetchedSuggestions);
@@ -200,7 +200,7 @@ export default function PartnerSuggestions() {
         }
 
         showToast("Invitation envoyée ! Valable 24h.", "success");
-        
+
         // Mettre à jour le statut local (sans refetch pour éviter les "sauts" visuels)
         setInvitationStatuses(prev => {
           const next = new Map(prev);
@@ -261,12 +261,12 @@ export default function PartnerSuggestions() {
   // Charger les suggestions au montage
   useEffect(() => {
     fetchSuggestions();
-    
+
     // Écouter les événements de mise à jour de profil pour rafraîchir les suggestions
     const handleProfileUpdate = () => {
       fetchSuggestions();
     };
-    
+
     // Écouter les événements d'invitations pour mettre à jour les statuts
     const handleInvitationEvent = (event?: Event) => {
       // Si c'est une suppression, mettre à jour immédiatement le statut pour le joueur concerné
@@ -284,7 +284,7 @@ export default function PartnerSuggestions() {
         }
       }
     };
-    
+
     if (typeof window !== "undefined") {
       window.addEventListener("profileUpdated", handleProfileUpdate);
       window.addEventListener("matchInvitationCreated", handleInvitationEvent);
@@ -429,180 +429,162 @@ export default function PartnerSuggestions() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3">
           {suggestions.map((player) => {
-          const playerName =
-            player.first_name && player.last_name
-              ? `${player.first_name} ${player.last_name}`
-              : player.display_name || "Joueur";
+            const playerName =
+              player.first_name && player.last_name
+                ? `${player.first_name} ${player.last_name}`
+                : player.display_name || "Joueur";
 
-          const initials =
-            player.first_name && player.last_name
-              ? `${player.first_name[0]}${player.last_name[0]}`
-              : player.display_name?.[0]?.toUpperCase() || "J";
-          
-          const invitationStatus = invitationStatuses.get(player.id);
-          const hasSentInvitation = invitationStatus?.sent || false;
-          const hasReceivedInvitation = invitationStatus?.received || false;
-          const isAccepted = invitationStatus?.isAccepted || false;
-          const senderName = invitationStatus?.senderName;
+            // Truncate name if too long
+            const displayName = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
 
-          return (
-            <motion.div
-              key={player.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-white/10"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                {player.avatar_url ? (
-                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
-                    <Image
-                      src={player.avatar_url}
-                      alt={playerName}
-                      width={56}
-                      height={56}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
-                    <User size={24} />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white truncate text-sm md:text-base">
-                    {playerName}
-                  </p>
-                  {player.niveau_padel && (
-                    <p className="text-xs text-gray-400">
-                      Niveau {player.niveau_padel.toFixed(1)}/10
-                    </p>
+            const invitationStatus = invitationStatuses.get(player.id);
+            const hasSentInvitation = invitationStatus?.sent || false;
+            const hasReceivedInvitation = invitationStatus?.received || false;
+            const isAccepted = invitationStatus?.isAccepted || false;
+            const senderName = invitationStatus?.senderName;
+
+            return (
+              <motion.div
+                key={player.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-slate-800/50 rounded-xl p-2.5 md:p-4 border border-white/10 flex flex-col h-full"
+              >
+                {/* Header: Avatar + Info Centered */}
+                <div className="flex flex-col items-center text-center mb-2.5 flex-1">
+                  {player.avatar_url ? (
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700 overflow-hidden border-2 border-white/20 mb-2 shadow-sm">
+                      <Image
+                        src={player.avatar_url}
+                        alt={playerName}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700 flex items-center justify-center text-white/40 border-2 border-white/20 mb-2 shadow-sm">
+                      <User size={24} />
+                    </div>
                   )}
+
+                  <h4 className="font-bold text-white text-sm md:text-base leading-tight mb-0.5 line-clamp-1 w-full px-1">
+                    {displayName}
+                  </h4>
+
+                  {player.niveau_padel && (
+                    <div className="inline-flex items-center justify-center bg-slate-700/50 rounded-full px-2 py-0.5 mb-1.5">
+                      <span className="text-[10px] md:text-xs text-blue-300 font-medium">
+                        Niveau {player.niveau_padel.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Compatibility Bar */}
                   {player.compatibilityScore !== null && (
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <div className="h-1.5 flex-1 bg-slate-700 rounded-full overflow-hidden max-w-[80px]">
+                    <div className="w-full max-w-[100px] flex items-center gap-1.5">
+                      <div className="h-1.5 flex-1 bg-slate-700 rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${
-                            player.compatibilityScore >= 70
-                              ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                              : player.compatibilityScore >= 40
+                          className={`h-full ${player.compatibilityScore >= 70
+                            ? "bg-gradient-to-r from-green-500 to-emerald-500"
+                            : player.compatibilityScore >= 40
                               ? "bg-gradient-to-r from-orange-500 to-orange-400"
                               : "bg-gradient-to-r from-red-500 to-red-400"
-                          }`}
-                          style={{
-                            width: `${player.compatibilityScore}%`,
-                          }}
+                            }`}
+                          style={{ width: `${player.compatibilityScore}%` }}
                         />
                       </div>
                       <span
-                        className={`text-[10px] font-semibold ${
-                          player.compatibilityScore >= 70
-                            ? "text-green-400"
-                            : player.compatibilityScore >= 40
+                        className={`text-[10px] font-bold ${player.compatibilityScore >= 70
+                          ? "text-green-400"
+                          : player.compatibilityScore >= 40
                             ? "text-orange-400"
                             : "text-red-400"
-                        }`}
+                          }`}
                       >
                         {player.compatibilityScore}%
                       </span>
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Tags de compatibilité */}
-              {player.compatibilityTags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {player.compatibilityTags.slice(0, 2).map((tag, i) => {
-                    const isSameSideOrHand = tag.toLowerCase().includes("même côté") || 
-                                             tag.toLowerCase().includes("mains similaires") || 
-                                             tag.toLowerCase().includes("même main");
-                    return (
-                      <span
-                        key={i}
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                          isSameSideOrHand
-                            ? "bg-orange-500/20 text-orange-300"
-                            : "bg-green-500/20 text-green-300"
-                        }`}
-                      >
-                        {tag}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
+                {/* Tags (Hidden on mobile very small screens if needed, or simplified) */}
+                {player.compatibilityTags.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1 mb-3 h-5 md:h-auto overflow-hidden">
+                    {player.compatibilityTags.slice(0, 1).map((tag, i) => {
+                      const isSameSideOrHand = tag.toLowerCase().includes("même côté") ||
+                        tag.toLowerCase().includes("mains similaires") ||
+                        tag.toLowerCase().includes("même main");
+                      return (
+                        <span
+                          key={i}
+                          className={`text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full ${isSameSideOrHand
+                            ? "bg-orange-500/10 text-orange-300/90 border border-orange-500/20"
+                            : "bg-green-500/10 text-green-300/90 border border-green-500/20"
+                            }`}
+                        >
+                          {tag}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => router.push(`/players/${player.id}?from=partners`)}
-                  className="flex-1 py-2 px-3 border border-white/20 text-gray-300 rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 active:bg-slate-700/50 min-h-[44px]"
-                >
-                  <Eye size={14} />
-                  <span>Voir le profil</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isAccepted) {
-                      showToast("Une invitation de paire acceptée existe déjà avec ce joueur", "error");
-                      return;
-                    }
-                    if (hasSentInvitation) {
-                      showToast("Une proposition de paire a déjà été envoyée à ce joueur", "error");
-                      return;
-                    }
-                    if (hasReceivedInvitation) {
-                      showToast(`Vous avez déjà une proposition de paire de ${senderName || "ce joueur"}`, "error");
-                      return;
-                    }
-                    handleInviteClick(player);
-                  }}
-                  disabled={isInvitingId === player.id || hasSentInvitation || hasReceivedInvitation || isAccepted}
-                  className="flex-1 py-2 px-3 bg-blue-500 text-white rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 active:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
-                  title={
-                    isAccepted
-                      ? "Une invitation de paire acceptée existe déjà avec ce joueur"
+                {/* Actions - Icon Only on Mobile, Text on Desktop if space */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/players/${player.id}?from=partners`)}
+                    className="py-2 px-0 border border-white/10 text-gray-300 rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
+                    title="Voir le profil"
+                  >
+                    <Eye size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isAccepted) {
+                        showToast("Invitation déjà acceptée", "error");
+                        return;
+                      }
+                      if (hasSentInvitation) {
+                        showToast("Invitation déjà envoyée", "error");
+                        return;
+                      }
+                      if (hasReceivedInvitation) {
+                        showToast(`Invitation reçue de ${senderName || "ce joueur"}`, "error");
+                        return;
+                      }
+                      handleInviteClick(player);
+                    }}
+                    disabled={isInvitingId === player.id || hasSentInvitation || hasReceivedInvitation || isAccepted}
+                    className={`py-2 px-0 rounded-lg text-xs font-medium flex items-center justify-center transition-all h-9 ${isAccepted
+                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
                       : hasSentInvitation
-                      ? "Une proposition de paire a déjà été envoyée à ce joueur"
-                      : hasReceivedInvitation
-                      ? `Vous avez déjà une proposition de paire de ${senderName || "ce joueur"}`
-                      : undefined
-                  }
-                >
-                  {isInvitingId === player.id ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>Envoi...</span>
-                    </>
-                  ) : isAccepted ? (
-                    <>
-                      <MessageCircle size={14} />
-                      <span>Acceptée</span>
-                    </>
-                  ) : hasSentInvitation ? (
-                    <>
-                      <MessageCircle size={14} />
-                      <span>Déjà envoyée</span>
-                    </>
-                  ) : hasReceivedInvitation ? (
-                    <>
-                      <MessageCircle size={14} />
-                      <span>Reçue</span>
-                    </>
-                  ) : (
-                    <>
-                      <MessageCircle size={14} />
-                      <span>Inviter à jouer</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          );
-        })}
+                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                        : hasReceivedInvitation
+                          ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          : "bg-blue-600 text-white shadow-lg shadow-blue-900/20 active:scale-95"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {isInvitingId === player.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : isAccepted ? (
+                      <CheckCircle2 size={16} />
+                    ) : hasSentInvitation ? (
+                      <Clock size={16} />
+                    ) : hasReceivedInvitation ? (
+                      <MessageCircle size={16} />
+                    ) : (
+                      <MessageCircle size={16} className="fill-current" />
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
 
