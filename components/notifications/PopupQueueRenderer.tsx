@@ -28,7 +28,7 @@ export default function PopupQueueRenderer() {
             </div>
           </div>
           <h3 className="mb-1 text-center text-xl font-extrabold text-gray-900">Badge débloqué !</h3>
-          <div className="mx-auto mt-3 flex w-full max-w-sm items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <div className="mx-auto mt-3 flex w-full max-w-sm items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3">
             <BadgeIconDisplay icon={badgeData.icon} size={32} />
             <div>
               <div className="text-sm font-bold text-gray-900">{badgeData.title}</div>
@@ -36,7 +36,7 @@ export default function PopupQueueRenderer() {
             </div>
           </div>
           <button
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md transition-all"
+            className="mt-6 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md transition-all"
             onClick={closeCurrentPopup}
           >
             Parfait
@@ -104,14 +104,14 @@ export default function PopupQueueRenderer() {
             </div>
           </div>
           <h3 className="mb-2 text-center text-xl font-extrabold text-gray-900">Niveau atteint !</h3>
-          <div className={`mx-auto mt-3 rounded-xl bg-gradient-to-r ${config.bgGradient} p-4 text-center`}>
+          <div className={`mx-auto mt-3 rounded-2xl bg-gradient-to-r ${config.bgGradient} p-4 text-center`}>
             <p className="text-gray-700">
               Félicitations, vous avez atteint le niveau
             </p>
             <p className="text-2xl font-bold text-gray-900 mt-1">{levelData.tier}</p>
           </div>
           <button
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md transition-all"
+            className="mt-6 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:shadow-md transition-all"
             onClick={closeCurrentPopup}
           >
             Super !

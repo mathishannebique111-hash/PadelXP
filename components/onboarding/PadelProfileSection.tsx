@@ -163,15 +163,15 @@ export default function PadelProfileSection({
   useEffect(() => {
     loadProfile();
     loadPartner();
-    
+
     // Écouter les événements profileUpdated pour recharger les données
     const handleProfileUpdate = () => {
       loadProfile();
       loadPartner();
     };
-    
+
     window.addEventListener("profileUpdated", handleProfileUpdate);
-    
+
     return () => {
       window.removeEventListener("profileUpdated", handleProfileUpdate);
     };
@@ -331,7 +331,7 @@ export default function PadelProfileSection({
         setIsEditing(false);
         setOpenDropdown(null);
         await loadProfile();
-        
+
         // Déclencher un événement pour rafraîchir les suggestions de partenaires
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('profileUpdated'));
@@ -369,10 +369,10 @@ export default function PadelProfileSection({
 
       setShowDeleteDialog(false);
       setPartnerData(null);
-      
+
       // Recharger les données du partenaire sans recharger la page
       await loadPartner();
-      
+
       // Notifier les autres composants
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("profileUpdated"));
@@ -387,7 +387,7 @@ export default function PadelProfileSection({
 
   if (isLoading) {
     return (
-      <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <div className="text-white/60">Chargement...</div>
       </div>
     );
@@ -395,7 +395,7 @@ export default function PadelProfileSection({
 
   if (!profileData || Object.values(profileData).every((v) => v === null)) {
     return (
-      <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6">
           Mon Profil Padel
         </h2>
@@ -445,10 +445,10 @@ export default function PadelProfileSection({
     if (!isEditing) {
       if (!currentValue) return null;
       return (
-        <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
+        <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
           <div className="flex items-center gap-4">
             {Icon && (
-              <Icon className={`w-7 h-7 text-white flex-shrink-0 ${iconClassName}`} />
+              <Icon className={`w-7 h-7 text-padel-green flex-shrink-0 ${iconClassName}`} />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
@@ -471,9 +471,8 @@ export default function PadelProfileSection({
         className="relative"
       >
         <div
-          className={`rounded-xl border border-white/30 bg-white/5 p-5 ${
-            isOpen ? "bg-white/[0.1] border-white/50" : "hover:bg-white/[0.07] cursor-pointer"
-          }`}
+          className={`rounded-2xl border border-white/30 bg-white/5 p-5 ${isOpen ? "bg-white/[0.1] border-white/50" : "hover:bg-white/[0.07] cursor-pointer"
+            }`}
           onClick={(e) => {
             if (!isOpen && !(e.target as HTMLElement).closest('button')) {
               setOpenDropdown(fieldKey);
@@ -482,7 +481,7 @@ export default function PadelProfileSection({
         >
           <div className="flex items-center gap-4">
             {Icon && (
-              <Icon className={`w-7 h-7 text-white flex-shrink-0 ${iconClassName}`} />
+              <Icon className={`w-7 h-7 text-padel-green flex-shrink-0 ${iconClassName}`} />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
@@ -502,9 +501,8 @@ export default function PadelProfileSection({
                 }}
               >
                 <ChevronDown
-                  className={`w-4 h-4 text-white/50 ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-white/50 ${isOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
             </div>
@@ -512,63 +510,61 @@ export default function PadelProfileSection({
         </div>
 
         {isOpen && (
-          <div 
-            className="absolute z-50 w-full mt-2 rounded-xl border border-white/30 bg-slate-900 shadow-xl"
+          <div
+            className="absolute z-50 w-full mt-2 rounded-2xl border border-white/30 bg-slate-900 shadow-xl"
             style={{ boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)' }}
             onClick={(e) => e.stopPropagation()}
           >
-              <div className="p-2 space-y-1">
-                {options.map((option) => {
-                  const OptionIcon = (() => {
-                    if (fieldKey === "level") return levelIcons[option.value];
-                    if (fieldKey === "hand") return handIcons[option.value];
-                    if (fieldKey === "preferred_side") return sideIcons[option.value];
-                    if (fieldKey === "best_shot") return shotIcons[option.value];
-                    if (fieldKey === "frequency") return frequencyIcons[option.value];
-                    return null;
-                  })();
-                  const isSelected = currentValue === option.value;
-                  const isOptionLeftHanded = fieldKey === "hand" && option.value === "left";
+            <div className="p-2 space-y-1">
+              {options.map((option) => {
+                const OptionIcon = (() => {
+                  if (fieldKey === "level") return levelIcons[option.value];
+                  if (fieldKey === "hand") return handIcons[option.value];
+                  if (fieldKey === "preferred_side") return sideIcons[option.value];
+                  if (fieldKey === "best_shot") return shotIcons[option.value];
+                  if (fieldKey === "frequency") return frequencyIcons[option.value];
+                  return null;
+                })();
+                const isSelected = currentValue === option.value;
+                const isOptionLeftHanded = fieldKey === "hand" && option.value === "left";
 
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFieldChange(fieldKey, option.value);
-                      }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg text-left ${
-                        isSelected
-                          ? "bg-white/20 border border-white/40"
-                          : "hover:bg-white/10 border border-transparent"
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFieldChange(fieldKey, option.value);
+                    }}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg text-left ${isSelected
+                      ? "bg-white/20 border border-white/40"
+                      : "hover:bg-white/10 border border-transparent"
                       }`}
-                    >
-                      {OptionIcon && (
-                        <OptionIcon
-                          className={`w-5 h-5 text-white flex-shrink-0 ${
-                            isOptionLeftHanded ? "rotate-180" : ""
+                  >
+                    {OptionIcon && (
+                      <OptionIcon
+                        className={`w-5 h-5 text-padel-green flex-shrink-0 ${isOptionLeftHanded ? "rotate-180" : ""
                           }`}
-                        />
-                      )}
-                      <span className="text-sm font-medium text-white flex-1">
-                        {option.label}
-                      </span>
-                      {isSelected && (
-                        <Check className="w-4 h-4 text-white flex-shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                      />
+                    )}
+                    <span className="text-sm font-medium text-white flex-1">
+                      {option.label}
+                    </span>
+                    {isSelected && (
+                      <Check className="w-4 h-4 text-white flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 sm:p-8 md:p-10 backdrop-blur-sm">
+    <div className="rounded-2xl border border-white/80 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 sm:p-8 md:p-10 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
@@ -618,11 +614,11 @@ export default function PadelProfileSection({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {renderEditableField("level", "Niveau", LevelIcon)}
-        
+
         {/* Partenaire Habituel */}
-        <div className="rounded-xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group relative">
+        <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group relative">
           <div className="flex items-center gap-4">
-            <Users className="w-7 h-7 text-white flex-shrink-0" />
+            <Users className="w-7 h-7 text-padel-green flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="text-xs text-white/50 uppercase tracking-wider font-medium">

@@ -12,13 +12,11 @@ import Link from "next/link";
 import PageTitle from "@/components/PageTitle";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
-import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
 import PlayerProfileTabs from "@/components/PlayerProfileTabs";
-import LeaderboardContent from "@/components/LeaderboardContent";
 import PadelTabContent from "@/components/PadelTabContent";
-import FindPartnersTabContent from "@/components/FindPartnersTabContent";
+import BadgesContent from "@/components/BadgesContent";
 import HideSplashScreen from "@/components/HideSplashScreen";
 
 function tierForPoints(points: number) {
@@ -50,9 +48,9 @@ export default async function HomePage({
 }) {
   const supabase = await createClient();
   const resolvedSearchParams = await searchParams;
-  const activeTab: 'stats' | 'leaderboard' | 'padel' | 'partners' = (resolvedSearchParams?.tab === 'leaderboard' || resolvedSearchParams?.tab === 'padel' || resolvedSearchParams?.tab === 'partners')
-    ? (resolvedSearchParams.tab as 'leaderboard' | 'padel' | 'partners')
-    : 'stats';
+  const activeTab: 'profil' | 'stats' | 'badges' = (resolvedSearchParams?.tab === 'stats' || resolvedSearchParams?.tab === 'badges')
+    ? (resolvedSearchParams.tab as 'stats' | 'badges')
+    : 'profil';
 
   // Vérifier d'abord la session pour éviter les déconnexions inattendues
   // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas
@@ -269,75 +267,7 @@ export default async function HomePage({
 
   // NE PLUS bloquer l'affichage si pas de club_id
   // Le layout (menu hamburger + logo) doit TOUJOURS s'afficher, même pour nouveaux joueurs
-  // Afficher simplement un leaderboard vide si pas de club_id
   const hasNoClub = !userClubId;
-
-
-  // Utiliser la fonction de calcul du leaderboard (même logique que la page profil)
-  // Si pas de club_id, retourner un tableau vide au lieu d'appeler la fonction
-  const leaderboardRaw = hasNoClub ? [] : await calculatePlayerLeaderboard(userClubId);
-  // Ajouter le rang à chaque joueur
-  const leaderboard = leaderboardRaw.map((player, index) => ({
-    ...player,
-    rank: index + 1,
-  }));
-
-  // Récupérer les profils pour l'affichage des noms (première partie en gras)
-  const profilesFirstNameMap = new Map<string, string>();
-  const profilesLastNameMap = new Map<string, string>();
-
-  if (leaderboard.length > 0) {
-    const userIds = leaderboard.filter(p => !p.isGuest).map(p => p.user_id);
-    if (userIds.length > 0) {
-      let profilesQuery = supabaseAdmin
-        .from("profiles")
-        .select("id, first_name, last_name")
-        .in("id", userIds);
-
-      if (userClubId) {
-        profilesQuery = profilesQuery.eq("club_id", userClubId);
-      }
-
-      const { data: profiles } = await profilesQuery;
-      if (profiles) {
-        profiles.forEach(p => {
-          if (p.first_name) {
-            profilesFirstNameMap.set(p.id, p.first_name);
-          }
-          if (p.last_name) {
-            profilesLastNameMap.set(p.id, p.last_name);
-          }
-        });
-      }
-    }
-  }
-
-  // Résumé final du classement
-  const totalMatchesInLeaderboard = leaderboard.reduce((sum, p) => sum + p.matches, 0);
-  const totalWinsInLeaderboard = leaderboard.reduce((sum, p) => sum + p.wins, 0);
-  const totalLossesInLeaderboard = leaderboard.reduce((sum, p) => sum + p.losses, 0);
-
-  // Ne pas afficher les points/stats si moins de 2 vrais joueurs dans la base de données
-  const { count: totalProfilesCount } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true });
-
-  const hasMultipleRealPlayersInDB = (totalProfilesCount || 0) >= 2;
-  const realPlayers = leaderboard.filter(p => !p.isGuest);
-  const hasMultipleRealPlayersInLeaderboard = realPlayers.length >= 2;
-  const shouldShowPoints = hasMultipleRealPlayersInDB && hasMultipleRealPlayersInLeaderboard && totalMatchesInLeaderboard > 0;
-
-  logger.info("[Home] ===== LEADERBOARD SUMMARY =====");
-  logger.info("[Home] Total profiles in database:", totalProfilesCount);
-  logger.info("[Home] Total players in leaderboard:", leaderboard.length);
-  logger.info("[Home] Real players (non-guests) in leaderboard:", realPlayers.length);
-  logger.info("[Home] Total matches counted:", totalMatchesInLeaderboard);
-  logger.info("[Home] Total wins:", totalWinsInLeaderboard);
-  logger.info("[Home] Total losses:", totalLossesInLeaderboard);
-  logger.info("[Home] Has multiple real players in DB:", hasMultipleRealPlayersInDB);
-  logger.info("[Home] Has multiple real players in leaderboard:", hasMultipleRealPlayersInLeaderboard);
-  logger.info("[Home] Should show points:", shouldShowPoints);
-  logger.info("[Home] ================================");
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -399,27 +329,19 @@ export default async function HomePage({
         {profile && user ? (
           <PlayerProfileTabs
             activeTab={activeTab}
+            profilContent={profile ? <PadelTabContent profile={profile} /> : null}
             statsContent={
               <div className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6">
                 <div className="w-full max-w-md">
                   <PlayerSummary profileId={profile.id} />
                 </div>
-                <a href="/match/new" className="inline-flex w-full max-w-md items-center justify-center rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-white transition-all hover:scale-105" style={{ background: "linear-gradient(135deg,#0052CC,#003D99)", boxShadow: "0 0 25px rgba(0,82,204,0.7)" }}>Enregistrer un match</a>
+                <a href="/match/new" className="inline-flex w-full max-w-md items-center justify-center rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-bold text-black transition-all hover:scale-105 bg-padel-green">Enregistrer un match</a>
                 <div className="w-full max-w-md">
                   <ReferralSection userId={profile.id} />
                 </div>
               </div>
             }
-            leaderboardContent={
-              <LeaderboardContent
-                initialLeaderboard={leaderboard}
-                initialProfilesFirstNameMap={profilesFirstNameMap}
-                initialProfilesLastNameMap={profilesLastNameMap}
-                currentUserId={profile?.id}
-              />
-            }
-            partnersContent={<FindPartnersTabContent />}
-            padelContent={profile ? <PadelTabContent profile={profile} /> : null}
+            badgesContent={<BadgesContent />}
           />
         ) : null}
       </div>

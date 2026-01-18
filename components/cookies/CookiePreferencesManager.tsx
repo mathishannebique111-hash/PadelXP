@@ -44,7 +44,7 @@ export default function CookiePreferencesManager() {
     setPreferences(prefs);
     setHasConsent(true);
     setSaved(true);
-    
+
     // Appliquer les cookies selon les préférences
     if (prefs.analytics) {
       logger.info("Analytics cookies enabled");
@@ -53,7 +53,7 @@ export default function CookiePreferencesManager() {
       // Désactiver les cookies analytiques si nécessaire
       logger.info("Analytics cookies disabled");
     }
-    
+
     if (prefs.marketing) {
       logger.info("Marketing cookies enabled");
       // Ici, vous pourriez initialiser des cookies marketing
@@ -104,7 +104,7 @@ export default function CookiePreferencesManager() {
     <div className="space-y-6">
       {/* Message de confirmation */}
       {saved && (
-        <div className="bg-emerald-500/20 border border-emerald-400/50 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-emerald-500/20 border border-emerald-400/50 rounded-2xl p-4 flex items-center gap-3">
           <span className="text-2xl">✅</span>
           <div>
             <p className="text-emerald-300 font-semibold">Préférences sauvegardées</p>
@@ -114,12 +114,12 @@ export default function CookiePreferencesManager() {
       )}
 
       {/* Statut actuel */}
-      <div className="bg-white/5 border border-white/20 rounded-xl p-4">
+      <div className="bg-white/5 border border-white/20 rounded-2xl p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white font-semibold">Statut du consentement</p>
             <p className="text-white/60 text-sm mt-1">
-              {hasConsent 
+              {hasConsent
                 ? "Vous avez déjà configuré vos préférences de cookies"
                 : "Aucune préférence enregistrée. Configurez vos préférences ci-dessous."
               }
@@ -134,7 +134,7 @@ export default function CookiePreferencesManager() {
       </div>
 
       {/* Actions rapides */}
-      <div className="bg-white/5 border border-white/20 rounded-xl p-6">
+      <div className="bg-white/5 border border-white/20 rounded-2xl p-6">
         <h2 className="text-lg font-semibold text-white mb-3">Actions rapides</h2>
         <p className="text-white/60 text-sm mb-4">
           Accepter ou refuser tous les cookies d'un coup.
@@ -142,13 +142,13 @@ export default function CookiePreferencesManager() {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleAcceptAll}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl"
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl"
           >
             Accepter tout
           </button>
           <button
             onClick={handleRejectAll}
-            className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-colors border border-white/20"
+            className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-medium transition-colors border border-white/20"
           >
             Refuser tout (nécessaires uniquement)
           </button>
@@ -156,10 +156,10 @@ export default function CookiePreferencesManager() {
       </div>
 
       {/* Préférences détaillées */}
-      <div className="bg-white/5 border border-white/20 rounded-xl p-6">
+      <div className="bg-white/5 border border-white/20 rounded-2xl p-6">
         <h2 className="text-lg font-semibold text-white mb-3">Préférences détaillées</h2>
         <p className="text-white/60 text-sm mb-6">
-          Personnalisez vos préférences par catégorie. Les cookies strictement nécessaires 
+          Personnalisez vos préférences par catégorie. Les cookies strictement nécessaires
           ne peuvent pas être désactivés car ils sont essentiels au fonctionnement du site.
         </p>
 
@@ -175,7 +175,7 @@ export default function CookiePreferencesManager() {
                   </span>
                 </div>
                 <p className="text-sm text-white/70 mb-2">
-                  Ces cookies sont essentiels au fonctionnement du site. Ils permettent l'authentification, 
+                  Ces cookies sont essentiels au fonctionnement du site. Ils permettent l'authentification,
                   la sécurité, la gestion de session et le stockage de vos préférences.
                 </p>
                 <p className="text-xs text-white/50">
@@ -208,7 +208,7 @@ export default function CookiePreferencesManager() {
                   </span>
                 </div>
                 <p className="text-sm text-white/70 mb-2">
-                  Ces cookies nous aident à comprendre comment vous utilisez le site pour l'améliorer. 
+                  Ces cookies nous aident à comprendre comment vous utilisez le site pour l'améliorer.
                   Ils collectent des informations anonymes sur votre navigation (pages visitées, temps passé, etc.).
                 </p>
                 <p className="text-xs text-white/50">
@@ -224,16 +224,15 @@ export default function CookiePreferencesManager() {
                   }
                   className="sr-only peer"
                 />
-                <div className={`w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                  preferences.analytics 
-                    ? "bg-emerald-600 peer-checked:bg-emerald-600" 
+                <div className={`w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${preferences.analytics
+                    ? "bg-emerald-600 peer-checked:bg-emerald-600"
                     : "bg-gray-600 peer-checked:bg-emerald-600"
-                }`}></div>
+                  }`}></div>
               </label>
             </div>
             <p className="text-xs text-white/50 mt-3">
-              {preferences.analytics 
-                ? "✅ Cookies analytiques activés" 
+              {preferences.analytics
+                ? "✅ Cookies analytiques activés"
                 : "❌ Cookies analytiques désactivés (actuellement non utilisés sur PadelXP)"}
             </p>
           </div>
@@ -249,7 +248,7 @@ export default function CookiePreferencesManager() {
                   </span>
                 </div>
                 <p className="text-sm text-white/70 mb-2">
-                  Ces cookies sont utilisés pour la publicité personnalisée, le ciblage publicitaire 
+                  Ces cookies sont utilisés pour la publicité personnalisée, le ciblage publicitaire
                   et le suivi de vos interactions avec nos campagnes marketing.
                 </p>
                 <p className="text-xs text-white/50">
@@ -265,16 +264,15 @@ export default function CookiePreferencesManager() {
                   }
                   className="sr-only peer"
                 />
-                <div className={`w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                  preferences.marketing 
-                    ? "bg-emerald-600 peer-checked:bg-emerald-600" 
+                <div className={`w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${preferences.marketing
+                    ? "bg-emerald-600 peer-checked:bg-emerald-600"
                     : "bg-gray-600 peer-checked:bg-emerald-600"
-                }`}></div>
+                  }`}></div>
               </label>
             </div>
             <p className="text-xs text-white/50 mt-3">
-              {preferences.marketing 
-                ? "✅ Cookies marketing activés" 
+              {preferences.marketing
+                ? "✅ Cookies marketing activés"
                 : "❌ Cookies marketing désactivés (actuellement non utilisés sur PadelXP)"}
             </p>
           </div>
@@ -284,7 +282,7 @@ export default function CookiePreferencesManager() {
         <div className="flex justify-end pt-4 border-t border-white/20">
           <button
             onClick={handleSave}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Enregistrer mes préférences
           </button>
@@ -292,7 +290,7 @@ export default function CookiePreferencesManager() {
       </div>
 
       {/* Informations supplémentaires */}
-      <div className="bg-white/5 border border-white/20 rounded-xl p-6">
+      <div className="bg-white/5 border border-white/20 rounded-2xl p-6">
         <h3 className="font-semibold text-white mb-3">Informations supplémentaires</h3>
         <div className="space-y-2 text-sm text-white/70">
           <p>

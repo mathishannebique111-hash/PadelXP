@@ -4,6 +4,7 @@ import Link from "next/link";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import PendingMatchesSection from "@/components/PendingMatchesSection";
 import { logger } from '@/lib/logger';
+import { Trophy, Check, X } from "lucide-react";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -325,45 +326,45 @@ export default async function MatchHistoryContent() {
           return (
             <div
               key={match.id}
-              className={`rounded-2xl border-2 p-6 transition-all ${won
-                ? "border-green-500 bg-green-50"
+              className={`rounded-2xl border-2 p-2 transition-all ${won
+                ? "border-green-300 bg-green-50"
                 : "border-red-300 bg-red-50"
                 }`}
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className={`text-2xl ${won ? "text-green-600" : "text-red-600"} flex items-center`}>
-                    {won ? <BadgeIconDisplay icon="🏆" size={32} className="flex-shrink-0" /> : "❌"}
+                  <span className={`text-2xl flex items-center`}>
+                    {won ? <Check size={24} className="text-green-600 flex-shrink-0" /> : <X size={24} className="text-red-500 flex-shrink-0" />}
                   </span>
                   <div>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className={`text-sm font-semibold text-[#071554]`}>
                       {won ? "Victoire" : "Défaite"}
                     </div>
-                    <div className="text-xs text-gray-600 font-normal">
+                    <div className={`text-xs font-normal text-[#071554]/70`}>
                       {dateStr} à {timeStr}
                     </div>
                     {match.decided_by_tiebreak && (
-                      <div className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${won
+                      <div className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${won
                         ? "border-amber-300 bg-amber-50 text-amber-700"
                         : "border-red-300 bg-red-50 text-red-700"
                         }`}>
                         <span>⚡</span>
-                        <span>{won ? "Victoire au tie-break" : "Défaite au tie-break"}</span>
+                        <span>{won ? "Tie-break" : "Tie-break"}</span>
                       </div>
                     )}
                   </div>
                 </div>
                 {match.score && (
-                  <div className="rounded-lg bg-white px-4 py-2 text-base font-bold text-gray-900 tabular-nums">
+                  <div className={`rounded-lg bg-white px-3 py-1.5 text-sm font-bold tabular-nums ${won ? "text-[#071554]" : "text-[#071554]"}`}>
                     {match.score}
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                 {/* Équipe 1 */}
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600 flex items-center gap-1">Équipe 1 {match.winner_team === 1 && <BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" />}</div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div className="mb-2 text-[10px] font-normal uppercase tracking-wide text-[#071554]/70 flex items-center gap-1">Équipe 1 {match.winner_team === 1 && <Trophy size={14} className="flex-shrink-0 text-[#071554]" />}</div>
                   <div className="divide-y divide-gray-100">
                     {team1.map((p: any) => {
                       const isGuest = p.player_type === "guest";
@@ -373,11 +374,11 @@ export default async function MatchHistoryContent() {
                       const isCurrentUser = !isGuest && p.user_id === user.id;
 
                       return (
-                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1.5">
+                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1">
                           {isCurrentUser ? (
                             <>
-                              <span className="text-sm font-semibold text-gray-900 tracking-tight">{displayName}</span>
-                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-xs font-bold text-white shadow-sm">VOUS</span>
+                              <span className="text-sm font-semibold text-[#071554] tracking-tight">{displayName}</span>
+                              <span className="rounded-full bg-padel-green px-2 py-0.5 text-xs font-bold text-[#071554] shadow-sm">VOUS</span>
                             </>
                           ) : (
                             <>
@@ -392,8 +393,8 @@ export default async function MatchHistoryContent() {
                 </div>
 
                 {/* Équipe 2 */}
-                <div className="rounded-lg border border-gray-200 bg-white p-4">
-                  <div className="mb-3 text-xs font-normal uppercase tracking-wide text-gray-600 flex items-center gap-1">Équipe 2 {match.winner_team === 2 && <BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" />}</div>
+                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                  <div className="mb-2 text-[10px] font-normal uppercase tracking-wide text-[#071554]/70 flex items-center gap-1">Équipe 2 {match.winner_team === 2 && <Trophy size={14} className="flex-shrink-0 text-[#071554]" />}</div>
                   <div className="divide-y divide-gray-100">
                     {team2.map((p: any) => {
                       const isGuest = p.player_type === "guest";
@@ -403,11 +404,11 @@ export default async function MatchHistoryContent() {
                       const isCurrentUser = !isGuest && p.user_id === user.id;
 
                       return (
-                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1.5">
+                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1">
                           {isCurrentUser ? (
                             <>
-                              <span className="text-sm font-semibold text-gray-900 tracking-tight">{displayName}</span>
-                              <span className="rounded-full bg-blue-600/90 px-2 py-0.5 text-xs font-bold text-white shadow-sm">VOUS</span>
+                              <span className="text-sm font-semibold text-[#071554] tracking-tight">{displayName}</span>
+                              <span className="rounded-full bg-padel-green px-2 py-0.5 text-xs font-bold text-[#071554] shadow-sm">VOUS</span>
                             </>
                           ) : (
                             <>

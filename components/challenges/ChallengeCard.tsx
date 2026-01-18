@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
+import { Calendar } from "lucide-react";
 
 interface PlayerChallenge {
   id: string;
@@ -46,7 +47,7 @@ function statusLabel(status: PlayerChallenge["status"]) {
 function statusClasses(status: PlayerChallenge["status"]) {
   switch (status) {
     case "active":
-      return "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40";
+      return "bg-white/20 text-white border border-white/40";
     case "upcoming":
       return "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
@@ -107,7 +108,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] ✅ Reward claimed successfully!`, data);
         setRewardValue(data.rewardValue);
         setShowCongrats(true);
-        
+
         // Masquer le pop-up après 8 secondes (mais peut être fermé manuellement avant)
         const timeout = setTimeout(() => {
           setShowCongrats(false);
@@ -156,7 +157,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
       {/* Pop-up de félicitations */}
       {showCongrats && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="relative mx-4 max-w-md transform animate-[scale-in_0.3s_ease-out] rounded-3xl bg-gradient-to-br from-yellow-500/20 via-amber-500/15 to-orange-500/10 p-8 text-center shadow-2xl ring-2 ring-yellow-400/30">
+          <div className="relative mx-4 max-w-md transform animate-[scale-in_0.3s_ease-out] rounded-2xl bg-gradient-to-br from-yellow-500/20 via-amber-500/15 to-orange-500/10 p-8 text-center shadow-2xl ring-2 ring-yellow-400/30">
             {/* Confettis effet */}
             <div className="absolute -top-4 -left-4 h-24 w-24 rounded-full bg-yellow-400/20 blur-2xl" />
             <div className="absolute -bottom-4 -right-4 h-32 w-32 rounded-full bg-amber-400/20 blur-2xl" />
@@ -223,20 +224,19 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
       )}
 
       {/* Carte du challenge */}
-      <div className={`group relative rounded-3xl border-2 p-6 shadow-xl transition-all duration-300 overflow-hidden ${
-        isCompleted
-          ? "border-emerald-500/80 bg-gradient-to-br from-emerald-500/10 to-green-500/5 shadow-emerald-500/20"
-          : isFailed
+      <div className={`group relative rounded-2xl border-2 p-4 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
+        ? "border-emerald-500/80 bg-gradient-to-br from-emerald-500/10 to-green-500/5 shadow-emerald-500/20"
+        : isFailed
           ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
-          : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-2xl"
-      }`}>
+          : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-xl"
+        }`}>
         {/* Effet brillant style top joueurs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
           <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
             <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
           </div>
         </div>
-        
+
         {/* En-tête */}
         <div className="mb-5 flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -247,17 +247,17 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
           </div>
 
           {/* Badge récompense */}
-          <div className="flex flex-col items-center gap-1.5 rounded-2xl bg-gradient-to-br from-yellow-500/15 to-amber-600/10 px-5 py-3 shadow-lg ring-1 ring-yellow-400/20">
-            <span className="text-xs font-medium uppercase tracking-wide text-yellow-200/80">
+          <div className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-yellow-500/15 to-amber-600/10 px-3 py-2 shadow ring-1 ring-yellow-400/20">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-yellow-200/80">
               Récompense
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {challenge.rewardType === "points" ? (
                 <Image
                   src="/images/Étoile points challenges.png"
                   alt="Étoile"
-                  width={28}
-                  height={28}
+                  width={20}
+                  height={20}
                   className="object-contain"
                 />
               ) : (
@@ -265,13 +265,13 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
                   <Image
                     src="/images/Badge.png"
                     alt="Badge"
-                    width={28}
-                    height={28}
+                    width={20}
+                    height={20}
                     className="object-contain"
                   />
                 </div>
               )}
-              <span className="text-lg font-bold text-white">
+              <span className="text-sm font-bold text-white">
                 {challenge.rewardType === "points"
                   ? `${challenge.rewardLabel} pts`
                   : challenge.rewardLabel}
@@ -298,11 +298,10 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
           {/* Barre de progression */}
           <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
             <div
-              className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${
-                isCompleted
-                  ? "bg-gradient-to-r from-emerald-400 to-green-500 shadow-lg shadow-emerald-500/50"
-                  : "bg-gradient-to-r from-blue-400 to-cyan-500 shadow-lg shadow-blue-500/30"
-              }`}
+              className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${isCompleted
+                ? "bg-gradient-to-r from-emerald-400 to-green-500 shadow-lg shadow-emerald-500/50"
+                : "bg-gradient-to-r from-blue-400 to-cyan-500 shadow-lg shadow-blue-500/30"
+                }`}
               style={{ width: `${percentage}%` }}
             />
           </div>
@@ -317,14 +316,10 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         </div>
 
         {/* Période */}
-        <div className="mb-5 rounded-2xl border border-white/20 bg-white/15 px-4 py-3">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-xl">📅</span>
-            <div>
-              <div className="font-medium text-white/60">Période</div>
-              <div className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</div>
-            </div>
-          </div>
+        <div className="mb-4 flex items-center gap-2 text-sm">
+          <Calendar size={16} className="text-white/60 flex-shrink-0" />
+          <span className="font-medium text-white/60">Période :</span>
+          <span className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</span>
         </div>
 
         {/* Bouton récupérer la récompense - En bas du cadre */}
@@ -337,7 +332,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
             >
               {/* Effet de brillance animé */}
               <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
-              
+
               {/* Contenu du bouton */}
               <div className="relative z-10 flex items-center justify-center gap-2">
                 {claiming ? (
@@ -360,11 +355,10 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
         {/* Message de challenge terminé */}
         {isExpired && (
-          <div className={`mb-5 rounded-2xl border px-4 py-3 ${
-            isCompleted
-              ? "border-emerald-500/40 bg-emerald-500/10"
-              : "border-red-500/40 bg-red-500/10"
-          }`}>
+          <div className={`mb-5 rounded-2xl border px-4 py-3 ${isCompleted
+            ? "border-emerald-500/40 bg-emerald-500/10"
+            : "border-red-500/40 bg-red-500/10"
+            }`}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">{isCompleted ? "✅" : "❌"}</span>
               <div>
@@ -372,7 +366,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
                   Challenge terminé
                 </div>
                 <div className={`text-sm ${isCompleted ? "text-emerald-200/80" : "text-red-200/80"}`}>
-                  {isCompleted 
+                  {isCompleted
                     ? "Félicitations ! Vous avez réussi ce challenge !"
                     : "Ce challenge n'a pas été complété à temps."}
                 </div>

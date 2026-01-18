@@ -59,6 +59,8 @@ const config: Config = {
           accent: "rgb(var(--theme-accent) / <alpha-value>)",
           "accent-hover": "rgb(var(--theme-accent-hover) / <alpha-value>)",
         },
+        'padel-green': '#CCFF00',
+        'padel-text': '#FFFFFF',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -93,7 +95,7 @@ const config: Config = {
     },
   },
   plugins: [
-    function({ addVariant }: any) {
+    function ({ addVariant }: any) {
       addVariant('is-app', '.is-app &');
       addVariant('is-web', '.is-web &');
     }

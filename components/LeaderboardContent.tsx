@@ -260,7 +260,7 @@ export default function LeaderboardContent({
                   : 'max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]';
 
                 return (
-                  <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl sm:rounded-2xl md:rounded-3xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 ' + sizeClass)} style={bgGradients[index]}>
+                  <div key={player.user_id} className={(shineClass + ' ' + borderWidth + ' ' + borderColors[index] + ' rounded-2xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 ' + sizeClass)} style={bgGradients[index]}>
                     <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
                       <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl">{medalEmojis[index]}</span>
                     </div>
@@ -314,7 +314,7 @@ export default function LeaderboardContent({
               <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
             </div>
           </div>
-          <div className="overflow-x-auto rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
+          <div className="overflow-x-auto rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
                 <tr>

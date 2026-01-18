@@ -316,6 +316,10 @@ export async function middleware(req: NextRequest) {
     "/player/terms",
     "/player/privacy",
     "/player/cookies",
+    "/courses",
+    "/club",
+    "/match/new",
+    "/tournaments",
     "/about",
     "/contact"
   ]);

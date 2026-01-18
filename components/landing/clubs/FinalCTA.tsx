@@ -13,12 +13,12 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="bg-gradient-to-br from-[#0066FF]/20 to-[#00CC99]/20 rounded-3xl p-8 md:p-12 border-2 border-[#0066FF]/30 text-center"
+          className="bg-gradient-to-br from-[#0066FF]/20 to-[#00CC99]/20 rounded-2xl p-8 md:p-12 border-2 border-[#0066FF]/30 text-center"
         >
           <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6">
             🚀 REJOIGNEZ LES CLUBS / COMPLEXES D'ÉLITE
           </h2>
-          
+
           <p className="text-xl text-white/80 mb-8 leading-relaxed">
             Transformez l'expérience de vos membres dès aujourd'hui avec Padel XP
           </p>

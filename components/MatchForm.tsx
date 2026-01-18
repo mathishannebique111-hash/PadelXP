@@ -9,6 +9,7 @@ import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';
+import { Trophy, Zap } from "lucide-react";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -1365,21 +1366,21 @@ export default function MatchForm({
                 type="button"
                 onClick={() => setWinner("1")}
                 className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${winner === "1"
-                  ? "border-[#BFFF00] bg-[#BFFF00] text-black shadow-lg shadow-[#BFFF00]/50"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-lg shadow-padel-green/50"
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
                   }`}
               >
-                <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 1</span>
+                <span className="flex items-center gap-1.5"><Trophy size={16} className={`flex-shrink-0 ${winner === "1" ? "text-[#071554]" : "text-white"}`} /> Équipe 1</span>
               </button>
               <button
                 type="button"
                 onClick={() => setWinner("2")}
                 className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${winner === "2"
-                  ? "border-[#BFFF00] bg-[#BFFF00] text-black shadow-lg shadow-[#BFFF00]/50"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-lg shadow-padel-green/50"
                   : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
                   }`}
               >
-                <span className="flex items-center gap-1.5"><BadgeIconDisplay icon="🏆" size={16} className="flex-shrink-0" /> Équipe 2</span>
+                <span className="flex items-center gap-1.5"><Trophy size={16} className={`flex-shrink-0 ${winner === "2" ? "text-[#071554]" : "text-white"}`} /> Équipe 2</span>
               </button>
             </div>
             {errors.winner && (
@@ -1553,17 +1554,10 @@ export default function MatchForm({
 
         {/* Option boost - placé juste avant le bouton Enregistrer */}
         {!loadingBoostStats && boostStats && (
-          <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 backdrop-blur-sm">
-            <div className="flex items-start gap-3">
+          <div className="mb-6 rounded-lg border border-padel-green/50 bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 p-4 shadow-xl relative overflow-hidden">
+            <div className="flex items-start gap-3 relative z-10">
               <div className="flex-shrink-0 flex items-center justify-center">
-                <Image
-                  src="/images/Éclair page avis.png"
-                  alt="Éclair"
-                  width={24}
-                  height={24}
-                  className="flex-shrink-0"
-                  unoptimized
-                />
+                <Zap className="h-6 w-6 text-padel-green" fill="currentColor" />
               </div>
               <div className="flex-1">
                 <label className="flex cursor-pointer items-center gap-3">
@@ -1597,7 +1591,7 @@ export default function MatchForm({
                 {boostStats && (boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) <= 0) && (
                   <p className="mt-2 text-xs text-white/70">
                     Tu n'as plus de boosts disponibles.{" "}
-                    <a href="/boost" className="font-semibold text-blue-300 underline hover:text-blue-200">
+                    <a href="/boost" className="font-semibold text-white underline hover:text-gray-200">
                       Achète-en de nouveaux
                     </a>
                   </p>
@@ -1607,7 +1601,7 @@ export default function MatchForm({
           </div>
         )}
 
-        <button disabled={loading} className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-500 hover:shadow-lg disabled:opacity-50">Enregistrer</button>
+        <button disabled={loading} className="w-full rounded-md bg-padel-green px-4 py-3 font-semibold text-blue-950 transition-all hover:bg-padel-green/90 hover:shadow-lg disabled:opacity-50">Enregistrer</button>
       </form>
     </>
   );

@@ -43,11 +43,10 @@ export default function FeaturesDetailed() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                activeTab === tab.id
+              className={`px-6 py-3 rounded-xl font-semibold transition-all ${activeTab === tab.id
                   ? "bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white shadow-[0_0_20px_rgba(0,102,255,0.5)]"
                   : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10"
-              }`}
+                }`}
             >
               {tab.label}
             </button>
@@ -85,7 +84,7 @@ function RankingFeature() {
     { name: "Lucas B.", points: 320, wins: 28, losses: 4, matches: 32, tier: "Diamant" },
     { name: "Pierre M.", points: 65, wins: 5, losses: 5, matches: 10, tier: "Bronze" },
   ];
-  
+
   // Trier par points décroissants et assigner les rangs
   const mockPlayers = mockPlayersUnsorted
     .sort((a, b) => b.points - a.points)
@@ -106,7 +105,7 @@ function RankingFeature() {
             <RankBadge rank={1} size="sm" />
           </div>
         </div>
-        
+
         <div className="space-y-6">
           {/* Statistiques */}
           <div>
@@ -154,10 +153,10 @@ function RankingFeature() {
                 } else if (badge.icon === "🔥") {
                   badgeImage = "/images/Flamme page badges.png";
                 }
-                
+
                 return (
-                  <span 
-                    key={i} 
+                  <span
+                    key={i}
                     title={badge.title}
                     className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-white bg-gray-800"
                   >
@@ -180,32 +179,31 @@ function RankingFeature() {
             </h4>
             <div className="space-y-3">
               {[
-                { 
-                  date: "5 novembre 2025", 
+                {
+                  date: "5 novembre 2025",
                   time: "20:35",
-                  result: "Victoire", 
+                  result: "Victoire",
                   team1Players: ["Marc L.", "Sophie D."],
                   team2Players: ["Thomas R.", "Julie M."],
                   score: "2-0",
-                  won: true 
+                  won: true
                 },
-                { 
-                  date: "5 novembre 2025", 
+                {
+                  date: "5 novembre 2025",
                   time: "20:34",
-                  result: "Défaite", 
+                  result: "Défaite",
                   team1Players: ["Marc L.", "Lucas B."],
                   team2Players: ["Julie M.", "Thomas R."],
                   score: "1-2",
-                  won: false 
+                  won: false
                 },
               ].map((match, i) => (
                 <div
                   key={i}
-                  className={`rounded-2xl border-2 transition-all ${
-                    match.won
+                  className={`rounded-2xl border-2 transition-all ${match.won
                       ? "border-green-500 bg-green-50"
                       : "border-red-300 bg-red-50"
-                  }`}
+                    }`}
                 >
                   {/* Header */}
                   <div className="mb-4 flex items-center justify-between p-4 pb-3">
@@ -224,11 +222,10 @@ function RankingFeature() {
                         </div>
                       </div>
                     </div>
-                    <div className={`rounded-lg px-4 py-2 text-lg font-bold ${
-                      match.won 
-                        ? "bg-green-100 text-green-700" 
+                    <div className={`rounded-lg px-4 py-2 text-lg font-bold ${match.won
+                        ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
-                    }`}>
+                      }`}>
                       {match.score}
                     </div>
                   </div>
@@ -338,7 +335,7 @@ function RankingFeature() {
               <tbody>
                 {mockPlayers.map((player, idx) => {
                   const winrate = player.matches > 0 ? Math.round((player.wins / player.matches) * 100) : 0;
-                  
+
                   return (
                     <tr
                       key={player.rank}
@@ -456,7 +453,7 @@ function GamificationFeature() {
               } else if (badge.title === "Contributeur") {
                 badgeImage = "/images/Commentaire page avis.png";
               }
-              
+
               return (
                 <div key={i} className="p-3 bg-white/5 rounded-lg border border-white/10 text-center">
                   {badgeImage ? (
@@ -546,7 +543,7 @@ function PublicPageFeature() {
   const website = "www.clubpadeltoulouse.fr";
   const numberOfCourts = 4;
   const courtType = "Couvert";
-  
+
   const openingHours = {
     monday: { open: "08:00", close: "23:00" },
     tuesday: { open: "08:00", close: "23:00" },
@@ -616,11 +613,11 @@ function PublicPageFeature() {
                   className="h-20 w-20 object-contain"
                 />
               ) : (
-                <Image 
-                  src="/images/logo fonctionnalités.png" 
-                  alt="Logo club" 
-                  width={80} 
-                  height={80} 
+                <Image
+                  src="/images/logo fonctionnalités.png"
+                  alt="Logo club"
+                  width={80}
+                  height={80}
                   className="object-contain"
                   unoptimized
                 />
@@ -671,13 +668,13 @@ function PublicPageFeature() {
             <div className="mt-5 space-y-4 text-sm">
               {addressLine ? (
                 <div className="flex flex-col items-center gap-1 text-center">
-                  <Image 
-                    src="/images/Gps page mon club.png" 
-                    alt="GPS" 
-                    width={20} 
-                    height={20} 
+                  <Image
+                    src="/images/Gps page mon club.png"
+                    alt="GPS"
+                    width={20}
+                    height={20}
                     className="flex-shrink-0"
-                    style={{ 
+                    style={{
                       mixBlendMode: 'screen',
                       filter: 'contrast(1.2) brightness(1.1)'
                     }}
@@ -692,11 +689,11 @@ function PublicPageFeature() {
               )}
               {phone ? (
                 <div className="flex flex-col items-center gap-1 text-center">
-                  <Image 
-                    src="/images/Téléphone page mon club.png" 
-                    alt="Téléphone" 
-                    width={20} 
-                    height={20} 
+                  <Image
+                    src="/images/Téléphone page mon club.png"
+                    alt="Téléphone"
+                    width={20}
+                    height={20}
                     className="flex-shrink-0"
                     unoptimized
                   />
@@ -773,7 +770,7 @@ function InscriptionFeature() {
       <div className="w-full max-w-md rounded-2xl bg-white/5 border border-white/10 p-8">
         <h1 className="text-2xl font-extrabold mb-2">Inscription joueur</h1>
         <p className="text-white/60 mb-6 text-sm">Créez votre compte, puis associez‑le à votre club / complexe avec le code d'invitation.</p>
-        
+
         <form className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <input
@@ -801,7 +798,7 @@ function InscriptionFeature() {
             className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
             disabled
           />
-          
+
           <div className="space-y-3 pt-2">
             <label className="block text-sm text-white/70">Club / complexe</label>
             <select
@@ -821,7 +818,7 @@ function InscriptionFeature() {
               disabled
             />
           </div>
-          
+
           <button
             disabled
             className="w-full rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105 disabled:opacity-60 cursor-default"
@@ -830,10 +827,10 @@ function InscriptionFeature() {
             Créer mon compte
           </button>
         </form>
-        
+
         <div className="mt-4 text-center text-sm text-white/70">
-          Déjà membre ? <span 
-            className="underline cursor-default" 
+          Déjà membre ? <span
+            className="underline cursor-default"
             onClick={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
           >
@@ -853,7 +850,7 @@ function TournamentsFeature() {
       transition={{ duration: 0.6 }}
       className="flex items-center justify-center"
     >
-      <div className="w-full max-w-3xl rounded-3xl border border-white/15 bg-gradient-to-br from-[#020617] via-[#020617] to-[#0f172a] p-8 md:p-10 shadow-[0_30px_80px_rgba(15,23,42,0.9)] relative overflow-hidden">
+      <div className="w-full max-w-3xl rounded-2xl border border-white/15 bg-gradient-to-br from-[#020617] via-[#020617] to-[#0f172a] p-8 md:p-10 shadow-[0_30px_80px_rgba(15,23,42,0.9)] relative overflow-hidden">
         {/* Glow / background elements */}
         <div className="pointer-events-none absolute inset-0 opacity-40">
           <div className="absolute -top-24 -right-32 w-72 h-72 bg-[#0066FF] rounded-full blur-3xl" />

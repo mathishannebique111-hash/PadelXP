@@ -134,33 +134,23 @@ export default function PlayerProfileView({
           : "red"
       : "green";
 
+  const compatibilityCardClass = "bg-white/5 border border-white/20";
+
   const compatibilityBarClass =
     compatibilityColor === "green"
-      ? "bg-gradient-to-r from-green-500 to-emerald-500"
+      ? "bg-emerald-500"
       : compatibilityColor === "orange"
         ? "bg-gradient-to-r from-orange-500 to-orange-400"
         : "bg-gradient-to-r from-red-500 to-red-400";
 
   const compatibilityTextClass =
     compatibilityColor === "green"
-      ? "text-green-400"
+      ? "text-emerald-400"
       : compatibilityColor === "orange"
         ? "text-orange-400"
         : "text-red-400";
 
-  const compatibilityCardClass =
-    compatibilityColor === "green"
-      ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30"
-      : compatibilityColor === "orange"
-        ? "bg-gradient-to-r from-orange-500/10 to-orange-500/10 border border-orange-500/30"
-        : "bg-gradient-to-r from-red-500/10 to-red-500/10 border border-red-500/30";
-
-  const compatibilityLabelClass =
-    compatibilityColor === "green"
-      ? "text-green-300"
-      : compatibilityColor === "orange"
-        ? "text-orange-300"
-        : "text-red-300";
+  const compatibilityLabelClass = "text-white";
 
   // Vérifier le statut des invitations au chargement
   useEffect(() => {
@@ -382,7 +372,7 @@ export default function PlayerProfileView({
           className="relative"
         >
           {/* Card principale avec effet de profondeur */}
-          <div className="relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-3xl p-5 md:p-8 shadow-2xl border-2 border-slate-700/80">
+          <div className="relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl p-5 md:p-8 shadow-2xl border-2 border-slate-700/80">
             {/* Avatar + Infos principales - Mobile centered */}
             <div className="flex flex-col items-center text-center">
               {/* Avatar avec anneau de niveau - Taille mobile */}
@@ -412,16 +402,16 @@ export default function PlayerProfileView({
 
               {/* Badge niveau - VERSION MOBILE COMPACTE */}
               {player.niveau_padel && player.niveau_categorie ? (
-                <div className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2 md:py-2.5 rounded-2xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-400/30 shadow-lg shadow-blue-500/10 mb-3">
+                <div className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2 md:py-2.5 rounded-2xl bg-white/5 border border-white/20 shadow-lg mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black text-white text-sm md:text-base shadow-lg">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white flex items-center justify-center font-black text-[#071554] text-sm md:text-base shadow-lg border border-white/10">
                       {Math.floor(player.niveau_padel)}
                     </div>
                     <div className="text-left">
-                      <p className="text-[10px] md:text-xs text-blue-300/80 font-medium leading-tight">
+                      <p className="text-[10px] md:text-xs text-blue-200/60 font-medium leading-tight">
                         Niveau
                       </p>
-                      <p className="text-xs md:text-sm font-bold text-blue-200 leading-tight">
+                      <p className="text-xs md:text-sm font-bold text-white leading-tight">
                         {player.niveau_categorie}
                       </p>
                     </div>
@@ -482,9 +472,9 @@ export default function PlayerProfileView({
                       return (
                         <span
                           key={i}
-                          className={`text-[11px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-medium ${isSameSideOrHand
+                          className={`text-[11px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-medium border border-padel-green/20 ${isSameSideOrHand
                             ? "bg-orange-500/20 text-orange-300"
-                            : "bg-green-500/20 text-green-300"
+                            : "bg-padel-green/10 text-padel-green"
                             }`}
                         >
                           {tag}
@@ -516,7 +506,7 @@ export default function PlayerProfileView({
                   handleProposeMatch();
                 }}
                 disabled={isInviting || invitationStatus?.sent || invitationStatus?.received || invitationStatus?.isAccepted}
-                className="flex-1 py-3.5 md:py-4 px-4 bg-gradient-to-r from-blue-500 to-blue-600 active:from-blue-600 active:to-blue-700 text-white rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3.5 md:py-4 px-4 bg-padel-green text-[#071554] rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg shadow-padel-green/20 active:scale-[0.98] transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                 title={
                   invitationStatus?.isAccepted
                     ? "Une invitation de paire acceptée existe déjà avec ce joueur"
@@ -581,9 +571,7 @@ export default function PlayerProfileView({
               className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-slate-800/50"
             >
               <h2 className="text-base md:text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Target size={18} className="text-white md:hidden" />
-                <Target size={20} className="text-white hidden md:block" />
-                <span>Profil Padel</span>
+                <span>Son profil padel</span>
               </h2>
 
               {/* Grid mobile 1 colonne, desktop 2 colonnes */}
@@ -647,16 +635,16 @@ export default function PlayerProfileView({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-blue-500/5 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-4 md:p-5"
+            className="bg-padel-green/5 backdrop-blur-sm border border-padel-green/20 rounded-2xl p-4 md:p-5"
           >
-            <h3 className="text-sm md:text-base font-bold text-blue-300 mb-3 flex items-center gap-2">
-              <Star size={16} className="md:hidden" />
-              <Star size={18} className="hidden md:block" />
+            <h3 className="text-sm md:text-base font-bold text-padel-green mb-3 flex items-center gap-2">
+              <Star size={16} className="md:hidden fill-current" />
+              <Star size={18} className="hidden md:block fill-current" />
               <span>Pourquoi jouer avec {firstName} ?</span>
             </h3>
             <ul className="space-y-2 md:space-y-2.5 text-xs md:text-sm text-gray-300">
               <li className="flex items-start gap-2">
-                <span className="text-blue-400 flex-shrink-0 mt-0.5">→</span>
+                <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
                 <span>
                   Niveau évalué :{" "}
                   <strong className="text-white">
@@ -666,7 +654,7 @@ export default function PlayerProfileView({
               </li>
               {player.frequency && (
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-400 flex-shrink-0 mt-0.5">→</span>
+                  <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
                   <span>
                     Joue <strong className="text-white">{frequenceJeu}</strong>
                   </span>
@@ -674,7 +662,7 @@ export default function PlayerProfileView({
               )}
               {player.best_shot && (
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-400 flex-shrink-0 mt-0.5">→</span>
+                  <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
                   <span>
                     Spécialiste{" "}
                     <strong className="text-white">{coupSignature}</strong>
@@ -682,7 +670,7 @@ export default function PlayerProfileView({
                 </li>
               )}
               <li className="flex items-start gap-2">
-                <span className="text-blue-400 flex-shrink-0 mt-0.5">→</span>
+                <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
                 <span>Même club que vous</span>
               </li>
             </ul>
@@ -731,8 +719,8 @@ function InfoCard({
         } border border-white/20 bg-white/5 rounded-xl p-3 md:p-3.5`}
     >
       <div className="flex items-center gap-2 md:gap-3">
-        <Icon size={16} className="text-white flex-shrink-0 md:hidden" />
-        <Icon size={18} className="text-white flex-shrink-0 hidden md:block" />
+        <Icon size={16} className="text-padel-green flex-shrink-0 md:hidden" />
+        <Icon size={18} className="text-padel-green flex-shrink-0 hidden md:block" />
         <div className="min-w-0 flex-1">
           <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 leading-tight">
             {label}

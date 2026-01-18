@@ -86,7 +86,7 @@ export default function CookieConsent() {
       {showBanner && !showPreferences && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end p-4 bg-black/60 backdrop-blur-[2px]">
           <div className="flex justify-center w-full mb-4 is-app:mb-12">
-            <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl max-w-md w-full backdrop-blur-xl bg-opacity-95 ring-1 ring-white/20">
+            <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 shadow-2xl max-w-md w-full backdrop-blur-xl bg-opacity-95 ring-1 ring-white/20">
               <div className="text-center space-y-4">
                 <div className="space-y-2">
                   <p className="text-white text-base font-bold leading-relaxed">

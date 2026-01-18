@@ -4,7 +4,8 @@ import MatchForm from "@/components/MatchForm";
 import PageTitle from "@/components/PageTitle";
 import MatchTabs from "@/components/MatchTabs";
 import MatchHistoryContent from "@/components/MatchHistoryContent";
-import BadgesContent from "@/components/BadgesContent";
+import FindPartnersTabContent from "@/components/FindPartnersTabContent";
+import BoostContent from "@/components/BoostContent";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
 
@@ -28,7 +29,7 @@ export default async function NewMatchPage({
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = searchParams?.tab === 'history' ? 'history' : searchParams?.tab === 'badges' ? 'badges' : 'record';
+  const activeTab = searchParams?.tab === 'history' ? 'history' : searchParams?.tab === 'partners' ? 'partners' : searchParams?.tab === 'boost' ? 'boost' : 'record';
 
   if (!user) {
     return (
@@ -40,8 +41,6 @@ export default async function NewMatchPage({
   }
 
   // Récupérer le club du joueur en utilisant directement le client admin
-  // pour éviter tout problème de RLS / cache qui pourrait faire croire
-  // que le joueur n'est pas rattaché à un club alors qu'il l'est.
   let clubId: string | null = null;
   let clubSlug: string | null = null;
   let clubName: string | null = null;
@@ -78,21 +77,17 @@ export default async function NewMatchPage({
   if (!clubId) {
     return (
       <div className="relative min-h-screen overflow-hidden">
-        {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
-
-        {/* Halos vert et bleu animés */}
         <div className="absolute inset-0 opacity-20 pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
-
         <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8 text-white">
           <div className="mb-4 sm:mb-6">
             <PageTitle title="Matchs" />
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 font-normal">
-            <p>Vous devez être rattaché à un club pour enregistrer un match. Demandez à votre club / complexe de vous inviter ou utilisez le code d'invitation depuis l'espace joueur.</p>
+            <p>Vous devez être rattaché à un club pour enregistrer un match.</p>
           </div>
         </div>
       </div>
@@ -101,10 +96,7 @@ export default async function NewMatchPage({
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
-
-      {/* Pattern animé - halos de la landing page */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
@@ -119,7 +111,8 @@ export default async function NewMatchPage({
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
               <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
               <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
-              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
+              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Trouve tes partenaires</div>
+              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Boost</div>
             </div>
             <div className="mt-4 sm:mt-6 flex items-center justify-center">
               <div className="text-white/60">Chargement...</div>
@@ -130,7 +123,8 @@ export default async function NewMatchPage({
             activeTab={activeTab}
             recordContent={<MatchForm selfId={user.id} />}
             historyContent={<MatchHistoryContent />}
-            badgesContent={<BadgesContent />}
+            partnersContent={<FindPartnersTabContent />}
+            boostContent={<BoostContent />}
           />
         </Suspense>
       </div>

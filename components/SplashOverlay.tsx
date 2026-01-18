@@ -21,8 +21,17 @@ export default function SplashOverlay({ isApp }: SplashOverlayProps) {
         };
 
         window.addEventListener('hide-splash-overlay', handleHide);
-        return () => window.removeEventListener('hide-splash-overlay', handleHide);
-    }, [isApp]);
+
+        // Sécurité : forcer la disparition après 5 secondes si pas d'événement
+        const fallbackTimer = setTimeout(() => {
+            if (visible) handleHide();
+        }, 5000);
+
+        return () => {
+            window.removeEventListener('hide-splash-overlay', handleHide);
+            clearTimeout(fallbackTimer);
+        };
+    }, [isApp, visible]);
 
     if (!isApp || !visible) return null;
 

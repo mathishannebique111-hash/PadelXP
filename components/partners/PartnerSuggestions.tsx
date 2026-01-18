@@ -475,8 +475,8 @@ export default function PartnerSuggestions() {
                   </h4>
 
                   {player.niveau_padel && (
-                    <div className="inline-flex items-center justify-center bg-slate-700/50 rounded-full px-2 py-0.5 mb-1.5">
-                      <span className="text-[10px] md:text-xs text-blue-300 font-medium">
+                    <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-2 py-0.5 mb-1.5 border border-white/20">
+                      <span className="text-[10px] md:text-xs text-white font-medium">
                         Niveau {player.niveau_padel.toFixed(1)}
                       </span>
                     </div>
@@ -510,35 +510,14 @@ export default function PartnerSuggestions() {
                   )}
                 </div>
 
-                {/* Tags (Hidden on mobile very small screens if needed, or simplified) */}
-                {player.compatibilityTags.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-1 mb-3 h-5 md:h-auto overflow-hidden">
-                    {player.compatibilityTags.slice(0, 1).map((tag, i) => {
-                      const isNegativeOrWarning = tag.toLowerCase().includes("même côté") ||
-                        tag.toLowerCase().includes("mains similaires") ||
-                        tag.toLowerCase().includes("même main") ||
-                        tag.toLowerCase().includes("niveau différent");
-                      return (
-                        <span
-                          key={i}
-                          className={`text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full font-medium truncate max-w-full ${isNegativeOrWarning
-                            ? "bg-orange-500/10 text-orange-300/90 border border-orange-500/20"
-                            : "bg-green-500/10 text-green-300/90 border border-green-500/20"
-                            }`}
-                        >
-                          {tag}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
+
 
                 {/* Actions - Icon Only on Mobile, Text on Desktop if space */}
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
                     type="button"
                     onClick={() => router.push(`/players/${player.id}?from=partners`)}
-                    className="py-2 px-0 border border-white/10 text-gray-300 rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
+                    className="py-2 px-0 border border-white/10 text-white rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
                     title="Voir le profil"
                   >
                     <Eye size={16} />
@@ -567,7 +546,7 @@ export default function PartnerSuggestions() {
                         ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                         : hasReceivedInvitation
                           ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                          : "bg-blue-600 text-white shadow-lg shadow-blue-900/20 active:scale-95"
+                          : "bg-padel-green text-[#071554] shadow-lg shadow-padel-green/20 active:scale-95"
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {isInvitingId === player.id ? (

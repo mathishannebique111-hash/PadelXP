@@ -48,12 +48,12 @@ export default function BillingInfoSection({
 
   const formatAddress = (address: BillingAddress | null | string): string => {
     if (!address) return "—";
-    
+
     // Si c'est une chaîne, la retourner telle quelle
     if (typeof address === "string") {
       return address || "—";
     }
-    
+
     // Si c'est un objet, formater les parties
     const parts = [
       address.street,
@@ -133,7 +133,7 @@ export default function BillingInfoSection({
   return (
     <>
       {/* Dénomination légale */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="text-xs text-white/60 mb-1">Dénomination légale</div>
         <div className="text-sm text-white">{legalName || "—"}</div>
         <p className="text-xs text-white/50 mt-2">
@@ -142,7 +142,7 @@ export default function BillingInfoSection({
       </div>
 
       {/* Adresse de facturation */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
             <div className="text-xs text-white/60 mb-1">Adresse de facturation</div>
@@ -159,7 +159,7 @@ export default function BillingInfoSection({
       </div>
 
       {/* TVA */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
             <div className="text-xs text-white/60 mb-1">TVA (optionnel)</div>
@@ -176,7 +176,7 @@ export default function BillingInfoSection({
       </div>
 
       {/* Email de facturation */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
             <div className="text-xs text-white/60 mb-1">Email de facturation</div>
@@ -193,7 +193,7 @@ export default function BillingInfoSection({
       </div>
 
       {/* Contact administratif */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="text-xs text-white/60 mb-1">Contact administratif</div>
         <div className="text-sm text-white">{adminContact || "—"}</div>
         <p className="text-xs text-white/50 mt-2">
@@ -202,7 +202,7 @@ export default function BillingInfoSection({
       </div>
 
       {/* Moyen de paiement */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="text-xs text-white/60 mb-1">Moyen de paiement</div>
         {paymentMethod ? (
           <div className="space-y-2">
@@ -230,7 +230,7 @@ export default function BillingInfoSection({
       </div>
 
       {/* Préférences */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="text-xs text-white/60 mb-3">Préférences</div>
         <div className="space-y-3">
           <div className="flex items-center justify-between">

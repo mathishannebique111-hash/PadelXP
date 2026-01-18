@@ -28,7 +28,7 @@ export default function Pricing() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00CC99] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
-      
+
       <div className="relative z-10 max-w-5xl mx-auto px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -44,7 +44,7 @@ export default function Pricing() {
             </span>
           </h2>
           <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-            Rejoignez les clubs qui ont déjà fait le choix de l'excellence. 
+            Rejoignez les clubs qui ont déjà fait le choix de l'excellence.
             <span className="text-white font-semibold"> Commencez votre essai gratuit maintenant</span>, sans carte bancaire.
           </p>
         </motion.div>
@@ -54,7 +54,7 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="bg-gradient-to-br from-[#0066FF]/20 via-[#00CC99]/15 to-[#0066FF]/20 rounded-3xl p-8 md:p-12 border-2 border-[#0066FF]/40 shadow-2xl relative overflow-hidden"
+          className="bg-gradient-to-br from-[#0066FF]/20 via-[#00CC99]/15 to-[#0066FF]/20 rounded-2xl p-8 md:p-12 border-2 border-[#0066FF]/40 shadow-2xl relative overflow-hidden"
         >
           {/* Shimmer effect */}
           <div className="absolute inset-0 opacity-10">
@@ -62,7 +62,7 @@ export default function Pricing() {
               <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/30 to-transparent challenge-shine-gradient" />
             </div>
           </div>
-          
+
           <div className="relative z-10">
             {/* Principaux avantages en avant */}
             <div className="text-center mb-10">
@@ -70,7 +70,7 @@ export default function Pricing() {
                 <Image src="/images/Cadeau accueil club.png" alt="Cadeau" width={24} height={24} className="flex-shrink-0" unoptimized />
                 <span className="text-lg font-bold text-white">Essai gratuit 14 jours - Sans carte bancaire</span>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                 <div className="bg-white/5 rounded-xl p-6 border border-white/10 text-center">
                   <div className="mb-3 flex justify-center">

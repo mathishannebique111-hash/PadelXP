@@ -200,17 +200,15 @@ export default function PadelProfileEditModal({
     return (
       <div key={fieldKey} className="relative">
         <div
-          className={`rounded-xl border border-white/30 bg-white/5 p-5 transition-all cursor-pointer ${
-            isOpen ? "bg-white/[0.1] border-white/50" : "hover:bg-white/[0.07]"
-          }`}
+          className={`rounded-2xl border border-white/30 bg-white/5 p-5 transition-all cursor-pointer ${isOpen ? "bg-white/[0.1] border-white/50" : "hover:bg-white/[0.07]"
+            }`}
           onClick={() => setOpenField(isOpen ? null : fieldKey)}
         >
           <div className="flex items-start gap-4">
             {IconComponent && (
               <IconComponent
-                className={`w-7 h-7 text-white flex-shrink-0 mt-0.5 transition-transform ${
-                  isOpen ? "scale-110" : ""
-                } ${isLeftHanded ? "rotate-180" : ""}`}
+                className={`w-7 h-7 text-white flex-shrink-0 mt-0.5 transition-transform ${isOpen ? "scale-110" : ""
+                  } ${isLeftHanded ? "rotate-180" : ""}`}
               />
             )}
             <div className="flex-1 min-w-0">
@@ -222,9 +220,8 @@ export default function PadelProfileEditModal({
                   {currentValue ? getDisplayLabel(currentValue) : "Non renseigné"}
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""
+                    }`}
                 />
               </div>
             </div>
@@ -238,7 +235,7 @@ export default function PadelProfileEditModal({
               initial={{ opacity: 0, height: 0, marginTop: 0 }}
               animate={{ opacity: 1, height: "auto", marginTop: 8 }}
               exit={{ opacity: 0, height: 0, marginTop: 0 }}
-              className="overflow-hidden rounded-xl border border-white/30 bg-white/10 backdrop-blur-sm"
+              className="overflow-hidden rounded-2xl border border-white/30 bg-white/10 backdrop-blur-sm"
             >
               <div className="p-2 space-y-1">
                 {field.options.map((option) => {
@@ -250,17 +247,15 @@ export default function PadelProfileEditModal({
                     <button
                       key={option.value}
                       onClick={() => handleFieldChange(fieldKey, option.value)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${
-                        isSelected
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${isSelected
                           ? "bg-white/20 border border-white/40"
                           : "hover:bg-white/10 border border-transparent"
-                      }`}
+                        }`}
                     >
                       {OptionIcon && (
                         <OptionIcon
-                          className={`w-5 h-5 text-white flex-shrink-0 ${
-                            isOptionLeftHanded ? "rotate-180" : ""
-                          }`}
+                          className={`w-5 h-5 text-white flex-shrink-0 ${isOptionLeftHanded ? "rotate-180" : ""
+                            }`}
                         />
                       )}
                       <span className="text-sm font-medium text-white flex-1">

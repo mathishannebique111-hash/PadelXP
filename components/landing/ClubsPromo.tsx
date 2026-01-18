@@ -14,7 +14,7 @@ export default function ClubsPromo() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="bg-gradient-to-br from-[#0066FF]/20 to-[#00CC99]/20 rounded-3xl p-8 md:p-12 border-2 border-[#0066FF]/30"
+          className="bg-gradient-to-br from-[#0066FF]/20 to-[#00CC99]/20 rounded-2xl p-8 md:p-12 border-2 border-[#0066FF]/30"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
@@ -44,16 +44,16 @@ export default function ClubsPromo() {
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
               </Link>
             </div>
-            
+
             <div className="hidden md:block">
               <div className="grid grid-cols-2 gap-5">
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-gray-700 flex flex-col items-start">
                   <div className="mb-3 min-h-[32px]">
-                    <Image 
-                      src="/images/Trophée page badges.png" 
-                      alt="Trophée" 
-                      width={32} 
-                      height={32} 
+                    <Image
+                      src="/images/Trophée page badges.png"
+                      alt="Trophée"
+                      width={32}
+                      height={32}
                       className="flex-shrink-0"
                       unoptimized
                     />
@@ -68,11 +68,11 @@ export default function ClubsPromo() {
                 </div>
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-gray-700 flex flex-col items-start">
                   <div className="mb-3 min-h-[32px]">
-                    <Image 
-                      src="/images/Manette landing page.png" 
-                      alt="Manette" 
-                      width={32} 
-                      height={32} 
+                    <Image
+                      src="/images/Manette landing page.png"
+                      alt="Manette"
+                      width={32}
+                      height={32}
                       className="flex-shrink-0"
                       unoptimized
                     />
@@ -81,11 +81,11 @@ export default function ClubsPromo() {
                 </div>
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 border border-gray-700 flex flex-col items-start">
                   <div className="mb-3 min-h-[32px]">
-                    <Image 
-                      src="/images/Page publique du club.png" 
-                      alt="Page club publique" 
-                      width={32} 
-                      height={32} 
+                    <Image
+                      src="/images/Page publique du club.png"
+                      alt="Page club publique"
+                      width={32}
+                      height={32}
                       className="flex-shrink-0"
                       unoptimized
                     />

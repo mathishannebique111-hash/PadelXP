@@ -33,7 +33,7 @@ export default function ChallengesList({ challenges }: ChallengesListProps) {
 
   if (challenges.length === 0) {
     return (
-      <div className="rounded-3xl border border-white/20 bg-white/15 px-6 py-14 text-center text-white">
+      <div className="rounded-2xl border border-white/20 bg-white/15 px-6 py-14 text-center text-white">
         Aucun challenge n'a encore été publié par votre club. Revenez bientôt !
       </div>
     );

@@ -174,10 +174,10 @@ export default function NotificationCenter() {
 
   const handleMarkAllAsRead = async () => {
     if (!user?.id || isMarkingAll) return;
-    
+
     setIsMarkingAll(true);
     markAllAsReadLocal();
-    
+
     try {
       await markAllAsRead(user.id);
       await refreshNotifications();
@@ -203,7 +203,7 @@ export default function NotificationCenter() {
 
     // Navigation selon le type
     const data = typeof notification.data === 'string' ? JSON.parse(notification.data) : notification.data;
-    
+
     if (notification.type === 'chat' && data?.conversation_id) {
       router.push(`/chat/${data.conversation_id}`);
     } else if (notification.type === 'badge' || notification.type === 'badge_unlocked') {
@@ -211,7 +211,7 @@ export default function NotificationCenter() {
     } else if (notification.type === 'level_up') {
       router.push('/home?tab=profile');
     }
-    
+
     handleClose();
   };
 
@@ -266,7 +266,7 @@ export default function NotificationCenter() {
       {isOpen && (
         <>
           {/* Overlay - Tap pour fermer */}
-          <div 
+          <div
             className="fixed inset-0 z-[100000] bg-black/50 backdrop-blur-sm transition-opacity duration-300"
             onClick={handleClose}
             aria-hidden="true"
@@ -292,14 +292,14 @@ export default function NotificationCenter() {
               transition-transform duration-300 ease-out
               ${isClosing ? 'translate-y-full md:translate-y-0 md:scale-95 md:opacity-0' : 'translate-y-0'}
               inset-0 w-full h-full
-              md:inset-auto md:top-16 md:right-4 md:w-[400px] md:max-h-[600px] md:rounded-xl md:shadow-2xl md:border md:border-white/20
+              md:inset-auto md:top-16 md:right-4 md:w-[400px] md:max-h-[600px] md:rounded-2xl md:shadow-2xl md:border md:border-white/20
             `}
             style={{
               transform: isSwiping ? `translateY(${swipeY}px)` : undefined,
             }}
           >
             {/* Header - Sticky en haut */}
-            <div 
+            <div
               className="flex-shrink-0 h-16 px-4 border-b border-white/10 flex items-center justify-between bg-black/95 sticky top-0 z-10 pt-[env(safe-area-inset-top,0px)]"
             >
               {/* Bouton retour/fermer (mobile) ou X (desktop) */}
@@ -339,7 +339,7 @@ export default function NotificationCenter() {
             </div>
 
             {/* Body - Scroll vertical */}
-            <div 
+            <div
               ref={scrollRef}
               className="flex-1 overflow-y-auto min-h-0 px-4 py-2 md:py-4"
               style={{
@@ -359,10 +359,10 @@ export default function NotificationCenter() {
               ) : (
                 <div className="space-y-2">
                   {displayedNotifications.map((notification: Notification) => {
-                    const isRead = (notification as any).is_read !== undefined 
-                      ? (notification as any).is_read 
+                    const isRead = (notification as any).is_read !== undefined
+                      ? (notification as any).is_read
                       : (notification as any).read;
-                    
+
                     return (
                       <button
                         key={notification.id}
@@ -371,15 +371,14 @@ export default function NotificationCenter() {
                           w-full 
                           min-h-[60px]
                           p-4 
-                          rounded-xl
+                          rounded-2xl
                           text-left
                           transition-all duration-200
                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black
                           active:scale-[0.98]
-                          ${
-                            !isRead 
-                              ? 'bg-blue-500/10 border border-blue-500/20' 
-                              : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                          ${!isRead
+                            ? 'bg-blue-500/10 border border-blue-500/20'
+                            : 'bg-white/5 border border-white/10 hover:bg-white/10'
                           }
                         `}
                       >

@@ -2,30 +2,36 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
-type TabType = 'record' | 'history' | 'badges';
+type TabType = 'record' | 'history' | 'partners' | 'boost';
 
 interface MatchTabsProps {
   activeTab?: TabType;
   recordContent: React.ReactNode;
   historyContent: React.ReactNode;
-  badgesContent?: React.ReactNode;
+  partnersContent?: React.ReactNode;
+  boostContent?: React.ReactNode;
 }
 
 function MatchTabsContent({
   activeTab = 'record',
   recordContent,
   historyContent,
-  badgesContent
+  partnersContent,
+  boostContent
 }: MatchTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
-  const initialTab = tabFromUrl && ['record', 'history', 'badges'].includes(tabFromUrl) ? tabFromUrl : activeTab;
+  const initialTab = tabFromUrl && ['record', 'history', 'partners', 'boost'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingMatchesCount, setPendingMatchesCount] = useState(0);
+  const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
+  const [pendingChallengesCount, setPendingChallengesCount] = useState(0);
+  const supabase = createClient();
 
   useEffect(() => {
-    if (tabFromUrl && ['record', 'history', 'badges'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['record', 'history', 'partners', 'boost'].includes(tabFromUrl)) {
       setCurrentTab(tabFromUrl);
     }
   }, [tabFromUrl]);
@@ -66,16 +72,81 @@ function MatchTabsContent({
     };
   }, []);
 
+  // Load pending invitations and challenges for partners tab badge
+  useEffect(() => {
+    const loadPendingInvitationsCount = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { count: matchInvitationsCount } = await supabase
+          .from('match_invitations')
+          .select('*', { count: 'exact', head: true })
+          .eq('receiver_id', user.id)
+          .eq('status', 'pending')
+          .gt('expires_at', new Date().toISOString());
+
+        setPendingInvitationsCount(matchInvitationsCount || 0);
+      } catch (error) {
+        console.error('[MatchTabs] Error loading invitations count:', error);
+      }
+    };
+
+    const loadPendingChallengesCount = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: challenges } = await supabase
+          .from('team_challenges')
+          .select('id, defender_player_1_id, defender_player_2_id, defender_1_status, defender_2_status, status')
+          .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
+          .eq('status', 'pending')
+          .gt('expires_at', new Date().toISOString());
+
+        const pendingCount = (challenges || []).filter((challenge: any) => {
+          const isDefender1 = challenge.defender_player_1_id === user.id;
+          const myStatus = isDefender1 ? challenge.defender_1_status : challenge.defender_2_status;
+          return myStatus === 'pending';
+        }).length;
+
+        setPendingChallengesCount(pendingCount);
+      } catch (error) {
+        console.error('[MatchTabs] Error loading challenges count:', error);
+      }
+    };
+
+    loadPendingInvitationsCount();
+    loadPendingChallengesCount();
+
+    // Listen for events
+    const handleInvitationEvent = () => loadPendingInvitationsCount();
+    const handleChallengeEvent = () => loadPendingChallengesCount();
+
+    window.addEventListener("matchInvitationCreated", handleInvitationEvent);
+    window.addEventListener("matchInvitationDeleted", handleInvitationEvent);
+    window.addEventListener("teamChallengeCreated", handleChallengeEvent);
+    window.addEventListener("teamChallengeUpdated", handleChallengeEvent);
+
+    return () => {
+      window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
+      window.removeEventListener("matchInvitationDeleted", handleInvitationEvent);
+      window.removeEventListener("teamChallengeCreated", handleChallengeEvent);
+      window.removeEventListener("teamChallengeUpdated", handleChallengeEvent);
+    };
+  }, [supabase]);
+
   const tabs = [
     { id: 'record' as TabType, label: 'Enregistrer' },
-    { id: 'history' as TabType, label: 'Mes matchs' },
-    { id: 'badges' as TabType, label: 'Mes badges' },
+    { id: 'history' as TabType, label: 'Mes matchs', badge: pendingMatchesCount },
+    { id: 'partners' as TabType, label: 'Trouve tes partenaires', badge: pendingInvitationsCount + pendingChallengesCount },
+    { id: 'boost' as TabType, label: 'Boost' },
   ];
 
   return (
     <div className="w-full">
       {/* Onglets */}
-      <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
+      <div className="flex items-center justify-between w-full mb-4 sm:mb-6 border-b border-white/10">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -86,21 +157,21 @@ function MatchTabsContent({
               newUrl.searchParams.set('tab', tab.id);
               window.history.replaceState(null, '', newUrl.toString());
             }}
-            className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${currentTab === tab.id
-              ? 'text-white border-b-2 border-blue-400'
+            className={`px-1 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${currentTab === tab.id
+              ? 'text-white border-b-2 border-padel-green'
               : 'text-white/60 hover:text-white/80'
               }`}
           >
-            <div className="flex items-center gap-1.5 px-3">
-              <span>{tab.label}</span>
-              {tab.id === 'history' && pendingMatchesCount > 0 && (
-                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                  {pendingMatchesCount > 9 ? '9+' : pendingMatchesCount}
+            <div className="flex items-center justify-center gap-1.5 px-1 sm:px-2 h-full">
+              <span className="text-center whitespace-normal leading-tight max-w-[80px] sm:max-w-none">{tab.label}</span>
+              {tab.badge !== undefined && tab.badge > 0 && (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white flex-shrink-0">
+                  {tab.badge > 9 ? '9+' : tab.badge}
                 </span>
               )}
             </div>
             {currentTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
             )}
           </button>
         ))}
@@ -110,7 +181,8 @@ function MatchTabsContent({
       <div className="mt-4 sm:mt-6">
         {currentTab === 'record' && <div>{recordContent}</div>}
         {currentTab === 'history' && <div>{historyContent}</div>}
-        {badgesContent && currentTab === 'badges' && <div>{badgesContent}</div>}
+        {partnersContent && currentTab === 'partners' && <div>{partnersContent}</div>}
+        {boostContent && currentTab === 'boost' && <div>{boostContent}</div>}
       </div>
     </div>
   );
@@ -123,7 +195,8 @@ export default function MatchTabs(props: MatchTabsProps) {
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Trouve tes partenaires</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Boost</div>
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center">
           <div className="text-white/60">Chargement...</div>
@@ -134,4 +207,3 @@ export default function MatchTabs(props: MatchTabsProps) {
     </Suspense>
   );
 }
-

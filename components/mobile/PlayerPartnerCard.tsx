@@ -58,7 +58,7 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [requestToCancel, setRequestToCancel] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-  
+
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -270,7 +270,7 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
         loadPartnerData();
       }
     };
-    
+
     window.addEventListener("profileUpdated", handleProfileUpdate);
 
     return () => {
@@ -306,7 +306,7 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("profileUpdated"));
       }
-      
+
       setResponding(null);
     } catch (error) {
       console.error('[PlayerPartnerCard] Erreur réponse partenariat', error);
@@ -337,7 +337,7 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
       // Fermer le dialog et notifier pour recharger les données
       setCancelDialogOpen(false);
       setRequestToCancel(null);
-      
+
       // Notifier pour recharger les données sans recharger la page
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("profileUpdated"));
@@ -469,7 +469,7 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
 
   // Filtrer les demandes expirées (24h) si le joueur a un partenaire
   const [filteredPendingRequests, setFilteredPendingRequests] = useState<PendingRequest[]>([]);
-  
+
   // État pour le temps actuel (pour le compteur 24h)
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -480,20 +480,20 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
     const now = currentTime;
     const diffMs = now.getTime() - created.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
-    
+
     if (diffHours >= 24) {
       return { hours: 0, minutes: 0, expired: true };
     }
-    
+
     const remainingMs = (24 * 60 * 60 * 1000) - diffMs;
     const remainingHours = remainingMs / (1000 * 60 * 60);
     const hours = Math.floor(remainingHours);
     const remainingMinutes = (remainingHours - hours) * 60;
     const minutes = Math.floor(remainingMinutes);
-    
+
     return { hours, minutes, expired: false };
   };
-  
+
   useEffect(() => {
     if (partner && pendingRequests.length > 0) {
       const now = new Date();
@@ -505,7 +505,7 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
         return diffHours < 24; // Garder seulement si moins de 24h
       });
       setFilteredPendingRequests(validRequests);
-      
+
       // Supprimer automatiquement les demandes expirées
       if (validRequests.length < pendingRequests.length) {
         // Décliner automatiquement les demandes expirées
@@ -561,13 +561,13 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
       <div className="bg-slate-900 rounded-2xl p-4 border border-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Users size={18} className="text-blue-400" />
+            <Users size={18} className="text-padel-green" />
             <span className="text-sm font-semibold text-white">Mon partenaire habituel</span>
           </div>
           {hasLevel && !partner && (
             <button
               onClick={() => setShowAddPartner(!showAddPartner)}
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+              className="text-padel-green hover:brightness-110 text-sm font-medium"
             >
               {showAddPartner ? 'Annuler' : 'Ajouter'}
             </button>
@@ -591,58 +591,16 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
           {/* Contenu normal si niveau évalué */}
           {hasLevel && (
             <>
-          {/* 0. SECTION PARTENAIRE ACCEPTÉ */}
-          {partner && (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Votre partenaire habituel</p>
-              <div className="bg-slate-800/80 rounded-xl p-4 border border-green-500/30 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-green-500" />
-                <div className="flex items-center gap-3">
-                  {partner.partner.avatar_url ? (
-                    <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
-                      <Image src={partner.partner.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
-                      <User size={24} />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="font-semibold text-white">
-                      {partner.partner.first_name} {partner.partner.last_name}
-                    </p>
-                    <p className="text-xs text-green-400 font-medium">
-                      Partenaire habituel
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 1. SECTION INVITATIONS REÇUES */}
-          {displayRequests.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                {partner ? 'Demande reçue' : `Invitations reçues (${displayRequests.length})`}
-              </p>
-              {displayRequests.map((req) => {
-                const timeRemaining = getTimeRemaining(req.created_at);
-                return (
-                  <div key={req.id} className="bg-slate-800/80 rounded-xl p-4 border border-blue-500/30 relative overflow-hidden">
-                    {/* Compteur 24h en haut à droite si partenaire existe */}
-                    {partner && timeRemaining && !timeRemaining.expired && (
-                      <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
-                        <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap">
-                          {timeRemaining.hours}h {timeRemaining.minutes}m
-                        </p>
-                      </div>
-                    )}
-                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
-                    <div className="flex items-center gap-3 mb-4">
-                      {req.partner.avatar_url ? (
+              {/* 0. SECTION PARTENAIRE ACCEPTÉ */}
+              {partner && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Votre partenaire habituel</p>
+                  <div className="bg-slate-800/80 rounded-xl p-4 border border-green-500/30 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-green-500" />
+                    <div className="flex items-center gap-3">
+                      {partner.partner.avatar_url ? (
                         <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
-                          <Image src={req.partner.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
+                          <Image src={partner.partner.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
                         </div>
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
@@ -651,170 +609,212 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
                       )}
                       <div className="flex-1">
                         <p className="font-semibold text-white">
-                          {req.partner.first_name} {req.partner.last_name}
+                          {partner.partner.first_name} {partner.partner.last_name}
                         </p>
-                        <p className="text-xs text-blue-400 font-medium">
-                          Souhaite devenir votre partenaire habituel
+                        <p className="text-xs text-green-400 font-medium">
+                          Partenaire habituel
                         </p>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
 
-                    {/* Message spécial si partenaire existe */}
-                    {partner && (
-                      <div className="mb-3 p-2.5 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                        <p className="text-xs text-orange-300">
-                          Vous avez reçu une demande de partenaire habituel mais vous ne pouvez pas l'accepter tant que vous avez déjà un partenaire habituel.
+              {/* 1. SECTION INVITATIONS REÇUES */}
+              {displayRequests.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                    {partner ? 'Demande reçue' : `Invitations reçues (${displayRequests.length})`}
+                  </p>
+                  {displayRequests.map((req) => {
+                    const timeRemaining = getTimeRemaining(req.created_at);
+                    return (
+                      <div key={req.id} className="bg-slate-800/80 rounded-xl p-4 border border-blue-500/30 relative overflow-hidden">
+                        {/* Compteur 24h en haut à droite si partenaire existe */}
+                        {partner && timeRemaining && !timeRemaining.expired && (
+                          <div className="absolute top-3 right-3 bg-orange-500/20 border border-orange-500/30 rounded-lg px-2 py-1 z-10">
+                            <p className="text-[10px] text-orange-400 font-bold whitespace-nowrap">
+                              {timeRemaining.hours}h {timeRemaining.minutes}m
+                            </p>
+                          </div>
+                        )}
+                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+                        <div className="flex items-center gap-3 mb-4">
+                          {req.partner.avatar_url ? (
+                            <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
+                              <Image src={req.partner.avatar_url} alt="" width={48} height={48} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
+                              <User size={24} />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="font-semibold text-white">
+                              {req.partner.first_name} {req.partner.last_name}
+                            </p>
+                            <p className="text-xs text-blue-400 font-medium">
+                              Souhaite devenir votre partenaire habituel
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Message spécial si partenaire existe */}
+                        {partner && (
+                          <div className="mb-3 p-2.5 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                            <p className="text-xs text-orange-300">
+                              Vous avez reçu une demande de partenaire habituel mais vous ne pouvez pas l'accepter tant que vous avez déjà un partenaire habituel.
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          {/* Bouton Accepter - masqué si partenaire existe */}
+                          {!partner && (
+                            <button
+                              onClick={() => handleRespond(req.id, 'accepted')}
+                              disabled={!!responding}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                              {responding === req.id ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <>
+                                  <Check size={16} />
+                                  Accepter
+                                </>
+                              )}
+                            </button>
+                          )}
+                          {/* Bouton Refuser - toujours visible */}
+                          <button
+                            onClick={() => handleRespond(req.id, 'declined')}
+                            disabled={!!responding}
+                            className={`${partner ? 'flex-1' : 'px-3'} bg-slate-800 hover:bg-red-900/30 text-gray-300 hover:text-red-400 border border-slate-700 hover:border-red-500/30 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2`}
+                          >
+                            <X size={18} />
+                            {partner && <span>Refuser</span>}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 2. SECTION INVITATION ENVOYÉE */}
+              {sentRequest && (
+                <div className="space-y-2">
+                  {pendingRequests.length > 0 && <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Votre invitation envoyée</p>}
+                  <div className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-white/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      {sentRequest.partner.avatar_url ? (
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
+                          <Image src={sentRequest.partner.avatar_url} alt="" width={56} height={56} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
+                          <User size={24} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white truncate text-sm md:text-base">
+                          {sentRequest.partner.first_name} {sentRequest.partner.last_name}
                         </p>
+                        <p className="text-xs text-blue-400 font-medium bg-blue-400/10 px-2 py-0.5 rounded-full inline-block mt-1">
+                          Invitation envoyée
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => openCancelDialog(sentRequest.id)}
+                      className="w-full py-2 px-3 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 transition-colors min-h-[44px]"
+                    >
+                      <X size={14} />
+                      Annuler la demande
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. SEARCH / ADD PARTNER FORM */}
+              {showAddPartner && (
+                <div className="space-y-3 pt-2 border-t border-white/10" ref={wrapperRef}>
+                  <div className="relative">
+                    <label className="block text-xs text-gray-400 mb-2">
+                      Rechercher un joueur du même club
+                    </label>
+                    <input
+                      type="text"
+                      value={searchValue}
+                      onChange={handleSearchChange}
+                      onFocus={() => {
+                        if (searchResults.length > 0) {
+                          setShowDropdown(true);
+                        }
+                      }}
+                      placeholder="Nom du joueur..."
+                      className="w-full rounded-lg border border-white/20 bg-slate-800 px-4 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+
+                    {showDropdown && searchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/20 bg-slate-800 shadow-lg max-h-60 overflow-y-auto">
+                        {searchResults.map((player) => (
+                          <button
+                            key={`${player.type}-${player.id}`}
+                            type="button"
+                            onClick={() => handleSelectPlayer(player)}
+                            className="w-full px-4 py-3 text-left text-sm text-white hover:bg-slate-700 transition-colors border-b border-white/10 last:border-b-0"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{player.display_name}</span>
+                              <span className="text-xs text-gray-400">
+                                {player.type === 'user' ? 'Inscrit' : 'Invité'}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     )}
 
-                    <div className="flex gap-2">
-                      {/* Bouton Accepter - masqué si partenaire existe */}
-                      {!partner && (
-                        <button
-                          onClick={() => handleRespond(req.id, 'accepted')}
-                          disabled={!!responding}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                        >
-                          {responding === req.id ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <>
-                              <Check size={16} />
-                              Accepter
-                            </>
-                          )}
-                        </button>
-                      )}
-                      {/* Bouton Refuser - toujours visible */}
-                      <button
-                        onClick={() => handleRespond(req.id, 'declined')}
-                        disabled={!!responding}
-                        className={`${partner ? 'flex-1' : 'px-3'} bg-slate-800 hover:bg-red-900/30 text-gray-300 hover:text-red-400 border border-slate-700 hover:border-red-500/30 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2`}
-                      >
-                        <X size={18} />
-                        {partner && <span>Refuser</span>}
-                      </button>
-                    </div>
+                    {searching && (
+                      <div className="absolute right-3 top-10 text-gray-400 text-xs">
+                        Recherche...
+                      </div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
 
-          {/* 2. SECTION INVITATION ENVOYÉE */}
-          {sentRequest && (
-            <div className="space-y-2">
-              {pendingRequests.length > 0 && <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Votre invitation envoyée</p>}
-              <div className="bg-slate-800/50 rounded-xl p-3 md:p-4 border border-white/10">
-                <div className="flex items-center gap-3 mb-3">
-                  {sentRequest.partner.avatar_url ? (
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
-                      <Image src={sentRequest.partner.avatar_url} alt="" width={56} height={56} className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 flex items-center justify-center text-white/40 flex-shrink-0 border-2 border-white/20">
-                      <User size={24} />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white truncate text-sm md:text-base">
-                      {sentRequest.partner.first_name} {sentRequest.partner.last_name}
-                    </p>
-                    <p className="text-xs text-blue-400 font-medium bg-blue-400/10 px-2 py-0.5 rounded-full inline-block mt-1">
-                      Invitation envoyée
-                    </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowAddPartner(false);
+                        setSearchValue('');
+                        setSelectedPlayer(null);
+                        setSearchResults([]);
+                        setShowDropdown(false);
+                      }}
+                      className="flex-1 py-2 px-3 border border-white/20 text-gray-300 rounded-lg text-sm font-medium active:bg-slate-700/50 min-h-[44px]"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleAddPartner}
+                      disabled={!selectedPlayer || addingPartner}
+                      className="flex-1 py-2 px-3 bg-blue-500 text-white rounded-lg text-sm font-medium active:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                    >
+                      {addingPartner ? 'Envoi...' : 'Envoyer'}
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => openCancelDialog(sentRequest.id)}
-                  className="w-full py-2 px-3 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-1 transition-colors min-h-[44px]"
-                >
-                  <X size={14} />
-                  Annuler la demande
-                </button>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* 3. SEARCH / ADD PARTNER FORM */}
-          {showAddPartner && (
-            <div className="space-y-3 pt-2 border-t border-white/10" ref={wrapperRef}>
-              <div className="relative">
-                <label className="block text-xs text-gray-400 mb-2">
-                  Rechercher un joueur du même club
-                </label>
-                <input
-                  type="text"
-                  value={searchValue}
-                  onChange={handleSearchChange}
-                  onFocus={() => {
-                    if (searchResults.length > 0) {
-                      setShowDropdown(true);
-                    }
-                  }}
-                  placeholder="Nom du joueur..."
-                  className="w-full rounded-lg border border-white/20 bg-slate-800 px-4 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-
-                {showDropdown && searchResults.length > 0 && (
-                  <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/20 bg-slate-800 shadow-lg max-h-60 overflow-y-auto">
-                    {searchResults.map((player) => (
-                      <button
-                        key={`${player.type}-${player.id}`}
-                        type="button"
-                        onClick={() => handleSelectPlayer(player)}
-                        className="w-full px-4 py-3 text-left text-sm text-white hover:bg-slate-700 transition-colors border-b border-white/10 last:border-b-0"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{player.display_name}</span>
-                          <span className="text-xs text-gray-400">
-                            {player.type === 'user' ? 'Inscrit' : 'Invité'}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {searching && (
-                  <div className="absolute right-3 top-10 text-gray-400 text-xs">
-                    Recherche...
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setShowAddPartner(false);
-                    setSearchValue('');
-                    setSelectedPlayer(null);
-                    setSearchResults([]);
-                    setShowDropdown(false);
-                  }}
-                  className="flex-1 py-2 px-3 border border-white/20 text-gray-300 rounded-lg text-sm font-medium active:bg-slate-700/50 min-h-[44px]"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleAddPartner}
-                  disabled={!selectedPlayer || addingPartner}
-                  className="flex-1 py-2 px-3 bg-blue-500 text-white rounded-lg text-sm font-medium active:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
-                >
-                  {addingPartner ? 'Envoi...' : 'Envoyer'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* EMPTY STATE */}
-          {!sentRequest && pendingRequests.length === 0 && !showAddPartner && (
-            <div className="flex items-center gap-3 text-gray-400 py-2">
-              <UserPlus size={20} />
-              <p className="text-sm">Aucun partenaire pour le moment</p>
-            </div>
-          )}
+              {/* EMPTY STATE */}
+              {!sentRequest && pendingRequests.length === 0 && !showAddPartner && (
+                <div className="flex items-center gap-3 text-gray-400 py-2">
+                  <UserPlus size={20} />
+                  <p className="text-sm">Aucun partenaire pour le moment</p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -852,7 +852,7 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Dialog d'erreur - Design toast bleu */}
       <Dialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
         <DialogContent className="sm:max-w-md bg-blue-500/90 border-blue-400/50 text-white p-0 overflow-hidden">

@@ -189,7 +189,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
                     <span className="text-[11px] sm:text-xs text-gray-400">
                       Vers niveau {Math.floor(profile.niveau_padel) + 1}
                     </span>
-                    <span className="text-xs sm:text-sm text-blue-400 font-semibold">
+                    <span className="text-xs sm:text-sm text-padel-green font-semibold">
                       {(() => {
                         const currentLevel = Math.floor(profile.niveau_padel);
                         const nextThreshold = currentLevel + 0.5;
@@ -207,7 +207,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
                   </div>
                   <div className="h-2.5 bg-slate-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
+                      className="h-full bg-padel-green transition-all duration-500"
                       style={{
                         width: `${(() => {
                           const currentLevel = Math.floor(
@@ -232,7 +232,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
                 profile.niveau_recommendations.length > 0 && (
                   <div className="bg-slate-900/40 rounded-xl p-3 sm:p-4">
                     <h4 className="text-xs sm:text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                      <Lightbulb size={16} className="text-yellow-400" />
+                      <Lightbulb size={16} className="text-white" />
                       Recommandations
                     </h4>
                     <ul className="space-y-1.5">
@@ -244,7 +244,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
                           >
                             <ArrowRight
                               size={12}
-                              className="text-blue-400 flex-shrink-0 mt-0.5"
+                              className="text-padel-green flex-shrink-0 mt-0.5"
                             />
                             <span>{rec}</span>
                           </li>

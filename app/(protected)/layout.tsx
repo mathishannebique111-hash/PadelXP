@@ -1,13 +1,14 @@
 // Layout pour toutes les pages du compte joueur
 // Ce fichier assure une typographie cohérente sur toutes les pages
-// TOUJOURS afficher le menu hamburger et le logo du club sur TOUS les formats
-// Même pour les nouveaux joueurs qui viennent de s'inscrire
 import { Suspense } from 'react';
 import PlayerSidebar from '@/components/PlayerSidebar';
+import BottomNavBar from '@/components/BottomNavBar';
 import PlayerClubLogo from '@/components/PlayerClubLogo';
+import HeaderLogo from '@/components/HeaderLogo';
 import PlayerSafeAreaColor from '@/components/PlayerSafeAreaColor';
 import { PopupQueueProvider } from '@/contexts/PopupQueueContext';
 import PopupQueueRenderer from '@/components/notifications/PopupQueueRenderer';
+import HideSplashScreen from '@/components/HideSplashScreen';
 import GlobalNotificationListener from '@/components/notifications/GlobalNotificationListener';
 import ToastContainer from '@/components/ui/Toast';
 
@@ -20,13 +21,9 @@ export default function PlayerAccountLayout({
     <>
       {/* Configuration spécifique pour les pages joueurs */}
       <PlayerSafeAreaColor />
+      <HideSplashScreen />
       <PopupQueueProvider>
-        {/* Menu hamburger - TOUJOURS visible sur TOUS les formats (desktop au mobile) - Même pour nouveaux joueurs */}
-        {/* Composant client, s'affiche immédiatement sans attendre la vérification du club_id */}
-        {/* Enveloppé dans Suspense car utilise useSearchParams() */}
-        <Suspense fallback={null}>
-          <PlayerSidebar />
-        </Suspense>
+
         <div
           className="relative min-h-screen overflow-hidden bg-[#172554]"
           style={{
@@ -36,11 +33,25 @@ export default function PlayerAccountLayout({
           {/* Background global pour toutes les pages joueur */}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
 
-          {/* Logo du club - TOUJOURS visible sur TOUS les formats */}
-          <PlayerClubLogo />
+          {/* Logo PadelXP Header (scroll avec contenus) */}
+          <HeaderLogo />
 
-          {/* Contenu des pages - démarre sous la barre de statut avec padding-top (app uniquement) */}
-          <div className="relative z-10 min-h-screen app-content-padding">
+          {/* Logo du club + Settings (Top Right) - Logo à gauche, Settings à droite */}
+          <div
+            className="absolute z-[100] flex flex-row items-center gap-1.5 pointer-events-auto"
+            style={{
+              top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)',
+              right: '0.75rem'
+            }}
+          >
+            <PlayerClubLogo />
+            <Suspense fallback={null}>
+              <PlayerSidebar />
+            </Suspense>
+          </div>
+
+          {/* Contenu des pages - avec padding bottom pour la nav bar */}
+          <div className="relative z-10 min-h-screen app-content-padding pb-24">
             {children}
           </div>
           {/* Écouteur global pour les notifications de badges et niveaux */}
@@ -50,9 +61,11 @@ export default function PlayerAccountLayout({
           {/* Toast notifications */}
           <ToastContainer />
         </div>
+        {/* Barre de navigation en bas */}
+        <Suspense fallback={null}>
+          <BottomNavBar />
+        </Suspense>
       </PopupQueueProvider>
     </>
   );
 }
-
-

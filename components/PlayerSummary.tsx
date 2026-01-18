@@ -6,6 +6,7 @@ import BadgesUnlockNotifier from "./BadgesUnlockNotifier";
 import LevelUpNotifier from "./LevelUpNotifier";
 import TierBadge from "./TierBadge";
 import BadgeIconDisplay from "./BadgeIconDisplay";
+import { Flame } from "lucide-react";
 import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
 import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { calculatePointsWithBoosts } from "@/lib/utils/boost-points-utils";
@@ -516,7 +517,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   const badgesObtained = badgesWithStatus.filter((b) => b.obtained).length;
 
   return (
-    <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border-2 border-white/80 p-6 sm:p-8 md:p-10 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)] relative overflow-hidden" style={{
+    <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border border-white/80 p-6 sm:p-8 md:p-10 text-white shadow-xl relative overflow-hidden" style={{
       background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, rgba(0,102,255,0.08), transparent 70%)"
     }}>
       <div>
@@ -526,26 +527,24 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         <BadgesUnlockNotifier obtained={computedBadges} />
         {/* Badge niveau en haut et visible */}
         <div className="mb-4 sm:mb-5 flex items-center justify-between gap-2">
-          <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/90 truncate">Vos statistiques</h3>
-          <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="md" />
+          <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white truncate">Mes statistiques</h3>
+          <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
         </div>
 
         {/* Série de victoires en cours - Cadre en longueur, séparé */}
         <div className="mb-3 sm:mb-4">
           <div
-            className="rounded-lg border border-orange-400/40 bg-gradient-to-br from-orange-500/30 via-amber-500/20 to-yellow-500/15 px-3 sm:px-4 py-2 sm:py-2.5 shadow-md ring-1 ring-orange-400/30 animate-fadeInUp relative overflow-hidden text-white"
+            className="rounded-lg border border-padel-green bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 px-3 sm:px-4 py-2 sm:py-2.5 animate-fadeInUp relative overflow-hidden text-white"
             style={{ animationDelay: "0ms" }}
           >
-            {/* Effet de brillance subtil */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer" />
 
             <div className="relative z-10 flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] text-white/80 font-medium mb-1">
+                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] text-padel-green font-medium mb-1">
                   Série de victoires en cours
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl md:text-4xl font-black tabular-nums">
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-black tabular-nums text-white">
                     {currentWinStreak}
                   </span>
                   <span className="text-[10px] sm:text-xs text-white/80 uppercase tracking-[0.1em]">
@@ -553,16 +552,18 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1.5">
-                <Image
-                  src="/images/Flamme page badges.png"
-                  alt="Icône flamme"
-                  width={36}
-                  height={36}
-                  className="w-6 sm:w-7 md:w-8 h-auto drop-shadow-[0_6px_18px_rgba(249,115,22,0.55)]"
-                />
-                <div className="text-[9px] sm:text-[10px] text-white/80">
-                  Meilleure : <span className="font-semibold tabular-nums text-white">{streak}</span>
+              <div className="flex flex-col items-end gap-1.5 relative">
+                {/* Icône flamme principale */}
+                <div className="relative z-10">
+                  <Flame size={32} className="text-white drop-shadow-[0_0_8px_rgba(204,255,0,0.6)]" strokeWidth={1.5} />
+                </div>
+                {/* Effet fantôme derrière */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none">
+                  <Flame size={64} className="text-padel-green/20 blur-[1px] transform scale-125" strokeWidth={3} />
+                </div>
+
+                <div className="text-[9px] sm:text-[10px] text-white/80 mt-1">
+                  Meilleure : <span className="font-semibold tabular-nums text-padel-green">{streak}</span>
                 </div>
               </div>
             </div>
@@ -574,10 +575,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Points - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '3px', borderLeftColor: '#0066FF' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Points</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Points</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">
               {typeof points === 'number' ? points : (typeof points === 'string' ? parseInt(String(points), 10) || 0 : 0)}
             </div>
           </div>
@@ -585,56 +586,56 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Matchs - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '3px', borderLeftColor: '#9CA3AF' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Matchs</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">{matches}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Matchs</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{matches}</div>
           </div>
 
           {/* Victoires - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '100ms', borderLeftWidth: '3px', borderLeftColor: '#10B981' }}
+            style={{ animationDelay: '100ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Victoires</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">{wins}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Victoires</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{wins}</div>
           </div>
 
           {/* Défaites - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '150ms', borderLeftWidth: '3px', borderLeftColor: '#EF4444' }}
+            style={{ animationDelay: '150ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Défaites</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tabular-nums">{losses}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Défaites</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{losses}</div>
           </div>
 
           {/* Sets gagnés - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '200ms', borderLeftWidth: '3px', borderLeftColor: '#10B981' }}
+            style={{ animationDelay: '200ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Sets gagnés</div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsWon}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Sets gagnés</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{setsWon}</div>
           </div>
 
           {/* Sets perdus - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '250ms', borderLeftWidth: '3px', borderLeftColor: '#EF4444' }}
+            style={{ animationDelay: '250ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Sets perdus</div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{setsLost}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Sets perdus</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{setsLost}</div>
           </div>
 
           {/* Winrate - Stat secondaire avec dégradé */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '300ms', borderLeftWidth: '3px', borderLeftColor: '#BFFF00' }}
+            style={{ animationDelay: '300ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Winrate</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Winrate</div>
             <div
-              className="text-xl sm:text-2xl md:text-3xl font-bold tabular-nums"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums"
               style={{
                 background: winrate > 60
                   ? "linear-gradient(to right, #10B981, #059669)"
@@ -656,38 +657,14 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Badges - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '350ms', borderLeftWidth: '3px', borderLeftColor: '#D1D5DB' }}
+            style={{ animationDelay: '350ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-gray-700 mb-1.5 sm:mb-2 font-medium">Badges</div>
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 tabular-nums">{badgesObtained} / {totalBadges}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Badges</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{badgesObtained} / {totalBadges}</div>
           </div>
         </div>
 
-        {/* Badges en bas */}
-        {computedBadges.length > 0 && (
-          <div className="mt-4 sm:mt-5 md:mt-6 pt-4 sm:pt-5 md:pt-6 border-t border-white/20">
-            <div className="mb-2 sm:mb-2.5 text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.25em] text-white">Badges</div>
-            <div className="flex flex-wrap gap-2 sm:gap-2.5 md:gap-3">
-              {computedBadges.map((b, idx) => (
-                <span
-                  key={idx}
-                  title={b.title}
-                  className="inline-flex items-center rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-gray-900 bg-white relative overflow-hidden transition-transform duration-200 hover:scale-105 hover:shadow-md"
-                  style={{
-                    "--shimmer": "rgba(255, 255, 255, 0.5)",
-                    "--shimmer-duration": "3s",
-                  } as React.CSSProperties}
-                >
-                  <span className="shimmer-layer" />
-                  <span className="relative z-10 flex items-center gap-1">
-                    <BadgeIconDisplay icon={b.icon} title={b.title} size={16} className="flex-shrink-0" />
-                    <span>{b.title}</span>
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+
       </div>
     </div>
   );

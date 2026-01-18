@@ -162,7 +162,7 @@ export default async function BadgesContent() {
 
       const validUserIds = new Set((profiles || []).map((p: any) => p.id));
 
-      validMatchIds = matchIds.filter(matchId => {
+      validMatchIds = matchIds.filter((matchId: string) => {
         const participants = (allParticipants || []).filter((p: any) => p.match_id === matchId);
         return participants.every((p: any) =>
           p.player_type === "guest" || validUserIds.has(p.user_id)
@@ -239,35 +239,27 @@ export default async function BadgesContent() {
       <BadgesUnlockNotifier obtained={obtainedBadges} />
 
       {/* Statistiques */}
-      <div className="mb-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-4 sm:p-8 border-2 border-blue-400 shadow-xl">
-        <div className="mb-3 sm:mb-4 text-center">
-          <div className="mb-2 sm:mb-3 text-xl sm:text-3xl font-bold text-white">
-            <span className="text-yellow-300 tabular-nums">{totalBadgesCount}</span>
-            <span className="text-white/80 text-lg sm:text-2xl ml-2 font-semibold">Badge{totalBadgesCount > 1 ? "s" : ""} au total</span>
+      <div className="mb-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-sm max-w-xs mx-auto">
+        <div className="flex items-center justify-between gap-2">
+          {/* Gauche: Total Badges - Plus étroit */}
+          <div className="text-center w-20 sm:w-24">
+            <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{totalBadgesCount}</div>
+            <div className="text-[10px] sm:text-xs font-semibold text-white/80">Badges</div>
           </div>
-          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-8 text-xs sm:text-sm text-white/70 font-normal">
-            <div>
-              <span className="font-bold text-yellow-300 tabular-nums">{obtainedCount}</span>
-              <span className="ml-1">badge{obtainedCount > 1 ? "s" : ""} standard{obtainedCount > 1 ? "s" : ""}</span>
+          {/* Séparation verticale */}
+          <div className="w-px h-10 bg-white/30"></div>
+          {/* Droite: Standards et Challenges - Plus large */}
+          <div className="flex-1 flex justify-center gap-6 sm:gap-8 min-w-0">
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{obtainedCount}</div>
+              <div className="text-[10px] sm:text-xs font-medium text-white/80 whitespace-nowrap">standards</div>
             </div>
-            {challengeBadgesCount > 0 && (
-              <div>
-                <span className="font-bold text-yellow-300 tabular-nums">{challengeBadgesCount}</span>
-                <span className="ml-1">badge{challengeBadgesCount > 1 ? "s" : ""} de challenge{challengeBadgesCount > 1 ? "s" : ""}</span>
-              </div>
-            )}
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{challengeBadgesCount}</div>
+              <div className="text-[10px] sm:text-xs font-medium text-white/80 whitespace-nowrap">challenges</div>
+            </div>
           </div>
         </div>
-        {obtainedCount < ALL_BADGES.length && (
-          <div className="text-center">
-            <Link href="/match/new" className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-4 py-2 sm:px-6 sm:py-3 border-2 border-white/30 hover:bg-white/25 hover:translate-y-[-1px] transition-all cursor-pointer">
-              <BadgeIconDisplay icon="🎾" size={16} className="flex-shrink-0 sm:w-5 sm:h-5" />
-              <span className="text-xs sm:text-sm font-semibold text-white">
-                Jouez des matchs pour débloquer de nouveaux badges !
-              </span>
-            </Link>
-          </div>
-        )}
       </div>
 
       {/* Badges de challenges */}
@@ -280,7 +272,7 @@ export default async function BadgesContent() {
             {challengeBadges.map((badge) => (
               <div
                 key={badge.id}
-                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[140px] sm:h-[180px] items-center text-center"
+                className="rounded-xl bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[140px] sm:h-[180px] items-center text-center"
               >
                 <div className="mb-2 sm:mb-3 flex flex-col items-center gap-2 sm:gap-3 flex-1">
                   <div className="h-[32px] sm:h-[40px] flex items-center justify-center mb-1">
@@ -318,9 +310,9 @@ export default async function BadgesContent() {
         {badgesWithStatus.map((badge, idx) => (
           <div
             key={idx}
-            className={`rounded-xl border px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all flex flex-col h-[140px] sm:h-[180px] items-center text-center ${badge.obtained
-              ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
-              : "border-gray-200 bg-gray-50 opacity-75"
+            className={`rounded-xl px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all flex flex-col h-[140px] sm:h-[180px] items-center text-center ${badge.obtained
+              ? "bg-white shadow-md hover:scale-105 hover:shadow-xl"
+              : "bg-gray-50 opacity-75"
               }`}
           >
             <div className="flex-shrink-0 mb-2 sm:mb-3 h-[36px] sm:h-[48px] flex items-center justify-center">
@@ -342,7 +334,7 @@ export default async function BadgesContent() {
 
             <div className="flex-shrink-0 w-full h-[24px] sm:h-[32px] flex items-center justify-center mt-auto">
               {badge.obtained ? (
-                <div className="w-full rounded-lg bg-green-50 px-2 py-1 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-green-700 tabular-nums">
+                <div className="w-full rounded-lg bg-[#172554] px-2 py-1 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-white tabular-nums">
                   ✓ Débloqué
                 </div>
               ) : (
