@@ -225,7 +225,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
       {/* Carte du challenge */}
       <div className={`group relative rounded-2xl border-2 p-4 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
-        ? "border-emerald-500/80 bg-gradient-to-br from-emerald-500/10 to-green-500/5 shadow-emerald-500/20"
+        ? "border-padel-green bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 shadow-emerald-500/20"
         : isFailed
           ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
           : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-xl"
@@ -299,8 +299,8 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
           <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
             <div
               className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${isCompleted
-                ? "bg-gradient-to-r from-emerald-400 to-green-500 shadow-lg shadow-emerald-500/50"
-                : "bg-gradient-to-r from-blue-400 to-cyan-500 shadow-lg shadow-blue-500/30"
+                ? "bg-padel-green shadow-lg shadow-padel-green/50"
+                : "bg-padel-green shadow-lg shadow-padel-green/30"
                 }`}
               style={{ width: `${percentage}%` }}
             />
@@ -328,7 +328,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
             <button
               onClick={claimReward}
               disabled={claiming}
-              className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 px-4 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-yellow-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+              className="group relative w-full overflow-hidden rounded-xl bg-padel-green px-4 py-3 font-bold text-[#071554] shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-padel-green/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
             >
               {/* Effet de brillance animé */}
               <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />

@@ -6,9 +6,9 @@ const config: CapacitorConfig = {
   appName: 'PadelXP',
   webDir: 'public',
   server: {
-    url: 'http://localhost:3000',
-    cleartext: true,
-    allowNavigation: ['localhost', '127.0.0.1']
+    url: 'https://padelxp.eu',
+    cleartext: false,
+    allowNavigation: ['padelxp.eu', '*.padelxp.eu']
   },
   appendUserAgent: 'PadelXPCapacitor',
   ios: {
