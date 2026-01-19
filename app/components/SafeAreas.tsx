@@ -64,22 +64,14 @@ export default function SafeAreas() {
     // Forcer immédiatement
     forceSafeAreaColor();
 
-    // Boucle de rafraîchissement pendant la navigation/chargement
-    const interval = setInterval(forceSafeAreaColor, 500);
+    // Forcer immédiatement
+    forceSafeAreaColor();
 
-    // Observer les changements de classe ou de style sur le body
-    const observer = new MutationObserver(forceSafeAreaColor);
-
-    if (document.body) {
-      observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style'],
-      });
-    }
+    // Petit rappel au cas où le rendu prend du temps (hydratation)
+    const timer = setTimeout(forceSafeAreaColor, 500);
 
     return () => {
-      observer.disconnect();
-      clearInterval(interval);
+      clearTimeout(timer);
     };
   }, [pathname]);
 

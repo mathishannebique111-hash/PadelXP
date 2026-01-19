@@ -36,6 +36,7 @@ async function calculateStreak(supabase: any, userId: string): Promise<number> {
     .from("matches")
     .select("id, winner_team_id, team1_id, team2_id, created_at")
     .in("id", matchIds)
+    .eq("status", "confirmed")
     .order("created_at", { ascending: false });
 
   if (!ms || ms.length === 0) return 0;
@@ -173,7 +174,8 @@ export default async function BadgesContent() {
     const { data: ms } = await supabase
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id")
-      .in("id", validMatchIds);
+      .in("id", validMatchIds)
+      .eq("status", "confirmed");
 
     const byId: Record<string, number> = {};
     (ms || []).forEach((m: any) => {

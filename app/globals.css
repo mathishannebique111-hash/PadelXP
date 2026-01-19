@@ -87,6 +87,7 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+    /* ... rest of dark theme vars ... */
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
@@ -105,7 +106,29 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+}
 
+/* FIX CRITIQUE POUR SIMULATEUR IOS */
+/* Force l'interactivité sur tous les champs de saisie, boutons et select */
+/* Cela permet de contourner d'éventuels overlays invisibles */
+input,
+select,
+button,
+textarea,
+a,
+[role="button"] {
+  pointer-events: auto !important;
+  position: relative;
+  /* Nécessaire pour le z-index local */
+  /* color: white; removed to allow Tailwind text colors */
+  /* Force visibility */
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* S'assurer que le body ne bloque pas les clics */
+body {
+  pointer-events: auto;
 }
 
 /* Padding du contenu - UNIQUEMENT dans l'app iOS */

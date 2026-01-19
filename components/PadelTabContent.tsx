@@ -6,7 +6,7 @@ import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
 import LevelBadge from "@/components/padel-level/LevelBadge";
 import { PlayerPartnerCard } from "@/components/mobile/PlayerPartnerCard";
-import { Lightbulb, ArrowRight } from "lucide-react";
+import { Lightbulb, ArrowRight, Share2 } from "lucide-react";
 
 interface Props {
   profile: any;
@@ -172,13 +172,41 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
               <p className="text-xs text-gray-400 mb-3">
                 {profile.niveau_categorie}
               </p>
-              <button
-                type="button"
-                onClick={() => setShowWizard(true)}
-                className="w-full px-2 py-2 text-xs rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10 mt-1"
-              >
-                Refaire l&apos;évaluation
-              </button>
+              <div className="flex flex-col gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowWizard(true)}
+                  className="w-full px-2 py-2 text-xs rounded-lg border border-white/20 text-white/80 font-medium active:bg-white/10"
+                >
+                  Refaire l&apos;évaluation
+                </button>
+                {profile.username && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const username = profile.username.startsWith('@') ? profile.username.substring(1) : profile.username;
+                      const url = `${window.location.origin}/player/${username}`;
+
+                      if (navigator.share) {
+                        navigator.share({
+                          title: `Profil PadelXP de ${profile.display_name}`,
+                          text: `Découvre mon profil PadelXP et mes stats !`,
+                          url: url
+                        }).catch(console.error);
+                      } else {
+                        navigator.clipboard.writeText(url).then(() => {
+                          // Petit feedback toast idéalement, ici simple alert pour l'instant ou rien
+                          alert("Lien copié !");
+                        });
+                      }
+                    }}
+                    className="w-full px-2 py-2 text-xs rounded-lg bg-white/10 text-white font-medium hover:bg-white/20 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Share2 size={12} />
+                    Partager mon profil
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Progression + recommandations à droite */}

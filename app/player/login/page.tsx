@@ -37,15 +37,15 @@ export default async function PlayerLoginPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
 
         {/* Logo en haut de la page */}
-        <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20">
+        <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20 pointer-events-none">
           <img
             src="/images/Logo sans fond.png"
             alt="PadelXP Logo"
-            className="w-28 h-auto object-contain opacity-90 drop-shadow-2xl"
+            className="w-28 h-auto object-contain opacity-90 drop-shadow-2xl pointer-events-none"
           />
         </div>
 
-        <div className="relative z-10 w-full max-w-md rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md p-6 shadow-xl">
+        <div className="relative z-[50] w-full max-w-md rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md p-6 shadow-xl">
           <h1 className="text-2xl font-extrabold mb-6">Connexion joueur</h1>
           <EmailLoginForm />
           <div className="mt-4 text-center text-sm text-white/70">

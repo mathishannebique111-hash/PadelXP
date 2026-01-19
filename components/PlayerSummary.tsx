@@ -95,56 +95,11 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
     // Si on a un club_id, filtrer les matchs pour ne garder que ceux du même club
     // IMPORTANT: Utiliser la même logique que home/page.tsx pour garantir la cohérence
+    // Si on a un club_id, on NE filtre PLUS les matchs pour ne garder que ceux du même club
+    // Les matchs inter-clubs comptent désormais pour les statistiques personnelles
     let validMatchIds = matchIds;
-    if (playerClubId) {
-      // Récupérer tous les participants de ces matchs (users ET guests pour vérifier complètement)
-      const { data: allParticipants } = await supabase
-        .from("match_participants")
-        .select("match_id, user_id, player_type, guest_player_id")
-        .in("match_id", matchIds);
-
-      // Récupérer les profils pour vérifier les club_id - utiliser admin pour bypass RLS
-      const participantUserIds = [...new Set((allParticipants || []).filter((p: any) => p.player_type === "user" && p.user_id).map((p: any) => p.user_id))];
-
-      let validUserIds = new Set<string>();
-      if (participantUserIds.length > 0) {
-        const { data: profiles } = await supabaseAdmin
-          .from("profiles")
-          .select("id, club_id")
-          .in("id", participantUserIds)
-          .eq("club_id", playerClubId);
-
-        validUserIds = new Set((profiles || []).map((p: any) => p.id));
-      }
-
-      // Grouper les participants par match (comme dans home/page.tsx)
-      const participantsByMatch = new Map<string, any[]>();
-      (allParticipants || []).forEach((p: any) => {
-        if (!participantsByMatch.has(p.match_id)) {
-          participantsByMatch.set(p.match_id, []);
-        }
-        participantsByMatch.get(p.match_id)!.push(p);
-      });
-
-      // Filtrer les matchs : ne garder que ceux où TOUS les participants users appartiennent au même club
-      // (exactement comme dans home/page.tsx)
-      validMatchIds = matchIds.filter(matchId => {
-        const participants = participantsByMatch.get(matchId) || [];
-        const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
-
-        // Si aucun participant user, exclure le match (ne devrait pas arriver)
-        if (userParticipants.length === 0) {
-          return false;
-        }
-
-        // Vérifier que tous les participants users appartiennent au même club
-        const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
-        return allUsersInSameClub;
-      });
-
-      logger.info("[PlayerSummary] Valid matches after club filtering:", validMatchIds.length);
-      logger.info("[PlayerSummary] Valid match IDs after club filtering:", validMatchIds);
-    }
+    // Logique de filtrage "même club" supprimée (anciennement ici lines 99-147)
+    logger.info("[PlayerSummary] Cross-club stats enabled - using all match IDs:", validMatchIds.length);
 
     // Construire byId à partir de tous les matchs (allMs) pour avoir toutes les données nécessaires
     const byId: Record<string, { winner_team: number; score_team1: number; score_team2: number }> = {};
@@ -277,6 +232,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, created_at, played_at")
       .in("id", matchIds)
+      .eq("status", "confirmed")
       .order("created_at", { ascending: false });
 
     if (msStreakError) {
@@ -418,7 +374,8 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     const { data: msForBadges } = await supabase
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, created_at")
-      .in("id", validMatchIdsForBadges);
+      .in("id", validMatchIdsForBadges)
+      .eq("status", "confirmed");
 
     const byIdForBadges: Record<string, number> = {};
     (msForBadges || []).forEach((m: any) => {

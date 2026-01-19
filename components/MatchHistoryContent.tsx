@@ -4,7 +4,7 @@ import Link from "next/link";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import PendingMatchesSection from "@/components/PendingMatchesSection";
 import { logger } from '@/lib/logger';
-import { Trophy, Check, X } from "lucide-react";
+import { Trophy, Check, X, MapPin } from "lucide-react";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -114,7 +114,7 @@ export default async function MatchHistoryContent() {
   // NOUVEAU: Filtrer uniquement les matchs confirmés
   const { data: allMatches, error: matchesError } = await supabase
     .from("matches")
-    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at, decided_by_tiebreak, status")
+    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at, played_at, decided_by_tiebreak, status, location_club_id, is_registered_club")
     .in("id", matchIds)
     .or("status.eq.confirmed,status.is.null") // Matchs confirmés OU anciens matchs sans statut
     .order("created_at", { ascending: false });
@@ -136,16 +136,9 @@ export default async function MatchHistoryContent() {
     logger.error("Error fetching matches:", matchesError);
   }
 
-  if (!transformedMatches || transformedMatches.length === 0) {
-    return (
-      <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
-        <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
-          Enregistrer un match
-        </Link>
-      </div>
-    );
-  }
+  // NOTE: On ne retourne pas "Aucun match" ici car on veut afficher la section PendingMatchesSection
+  // même si l'historique est vide.
+
 
   // Récupérer les détails de tous les participants pour chaque match
   logger.info("[MatchHistory] Fetching participants for match IDs:", matchIds);
@@ -178,9 +171,11 @@ export default async function MatchHistoryContent() {
         .select("id, display_name")
         .in("id", userIds);
 
-      if (userClubId) {
-        profilesQuery = profilesQuery.eq("club_id", userClubId);
-      }
+      // CORRECTION: Ne PAS filtrer par club ici. On veut charger les noms de TOUS les participants
+      // même s'ils sont dans un autre club.
+      // if (userClubId) {
+      //   profilesQuery = profilesQuery.eq("club_id", userClubId);
+      // }
 
       const { data: profiles, error: profilesError } = await profilesQuery;
 
@@ -211,16 +206,20 @@ export default async function MatchHistoryContent() {
 
     const validUserIds = new Set(profilesMap.keys());
 
-    const filteredParticipants = userClubId
-      ? allParticipants.filter((p: any) => {
-        if (p.player_type === "user" && p.user_id) {
-          return validUserIds.has(p.user_id);
-        }
-        return p.player_type === "guest";
-      })
-      : allParticipants;
+    // CORRECTION: On commente le filtrage par club. On veut afficher tout le monde.
+    // const filteredParticipants = userClubId
+    //   ? allParticipants.filter((p: any) => {
+    //     if (p.player_type === "user" && p.user_id) {
+    //       return validUserIds.has(p.user_id);
+    //     }
+    //     return p.player_type === "guest";
+    //   })
+    //   : allParticipants;
 
-    logger.info("[MatchHistory] Participants after club filtering:", filteredParticipants.length);
+    // Pour l'instant on garde tous les participants
+    const filteredParticipants = allParticipants;
+
+    logger.info("[MatchHistory] Participants after filtering:", filteredParticipants.length);
 
     const participantsByMatchTemp = filteredParticipants.reduce((acc: Record<string, any[]>, p: any) => {
       if (!acc[p.match_id]) {
@@ -232,14 +231,12 @@ export default async function MatchHistoryContent() {
 
     const validMatchIds = new Set<string>();
     Object.entries(participantsByMatchTemp).forEach(([matchId, participants]: [string, any[]]) => {
-      const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
-      const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
+      // CORRECTION: Plus besoin de vérifier que tout le monde est dans le même club
+      // const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
+      // const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
 
-      if (allUsersInSameClub) {
-        validMatchIds.add(matchId);
-      } else {
-        logger.info(`[MatchHistory] Filtering out match ${matchId} - not all users in same club`);
-      }
+      // On accepte tous les matchs
+      validMatchIds.add(matchId);
     });
 
     logger.info("[MatchHistory] Valid matches (all users in same club):", validMatchIds.size);
@@ -289,6 +286,28 @@ export default async function MatchHistoryContent() {
   }
 
   const finalMatches = transformedMatches.filter((match: any) => validMatchIdsForDisplay.has(match.id));
+
+  // Récupérer les informations de lieu pour tous les matchs
+  const clubIds = [...new Set(finalMatches.filter((m: any) => m.location_club_id && m.is_registered_club).map((m: any) => m.location_club_id))];
+  const unregClubIds = [...new Set(finalMatches.filter((m: any) => m.location_club_id && !m.is_registered_club).map((m: any) => m.location_club_id))];
+
+  const locationNamesMap = new Map<string, string>();
+
+  if (clubIds.length > 0) {
+    const { data: registeredClubs } = await supabaseAdmin
+      .from("clubs")
+      .select("id, name, city")
+      .in("id", clubIds);
+    (registeredClubs || []).forEach(c => locationNamesMap.set(c.id, `${c.name} (${c.city})`));
+  }
+
+  if (unregClubIds.length > 0) {
+    const { data: unregisteredClubs } = await supabaseAdmin
+      .from("unregistered_clubs")
+      .select("id, name, city")
+      .in("id", unregClubIds);
+    (unregisteredClubs || []).forEach(c => locationNamesMap.set(c.id, `${c.name} (${c.city})`));
+  }
 
   logger.info("[MatchHistory] Final matches after filtering:", finalMatches.length);
 
@@ -343,6 +362,12 @@ export default async function MatchHistoryContent() {
                     <div className={`text-xs font-normal text-[#071554]/70`}>
                       {dateStr} à {timeStr}
                     </div>
+                    {match.location_club_id && (
+                      <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#071554]/60">
+                        <MapPin className="h-3 w-3 opacity-70" />
+                        <span className="truncate max-w-[150px]">{locationNamesMap.get(match.location_club_id) || "Lieu inconnu"}</span>
+                      </div>
+                    )}
                     {match.decided_by_tiebreak && (
                       <div className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${won
                         ? "border-amber-300 bg-amber-50 text-amber-700"

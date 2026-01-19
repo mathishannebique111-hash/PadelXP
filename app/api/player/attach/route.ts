@@ -5,6 +5,7 @@ import { z } from "zod";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
 import { processReferralCode } from "@/lib/utils/referral-utils";
 import { logger } from "@/lib/logger";
+import slugify from "slugify";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -45,7 +46,7 @@ const playerAttachSchema = z.object({
 export async function POST(req: Request) {
   try {
     if (!SERVICE_ROLE_KEY) {
-      logger.error({}, "[player/attach] Missing SUPABASE_SERVICE_ROLE_KEY env var");
+      logger.error("[player/attach] Missing SUPABASE_SERVICE_ROLE_KEY env var", {});
       return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
       const token = authHeader.slice(7);
       const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.getUser(token);
       if (tokenError) {
-        logger.error({ error: tokenError }, "[player/attach] Token lookup error");
+        logger.error("[player/attach] Token lookup error", { error: tokenError });
       } else {
         user = tokenData?.user ?? null;
       }
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
       .single();
 
     if (clubError || !club) {
-      logger.error({ slug, error: clubError }, "[player/attach] Club lookup error");
+      logger.error("[player/attach] Club lookup error", { slug, error: clubError });
       return NextResponse.json({ error: "Club introuvable" }, { status: 404 });
     }
 
@@ -113,7 +114,7 @@ export async function POST(req: Request) {
 
     const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
-      .select("id, display_name, first_name, last_name, email")
+      .select("id, display_name, first_name, last_name, email, username, referral_code")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -121,13 +122,13 @@ export async function POST(req: Request) {
     const rawDisplayName = (displayName || existingProfile?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Joueur").trim();
     const rawFirst = (firstName || existingProfile?.first_name || user.user_metadata?.first_name || rawDisplayName.split(' ')[0] || "").trim();
     const rawLast = (lastName || existingProfile?.last_name || user.user_metadata?.last_name || rawDisplayName.split(' ').slice(1).join(' ') || "").trim();
-    
+
     // Capitaliser automatiquement le prénom et le nom
     const { firstName: normalizedFirst, lastName: normalizedLast } = capitalizeFullName(rawFirst, rawLast);
     const normalizedEmail = email || existingProfile?.email || user.email || null;
-    
+
     // Reconstruire le display_name avec les noms capitalisés
-    const finalDisplayName = normalizedFirst && normalizedLast 
+    const finalDisplayName = normalizedFirst && normalizedLast
       ? `${normalizedFirst} ${normalizedLast}`.trim()
       : normalizedFirst || normalizedLast || rawDisplayName;
 
@@ -144,18 +145,42 @@ export async function POST(req: Request) {
       club_slug: club.slug,
       // Le code de parrainage sera généré automatiquement par le trigger SQL si null
       referral_code: existingProfile?.referral_code || null,
+      // Username : conserver s'il existe, sinon on le générera
+      username: existingProfile?.username || null,
     };
+
+    // Génération du username si nécessaire
+    if (!upsertPayload.username) {
+      const cleanFirst = slugify(normalizedFirst || "Joueur", { lower: false, strict: true });
+      const cleanLastInitial = (normalizedLast || "").charAt(0).toUpperCase();
+      let baseUsername = `@${cleanFirst}${cleanLastInitial}`;
+
+      // Vérifier si le username existe déjà
+      const { data: existingUser } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("username", baseUsername)
+        .maybeSingle();
+
+      if (existingUser && existingUser.id !== user.id) {
+        // En cas de collision, ajouter un suffixe aléatoire
+        const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        baseUsername = `${baseUsername}_${randomSuffix}`;
+      }
+
+      upsertPayload.username = baseUsername;
+    }
 
     let upsertedProfile = null;
     let upsertError = null;
-    
+
     // Première tentative d'upsert
     const upsertResult = await supabaseAdmin
       .from("profiles")
       .upsert(upsertPayload, { onConflict: "id" })
       .select("id, club_id, club_slug")
       .single();
-    
+
     upsertedProfile = upsertResult.data;
     upsertError = upsertResult.error;
 
@@ -171,23 +196,38 @@ export async function POST(req: Request) {
         .upsert(retryPayload, { onConflict: "id" })
         .select("id, club_id, club_slug")
         .single();
-      
+
       if (retryResult.error || !retryResult.data) {
         logger.error({ userId: user.id.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: retryResult.error }, "[player/attach] Retry upsert error");
-        return NextResponse.json({ 
-          error: "Erreur lors de la création du profil. Veuillez réessayer ou contacter le support." 
+        return NextResponse.json({
+          error: "Erreur lors de la création du profil. Veuillez réessayer ou contacter le support."
         }, { status: 500 });
       }
-      
+
       upsertedProfile = retryResult.data;
       upsertError = null;
     }
 
     if (upsertError || !upsertedProfile) {
-      logger.error({ userId: user.id.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: upsertError }, "[player/attach] Upsert error");
-      return NextResponse.json({ 
-        error: upsertError?.message || "Impossible d'attacher le club. Veuillez réessayer ou contacter le support." 
+      logger.error("[player/attach] Upsert error", { userId: user.id.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: upsertError });
+      return NextResponse.json({
+        error: upsertError?.message || "Impossible d'attacher le club. Veuillez réessayer ou contacter le support."
       }, { status: 400 });
+    }
+
+    // 2. CRÉER / METTRE À JOUR L'ENTRÉE DANS user_clubs
+    const { error: userClubError } = await supabaseAdmin
+      .from("user_clubs")
+      .upsert({
+        user_id: user.id,
+        club_id: club.id,
+        role: 'principal', // Par défaut lors de l'inscription/attachement via ce flow
+        club_points: 0, // Initialement 0 pour un nouveau club
+      }, { onConflict: 'user_id, club_id' });
+
+    if (userClubError) {
+      logger.error("[player/attach] user_clubs upsert error", { userId: user.id, clubId: club.id, error: userClubError });
+      // On ne bloque pas si ça échoue, mais on loggue
     }
 
     // Traiter le code de parrainage si fourni
@@ -196,23 +236,23 @@ export async function POST(req: Request) {
       try {
         referralResult = await processReferralCode(referralCode.trim(), user.id);
         if (!referralResult.success) {
-          logger.warn({ userId: user.id.substring(0, 8) + "…", referralCode: referralCode.substring(0, 5) + "…", error: referralResult.error }, "[player/attach] Referral code processing failed");
+          logger.warn("[player/attach] Referral code processing failed", { userId: user.id.substring(0, 8) + "…", referralCode: referralCode.substring(0, 5) + "…", error: referralResult.error });
           // Ne pas échouer l'inscription si le code de parrainage échoue
           // On retourne quand même un succès mais avec un avertissement
         }
       } catch (referralError) {
-        logger.error({ userId: user.id.substring(0, 8) + "…", referralCode: referralCode.substring(0, 5) + "…", error: referralError }, "[player/attach] Referral code processing error");
+        logger.error("[player/attach] Referral code processing error", { userId: user.id.substring(0, 8) + "…", referralCode: referralCode.substring(0, 5) + "…", error: referralError });
         // Ne pas échouer l'inscription si le code de parrainage échoue
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       ok: true,
       referralProcessed: referralResult?.success || false,
       referralError: referralResult?.error || null,
     });
   } catch (e) {
-    logger.error({ error: e instanceof Error ? e.message : String(e) }, "[player/attach] Unexpected error");
+    logger.error("[player/attach] Unexpected error", { error: e instanceof Error ? e.message : String(e) });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

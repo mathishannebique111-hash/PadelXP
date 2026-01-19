@@ -10,7 +10,8 @@ import { consumeBoostForMatch, canPlayerUseBoost, getPlayerBoostCreditsAvailable
 import { logger } from "@/lib/logger"; // ✅ AJOUTÉ
 import { updateEngagementMetrics, checkAutoExtensionEligibility, grantAutoExtension } from "@/lib/trial-hybrid";
 import { cacheDelete, cacheSet } from "@/lib/cache/redis";
-
+import { calculateSimilarity, normalizeString } from "@/lib/utils/string-utils";
+import { sendGuestMatchInvitationEmail } from "@/lib/email"; // ✅ AJOUT
 
 const GUEST_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -54,6 +55,10 @@ const matchSubmitSchema = z.object({
     })
     .optional(),
   useBoost: z.boolean().optional(),
+  locationClubId: z.string().optional(),
+  isUnregisteredClub: z.boolean().default(false),
+  unregisteredClubName: z.string().optional(),
+  unregisteredClubCity: z.string().optional(),
 });
 
 
@@ -97,7 +102,7 @@ export async function POST(req: Request) {
     }
 
 
-    const { players, winner, sets, tieBreak, useBoost } = parsedBody.data;
+    const { players, winner, sets, tieBreak, useBoost, locationClubId, isUnregisteredClub, unregisteredClubName, unregisteredClubCity } = parsedBody.data;
 
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -193,37 +198,15 @@ export async function POST(req: Request) {
       }
 
 
+
       if (!userClubId) {
         logger.error("User without club trying to create match"); // ✅ REMPLACÉ
         return NextResponse.json({ error: "Vous devez être rattaché à un club pour enregistrer un match" }, { status: 403 });
       }
 
-
-      const { data: playerProfiles, error: profilesError } = await supabaseAdmin
-        .from("profiles")
-        .select("id, club_id")
-        .in("id", userPlayers);
-
-
-      if (profilesError || !playerProfiles || playerProfiles.length !== userPlayers.length) {
-        logger.error("Error fetching player profiles", {
-          expected: userPlayers.length,
-          received: playerProfiles?.length,
-          error: profilesError?.message
-        }); // ✅ REMPLACÉ
-        return NextResponse.json({ error: "Impossible de vérifier les clubs des joueurs" }, { status: 500 });
-      }
-
-
-      const allSameClub = playerProfiles.every((profile: any) => profile.club_id === userClubId);
-
-
-      if (!allSameClub) {
-        logger.error("Players from different clubs detected"); // ✅ REMPLACÉ
-        return NextResponse.json({
-          error: "Tous les joueurs doivent appartenir au même club."
-        }, { status: 403 });
-      }
+      // LA VALIDATION "MÊME CLUB" A ÉTÉ SUPPRIMÉE POUR PERMETTRE LES MATCHS INTER-CLUBS
+      // Les joueurs peuvent désormais provenir de différents clubs.
+      // Le classement sera géré individuellement pour chaque joueur dans son club respectif.
     }
 
 
@@ -383,6 +366,102 @@ export async function POST(req: Request) {
       }
     }
 
+    // GESTION DU LIEU DU MATCH (Club)
+    let finalLocationClubId: string | null = null;
+    let isRegisteredClub = true;
+
+    if (isUnregisteredClub) {
+      isRegisteredClub = false; // Par défaut, on assume non enregistré sauf si on trouve un match
+
+      // Créer ou récupérer le club non enregistré
+      if (unregisteredClubName && unregisteredClubCity) {
+        const normalizedInputName = normalizeString(unregisteredClubName);
+        const normalizedInputCity = normalizeString(unregisteredClubCity);
+
+        logger.info("[matches/submit] Processing club location", {
+          name: unregisteredClubName,
+          city: unregisteredClubCity
+        });
+
+        // 1. Récupérer TOUS les clubs (registered & unregistered) dans cette ville (recherche large)
+        // On utilise 'ilike' sur la ville pour filtrer grossièrement d'abord
+        const { data: registeredClubsInCity } = await supabaseAdmin
+          .from("clubs")
+          .select("id, name, city")
+          .ilike("city", unregisteredClubCity.trim());
+
+        const { data: unregisteredClubsInCity } = await supabaseAdmin
+          .from("unregistered_clubs")
+          .select("id, name, city")
+          .ilike("city", unregisteredClubCity.trim());
+
+        // 2. Recherche floue sur le NOM parmi les résultats de la ville
+        let bestMatch: { id: string; type: 'registered' | 'unregistered'; score: number; name: string } | null = null;
+        const SIMILARITY_THRESHOLD = 0.8; // 80% de similarité requis
+
+        // Vérifier les clubs enregistrés
+        if (registeredClubsInCity) {
+          for (const club of registeredClubsInCity) {
+            const similarity = calculateSimilarity(normalizedInputName, normalizeString(club.name));
+            if (similarity >= SIMILARITY_THRESHOLD) {
+              if (!bestMatch || similarity > bestMatch.score) {
+                bestMatch = { id: club.id, type: 'registered', score: similarity, name: club.name };
+              }
+            }
+          }
+        }
+
+        // Vérifier les clubs non enregistrés existants
+        if (unregisteredClubsInCity) {
+          for (const club of unregisteredClubsInCity) {
+            const similarity = calculateSimilarity(normalizedInputName, normalizeString(club.name));
+            if (similarity >= SIMILARITY_THRESHOLD) {
+              if (!bestMatch || similarity > bestMatch.score) {
+                bestMatch = { id: club.id, type: 'unregistered', score: similarity, name: club.name };
+              }
+            }
+          }
+        }
+
+        if (bestMatch) {
+          logger.info("[matches/submit] Fuzzy match found", {
+            input: unregisteredClubName,
+            match: bestMatch.name,
+            score: bestMatch.score,
+            type: bestMatch.type
+          });
+          finalLocationClubId = bestMatch.id;
+          isRegisteredClub = bestMatch.type === 'registered';
+        } else {
+          // 3. Aucun match trouvé -> Créer nouveau club user-defined
+          logger.info("[matches/submit] No match found, creating new unregistered club");
+
+          const { data: newUnregistered, error: createUnregError } = await supabaseAdmin
+            .from("unregistered_clubs")
+            .insert({
+              name: unregisteredClubName.trim(),
+              city: unregisteredClubCity.trim(),
+              created_by_user_id: user.id,
+              status: 'pending'
+            })
+            .select("id")
+            .single();
+
+          if (createUnregError) {
+            logger.error("[matches/submit] Error creating unregistered club", { error: createUnregError.message });
+            // Ne pas bloquer, on continuera sans location_club_id
+          } else {
+            finalLocationClubId = newUnregistered.id;
+            isRegisteredClub = false;
+          }
+        }
+      }
+    } else if (locationClubId) {
+      // Club enregistré sélectionné explicitement
+      finalLocationClubId = locationClubId;
+      isRegisteredClub = true;
+    }
+
 
     // Préparer les données d'insertion selon le schéma Supabase
     const matchData = {
@@ -393,7 +472,9 @@ export async function POST(req: Request) {
       score_team2,
       played_at: new Date().toISOString(),
       decided_by_tiebreak,
-      status: 'pending' // Match en attente de confirmation
+      status: 'pending', // Match en attente de confirmation
+      location_club_id: finalLocationClubId,
+      is_registered_club: isRegisteredClub
     };
 
     logger.debug("Match data prepared for insertion"); // ✅ REMPLACÉ
@@ -503,6 +584,45 @@ export async function POST(req: Request) {
           userId: otherUserId,
           error: (notifError as Error).message
         });
+      }
+    }
+
+    // 4. Envoyer des emails aux joueurs invités (guests) s'ils ont une adresse email
+    const guestParticipants = participants.filter(p => p.player_type === 'guest' && p.guest_player_id);
+
+    if (guestParticipants.length > 0) {
+      const guestIds = guestParticipants.map(p => p.guest_player_id!);
+      logger.info("Checking for guests with email", { count: guestIds.length });
+
+      const { data: guests, error: guestsError } = await supabaseAdmin
+        .from('guest_players')
+        .select('id, first_name, last_name, email')
+        .in('id', guestIds);
+
+      if (guestsError) {
+        logger.error("Error fetching guest details", { error: guestsError.message });
+      } else if (guests) {
+        // Construire le score lisible (ex: "6-3 6-4")
+        const scoreString = sets
+          .map(s => `${s.team1Score}-${s.team2Score}`)
+          .join(" ");
+
+        for (const guest of guests) {
+          if (guest.email) {
+            const guestName = `${guest.first_name} ${guest.last_name}`.trim();
+            logger.info("Sending email to guest", { guestId: guest.id, email: guest.email.substring(0, 5) + "…" });
+
+            // Envoyer l'email en arrière-plan (ne pas await pour ne pas ralentir la réponse)
+            sendGuestMatchInvitationEmail(
+              guest.email,
+              guestName,
+              creatorName,
+              scoreString
+            ).catch(err => {
+              logger.error("Failed to send guest email", { error: err });
+            });
+          }
+        }
       }
     }
     // ================================================

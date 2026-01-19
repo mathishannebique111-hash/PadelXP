@@ -22,10 +22,10 @@ export default function SplashOverlay({ isApp }: SplashOverlayProps) {
 
         window.addEventListener('hide-splash-overlay', handleHide);
 
-        // Sécurité : forcer la disparition après 5 secondes si pas d'événement
+        // Sécurité : forcer la disparition après 2 secondes si pas d'événement
         const fallbackTimer = setTimeout(() => {
             if (visible) handleHide();
-        }, 5000);
+        }, 2000);
 
         return () => {
             window.removeEventListener('hide-splash-overlay', handleHide);

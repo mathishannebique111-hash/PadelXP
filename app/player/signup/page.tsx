@@ -31,15 +31,15 @@ export default async function PlayerSignupPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
 
         {/* Logo en haut de la page */}
-        <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20">
+        <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20 pointer-events-none">
           <img
             src="/images/Logo sans fond.png"
             alt="PadelXP Logo"
-            className="w-28 h-auto object-contain opacity-90 drop-shadow-2xl"
+            className="w-28 h-auto object-contain opacity-90 drop-shadow-2xl pointer-events-none"
           />
         </div>
 
-        <div className="relative z-10 w-full flex flex-col items-center justify-center flex-1">
+        <div className="relative z-[50] w-full flex flex-col items-center justify-center flex-1">
           <ClientLogin />
         </div>
       </div>

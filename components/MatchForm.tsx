@@ -9,7 +9,7 @@ import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';
-import { Trophy, Zap } from "lucide-react";
+import { Trophy, Zap, Mail, Globe } from "lucide-react";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -22,6 +22,10 @@ const schema = z.object({
     team1Score: z.string(),
     team2Score: z.string(),
   }).optional(),
+  locationClubId: z.string().optional(),
+  isUnregisteredClub: z.boolean().default(false),
+  unregisteredClubName: z.string().optional(),
+  unregisteredClubCity: z.string().optional(),
 });
 
 export default function MatchForm({
@@ -52,6 +56,15 @@ export default function MatchForm({
     opp1: null,
     opp2: null,
   });
+
+  // Location state
+  const [clubs, setClubs] = useState<Array<{ id: string; name: string; city: string }>>([]);
+  const [selectedClubId, setSelectedClubId] = useState<string>("");
+  const [selfClubName, setSelfClubName] = useState<string | null>(null);
+  const [isUnregisteredClub, setIsUnregisteredClub] = useState(false);
+  const [unregisteredClubName, setUnregisteredClubName] = useState("");
+  const [unregisteredClubCity, setUnregisteredClubCity] = useState("");
+  const [loadingClubs, setLoadingClubs] = useState(true);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -274,25 +287,24 @@ export default function MatchForm({
             };
 
             logger.info('[MatchForm] ===== BOOST STATS PARSED =====');
-            logger.info('[MatchForm] creditsAvailable:', creditsAvailable, 'type:', typeof creditsAvailable);
-            logger.info('[MatchForm] Number(creditsAvailable):', Number(creditsAvailable));
-            logger.info('[MatchForm] creditsAvailable >= 1?', creditsAvailable >= 1);
-            logger.info('[MatchForm] Checkbox will be:', creditsAvailable >= 1 ? '✅ ENABLED' : '❌ DISABLED');
-            logger.info('[MatchForm] Full stats:', stats);
+            logger.info(`[MatchForm] creditsAvailable: ${creditsAvailable} type: ${typeof creditsAvailable}`);
+            logger.info(`[MatchForm] Number(creditsAvailable): ${Number(creditsAvailable)}`);
+            logger.info(`[MatchForm] creditsAvailable >= 1? ${creditsAvailable >= 1}`);
+            logger.info(`[MatchForm] Checkbox will be: ${creditsAvailable >= 1 ? '✅ ENABLED' : '❌ DISABLED'}`);
+            logger.debug('[MatchForm] Full stats', { stats });
             logger.info('[MatchForm] =============================');
 
             if (!cancelled) {
               setBoostStats(stats);
-              // Forcer un re-render en mettant à jour l'état
-              logger.info('[MatchForm] State updated with stats:', stats);
+              logger.debug('[MatchForm] State updated with stats', { stats });
             }
           } else if (!cancelled) {
-            logger.error('[MatchForm] ❌ Invalid boost stats data:', data);
+            logger.error('[MatchForm] ❌ Invalid boost stats data', { data });
             setBoostStats(null);
           }
         } else if (!cancelled) {
           const errorText = await res.text();
-          logger.error('[MatchForm] Failed to load boost stats:', res.status, res.statusText, errorText);
+          logger.error(`[MatchForm] Failed to load boost stats: ${res.status} ${res.statusText}`, { error: errorText });
           setBoostStats(null);
         }
       } catch (error) {
@@ -323,6 +335,105 @@ export default function MatchForm({
       clearInterval(interval);
     };
   }, [supabase]);
+
+  // Fetch user's clubs
+  useEffect(() => {
+    async function fetchAllClubs() {
+      try {
+        setLoadingClubs(true);
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Récupérer TOUS les clubs enregistrés
+        const { data: allClubs, error: clubsError } = await supabase
+          .from('clubs')
+          .select('id, name, city')
+          .order('name');
+
+        if (clubsError) {
+          logger.error('Error fetching all clubs:', clubsError);
+        }
+
+        if (allClubs) {
+          setClubs(allClubs);
+
+          // Tenter de pré-sélectionner le club de l'utilisateur
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('club_id, clubs(name)')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            if (profile?.club_id) {
+              if (allClubs.some(c => c.id === profile.club_id)) {
+                setSelectedClubId(profile.club_id);
+              }
+              setSelfClubName((profile.clubs as any)?.name || null);
+            } else if (allClubs.length > 0) {
+              setSelectedClubId(allClubs[0].id);
+            }
+          } else if (allClubs.length > 0) {
+            setSelectedClubId(allClubs[0].id);
+          }
+        }
+      } catch (err) {
+        logger.error('Error in fetchAllClubs:', err);
+      } finally {
+        setLoadingClubs(false);
+      }
+    }
+
+    fetchAllClubs();
+  }, [supabase]);
+
+  // Gérer la pré-sélection d'un adversaire via URL (ex: "Défier ce joueur")
+  useEffect(() => {
+    const opponentId = searchParams.get('opponentId');
+    if (opponentId) {
+      const fetchOpponent = async () => {
+        try {
+          // Utiliser l'API de validation pour récupérer les détails complets du joueur (club, etc.)
+          // On triche un peu en utilisant validate-exact avec un ID simulé ou via une autre API
+          // Mieux : utiliser l'API search ou batch profile
+
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, display_name, club_id, email, clubs(name)')
+            .eq('id', opponentId)
+            .single();
+
+          if (data && !error) {
+            const first_name = data.first_name || data.display_name.split(' ')[0] || '';
+            const last_name = data.last_name || data.display_name.split(' ').slice(1).join(' ') || '';
+            const displayName = data.display_name || `${first_name} ${last_name}`.trim();
+
+            const player: PlayerSearchResult = {
+              id: data.id,
+              first_name,
+              last_name,
+              display_name: displayName,
+              type: 'user',
+              email: data.email || null,
+              club_name: (data.clubs as any)?.name || null,
+              // is_external calculé dynamiquement
+            };
+
+            // Mettre à jour l'état
+            setSelectedPlayers(prev => ({
+              ...prev,
+              opp1: player
+            }));
+            setOpp1Name(displayName);
+            logger.info(`[MatchForm] Opponent pre-selected from URL: ${displayName}`);
+          }
+        } catch (e) {
+          logger.error("[MatchForm] Error fetching pre-selected opponent", e);
+        }
+      };
+
+      fetchOpponent();
+    }
+  }, [searchParams, supabase]);
 
   const addSet = () => {
     const nextSetNumber = sets.length + 1;
@@ -473,11 +584,11 @@ export default function MatchForm({
 
     // Stocker le joueur validé dans selectedPlayers (sans modifier le champ de saisie)
     if (fieldName === 'partnerName') {
-      setSelectedPlayers((prev) => ({ ...prev, partner: validation.player }));
+      setSelectedPlayers((prev) => ({ ...prev, partner: (validation.player ?? null) as PlayerSearchResult | null }));
     } else if (fieldName === 'opp1Name') {
-      setSelectedPlayers((prev) => ({ ...prev, opp1: validation.player }));
+      setSelectedPlayers((prev) => ({ ...prev, opp1: (validation.player ?? null) as PlayerSearchResult | null }));
     } else if (fieldName === 'opp2Name') {
-      setSelectedPlayers((prev) => ({ ...prev, opp2: validation.player }));
+      setSelectedPlayers((prev) => ({ ...prev, opp2: (validation.player ?? null) as PlayerSearchResult | null }));
     }
   };
 
@@ -497,7 +608,7 @@ export default function MatchForm({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
-        logger.error("Validate exact API error:", response.status, response.statusText, errorData);
+        logger.error(`Validate exact API error: ${response.status} ${response.statusText}`, { error: errorData });
 
         if (response.status === 401) {
           return { valid: false, error: "Erreur d'authentification. Veuillez vous reconnecter." };
@@ -545,6 +656,9 @@ export default function MatchForm({
           last_name: last_name.trim(),
           type,
           display_name: type === "guest" ? `${fullName} 👤` : fullName,
+          email: player.email || null,
+          club_name: player.club_name || null,
+          is_external: player.type === "user" && player.club_id !== undefined ? true : undefined, // On verra plus tard si on a besoin de is_external précis
         },
       };
     } catch (error) {
@@ -584,7 +698,7 @@ export default function MatchForm({
         });
 
         if (!profileRes.ok) {
-          logger.error("❌ Error fetching self profile from API:", profileRes.status, profileRes.statusText);
+          logger.error(`❌ Error fetching self profile from API: ${profileRes.status} ${profileRes.statusText}`);
           if (profileRes.status === 404) {
             setErrorMessage("Votre profil n'a pas été trouvé. Veuillez contacter le support.");
           } else {
@@ -794,6 +908,26 @@ export default function MatchForm({
         return;
       }
 
+      // Validation de la localisation
+      if (!isUnregisteredClub && !selectedClubId) {
+        setErrors((prev) => ({ ...prev, location: "Veuillez sélectionner un club" }));
+        setLoading(false);
+        return;
+      }
+
+      if (isUnregisteredClub) {
+        if (!unregisteredClubName.trim()) {
+          setErrors((prev) => ({ ...prev, unregisteredClubName: "Le nom du club est requis" }));
+          setLoading(false);
+          return;
+        }
+        if (!unregisteredClubCity.trim()) {
+          setErrors((prev) => ({ ...prev, unregisteredClubCity: "La ville est requise" }));
+          setLoading(false);
+          return;
+        }
+      }
+
       logger.info("🔧 Preparing players data...");
 
       // Préparer les données pour l'API avec le nouveau format
@@ -963,10 +1097,14 @@ export default function MatchForm({
         sets,
         tieBreak: hasTieBreak && tieBreak.team1Score && tieBreak.team2Score ? tieBreak : undefined,
         useBoost: useBoost, // Envoyer la valeur de la case, la vérification se fera côté serveur
+        locationClubId: selectedClubId,
+        isUnregisteredClub,
+        unregisteredClubName,
+        unregisteredClubCity,
       };
 
-      logger.info("🔍 [MatchForm] useBoost value before sending:", useBoost, "type:", typeof useBoost);
-      logger.info("📤 Données envoyées à l'API:", JSON.stringify(payload, null, 2));
+      logger.info(`🔍 [MatchForm] useBoost value before sending: ${useBoost} type: ${typeof useBoost}`);
+      logger.info("📤 Données envoyées à l'API [Payload omit log for brevity]");
       logger.info("📤 Structure détaillée:", {
         playersCount: players.length,
         players: players.map(p => ({
@@ -991,7 +1129,7 @@ export default function MatchForm({
         body: JSON.stringify(payload),
       });
 
-      logger.info("📥 Response status:", res.status, res.statusText);
+      logger.info(`📥 Response status: ${res.status} ${res.statusText}`);
 
       if (res.ok) {
         const data = await res.json();
@@ -1128,8 +1266,8 @@ export default function MatchForm({
         try {
           const errorData = await res.json();
           logger.info("🔍 Error data complet:", JSON.stringify(errorData, null, 2));
-          logger.error("❌ Match submission failed:", res.status, errorData);
-          errorMsg = errorData?.error || errorData?.message || `Erreur ${res.status}: ${res.statusText}`;
+          logger.error(`❌ Match submission failed: ${res.status}`, { error: errorData });
+          errorMsg = errorData?.error || errorData?.message || `Erreur ${res.status}: ${res.statusText || 'Unknown'}`;
         } catch (parseError) {
           logger.error("❌ Failed to parse error response:", parseError);
           errorMsg = `Erreur ${res.status}: ${res.statusText || "Erreur serveur"}`;
@@ -1277,11 +1415,108 @@ export default function MatchForm({
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
+          <div className="mb-3 text-base font-semibold text-white">Lieu du match</div>
+          <div className="space-y-4">
+            <div className="relative">
+              <select
+                value={isUnregisteredClub ? "other" : selectedClubId}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "other") {
+                    setIsUnregisteredClub(true);
+                    setSelectedClubId("");
+                  } else {
+                    setIsUnregisteredClub(false);
+                    setSelectedClubId(val);
+                  }
+                  // Clear error
+                  if (errors.location) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.location;
+                      return newErrors;
+                    });
+                  }
+                }}
+                className="w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-10 text-sm text-white transition-all focus:border-padel-green focus:ring-1 focus:ring-padel-green outline-none"
+                disabled={loadingClubs}
+              >
+                {!loadingClubs && clubs.length === 0 && <option value="" disabled>Aucun club rejoint</option>}
+                {clubs.map((club) => (
+                  <option key={club.id} value={club.id} className="text-gray-900">
+                    {club.name} ({club.city})
+                  </option>
+                ))}
+                <option value="other" className="text-gray-900 font-medium text-padel-green">
+                  + Autre club (non listé)
+                </option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/50">
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
+              </div>
+            </div>
+
+            {errors.location && (
+              <p className="text-xs text-red-400">{errors.location}</p>
+            )}
+
+            {isUnregisteredClub && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-white/70">Nom du club *</label>
+                  <input
+                    type="text"
+                    value={unregisteredClubName}
+                    onChange={(e) => {
+                      setUnregisteredClubName(e.target.value);
+                      if (errors.unregisteredClubName) {
+                        setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
+                      }
+                    }}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white transition-all focus:border-padel-green focus:ring-1 focus:ring-padel-green outline-none placeholder:text-white/20"
+                    placeholder="Ex: Urban Padel..."
+                  />
+                  {errors.unregisteredClubName && (
+                    <p className="mt-1 text-xs text-red-400">{errors.unregisteredClubName}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-white/70">Ville *</label>
+                  <input
+                    type="text"
+                    value={unregisteredClubCity}
+                    onChange={(e) => {
+                      setUnregisteredClubCity(e.target.value);
+                      if (errors.unregisteredClubCity) {
+                        setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubCity; return n; });
+                      }
+                    }}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white transition-all focus:border-padel-green focus:ring-1 focus:ring-padel-green outline-none placeholder:text-white/20"
+                    placeholder="Ex: Nantes"
+                  />
+                  {errors.unregisteredClubCity && (
+                    <p className="mt-1 text-xs text-red-400">{errors.unregisteredClubCity}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
           <div className="mb-3 text-base font-semibold text-white">Équipe 1</div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Vous</label>
-              <input className="w-full cursor-not-allowed rounded-md border bg-gray-100 px-4 py-3 text-sm text-gray-600" disabled value="Vous (connecté)" />
+              <input className="w-full cursor-not-allowed rounded-md border bg-gray-100 px-4 py-3 text-sm text-[#071554]/60" disabled value="Vous (connecté)" />
+              {selfClubName && (
+                <p className="mt-1.5 text-xs text-white/50 flex items-center gap-1.5 animate-in fade-in duration-300">
+                  <Globe size={12} className="text-padel-green flex-shrink-0" />
+                  <span>Marquera pour <strong>{selfClubName}</strong></span>
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Partenaire</label>
@@ -1304,6 +1539,21 @@ export default function MatchForm({
                 placeholder="Prénom et nom complet"
                 error={errors.partnerName}
               />
+              {selectedPlayers.partner && (
+                <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                  {selectedPlayers.partner.type === "user" ? (
+                    <p className="text-xs text-white/50 flex items-center gap-1.5">
+                      <Globe size={12} className="text-padel-green flex-shrink-0" />
+                      <span>Marquera pour <strong>{selectedPlayers.partner.club_name || "son club"}</strong></span>
+                    </p>
+                  ) : selectedPlayers.partner.email ? (
+                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
+                      <Mail size={12} className="flex-shrink-0" />
+                      <span>Une invitation sera envoyée par email</span>
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1332,6 +1582,21 @@ export default function MatchForm({
                 placeholder="Prénom et nom complet"
                 error={errors.opp1Name}
               />
+              {selectedPlayers.opp1 && (
+                <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                  {selectedPlayers.opp1.type === "user" ? (
+                    <p className="text-xs text-white/50 flex items-center gap-1.5">
+                      <Globe size={12} className="text-padel-green flex-shrink-0" />
+                      <span>Marquera pour <strong>{selectedPlayers.opp1.club_name || "son club"}</strong></span>
+                    </p>
+                  ) : selectedPlayers.opp1.email ? (
+                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
+                      <Mail size={12} className="flex-shrink-0" />
+                      <span>Une invitation sera envoyée par email</span>
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Joueur 2</label>
@@ -1354,6 +1619,21 @@ export default function MatchForm({
                 placeholder="Prénom et nom complet"
                 error={errors.opp2Name}
               />
+              {selectedPlayers.opp2 && (
+                <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                  {selectedPlayers.opp2.type === "user" ? (
+                    <p className="text-xs text-white/50 flex items-center gap-1.5">
+                      <Globe size={12} className="text-padel-green flex-shrink-0" />
+                      <span>Marquera pour <strong>{selectedPlayers.opp2.club_name || "son club"}</strong></span>
+                    </p>
+                  ) : selectedPlayers.opp2.email ? (
+                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
+                      <Mail size={12} className="flex-shrink-0" />
+                      <span>Une invitation sera envoyée par email</span>
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1399,22 +1679,22 @@ export default function MatchForm({
                   <span className="text-sm font-medium text-white min-w-[80px]">Set {set.setNumber}</span>
                   <input
                     type="text"
-                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
+                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
                     value={set.team1Score}
                     onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                     placeholder="0"
                     maxLength={2}
-                    ref={(el) => (setTeam1Refs.current[index] = el)}
+                    ref={(el) => { setTeam1Refs.current[index] = el; }}
                   />
                   <span className="text-white">-</span>
                   <input
                     type="text"
-                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
+                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
                     value={set.team2Score}
                     onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                     placeholder="0"
                     maxLength={2}
-                    ref={(el) => (setTeam2Refs.current[index] = el)}
+                    ref={(el) => { setTeam2Refs.current[index] = el; }}
                   />
                   {errors[`set${set.setNumber}_team1`] && (
                     <span className="text-xs text-red-400">{errors[`set${set.setNumber}_team1`]}</span>
@@ -1476,7 +1756,7 @@ export default function MatchForm({
               <div className="flex items-center gap-3">
                 <input
                   type="text"
-                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
+                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
                   value={tieBreak.team1Score}
                   onChange={(e) => {
                     // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
@@ -1511,7 +1791,7 @@ export default function MatchForm({
                 <span className="text-white">-</span>
                 <input
                   type="text"
-                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-gray-900 tabular-nums"
+                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
                   value={tieBreak.team2Score}
                   onChange={(e) => {
                     // Filtrer uniquement les chiffres (pas de limite pour le tie-break)

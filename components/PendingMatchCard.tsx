@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, FileText, Trophy, Check } from "lucide-react";
+import { Clock, FileText, Trophy, Check, MapPin } from "lucide-react";
 
 interface Participant {
     user_id: string;
     team: number;
     display_name: string;
+    club_name?: string;
     has_confirmed: boolean;
     is_current_user?: boolean;
 }
@@ -25,6 +26,7 @@ interface PendingMatch {
     current_user_confirmed: boolean;
     confirmation_count: number;
     confirmations_needed: number;
+    location_name?: string;
 }
 
 interface PendingMatchCardProps {
@@ -127,8 +129,15 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                         <div className="text-xs font-semibold text-gray-900">
                             Par {match.creator_name}
                         </div>
-                        <div className="text-[10px] text-gray-600">
-                            {dateStr} • {timeStr}
+                        <div className="text-[10px] text-gray-600 flex items-center gap-1 mt-0.5">
+                            <span>{dateStr} • {timeStr}</span>
+                            {match.location_name && (
+                                <>
+                                    <span>•</span>
+                                    <MapPin className="h-2.5 w-2.5 text-[#071554]/40" />
+                                    <span className="truncate max-w-[100px]">{match.location_name}</span>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -146,7 +155,10 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                     <div className="space-y-1">
                         {team1.map((p) => (
                             <div key={p.user_id} className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">{p.display_name}</span>
+                                <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">
+                                    {p.display_name}
+                                    {(p as any).club_name && <span className="text-gray-500 font-normal ml-1">({(p as any).club_name})</span>}
+                                </span>
                                 {(p.has_confirmed || (p.is_current_user && confirmed)) && (
                                     <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
                                         <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
@@ -165,7 +177,10 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                     <div className="space-y-1">
                         {team2.map((p) => (
                             <div key={p.user_id} className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">{p.display_name}</span>
+                                <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">
+                                    {p.display_name}
+                                    {(p as any).club_name && <span className="text-gray-500 font-normal ml-1">({(p as any).club_name})</span>}
+                                </span>
                                 {(p.has_confirmed || (p.is_current_user && confirmed)) && (
                                     <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
                                         <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />

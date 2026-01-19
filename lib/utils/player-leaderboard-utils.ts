@@ -191,51 +191,15 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         MAX_MATCHES_PER_DAY
       );
 
-      // Étape 4b: Filtrer par club (ne garder que les matchs où tous les participants users sont du même club)
-      // Récupérer tous les participants de ces matchs
-      const matchIdsForClubFilter = playerMatchIds;
-      const { data: allMatchParticipants } = await supabaseAdmin
-        .from("match_participants")
-        .select("match_id, user_id, player_type")
-        .in("match_id", matchIdsForClubFilter);
+      // Étape 4b: Filtrage par club SUPPRIMÉ
+      // On ne filtre plus les matchs par club, les matchs inter-clubs comptent pour le classement du club du joueur
 
-      // Récupérer les profils des participants users
-      const participantUserIds = [...new Set((allMatchParticipants || [])
-        .filter(p => p.player_type === "user" && p.user_id)
-        .map(p => p.user_id))];
+      const validMatchIds = playerMatchIds;
+      // Logique de filtrage "même club" supprimée (anciennement ici lines 196-235)
 
-      const { data: participantProfiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, club_id")
-        .in("id", participantUserIds)
-        .eq("club_id", clubId);
-
-      const validUserIds = new Set((participantProfiles || []).map(p => p.id));
-
-      // Grouper les participants par match
-      const participantsByMatch = new Map<string, any[]>();
-      (allMatchParticipants || []).forEach(p => {
-        if (!participantsByMatch.has(p.match_id)) {
-          participantsByMatch.set(p.match_id, []);
-        }
-        participantsByMatch.get(p.match_id)!.push(p);
-      });
-
-      // Filtrer les matchs : ne garder que ceux où TOUS les participants users sont du même club
-      const validMatchIds = playerMatchIds.filter(matchId => {
-        const participants = participantsByMatch.get(matchId) || [];
-        const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
-
-        if (userParticipants.length === 0) {
-          return false;
-        }
-
-        const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
-        return allUsersInSameClub;
-      });
-
-      // Étape 4c: Filtrer les participants pour ne garder que les matchs valides (même club) ET qui respectent la limite quotidienne
+      // Étape 4c: Filtrer les participants pour ne garder que les matchs valides ET qui respectent la limite quotidienne
       const filteredParticipants = playerParticipants.filter(p => {
+        // isValidForClub est maintenant toujours true car validMatchIds contient tous les matchs
         const isValidForClub = validMatchIds.includes(p.match_id);
         const isValidForDailyLimit = validMatchIdsForPoints.has(p.match_id);
         const matchExists = matchesMap.has(p.match_id);

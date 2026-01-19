@@ -1,19 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import { MapPin } from "lucide-react";
 
 export default function MatchConfirmForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token");
-  const status = searchParams.get("status");
+  const token = searchParams?.get("token");
+  const status = searchParams?.get("status");
 
   const [loading, setLoading] = useState(false);
+  const [loadingMatch, setLoadingMatch] = useState(!!token && !status);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(status === "success" || status === "already-confirmed");
+  const [matchData, setMatchData] = useState<{
+    score: string;
+    locationName: string;
+    played_at: string;
+    participants: { team: number; name: string }[];
+  } | null>(null);
+
+  // Charger les détails du match au montage
+  useEffect(() => {
+    async function fetchMatchDetails() {
+      if (!token || status) return;
+
+      try {
+        const response = await fetch(`/api/matches/confirm?token=${token}`);
+        const data = await response.json();
+
+        if (data.success) {
+          if (data.alreadyConfirmed) {
+            setConfirmed(true);
+          } else {
+            setMatchData(data.match);
+          }
+        } else {
+          setError(data.error || "Impossible de charger les détails du match");
+        }
+      } catch (err) {
+        setError("Erreur lors de la récupération du match");
+      } finally {
+        setLoadingMatch(false);
+      }
+    }
+
+    fetchMatchDetails();
+  }, [token, status]);
 
   const handleConfirm = async () => {
     if (!token) return;
@@ -108,26 +144,90 @@ export default function MatchConfirmForm() {
           </div>
 
           {error && (
-            <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>
+            <div className="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-600 font-medium">{error}</div>
           )}
 
-          <div className="mb-6 space-y-4">
-            <div className="rounded-lg bg-gray-50 p-4">
-              <p className="text-sm text-gray-600">Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.</p>
+          {loadingMatch ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+              <div className="w-8 h-8 border-4 border-padel-green border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-gray-500">Chargement des détails du match...</p>
+            </div>
+          ) : matchData ? (
+            <div className="mb-6 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Score</span>
+                    <span className="text-3xl font-black text-[#071554] tracking-tight">{matchData.score}</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Lieu</span>
+                    <span className="text-sm font-semibold text-[#071554] flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 text-padel-green" />
+                      {matchData.locationName}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Équipe 1</span>
+                    {matchData.participants.filter(p => p.team === 1).map((p, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-padel-green" />
+                        <span className="text-sm font-medium text-gray-700">{p.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Équipe 2</span>
+                    {matchData.participants.filter(p => p.team === 2).map((p, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <span className="text-sm font-medium text-gray-700">{p.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 px-1">
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <p className="text-[11px] font-medium text-gray-500 italic">
+                  Veuillez vérifier que les informations ci-dessus sont correctes avant de confirmer.
+                </p>
+              </div>
+            </div>
+          ) : !confirmed && (
+            <div className="mb-6 rounded-xl bg-amber-50 p-4 border border-amber-100">
+              <p className="text-sm text-amber-700 font-medium">Informations du match non disponibles.</p>
+            </div>
+          )}
+
+          <div className="mb-6">
+            <div className="rounded-lg bg-[#071554]/5 p-4 border border-[#071554]/10">
+              <p className="text-sm text-[#071554]/80 font-medium leading-relaxed">
+                Le match sera validé et les points seront distribués lorsque <span className="text-[#071554] font-bold">2 joueurs sur 3</span> auront confirmé.
+              </p>
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleConfirm}
-              disabled={loading || confirmed}
-              className="flex-1 rounded-md bg-green-600 px-6 py-3 font-semibold text-white transition-all hover:bg-green-500 disabled:opacity-50"
+              disabled={loading || confirmed || loadingMatch}
+              className="flex-[2] rounded-xl bg-padel-green px-6 py-4 font-bold text-[#071554] shadow-lg shadow-padel-green/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 disabled:grayscale"
             >
-              {loading ? "Confirmation..." : confirmed ? "Confirmé ✓" : "Confirmer le match"}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-[#071554] border-t-transparent rounded-full animate-spin" />
+                  <span>Confirmation...</span>
+                </div>
+              ) : confirmed ? "Match Confirmé ✓" : "Confirmer le match"}
             </button>
             <Link
               href="/home"
-              className="flex-1 rounded-md border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-700 transition-all hover:bg-gray-50"
+              className="flex-1 rounded-xl border border-gray-200 bg-white px-6 py-4 text-center font-bold text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300"
             >
               Plus tard
             </Link>

@@ -26,6 +26,7 @@ const findOrCreatePlayerSchema = z.object({
     .min(1, 'Le nom du joueur est requis')
     .max(100, 'Le nom du joueur est trop long')
     .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Le nom du joueur contient des caractères invalides'),
+  email: z.string().email("Email invalide").optional().or(z.literal("")),
 });
 // === FIN AJOUT ===
 
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
     }
 
-    const { playerName } = parsed.data;
+    const { playerName, email } = parsed.data;
     // === FIN MODIFICATION ===
 
     const cookieStore = await cookies();
@@ -133,12 +134,14 @@ export async function POST(request: NextRequest) {
       .insert({
         first_name: firstName,
         last_name: lastName,
+        email: email || null,
+        invited_by_user_id: user.id
       })
-      .select('id, first_name, last_name')
+      .select('id, first_name, last_name, email')
       .single();
 
     if (guestError || !guest) {
-      logger.error({ clubId: clubId.substring(0, 8) + "…", playerName, error: guestError }, '❌ Error inserting guest player');
+      logger.error('❌ Error inserting guest player', { clubId: clubId.substring(0, 8) + "…", playerName, error: guestError });
       return NextResponse.json({ error: 'Unable to create guest player' }, { status: 500 });
     }
 
@@ -146,35 +149,35 @@ export async function POST(request: NextRequest) {
 
     // Auto-extension après création de joueur (invite)
     try {
-      logger.info({ clubId: clubId.substring(0, 8) + "…" }, '[players/find-or-create] Trial check after player signup');
+      logger.info('[players/find-or-create] Trial check after player signup', { clubId: clubId.substring(0, 8) + "…" });
       await updateEngagementMetrics(clubId);
       const eligibility = await checkAutoExtensionEligibility(clubId);
-      logger.info({ clubId: clubId.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason }, '[players/find-or-create] Trial eligibility');
+      logger.info('[players/find-or-create] Trial eligibility', { clubId: clubId.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason });
       if (eligibility.eligible && eligibility.reason) {
         const grantRes = await grantAutoExtension(clubId, eligibility.reason);
         if (grantRes.success) {
-          logger.info({ clubId: clubId.substring(0, 8) + "…", reason: eligibility.reason }, '[players/find-or-create] Auto extension granted after player signup');
+          logger.info('[players/find-or-create] Auto extension granted after player signup', { clubId: clubId.substring(0, 8) + "…", reason: eligibility.reason });
           // Note: revalidatePath ne peut pas être appelé ici car c'est une route API, pas un Server Component
         } else {
-          logger.warn({ clubId: clubId.substring(0, 8) + "…", error: grantRes.error }, '[players/find-or-create] Auto extension grant failed after player signup');
+          logger.warn('[players/find-or-create] Auto extension grant failed after player signup', { clubId: clubId.substring(0, 8) + "…", error: grantRes.error });
         }
       } else {
-        logger.info({ clubId: clubId.substring(0, 8) + "…" }, '[players/find-or-create] No auto extension (threshold not met or already unlocked)');
+        logger.info('[players/find-or-create] No auto extension (threshold not met or already unlocked)', { clubId: clubId.substring(0, 8) + "…" });
       }
     } catch (extErr) {
-      logger.error({ clubId: clubId.substring(0, 8) + "…", error: (extErr as Error).message }, '[players/find-or-create] Auto extension check error');
+      logger.error('[players/find-or-create] Auto extension check error', { clubId: clubId.substring(0, 8) + "…", error: (extErr as Error).message });
     }
 
     return NextResponse.json({
       player: {
         id: guest.id,
         display_name: guestDisplayName,
-        email: null,
+        email: email || null,
         was_created: true,
       },
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error) }, '❌ Unexpected error');
+    logger.error('❌ Unexpected error', { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

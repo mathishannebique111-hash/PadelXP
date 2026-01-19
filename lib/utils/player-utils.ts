@@ -47,5 +47,8 @@ export interface PlayerSearchResult {
   last_name: string;
   type: PlayerType;
   display_name: string;
+  club_name?: string | null;
+  is_external?: boolean;
+  email?: string | null;
 }
 

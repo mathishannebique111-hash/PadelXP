@@ -34,6 +34,7 @@ interface Player {
   best_shot: string | null;
   level: string | null; // Niveau de l'onboarding (beginner, leisure, regular, competition)
   created_at: string;
+  username?: string | null;
 }
 
 interface Props {
@@ -399,6 +400,13 @@ export default function PlayerProfileView({
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white mb-2 tracking-tight">
                 {playerName}
               </h1>
+
+              {/* Username - Affichage public */}
+              {player.username && (
+                <p className="text-sm md:text-base text-blue-300 font-medium mb-4">
+                  {player.username}
+                </p>
+              )}
 
               {/* Badge niveau - VERSION MOBILE COMPACTE */}
               {player.niveau_padel && player.niveau_categorie ? (

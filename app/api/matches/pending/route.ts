@@ -78,7 +78,9 @@ export async function GET(req: Request) {
         score_team1,
         score_team2,
         created_at,
-        status
+        status,
+        location_club_id,
+        is_registered_club
       `)
             .in("id", matchIds)
             .eq("status", "pending")
@@ -91,6 +93,28 @@ export async function GET(req: Request) {
 
         if (!pendingMatches || pendingMatches.length === 0) {
             return NextResponse.json({ pendingMatches: [] });
+        }
+
+        // Récupérer les informations de lieu pour tous les matchs
+        const clubIds = [...new Set(pendingMatches.filter(m => m.location_club_id && m.is_registered_club).map(m => m.location_club_id))];
+        const unregClubIds = [...new Set(pendingMatches.filter(m => m.location_club_id && !m.is_registered_club).map(m => m.location_club_id))];
+
+        const locationNamesMap = new Map<string, string>();
+
+        if (clubIds.length > 0) {
+            const { data: registeredClubs } = await supabaseAdmin
+                .from("clubs")
+                .select("id, name, city")
+                .in("id", clubIds);
+            (registeredClubs || []).forEach(c => locationNamesMap.set(c.id, `${c.name} (${c.city})`));
+        }
+
+        if (unregClubIds.length > 0) {
+            const { data: unregisteredClubs } = await supabaseAdmin
+                .from("unregistered_clubs")
+                .select("id, name, city")
+                .in("id", unregClubIds);
+            (unregisteredClubs || []).forEach(c => locationNamesMap.set(c.id, `${c.name} (${c.city})`));
         }
 
         // Récupérer les participants et confirmations pour chaque match
@@ -114,12 +138,26 @@ export async function GET(req: Request) {
 
             const { data: profiles } = await supabaseAdmin
                 .from("profiles")
-                .select("id, display_name, first_name, last_name")
+                .select("id, display_name, first_name, last_name, club_id")
                 .in("id", userIds);
 
-            const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+            // Récupérer les noms des clubs pour ces joueurs
+            const profileClubIds = [...new Set((profiles || []).map(p => p.club_id).filter(Boolean))];
+            const profileClubNamesMap = new Map<string, string>();
 
-            // Enrichir les participants avec les noms
+            if (profileClubIds.length > 0) {
+                const { data: clubs } = await supabaseAdmin
+                    .from("clubs")
+                    .select("id, name")
+                    .in("id", profileClubIds);
+                (clubs || []).forEach(c => profileClubNamesMap.set(c.id, c.name));
+            }
+
+            const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+            const currentUserProfile = profileMap.get(user.id);
+            const currentUserClubId = currentUserProfile?.club_id;
+
+            // Enrichir les participants avec les noms et clubs
             const enrichedParticipants = (participants || []).map(p => {
                 const profile = profileMap.get(p.user_id);
                 const displayName = profile?.display_name ||
@@ -131,9 +169,18 @@ export async function GET(req: Request) {
                     c => c.user_id === p.user_id && c.confirmed
                 );
 
+                // Déterminer le nom du club si différent de celui du joueur connecté
+                let clubName = undefined;
+                if (p.player_type === "user" && profile?.club_id) {
+                    if (profile.club_id !== currentUserClubId) {
+                        clubName = profileClubNamesMap.get(profile.club_id);
+                    }
+                }
+
                 return {
                     ...p,
                     display_name: displayName,
+                    club_name: clubName,
                     has_confirmed: hasConfirmed,
                     is_current_user: p.user_id === user.id
                 };
@@ -158,7 +205,8 @@ export async function GET(req: Request) {
                 creator_id: creator?.user_id,
                 current_user_confirmed: currentUserConfirmed,
                 confirmation_count: confirmationCount,
-                confirmations_needed: Math.max(0, neededForFullSum)
+                confirmations_needed: Math.max(0, neededForFullSum),
+                location_name: match.location_club_id ? (locationNamesMap.get(match.location_club_id) || "Lieu inconnu") : "Lieu non précisé"
             };
         }));
 

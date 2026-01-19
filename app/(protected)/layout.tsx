@@ -38,9 +38,9 @@ export default function PlayerAccountLayout({
 
           {/* Logo du club + Settings (Top Right) - Logo à gauche, Settings à droite */}
           <div
-            className="absolute z-[100] flex flex-row items-center gap-1.5 pointer-events-auto"
+            className="fixed z-[100] flex flex-row items-center gap-1.5 pointer-events-auto"
             style={{
-              top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)',
+              top: 'calc(var(--sat, 0px) + 0.75rem)',
               right: '0.75rem'
             }}
           >
