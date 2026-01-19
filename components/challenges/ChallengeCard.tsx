@@ -281,17 +281,17 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         </div>
 
         {/* Objectif */}
-        <div className="mb-5 rounded-2xl border border-blue-400/40 bg-gradient-to-br from-blue-500/30 to-cyan-500/15 p-4 shadow-inner">
+        <div className="mb-5 rounded-2xl border border-white/10 bg-gradient-to-br from-[#071554]/80 to-[#071554]/40 p-4 shadow-inner">
           <div className="mb-3 flex items-start justify-between">
             <div>
-              <div className="mb-1 text-sm font-medium text-blue-200">Objectif</div>
-              <div className="text-xs text-white/80">{challenge.objective}</div>
+              <div className="mb-1 text-sm font-medium text-white/60">Objectif</div>
+              <div className="text-xs text-white/90">{challenge.objective}</div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-white">
                 {challenge.progress.current}/{challenge.progress.target}
               </div>
-              <div className="text-xs font-medium text-blue-200">{Math.round(percentage)}%</div>
+              <div className="text-xs font-medium text-white/60">{Math.round(percentage)}%</div>
             </div>
           </div>
 

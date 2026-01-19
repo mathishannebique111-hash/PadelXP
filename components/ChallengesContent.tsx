@@ -195,9 +195,9 @@ export default async function ChallengesContent() {
                 <div className="flex justify-center">
                     <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-2 border border-white/20">
                         <span className="text-sm font-semibold text-white">
-                            <span className="text-yellow-300 tabular-nums">{challengePoints}</span>
+                            <span className="text-padel-green tabular-nums">{challengePoints}</span>
                             <span className="ml-1">point{challengePoints > 1 ? "s" : ""} et </span>
-                            <span className="text-yellow-300 tabular-nums">{challengeBadgesCount}</span>
+                            <span className="text-padel-green tabular-nums">{challengeBadgesCount}</span>
                             <span className="ml-1">badge{challengeBadgesCount > 1 ? "s" : ""} débloqué{challengeBadgesCount > 1 ? "s" : ""}</span>
                         </span>
                     </div>
