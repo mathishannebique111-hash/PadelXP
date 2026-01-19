@@ -13,7 +13,7 @@ export default function PlayerSidebar() {
       {/* Settings button - now part of the header flex container */}
       <Link
         href="/settings"
-        className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 transition-all duration-300 ${isSettingsActive
+        className={`relative z-[150] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 transition-all duration-300 cursor-pointer ${isSettingsActive
           ? 'text-blue-400'
           : 'text-white/80 hover:text-white'
           }`}

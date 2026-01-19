@@ -794,6 +794,31 @@ html {
   }
 }
 
+/* COMMENCEMENT DU FIX POUR IPAD */
+/* Force un fond bleu uniforme sur iPad pour éviter les différences de teintes en haut de page */
+/* On cible spécifiquement les tablettes et + */
+@media screen and (min-width: 768px) {
+
+  html,
+  body,
+  html.is-app,
+  body.is-app,
+  #__next,
+  main {
+    background-color: #172554 !important;
+    /* --theme-player-page */
+    overscroll-behavior-y: none;
+    /* Empêche le rebond qui montre le fond blanc/noir derrière */
+    min-height: 100%;
+    height: 100%;
+  }
+
+  /* On s'assure que le layout n'a pas de fond transparent qui laisserait voir un autre body */
+  .app-content {
+    background-color: #172554 !important;
+  }
+}
+
 @keyframes pulse-glow-dark {
 
   0%,
@@ -939,7 +964,7 @@ body.is-app,
   background-color: #172554 !important;
 }
 
-/* 3. Positionnement du bouton Menu (Hamburger) - DIMENSIONS ET POSITION FIXÉES */
+/* 4. Positionnement du bouton Menu (Hamburger) - DIMENSIONS ET POSITION FIXÉES */
 /* WEB: positionnement simple */
 [data-hamburger-button] {
   position: fixed !important;
@@ -984,3 +1009,15 @@ body.is-app [data-hamburger-button],
 
 /* 4. Positionnement du Logo du club - RETIRÉ POUR FLEX LAYOUT */
 /* Les règles de positionnement sont maintenant gérées dans layout.tsx */
+/* COMMENCEMENT DU FIX POUR IPAD */
+/* Force un fond bleu uniforme sur iPad pour éviter les différences de teintes en haut de page */
+@media screen and (min-width: 768px) {
+  @supports (-webkit-touch-callout: none) {
+
+    html,
+    body {
+      background-color: rgb(23, 37, 84) !important;
+      /* #172554 --theme-player-page */
+    }
+  }
+}

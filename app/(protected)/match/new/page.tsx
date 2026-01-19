@@ -25,11 +25,12 @@ export const dynamic = 'force-dynamic';
 export default async function NewMatchPage({
   searchParams,
 }: {
-  searchParams?: { tab?: string };
+  searchParams: Promise<{ tab?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = searchParams?.tab === 'history' ? 'history' : searchParams?.tab === 'partners' ? 'partners' : searchParams?.tab === 'boost' ? 'boost' : 'record';
+  const activeTab = resolvedSearchParams?.tab === 'history' ? 'history' : resolvedSearchParams?.tab === 'partners' ? 'partners' : resolvedSearchParams?.tab === 'boost' ? 'boost' : 'record';
 
   if (!user) {
     return (

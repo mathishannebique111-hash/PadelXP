@@ -140,7 +140,7 @@ function MatchTabsContent({
     { id: 'record' as TabType, label: 'Enregistrer' },
     { id: 'history' as TabType, label: 'Mes matchs', badge: pendingMatchesCount },
     { id: 'partners' as TabType, label: 'Trouve tes partenaires', badge: pendingInvitationsCount + pendingChallengesCount },
-    { id: 'boost' as TabType, label: 'Boost' },
+    // { id: 'boost' as TabType, label: 'Boost' },
   ];
 
   return (
@@ -196,7 +196,7 @@ export default function MatchTabs(props: MatchTabsProps) {
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Trouve tes partenaires</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Boost</div>
+          {/* <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Boost</div> */}
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center">
           <div className="text-white/60">Chargement...</div>

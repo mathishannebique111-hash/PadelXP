@@ -7,7 +7,7 @@ import PageTitle from "@/components/PageTitle";
 import DeleteAccountButton from "@/components/settings/DeleteAccountButton";
 import ProfilePhotoUpload from "@/components/settings/ProfilePhotoUpload";
 import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
-import NameSettings from "@/components/settings/NameSettings";
+import UsernameSettings from "@/components/settings/UsernameSettings";
 import SupportChatSection from "@/components/settings/SupportChatSection";
 import ReviewsSection from "@/components/settings/ReviewsSection";
 import LogoutButton from "@/components/LogoutButton";
@@ -29,7 +29,7 @@ export default function SettingsContent() {
 
         <div className="mt-6 sm:mt-8 space-y-6">
           <ProfilePhotoUpload />
-          <NameSettings />
+          <UsernameSettings />
           <WhatsAppSettings />
           <SupportChatSection />
           <ReviewsSection />

@@ -8,8 +8,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
   : null;
 
 const PUBLIC_INFO_BUCKET = "club-public-info";
@@ -74,9 +74,9 @@ export async function getClubPublicExtras(clubId: string): Promise<ClubPublicExt
           ? parsed.number_of_courts
           : typeof parsed?.number_of_courts === "string" && parsed.number_of_courts.trim()
             ? (() => {
-                const value = Number.parseInt(parsed.number_of_courts, 10);
-                return Number.isNaN(value) ? null : value;
-              })()
+              const value = Number.parseInt(parsed.number_of_courts, 10);
+              return Number.isNaN(value) ? null : value;
+            })()
             : null,
       court_type: typeof parsed?.court_type === "string" ? parsed.court_type : null,
       description: typeof parsed?.description === "string" ? parsed.description : null,
@@ -251,12 +251,12 @@ export async function getUserClubId(): Promise<string | null> {
   return clubId;
 }
 
-export async function getClubDashboardData(clubId: string | null, clubSlug?: string | null): Promise<{ members: ClubMember[]; leaderboard: ClubLeaderboardRow[] }> {
+export async function getClubDashboardData(clubId: string | null, clubSlug?: string | null): Promise<{ members: ClubMember[]; visitors: ClubMember[]; leaderboard: ClubLeaderboardRow[] }> {
   if (!clubId || !supabaseAdmin) {
     if (!supabaseAdmin) {
       logger.warn({}, "[getClubDashboardData] Supabase admin client not configured");
     }
-    return { members: [], leaderboard: [] };
+    return { members: [], visitors: [], leaderboard: [] };
   }
 
   let resolvedSlug: string | null = clubSlug ?? null;
@@ -302,14 +302,14 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
 
   if (profilesError) {
     logger.error({ clubId: clubId.substring(0, 8) + "…", error: profilesError }, "[getClubDashboardData] Failed to load club members");
-    return { members: [], leaderboard: [] };
+    return { members: [], visitors: [], leaderboard: [] };
   }
 
   // Vérifier quels admins ont participé à des matchs (donc sont vraiment des joueurs)
   // Si un admin a participé à des matchs, il est aussi un joueur
   const adminUserIdsArray = Array.from(adminUserIds);
   let adminIdsWithMatches = new Set<string>();
-  
+
   if (adminUserIdsArray.length > 0) {
     const { data: adminMatchParticipants } = await supabaseAdmin
       .from("match_participants")
@@ -347,7 +347,8 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
   }));
 
   if (!members.length) {
-    return { members, leaderboard: [] };
+    // Même si pas de membres, on peut avoir des visiteurs, donc on continue au lieu de retourner
+    // return { members, visitors: [], leaderboard: [] };
   }
 
   const memberIds = members.map((m) => m.id).filter(Boolean);
@@ -358,7 +359,8 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
   });
 
   if (memberIds.length === 0) {
-    return { members, leaderboard: [] };
+    // Continue execution to fetch visitors even if no members
+    // return { members, leaderboard: [] };
   }
 
   const history = await getClubMatchHistory(clubId, resolvedSlug);
@@ -378,7 +380,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
       rank: idx + 1,
     }));
 
-    return { members, leaderboard: leaderboardFallback };
+    return { members, visitors: [], leaderboard: leaderboardFallback };
   }
 
   history.matches.forEach((match) => {
@@ -465,8 +467,124 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     return leftName.localeCompare(rightName);
   });
 
+  // --- LOGIQUE VISITEURS ---
+  // Récupérer les joueurs non-membres qui ont joué dans ce club
+
+  const visitors: ClubMember[] = [];
+
+  // 1. Récupérer les matchs joués dans ce club
+  const { data: locationMatches, error: locationMatchesError } = await supabaseAdmin
+    .from("matches")
+    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at")
+    .eq("location_club_id", clubId)
+    .eq("status", "confirmed")
+    .order("created_at", { ascending: false });
+
+  if (locationMatches && locationMatches.length > 0) {
+    const locationMatchIds = locationMatches.map(m => m.id);
+
+    // 2. Récupérer tous les participants de ces matchs
+    const { data: locationParticipants, error: locPartError } = await supabaseAdmin
+      .from("match_participants")
+      .select("user_id, match_id, team, player_type")
+      .in("match_id", locationMatchIds)
+      .eq("player_type", "user"); // On ne s'intéresse qu'aux utilisateurs inscrits
+
+    if (locationParticipants && locationParticipants.length > 0) {
+      // 3. Identifier les visiteurs (ceux qui ne sont PAS dans memberIdSet et pas null)
+      const uniqueVisitorIds = new Set<string>();
+      locationParticipants.forEach(p => {
+        if (p.user_id && !memberIdSet.has(p.user_id)) {
+          uniqueVisitorIds.add(p.user_id);
+        }
+      });
+
+      if (uniqueVisitorIds.size > 0) {
+        // 4. Récupérer les profils des visiteurs
+        const { data: visitorProfiles, error: visProfError } = await supabaseAdmin
+          .from("profiles")
+          .select("id, display_name, first_name, last_name, email, created_at")
+          .in("id", Array.from(uniqueVisitorIds));
+
+        if (visitorProfiles && visitorProfiles.length > 0) {
+          // Initialiser les stats visiteurs
+          const visitorStats = new Map<string, ClubMember>();
+          visitorProfiles.forEach(p => {
+            visitorStats.set(p.id, {
+              id: p.id,
+              display_name: p.display_name ?? null,
+              first_name: p.first_name ?? null,
+              last_name: p.last_name ?? null,
+              email: p.email ?? null,
+              created_at: p.created_at ?? null,
+              wins: 0,
+              losses: 0,
+              matches: 0,
+              points: 0,
+              last_match_at: null
+            });
+          });
+
+          // 5. Calculer les stats UNIQUEMENT sur les matchs du club (locationMatches)
+          // Créer une map des matchs du club pour accès rapide
+          const locMatchesMap = new Map<string, any>();
+          locationMatches.forEach(m => {
+            // Calculer winner team si pas direct
+            const winner_team = m.winner_team_id
+              ? m.winner_team_id === m.team1_id ? 1 : m.winner_team_id === m.team2_id ? 2 : null
+              : m.score_team1 != null && m.score_team2 != null && m.score_team1 !== m.score_team2
+                ? m.score_team1 > m.score_team2 ? 1 : 2
+                : null;
+            locMatchesMap.set(m.id, { ...m, winner_team });
+          });
+
+          // Parcourir les participants pour accumuler les stats
+          locationParticipants.forEach(p => {
+            if (!p.user_id || !visitorStats.has(p.user_id)) return;
+
+            const visitor = visitorStats.get(p.user_id)!;
+            const match = locMatchesMap.get(p.match_id);
+            if (!match) return;
+
+            visitor.matches += 1;
+
+            if (match.created_at) {
+              if (!visitor.last_match_at || new Date(match.created_at) > new Date(visitor.last_match_at)) {
+                visitor.last_match_at = match.created_at;
+              }
+            }
+
+            if (match.winner_team) {
+              const myTeam = p.team; // 1 ou 2
+              // Warning: team field in match_participants is int, match.winner_team logic above produces 1 or 2
+              // Assume p.team is stored as 1 or 2 in DB or mapped correctly? 
+              // Check mapping in getClubMatchHistory: `teamNormalized` logic.
+              // Let's assume standard 1/2.
+              if (myTeam === match.winner_team) {
+                visitor.wins += 1;
+              } else {
+                visitor.losses += 1;
+              }
+            }
+          });
+
+          // Calculer les points (juste pour info, même formule ?)
+          // On peut garder wins*10 + losses*3 pour cohérence
+          visitorStats.forEach(v => {
+            v.points = v.wins * 10 + v.losses * 3;
+            visitors.push(v);
+          });
+        }
+      }
+    }
+  }
+
+  // Trier les visiteurs
+  visitors.sort((a, b) => b.matches - a.matches); // Par nombre de matchs décroissant par défaut
+
   return {
     members: membersWithStats,
+    visitors,
     leaderboard,
   };
 }
@@ -582,13 +700,13 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
         ? match.winner_team_id === match.team1_id
           ? 1
           : match.winner_team_id === match.team2_id
-          ? 2
-          : null
+            ? 2
+            : null
         : match.score_team1 != null && match.score_team2 != null && match.score_team1 !== match.score_team2
-        ? match.score_team1 > match.score_team2
-          ? 1
-          : 2
-        : null;
+          ? match.score_team1 > match.score_team2
+            ? 1
+            : 2
+          : null;
       const score = `${match.score_team1 ?? 0}-${match.score_team2 ?? 0}`;
       matchesMap.set(match.id, { ...match, winner_team, score });
     }

@@ -22,6 +22,11 @@ export default function PlayerAccountLayout({
       {/* Configuration spécifique pour les pages joueurs */}
       <PlayerSafeAreaColor />
       <HideSplashScreen />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.classList.add('player-page');`
+        }}
+      />
       <PopupQueueProvider>
 
         <div
@@ -31,7 +36,8 @@ export default function PlayerAccountLayout({
           }}
         >
           {/* Background global pour toutes les pages joueur */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
+          {/* Le dégradé commence un peu plus bas pour laisser le haut (safe area) parfaitement bleu #172554 */}
+          <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 160px, rgba(0,0,0,0.8) 70%, #000000 100%)' }} />
 
           {/* Logo PadelXP Header (scroll avec contenus) */}
           <HeaderLogo />

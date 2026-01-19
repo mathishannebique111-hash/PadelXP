@@ -104,7 +104,7 @@ export default async function HomePage({
       try {
         const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
           .from("profiles")
-          .select("id, display_name, first_name, last_name, email, club_id, club_slug")
+          .select("id, display_name, first_name, last_name, email, club_id, club_slug, username")
           .eq("id", user.id)
           .maybeSingle();
         if (adminProfileError) {
