@@ -2,14 +2,14 @@
 
 import { useRef, useState, useEffect } from "react";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';
-import { Trophy, Zap, Mail, Globe } from "lucide-react";
+import { Trophy, Zap, Mail, Globe, ChevronDown } from "lucide-react";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -34,6 +34,7 @@ export default function MatchForm({
   selfId: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   const [partnerName, setPartnerName] = useState("");
@@ -55,6 +56,16 @@ export default function MatchForm({
     partner: null,
     opp1: null,
     opp2: null,
+  });
+
+  const [scopes, setScopes] = useState<{
+    partner: 'club' | 'global' | 'guest';
+    opp1: 'club' | 'global' | 'guest';
+    opp2: 'club' | 'global' | 'guest';
+  }>({
+    partner: 'club',
+    opp1: 'club',
+    opp2: 'club',
   });
 
   // Location state
@@ -365,7 +376,7 @@ export default function MatchForm({
               .maybeSingle();
 
             if (profile?.club_id) {
-              if (allClubs.some(c => c.id === profile.club_id)) {
+              if (allClubs.some((c: any) => c.id === profile.club_id)) {
                 setSelectedClubId(profile.club_id);
               }
               setSelfClubName((profile.clubs as any)?.name || null);
@@ -388,7 +399,7 @@ export default function MatchForm({
 
   // Gérer la pré-sélection d'un adversaire via URL (ex: "Défier ce joueur")
   useEffect(() => {
-    const opponentId = searchParams.get('opponentId');
+    const opponentId = searchParams?.get('opponentId');
     if (opponentId) {
       const fetchOpponent = async () => {
         try {
@@ -1514,37 +1525,55 @@ export default function MatchForm({
               {selfClubName && (
                 <p className="mt-1.5 text-xs text-white/50 flex items-center gap-1.5 animate-in fade-in duration-300">
                   <Globe size={12} className="text-padel-green flex-shrink-0" />
-                  <span>Marquera pour <strong>{selfClubName}</strong></span>
+                  <span>points pour classement de (<strong>{selfClubName}</strong>)</span>
                 </p>
               )}
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Partenaire</label>
-              <PlayerAutocomplete
-                value={partnerName}
-                onChange={(value) => {
-                  setPartnerName(value);
-                  // Nettoyer l'erreur quand l'utilisateur tape
-                  if (errors.partnerName) {
-                    setErrors((prev) => {
-                      const newErrors = { ...prev };
-                      delete newErrors.partnerName;
-                      return newErrors;
-                    });
-                  }
-                }}
-                onSelect={(player) => {
-                  setSelectedPlayers((prev) => ({ ...prev, partner: player }));
-                }}
-                placeholder="Prénom et nom complet"
-                error={errors.partnerName}
-              />
+              <div className="relative group">
+                <PlayerAutocomplete
+                  value={partnerName}
+                  onChange={(value) => {
+                    setPartnerName(value);
+                    // Nettoyer l'erreur quand l'utilisateur tape
+                    if (errors.partnerName) {
+                      setErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.partnerName;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  onSelect={(player) => {
+                    setSelectedPlayers((prev) => ({ ...prev, partner: player }));
+                  }}
+                  placeholder="Prénom et nom complet"
+                  error={errors.partnerName}
+                  searchScope={scopes.partner}
+                  inputClassName="pr-[90px]"
+                />
+                <div className="absolute right-1 top-1 bottom-1 flex items-center">
+                  <select
+                    value={scopes.partner}
+                    onChange={(e) => setScopes(prev => ({ ...prev, partner: e.target.value as any }))}
+                    className="h-[80%] my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none"
+                  >
+                    <option value="club">Club</option>
+                    <option value="global">Global</option>
+                    <option value="guest">Invité</option>
+                  </select>
+                </div>
+                <div className="absolute right-2 top-0 bottom-0 flex items-center pointer-events-none z-10 font-bold">
+                  <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
+                </div>
+              </div>
               {selectedPlayers.partner && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
                   {selectedPlayers.partner.type === "user" ? (
                     <p className="text-xs text-white/50 flex items-center gap-1.5">
                       <Globe size={12} className="text-padel-green flex-shrink-0" />
-                      <span>Marquera pour <strong>{selectedPlayers.partner.club_name || "son club"}</strong></span>
+                      <span>points pour classement de (<strong>{selectedPlayers.partner.club_name || "son club"}</strong>)</span>
                     </p>
                   ) : selectedPlayers.partner.email ? (
                     <p className="text-xs text-blue-300 flex items-center gap-1.5">
@@ -1563,31 +1592,49 @@ export default function MatchForm({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Joueur 1</label>
-              <PlayerAutocomplete
-                value={opp1Name}
-                onChange={(value) => {
-                  setOpp1Name(value);
-                  // Nettoyer l'erreur quand l'utilisateur tape
-                  if (errors.opp1Name) {
-                    setErrors((prev) => {
-                      const newErrors = { ...prev };
-                      delete newErrors.opp1Name;
-                      return newErrors;
-                    });
-                  }
-                }}
-                onSelect={(player) => {
-                  setSelectedPlayers((prev) => ({ ...prev, opp1: player }));
-                }}
-                placeholder="Prénom et nom complet"
-                error={errors.opp1Name}
-              />
+              <div className="relative group">
+                <PlayerAutocomplete
+                  value={opp1Name}
+                  onChange={(value) => {
+                    setOpp1Name(value);
+                    // Nettoyer l'erreur quand l'utilisateur tape
+                    if (errors.opp1Name) {
+                      setErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.opp1Name;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  onSelect={(player) => {
+                    setSelectedPlayers((prev) => ({ ...prev, opp1: player }));
+                  }}
+                  placeholder="Prénom et nom complet"
+                  error={errors.opp1Name}
+                  searchScope={scopes.opp1}
+                  inputClassName="pr-[90px]"
+                />
+                <div className="absolute right-1 top-1 bottom-1 flex items-center">
+                  <select
+                    value={scopes.opp1}
+                    onChange={(e) => setScopes(prev => ({ ...prev, opp1: e.target.value as any }))}
+                    className="h-[80%] my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none"
+                  >
+                    <option value="club">Club</option>
+                    <option value="global">Global</option>
+                    <option value="guest">Invité</option>
+                  </select>
+                </div>
+                <div className="absolute right-2 top-0 bottom-0 flex items-center pointer-events-none z-10 font-bold">
+                  <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
+                </div>
+              </div>
               {selectedPlayers.opp1 && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
                   {selectedPlayers.opp1.type === "user" ? (
                     <p className="text-xs text-white/50 flex items-center gap-1.5">
                       <Globe size={12} className="text-padel-green flex-shrink-0" />
-                      <span>Marquera pour <strong>{selectedPlayers.opp1.club_name || "son club"}</strong></span>
+                      <span>points pour classement de (<strong>{selectedPlayers.opp1.club_name || "son club"}</strong>)</span>
                     </p>
                   ) : selectedPlayers.opp1.email ? (
                     <p className="text-xs text-blue-300 flex items-center gap-1.5">
@@ -1600,31 +1647,49 @@ export default function MatchForm({
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Joueur 2</label>
-              <PlayerAutocomplete
-                value={opp2Name}
-                onChange={(value) => {
-                  setOpp2Name(value);
-                  // Nettoyer l'erreur quand l'utilisateur tape
-                  if (errors.opp2Name) {
-                    setErrors((prev) => {
-                      const newErrors = { ...prev };
-                      delete newErrors.opp2Name;
-                      return newErrors;
-                    });
-                  }
-                }}
-                onSelect={(player) => {
-                  setSelectedPlayers((prev) => ({ ...prev, opp2: player }));
-                }}
-                placeholder="Prénom et nom complet"
-                error={errors.opp2Name}
-              />
+              <div className="relative group">
+                <PlayerAutocomplete
+                  value={opp2Name}
+                  onChange={(value) => {
+                    setOpp2Name(value);
+                    // Nettoyer l'erreur quand l'utilisateur tape
+                    if (errors.opp2Name) {
+                      setErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors.opp2Name;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  onSelect={(player) => {
+                    setSelectedPlayers((prev) => ({ ...prev, opp2: player }));
+                  }}
+                  placeholder="Prénom et nom complet"
+                  error={errors.opp2Name}
+                  searchScope={scopes.opp2}
+                  inputClassName="pr-[90px]"
+                />
+                <div className="absolute right-1 top-1 bottom-1 flex items-center">
+                  <select
+                    value={scopes.opp2}
+                    onChange={(e) => setScopes(prev => ({ ...prev, opp2: e.target.value as any }))}
+                    className="h-[80%] my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none"
+                  >
+                    <option value="club">Club</option>
+                    <option value="global">Global</option>
+                    <option value="guest">Invité</option>
+                  </select>
+                </div>
+                <div className="absolute right-2 top-0 bottom-0 flex items-center pointer-events-none z-10 font-bold">
+                  <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
+                </div>
+              </div>
               {selectedPlayers.opp2 && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
                   {selectedPlayers.opp2.type === "user" ? (
                     <p className="text-xs text-white/50 flex items-center gap-1.5">
                       <Globe size={12} className="text-padel-green flex-shrink-0" />
-                      <span>Marquera pour <strong>{selectedPlayers.opp2.club_name || "son club"}</strong></span>
+                      <span>points pour classement de (<strong>{selectedPlayers.opp2.club_name || "son club"}</strong>)</span>
                     </p>
                   ) : selectedPlayers.opp2.email ? (
                     <p className="text-xs text-blue-300 flex items-center gap-1.5">
@@ -1832,7 +1897,7 @@ export default function MatchForm({
           )}
         </div>
 
-        {/* Option boost - placé juste avant le bouton Enregistrer */}
+        {/* Option boost - caché temporairement
         {!loadingBoostStats && boostStats && (
           <div className="mb-6 rounded-lg border border-padel-green/50 bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 p-4 shadow-xl relative overflow-hidden">
             <div className="flex items-start gap-3 relative z-10">
@@ -1880,6 +1945,7 @@ export default function MatchForm({
             </div>
           </div>
         )}
+        */}
 
         <button disabled={loading} className="w-full rounded-md bg-padel-green px-4 py-3 font-semibold text-blue-950 transition-all hover:bg-padel-green/90 hover:shadow-lg disabled:opacity-50">Enregistrer</button>
       </form>

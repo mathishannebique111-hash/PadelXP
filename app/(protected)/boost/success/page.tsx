@@ -24,8 +24,9 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
 export default async function BoostSuccessPage({
   searchParams,
 }: {
-  searchParams: { session_id?: string };
+  searchParams: Promise<{ session_id?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -36,7 +37,7 @@ export default async function BoostSuccessPage({
   // Vérifier et créditer les boosts si nécessaire (fallback si le webhook n'a pas encore été appelé)
   let boostsCredited = false;
   let creditError: string | null = null;
-  const sessionId = searchParams.session_id;
+  const sessionId = resolvedSearchParams.session_id;
 
   if (sessionId && stripe && supabaseAdmin) {
     try {

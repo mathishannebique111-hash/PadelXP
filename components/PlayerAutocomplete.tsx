@@ -13,6 +13,8 @@ interface PlayerAutocompleteProps {
   error?: string;
   placeholder?: string;
   label?: string;
+  searchScope?: 'club' | 'global' | 'guest';
+  inputClassName?: string;
 }
 
 const GUEST_UUID = "00000000-0000-0000-0000-000000000000";
@@ -24,8 +26,9 @@ export default function PlayerAutocomplete({
   error,
   placeholder = "Rechercher un joueur...",
   label,
+  searchScope = 'club',
+  inputClassName = "",
 }: PlayerAutocompleteProps) {
-  const [searchScope, setSearchScope] = useState<'club' | 'global' | 'guest'>('club');
 
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -74,7 +77,6 @@ export default function PlayerAutocomplete({
     onSelect(player);
     setShowDropdown(false);
     setSearchResults([]);
-    setSearchScope('club'); // Reset to default after selection
   };
 
   const searchPlayers = async (query: string) => {
@@ -217,45 +219,6 @@ export default function PlayerAutocomplete({
         <label className="mb-2 block text-sm font-medium text-white">{label}</label>
       )}
 
-
-
-      {/* Sélecteur de Scope */}
-      <div className="flex bg-white/10 p-1 rounded-lg mb-2 gap-1">
-        <button
-          type="button"
-          onClick={() => setSearchScope('club')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${searchScope === 'club'
-            ? 'bg-[#E3F2FD] text-[#0A2540] shadow-sm'
-            : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
-        >
-          <Home size={14} />
-          <span className="truncate">Mon Club</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setSearchScope('global')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${searchScope === 'global'
-            ? 'bg-[#E3F2FD] text-[#0A2540] shadow-sm'
-            : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
-        >
-          <Globe size={14} />
-          <span className="truncate">Global</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setSearchScope('guest')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-xs font-medium rounded-md transition-all ${searchScope === 'guest'
-            ? 'bg-[#E3F2FD] text-[#0A2540] shadow-sm'
-            : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
-        >
-          <Mail size={14} />
-          <span className="truncate">Invité</span>
-        </button>
-      </div>
-
       {searchScope === 'guest' ? (
         <div className="bg-gray-50 rounded-md border border-gray-200 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="mb-3 flex justify-between items-center">
@@ -326,7 +289,7 @@ export default function PlayerAutocomplete({
             }
           }}
           placeholder={searchScope === 'global' ? "Rechercher dans tout PadelXP..." : "Rechercher dans mon club..."}
-          className="w-full rounded-md border bg-white px-4 py-3 text-sm text-[#071554] focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+          className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-[#071554] focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${inputClassName}`}
         />
       )}
 

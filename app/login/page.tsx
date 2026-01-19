@@ -8,8 +8,9 @@ import HideSplashScreen from "@/components/HideSplashScreen";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: { "password-reset"?: string };
+  searchParams: Promise<{ "password-reset"?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
@@ -44,7 +45,7 @@ export default async function LoginPage({
     }
   }
 
-  const showPasswordResetSuccess = searchParams?.["password-reset"] === "success";
+  const showPasswordResetSuccess = resolvedSearchParams?.["password-reset"] === "success";
 
   return (
     <>

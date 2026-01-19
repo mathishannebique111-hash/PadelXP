@@ -27,11 +27,12 @@ const supabaseAdmin = createAdminClient(
 export default async function ClubPage({
   searchParams,
 }: {
-  searchParams?: { tab?: string };
+  searchParams: Promise<{ tab?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = searchParams?.tab === 'classement' ? 'classement' : searchParams?.tab === 'challenges' ? 'challenges' : 'club';
+  const activeTab = resolvedSearchParams?.tab === 'classement' ? 'classement' : resolvedSearchParams?.tab === 'challenges' ? 'challenges' : 'club';
 
   if (!user) {
     return (
