@@ -198,6 +198,7 @@ export default function SuggestedMatches() {
                 .eq("defender_player_1_id", defenderPair.player1_id)
                 .eq("defender_player_2_id", defenderPair.player2_id)
                 .in("status", ["pending", "accepted"])
+                .gt("expires_at", new Date().toISOString())
                 .maybeSingle();
 
             if (checkError) {
@@ -219,6 +220,7 @@ export default function SuggestedMatches() {
                 .eq("defender_player_1_id", user.id)
                 .eq("defender_player_2_id", myPartner.id)
                 .in("status", ["pending", "accepted"])
+                .gt("expires_at", new Date().toISOString())
                 .maybeSingle();
 
             if (reverseCheckError) {
