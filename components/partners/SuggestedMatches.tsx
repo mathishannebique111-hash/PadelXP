@@ -105,12 +105,16 @@ export default function SuggestedMatches() {
                 if (challenges) {
                     const challengesMap = new Map();
                     challenges.forEach((challenge) => {
-                        // Créer une clé unique pour identifier la paire défendue
-                        const defenderKey = `${challenge.defender_player_1_id}-${challenge.defender_player_2_id}`;
-                        challengesMap.set(defenderKey, {
-                            expires_at: challenge.expires_at,
-                            status: challenge.status
-                        });
+                        // On ne bloque que si le défi n'est pas expiré
+                        const expires = new Date(challenge.expires_at);
+                        if (expires > new Date()) {
+                            // Créer une clé unique pour identifier la paire défendue
+                            const defenderKey = `${challenge.defender_player_1_id}-${challenge.defender_player_2_id}`;
+                            challengesMap.set(defenderKey, {
+                                expires_at: challenge.expires_at,
+                                status: challenge.status
+                            });
+                        }
                     });
                     setExistingChallenges(challengesMap);
                 }

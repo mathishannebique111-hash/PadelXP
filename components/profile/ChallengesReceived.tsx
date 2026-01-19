@@ -141,8 +141,13 @@ export default function ChallengesReceived() {
 
       if (!challengesData || challengesData.length === 0) {
         setChallenges([]);
+        // S'assurer que currentUserId est défini même s'il n'y a pas de défis
+        if (!currentUserId) setCurrentUserId(user.id);
         return;
       }
+
+      // Définir currentUserId immédiatement pour éviter la race condition
+      setCurrentUserId(user.id);
 
       // Récupérer les profils des challengers et des deux defenders
       const profileIds = new Set<string>();
@@ -434,11 +439,19 @@ export default function ChallengesReceived() {
   };
 
 
+  const visibleChallenges = challenges.filter((challenge) => {
+    // Afficher les défis non expirés OU les défis refusés (pour pouvoir les supprimer)
+    const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
+    const isNotExpired = timeRemaining && !timeRemaining.expired;
+    const isRefused = challenge.status === "refused";
+    return isNotExpired || isRefused;
+  });
+
   if (loading && challenges.length === 0) {
     return null;
   }
 
-  if (challenges.length === 0) {
+  if (visibleChallenges.length === 0) {
     return null;
   }
 
@@ -453,14 +466,7 @@ export default function ChallengesReceived() {
         </div>
 
         <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
-          {challenges
-            .filter((challenge) => {
-              // Afficher les défis non expirés OU les défis refusés (pour pouvoir les supprimer)
-              const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
-              const isNotExpired = timeRemaining && !timeRemaining.expired;
-              const isRefused = challenge.status === "refused";
-              return isNotExpired || isRefused;
-            })
+          {visibleChallenges
             .map((challenge) => {
               if (!currentUserId) return null;
 

@@ -321,11 +321,19 @@ export default function ChallengesSent() {
     );
   };
 
+  const visibleChallenges = challenges.filter((challenge) => {
+    // Afficher les défis non expirés OU les défis refusés (pour pouvoir les supprimer)
+    const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
+    const isNotExpired = timeRemaining && !timeRemaining.expired;
+    const isRefused = challenge.status === "refused";
+    return isNotExpired || isRefused;
+  });
+
   if (loading && challenges.length === 0) {
     return null;
   }
 
-  if (challenges.length === 0) {
+  if (visibleChallenges.length === 0) {
     return null;
   }
 
@@ -340,14 +348,7 @@ export default function ChallengesSent() {
         </div>
 
         <div className="space-y-2.5 sm:space-y-3">
-          {challenges
-            .filter((challenge) => {
-              // Afficher les défis non expirés OU les défis refusés (pour pouvoir les supprimer)
-              const timeRemaining = getTimeRemaining(challenge.expires_at, currentTime);
-              const isNotExpired = timeRemaining && !timeRemaining.expired;
-              const isRefused = challenge.status === "refused";
-              return isNotExpired || isRefused;
-            })
+          {visibleChallenges
             .map((challenge) => {
               const defender1Name =
                 challenge.defender_1.first_name && challenge.defender_1.last_name
