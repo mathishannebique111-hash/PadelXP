@@ -47,7 +47,7 @@ function statusLabel(status: PlayerChallenge["status"]) {
 function statusClasses(status: PlayerChallenge["status"]) {
   switch (status) {
     case "active":
-      return "bg-white/20 text-white border border-white/40";
+      return "bg-white/30 text-white border-2 border-white";
     case "upcoming":
       return "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
@@ -284,14 +284,14 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         <div className="mb-5 rounded-2xl border border-white/10 bg-gradient-to-br from-[#071554]/80 to-[#071554]/40 p-4 shadow-inner">
           <div className="mb-3 flex items-start justify-between">
             <div>
-              <div className="mb-1 text-sm font-medium text-white/60">Objectif</div>
-              <div className="text-xs text-white/90">{challenge.objective}</div>
+              <div className="mb-1 text-sm font-medium text-white">Objectif</div>
+              <div className="text-xs text-white">{challenge.objective}</div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-white">
                 {challenge.progress.current}/{challenge.progress.target}
               </div>
-              <div className="text-xs font-medium text-white/60">{Math.round(percentage)}%</div>
+              <div className="text-xs font-medium text-white">{Math.round(percentage)}%</div>
             </div>
           </div>
 
@@ -317,8 +317,8 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
         {/* Période */}
         <div className="mb-4 flex items-center gap-2 text-sm">
-          <Calendar size={16} className="text-white/60 flex-shrink-0" />
-          <span className="font-medium text-white/60">Période :</span>
+          <Calendar size={16} className="text-white flex-shrink-0" />
+          <span className="font-medium text-white">Période :</span>
           <span className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</span>
         </div>
 
