@@ -95,6 +95,57 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedQuery = playerName.trim().toLowerCase();
+
+    // 1. Si un email est fourni, rechercher globalement d'abord
+    if (email && email.trim()) {
+      const searchEmail = email.trim().toLowerCase();
+
+      // Rechercher un utilisateur existant (prioritaire)
+      const { data: existingUser } = await supabaseAdmin
+        .from('profiles')
+        .select('id, display_name, first_name, last_name, email, club_id')
+        .eq('email', searchEmail)
+        .maybeSingle();
+
+      if (existingUser) {
+        logger.info('[players/find-or-create] Found existing user by email', { userId: existingUser.id, email: searchEmail });
+        const displayName = existingUser.display_name ||
+          (existingUser.first_name && existingUser.last_name ? `${existingUser.first_name} ${existingUser.last_name}` : 'Joueur');
+
+        return NextResponse.json({
+          player: {
+            id: existingUser.id,
+            display_name: displayName,
+            email: existingUser.email,
+            type: 'user',
+            was_created: false,
+          },
+        });
+      }
+
+      // Rechercher un invité existant
+      const { data: existingGuest } = await supabaseAdmin
+        .from('guest_players')
+        .select('id, first_name, last_name, email')
+        .eq('email', searchEmail)
+        .maybeSingle();
+
+      if (existingGuest) {
+        logger.info('[players/find-or-create] Found existing guest by email', { guestId: existingGuest.id, email: searchEmail });
+        const guestDisplayName = `${existingGuest.first_name || ''} ${existingGuest.last_name || ''}`.trim() || 'Invité';
+
+        return NextResponse.json({
+          player: {
+            id: existingGuest.id,
+            display_name: guestDisplayName,
+            email: existingGuest.email,
+            type: 'guest',
+            was_created: false,
+          },
+        });
+      }
+    }
+
     const searchPattern = `%${normalizedQuery.replace(/'/g, "''")}%`;
 
     // Rechercher d'abord un membre du même club (inscrit)
@@ -115,6 +166,7 @@ export async function POST(request: NextRequest) {
           id: member.id,
           display_name: displayName,
           email: member.email || null,
+          type: 'user',
           was_created: false,
         },
       });
@@ -147,6 +199,9 @@ export async function POST(request: NextRequest) {
 
     const guestDisplayName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || firstName;
 
+    // ... (auto-extension logic remains) ...
+
+
     // Auto-extension après création de joueur (invite)
     try {
       logger.info('[players/find-or-create] Trial check after player signup', { clubId: clubId.substring(0, 8) + "…" });
@@ -173,6 +228,7 @@ export async function POST(request: NextRequest) {
         id: guest.id,
         display_name: guestDisplayName,
         email: email || null,
+        type: 'guest',
         was_created: true,
       },
     });

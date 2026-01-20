@@ -1554,7 +1554,7 @@ export default function MatchForm({
                   inputClassName="pr-[90px]"
                 />
                 <div className={`absolute z-10 flex items-center ${scopes.partner === 'guest'
-                  ? 'top-4 right-4'
+                  ? 'top-3 right-5'
                   : 'right-1 top-0 bottom-0'
                   }`}>
                   <div className="relative">
@@ -1618,7 +1618,7 @@ export default function MatchForm({
                   inputClassName="pr-[90px]"
                 />
                 <div className={`absolute z-10 flex items-center ${scopes.opp1 === 'guest'
-                  ? 'top-4 right-4'
+                  ? 'top-3 right-5'
                   : 'right-1 top-0 bottom-0'
                   }`}>
                   <div className="relative">
@@ -1676,7 +1676,7 @@ export default function MatchForm({
                   inputClassName="pr-[90px]"
                 />
                 <div className={`absolute z-10 flex items-center ${scopes.opp2 === 'guest'
-                  ? 'top-4 right-4'
+                  ? 'top-3 right-5'
                   : 'right-1 top-0 bottom-0'
                   }`}>
                   <div className="relative">

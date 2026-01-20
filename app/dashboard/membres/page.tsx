@@ -4,6 +4,7 @@ import { getUserClubInfo, getClubDashboardData } from "@/lib/utils/club-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import PageTitle from "../PageTitle";
 import Image from "next/image";
+import DeletePlayerButton from "@/components/members/DeletePlayerButton";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -151,6 +152,7 @@ export default async function MembersPage() {
               <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell">D</th>
               <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Points</th>
               <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
+              <th className="px-2 py-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -190,6 +192,13 @@ export default async function MembersPage() {
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
                     {formatDate(member.last_match_at)}
                   </td>
+                  <td className="px-2 py-2 text-right">
+                    <DeletePlayerButton
+                      playerId={member.id}
+                      playerType="member"
+                      playerName={name}
+                    />
+                  </td>
                 </tr>
               );
             })}
@@ -223,6 +232,7 @@ export default async function MembersPage() {
                   <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell">D</th>
                   <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Points</th>
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier passage</th>
+                  <th className="px-2 py-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -258,6 +268,13 @@ export default async function MembersPage() {
                       <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
                         {formatDate(visitor.last_match_at)}
                       </td>
+                      <td className="px-2 py-2 text-right">
+                        <DeletePlayerButton
+                          playerId={visitor.id}
+                          playerType="visitor"
+                          playerName={name}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
@@ -291,6 +308,7 @@ export default async function MembersPage() {
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell">Email</th>
                   <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Fréquence</th>
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
+                  <th className="px-2 py-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -323,6 +341,13 @@ export default async function MembersPage() {
                       </td>
                       <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
                         {formatDate(guest.last_match_at)}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        <DeletePlayerButton
+                          playerId={guest.id}
+                          playerType="guest"
+                          playerName={name}
+                        />
                       </td>
                     </tr>
                   );

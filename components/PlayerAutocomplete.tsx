@@ -183,8 +183,8 @@ export default function PlayerAutocomplete({
         const first_name = nameParts[0] || "";
         const last_name = nameParts.slice(1).join(" ") || "";
 
-        // Déterminer le type
-        const type: "user" | "guest" = player.email ? "user" : "guest";
+        // Déterminer le type (prioriser le type retourné par l'API)
+        const type: "user" | "guest" = (player.type as "user" | "guest") || (player.email ? "user" : "guest");
 
         const playerResult: PlayerSearchResult = {
           id: player.id,

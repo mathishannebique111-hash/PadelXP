@@ -287,6 +287,14 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     }
   }
 
+  // Récupérer les visiteurs masqués
+  const { data: hiddenVisitorsData } = await supabaseAdmin
+    .from("club_hidden_visitors")
+    .select("user_id")
+    .eq("club_id", clubId);
+
+  const hiddenVisitorIds = new Set<string>((hiddenVisitorsData || []).map(h => h.user_id));
+
   // Récupérer tous les administrateurs du club pour les exclure s'ils ne sont que des admins
   const { data: clubAdmins, error: adminsError } = await supabaseAdmin
     .from("club_admins")
@@ -540,7 +548,10 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
   history.matches.forEach(match => {
     [...match.team1, ...match.team2].forEach(p => {
       if (p.player_type === "user" && p.user_id && !p.isClubMember) {
-        uniqueVisitorIds.add(p.user_id);
+        // Double sécurité : on vérifie aussi qu'il n'est pas dans la liste des membres actuelle
+        if (!memberIdSet.has(p.user_id)) {
+          uniqueVisitorIds.add(p.user_id);
+        }
       }
     });
   });
@@ -710,12 +721,16 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
 
   // Trier les visiteurs
   visitors.sort((a, b) => b.matches - a.matches);
+
+  // Filtrer les visiteurs masqués
+  const visibleVisitors = visitors.filter(v => !hiddenVisitorIds.has(v.id));
+
   // Trier les invités
   guests.sort((a, b) => b.matches - a.matches);
 
   return {
     members: membersWithStats,
-    visitors,
+    visitors: visibleVisitors,
     guests,
     leaderboard,
   };
