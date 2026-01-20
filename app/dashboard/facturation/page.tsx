@@ -351,11 +351,8 @@ export default async function BillingPage() {
   const adminContact = user.email;
 
   // Calculer les prix automatiquement
-  const MONTHLY_PRICE = 79;
-  const ANNUAL_DISCOUNT = 0.15; // 15%
+  const MONTHLY_PRICE = 39;
 
-  const annualMonthlyPrice = 67; // 67€/mois
-  const annualTotalPrice = 804; // 804€ par an
 
   // Informations sur une activation programmée après l'essai
   const hasScheduledActivation =
@@ -367,9 +364,7 @@ export default async function BillingPage() {
     (subscription?.current_period_start && new Date(subscription.current_period_start)) ||
     trialEndDate;
   const scheduledPlanLabel: string | null = subscription?.plan_cycle
-    ? subscription.plan_cycle === "monthly"
-      ? "abonnement mensuel"
-      : "abonnement annuel"
+    ? "abonnement mensuel"
     : null;
 
   const formatDate = (date: Date | null): string => {
@@ -383,7 +378,7 @@ export default async function BillingPage() {
 
   // Price IDs (Stripe) depuis variables d'environnement publiques
   const PRICE_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "";
-  const PRICE_ANNUAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || "";
+
 
   return (
     <div className="relative">
@@ -454,11 +449,9 @@ export default async function BillingPage() {
                   {!isCanceled && subscriptionStatus === "active" && (
                     <span className="rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-sm font-semibold text-emerald-300">
                       Abonnement actif
-                      {currentPlan && (
-                        <span className="ml-2 text-xs">
-                          ({currentPlan === "monthly" ? "Mensuel" : "Annuel"})
-                        </span>
-                      )}
+                      <span className="ml-2 text-xs">
+                        (Mensuel)
+                      </span>
                     </span>
                   )}
                   {!isCanceled && subscriptionStatus === "payment_pending" && (
@@ -672,122 +665,65 @@ export default async function BillingPage() {
             <p className="text-xs sm:text-sm text-white/60">Les réductions s'appliquent automatiquement.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
-            {/* Mensuel */}
-            {/*
+          <div className="flex justify-center">
+            <div className="w-full max-w-md">
+              {/* Mensuel */}
+              {/*
             Plan actuel n'apparaît que si l'abonnement est réellement actif (ou paiement en attente).
           */}
-            <div
-              className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled
-                ? "border-white/70 bg-gradient-to-br from-white/20 via-slate-100/10 to-white/20 shadow-[0_10px_35px_rgba(255,255,255,0.25)]"
-                : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
-                }`}
-            >
-              {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled && (
-                <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                  <span className="rounded-full border-2 border-white/80 bg-gradient-to-r from-white to-slate-200 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-slate-800 shadow-lg">
-                    <Check className="w-3 h-3 inline mr-1" /> Plan actuel
-                  </span>
+              <div
+                className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled
+                  ? "border-white/70 bg-gradient-to-br from-white/20 via-slate-100/10 to-white/20 shadow-[0_10px_35px_rgba(255,255,255,0.25)]"
+                  : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
+                  }`}
+              >
+                {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled && (
+                  <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
+                    <span className="rounded-full border-2 border-white/80 bg-gradient-to-r from-white to-slate-200 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-slate-800 shadow-lg">
+                      <Check className="w-3 h-3 inline mr-1" /> Plan actuel
+                    </span>
+                  </div>
+                )}
+                <div className="mb-3 sm:mb-4">
+                  <h3 className="text-lg sm:text-xl font-extrabold text-white">Mensuel</h3>
                 </div>
-              )}
-              <div className="mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl font-extrabold text-white">Mensuel</h3>
+                <div className="mb-4 sm:mb-5">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-white">{MONTHLY_PRICE}€</span>
+                    <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
+                  </div>
+                </div>
+                <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
+                  <div className="flex items-center">
+                    <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
+                    <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation mensuelle</div>
+                  </div>
+                </div>
+                {isTrialActive && !hasChosenPlan ? (
+                  <NewSubscriptionCheckoutButton
+                    plan="monthly"
+                    disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
+                    className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
+                      ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
+                      }`}
+                  >
+                    {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
+                  </NewSubscriptionCheckoutButton>
+                ) : (
+                  <StripeCheckoutButton
+                    priceId={PRICE_MONTHLY}
+                    mode="subscription"
+                    disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
+                    className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
+                      ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
+                      }`}
+                  >
+                    {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
+                  </StripeCheckoutButton>
+                )}
               </div>
-              <div className="mb-4 sm:mb-5">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-white">{MONTHLY_PRICE}€</span>
-                  <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
-                </div>
-              </div>
-              <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-                <div className="flex items-center">
-                  <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
-                  <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation mensuelle</div>
-                </div>
-              </div>
-              {isTrialActive && !hasChosenPlan ? (
-                <NewSubscriptionCheckoutButton
-                  plan="monthly"
-                  disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </NewSubscriptionCheckoutButton>
-              ) : (
-                <StripeCheckoutButton
-                  priceId={PRICE_MONTHLY}
-                  mode="subscription"
-                  disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </StripeCheckoutButton>
-              )}
-            </div>
-
-
-
-            {/* Annuel */}
-            <div className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled
-              ? "border-emerald-400/80 bg-gradient-to-br from-emerald-500/20 via-emerald-600/10 to-emerald-500/20 shadow-[0_8px_32px_rgba(16,185,129,0.25)]"
-              : "border-yellow-400/60 bg-gradient-to-br from-yellow-500/15 via-amber-600/10 to-yellow-500/15 shadow-[0_12px_40px_rgba(234,179,8,0.3)]"
-              }`}>
-              {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled && (
-                <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                  <span className="rounded-full border-2 border-emerald-400 bg-emerald-500 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white shadow-lg">
-                    <Check className="w-3 h-3 inline mr-1" /> Plan actuel
-                  </span>
-                </div>
-              )}
-              <div className="mb-3 sm:mb-4">
-                <h3 className="text-lg sm:text-xl font-extrabold text-white">Annuel</h3>
-              </div>
-              <div className="mb-4 sm:mb-5">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-white">{Math.round(annualMonthlyPrice)}€</span>
-                  <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
-                </div>
-                <div className="text-[10px] sm:text-xs text-white/60 mt-0.5 sm:mt-1">
-                  {Math.round(annualTotalPrice)}€ par an
-                </div>
-              </div>
-              <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-                <div className="text-xs sm:text-sm text-yellow-300 font-extrabold">Économisez {Math.round((1 - annualMonthlyPrice / MONTHLY_PRICE) * 100)}% par rapport à l'offre mensuelle</div>
-                <div className="flex items-center">
-                  <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
-                  <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation annuelle</div>
-                </div>
-              </div>
-              {isTrialActive && !hasChosenPlan ? (
-                <NewSubscriptionCheckoutButton
-                  plan="annual"
-                  disabled={((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </NewSubscriptionCheckoutButton>
-              ) : (
-                <StripeCheckoutButton
-                  priceId={PRICE_ANNUAL}
-                  mode="subscription"
-                  disabled={((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL}
-                  className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_ANNUAL
-                    ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-yellow-500 to-amber-600 text-white border-2 border-yellow-400/50 shadow-[0_6px_20px_rgba(234,179,8,0.4)] hover:shadow-[0_8px_28px_rgba(234,179,8,0.5)] hover:scale-105 active:scale-100"
-                    }`}
-                >
-                  {currentPlan === "annual" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                </StripeCheckoutButton>
-              )}
             </div>
           </div>
         </section>
@@ -819,7 +755,7 @@ export default async function BillingPage() {
               <div className="rounded-xl border border-white/10 bg-blue-500/10 p-4">
                 <div className="text-xs text-white/60 mb-1">Prochaine échéance</div>
                 <div className="text-sm text-white">
-                  {formatDate(nextBillingDate)} — {currentPlan === "monthly" ? "Mensuel" : "Annuel"}
+                  {formatDate(nextBillingDate)} — Mensuel
                 </div>
                 <div className="text-xs text-white/60 mt-1">Taxes applicables selon votre pays</div>
               </div>

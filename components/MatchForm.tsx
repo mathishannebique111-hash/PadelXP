@@ -1553,7 +1553,7 @@ export default function MatchForm({
                   searchScope={scopes.partner}
                   inputClassName="pr-[90px]"
                 />
-                <div className="absolute right-1 top-1 bottom-1 flex items-center">
+                <div className="absolute right-1 top-1 h-[48px] flex items-center">
                   <select
                     value={scopes.partner}
                     onChange={(e) => setScopes(prev => ({ ...prev, partner: e.target.value as any }))}
@@ -1614,7 +1614,7 @@ export default function MatchForm({
                   searchScope={scopes.opp1}
                   inputClassName="pr-[90px]"
                 />
-                <div className="absolute right-1 top-1 bottom-1 flex items-center">
+                <div className="absolute right-1 top-1 h-[48px] flex items-center">
                   <select
                     value={scopes.opp1}
                     onChange={(e) => setScopes(prev => ({ ...prev, opp1: e.target.value as any }))}
@@ -1669,7 +1669,7 @@ export default function MatchForm({
                   searchScope={scopes.opp2}
                   inputClassName="pr-[90px]"
                 />
-                <div className="absolute right-1 top-1 bottom-1 flex items-center">
+                <div className="absolute right-1 top-1 h-[48px] flex items-center">
                   <select
                     value={scopes.opp2}
                     onChange={(e) => setScopes(prev => ({ ...prev, opp2: e.target.value as any }))}

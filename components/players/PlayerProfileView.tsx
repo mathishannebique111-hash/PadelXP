@@ -351,9 +351,9 @@ export default function PlayerProfileView({
             onClick={() => {
               // Retourner à l'onglet d'origine si spécifié, sinon /home
               if (fromTab === 'leaderboard') {
-                router.push("/home?tab=leaderboard");
+                router.push("/club?tab=classement");
               } else if (fromTab === 'partners') {
-                router.push("/home?tab=partners");
+                router.push("/match/new?tab=partners");
               } else {
                 router.push("/home");
               }

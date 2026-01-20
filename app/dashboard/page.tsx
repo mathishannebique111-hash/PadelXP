@@ -4,7 +4,6 @@ import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { redirect } from "next/navigation";
 import InvitationCodeCard from "./InvitationCodeCard";
 import PageTitle from "./PageTitle";
-import ClubNameChangeForm from "./ClubNameChangeForm";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import Image from "next/image";
 import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
@@ -304,11 +303,6 @@ export default async function DashboardHome() {
       <header>
         <PageTitle title="Tableau de bord" subtitle="Bienvenue dans votre espace club / complexe" />
       </header>
-
-      {/* Formulaire temporaire de changement de nom */}
-      {clubId && club?.name && (
-        <ClubNameChangeForm clubId={clubId} initialName={club.name} />
-      )}
 
       {/* Progress bar pour débloquer l'extension automatique */}
       {daysRemaining !== null && daysRemaining > 0 && !club?.auto_extension_unlocked && (

@@ -120,6 +120,16 @@ export type ClubMember = {
   last_match_at: string | null;
 };
 
+export type ClubGuest = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  created_at: string | null;
+  matches: number;
+  last_match_at: string | null;
+};
+
 export type ClubLeaderboardRow = {
   user_id: string;
   player_name: string;
@@ -251,12 +261,12 @@ export async function getUserClubId(): Promise<string | null> {
   return clubId;
 }
 
-export async function getClubDashboardData(clubId: string | null, clubSlug?: string | null): Promise<{ members: ClubMember[]; visitors: ClubMember[]; leaderboard: ClubLeaderboardRow[] }> {
+export async function getClubDashboardData(clubId: string | null, clubSlug?: string | null): Promise<{ members: ClubMember[]; visitors: ClubMember[]; guests: ClubGuest[]; leaderboard: ClubLeaderboardRow[] }> {
   if (!clubId || !supabaseAdmin) {
     if (!supabaseAdmin) {
       logger.warn({}, "[getClubDashboardData] Supabase admin client not configured");
     }
-    return { members: [], visitors: [], leaderboard: [] };
+    return { members: [], visitors: [], guests: [], leaderboard: [] };
   }
 
   let resolvedSlug: string | null = clubSlug ?? null;
@@ -302,7 +312,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
 
   if (profilesError) {
     logger.error({ clubId: clubId.substring(0, 8) + "…", error: profilesError }, "[getClubDashboardData] Failed to load club members");
-    return { members: [], visitors: [], leaderboard: [] };
+    return { members: [], visitors: [], guests: [], leaderboard: [] };
   }
 
   // Vérifier quels admins ont participé à des matchs (donc sont vraiment des joueurs)
@@ -380,7 +390,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
       rank: idx + 1,
     }));
 
-    return { members, visitors: [], leaderboard: leaderboardFallback };
+    return { members, visitors: [], guests: [], leaderboard: leaderboardFallback };
   }
 
   history.matches.forEach((match) => {
@@ -471,120 +481,240 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
   // Récupérer les joueurs non-membres qui ont joué dans ce club
 
   const visitors: ClubMember[] = [];
+  const guests: ClubGuest[] = [];
 
   // 1. Récupérer les matchs joués dans ce club
   const { data: locationMatches, error: locationMatchesError } = await supabaseAdmin
     .from("matches")
     .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at")
     .eq("location_club_id", clubId)
-    .eq("status", "confirmed")
+    .neq("status", "cancelled")
     .order("created_at", { ascending: false });
 
-  if (locationMatches && locationMatches.length > 0) {
-    const locationMatchIds = locationMatches.map(m => m.id);
+  if (locationMatchesError) {
+    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: locationMatchesError }, "[getClubDashboardData] Failed to load location matches");
+  }
 
-    // 2. Récupérer tous les participants de ces matchs
-    const { data: locationParticipants, error: locPartError } = await supabaseAdmin
+  const locMatchesMap = new Map<string, any>();
+  let locationMatchIds: string[] = [];
+
+  if (locationMatches && locationMatches.length > 0) {
+    locationMatchIds = locationMatches.map(m => m.id);
+    locationMatches.forEach(m => {
+      const winner_team = m.winner_team_id
+        ? m.winner_team_id === m.team1_id ? 1 : m.winner_team_id === m.team2_id ? 2 : null
+        : m.score_team1 != null && m.score_team2 != null && m.score_team1 !== m.score_team2
+          ? m.score_team1 > m.score_team2 ? 1 : 2
+          : null;
+      locMatchesMap.set(m.id, { ...m, winner_team });
+    });
+  }
+
+  // 2. Récupérer les participants "user" pour les matchs du lieu
+  let locationParticipants: { user_id: string | null; match_id: string; team: number | null; player_type: string }[] = [];
+
+  if (locationMatchIds.length > 0) {
+    const { data: parts, error: partsError } = await supabaseAdmin
       .from("match_participants")
       .select("user_id, match_id, team, player_type")
       .in("match_id", locationMatchIds)
-      .eq("player_type", "user"); // On ne s'intéresse qu'aux utilisateurs inscrits
+      .eq("player_type", "user");
 
-    if (locationParticipants && locationParticipants.length > 0) {
-      // 3. Identifier les visiteurs (ceux qui ne sont PAS dans memberIdSet et pas null)
-      const uniqueVisitorIds = new Set<string>();
-      locationParticipants.forEach(p => {
-        if (p.user_id && !memberIdSet.has(p.user_id)) {
-          uniqueVisitorIds.add(p.user_id);
-        }
+    if (parts) {
+      locationParticipants = parts;
+    }
+  }
+
+  // --- LOGIQUE VISITEURS ---
+  const uniqueVisitorIds = new Set<string>();
+
+  // A. De locationParticipants (ceux qui ne sont pas membres)
+  locationParticipants.forEach(p => {
+    if (p.user_id && !memberIdSet.has(p.user_id)) {
+      uniqueVisitorIds.add(p.user_id);
+    }
+  });
+
+  // B. De l'historique du club (joueurs non-membres dans les matchs du club)
+  history.matches.forEach(match => {
+    [...match.team1, ...match.team2].forEach(p => {
+      if (p.player_type === "user" && p.user_id && !p.isClubMember) {
+        uniqueVisitorIds.add(p.user_id);
+      }
+    });
+  });
+
+  if (uniqueVisitorIds.size > 0) {
+    // 4. Récupérer les profils des visiteurs
+    const { data: visitorProfiles, error: visProfError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, first_name, last_name, email, created_at")
+      .in("id", Array.from(uniqueVisitorIds));
+
+    if (visitorProfiles && visitorProfiles.length > 0) {
+      // Initialiser les stats visiteurs
+      const visitorStats = new Map<string, ClubMember>();
+      visitorProfiles.forEach(p => {
+        visitorStats.set(p.id, {
+          id: p.id,
+          display_name: p.display_name ?? null,
+          first_name: p.first_name ?? null,
+          last_name: p.last_name ?? null,
+          email: p.email ?? null,
+          created_at: p.created_at ?? null,
+          wins: 0,
+          losses: 0,
+          matches: 0,
+          points: 0,
+          last_match_at: null
+        });
       });
 
-      if (uniqueVisitorIds.size > 0) {
-        // 4. Récupérer les profils des visiteurs
-        const { data: visitorProfiles, error: visProfError } = await supabaseAdmin
-          .from("profiles")
-          .select("id, display_name, first_name, last_name, email, created_at")
-          .in("id", Array.from(uniqueVisitorIds));
+      // 5. Calculer les stats sur tous les matchs pertinents
+      const processedMatchIds = new Set<string>();
 
-        if (visitorProfiles && visitorProfiles.length > 0) {
-          // Initialiser les stats visiteurs
-          const visitorStats = new Map<string, ClubMember>();
-          visitorProfiles.forEach(p => {
-            visitorStats.set(p.id, {
-              id: p.id,
-              display_name: p.display_name ?? null,
-              first_name: p.first_name ?? null,
-              last_name: p.last_name ?? null,
-              email: p.email ?? null,
-              created_at: p.created_at ?? null,
-              wins: 0,
-              losses: 0,
-              matches: 0,
-              points: 0,
-              last_match_at: null
-            });
-          });
+      // A. Parcourir les matchs de l'historique (impliquant au moins un membre)
+      history.matches.forEach(match => {
+        const winner_team = match.winner_team;
+        const matchDate = match.created_at;
 
-          // 5. Calculer les stats UNIQUEMENT sur les matchs du club (locationMatches)
-          // Créer une map des matchs du club pour accès rapide
-          const locMatchesMap = new Map<string, any>();
-          locationMatches.forEach(m => {
-            // Calculer winner team si pas direct
-            const winner_team = m.winner_team_id
-              ? m.winner_team_id === m.team1_id ? 1 : m.winner_team_id === m.team2_id ? 2 : null
-              : m.score_team1 != null && m.score_team2 != null && m.score_team1 !== m.score_team2
-                ? m.score_team1 > m.score_team2 ? 1 : 2
-                : null;
-            locMatchesMap.set(m.id, { ...m, winner_team });
-          });
-
-          // Parcourir les participants pour accumuler les stats
-          locationParticipants.forEach(p => {
-            if (!p.user_id || !visitorStats.has(p.user_id)) return;
-
-            const visitor = visitorStats.get(p.user_id)!;
-            const match = locMatchesMap.get(p.match_id);
-            if (!match) return;
-
-            visitor.matches += 1;
-
-            if (match.created_at) {
-              if (!visitor.last_match_at || new Date(match.created_at) > new Date(visitor.last_match_at)) {
-                visitor.last_match_at = match.created_at;
-              }
-            }
-
-            if (match.winner_team) {
-              const myTeam = p.team; // 1 ou 2
-              // Warning: team field in match_participants is int, match.winner_team logic above produces 1 or 2
-              // Assume p.team is stored as 1 or 2 in DB or mapped correctly? 
-              // Check mapping in getClubMatchHistory: `teamNormalized` logic.
-              // Let's assume standard 1/2.
-              if (myTeam === match.winner_team) {
-                visitor.wins += 1;
-              } else {
-                visitor.losses += 1;
+        [match.team1, match.team2].forEach((teamPlayers, teamIndex) => {
+          const teamNumber = (teamIndex + 1) as 1 | 2;
+          teamPlayers.forEach(player => {
+            if (player.player_type === "user" && player.user_id && !player.isClubMember) {
+              const visitor = visitorStats.get(player.user_id);
+              if (visitor) {
+                visitor.matches += 1;
+                if (winner_team) {
+                  if (winner_team === teamNumber) visitor.wins += 1;
+                  else visitor.losses += 1;
+                }
+                if (matchDate && (!visitor.last_match_at || new Date(matchDate) > new Date(visitor.last_match_at))) {
+                  visitor.last_match_at = matchDate;
+                }
               }
             }
           });
+        });
+        processedMatchIds.add(match.id);
+      });
 
-          // Calculer les points (juste pour info, même formule ?)
-          // On peut garder wins*10 + losses*3 pour cohérence
-          visitorStats.forEach(v => {
-            v.points = v.wins * 10 + v.losses * 3;
-            visitors.push(v);
-          });
+      // B. Parcourir les matchs au lieu du club qui n'auraient pas été dans l'historique membres
+      locationParticipants.forEach(p => {
+        if (!p.user_id || !visitorStats.has(p.user_id) || processedMatchIds.has(p.match_id)) return;
+
+        const visitor = visitorStats.get(p.user_id)!;
+        const match = locMatchesMap.get(p.match_id);
+        if (!match) return;
+
+        visitor.matches += 1;
+        if (match.created_at && (!visitor.last_match_at || new Date(match.created_at) > new Date(visitor.last_match_at))) {
+          visitor.last_match_at = match.created_at;
         }
+
+      });
+
+      visitorStats.forEach(v => visitors.push(v));
+    }
+  }
+
+  // --- LOGIQUE INVITÉS (GUESTS) ---
+  const uniqueGuestIds = new Set<string>();
+
+  // Identifier tous les IDs d'invités dans les deux sources (location et history)
+  if (locationMatchIds && locationMatchIds.length > 0) {
+    const { data: locGuestParts } = await supabaseAdmin
+      .from("match_participants")
+      .select("guest_player_id")
+      .in("match_id", locationMatchIds)
+      .eq("player_type", "guest");
+
+    (locGuestParts || []).forEach(p => {
+      if (p.guest_player_id) uniqueGuestIds.add(p.guest_player_id);
+    });
+  }
+
+  history.matches.forEach(match => {
+    [...match.team1, ...match.team2].forEach(p => {
+      if (p.player_type === "guest" && p.guest_player_id) {
+        uniqueGuestIds.add(p.guest_player_id);
       }
+    });
+  });
+
+  if (uniqueGuestIds.size > 0) {
+    const { data: guestProfiles } = await supabaseAdmin
+      .from("guest_players")
+      .select("id, first_name, last_name, email, created_at")
+      .in("id", Array.from(uniqueGuestIds));
+
+    if (guestProfiles && guestProfiles.length > 0) {
+      const guestStats = new Map<string, ClubGuest>();
+      guestProfiles.forEach(p => {
+        guestStats.set(p.id, {
+          id: p.id,
+          first_name: p.first_name ?? null,
+          last_name: p.last_name ?? null,
+          email: p.email ?? null,
+          created_at: p.created_at ?? null,
+          matches: 0,
+          last_match_at: null
+        });
+      });
+
+      const processedGuestMatchIds = new Set<string>();
+
+      // Stats via historique
+      history.matches.forEach(match => {
+        [...match.team1, ...match.team2].forEach(p => {
+          if (p.player_type === "guest" && p.guest_player_id) {
+            const guest = guestStats.get(p.guest_player_id);
+            if (guest) {
+              guest.matches += 1;
+              if (match.created_at && (!guest.last_match_at || new Date(match.created_at) > new Date(guest.last_match_at))) {
+                guest.last_match_at = match.created_at;
+              }
+            }
+          }
+        });
+        processedGuestMatchIds.add(match.id);
+      });
+
+      // Stats via location matches (pour ceux pas dans history membres)
+      if (locationMatchIds && locationMatchIds.length > 0) {
+        const { data: locAllGuestParts } = await supabaseAdmin
+          .from("match_participants")
+          .select("match_id, guest_player_id")
+          .in("match_id", locationMatchIds)
+          .eq("player_type", "guest");
+
+        (locAllGuestParts || []).forEach(p => {
+          if (p.guest_player_id && !processedGuestMatchIds.has(p.match_id)) {
+            const guest = guestStats.get(p.guest_player_id);
+            if (guest) {
+              guest.matches += 1;
+              const match = locMatchesMap.get(p.match_id);
+              if (match?.created_at && (!guest.last_match_at || new Date(match.created_at) > new Date(guest.last_match_at))) {
+                guest.last_match_at = match.created_at;
+              }
+            }
+          }
+        });
+      }
+
+      guestStats.forEach(g => guests.push(g));
     }
   }
 
   // Trier les visiteurs
-  visitors.sort((a, b) => b.matches - a.matches); // Par nombre de matchs décroissant par défaut
+  visitors.sort((a, b) => b.matches - a.matches);
+  // Trier les invités
+  guests.sort((a, b) => b.matches - a.matches);
 
   return {
     members: membersWithStats,
     visitors,
+    guests,
     leaderboard,
   };
 }
@@ -827,6 +957,8 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
       clubTeam = 1;
     } else if (clubTeam2Count > 0 && clubTeam1Count === 0) {
       clubTeam = 2;
+    } else if (clubTeam1Count > 0 && clubTeam2Count === 0) {
+      // should not happen given logic above
     } else if (clubTeam1Count > 0 && clubTeam2Count > 0) {
       clubTeam = null; // match interne
     }
