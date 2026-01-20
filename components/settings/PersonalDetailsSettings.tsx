@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User, Save, Loader2, Check } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { updateProfile } from "@/app/(protected)/settings/actions";
 
 export default function PersonalDetailsSettings() {
     const [firstName, setFirstName] = useState("");
@@ -69,27 +70,7 @@ export default function PersonalDetailsSettings() {
         setSuccess(false);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setError("Utilisateur non connecté");
-                setSaving(false);
-                return;
-            }
-
-            const { error: updateError } = await supabase
-                .from("profiles")
-                .update({
-                    first_name: trimmedFirstName,
-                    last_name: trimmedLastName
-                })
-                .eq("id", user.id);
-
-            if (updateError) {
-                logger.error("[PersonalDetailsSettings] Error updating profile:", updateError);
-                setError("Erreur lors de la mise à jour");
-                setSaving(false);
-                return;
-            }
+            await updateProfile(trimmedFirstName, trimmedLastName);
 
             // Mettre à jour les valeurs originales
             setOriginalFirstName(trimmedFirstName);
@@ -100,7 +81,7 @@ export default function PersonalDetailsSettings() {
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {
             logger.error("[PersonalDetailsSettings] Error saving:", err);
-            setError("Erreur lors de la sauvegarde");
+            setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde");
         } finally {
             setSaving(false);
         }

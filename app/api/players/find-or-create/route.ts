@@ -181,6 +181,28 @@ export async function POST(request: NextRequest) {
     // Capitaliser automatiquement le prénom et le nom
     const { firstName, lastName } = capitalizeFullName(rawFirstName, rawLastName || '');
 
+    // CHECK DUPLICATE GUEST BY NAME FOR THIS USER
+    const { data: existingGuestByName } = await supabaseAdmin
+      .from('guest_players')
+      .select('id, first_name, last_name, email')
+      .eq('first_name', firstName)
+      .eq('last_name', lastName)
+      .eq('invited_by_user_id', user.id)
+      .maybeSingle();
+
+    if (existingGuestByName) {
+      logger.info('[players/find-or-create] Found existing guest by name', { guestId: existingGuestByName.id, name: `${firstName} ${lastName}` });
+      return NextResponse.json({
+        player: {
+          id: existingGuestByName.id,
+          display_name: `${existingGuestByName.first_name} ${existingGuestByName.last_name}`,
+          email: existingGuestByName.email || null,
+          type: 'guest',
+          was_created: false,
+        },
+      });
+    }
+
     const { data: guest, error: guestError } = await supabaseAdmin
       .from('guest_players')
       .insert({
