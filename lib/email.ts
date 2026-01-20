@@ -307,14 +307,14 @@ export async function sendGuestMatchInvitationEmail(
                   Score: ${matchScore}
                 </div>
                 
-                <p>Pour confirmer ce match, voir tes statistiques et suivre ta progression, rejoins PadelXP gratuitement !</p>
+                <p>Clique sur le bouton ci-dessous pour confirmer ta participation et recevoir les nouvelles du club si tu le souhaites.</p>
                 
                 <div style="text-align: center;">
-                  <a href="${targetUrl}" class="button">Rejoindre PadelXP</a>
+                  <a href="${targetUrl}" class="button">Confirmer le match</a>
                 </div>
                 
                 <p style="margin-top: 30px; font-size: 12px; color: #666;">
-                  PadelXP est l'application ultime pour suivre tes matchs, ton classement et ta progression au Padel.
+                  Si ce n'est pas toi, tu peux ignorer cet email.
                 </p>
               </div>
             </div>

@@ -47,7 +47,7 @@ function statusLabel(status: PlayerChallenge["status"]) {
 function statusClasses(status: PlayerChallenge["status"]) {
   switch (status) {
     case "active":
-      return "bg-white/30 text-white border-2 border-white";
+      return "bg-white/30 text-white border border-white";
     case "upcoming":
       return "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
@@ -225,7 +225,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
       {/* Carte du challenge */}
       <div className={`group relative rounded-2xl border-2 p-4 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
-        ? "border-padel-green bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 shadow-emerald-500/20"
+        ? "border-blue-500 bg-gradient-to-br from-blue-600/10 via-black/40 to-black/20 shadow-blue-500/20"
         : isFailed
           ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
           : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-xl"
@@ -299,8 +299,8 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
           <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
             <div
               className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${isCompleted
-                ? "bg-padel-green shadow-lg shadow-padel-green/50"
-                : "bg-padel-green shadow-lg shadow-padel-green/30"
+                ? "bg-blue-500 shadow-lg shadow-blue-500/50"
+                : "bg-blue-500 shadow-lg shadow-blue-500/30"
                 }`}
               style={{ width: `${percentage}%` }}
             />
@@ -308,7 +308,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
           {/* Indicateur de récompense réclamée */}
           {challenge.rewardClaimed && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-300">
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-500/15 px-3 py-2 text-sm font-medium text-blue-300">
               <span>✅</span>
               <span>Récompense réclamée</span>
             </div>
@@ -328,7 +328,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
             <button
               onClick={claimReward}
               disabled={claiming}
-              className="group relative w-full overflow-hidden rounded-xl bg-padel-green px-4 py-3 font-bold text-[#071554] shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-padel-green/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+              className="group relative w-full overflow-hidden rounded-xl bg-blue-600 px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
             >
               {/* Effet de brillance animé */}
               <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
@@ -356,16 +356,16 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
         {/* Message de challenge terminé */}
         {isExpired && (
           <div className={`mb-5 rounded-2xl border px-4 py-3 ${isCompleted
-            ? "border-emerald-500/40 bg-emerald-500/10"
+            ? "border-blue-500/40 bg-blue-500/10"
             : "border-red-500/40 bg-red-500/10"
             }`}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">{isCompleted ? "✅" : "❌"}</span>
               <div>
-                <div className={`font-bold ${isCompleted ? "text-emerald-300" : "text-red-300"}`}>
+                <div className={`font-bold ${isCompleted ? "text-blue-300" : "text-red-300"}`}>
                   Challenge terminé
                 </div>
-                <div className={`text-sm ${isCompleted ? "text-emerald-200/80" : "text-red-200/80"}`}>
+                <div className={`text-sm ${isCompleted ? "text-blue-200/80" : "text-red-200/80"}`}>
                   {isCompleted
                     ? "Félicitations ! Vous avez réussi ce challenge !"
                     : "Ce challenge n'a pas été complété à temps."}

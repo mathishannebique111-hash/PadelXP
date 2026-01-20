@@ -218,12 +218,11 @@ export default async function MembersPage() {
               <thead>
                 <tr className="bg-white/10 text-left text-[10px] sm:text-xs uppercase tracking-wide text-white/60">
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">Joueur</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell">Email</th>
-                  <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Matchs (Ici)</th>
+                  <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Fréquence</th>
                   <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell">V</th>
                   <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell">D</th>
                   <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Points</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
+                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier passage</th>
                 </tr>
               </thead>
               <tbody>
@@ -242,8 +241,11 @@ export default async function MembersPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell truncate max-w-[200px]">{visitor.email || "—"}</td>
-                      <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold tabular-nums">{visitor.matches}</td>
+                      <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] sm:text-xs">
+                          A joué {visitor.matches} fois dans votre club
+                        </span>
+                      </td>
                       <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell text-emerald-300 tabular-nums">
                         {visitor.wins}
                       </td>
@@ -287,13 +289,16 @@ export default async function MembersPage() {
                 <tr className="bg-white/10 text-left text-[10px] sm:text-xs uppercase tracking-wide text-white/60">
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">Joueur</th>
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell">Email</th>
-                  <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Matchs (Ici)</th>
+                  <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Fréquence</th>
                   <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
                 </tr>
               </thead>
               <tbody>
                 {guests.map((guest) => {
                   const name = `${guest.first_name ?? ""} ${guest.last_name ?? ""}`.trim() || "Invité";
+                  // On affiche l'email seulement si le consentement marketing est donné
+                  const showEmail = guest.marketing_consent;
+
                   return (
                     <tr key={guest.id} className="border-t border-white/10 text-xs sm:text-sm text-white/80">
                       <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">
@@ -304,8 +309,18 @@ export default async function MembersPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell truncate max-w-[200px]">{guest.email || "—"}</td>
-                      <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold tabular-nums">{guest.matches}</td>
+                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell truncate max-w-[200px]">
+                        {showEmail ? (
+                          <span className="text-white/90">{guest.email}</span>
+                        ) : (
+                          <span className="text-white/30 italic">Masqué (Défaut)</span>
+                        )}
+                      </td>
+                      <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">
+                        <span className="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] sm:text-xs">
+                          A joué {guest.matches} fois dans votre club
+                        </span>
+                      </td>
                       <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
                         {formatDate(guest.last_match_at)}
                       </td>

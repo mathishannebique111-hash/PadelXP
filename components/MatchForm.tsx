@@ -1553,18 +1553,22 @@ export default function MatchForm({
                   searchScope={scopes.partner}
                   inputClassName="pr-[90px]"
                 />
-                <div className="absolute right-1 top-1 h-[48px] flex items-center">
+                <div className={`absolute flex items-center z-10 ${scopes.partner === 'guest'
+                    ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
+                    : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
+                  }`}>
                   <select
                     value={scopes.partner}
                     onChange={(e) => setScopes(prev => ({ ...prev, partner: e.target.value as any }))}
-                    className="h-[80%] my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none"
+                    className="my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none h-[32px]"
                   >
                     <option value="club">Club</option>
                     <option value="global">Global</option>
                     <option value="guest">Invité</option>
                   </select>
                 </div>
-                <div className="absolute right-2 top-0 bottom-0 flex items-center pointer-events-none z-10 font-bold">
+                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.partner === 'guest' ? 'top-4 right-6 pt-2' : 'right-2 top-0 bottom-0'
+                  }`}>
                   <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
                 </div>
               </div>
@@ -1614,18 +1618,22 @@ export default function MatchForm({
                   searchScope={scopes.opp1}
                   inputClassName="pr-[90px]"
                 />
-                <div className="absolute right-1 top-1 h-[48px] flex items-center">
+                <div className={`absolute flex items-center z-10 ${scopes.opp1 === 'guest'
+                    ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
+                    : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
+                  }`}>
                   <select
                     value={scopes.opp1}
                     onChange={(e) => setScopes(prev => ({ ...prev, opp1: e.target.value as any }))}
-                    className="h-[80%] my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none"
+                    className="my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none h-[32px]"
                   >
                     <option value="club">Club</option>
                     <option value="global">Global</option>
                     <option value="guest">Invité</option>
                   </select>
                 </div>
-                <div className="absolute right-2 top-0 bottom-0 flex items-center pointer-events-none z-10 font-bold">
+                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.opp1 === 'guest' ? 'top-4 right-6 pt-2' : 'right-2 top-0 bottom-0'
+                  }`}>
                   <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
                 </div>
               </div>
@@ -1669,18 +1677,22 @@ export default function MatchForm({
                   searchScope={scopes.opp2}
                   inputClassName="pr-[90px]"
                 />
-                <div className="absolute right-1 top-1 h-[48px] flex items-center">
+                <div className={`absolute flex items-center z-10 ${scopes.opp2 === 'guest'
+                    ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
+                    : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
+                  }`}>
                   <select
                     value={scopes.opp2}
                     onChange={(e) => setScopes(prev => ({ ...prev, opp2: e.target.value as any }))}
-                    className="h-[80%] my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none"
+                    className="my-auto bg-white text-[#071554] text-[10px] font-bold rounded-md px-2 pr-6 outline-none border-2 border-[#071554] cursor-pointer transition-colors shadow-sm appearance-none h-[32px]"
                   >
                     <option value="club">Club</option>
                     <option value="global">Global</option>
                     <option value="guest">Invité</option>
                   </select>
                 </div>
-                <div className="absolute right-2 top-0 bottom-0 flex items-center pointer-events-none z-10 font-bold">
+                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.opp2 === 'guest' ? 'top-4 right-6 pt-2' : 'right-2 top-0 bottom-0'
+                  }`}>
                   <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
                 </div>
               </div>

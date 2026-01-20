@@ -613,11 +613,14 @@ export async function POST(req: Request) {
             logger.info("Sending email to guest", { guestId: guest.id, email: guest.email.substring(0, 5) + "…" });
 
             // Envoyer l'email en arrière-plan (ne pas await pour ne pas ralentir la réponse)
+            const confirmationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/guest/confirmation?id=${guest.id}`;
+
             sendGuestMatchInvitationEmail(
               guest.email,
               guestName,
               creatorName,
-              scoreString
+              scoreString,
+              confirmationUrl
             ).catch(err => {
               logger.error("Failed to send guest email", { error: err });
             });
