@@ -1554,8 +1554,8 @@ export default function MatchForm({
                   inputClassName="pr-[90px]"
                 />
                 <div className={`absolute flex items-center z-10 ${scopes.partner === 'guest'
-                    ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
-                    : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
+                  ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
+                  : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
                   }`}>
                   <select
                     value={scopes.partner}
@@ -1567,7 +1567,9 @@ export default function MatchForm({
                     <option value="guest">Invité</option>
                   </select>
                 </div>
-                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.partner === 'guest' ? 'top-4 right-6 pt-2' : 'right-2 top-0 bottom-0'
+                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.partner === 'guest'
+                  ? 'top-4 right-5 h-[32px]' // En mode invité : même hauteur que le select pour centrer
+                  : 'right-2 top-0 bottom-0'
                   }`}>
                   <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
                 </div>
@@ -1619,8 +1621,8 @@ export default function MatchForm({
                   inputClassName="pr-[90px]"
                 />
                 <div className={`absolute flex items-center z-10 ${scopes.opp1 === 'guest'
-                    ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
-                    : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
+                  ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
+                  : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
                   }`}>
                   <select
                     value={scopes.opp1}
@@ -1632,7 +1634,9 @@ export default function MatchForm({
                     <option value="guest">Invité</option>
                   </select>
                 </div>
-                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.opp1 === 'guest' ? 'top-4 right-6 pt-2' : 'right-2 top-0 bottom-0'
+                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.opp1 === 'guest'
+                  ? 'top-4 right-5 h-[32px]' // En mode invité : même hauteur que le select pour centrer
+                  : 'right-2 top-0 bottom-0'
                   }`}>
                   <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
                 </div>
@@ -1678,8 +1682,8 @@ export default function MatchForm({
                   inputClassName="pr-[90px]"
                 />
                 <div className={`absolute flex items-center z-10 ${scopes.opp2 === 'guest'
-                    ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
-                    : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
+                  ? 'top-4 right-4' // En mode invité : aligner en haut à droite du cadre (padding p-4)
+                  : 'right-1 top-0 bottom-0' // En mode input : centrer verticalement
                   }`}>
                   <select
                     value={scopes.opp2}
@@ -1691,7 +1695,9 @@ export default function MatchForm({
                     <option value="guest">Invité</option>
                   </select>
                 </div>
-                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.opp2 === 'guest' ? 'top-4 right-6 pt-2' : 'right-2 top-0 bottom-0'
+                <div className={`absolute flex items-center pointer-events-none z-20 font-bold ${scopes.opp2 === 'guest'
+                  ? 'top-4 right-5 h-[32px]' // En mode invité : même hauteur que le select pour centrer
+                  : 'right-2 top-0 bottom-0'
                   }`}>
                   <ChevronDown className="h-3.5 w-3.5 text-[#071554] stroke-[3px]" />
                 </div>
