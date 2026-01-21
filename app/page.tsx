@@ -8,10 +8,12 @@ import ClubsPromo from "@/components/landing/ClubsPromo";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
 import AuthRedirectHandler from "@/components/AuthRedirectHandler";
+import HideSplashScreen from "@/components/HideSplashScreen";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
+      <HideSplashScreen />
       <AuthRedirectHandler />
       <HeroSection />
       <SocialProof />
