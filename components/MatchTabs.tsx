@@ -164,7 +164,7 @@ function MatchTabsContent({
           >
             <div className="flex items-center justify-center gap-1.5 px-1 sm:px-2 h-full">
               <span className="text-center whitespace-normal leading-tight max-w-[80px] sm:max-w-none">{tab.label}</span>
-              {tab.badge !== undefined && tab.badge > 0 && (
+              {tab.badge !== undefined && tab.badge > 0 && currentTab !== tab.id && (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white flex-shrink-0">
                   {tab.badge > 9 ? '9+' : tab.badge}
                 </span>

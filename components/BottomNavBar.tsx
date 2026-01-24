@@ -50,7 +50,26 @@ export default function BottomNavBar() {
 
         // Polling toutes les 30s pour garder à jour
         const interval = setInterval(fetchCounts, 30000);
-        return () => clearInterval(interval);
+
+        // Ecouter les événements pour mise à jour immédiate
+        const handleUpdate = () => fetchCounts();
+
+        window.addEventListener('matchFullyConfirmed', handleUpdate);
+        window.addEventListener('matchInvitationCreated', handleUpdate);
+        window.addEventListener('matchInvitationDeleted', handleUpdate);
+        window.addEventListener('matchInvitationUpdated', handleUpdate);
+        window.addEventListener('teamChallengeCreated', handleUpdate);
+        window.addEventListener('teamChallengeUpdated', handleUpdate);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('matchFullyConfirmed', handleUpdate);
+            window.removeEventListener('matchInvitationCreated', handleUpdate);
+            window.removeEventListener('matchInvitationDeleted', handleUpdate);
+            window.removeEventListener('matchInvitationUpdated', handleUpdate);
+            window.removeEventListener('teamChallengeCreated', handleUpdate);
+            window.removeEventListener('teamChallengeUpdated', handleUpdate);
+        };
     }, []);
 
     // Gestion du "Dismiss" automatique à la visite
