@@ -102,10 +102,23 @@ export class PushNotificationsService {
             console.error("[PushNotifications] Erreur désenregistrement:", error);
         }
     }
+
+    // NON DISPONIBLE SANS @capacitor/badge
+    static async setBadge(count: number) {
+        console.warn("[PushNotifications] setBadge requires @capacitor/badge plugin (failed to install)");
+        // if (Capacitor.getPlatform() === "web") return;
+        // try {
+        //     await Badge.set({ count });
+        // } catch (error) {
+        //     console.error("[PushNotifications] Erreur setBadge:", error);
+        // }
+    }
+
     static async clearBadge() {
         if (Capacitor.getPlatform() === "web") return;
         try {
             await PushNotifications.removeAllDeliveredNotifications();
+            // await Badge.clear();
         } catch (error) {
             console.error("[PushNotifications] Erreur nettoyage badge:", error);
         }
