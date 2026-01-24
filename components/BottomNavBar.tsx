@@ -16,10 +16,8 @@ interface NavItem {
 export default function BottomNavBar() {
     const pathname = usePathname();
     const [counts, setCounts] = useState({ matches: 0, invitations: 0, notifications: 0 });
-    const [dismissed, setDismissed] = useState<{ matches: boolean; invitations: boolean }>({
-        matches: false,
-        invitations: false
-    });
+    const [viewedMatchesCount, setViewedMatchesCount] = useState(0);
+    const [viewedPartnersCount, setViewedPartnersCount] = useState(0);
     const [activeIndex, setActiveIndex] = useState(0);
 
     const navItems: NavItem[] = [
@@ -36,6 +34,20 @@ export default function BottomNavBar() {
                 const data = await res.json();
                 setCounts(data);
 
+                // Auto-adjust viewed counts if they are higher than actual (e.g. validé ailleurs)
+                const storedMatches = parseInt(localStorage.getItem('padelxp_viewed_matches_count') || '0');
+                if (data.matches < storedMatches) {
+                    localStorage.setItem('padelxp_viewed_matches_count', data.matches.toString());
+                    setViewedMatchesCount(data.matches);
+                }
+
+                const totalPartners = (data.invitations || 0) + (data.notifications || 0); // Approx logic matching MatchTabs
+                const storedPartners = parseInt(localStorage.getItem('padelxp_viewed_partners_count') || '0');
+                if (totalPartners < storedPartners) {
+                    localStorage.setItem('padelxp_viewed_partners_count', totalPartners.toString());
+                    setViewedPartnersCount(totalPartners);
+                }
+
                 // Mettre à jour le badge natif de l'application (Icone téléphone)
                 const total = (data.total || 0);
                 await PushNotificationsService.setBadge(total);
@@ -46,13 +58,22 @@ export default function BottomNavBar() {
     };
 
     useEffect(() => {
+        const loadViewed = () => {
+            setViewedMatchesCount(parseInt(localStorage.getItem('padelxp_viewed_matches_count') || '0'));
+            setViewedPartnersCount(parseInt(localStorage.getItem('padelxp_viewed_partners_count') || '0'));
+        };
+        loadViewed();
+
         fetchCounts();
 
         // Polling toutes les 30s pour garder à jour
         const interval = setInterval(fetchCounts, 30000);
 
         // Ecouter les événements pour mise à jour immédiate
-        const handleUpdate = () => fetchCounts();
+        const handleUpdate = () => {
+            fetchCounts();
+            loadViewed(); // Also reload viewed in case MatchTabs updated it
+        };
 
         window.addEventListener('matchFullyConfirmed', handleUpdate);
         window.addEventListener('matchInvitationCreated', handleUpdate);
@@ -60,6 +81,7 @@ export default function BottomNavBar() {
         window.addEventListener('matchInvitationUpdated', handleUpdate);
         window.addEventListener('teamChallengeCreated', handleUpdate);
         window.addEventListener('teamChallengeUpdated', handleUpdate);
+        window.addEventListener('badge-sync', loadViewed); // Sync from MatchTabs
 
         return () => {
             clearInterval(interval);
@@ -69,18 +91,30 @@ export default function BottomNavBar() {
             window.removeEventListener('matchInvitationUpdated', handleUpdate);
             window.removeEventListener('teamChallengeCreated', handleUpdate);
             window.removeEventListener('teamChallengeUpdated', handleUpdate);
+            window.removeEventListener('badge-sync', loadViewed);
         };
     }, []);
 
     // Gestion du "Dismiss" automatique à la visite
     useEffect(() => {
-        if (pathname?.startsWith('/match')) {
-            setDismissed(prev => ({ ...prev, matches: true }));
-        } else if (pathname?.startsWith('/home') || pathname === '/player/profile') {
-            // "Profil" contient souvent les invitations
-            setDismissed(prev => ({ ...prev, invitations: true }));
+        // NOTE: Actually MatchTabs handles the "match" view.
+        // But if we navigate directly via BottomNav to /home (Profil), we should mark Profil/partners as viewed here too.
+        if (pathname === '/home' || pathname === '/player/profile') {
+            // Profil affiche les invitations + notifs générales
+            const total = counts.invitations + counts.notifications;
+            if (total > viewedPartnersCount) {
+                localStorage.setItem('padelxp_viewed_partners_count', total.toString());
+                setViewedPartnersCount(total);
+            }
         }
-    }, [pathname]);
+        // For '/match/new', MatchTabs handles it, but good to be safe:
+        if (pathname?.startsWith('/match')) {
+            if (counts.matches > viewedMatchesCount) {
+                localStorage.setItem('padelxp_viewed_matches_count', counts.matches.toString());
+                setViewedMatchesCount(counts.matches);
+            }
+        }
+    }, [pathname, counts, viewedMatchesCount, viewedPartnersCount]);
 
     // Update active index
     useEffect(() => {
@@ -92,11 +126,7 @@ export default function BottomNavBar() {
         setActiveIndex(newIndex);
     }, [pathname]);
 
-    // Reset dismissed si le compteur augmente (optionnel, nécessite tracking previous count)
-    // Pour l'instant, disons que si on recharge l'app, ça réapparait tant que c'est pending.
-    // C'est un comportement acceptable : "Tant que tu n'as pas traité, je te le rappelle au prochain lancement".
-    // Mais PENDANT la session, si tu as visité, ça disparaît.
-
+    // Calculate bubble position based on index
     const getBubblePosition = () => {
         const itemWidth = 25;
         const bubbleWidth = 22;
@@ -131,11 +161,12 @@ export default function BottomNavBar() {
 
                     if (item.navKey === 'match') {
                         badgeCount = counts.matches;
-                        showBadge = badgeCount > 0 && !dismissed.matches;
+                        // Show ONLY if current count is higher than what we last viewed
+                        showBadge = badgeCount > viewedMatchesCount;
                     } else if (item.navKey === 'home') {
                         // Profil affiche les invitations + notifs générales
                         badgeCount = counts.invitations + counts.notifications;
-                        showBadge = badgeCount > 0 && !dismissed.invitations;
+                        showBadge = badgeCount > viewedPartnersCount;
                     }
 
                     return (
@@ -146,8 +177,15 @@ export default function BottomNavBar() {
                             style={{ flex: 1 }}
                             onClick={() => {
                                 // Forcer le dismiss immédiat au clic
-                                if (item.navKey === 'match') setDismissed(prev => ({ ...prev, matches: true }));
-                                if (item.navKey === 'home') setDismissed(prev => ({ ...prev, invitations: true }));
+                                if (item.navKey === 'match') {
+                                    localStorage.setItem('padelxp_viewed_matches_count', counts.matches.toString());
+                                    setViewedMatchesCount(counts.matches);
+                                }
+                                if (item.navKey === 'home') {
+                                    const total = counts.invitations + counts.notifications;
+                                    localStorage.setItem('padelxp_viewed_partners_count', total.toString());
+                                    setViewedPartnersCount(total);
+                                }
                             }}
                         >
                             <div className="relative flex flex-col items-center text-[#172554]">

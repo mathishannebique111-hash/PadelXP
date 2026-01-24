@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
-import { Calendar } from "lucide-react";
+import { Calendar, PartyPopper } from "lucide-react";
 
 interface PlayerChallenge {
   id: string;
@@ -164,7 +164,7 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
 
             {/* Contenu */}
             <div className="relative z-10">
-              <div className="mb-4 text-6xl">🎉</div>
+              <PartyPopper className="mb-4 h-16 w-16 text-yellow-400" />
               <h2 className="mb-3 text-3xl font-bold text-yellow-300">
                 Félicitations !
               </h2>

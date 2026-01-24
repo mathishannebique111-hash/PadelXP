@@ -12,6 +12,28 @@ type Props = {
 };
 
 export default function BadgeIconDisplay({ icon, className = "", size = 32, title }: Props) {
+  // Mapper les titres de badges vers des icônes Lucide
+  const getLucideIconFromTitle = (badgeTitle?: string) => {
+    if (!badgeTitle) return null;
+    const t = badgeTitle.toLowerCase();
+
+    if (t.includes("partenaire")) return "Users";
+    if (t.includes("vainqueur") || t.includes("victoire")) return "Trophy";
+    if (t.includes("match")) return "Swords";
+    if (t.includes("point")) return "Star";
+    if (t.includes("niveau")) return "TrendingUp";
+    if (t.includes("série") || t.includes("streak") || t.includes("flamme")) return "Flame";
+    if (t.includes("marathon")) return "Activity";
+    if (t.includes("centurion")) return "Crown";
+    if (t.includes("score")) return "Target";
+    if (t.includes("diamant")) return "Gem";
+    if (t.includes("amour")) return "Heart";
+    if (t.includes("contrib")) return "MessageSquare";
+    if (t.includes("première")) return "Medal";
+
+    return null;
+  };
+
   // Mapper les couleurs par type d'icône ou titre
   const getIconColor = (iconName: string, badgeTitle?: string) => {
     if (iconName === "Trophy" || badgeTitle === "Première victoire") return "#FBBF24"; // Ambre/Or
@@ -64,7 +86,7 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
     return emojiMap[nameOrEmoji] || nameOrEmoji;
   };
 
-  const lucideIconName = getLucideIconName(icon);
+  const lucideIconName = getLucideIconFromTitle(title) || getLucideIconName(icon);
   const LucideIcon = (LucideIcons as any)[lucideIconName];
 
   if (LucideIcon) {

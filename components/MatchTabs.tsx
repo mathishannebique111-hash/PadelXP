@@ -28,7 +28,49 @@ function MatchTabsContent({
   const [pendingMatchesCount, setPendingMatchesCount] = useState(0);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   const [pendingChallengesCount, setPendingChallengesCount] = useState(0);
+
+  // Persistent read state
+  const [viewedMatchesCount, setViewedMatchesCount] = useState(0);
+  const [viewedPartnersCount, setViewedPartnersCount] = useState(0);
   const supabase = createClient();
+
+  useEffect(() => {
+    // Initial load
+    const savedMatches = parseInt(localStorage.getItem('padelxp_viewed_matches_count') || '0');
+    const savedPartners = parseInt(localStorage.getItem('padelxp_viewed_partners_count') || '0');
+    setViewedMatchesCount(savedMatches);
+    setViewedPartnersCount(savedPartners);
+  }, []);
+
+  // Auto-adjustment: if actual count < viewed, lower the viewed count
+  useEffect(() => {
+    if (pendingMatchesCount < viewedMatchesCount) {
+      setViewedMatchesCount(pendingMatchesCount);
+      localStorage.setItem('padelxp_viewed_matches_count', pendingMatchesCount.toString());
+    }
+  }, [pendingMatchesCount, viewedMatchesCount]);
+
+  useEffect(() => {
+    const totalPartners = pendingInvitationsCount + pendingChallengesCount;
+    if (totalPartners < viewedPartnersCount) {
+      setViewedPartnersCount(totalPartners);
+      localStorage.setItem('padelxp_viewed_partners_count', totalPartners.toString());
+    }
+  }, [pendingInvitationsCount, pendingChallengesCount, viewedPartnersCount]);
+
+  // Mark as viewed when active
+  useEffect(() => {
+    if (currentTab === 'history') {
+      setViewedMatchesCount(pendingMatchesCount);
+      localStorage.setItem('padelxp_viewed_matches_count', pendingMatchesCount.toString());
+      window.dispatchEvent(new Event('badge-sync'));
+    } else if (currentTab === 'partners') {
+      const total = pendingInvitationsCount + pendingChallengesCount;
+      setViewedPartnersCount(total);
+      localStorage.setItem('padelxp_viewed_partners_count', total.toString());
+      window.dispatchEvent(new Event('badge-sync'));
+    }
+  }, [currentTab, pendingMatchesCount, pendingInvitationsCount, pendingChallengesCount]);
 
   useEffect(() => {
     if (tabFromUrl && ['record', 'history', 'partners', 'boost'].includes(tabFromUrl)) {
@@ -138,8 +180,8 @@ function MatchTabsContent({
 
   const tabs = [
     { id: 'record' as TabType, label: 'Enregistrer' },
-    { id: 'history' as TabType, label: 'Mes matchs', badge: pendingMatchesCount },
-    { id: 'partners' as TabType, label: 'Trouve tes partenaires', badge: pendingInvitationsCount + pendingChallengesCount },
+    { id: 'history' as TabType, label: 'Mes matchs', badge: pendingMatchesCount > viewedMatchesCount ? pendingMatchesCount : 0 },
+    { id: 'partners' as TabType, label: 'Trouve tes partenaires', badge: (pendingInvitationsCount + pendingChallengesCount) > viewedPartnersCount ? (pendingInvitationsCount + pendingChallengesCount) : 0 },
     // { id: 'boost' as TabType, label: 'Boost' },
   ];
 
@@ -164,7 +206,7 @@ function MatchTabsContent({
           >
             <div className="flex items-center justify-center gap-1.5 px-1 sm:px-2 h-full">
               <span className="text-center whitespace-normal leading-tight max-w-[80px] sm:max-w-none">{tab.label}</span>
-              {tab.badge !== undefined && tab.badge > 0 && currentTab !== tab.id && (
+              {tab.badge !== undefined && tab.badge > 0 && (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white flex-shrink-0">
                   {tab.badge > 9 ? '9+' : tab.badge}
                 </span>
