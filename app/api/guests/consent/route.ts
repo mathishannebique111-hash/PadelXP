@@ -43,10 +43,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Guest not found" }, { status: 404 });
         }
 
-        // Update consent
+        // Update consent and mark as confirmed
         const { error: updateError } = await supabaseAdmin
             .from("guest_players")
-            .update({ marketing_consent: consent })
+            .update({
+                marketing_consent: consent,
+                confirmed_at: new Date().toISOString()
+            })
             .eq("id", guestId);
 
         if (updateError) {

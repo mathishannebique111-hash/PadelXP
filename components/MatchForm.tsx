@@ -1547,6 +1547,7 @@ export default function MatchForm({
                   }}
                   onSelect={(player) => {
                     setSelectedPlayers((prev) => ({ ...prev, partner: player }));
+                    setScopes((prev) => ({ ...prev, partner: 'club' }));
                   }}
                   placeholder="Prénom et nom complet"
                   error={errors.partnerName}
@@ -1611,6 +1612,7 @@ export default function MatchForm({
                   }}
                   onSelect={(player) => {
                     setSelectedPlayers((prev) => ({ ...prev, opp1: player }));
+                    setScopes((prev) => ({ ...prev, opp1: 'club' }));
                   }}
                   placeholder="Prénom et nom complet"
                   error={errors.opp1Name}
@@ -1669,6 +1671,7 @@ export default function MatchForm({
                   }}
                   onSelect={(player) => {
                     setSelectedPlayers((prev) => ({ ...prev, opp2: player }));
+                    setScopes((prev) => ({ ...prev, opp2: 'club' }));
                   }}
                   placeholder="Prénom et nom complet"
                   error={errors.opp2Name}
@@ -1752,22 +1755,26 @@ export default function MatchForm({
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-white min-w-[80px]">Set {set.setNumber}</span>
                   <input
-                    type="text"
-                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] text-center font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={set.team1Score}
                     onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                     placeholder="0"
-                    maxLength={2}
                     ref={(el) => { setTeam1Refs.current[index] = el; }}
                   />
                   <span className="text-white">-</span>
                   <input
-                    type="text"
-                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] text-center font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={set.team2Score}
                     onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                     placeholder="0"
-                    maxLength={2}
                     ref={(el) => { setTeam2Refs.current[index] = el; }}
                   />
                   {errors[`set${set.setNumber}_team1`] && (

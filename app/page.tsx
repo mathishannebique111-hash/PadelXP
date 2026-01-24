@@ -1,28 +1,20 @@
-import HeroSection from "@/components/landing/HeroSection";
-import SocialProof from "@/components/landing/SocialProof";
-import FeaturesGrid from "@/components/landing/FeaturesGrid";
-import LeaderboardPreview from "@/components/landing/LeaderboardPreview";
-import Testimonials from "@/components/landing/Testimonials";
-import Benefits from "@/components/landing/Benefits";
-import ClubsPromo from "@/components/landing/ClubsPromo";
-import FinalCTA from "@/components/landing/FinalCTA";
+import ClubsHeroSection from "@/components/landing/clubs/ClubsHeroSection";
+import ProblemSolution from "@/components/landing/clubs/ProblemSolution";
+import FeaturesDetailed from "@/components/landing/clubs/FeaturesDetailed";
+import Pricing from "@/components/landing/clubs/Pricing";
+import FAQ from "@/components/landing/clubs/FAQ";
 import Footer from "@/components/landing/Footer";
-import AuthRedirectHandler from "@/components/AuthRedirectHandler";
 import HideSplashScreen from "@/components/HideSplashScreen";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
       <HideSplashScreen />
-      <AuthRedirectHandler />
-      <HeroSection />
-      <SocialProof />
-      <FeaturesGrid />
-      <LeaderboardPreview />
-      <Testimonials />
-      <Benefits />
-      <ClubsPromo />
-      <FinalCTA />
+      <ClubsHeroSection />
+      <ProblemSolution />
+      <FeaturesDetailed />
+      <FAQ />
+      <Pricing />
       <Footer />
     </div>
   );

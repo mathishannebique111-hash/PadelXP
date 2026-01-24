@@ -126,6 +126,7 @@ export type ClubGuest = {
   last_name: string | null;
   email: string | null;
   marketing_consent?: boolean | null;
+  confirmed_at?: string | null;
   created_at: string | null;
   matches: number;
   last_match_at: string | null;
@@ -657,7 +658,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
   if (uniqueGuestIds.size > 0) {
     const { data: guestProfiles } = await supabaseAdmin
       .from("guest_players")
-      .select("id, first_name, last_name, email, created_at, marketing_consent")
+      .select("id, first_name, last_name, email, created_at, marketing_consent, confirmed_at")
       .in("id", Array.from(uniqueGuestIds));
 
     if (guestProfiles && guestProfiles.length > 0) {
@@ -669,6 +670,7 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
           last_name: p.last_name ?? null,
           email: p.email ?? null,
           marketing_consent: (p as any).marketing_consent ?? false,
+          confirmed_at: (p as any).confirmed_at ?? null,
           created_at: p.created_at ?? null,
           matches: 0,
           last_match_at: null

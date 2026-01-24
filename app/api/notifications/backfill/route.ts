@@ -141,14 +141,19 @@ export async function POST(req: Request) {
     const existingTiers = new Set<string>();
 
     existingNotifications?.forEach((n: any) => {
-      if (n.type === "badge_unlocked" || n.type === "badge") {
-        const data = typeof n.data === "string" ? JSON.parse(n.data) : n.data;
-        const key = `${data.badge_icon || ""}|${data.badge_name || ""}`;
-        if (key !== "|") existingBadgeKeys.add(key);
-      } else if (n.type === "level_up") {
-        const data = typeof n.data === "string" ? JSON.parse(n.data) : n.data;
-        const tier = data.tier || data.tier_name;
-        if (tier) existingTiers.add(tier);
+      try {
+        if (n.type === "badge_unlocked" || n.type === "badge") {
+          const data = typeof n.data === "string" ? JSON.parse(n.data) : n.data;
+          const key = `${data?.badge_icon || ""}|${data?.badge_name || ""}`;
+          if (key !== "|") existingBadgeKeys.add(key);
+        } else if (n.type === "level_up") {
+          const data = typeof n.data === "string" ? JSON.parse(n.data) : n.data;
+          const tier = data?.tier || data?.tier_name;
+          if (tier) existingTiers.add(tier);
+        }
+      } catch (parseError) {
+        // Skip malformed notification data silently
+        logger.warn(`[Backfill] Malformed notification data skipped: ${n.id}`);
       }
     });
 
@@ -164,7 +169,7 @@ export async function POST(req: Request) {
       .eq("player_type", "user");
 
     if (!mp || mp.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: "Aucun match trouvé",
         created: { badges: 0, tiers: 0 }
       });
@@ -206,7 +211,7 @@ export async function POST(req: Request) {
       .in("id", validMatchIds);
 
     if (!matches || matches.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: "Aucun match valide trouvé",
         created: { badges: 0, tiers: 0 }
       });
@@ -253,14 +258,14 @@ export async function POST(req: Request) {
     // Note: calculatePointsWithBoosts prend (wins, losses, matchIds, winMatches, userId, reviewsBonus, challengePoints)
     // Pour simplifier, on calcule les points de base ici
     const basePoints = wins * 10 + losses * 3;
-    
+
     // Ajouter le bonus review si applicable
     const { data: reviews } = await supabaseAdmin
       .from("reviews")
       .select("rating, comment")
       .eq("user_id", user.id)
       .limit(1);
-    
+
     let reviewsBonus = 0;
     if (reviews && reviews.length > 0) {
       const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
@@ -268,12 +273,12 @@ export async function POST(req: Request) {
         reviewsBonus = 10;
       }
     }
-    
+
     // Récupérer les points de challenge
-    const challengePoints = typeof profile.points === "number" 
-      ? profile.points 
+    const challengePoints = typeof profile.points === "number"
+      ? profile.points
       : (typeof profile.points === "string" ? parseInt(profile.points || "0", 10) : 0);
-    
+
     // Calculer les points avec boosts (simplifié pour le backfill)
     const points = await calculatePointsWithBoosts(
       wins,

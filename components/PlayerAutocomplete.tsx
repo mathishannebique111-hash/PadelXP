@@ -179,12 +179,14 @@ export default function PlayerAutocomplete({
         }
 
         // Parser le display_name pour extraire first_name et last_name
+        // La majuscule est déjà gérée par l'API mais on s'assure que l'affichage local est correct
         const nameParts = player.display_name.trim().split(/\s+/);
         const first_name = nameParts[0] || "";
         const last_name = nameParts.slice(1).join(" ") || "";
 
         // Déterminer le type (prioriser le type retourné par l'API)
-        const type: "user" | "guest" = (player.type as "user" | "guest") || (player.email ? "user" : "guest");
+        // IMPORTANT : Ne pas forcer 'user' si email présent, car un guest peut avoir un email
+        const type: "user" | "guest" = (player.type as "user" | "guest") || "guest";
 
         const playerResult: PlayerSearchResult = {
           id: player.id,
@@ -220,44 +222,44 @@ export default function PlayerAutocomplete({
       )}
 
       {searchScope === 'guest' ? (
-        <div className="bg-gray-50 rounded-md border border-gray-200 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="mb-3 flex justify-between items-center">
-            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Mail size={16} /> Inviter par email
+        <div className="bg-slate-800/90 rounded-xl border border-white/10 p-4 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md shadow-xl">
+          <div className="mb-4 flex justify-between items-center">
+            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Mail size={16} className="text-blue-400" /> Inviter par email
             </h4>
           </div>
-          {/* ... (guest form content) ... */}
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Prénom</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Prénom</label>
                 <input
                   type="text"
                   value={guestFirstName}
                   onChange={(e) => setGuestFirstName(e.target.value)}
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
+                  className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   placeholder="Prénom"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Nom</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Nom</label>
                 <input
                   type="text"
                   value={guestLastName}
                   onChange={(e) => setGuestLastName(e.target.value)}
-                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
+                  className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   placeholder="Nom"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Email <span className="text-gray-400 font-normal">(Requis pour invitation)</span></label>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Email <span className="text-gray-500 font-normal">(Requis pour invitation)</span></label>
               <input
                 type="email"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
+                className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                 placeholder="email@exemple.com"
               />
             </div>
@@ -266,7 +268,7 @@ export default function PlayerAutocomplete({
               type="button"
               onClick={handleCreateGuest}
               disabled={creatingGuest || !guestFirstName.trim() || !guestLastName.trim()}
-              className="w-full mt-2 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center shadow-sm"
+              className="w-full mt-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all"
             >
               {creatingGuest ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />

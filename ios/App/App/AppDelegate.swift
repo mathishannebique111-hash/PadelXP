@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import UserNotifications
 import WebKit
 
 @UIApplicationMain
@@ -12,6 +13,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             window.backgroundColor = UIColor(red: 0.09, green: 0.145, blue: 0.33, alpha: 1.0)
         }
         return true
+    }
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
     }
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {

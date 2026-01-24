@@ -195,6 +195,14 @@ export default function MatchInvitationsReceived() {
 
       if (error) throw error;
 
+      // Supprimer la notification visuelle associée
+      await supabase
+        .from("notifications")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("type", "match_invitation_received")
+        .filter("data->>invitation_id", "eq", invitationId);
+
       showToast("Invitation refusée", "info");
       await loadInvitations();
       window.dispatchEvent(new CustomEvent("matchInvitationUpdated"));
@@ -285,6 +293,14 @@ export default function MatchInvitationsReceived() {
 
       if (updateError) throw updateError;
 
+      // Supprimer la notification visuelle associée
+      await supabase
+        .from("notifications")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("type", "match_invitation_received")
+        .filter("data->>invitation_id", "eq", invitationId);
+
       // 3. Récupérer le numéro et le nom du sender
       const { data: phoneData, error: phoneError } = await supabase.rpc(
         "get_partner_phone",
@@ -361,6 +377,14 @@ export default function MatchInvitationsReceived() {
           .eq("id", invitationId);
 
         if (updateError) throw updateError;
+
+        // Supprimer la notification visuelle associée
+        await supabase
+          .from("notifications")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("type", "match_invitation_received")
+          .filter("data->>invitation_id", "eq", invitationId);
 
         // Récupérer le numéro et le nom du sender
         const { data: phoneData, error: phoneError } = await supabase.rpc(

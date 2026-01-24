@@ -39,7 +39,31 @@ export class PushNotificationsService {
             // 6. Écouter l'action de clic sur la notification
             PushNotifications.addListener("pushNotificationActionPerformed", (notification) => {
                 console.log("[PushNotifications] Action effectuée:", notification.actionId, notification.notification);
-                // Ici on pourra rediriger l'utilisateur selon les données de la notif
+
+                const data = notification.notification.data;
+                if (!data) return;
+
+                // Redirection basée sur le contenu de la data
+                // Invitations de joueurs
+                if (data.invitation_id || (data.type && data.type.includes("match_invitation"))) {
+                    window.location.href = "/player/partners";
+                }
+                // Défis d'équipe
+                else if (data.challenge_id || (data.type && data.type.includes("team_challenge"))) {
+                    window.location.href = "/player/matches"; // Ou l'onglet spécifique des défis
+                }
+                // Demandes de partenariat
+                else if (data.partnership_id || (data.type && data.type.includes("partnership"))) {
+                    window.location.href = "/player/partners";
+                }
+                // Badges / Niveaux
+                else if (data.badge_id || (data.type && data.type.includes("badge"))) {
+                    window.location.href = "/player/profile";
+                }
+                // Match validé -> Historique
+                else if (data.match_id) {
+                    window.location.href = "/player/history";
+                }
             });
 
         } catch (error) {

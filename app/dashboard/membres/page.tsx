@@ -285,78 +285,153 @@ export default async function MembersPage() {
       )}
 
       {/* Section Invités (Sans compte PadelXP) */}
-      {guests && guests.length > 0 && (
-        <div className="mt-8 sm:mt-12 space-y-4 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Joueurs invités (Sans compte)</h2>
-            <span
-              className="group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10 self-start sm:self-auto"
-              style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(37,99,235,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
-              <span className="relative">
-                {guests.length} invité{guests.length > 1 ? "s" : ""}
-              </span>
-            </span>
-          </div>
+      {guests && guests.length > 0 && (() => {
+        // Séparer les invités confirmés (qui ont cliqué sur le bouton de confirmation) de ceux non confirmés
+        const confirmedGuests = guests.filter(g => g.confirmed_at);
+        const unconfirmedGuests = guests.filter(g => !g.confirmed_at);
 
-          <div className="overflow-x-auto overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 scrollbar-hide">
-            <table className="w-full min-w-[600px]">
-              <thead>
-                <tr className="bg-white/10 text-left text-[10px] sm:text-xs uppercase tracking-wide text-white/60">
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">Joueur</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell">Email</th>
-                  <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Fréquence</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
-                  <th className="px-2 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {guests.map((guest) => {
-                  const name = `${guest.first_name ?? ""} ${guest.last_name ?? ""}`.trim() || "Invité";
-                  // On affiche l'email seulement si le consentement marketing est donné
-                  const showEmail = guest.marketing_consent;
+        return (
+          <>
+            {/* Invités confirmés - affichent l'email si marketing_consent est true */}
+            {confirmedGuests.length > 0 && (
+              <div className="mt-8 sm:mt-12 space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Joueurs invités qui n'ont pas PadelXP</h2>
+                  <span
+                    className="group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10 self-start sm:self-auto"
+                    style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(37,99,235,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
+                    <span className="relative">
+                      {confirmedGuests.length} confirmé{confirmedGuests.length > 1 ? "s" : ""}
+                    </span>
+                  </span>
+                </div>
 
-                  return (
-                    <tr key={guest.id} className="border-t border-white/10 text-xs sm:text-sm text-white/80">
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-semibold text-white truncate">{name}</span>
-                          <span className="text-[10px] sm:text-xs text-white/50">
-                            Créé le {formatDate(guest.created_at)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell truncate max-w-[200px]">
-                        {showEmail ? (
-                          <span className="text-white/90">{guest.email}</span>
-                        ) : (
-                          <span className="text-white/30 italic">Masqué (Défaut)</span>
-                        )}
-                      </td>
-                      <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] sm:text-xs">
-                          A joué {guest.matches} fois dans votre club
-                        </span>
-                      </td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
-                        {formatDate(guest.last_match_at)}
-                      </td>
-                      <td className="px-2 py-2 text-right">
-                        <DeletePlayerButton
-                          playerId={guest.id}
-                          playerType="guest"
-                          playerName={name}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                <div className="overflow-x-auto overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 scrollbar-hide">
+                  <table className="w-full min-w-[600px]">
+                    <thead>
+                      <tr className="bg-white/10 text-left text-[10px] sm:text-xs uppercase tracking-wide text-white/60">
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">Joueur</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell">Email</th>
+                        <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Fréquence</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
+                        <th className="px-2 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {confirmedGuests.map((guest) => {
+                        const name = `${guest.first_name ?? ""} ${guest.last_name ?? ""}`.trim() || "Invité";
+                        // On affiche l'email seulement si le consentement marketing est donné
+                        const showEmail = guest.marketing_consent;
+
+                        return (
+                          <tr key={guest.id} className="border-t border-white/10 text-xs sm:text-sm text-white/80">
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold text-white truncate">{name}</span>
+                                <span className="text-[10px] sm:text-xs text-white/50">
+                                  Confirmé le {formatDate(guest.confirmed_at)}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 hidden md:table-cell truncate max-w-[200px]">
+                              {showEmail ? (
+                                <span className="text-white/90">{guest.email}</span>
+                              ) : (
+                                <span className="text-white/30 italic">Non partagé</span>
+                              )}
+                            </td>
+                            <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] sm:text-xs">
+                                A joué {guest.matches} fois
+                              </span>
+                            </td>
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
+                              {formatDate(guest.last_match_at)}
+                            </td>
+                            <td className="px-2 py-2 text-right">
+                              <DeletePlayerButton
+                                playerId={guest.id}
+                                playerType="guest"
+                                playerName={name}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Invités non confirmés - affichent les mêmes infos que les visiteurs */}
+            {unconfirmedGuests.length > 0 && (
+              <div className="mt-8 sm:mt-12 space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Invités en attente de confirmation</h2>
+                  <span
+                    className="group relative inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-white overflow-hidden ring-1 ring-white/20 border border-white/10 self-start sm:self-auto"
+                    style={{ background: "linear-gradient(135deg, rgba(156,163,175,0.25) 0%, rgba(107,114,128,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
+                    <span className="relative">
+                      {unconfirmedGuests.length} en attente
+                    </span>
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 scrollbar-hide">
+                  <table className="w-full min-w-[600px]">
+                    <thead>
+                      <tr className="bg-white/10 text-left text-[10px] sm:text-xs uppercase tracking-wide text-white/60">
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">Joueur</th>
+                        <th className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">Fréquence</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell">Dernier match</th>
+                        <th className="px-2 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {unconfirmedGuests.map((guest) => {
+                        const name = `${guest.first_name ?? ""} ${guest.last_name ?? ""}`.trim() || "Invité";
+
+                        return (
+                          <tr key={guest.id} className="border-t border-white/10 text-xs sm:text-sm text-white/80">
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3">
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold text-white truncate">{name}</span>
+                                <span className="text-[10px] sm:text-xs text-white/50">
+                                  Créé le {formatDate(guest.created_at)}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center">
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] sm:text-xs">
+                                A joué {guest.matches} fois
+                              </span>
+                            </td>
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
+                              {formatDate(guest.last_match_at)}
+                            </td>
+                            <td className="px-2 py-2 text-right">
+                              <DeletePlayerButton
+                                playerId={guest.id}
+                                playerType="guest"
+                                playerName={name}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }

@@ -41,12 +41,15 @@ function splitName(fullName: string) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[find-or-create] ====== API CALLED ======');
   try {
     // === MODIFICATION : Validation Zod ===
     let body;
     try {
       body = await request.json();
+      console.log('[find-or-create] Body received:', JSON.stringify(body));
     } catch (parseError) {
+      console.error('[find-or-create] JSON parse error:', parseError);
       return NextResponse.json({ error: 'Format de requête invalide' }, { status: 400 });
     }
 
@@ -54,10 +57,12 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
       const firstError = Object.values(fieldErrors).flat()[0] ?? 'Données invalides';
+      console.error('[find-or-create] Zod validation failed:', JSON.stringify(fieldErrors));
       return NextResponse.json({ error: firstError, details: fieldErrors }, { status: 400 });
     }
 
     const { playerName, email } = parsed.data;
+    console.log('[find-or-create] Validated input:', { playerName, email });
     // === FIN MODIFICATION ===
 
     const cookieStore = await cookies();
@@ -79,6 +84,7 @@ export async function POST(request: NextRequest) {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
+    logger.info('[find-or-create] Auth check:', { userId: user?.id || 'NONE' });
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -90,6 +96,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     const clubId = profile?.club_id || null;
+    logger.info('[find-or-create] Profile/Club:', { clubId: clubId || 'NONE' });
     if (!clubId) {
       return NextResponse.json({ error: 'Club required' }, { status: 403 });
     }
@@ -108,7 +115,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (existingUser) {
-        logger.info('[players/find-or-create] Found existing user by email', { userId: existingUser.id, email: searchEmail });
+        console.log('[find-or-create] Found existing user by email', { userId: existingUser.id, email: searchEmail });
         const displayName = existingUser.display_name ||
           (existingUser.first_name && existingUser.last_name ? `${existingUser.first_name} ${existingUser.last_name}` : 'Joueur');
 
@@ -192,6 +199,22 @@ export async function POST(request: NextRequest) {
 
     if (existingGuestByName) {
       logger.info('[players/find-or-create] Found existing guest by name', { guestId: existingGuestByName.id, name: `${firstName} ${lastName}` });
+
+      // Si un email est fourni et qu'il est différent de celui existant (ou que l'existant est null), on met à jour
+      if (email && email.trim() && existingGuestByName.email !== email.trim()) {
+        const { error: updateError } = await supabaseAdmin
+          .from('guest_players')
+          .update({ email: email.trim() })
+          .eq('id', existingGuestByName.id);
+
+        if (updateError) {
+          logger.error('❌ Error updating guest email', { guestId: existingGuestByName.id, error: updateError });
+        } else {
+          logger.info('✅ Updated guest email', { guestId: existingGuestByName.id, newEmail: email });
+          existingGuestByName.email = email.trim(); // Mettre à jour l'objet local pour le retour
+        }
+      }
+
       return NextResponse.json({
         player: {
           id: existingGuestByName.id,

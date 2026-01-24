@@ -112,7 +112,9 @@ export default function ProfilePhotoCrop({
       onCropComplete(croppedImageBlob);
     } catch (error) {
       console.error("Error cropping image:", error);
-      alert("Erreur lors du recadrage de l'image");
+      // Don't use alert() - it can be blocked in iOS WebView
+      // Instead, cancel the operation and let the parent component handle the error
+      onCancel();
     }
   };
 

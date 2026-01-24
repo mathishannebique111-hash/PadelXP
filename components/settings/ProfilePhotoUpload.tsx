@@ -26,7 +26,7 @@ export default function ProfilePhotoUpload() {
       const timer = setTimeout(() => {
         setUploadSuccess(false);
       }, 5000); // 5 secondes
-      
+
       return () => clearTimeout(timer);
     }
   }, [uploadSuccess]);
@@ -37,7 +37,7 @@ export default function ProfilePhotoUpload() {
       const timer = setTimeout(() => {
         setDeleteSuccess(false);
       }, 5000); // 5 secondes
-      
+
       return () => clearTimeout(timer);
     }
   }, [deleteSuccess]);
@@ -48,22 +48,22 @@ export default function ProfilePhotoUpload() {
       try {
         const supabase = createClient();
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
+
         if (userError || !user) {
           console.warn("[ProfilePhotoUpload] Pas d'utilisateur connecté:", userError?.message || "Aucun utilisateur");
           setAvatarUrl(null);
           return;
         }
-        
+
         console.log("[ProfilePhotoUpload] Chargement du profil pour l'utilisateur:", user.id.substring(0, 8));
-        
+
         // Récupérer l'URL de la photo depuis la base de données
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("avatar_url")
           .eq("id", user.id)
           .maybeSingle();
-        
+
         // Gérer les erreurs de manière plus détaillée
         if (profileError) {
           // Vérifier si c'est une erreur "not found" (profil n'existe pas encore) ou une vraie erreur
@@ -73,7 +73,7 @@ export default function ProfilePhotoUpload() {
             setAvatarUrl(null);
             return;
           }
-          
+
           // C'est une vraie erreur (RLS, permissions, etc.)
           console.error("[ProfilePhotoUpload] Erreur lors de la récupération du profil:", {
             code: profileError.code,
@@ -84,7 +84,7 @@ export default function ProfilePhotoUpload() {
           setAvatarUrl(null);
           return;
         }
-        
+
         // Si une photo existe, l'afficher
         if (profile?.avatar_url) {
           const url = profile.avatar_url.trim();
@@ -111,51 +111,78 @@ export default function ProfilePhotoUpload() {
         setAvatarUrl(null);
       }
     };
-    
+
     // Charger immédiatement au montage
     loadUserProfile();
-    
+
     // Recharger aussi quand on arrive sur la page settings (au cas où le composant serait mis en cache)
     if (pathname === "/settings") {
       // Petit délai pour s'assurer que le composant est bien monté
       const timer = setTimeout(() => {
         loadUserProfile();
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [pathname]); // Recharger quand le pathname change (navigation)
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+
+    // Si aucun fichier n'est sélectionné, cela peut être dû à :
+    // 1. L'utilisateur a annulé la sélection
+    // 2. Les permissions ont été refusées (iOS/Android)
+    // 3. L'utilisateur a cliqué sur le bouton annuler
+    if (!file) {
+      // Ne pas afficher de message d'erreur si l'utilisateur a simplement annulé
+      // Mais réinitialiser l'input pour permettre une nouvelle sélection
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
 
     // Vérifier le type de fichier
     if (!file.type.startsWith("image/")) {
-      setError("Veuillez sélectionner une image");
+      setError("Veuillez sélectionner une image (JPG, PNG ou WebP)");
       return;
     }
 
     // Vérifier la taille (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("L'image est trop grande (max 5MB)");
+      setError("L'image est trop grande (max 5MB). Veuillez choisir une image plus petite.");
       return;
     }
 
     setError(null);
     setUploadSuccess(false);
 
-    // Afficher le modal de recadrage
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageSrc = reader.result as string;
-      setImageToCrop(imageSrc);
-      setShowCropModal(true);
-    };
-    reader.onerror = () => {
-      setError("Erreur lors de la lecture du fichier");
-    };
-    reader.readAsDataURL(file);
+    // Afficher le modal de recadrage avec gestion d'erreur
+    try {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        try {
+          const imageSrc = reader.result as string;
+          if (!imageSrc || imageSrc.length === 0) {
+            setError("Impossible de lire l'image. Veuillez réessayer.");
+            return;
+          }
+          setImageToCrop(imageSrc);
+          setShowCropModal(true);
+        } catch (e) {
+          console.error("[ProfilePhotoUpload] Error processing image result:", e);
+          setError("Erreur lors du traitement de l'image. Veuillez réessayer.");
+        }
+      };
+      reader.onerror = () => {
+        console.error("[ProfilePhotoUpload] FileReader error");
+        setError("Impossible de lire le fichier. Vérifiez que l'application a accès à vos photos dans les Réglages.");
+      };
+      reader.readAsDataURL(file);
+    } catch (e) {
+      console.error("[ProfilePhotoUpload] Error reading file:", e);
+      setError("Erreur lors de la lecture du fichier. Veuillez réessayer.");
+    }
   };
 
   const handleCropComplete = async (croppedImageBlob: Blob) => {
@@ -309,7 +336,7 @@ export default function ProfilePhotoUpload() {
                         .select("avatar_url")
                         .eq("id", user.id)
                         .maybeSingle();
-                      
+
                       if (profile?.avatar_url) {
                         const url = profile.avatar_url.trim();
                         if (url && url.length > 0) {

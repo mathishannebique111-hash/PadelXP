@@ -607,19 +607,91 @@ export async function POST(req: Request) {
           .map(s => `${s.team1Score}-${s.team2Score}`)
           .join(" ");
 
+        // Récupérer le nom du club
+        let clubName = "Club non spécifié";
+        if (finalLocationClubId) {
+          if (isRegisteredClub) {
+            const { data: club } = await supabaseAdmin
+              .from('clubs')
+              .select('name')
+              .eq('id', finalLocationClubId)
+              .maybeSingle();
+            if (club?.name) clubName = club.name;
+          } else {
+            const { data: unregClub } = await supabaseAdmin
+              .from('unregistered_clubs')
+              .select('name')
+              .eq('id', finalLocationClubId)
+              .maybeSingle();
+            if (unregClub?.name) clubName = unregClub.name;
+          }
+        }
+
+        // Récupérer les noms des joueurs pour les équipes
+        const allPlayerIds = participants.map(p => p.user_id).filter(id => id !== "00000000-0000-0000-0000-000000000000");
+        const allGuestPlayerIds = participants.map(p => p.guest_player_id).filter(Boolean) as string[];
+
+        // Fetch user profiles
+        const { data: userProfiles } = await supabaseAdmin
+          .from('profiles')
+          .select('id, display_name, first_name, last_name')
+          .in('id', allPlayerIds);
+
+        // Fetch guest profiles
+        const { data: guestProfiles } = await supabaseAdmin
+          .from('guest_players')
+          .select('id, first_name, last_name')
+          .in('id', allGuestPlayerIds);
+
+        // Helper to get player name
+        const getPlayerName = (participant: typeof participants[0]): string => {
+          if (participant.player_type === 'user') {
+            const profile = userProfiles?.find(p => p.id === participant.user_id);
+            if (profile) {
+              return profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Joueur';
+            }
+            return 'Joueur';
+          } else {
+            const guest = guestProfiles?.find(g => g.id === participant.guest_player_id);
+            if (guest) {
+              return `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || 'Invité';
+            }
+            return 'Invité';
+          }
+        };
+
+        // Build team names
+        const team1Participants = participants.filter(p => p.team === 1);
+        const team2Participants = participants.filter(p => p.team === 2);
+        const team1Players = team1Participants.map(getPlayerName).join(" & ");
+        const team2Players = team2Participants.map(getPlayerName).join(" & ");
+
+        // Determine winner team (1 or 2)
+        const winnerTeam: 1 | 2 = winner_team_id === team1_id ? 1 : 2;
+
         for (const guest of guests) {
           if (guest.email) {
             const guestName = `${guest.first_name} ${guest.last_name}`.trim();
             logger.info("Sending email to guest", { guestId: guest.id, email: guest.email.substring(0, 5) + "…" });
 
-            // Envoyer l'email en arrière-plan (ne pas await pour ne pas ralentir la réponse)
-            const confirmationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/guest/confirmation?id=${guest.id}`;
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL !== "undefined"
+              ? process.env.NEXT_PUBLIC_APP_URL
+              : "https://padelxp.eu";
+
+            const confirmationUrl = `${baseUrl}/guest/confirmation?id=${guest.id}&matchId=${match.id}`;
 
             sendGuestMatchInvitationEmail(
               guest.email,
               guestName,
               creatorName,
-              scoreString,
+              match.id,
+              {
+                clubName,
+                team1Players,
+                team2Players,
+                winnerTeam,
+                score: scoreString
+              },
               confirmationUrl
             ).catch(err => {
               logger.error("Failed to send guest email", { error: err });

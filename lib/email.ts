@@ -262,11 +262,23 @@ export async function sendModeratedReviewEmail(
   }
 }
 
+/**
+ * Interface for match details to pass to the guest invitation email
+ */
+interface GuestEmailMatchDetails {
+  clubName: string;
+  team1Players: string;
+  team2Players: string;
+  winnerTeam: 1 | 2;
+  score: string;
+}
+
 export async function sendGuestMatchInvitationEmail(
   to: string,
   playerName: string,
   matchCreatorName: string,
-  matchScore: string,
+  matchId: string,
+  matchDetails: GuestEmailMatchDetails,
   targetUrl: string = "https://padelxp.eu"
 ): Promise<void> {
   if (!resend || !process.env.RESEND_API_KEY) {
@@ -274,47 +286,108 @@ export async function sendGuestMatchInvitationEmail(
     return;
   }
 
+  // SVG tennis ball icon (Lucide-style)
+  const tennisBallSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M18.09 6.24c-2.07 2.83-2.07 8.69 0 11.52"/><path d="M5.91 6.24c2.07 2.83 2.07 8.69 0 11.52"/><path d="M2 12h20"/></svg>`;
+
+  const winnerText = matchDetails.winnerTeam === 1
+    ? `🏆 Équipe gagnante : Équipe 1 (${matchDetails.score})`
+    : `🏆 Équipe gagnante : Équipe 2 (${matchDetails.score})`;
+
+  // Generate a unique reference to prevent Gmail trimming/threading
+  const uniqueRef = new Date().getTime().toString(36);
+
   try {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "PadelXP <noreply@padelleague.com>",
       to,
-      subject: `🎾 Match enregistré avec toi - PadelXP`,
+      subject: `Match enregistré avec toi - PadelXP (${new Date().toLocaleDateString('fr-FR')})`,
       html: `
         <!DOCTYPE html>
         <html>
           <head>
-            <meta charset="utf-8">
+            <meta name="color-scheme" content="light dark">
+            <meta name="supported-color-schemes" content="light dark">
             <style>
-              body { font-family: Inter, sans-serif; line-height: 1.6; color: #333; }
+              :root {
+                color-scheme: light dark;
+                supported-color-schemes: light dark;
+              }
+              body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #ffffff; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #FF9900, #FF6600); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-              .button { display: inline-block; background: #FF6600; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
-              .button:hover { background: #E65C00; }
-              .score-box { background: white; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-size: 18px; font-weight: bold; border-left: 4px solid #FF6600; }
+              .header { background: linear-gradient(135deg, #071554, #050C30); color: #ffffff !important; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .header-icon { margin-bottom: 10px; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; color: #333333; }
+              .button { display: inline-block; background: #071554; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 10px 0; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(7, 21, 84, 0.2); }
+              .button:hover { background: #0A1E75; }
+              .match-details { background: #ffffff; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #071554; color: #333333; }
+              .match-row { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+              .match-row:last-child { border-bottom: none; }
+              .match-label { font-size: 12px; color: #888888; text-transform: uppercase; letter-spacing: 0.5px; }
+              .match-value { font-size: 15px; font-weight: 600; color: #333333; margin-top: 2px; }
+              .winner-row { background: linear-gradient(90deg, #f0f4ff, #ffffff); padding: 12px; border-radius: 6px; margin-top: 10px; }
+              .checkbox-section { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0; color: #333333; }
+              .checkbox-label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; color: #555555; }
+              .checkbox-note { font-size: 12px; color: #888888; margin-top: 8px; }
+
+              /* Dark Mode Overrides */
+              @media (prefers-color-scheme: dark) {
+                body { background-color: #1a1a1a !important; color: #e0e0e0 !important; }
+                .content { background-color: #2d2d2d !important; color: #e0e0e0 !important; }
+                .match-details { background-color: #333333 !important; color: #e0e0e0 !important; border-left-color: #4da6ff !important; }
+                .match-value { color: #ffffff !important; }
+                .match-label { color: #aaaaaa !important; }
+                .match-row { border-bottom-color: #444444 !important; }
+                .winner-row { background: #444444 !important; }
+                .winner-text { color: #ffffff !important; } /* New class for winner text */
+                .checkbox-section { background-color: #333333 !important; border-color: #444444 !important; color: #e0e0e0 !important; }
+                .checkbox-label { color: #cccccc !important; }
+                .header { color: #ffffff !important; } /* Force header white in dark mode */
+              }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1>🎾 Tu as joué un match !</h1>
+                <div class="header-icon">${tennisBallSvg}</div>
+                <h1 style="margin: 0; font-size: 24px; color: #ffffff !important;">Tu as joué un match !</h1>
               </div>
               <div class="content">
-                <p>Bonjour ${playerName},</p>
+                <p>Bonjour <strong>${playerName}</strong>,</p>
                 <p><strong>${matchCreatorName}</strong> a enregistré un match de padel avec toi sur PadelXP.</p>
                 
-                <div class="score-box">
-                  Score: ${matchScore}
+                <div class="match-details">
+                  <div class="match-row">
+                    <div class="match-label">📍 Lieu</div>
+                    <div class="match-value">${matchDetails.clubName}</div>
+                  </div>
+                  <div class="match-row">
+                    <div class="match-label">Équipe 1</div>
+                    <div class="match-value">${matchDetails.team1Players}</div>
+                  </div>
+                  <div class="match-row">
+                    <div class="match-label">Équipe 2</div>
+                    <div class="match-value">${matchDetails.team2Players}</div>
+                  </div>
+                  <div class="winner-row">
+                    <div class="match-value winner-text" style="color: #000000;">${winnerText}</div>
+                  </div>
+                </div>
+
+                <div style="text-align: center; margin: 25px 0;">
+                  <a href="${targetUrl}" class="button" style="color: #ffffff !important;">Confirmer le match</a>
+                  <p style="font-size: 13px; color: #666; margin-top: 8px;">Clique ci-dessus pour valider ta participation</p>
                 </div>
                 
-                <p>Clique sur le bouton ci-dessous pour confirmer ta participation et recevoir les nouvelles du club si tu le souhaites.</p>
-                
-                <div style="text-align: center;">
-                  <a href="${targetUrl}" class="button">Confirmer le match</a>
+                <div class="checkbox-section">
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="newsletter" style="width: 18px; height: 18px; margin-top: 2px;">
+                    <span>Je souhaite recevoir les actualités et événements du club par email</span>
+                  </label>
+                  <p class="checkbox-note">Cette case est optionnelle. Tu peux te désinscrire à tout moment.</p>
                 </div>
                 
-                <p style="margin-top: 30px; font-size: 12px; color: #666;">
-                  Si ce n'est pas toi, tu peux ignorer cet email.
+                <p style="margin-top: 30px; font-size: 12px; color: #999; text-align: center;">
+                  Ref: ${uniqueRef} • Si ce n'est pas toi, tu peux ignorer cet email.
                 </p>
               </div>
             </div>
@@ -324,8 +397,8 @@ export async function sendGuestMatchInvitationEmail(
     });
     logger.info("✅ Guest invitation email sent", { to: to.substring(0, 5) + "…" });
   } catch (error) {
+    console.error("❌ Error sending guest invitation email:", error);
     logger.error("❌ Error sending guest invitation email", { to: to.substring(0, 5) + "…", error });
-    // Ne pas bloquer le flux principal
   }
 }
 

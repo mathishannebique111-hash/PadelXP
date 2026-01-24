@@ -40,13 +40,15 @@ export default function ProfilePhotoUpload({
 
     // Vérifier le type de fichier
     if (!file.type.startsWith("image/")) {
-      alert("Veuillez sélectionner une image");
+      console.warn("[ProfilePhotoUpload] Invalid file type:", file.type);
+      // Don't use alert() - blocked in iOS WebView
       return;
     }
 
     // Vérifier la taille (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("L'image est trop grande (maximum 5MB)");
+      console.warn("[ProfilePhotoUpload] File too large:", file.size);
+      // Don't use alert() - blocked in iOS WebView
       return;
     }
 
@@ -121,9 +123,9 @@ export default function ProfilePhotoUpload({
     const handleImageMouseMove = (e: MouseEvent) => {
       const newX = e.clientX - dragStart.x;
       const newY = e.clientY - dragStart.y;
-      
+
       const maxMove = 50;
-      
+
       setImagePosition({
         x: Math.max(-maxMove, Math.min(maxMove, newX)),
         y: Math.max(-maxMove, Math.min(maxMove, newY)),
@@ -136,7 +138,7 @@ export default function ProfilePhotoUpload({
 
     window.addEventListener('mousemove', handleImageMouseMove);
     window.addEventListener('mouseup', handleImageMouseUp);
-    
+
     return () => {
       window.removeEventListener('mousemove', handleImageMouseMove);
       window.removeEventListener('mouseup', handleImageMouseUp);
@@ -149,10 +151,10 @@ export default function ProfilePhotoUpload({
     const handleModalImageMouseMove = (e: MouseEvent) => {
       const newX = e.clientX - modalDragStart.x;
       const newY = e.clientY - modalDragStart.y;
-      
+
       // Dans le modal, on peut bouger plus librement
       const maxMove = 200;
-      
+
       setModalImagePosition({
         x: Math.max(-maxMove, Math.min(maxMove, newX)),
         y: Math.max(-maxMove, Math.min(maxMove, newY)),
@@ -165,7 +167,7 @@ export default function ProfilePhotoUpload({
 
     window.addEventListener('mousemove', handleModalImageMouseMove);
     window.addEventListener('mouseup', handleModalImageMouseUp);
-    
+
     return () => {
       window.removeEventListener('mousemove', handleModalImageMouseMove);
       window.removeEventListener('mouseup', handleModalImageMouseUp);
@@ -183,21 +185,20 @@ export default function ProfilePhotoUpload({
         <label className="block text-sm font-medium text-white">
           Photo de profil {required && <span className="text-red-400">*</span>}
         </label>
-        
+
         <div
-          className={`relative border-2 border-dashed rounded-lg p-2 transition-colors w-44 mx-auto ${
-            isDragging
+          className={`relative border-2 border-dashed rounded-lg p-2 transition-colors w-44 mx-auto ${isDragging
               ? "border-[#0066FF] bg-[#0066FF]/10"
               : error
-              ? "border-red-500/50 bg-red-900/10"
-              : "border-white/20 bg-white/5"
-          }`}
+                ? "border-red-500/50 bg-red-900/10"
+                : "border-white/20 bg-white/5"
+            }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {preview ? (
-            <div 
+            <div
               ref={imageContainerRef}
               className="relative w-20 h-20 mx-auto overflow-hidden rounded-full cursor-move"
               onMouseDown={handleImageMouseDown}
@@ -289,7 +290,7 @@ export default function ProfilePhotoUpload({
 
       {/* Modal pour ajuster la photo */}
       {showModal && preview && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -311,7 +312,7 @@ export default function ProfilePhotoUpload({
               Double-cliquez (ou double-tapez sur mobile) ou bougez la photo pour la positionner
             </p>
             <div className="flex justify-center mb-4">
-              <div 
+              <div
                 ref={modalImageContainerRef}
                 className="relative w-64 h-64 overflow-hidden rounded-full border-4 border-white/30 cursor-move"
                 onMouseDown={handleModalImageMouseDown}

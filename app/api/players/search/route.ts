@@ -124,7 +124,7 @@ export async function GET(req: Request) {
       id: string;
       first_name: string;
       last_name: string;
-      type: "user";
+      type: "user" | "guest";
       display_name: string;
       club_name?: string | null;
       is_external?: boolean;
@@ -133,57 +133,58 @@ export async function GET(req: Request) {
 
     const scope = searchParams.get("scope") || "global"; // 'club' or 'global'
 
-    // ... (existing code)
+    const queryLower = query.toLowerCase().trim();
+    const searchPattern = `%${queryLower.replace(/'/g, "''")}%`; // Escape quotes manually for ilike
 
-    // Construire la requête de base avec le client admin (bypass RLS)
-    // RECHERCHE GLOBALE : On ne filtre plus par club_id SAUF si scope='club'
+    logger.info('[Search API] Search query', { userId: user.id.substring(0, 8) + "…", query: queryLower, scope });
+
+    // 1. Rechercher les profils (Users)
     let profilesQuery = supabaseAdmin
       .from("profiles")
-      .select("id, display_name, first_name, last_name, club_id, email, clubs(name)") // Récupérer le nom du club via la relation
-      .not("id", "eq", GUEST_USER_ID); // Exclure le user invité générique
+      .select("id, display_name, first_name, last_name, club_id, email, clubs(name)")
+      .not("id", "eq", GUEST_USER_ID);
 
-    // Filtrer par club si demandé
     if (scope === "club" && userClubId) {
       profilesQuery = profilesQuery.eq("club_id", userClubId);
     } else if (scope === "global" && userClubId) {
-      // Si mode Global, on exclut les joueurs de notre propre club (car ils sont dans l'onglet Club)
       profilesQuery = profilesQuery.neq("club_id", userClubId);
     }
 
-    // Recherche simple avec ilike sur display_name, first_name et last_name ou username
-    const queryLower = query.toLowerCase().trim();
-    logger.info('[Search API] Search query', { userId: user.id.substring(0, 8) + "…", query: queryLower, scope });
-
-    // Recherche sur plusieurs colonnes (inclure username si possible, sinon rester sur les noms)
     profilesQuery = profilesQuery.or(
-      `display_name.ilike.%${queryLower}%,first_name.ilike.%${queryLower}%,last_name.ilike.%${queryLower}%`
-      // Ajouter username si la colonne existe (à vérifier, sinon on laisse comme ça)
+      `display_name.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern}`
     );
 
-    // Exécuter la requête
-    logger.info('[Search API] Executing global profiles query', { userId: user.id.substring(0, 8) + "…" });
-    const { data: profiles, error: profilesError } = await profilesQuery.limit(20); // Limiter à 20 pour la perf
+    // Exécuter la requête des profils
+    const { data: profiles, error: profilesError } = await profilesQuery.limit(20);
 
     if (profilesError) {
-      logger.error('[Search API] Error fetching profiles', { userId: user.id.substring(0, 8) + "…", error: { message: profilesError.message, details: profilesError.details, hint: profilesError.hint, code: profilesError.code } });
-      return NextResponse.json({
-        players: [],
-        error: 'Database error',
-        message: profilesError.message,
-        details: profilesError.details
-      }, { status: 500 });
+      logger.error('[Search API] Error fetching profiles', { userId: user.id.substring(0, 8) + "…", error: profilesError });
     }
 
-    logger.info('[Search API] Found profiles (global)', { userId: user.id.substring(0, 8) + "…", profilesCount: profiles?.length || 0 });
+    // 2. Rechercher les invités (Guests) - Uniquement ceux invités par l'utilisateur courant
+    // On ne cherche les guests que si le scope n'est pas "club"
+    let guests: any[] = [];
+    if (scope !== "club") {
+      const { data, error } = await supabaseAdmin
+        .from("guest_players")
+        .select("id, first_name, last_name, email")
+        .eq("invited_by_user_id", user.id)
+        .or(
+          `first_name.ilike.${searchPattern},last_name.ilike.${searchPattern}`
+        )
+        .limit(10);
 
-    // Traiter les résultats
+      if (error) {
+        logger.error('[Search API] Error fetching guests', { userId: user.id.substring(0, 8) + "…", error });
+      }
+      guests = data || [];
+    }
+
+    // Traiter les profils (Users)
     if (profiles) {
       profiles.forEach((profile: any) => {
-        // Ignorer l'utilisateur lui-même
         if (profile.id === user.id) return;
 
-        // Ignorer les comptes qui ressemblent trop à des noms de clubs (comptes de gestion)
-        // On fait une vérification basique ici
         const displayNameLower = (profile.display_name || "").toLowerCase();
         if (displayNameLower.includes("padel") && displayNameLower.includes("club")) {
           return;
@@ -200,37 +201,58 @@ export async function GET(req: Request) {
 
         const displayName = profile.display_name || `${first_name} ${last_name}`.trim();
 
-        // Récupérer le nom du club
-        const clubName = profile.clubs?.name || null;
-        const isExternal = profile.club_id !== userClubId;
-
         results.push({
           id: profile.id,
           first_name,
           last_name,
           type: "user",
           display_name: displayName,
-          club_name: clubName,
-          is_external: isExternal,
+          club_name: profile.clubs?.name || null,
+          is_external: profile.club_id !== userClubId,
           email: profile.email || null
         });
       });
-      logger.info('[Search API] Added user profiles to results', { userId: user.id.substring(0, 8) + "…", resultsCount: results.length });
     }
 
-    // Trier les résultats : priorité aux membres du même club, puis alphabétique
+    // Traiter les invités (Guests)
+    if (guests) {
+      guests.forEach((guest: any) => {
+        const displayName = `${guest.first_name} ${guest.last_name}`.trim();
+        results.push({
+          id: guest.id,
+          first_name: guest.first_name,
+          last_name: guest.last_name,
+          type: "guest",
+          display_name: `${displayName} 👤`, // Ajouter une icône pour distinguer
+          club_name: null,
+          is_external: false,
+          email: guest.email || null
+        });
+      });
+    }
+
+    // Trier les résultats
     const sortedResults = results.sort((a, b) => {
-      // D'abord les membres du même club
+      // 1. Les invités de l'utilisateur en premier (facilite la selection)
+      if (a.type !== b.type) {
+        return a.type === 'guest' ? -1 : 1;
+      }
+      // 2. Membres du même club
       if (a.is_external !== b.is_external) {
         return a.is_external ? 1 : -1;
       }
-      // Ensuite alphabétique
+      // 3. Alphabétique
       return a.display_name.localeCompare(b.display_name);
     });
 
-    const finalResults = sortedResults.slice(0, 10);
+    const finalResults = sortedResults.slice(0, 15);
 
-    logger.info('[Search API] Final results count', { userId: user.id.substring(0, 8) + "…", finalResultsCount: finalResults.length });
+    logger.info('[Search API] Final results count', {
+      userId: user.id.substring(0, 8) + "…",
+      total: finalResults.length,
+      users: finalResults.filter(r => r.type === 'user').length,
+      guests: finalResults.filter(r => r.type === 'guest').length
+    });
 
     return NextResponse.json({ players: finalResults });
   } catch (error: any) {

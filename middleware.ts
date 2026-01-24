@@ -7,30 +7,28 @@ import { isAdmin } from "@/lib/admin-auth";
 
 
 
-const generalRatelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(1000, "15 m"),
-  analytics: true,
-  prefix: "ratelimit:general",
-});
+// Initialisation sécurisée de Redis pour éviter le crash au démarrage
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL?.replace(/"/g, '') || '';
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.replace(/"/g, '') || '';
 
+const redisClient = (redisUrl && redisToken)
+  ? new Redis({ url: redisUrl, token: redisToken })
+  : null;
 
+// Helper pour créer un ratelimiter seulement si Redis est dispo
+const createRatelimit = (limiter: any, prefix: string) => {
+  if (!redisClient) return null;
+  return new Ratelimit({
+    redis: redisClient,
+    limiter,
+    analytics: true,
+    prefix,
+  });
+};
 
-const loginRatelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(20, "15 m"), // 20 tentatives / 15 minutes
-  analytics: true,
-  prefix: "ratelimit:login",
-});
-
-
-
-const matchSubmitRatelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "5 m"),
-  analytics: true,
-  prefix: "ratelimit:match",
-});
+const generalRatelimit = createRatelimit(Ratelimit.slidingWindow(1000, "15 m"), "ratelimit:general");
+const loginRatelimit = createRatelimit(Ratelimit.slidingWindow(20, "15 m"), "ratelimit:login");
+const matchSubmitRatelimit = createRatelimit(Ratelimit.slidingWindow(5, "5 m"), "ratelimit:match");
 
 
 // Fonction pour détecter l'app mobile Capacitor
@@ -76,6 +74,11 @@ const PLAYER_ONLY_URLS = [
 
 
 export async function middleware(req: NextRequest) {
+  // Console log pour debug
+  if (req.nextUrl.pathname.startsWith('/api/players/find-or-create')) {
+    console.log('[Middleware] Handling request for:', req.nextUrl.pathname);
+  }
+
   // Exclure les webhooks Stripe du middleware
   if (req.nextUrl.pathname === '/api/stripe/webhook') {
     return NextResponse.next();
@@ -186,14 +189,16 @@ export async function middleware(req: NextRequest) {
     // Ne pas appliquer le rate limiting aux visites simples de la page /login (GET)
     // ni aux pages de réinitialisation de mot de passe
     if (isLoginApiCall) {
-      const { success, remaining, reset } = await loginRatelimit.limit(ip);
-      if (!success) {
-        return NextResponse.json(
-          { error: "Trop de tentatives de connexion. Réessayez dans 15 minutes.", retryAfter: reset },
-          { status: 429 }
-        );
+      if (loginRatelimit) {
+        const { success, remaining, reset } = await loginRatelimit.limit(ip);
+        if (!success) {
+          return NextResponse.json(
+            { error: "Trop de tentatives de connexion. Réessayez dans 15 minutes.", retryAfter: reset },
+            { status: 429 }
+          );
+        }
+        rateLimitInfo = { limit: "15", remaining, reset };
       }
-      rateLimitInfo = { limit: "15", remaining, reset };
     }
 
 
@@ -227,14 +232,16 @@ export async function middleware(req: NextRequest) {
 
 
 
-      const { success, remaining, reset } = await matchSubmitRatelimit.limit(rateLimitId);
-      if (!success) {
-        return NextResponse.json(
-          { error: "Trop de matchs soumis. Limite: 5 matchs par 5 minutes.", retryAfter: reset },
-          { status: 429 }
-        );
+      if (matchSubmitRatelimit) {
+        const { success, remaining, reset } = await matchSubmitRatelimit.limit(rateLimitId);
+        if (!success) {
+          return NextResponse.json(
+            { error: "Trop de matchs soumis. Limite: 5 matchs par 5 minutes.", retryAfter: reset },
+            { status: 429 }
+          );
+        }
+        rateLimitInfo = { limit: "5", remaining, reset };
       }
-      rateLimitInfo = { limit: "5", remaining, reset };
     }
 
 
@@ -246,19 +253,24 @@ export async function middleware(req: NextRequest) {
       !pathnameForRateLimit.startsWith("/api/send-trial-reminder") &&
       !pathnameForRateLimit.startsWith("/api/webhooks/") &&
       pathnameForRateLimit !== "/api/resend-inbound" &&
-      pathnameForRateLimit !== "/api/matches/submit"
+      pathnameForRateLimit !== "/api/matches/submit" &&
+      !pathnameForRateLimit.startsWith("/api/players/find-or-create")
     ) {
-      const { success, remaining, reset } = await generalRatelimit.limit(ip);
-      if (!success) {
-        return NextResponse.json(
-          { error: "Trop de requêtes. Réessayez plus tard.", retryAfter: reset },
-          { status: 429 }
-        );
+      if (generalRatelimit) {
+        const { success, remaining, reset } = await generalRatelimit.limit(ip);
+        if (!success) {
+          console.log('[Middleware] Rate limit exceeded for:', pathnameForRateLimit);
+          return NextResponse.json(
+            { error: "Trop de requêtes. Réessayez plus tard.", retryAfter: reset },
+            { status: 429 }
+          );
+        }
+        rateLimitInfo = { limit: "1000", remaining, reset };
       }
-      rateLimitInfo = { limit: "1000", remaining, reset };
     }
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error), context: 'rate-limiting', pathname: pathnameForRateLimit }, "[Middleware] Rate limiting error:");
+    console.error('[Middleware] Rate limiter error:', error);
+    // logger.error({ error: error instanceof Error ? error.message : String(error), context: 'rate-limiting', pathname: pathnameForRateLimit }, "[Middleware] Rate limiting error:");
   }
 
 
@@ -321,7 +333,8 @@ export async function middleware(req: NextRequest) {
     "/match/new",
     "/tournaments",
     "/about",
-    "/contact"
+    "/contact",
+    "/players"
   ]);
 
   const API_ROUTES_THAT_HANDLE_AUTH = ["/api/matches/", "/api/reviews"];

@@ -15,17 +15,17 @@ export default function ClubsHeroSection() {
 
   useEffect(() => {
     setIsVisible(true);
-    
+
     // Récupérer les vraies stats
     async function fetchStats() {
       try {
         const supabase = createClientComponentClient();
-        
+
         // Compter les joueurs uniques (users + guests)
         const { count: userCount } = await supabase
           .from("profiles")
           .select("id", { count: "exact", head: true });
-        
+
         const { count: guestCount } = await supabase
           .from("guest_players")
           .select("id", { count: "exact", head: true });
@@ -65,7 +65,7 @@ export default function ClubsHeroSection() {
       {/* Background avec overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
-      
+
       {/* Pattern animé */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
@@ -78,20 +78,12 @@ export default function ClubsHeroSection() {
           <Link href="/" className="flex items-center">
             <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-24 w-24 md:h-28 md:w-28 object-contain" />
           </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors"
-            >
-              Pour les joueurs
-            </Link>
-            <Link
-              href="/clubs/login"
-              className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-sm font-semibold text-white hover:shadow-[0_0_20px_rgba(0,102,255,0.5)] transition-all"
-            >
-              Connexion club / complexe
-            </Link>
-          </div>
+          <Link
+            href="/clubs/login"
+            className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-sm font-semibold text-white hover:shadow-[0_0_20px_rgba(0,102,255,0.5)] transition-all"
+          >
+            Connexion club / complexe
+          </Link>
         </div>
       </nav>
 
