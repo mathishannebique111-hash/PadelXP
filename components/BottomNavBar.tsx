@@ -160,13 +160,14 @@ export default function BottomNavBar() {
                     let badgeCount = 0;
 
                     if (item.navKey === 'match') {
-                        badgeCount = counts.matches;
+                        badgeCount = Math.max(0, counts.matches - viewedMatchesCount);
                         // Show ONLY if current count is higher than what we last viewed
-                        showBadge = badgeCount > viewedMatchesCount;
+                        showBadge = badgeCount > 0;
                     } else if (item.navKey === 'home') {
                         // Profil affiche les invitations + notifs générales
-                        badgeCount = counts.invitations + counts.notifications;
-                        showBadge = badgeCount > viewedPartnersCount;
+                        const total = counts.invitations + counts.notifications;
+                        badgeCount = Math.max(0, total - viewedPartnersCount);
+                        showBadge = badgeCount > 0;
                     }
 
                     return (

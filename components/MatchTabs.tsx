@@ -185,13 +185,15 @@ function MatchTabsContent({
     {
       id: 'history' as TabType,
       label: 'Mes matchs',
-      badge: (pendingMatchesCount !== null && pendingMatchesCount > viewedMatchesCount) ? pendingMatchesCount : 0
+      badge: (pendingMatchesCount !== null && pendingMatchesCount > viewedMatchesCount)
+        ? (pendingMatchesCount - viewedMatchesCount)
+        : 0
     },
     {
       id: 'partners' as TabType,
       label: 'Trouve tes partenaires',
       badge: (pendingInvitationsCount !== null && pendingChallengesCount !== null && (pendingInvitationsCount + pendingChallengesCount) > viewedPartnersCount)
-        ? (pendingInvitationsCount + pendingChallengesCount)
+        ? ((pendingInvitationsCount + pendingChallengesCount) - viewedPartnersCount)
         : 0
     },
     // { id: 'boost' as TabType, label: 'Boost' },
