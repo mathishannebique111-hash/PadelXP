@@ -102,4 +102,12 @@ export class PushNotificationsService {
             console.error("[PushNotifications] Erreur désenregistrement:", error);
         }
     }
+    static async clearBadge() {
+        if (Capacitor.getPlatform() === "web") return;
+        try {
+            await PushNotifications.removeAllDeliveredNotifications();
+        } catch (error) {
+            console.error("[PushNotifications] Erreur nettoyage badge:", error);
+        }
+    }
 }

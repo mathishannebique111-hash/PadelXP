@@ -9,6 +9,7 @@ import { showToast } from "@/components/ui/Toast";
 import AddPhoneModal from "@/components/AddPhoneModal";
 import WhatsAppModal from "@/components/profile/WhatsAppModal";
 import { openWhatsApp } from "@/lib/utils/whatsapp";
+import { PushNotificationsService } from "@/lib/notifications/push-notifications";
 
 interface MatchInvitation {
   id: string;
@@ -203,6 +204,8 @@ export default function MatchInvitationsReceived() {
         .eq("type", "match_invitation_received")
         .filter("data->>invitation_id", "eq", invitationId);
 
+      await PushNotificationsService.clearBadge();
+
       showToast("Invitation refusée", "info");
       await loadInvitations();
       window.dispatchEvent(new CustomEvent("matchInvitationUpdated"));
@@ -300,6 +303,8 @@ export default function MatchInvitationsReceived() {
         .eq("user_id", user.id)
         .eq("type", "match_invitation_received")
         .filter("data->>invitation_id", "eq", invitationId);
+
+      await PushNotificationsService.clearBadge();
 
       // 3. Récupérer le numéro et le nom du sender
       const { data: phoneData, error: phoneError } = await supabase.rpc(
