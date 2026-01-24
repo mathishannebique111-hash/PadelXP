@@ -35,22 +35,22 @@ export default function PlayerClubGate({
           cache: 'no-store',
           next: { revalidate: 0 },
         });
-        
+
         if (!apiRes.ok) {
           const errorText = await apiRes.text();
-          logger.error("[PlayerClubGate] API error response:", apiRes.status, errorText);
+          logger.error(`[PlayerClubGate] API error response: ${apiRes.status}`, { errorText });
           throw new Error(`API returned ${apiRes.status}: ${errorText}`);
         }
-        
+
         const apiData = await apiRes.json();
         logger.info("[PlayerClubGate] API response:", apiData);
-        
+
         if (apiData.error) {
           logger.error("[PlayerClubGate] API returned error:", apiData.error);
           // Essayer la requête directe en fallback
           await loadClubsDirect();
         } else if (apiData.clubs && Array.isArray(apiData.clubs)) {
-          logger.info("[PlayerClubGate] API returned", apiData.clubs.length, "clubs");
+          logger.info(`[PlayerClubGate] API returned ${apiData.clubs.length} clubs`);
           setClubs(apiData.clubs);
         } else {
           logger.warn("[PlayerClubGate] API returned empty clubs array");
@@ -60,10 +60,10 @@ export default function PlayerClubGate({
         logger.error("[PlayerClubGate] API fetch failed, trying direct query...", apiErr);
         await loadClubsDirect();
       }
-      
+
       setSelectedSlug("");
       setCode("");
-      
+
       // Fonction helper pour charger directement depuis Supabase
       async function loadClubsDirect() {
         try {
@@ -72,14 +72,13 @@ export default function PlayerClubGate({
             .from("clubs")
             .select("*")
             .order("name", { ascending: true });
-          
+
           logger.info("[PlayerClubGate] Direct query result:", { data: result.data, error: result.error });
-          
+
           if (!result.error && result.data) {
             const filtered = result.data.filter((club: any) => {
-              const status = club?.status ?? null;
-              if (status && status !== "active") return false;
-              return true;
+              const status = club?.status === "active";
+              return status;
             });
 
             const normalizedClubs = filtered.map((club: any) => ({
@@ -87,7 +86,7 @@ export default function PlayerClubGate({
               slug: club.slug || club.club_slug || (club.name ? club.name.toLowerCase().replace(/[^a-z0-9]+/g, '') : ''),
               code_invitation: club.code_invitation || club.invitation_code || club.code || '',
             })).filter((club: any) => club.name && club.slug && club.code_invitation);
-            
+
             logger.info("[PlayerClubGate] Loaded clubs via direct query:", normalizedClubs.length);
             setClubs(normalizedClubs);
             return;
@@ -95,7 +94,7 @@ export default function PlayerClubGate({
         } catch (directErr) {
           logger.error("[PlayerClubGate] Direct query also failed:", directErr);
         }
-        
+
         // Dernier recours : fallback TCAM
         logger.warn("[PlayerClubGate] All methods failed, returning empty list");
         setClubs([]);
@@ -108,9 +107,9 @@ export default function PlayerClubGate({
   const normalizedInput = useMemo(() => code.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase().replace(/[^A-Z0-9]+/g, "").trim(), [code]);
   const isValid = selectedClub ? (normalizedInput === (expectedCode || "").toUpperCase()) : false;
 
-  useEffect(() => { 
-    onValidChange?.(isValid); 
-    onChange?.({ name: selectedClub?.name || "", slug: selectedClub?.slug || "", invitationCode: expectedCode, code }); 
+  useEffect(() => {
+    onValidChange?.(isValid);
+    onChange?.({ name: selectedClub?.name || "", slug: selectedClub?.slug || "", invitationCode: expectedCode, code });
   }, [isValid, onValidChange, onChange, selectedClub, expectedCode, code]);
 
   return (
@@ -144,9 +143,8 @@ export default function PlayerClubGate({
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="Saisir le code reçu"
-        className={`w-full rounded-md px-2.5 py-1.5 text-sm text-white placeholder-white/40 border ${
-          isValid ? 'bg-white/5 border-white/10' : showInvalidState ? 'bg-white/5 border-red-400' : 'bg-white/5 border-white/10'
-        }`}
+        className={`w-full rounded-md px-2.5 py-1.5 text-sm text-white placeholder-white/40 border ${isValid ? 'bg-white/5 border-white/10' : showInvalidState ? 'bg-white/5 border-red-400' : 'bg-white/5 border-white/10'
+          }`}
       />
       {!isValid && code.length > 0 && selectedSlug && showInvalidState && (
         <div className="text-[10px] mt-0.5 text-red-400">Le code ne correspond pas au club sélectionné.</div>

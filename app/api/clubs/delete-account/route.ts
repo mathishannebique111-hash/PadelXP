@@ -45,7 +45,7 @@ export async function DELETE(request: Request) {
 
         const clubId = adminEntry.club_id;
 
-        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, "[delete-club] Starting club deletion");
+        logger.info("[delete-club] Starting club deletion", { userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" });
 
         // 1. Annuler l'abonnement Stripe si existant
         const { data: club } = await supabaseAdmin
@@ -57,9 +57,9 @@ export async function DELETE(request: Request) {
         if (stripe && club?.stripe_subscription_id) {
             try {
                 await stripe.subscriptions.cancel(club.stripe_subscription_id);
-                logger.info({ clubId: clubId.substring(0, 8) + "…", subscriptionId: club.stripe_subscription_id.substring(0, 8) + "…" }, "[delete-club] Stripe subscription cancelled");
+                logger.info("[delete-club] Stripe subscription cancelled", { clubId: clubId.substring(0, 8) + "…", subscriptionId: club.stripe_subscription_id.substring(0, 8) + "…" });
             } catch (stripeError: any) {
-                logger.warn({ clubId: clubId.substring(0, 8) + "…", error: stripeError.message }, "[delete-club] Failed to cancel Stripe subscription");
+                logger.warn("[delete-club] Failed to cancel Stripe subscription", { clubId: clubId.substring(0, 8) + "…", error: stripeError.message });
             }
         }
 
@@ -72,7 +72,7 @@ export async function DELETE(request: Request) {
             .delete()
             .eq("club_id", clubId);
         if (matchesError) {
-            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: matchesError }, "[delete-club] Error deleting matches");
+            logger.warn("[delete-club] Error deleting matches", { clubId: clubId.substring(0, 8) + "…", error: matchesError });
         }
 
         // Supprimer les challenges
@@ -81,7 +81,7 @@ export async function DELETE(request: Request) {
             .delete()
             .eq("club_id", clubId);
         if (challengesError) {
-            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: challengesError }, "[delete-club] Error deleting challenges");
+            logger.warn("[delete-club] Error deleting challenges", { clubId: clubId.substring(0, 8) + "…", error: challengesError });
         }
 
         // Supprimer les tournois
@@ -90,7 +90,7 @@ export async function DELETE(request: Request) {
             .delete()
             .eq("club_id", clubId);
         if (tournamentsError) {
-            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: tournamentsError }, "[delete-club] Error deleting tournaments");
+            logger.warn("[delete-club] Error deleting tournaments", { clubId: clubId.substring(0, 8) + "…", error: tournamentsError });
         }
 
         // Supprimer les profils des membres
@@ -99,7 +99,7 @@ export async function DELETE(request: Request) {
             .delete()
             .eq("club_id", clubId);
         if (profilesError) {
-            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: profilesError }, "[delete-club] Error deleting profiles");
+            logger.warn("[delete-club] Error deleting profiles", { clubId: clubId.substring(0, 8) + "…", error: profilesError });
         }
 
         // Supprimer les admins du club
@@ -108,7 +108,25 @@ export async function DELETE(request: Request) {
             .delete()
             .eq("club_id", clubId);
         if (adminsError) {
-            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: adminsError }, "[delete-club] Error deleting club_admins");
+            logger.warn("[delete-club] Error deleting club_admins", { clubId: clubId.substring(0, 8) + "…", error: adminsError });
+        }
+
+        // Supprimer les propositions de match
+        const { error: proposalsError } = await supabaseAdmin
+            .from("match_proposals")
+            .delete()
+            .eq("club_id", clubId);
+        if (proposalsError) {
+            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: proposalsError }, "[delete-club] Error deleting match_proposals");
+        }
+
+        // Supprimer les imports de membres
+        const { error: importsError } = await supabaseAdmin
+            .from("club_member_imports")
+            .delete()
+            .eq("club_id", clubId);
+        if (importsError) {
+            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: importsError }, "[delete-club] Error deleting club_member_imports");
         }
 
         // Supprimer les abonnements
@@ -117,7 +135,7 @@ export async function DELETE(request: Request) {
             .delete()
             .eq("club_id", clubId);
         if (subscriptionsError) {
-            logger.warn({ clubId: clubId.substring(0, 8) + "…", error: subscriptionsError }, "[delete-club] Error deleting subscriptions");
+            logger.warn("[delete-club] Error deleting subscriptions", { clubId: clubId.substring(0, 8) + "…", error: subscriptionsError });
         }
 
         // Supprimer le club
@@ -126,23 +144,23 @@ export async function DELETE(request: Request) {
             .delete()
             .eq("id", clubId);
         if (clubError) {
-            logger.error({ clubId: clubId.substring(0, 8) + "…", error: clubError }, "[delete-club] Error deleting club");
+            logger.error("[delete-club] Error deleting club", { clubId: clubId.substring(0, 8) + "…", error: clubError });
             return NextResponse.json({ error: "Erreur lors de la suppression du club" }, { status: 500 });
         }
 
         // 3. Supprimer l'utilisateur auth
         try {
             await supabaseAdmin.auth.admin.deleteUser(user.id);
-            logger.info({ userId: user.id.substring(0, 8) + "…" }, "[delete-club] User deleted from auth");
+            logger.info("[delete-club] User deleted from auth", { userId: user.id.substring(0, 8) + "…" });
         } catch (authError: any) {
-            logger.warn({ userId: user.id.substring(0, 8) + "…", error: authError.message }, "[delete-club] Failed to delete auth user");
+            logger.warn("[delete-club] Failed to delete auth user", { userId: user.id.substring(0, 8) + "…", error: authError.message });
         }
 
-        logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, "[delete-club] Club deletion completed");
+        logger.info("[delete-club] Club deletion completed", { userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" });
 
         return NextResponse.json({ success: true, message: "Club supprimé avec succès" });
     } catch (error: any) {
-        logger.error({ error: error.message }, "[delete-club] Unexpected error");
+        logger.error("[delete-club] Unexpected error", { error: error.message });
         return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 }
