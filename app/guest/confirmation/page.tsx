@@ -94,6 +94,8 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
                 <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
                     <h1 className="text-xl font-bold text-gray-900 mb-2">Match introuvable</h1>
                     <p className="text-gray-600">Ce match n'existe pas ou a été supprimé.</p>
+                    <p className="text-xs text-gray-400 mt-4 font-mono">ID: {matchId} | SRK: {!!process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Yes' : 'No'}</p>
+                    {matchError && <p className="text-xs text-red-400 mt-1">Erreur: {matchError.message} ({matchError.code})</p>}
                 </div>
             </div>
         );
