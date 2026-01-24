@@ -1,5 +1,6 @@
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
+import { Badge } from "@capawesome/capacitor-badge";
 import { createClient } from "@/lib/supabase/client";
 
 export class PushNotificationsService {
@@ -103,22 +104,20 @@ export class PushNotificationsService {
         }
     }
 
-    // NON DISPONIBLE SANS @capacitor/badge
     static async setBadge(count: number) {
-        console.warn("[PushNotifications] setBadge requires @capacitor/badge plugin (failed to install)");
-        // if (Capacitor.getPlatform() === "web") return;
-        // try {
-        //     await Badge.set({ count });
-        // } catch (error) {
-        //     console.error("[PushNotifications] Erreur setBadge:", error);
-        // }
+        if (Capacitor.getPlatform() === "web") return;
+        try {
+            await Badge.set({ count });
+        } catch (error) {
+            console.error("[PushNotifications] Erreur setBadge:", error);
+        }
     }
 
     static async clearBadge() {
         if (Capacitor.getPlatform() === "web") return;
         try {
             await PushNotifications.removeAllDeliveredNotifications();
-            // await Badge.clear();
+            await Badge.clear();
         } catch (error) {
             console.error("[PushNotifications] Erreur nettoyage badge:", error);
         }

@@ -14,7 +14,8 @@ let package = Package(
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.0.0"),
         .package(name: "CapacitorNetwork", path: "../../../node_modules/@capacitor/network"),
         .package(name: "CapacitorPushNotifications", path: "../../../node_modules/@capacitor/push-notifications"),
-        .package(name: "CapacitorSplashScreen", path: "../../../node_modules/@capacitor/splash-screen")
+        .package(name: "CapacitorSplashScreen", path: "../../../node_modules/@capacitor/splash-screen"),
+        .package(name: "CapawesomeCapacitorBadge", path: "../../../node_modules/@capawesome/capacitor-badge")
     ],
     targets: [
         .target(
@@ -24,7 +25,8 @@ let package = Package(
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
                 .product(name: "CapacitorNetwork", package: "CapacitorNetwork"),
                 .product(name: "CapacitorPushNotifications", package: "CapacitorPushNotifications"),
-                .product(name: "CapacitorSplashScreen", package: "CapacitorSplashScreen")
+                .product(name: "CapacitorSplashScreen", package: "CapacitorSplashScreen"),
+                .product(name: "CapawesomeCapacitorBadge", package: "CapawesomeCapacitorBadge")
             ]
         )
     ]
