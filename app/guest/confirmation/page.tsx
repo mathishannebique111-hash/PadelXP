@@ -81,9 +81,7 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
       winner_team_id,
       team1_id,
       location_club_id, 
-      is_registered_club,
-      unregistered_clubs(name),
-      clubs(name)
+      is_registered_club
     `)
         .eq("id", matchId)
         .single();
@@ -94,13 +92,30 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
                 <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
                     <h1 className="text-xl font-bold text-gray-900 mb-2">Match introuvable</h1>
                     <p className="text-gray-600">Ce match n'existe pas ou a été supprimé.</p>
-                    <p className="text-xs text-gray-400 mt-4 font-mono">ID: {matchId} | SRK: {!!process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Yes' : 'No'}</p>
-                    {matchError && <p className="text-xs text-red-400 mt-1">Erreur: {matchError.message} ({matchError.code})</p>}
                 </div>
             </div>
         );
     }
 
+    // Fetch club name separately to avoid foreign key issues (PGRST200)
+    let clubName = "Club inconnu";
+    if (match.location_club_id) {
+        if (match.is_registered_club) {
+            const { data: club } = await supabase
+                .from('clubs')
+                .select('name')
+                .eq('id', match.location_club_id)
+                .maybeSingle();
+            if (club) clubName = club.name;
+        } else {
+            const { data: unregClub } = await supabase
+                .from('unregistered_clubs')
+                .select('name')
+                .eq('id', match.location_club_id)
+                .maybeSingle();
+            if (unregClub) clubName = unregClub.name;
+        }
+    }
     // Fetch participants for names
     const { data: participants } = await supabase
         .from("match_participants")
@@ -138,7 +153,6 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
         .eq("guest_player_id", guestId)
         .maybeSingle();
 
-    const clubName = match.is_registered_club ? (match.clubs as any)?.name : (match.unregistered_clubs as any)?.name || "Club inconnu";
     const dateStr = new Date(match.played_at).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
     return (
