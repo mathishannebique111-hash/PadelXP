@@ -25,9 +25,9 @@ function MatchTabsContent({
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
   const initialTab = tabFromUrl && ['record', 'history', 'partners', 'boost'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
-  const [pendingMatchesCount, setPendingMatchesCount] = useState(0);
-  const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
-  const [pendingChallengesCount, setPendingChallengesCount] = useState(0);
+  const [pendingMatchesCount, setPendingMatchesCount] = useState<number | null>(null);
+  const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(null);
+  const [pendingChallengesCount, setPendingChallengesCount] = useState<number | null>(null);
 
   // Persistent read state
   const [viewedMatchesCount, setViewedMatchesCount] = useState(0);
@@ -44,27 +44,29 @@ function MatchTabsContent({
 
   // Auto-adjustment: if actual count < viewed, lower the viewed count
   useEffect(() => {
-    if (pendingMatchesCount < viewedMatchesCount) {
+    if (pendingMatchesCount !== null && pendingMatchesCount < viewedMatchesCount) {
       setViewedMatchesCount(pendingMatchesCount);
       localStorage.setItem('padelxp_viewed_matches_count', pendingMatchesCount.toString());
     }
   }, [pendingMatchesCount, viewedMatchesCount]);
 
   useEffect(() => {
-    const totalPartners = pendingInvitationsCount + pendingChallengesCount;
-    if (totalPartners < viewedPartnersCount) {
-      setViewedPartnersCount(totalPartners);
-      localStorage.setItem('padelxp_viewed_partners_count', totalPartners.toString());
+    if (pendingInvitationsCount !== null && pendingChallengesCount !== null) {
+      const totalPartners = pendingInvitationsCount + pendingChallengesCount;
+      if (totalPartners < viewedPartnersCount) {
+        setViewedPartnersCount(totalPartners);
+        localStorage.setItem('padelxp_viewed_partners_count', totalPartners.toString());
+      }
     }
   }, [pendingInvitationsCount, pendingChallengesCount, viewedPartnersCount]);
 
   // Mark as viewed when active
   useEffect(() => {
-    if (currentTab === 'history') {
+    if (currentTab === 'history' && pendingMatchesCount !== null) {
       setViewedMatchesCount(pendingMatchesCount);
       localStorage.setItem('padelxp_viewed_matches_count', pendingMatchesCount.toString());
       window.dispatchEvent(new Event('badge-sync'));
-    } else if (currentTab === 'partners') {
+    } else if (currentTab === 'partners' && pendingInvitationsCount !== null && pendingChallengesCount !== null) {
       const total = pendingInvitationsCount + pendingChallengesCount;
       setViewedPartnersCount(total);
       localStorage.setItem('padelxp_viewed_partners_count', total.toString());
@@ -104,7 +106,7 @@ function MatchTabsContent({
 
     // Listen for matchFullyConfirmed event to decrement badge
     const handleMatchConfirmed = () => {
-      setPendingMatchesCount(prev => Math.max(0, prev - 1));
+      setPendingMatchesCount(prev => (prev !== null ? Math.max(0, prev - 1) : 0));
     };
     window.addEventListener('matchFullyConfirmed', handleMatchConfirmed);
 
@@ -180,8 +182,18 @@ function MatchTabsContent({
 
   const tabs = [
     { id: 'record' as TabType, label: 'Enregistrer' },
-    { id: 'history' as TabType, label: 'Mes matchs', badge: pendingMatchesCount > viewedMatchesCount ? pendingMatchesCount : 0 },
-    { id: 'partners' as TabType, label: 'Trouve tes partenaires', badge: (pendingInvitationsCount + pendingChallengesCount) > viewedPartnersCount ? (pendingInvitationsCount + pendingChallengesCount) : 0 },
+    {
+      id: 'history' as TabType,
+      label: 'Mes matchs',
+      badge: (pendingMatchesCount !== null && pendingMatchesCount > viewedMatchesCount) ? pendingMatchesCount : 0
+    },
+    {
+      id: 'partners' as TabType,
+      label: 'Trouve tes partenaires',
+      badge: (pendingInvitationsCount !== null && pendingChallengesCount !== null && (pendingInvitationsCount + pendingChallengesCount) > viewedPartnersCount)
+        ? (pendingInvitationsCount + pendingChallengesCount)
+        : 0
+    },
     // { id: 'boost' as TabType, label: 'Boost' },
   ];
 
