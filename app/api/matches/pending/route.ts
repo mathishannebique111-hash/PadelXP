@@ -128,7 +128,7 @@ export async function GET(req: Request) {
             // Récupérer les confirmations
             const { data: confirmations } = await supabaseAdmin
                 .from("match_confirmations")
-                .select("user_id, confirmed")
+                .select("user_id, guest_player_id, confirmed")
                 .eq("match_id", match.id);
 
             // Récupérer les profils des participants
@@ -166,7 +166,16 @@ export async function GET(req: Request) {
 
                 // Vérifier si ce participant a confirmé
                 const hasConfirmed = (confirmations || []).some(
-                    c => c.user_id === p.user_id && c.confirmed
+                    c => {
+                        if (c.confirmed) {
+                            if (p.player_type === "user") {
+                                return c.user_id === p.user_id;
+                            } else if (p.player_type === "guest") {
+                                return c.guest_player_id === p.guest_player_id;
+                            }
+                        }
+                        return false;
+                    }
                 );
 
                 // Déterminer le nom du club si différent de celui du joueur connecté
