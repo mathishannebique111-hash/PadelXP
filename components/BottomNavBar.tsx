@@ -160,14 +160,14 @@ export default function BottomNavBar() {
                     let badgeCount = 0;
 
                     if (item.navKey === 'match') {
-                        badgeCount = Math.max(0, counts.matches - viewedMatchesCount);
-                        // Show ONLY if current count is higher than what we last viewed
+                        // Badge persistant tant qu'il y a des actions en attente
+                        badgeCount = counts.matches;
                         showBadge = badgeCount > 0;
                     } else if (item.navKey === 'home') {
-                        // Profil affiche les invitations + notifs générales
-                        const total = counts.invitations + counts.notifications;
-                        badgeCount = Math.max(0, total - viewedPartnersCount);
-                        showBadge = badgeCount > 0;
+                        // Profil : Pas de badge pour l'instant car les notifications ne sont pas affichées sur cette page
+                        // (Les invitations sont gérées dans l'onglet Matchs > Partenaires)
+                        badgeCount = 0;
+                        showBadge = false;
                     }
 
                     return (
@@ -177,16 +177,7 @@ export default function BottomNavBar() {
                             className="relative flex flex-col items-center justify-center py-1.5 z-10"
                             style={{ flex: 1 }}
                             onClick={() => {
-                                // Forcer le dismiss immédiat au clic
-                                if (item.navKey === 'match') {
-                                    localStorage.setItem('padelxp_viewed_matches_count', counts.matches.toString());
-                                    setViewedMatchesCount(counts.matches);
-                                }
-                                if (item.navKey === 'home') {
-                                    const total = counts.invitations + counts.notifications;
-                                    localStorage.setItem('padelxp_viewed_partners_count', total.toString());
-                                    setViewedPartnersCount(total);
-                                }
+                                // Ne pas effacer les badges ici, on laisse les pages gérer le "vu" par onglet
                             }}
                         >
                             <div className="relative flex flex-col items-center text-[#172554]">

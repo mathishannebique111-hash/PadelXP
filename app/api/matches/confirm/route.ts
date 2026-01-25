@@ -198,22 +198,55 @@ export async function POST(req: Request) {
     }
 
     // Upsert the confirmation
-    logger.info("POST /api/matches/confirm - Upserting confirmation");
-    const { error: upsertError } = await adminClient
-      .from("match_confirmations")
-      .upsert({
-        match_id: matchId,
-        user_id: user.id,
-        confirmed: true,
-        confirmed_at: new Date().toISOString(),
-        confirmation_token: crypto.randomUUID()
-      }, {
-        onConflict: 'match_id,user_id'
-      });
+    logger.info("POST /api/matches/confirm - handling confirmation (check existing first)");
 
-    if (upsertError) {
-      logger.error("POST /api/matches/confirm - Upsert error", { error: upsertError.message });
-      return NextResponse.json({ error: "Erreur lors de la confirmation", details: upsertError.message }, { status: 500 });
+    // On vérifie d'abord si une confirmation existe déjà pour cet utilisateur
+    // Cela évite les problèmes avec upsert sur un index partiel (Postgres ne trouve pas toujours l'index partial pour l'inférence ON CONFLICT)
+    const { data: existingConfirmation, error: checkError } = await adminClient
+      .from("match_confirmations")
+      .select("id")
+      .eq("match_id", matchId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (checkError) {
+      logger.error("POST /api/matches/confirm - Check existing error", { error: checkError.message });
+      return NextResponse.json({ error: "Erreur lors de la vérification", details: checkError.message }, { status: 500 });
+    }
+
+    let actionError = null;
+
+    if (existingConfirmation) {
+      // Update
+      const { error: updateError } = await adminClient
+        .from("match_confirmations")
+        .update({
+          confirmed: true,
+          confirmed_at: new Date().toISOString(),
+          // On ne change pas le token s'il existe déjà, sauf si on veut le forcer ?
+          // Gardons le token existant ou générons-en un nouveau ?
+          // Dans le doute, on update tout pour être iso avec l'ancien upsert
+          confirmation_token: crypto.randomUUID()
+        })
+        .eq("id", existingConfirmation.id);
+      actionError = updateError;
+    } else {
+      // Insert
+      const { error: insertError } = await adminClient
+        .from("match_confirmations")
+        .insert({
+          match_id: matchId,
+          user_id: user.id,
+          confirmed: true,
+          confirmed_at: new Date().toISOString(),
+          confirmation_token: crypto.randomUUID()
+        });
+      actionError = insertError;
+    }
+
+    if (actionError) {
+      logger.error("POST /api/matches/confirm - Action error", { error: actionError.message });
+      return NextResponse.json({ error: "Erreur lors de la confirmation", details: actionError.message }, { status: 500 });
     }
 
     logger.info("POST /api/matches/confirm - Confirmation upserted");
@@ -295,16 +328,18 @@ export async function POST(req: Request) {
             // On utilise rpc 'increment_global_points' idéalement pour atomicité, 
             // mais un simple update est acceptable ici vu le volume.
             // Mieux : récupérer points actuels ? Non, update direct : global_points = global_points + matchPoints
-            await adminClient.rpc('increment_global_points', {
+            const { error: rpcError } = await adminClient.rpc('increment_global_points', {
               p_user_id: userId,
               p_points: matchPoints
-            }).catch(async (e) => {
-              // Fallback si la fonction RPC n'existe pas (on devra la créer dans la migration ou faire un get/set)
-              logger.warn("RPC increment_global_points failed, falling back to get/set", e);
+            });
+
+            if (rpcError) {
+              // Fallback si la fonction RPC n'existe pas
+              logger.warn("RPC increment_global_points failed, falling back to get/set", rpcError);
               const { data: profile } = await adminClient.from("profiles").select("global_points").eq("id", userId).single();
               const newPoints = (profile?.global_points || 0) + matchPoints;
               await adminClient.from("profiles").update({ global_points: newPoints }).eq("id", userId);
-            });
+            }
 
             // 3. Mettre à jour club_points (Classement par club respectif)
             // On attribue les points au club "Principal" du joueur (celui dans son profil)
@@ -318,18 +353,20 @@ export async function POST(req: Request) {
             const userClubId = userProfile?.club_id;
 
             if (userClubId) {
-              await adminClient.rpc('increment_club_points', {
+              const { error: rpcError } = await adminClient.rpc('increment_club_points', {
                 p_user_id: userId,
                 p_club_id: userClubId,
                 p_points: matchPoints
-              }).catch(async (e) => {
-                logger.warn("RPC increment_club_points failed, falling back to get/set", e);
+              });
+
+              if (rpcError) {
+                logger.warn("RPC increment_club_points failed, falling back to get/set", rpcError);
                 const { data: uc } = await adminClient.from("user_clubs").select("club_points").eq("user_id", userId).eq("club_id", userClubId).maybeSingle();
                 if (uc) {
                   const newClubPoints = (uc.club_points || 0) + matchPoints;
                   await adminClient.from("user_clubs").update({ club_points: newClubPoints }).eq("user_id", userId).eq("club_id", userClubId);
                 }
-              });
+              }
             }
           }
           logger.info("Points distribution completed successfully.");
