@@ -167,9 +167,9 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
                         <Image
                             src="/padelxp-logo-transparent.png"
                             alt="PadelXP"
-                            width={180}
-                            height={60}
-                            className="h-14 w-auto object-contain"
+                            width={220}
+                            height={80}
+                            className="h-20 w-auto object-contain"
                         />
                     </div>
                     <p className="text-blue-100/90 text-sm font-medium">
