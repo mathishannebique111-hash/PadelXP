@@ -289,9 +289,15 @@ export async function sendGuestMatchInvitationEmail(
   // SVG tennis ball icon (Lucide-style)
   const tennisBallSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M18.09 6.24c-2.07 2.83-2.07 8.69 0 11.52"/><path d="M5.91 6.24c2.07 2.83 2.07 8.69 0 11.52"/><path d="M2 12h20"/></svg>`;
 
+  // SVG Trophy icon
+  const trophySvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
+
+  // SVG MapPin icon
+  const mapPinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`;
+
   const winnerText = matchDetails.winnerTeam === 1
-    ? `🏆 Équipe gagnante : Équipe 1 (${matchDetails.score})`
-    : `🏆 Équipe gagnante : Équipe 2 (${matchDetails.score})`;
+    ? `${trophySvg} Équipe gagnante : Équipe 1 (${matchDetails.score})`
+    : `${trophySvg} Équipe gagnante : Équipe 2 (${matchDetails.score})`;
 
   // Generate a unique reference to prevent Gmail trimming/threading
   const uniqueRef = new Date().getTime().toString(36);
@@ -337,8 +343,8 @@ export async function sendGuestMatchInvitationEmail(
                 .match-value { color: #ffffff !important; }
                 .match-label { color: #aaaaaa !important; }
                 .match-row { border-bottom-color: #444444 !important; }
-                .winner-row { background: #444444 !important; }
-                .winner-text { color: #ffffff !important; } /* New class for winner text */
+                .winner-row { background: #f0f4ff !important; border: 1px solid #444444 !important; } /* Light background for black text in dark mode */
+                .winner-text { color: #000000 !important; } /* Force black text as requested */
                 .checkbox-section { background-color: #333333 !important; border-color: #444444 !important; color: #e0e0e0 !important; }
                 .checkbox-label { color: #cccccc !important; }
                 .header { color: #ffffff !important; } /* Force header white in dark mode */
@@ -357,7 +363,7 @@ export async function sendGuestMatchInvitationEmail(
                 
                 <div class="match-details">
                   <div class="match-row">
-                    <div class="match-label">📍 Lieu</div>
+                    <div class="match-label">${mapPinSvg} Lieu</div>
                     <div class="match-value">${matchDetails.clubName}</div>
                   </div>
                   <div class="match-row">

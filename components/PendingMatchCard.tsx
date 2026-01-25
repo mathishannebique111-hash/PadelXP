@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, FileText, Trophy, Check, MapPin } from "lucide-react";
+import { Clock, FileText, Trophy, Check, MapPin, X } from "lucide-react";
 
 interface Participant {
     user_id: string;
@@ -9,6 +9,7 @@ interface Participant {
     display_name: string;
     club_name?: string;
     has_confirmed: boolean;
+    has_refused?: boolean;
     is_current_user?: boolean;
 }
 
@@ -164,6 +165,11 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                                         <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                                     </div>
                                 )}
+                                {p.has_refused && (
+                                    <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-500">
+                                        <X className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -184,6 +190,11 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                                 {(p.has_confirmed || (p.is_current_user && confirmed)) && (
                                     <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
                                         <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                                    </div>
+                                )}
+                                {p.has_refused && (
+                                    <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-500">
+                                        <X className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                                     </div>
                                 )}
                             </div>

@@ -178,6 +178,20 @@ export async function GET(req: Request) {
                     }
                 );
 
+                // Vérifier si ce participant a REFUSÉ
+                const hasRefused = (confirmations || []).some(
+                    c => {
+                        if (c.confirmed === false) { // false explicitement
+                            if (p.player_type === "user") {
+                                return c.user_id === p.user_id;
+                            } else if (p.player_type === "guest") {
+                                return c.guest_player_id === p.guest_player_id;
+                            }
+                        }
+                        return false;
+                    }
+                );
+
                 // Déterminer le nom du club si différent de celui du joueur connecté
                 let clubName = undefined;
                 if (p.player_type === "user" && profile?.club_id) {
@@ -191,6 +205,7 @@ export async function GET(req: Request) {
                     display_name: displayName,
                     club_name: clubName,
                     has_confirmed: hasConfirmed,
+                    has_refused: hasRefused,
                     is_current_user: p.user_id === user.id
                 };
             });
