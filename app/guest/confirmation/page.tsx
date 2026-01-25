@@ -158,59 +158,64 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
     const capitalizedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
     return (
-        <div className="min-h-screen bg-gray-50 py-2 flex flex-col items-center justify-start sm:justify-center font-sans">
-            <div className="max-w-md w-full px-2">
-                <div className="text-center mb-2">
+        <div className="min-h-screen bg-[#172554] py-2 flex flex-col items-center justify-start sm:justify-center font-sans">
+            <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 160px, rgba(0,0,0,0.8) 70%, #000000 100%)' }} />
+
+            <div className="max-w-md w-full px-2 z-10 relative">
+                <div className="text-center mb-4">
                     <div className="flex justify-center mb-2">
                         <Image
                             src="/padelxp-logo.png"
                             alt="PadelXP"
                             width={120}
                             height={40}
-                            className="h-8 w-auto object-contain"
+                            className="h-8 w-auto object-contain brightness-0 invert"
                         />
                     </div>
+                    <p className="text-blue-100/80 text-sm">
+                        Bonjour <strong>{guest.first_name}</strong>
+                    </p>
                 </div>
 
-                <div className="bg-white shadow-lg rounded-xl overflow-hidden mb-2">
-                    <div className="bg-blue-900 px-4 py-3">
-                        <h3 className="text-base font-medium text-white flex items-center gap-2">
-                            <Calendar className="w-4 h-4 opacity-80" /> {capitalizedDate}
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 shadow-xl rounded-xl overflow-hidden mb-4">
+                    <div className="bg-blue-600/20 px-4 py-3 border-b border-white/5">
+                        <h3 className="text-base font-bold text-white flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-padel-neongreen" /> {capitalizedDate}
                         </h3>
                         {/* Club info is fetched in clubName */}
-                        <p className="text-blue-200 text-xs mt-0.5 flex items-center gap-2">
-                            <MapPin className="w-3 h-3 opacity-80" /> {clubName}
+                        <p className="text-blue-100/70 text-xs mt-0.5 flex items-center gap-2">
+                            <MapPin className="w-3 h-3 text-padel-neongreen" /> {clubName}
                         </p>
                     </div>
 
                     <div className="p-4">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-6">
                             <div className="text-center flex-1">
-                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Équipe 1</div>
-                                <div className="font-semibold text-gray-900 text-xs leading-tight">
+                                <div className="text-[10px] font-bold text-blue-200/60 uppercase tracking-wide mb-1">Équipe 1</div>
+                                <div className="font-semibold text-white text-xs leading-relaxed">
                                     {team1Names.map((n, i) => <div key={i}>{n}</div>)}
                                 </div>
                                 {match.winner_team_id === match.team1_id && (
-                                    <div className="inline-block mt-1 px-1.5 py-0 bg-yellow-100 text-yellow-800 text-[9px] font-bold rounded-full">VAINQUEUR</div>
+                                    <div className="inline-block mt-2 px-1.5 py-0.5 bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 text-[9px] font-bold rounded">VAINQUEUR</div>
                                 )}
                             </div>
 
-                            <div className="mx-2 text-base font-bold text-gray-200">VS</div>
+                            <div className="mx-2 text-base font-bold text-white/20 italic">VS</div>
 
                             <div className="text-center flex-1">
-                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Équipe 2</div>
-                                <div className="font-semibold text-gray-900 text-xs leading-tight">
+                                <div className="text-[10px] font-bold text-blue-200/60 uppercase tracking-wide mb-1">Équipe 2</div>
+                                <div className="font-semibold text-white text-xs leading-relaxed">
                                     {team2Names.map((n, i) => <div key={i}>{n}</div>)}
                                 </div>
                                 {match.winner_team_id !== match.team1_id && (
-                                    <div className="inline-block mt-1 px-1.5 py-0 bg-yellow-100 text-yellow-800 text-[9px] font-bold rounded-full">VAINQUEUR</div>
+                                    <div className="inline-block mt-2 px-1.5 py-0.5 bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 text-[9px] font-bold rounded">VAINQUEUR</div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 rounded-lg p-2 text-center mb-4 border border-gray-100">
-                            <div className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">Score final</div>
-                            <div className="text-xl font-mono font-bold text-blue-900 leading-none">
+                        <div className="bg-black/20 rounded-lg p-3 text-center mb-6 border border-white/5">
+                            <div className="text-[9px] text-blue-200/50 uppercase tracking-wider mb-1">Score final</div>
+                            <div className="text-2xl font-mono font-bold text-white leading-none tracking-tight">
                                 {match.score_team1} - {match.score_team2}
                             </div>
                             {/* Note: we display sets total score here. Ideally we'd show set details if available in separate table or JSON column, 

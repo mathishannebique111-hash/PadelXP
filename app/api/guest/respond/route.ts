@@ -59,24 +59,53 @@ export async function POST(req: Request) {
         }
 
         // 3. Enregistrer la réponse
-        // On utilise upsert pour gérer le cas où le guest change d'avis (si permis) ou double-clique
-        const { error: upsertError } = await supabaseAdmin
+        // 3. Enregistrer la réponse
+        // On vérifie d'abord si une confirmation existe déjà pour ce match et ce guest
+        const { data: existingConfirmation, error: fetchError } = await supabaseAdmin
             .from("match_confirmations")
-            .upsert({
-                match_id: matchId,
-                guest_player_id: guestId, // User ID est null grace à la contrainte modifiée
-                user_id: null,
-                confirmed: confirmed,
-                confirmed_at: new Date().toISOString(),
-                confirmation_token: `guest_${guestId}_${Date.now()}` // Token fictif pour satisfaire la contrainte NOT NULL
-            }, {
-                onConflict: 'match_id, guest_player_id'
-            });
+            .select("id")
+            .eq("match_id", matchId)
+            .eq("guest_player_id", guestId)
+            .maybeSingle();
 
-        if (upsertError) {
-            logger.error("[guest/respond] Error saving confirmation", { error: upsertError });
+        if (fetchError) {
+            logger.error("[guest/respond] Error checking existing confirmation", { error: fetchError });
+            return NextResponse.json({ error: "Erreur lors de la vérification" }, { status: 500 });
+        }
+
+        let operationError;
+
+        if (existingConfirmation) {
+            // Update
+            const { error } = await supabaseAdmin
+                .from("match_confirmations")
+                .update({
+                    confirmed: confirmed,
+                    confirmed_at: new Date().toISOString()
+                })
+                .eq("id", existingConfirmation.id);
+            operationError = error;
+        } else {
+            // Insert
+            const { error } = await supabaseAdmin
+                .from("match_confirmations")
+                .insert({
+                    match_id: matchId,
+                    guest_player_id: guestId,
+                    user_id: null,
+                    confirmed: confirmed,
+                    confirmed_at: new Date().toISOString(),
+                    confirmation_token: `guest_${guestId}_${Date.now()}`
+                });
+            operationError = error;
+        }
+
+        if (operationError) {
+            logger.error("[guest/respond] Error saving confirmation", { error: operationError });
             return NextResponse.json({ error: "Erreur lors de l'enregistrement de la réponse" }, { status: 500 });
         }
+
+
 
         logger.info("[guest/respond] Response saved successfully");
         return NextResponse.json({ success: true, message: confirmed ? "Match confirmé" : "Match refusé" });
