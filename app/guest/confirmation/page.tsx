@@ -162,17 +162,17 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
             <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 160px, rgba(0,0,0,0.8) 70%, #000000 100%)' }} />
 
             <div className="max-w-md w-full px-2 z-10 relative">
-                <div className="text-center mb-4">
-                    <div className="flex justify-center mb-2">
+                <div className="text-center mb-6">
+                    <div className="flex justify-center mb-3">
                         <Image
-                            src="/padelxp-logo.png"
+                            src="/padelxp-logo-transparent.png"
                             alt="PadelXP"
-                            width={120}
-                            height={40}
-                            className="h-8 w-auto object-contain brightness-0 invert"
+                            width={180}
+                            height={60}
+                            className="h-14 w-auto object-contain"
                         />
                     </div>
-                    <p className="text-blue-100/80 text-sm">
+                    <p className="text-blue-100/90 text-sm font-medium">
                         Bonjour <strong>{guest.first_name}</strong>
                     </p>
                 </div>
