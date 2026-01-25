@@ -235,10 +235,22 @@ function MatchTabsContent({
 
       {/* Contenu des onglets */}
       <div className="mt-4 sm:mt-6">
-        {currentTab === 'record' && <div>{recordContent}</div>}
-        {currentTab === 'history' && <div>{historyContent}</div>}
-        {partnersContent && currentTab === 'partners' && <div>{partnersContent}</div>}
-        {boostContent && currentTab === 'boost' && <div>{boostContent}</div>}
+        <div className={currentTab === 'record' ? 'block' : 'hidden'}>
+          {recordContent}
+        </div>
+        <div className={currentTab === 'history' ? 'block' : 'hidden'}>
+          {historyContent}
+        </div>
+        {partnersContent && (
+          <div className={currentTab === 'partners' ? 'block' : 'hidden'}>
+            {partnersContent}
+          </div>
+        )}
+        {boostContent && (
+          <div className={currentTab === 'boost' ? 'block' : 'hidden'}>
+            {boostContent}
+          </div>
+        )}
       </div>
     </div>
   );

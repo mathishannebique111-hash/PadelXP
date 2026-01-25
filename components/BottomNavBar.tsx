@@ -174,6 +174,7 @@ export default function BottomNavBar() {
                         <Link
                             key={item.href}
                             href={item.href}
+                            prefetch={true}
                             className="relative flex flex-col items-center justify-center py-1.5 z-10"
                             style={{ flex: 1 }}
                             onClick={() => {
