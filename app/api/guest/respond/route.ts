@@ -25,15 +25,21 @@ export async function POST(req: Request) {
         }
 
         // 1. Vérifier que le guest participe bien au match
-        const { data: participation, error: partError } = await supabaseAdmin
+        // 1. Vérifier que le guest participe bien au match
+        const { data: participants, error: partError } = await supabaseAdmin
             .from("match_participants")
-            .select("id")
-            .eq("match_id", matchId)
-            .eq("guest_player_id", guestId)
-            .single();
+            .select("guest_player_id")
+            .eq("match_id", matchId);
 
-        if (partError || !participation) {
-            logger.error("[guest/respond] Guest not found in match participants", { error: partError });
+        if (partError || !participants) {
+            logger.error("[guest/respond] Error fetching participants", { error: partError });
+            return NextResponse.json({ error: "Ce joueur ne participe pas à ce match" }, { status: 403 });
+        }
+
+        const isParticipant = participants.some((p) => p.guest_player_id === guestId);
+
+        if (!isParticipant) {
+            logger.warn("[guest/respond] Guest ID not found in match participants", { guestId, matchId });
             return NextResponse.json({ error: "Ce joueur ne participe pas à ce match" }, { status: 403 });
         }
 

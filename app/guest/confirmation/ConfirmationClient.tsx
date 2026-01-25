@@ -103,33 +103,33 @@ export default function ConfirmationClient({
                 </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
                 <button
                     onClick={() => handleResponse(true)}
                     disabled={status === "loading"}
-                    className="flex flex-col items-center justify-center p-6 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-70"
+                    className="flex flex-col items-center justify-center p-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-70"
                 >
                     {status === "loading" ? (
-                        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mb-2" />
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mb-1" />
                     ) : (
-                        <Check className="w-8 h-8 mb-3" />
+                        <Check className="w-6 h-6 mb-1" />
                     )}
-                    <span className="text-lg font-bold">Confirmer le match</span>
-                    <span className="text-sm opacity-90 mt-1">C'est correct</span>
+                    <span className="text-sm font-bold leading-tight">Confirmer</span>
+                    <span className="text-[10px] opacity-90 mt-0.5">C'est correct</span>
                 </button>
 
                 <button
                     onClick={() => handleResponse(false)}
                     disabled={status === "loading"}
-                    className="flex flex-col items-center justify-center p-6 bg-white border-2 border-red-100 hover:border-red-200 hover:bg-red-50 text-red-600 rounded-xl transition-all disabled:opacity-70"
+                    className="flex flex-col items-center justify-center p-3 bg-white border-2 border-red-100 hover:border-red-200 hover:bg-red-50 text-red-600 rounded-xl transition-all disabled:opacity-70"
                 >
                     {status === "loading" ? (
-                        <div className="w-8 h-8 border-2 border-red-200 border-t-red-600 rounded-full animate-spin mb-2" />
+                        <div className="w-5 h-5 border-2 border-red-200 border-t-red-600 rounded-full animate-spin mb-1" />
                     ) : (
-                        <X className="w-8 h-8 mb-3" />
+                        <X className="w-6 h-6 mb-1" />
                     )}
-                    <span className="text-lg font-bold">Refuser</span>
-                    <span className="text-sm opacity-70 mt-1">Score incorrect ou erreur</span>
+                    <span className="text-sm font-bold leading-tight">Refuser</span>
+                    <span className="text-[10px] opacity-70 mt-0.5">Erreur score</span>
                 </button>
             </div>
 
