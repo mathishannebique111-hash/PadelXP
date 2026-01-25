@@ -343,10 +343,11 @@ export async function sendGuestMatchInvitationEmail(
                 .match-label { color: #aaaaaa !important; }
                 .match-row { border-bottom-color: #444444 !important; }
                 .winner-row { background: #f0f4ff !important; border: 1px solid #444444 !important; } /* Light background for black text in dark mode */
-                .winner-text { color: #000000 !important; } /* Force black text as requested */
+                .winner-text { color: #000001 !important; } /* Force off-black text to prevent inversion */
                 .checkbox-section { background-color: #333333 !important; border-color: #444444 !important; color: #e0e0e0 !important; }
                 .checkbox-label { color: #cccccc !important; }
-                .header { color: #ffffff !important; } /* Force header white in dark mode */
+                .header-title { color: #fffffe !important; } /* Force off-white to prevent inversion */
+                .header { color: #fffffe !important; }
               }
             </style>
           </head>
@@ -354,7 +355,7 @@ export async function sendGuestMatchInvitationEmail(
             <div class="container">
               <div class="header">
                 <div class="header-icon">${tennisBallIcon}</div>
-                <h1 style="margin: 0; font-size: 24px; color: #ffffff !important;">Tu as joué un match !</h1>
+                <h1 class="header-title" style="margin: 0; font-size: 24px; color: #fffffe !important;">Tu as joué un match !</h1>
               </div>
               <div class="content">
                 <p>Bonjour <strong>${playerName}</strong>,</p>
@@ -374,7 +375,7 @@ export async function sendGuestMatchInvitationEmail(
                     <div class="match-value">${matchDetails.team2Players}</div>
                   </div>
                   <div class="winner-row">
-                    <div class="match-value winner-text" style="color: #000000;">${winnerText}</div>
+                    <div class="match-value winner-text" style="color: #000001 !important;"><span style="color: #000001 !important;">${winnerText}</span></div>
                   </div>
                 </div>
 
