@@ -286,13 +286,10 @@ export async function sendGuestMatchInvitationEmail(
     return;
   }
 
-  // PNG Icons hosted on local public folder or external reliable source
-  // Using public absolute URLs for email client compatibility
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://padelxp.eu';
-
-  const tennisBallIcon = `<img src="${appUrl}/icons/tennis-ball.png" width="32" height="32" style="vertical-align: middle;" alt="Tennis Ball" />`;
-  const trophyIcon = `<img src="${appUrl}/icons/trophy.png" width="16" height="16" style="vertical-align: text-bottom; margin-right: 4px;" alt="Trophy" />`;
-  const mapPinIcon = `<img src="${appUrl}/icons/map-pin.png" width="14" height="14" style="vertical-align: middle; margin-right: 4px;" alt="Location" />`;
+  // Using public CDN URLs for reliable email client rendering without deployment
+  const tennisBallIcon = `<img src="https://img.icons8.com/color/96/tennis-ball.png" width="32" height="32" style="vertical-align: middle;" alt="Tennis Ball" />`;
+  const trophyIcon = `<img src="https://img.icons8.com/fluency/48/trophy.png" width="16" height="16" style="vertical-align: text-bottom; margin-right: 4px;" alt="Trophy" />`;
+  const mapPinIcon = `<img src="https://img.icons8.com/fluency/48/map-pin.png" width="14" height="14" style="vertical-align: middle; margin-right: 4px;" alt="Location" />`;
 
   const winnerText = matchDetails.winnerTeam === 1
     ? `${trophyIcon} Équipe gagnante : Équipe 1 (${matchDetails.score})`
@@ -343,11 +340,13 @@ export async function sendGuestMatchInvitationEmail(
                 .match-label { color: #aaaaaa !important; }
                 .match-row { border-bottom-color: #444444 !important; }
                 .winner-row { background: #f0f4ff !important; border: 1px solid #444444 !important; } /* Light background for black text in dark mode */
-                .winner-text { color: #000001 !important; } /* Force off-black text to prevent inversion */
+                /* Force black text effectively in Apple Mail Dark Mode */
+                .winner-text { color: #000000 !important; -webkit-text-fill-color: #000000 !important; text-shadow: 0 0 0 #000000; } 
                 .checkbox-section { background-color: #333333 !important; border-color: #444444 !important; color: #e0e0e0 !important; }
                 .checkbox-label { color: #cccccc !important; }
-                .header-title { color: #fffffe !important; } /* Force off-white to prevent inversion */
-                .header { color: #fffffe !important; }
+                /* Force white text effectively in Apple Mail Dark Mode */
+                .header-title { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: 0 0 0 #ffffff; }
+                .header { color: #ffffff !important; }
               }
             </style>
           </head>
@@ -355,7 +354,7 @@ export async function sendGuestMatchInvitationEmail(
             <div class="container">
               <div class="header">
                 <div class="header-icon">${tennisBallIcon}</div>
-                <h1 class="header-title" style="margin: 0; font-size: 24px; color: #fffffe !important;">Tu as joué un match !</h1>
+                <h1 class="header-title" style="margin: 0; font-size: 24px; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: 0 0 0 #ffffff;">Tu as joué un match !</h1>
               </div>
               <div class="content">
                 <p>Bonjour <strong>${playerName}</strong>,</p>
@@ -375,7 +374,7 @@ export async function sendGuestMatchInvitationEmail(
                     <div class="match-value">${matchDetails.team2Players}</div>
                   </div>
                   <div class="winner-row">
-                    <div class="match-value winner-text" style="color: #000001 !important;"><span style="color: #000001 !important;">${winnerText}</span></div>
+                    <div class="match-value winner-text" style="color: #000000 !important; -webkit-text-fill-color: #000000 !important; text-shadow: 0 0 0 #000000;"><span style="color: #000000 !important; -webkit-text-fill-color: #000000 !important;">${winnerText}</span></div>
                   </div>
                 </div>
 
