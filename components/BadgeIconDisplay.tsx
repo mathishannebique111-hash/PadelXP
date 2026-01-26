@@ -9,9 +9,10 @@ type Props = {
   className?: string;
   size?: number;
   title?: string;
+  color?: string;
 };
 
-export default function BadgeIconDisplay({ icon, className = "", size = 32, title }: Props) {
+export default function BadgeIconDisplay({ icon, className = "", size = 32, title, color: customColor }: Props) {
   // Mapper les titres de badges vers des icônes Lucide
   const getLucideIconFromTitle = (badgeTitle?: string) => {
     if (!badgeTitle) return null;
@@ -38,7 +39,7 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
   const getIconColor = (iconName: string, badgeTitle?: string) => {
     if (iconName === "Trophy" || badgeTitle === "Première victoire") return "#FBBF24"; // Ambre/Or
     if (iconName === "Flame") return "#F97316"; // Orange
-    if (iconName === "Timer") return "#3B82F6"; // Bleu
+    if (iconName === "Timer" || iconName === "Activity") return "#3B82F6"; // Bleu
     if (iconName === "Star") return "#EAB308"; // Jaune
     if (iconName === "Target") return "#EF4444"; // Rouge
     if (iconName === "TrendingUp") return "#10B981"; // Vert
@@ -82,6 +83,7 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
       "🥇": "Award",
       "🥈": "Award",
       "🥉": "Award",
+      "🎮": "Gamepad2",
     };
     return emojiMap[nameOrEmoji] || nameOrEmoji;
   };
@@ -90,12 +92,12 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
   const LucideIcon = (LucideIcons as any)[lucideIconName];
 
   if (LucideIcon) {
-    const color = getIconColor(lucideIconName, title);
+    const finalColor = customColor || getIconColor(lucideIconName, title);
     return (
       <LucideIcon
         size={size}
         className={className}
-        style={{ color }}
+        style={{ color: finalColor }}
         strokeWidth={2.5}
       />
     );
@@ -106,7 +108,7 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
     if (!badgeTitle) return null;
 
     if (badgeTitle === "Première victoire") return "/images/Badge Première victoire.png";
-    if (badgeTitle === "Marathonien") return "/images/Badge Marathonien.png";
+    // if (badgeTitle === "Marathonien") return "/images/Badge Marathonien.png";
     if (badgeTitle === "Centurion") return "/images/Badge Centurion.png";
     if (badgeTitle === "En progression") return "/images/Badge En progression.png";
     if (badgeTitle === "Top Scorer") return "/images/Badge Top Scorer.png";
@@ -148,4 +150,3 @@ export default function BadgeIconDisplay({ icon, className = "", size = 32, titl
   // Si vraiment rien ne correspond, afficher le texte brut (emoji)
   return <span className={className} style={{ fontSize: size }}>{icon}</span>;
 }
-

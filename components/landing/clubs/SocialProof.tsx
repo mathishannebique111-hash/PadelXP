@@ -8,7 +8,7 @@ export default function SocialProof() {
   const testimonials = [
     {
       rating: 5,
-      quote: "Nos membres sont 3x plus engagés depuis qu'on utilise Padel XP. Le classement crée une vraie émulation et tout le monde suit sa progression en temps réel !",
+      quote: "Nos joueurs sont 3x plus engagés depuis qu'on utilise Padel XP. Le classement crée une vraie émulation et tout le monde suit sa progression en temps réel !",
       author: "Marc D.",
       role: "Gérant Padel Center Toulouse",
       metric: "+67% d'activité en 3 mois"
@@ -22,10 +22,10 @@ export default function SocialProof() {
     },
     {
       rating: 5,
-      quote: "Le feed social a créé une vraie communauté. Les membres se challengent, commentent, likes... L'ambiance au club est complètement différente.",
+      quote: "Le feed social a créé une vraie communauté. Les joueurs se challengent, commentent, likes... L'ambiance au club est complètement différente.",
       author: "Thomas B.",
       role: "Gérant Padel Club Marseille",
-      metric: "🎮 Engagement membres +92%"
+      metric: "🎮 Engagement joueurs +92%"
     }
   ];
 

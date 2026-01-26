@@ -19,56 +19,39 @@ export default function Footer() {
             <Link href="/about" className="text-white/60 hover:text-white transition-colors">
               À propos
             </Link>
-            <Link href="/contact" className="text-white/60 hover:text-white transition-colors">
-              Contact
-            </Link>
-            
-            {/* Liens pour joueurs */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Link href="/player/legal" className="text-white/60 hover:text-white transition-colors">
-                Mentions légales (Joueurs)
-              </Link>
-              <Link href="/player/terms" className="text-white/60 hover:text-white transition-colors">
-                CGU (Joueurs)
-              </Link>
-              <Link href="/player/privacy" className="text-white/60 hover:text-white transition-colors">
-                Confidentialité (Joueurs)
-              </Link>
-            </div>
-            
+
+
             {/* Séparateur */}
             <span className="text-white/30">|</span>
-            
+
             {/* Liens pour clubs */}
             <div className="flex flex-wrap items-center gap-2">
               <Link href="/legal" className="text-white/60 hover:text-white transition-colors">
-                Mentions légales (Clubs)
+                Mentions légales
               </Link>
               <Link href="/cgv" className="text-white/60 hover:text-white transition-colors">
                 CGV
               </Link>
               <Link href="/terms" className="text-white/60 hover:text-white transition-colors">
-                CGU (Clubs)
+                CGU
               </Link>
               <Link href="/privacy" className="text-white/60 hover:text-white transition-colors">
-                Confidentialité (Clubs)
+                Confidentialité
               </Link>
             </div>
-            
+
             {/* Liens cookies */}
             <div className="flex flex-wrap items-center gap-2">
-              <Link href="/player/cookies" className="text-white/60 hover:text-white transition-colors">
-                Cookies (Joueurs)
-              </Link>
+
               <Link href="/cookies" className="text-white/60 hover:text-white transition-colors">
-                Cookies (Clubs)
+                Cookies
               </Link>
             </div>
           </nav>
 
           {/* Copyright */}
           <div className="text-sm text-white/40 text-center md:text-right">
-            © {new Date().getFullYear()} PadelXP · Made with 🏆 for padel lovers
+            © {new Date().getFullYear()} PadelXP · Fait par un joueur, pour les joueurs
           </div>
         </div>
       </div>

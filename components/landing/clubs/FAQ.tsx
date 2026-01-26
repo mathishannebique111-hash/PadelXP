@@ -13,31 +13,28 @@ export default function FAQ() {
 
   const faqs: FAQItem[] = [
     {
-      question: "Comment mes membres rejoignent-ils le club / complexe sur l'app ?",
-      answer: "Vous recevez un code d'invitation unique (ex: TOULOUSE31000) que vous partagez à vos membres. Ils s'inscrivent sur le site, entrent ce code, et c'est tout ! Vous pouvez aussi leur envoyer un lien d'invitation par email pour qu'ils accédent à la page d'inscription directement."
+      question: "Comment mes joueurs rejoignent-ils le club / complexe sur l'app ?",
+      answer: "Vous recevez un code d'invitation unique (ex: TOULOUSE31000) que vous partagez à vos joueurs. Ils s'inscrivent sur le site, entrent ce code, et c'est tout ! Vous pouvez aussi leur envoyer un lien d'invitation par email pour qu'ils accédent à la page d'inscription directement."
     },
     {
-      question: "Mes membres doivent-ils payer quelque chose ?",
-      answer: "Non, l'inscription est 100% gratuite pour tous vos membres. Seul le club / complexe paie un abonnement par mois."
+      question: "Mes joueurs doivent-ils payer quelque chose ?",
+      answer: "Non, l'inscription est 100% gratuite pour tous vos joueurs. Seul le club / complexe paie un abonnement par mois."
     },
     {
       question: "L'installation est-elle compliquée ?",
-      answer: "Pas du tout ! 5 minutes suffisent : créez votre profil club / complexe, ajoutez logo/photos, et partagez le code à vos membres."
+      answer: "Pas du tout ! 5 minutes suffisent : créez votre profil club / complexe, ajoutez logo/photos, et partagez le code à vos joueurs."
     },
-    {
-      question: "Que se passe-t-il après l'essai de 14 jours ?",
-      answer: "Si vous êtes satisfait, vous pouvez activer votre abonnement. Sinon, votre essai prendra fin et aucun prélèvement ne sera effectué."
-    },
+
     {
       question: "Puis-je annuler à tout moment ?",
       answer: "Oui, aucun engagement. Vous annulez quand vous voulez, sans pénalité. Vous gardez l'accès jusqu'à la fin du mois payé."
     },
     {
-      question: "Combien de membres peuvent utiliser la plateforme ?",
-      answer: "Illimité ! Que vous ayez 30 ou 300 membres, le prix reste le même."
+      question: "Combien de joueurs peuvent utiliser la plateforme ?",
+      answer: "Illimité ! Que vous ayez 30 ou 300 joueurs, le prix reste le même."
     },
     {
-      question: "Les données de mes membres sont-elles sécurisées ?",
+      question: "Les données de mes joueurs sont-elles sécurisées ?",
       answer: "Oui, hébergement sécurisé en Europe (RGPD), chiffrement des données, sauvegardes quotidiennes."
     }
   ];
@@ -85,7 +82,7 @@ export default function FAQ() {
                   ▼
                 </motion.span>
               </button>
-              
+
               {openIndex === idx && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}

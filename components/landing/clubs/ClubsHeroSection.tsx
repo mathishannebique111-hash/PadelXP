@@ -8,9 +8,12 @@ import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import TierBadge from "@/components/TierBadge";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
+import { Check } from "lucide-react";
+import ClubsContactModal from "@/components/landing/clubs/ClubsContactModal";
 
 export default function ClubsHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [stats, setStats] = useState({ totalPlayers: 0, clubs: 0, rating: 4.9 });
 
   useEffect(() => {
@@ -62,6 +65,8 @@ export default function ClubsHeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
+      <ClubsContactModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
+
       {/* Background avec overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
@@ -88,163 +93,77 @@ export default function ClubsHeroSection() {
       </nav>
 
       {/* Contenu principal */}
-      <div className="relative z-10 max-w-7xl mx-auto px-8 pt-32 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
-          {/* Bloc gauche (60%) */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : -30 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="lg:col-span-3 space-y-8"
-          >
-            {/* Headline principal */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">
-              Transformez votre club / complexe en{" "}
-              <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient">
-                communauté digitale d'élite
-              </span>
-            </h1>
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 pt-32 pb-16 flex flex-col items-center">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 30 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="space-y-8 text-center"
+        >
+          {/* Headline principal */}
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">
+            <span className="block mb-2">Transformez votre club de padel en</span>
+            <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block">
+              communauté d'élite
+            </span>
+          </h1>
 
-            {/* Sous-titre */}
-            <p className="text-xl md:text-2xl text-white/80 leading-relaxed">
-              La plateforme exclusive qui transforme l'expérience de vos clients : classements automatiques et défis & récompenses.
+          {/* Sous-titre */}
+          <p className="text-xl md:text-2xl text-white/80 leading-relaxed max-w-6xl mx-auto whitespace-nowrap">
+            Augmentez votre rétention de 20% en transformant l'expérience de vos joueurs.
+          </p>
+
+          {/* 5 bénéfices clés */}
+          {/* 5 bénéfices clés */}
+          <div className="space-y-6 pt-8 max-w-4xl mx-auto text-left">
+            <p className="text-xl text-white/60 font-medium text-center mb-8">
+              Voici ce que vous offrez à vos joueurs en rejoignant l'aventure PadelXP :
             </p>
-            <p className="text-lg text-white/60">
-              Rejoignez les clubs / complexes partenaires qui révolutionnent l'expérience de leurs membres
-            </p>
-
-            {/* 3 bénéfices clés */}
-            <div className="space-y-4 pt-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl flex-shrink-0">✅</span>
-                <div className="flex-1">
-                  <span className="font-semibold text-white">Classement automatique :</span>
-                  <span className="text-white/80"> Vos membres suivent leur progression en temps réel</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl flex-shrink-0">✅</span>
-                <div className="flex-1">
-                  <span className="font-semibold text-white">Création de challenges en 3 clics :</span>
-                  <span className="text-white/80"> Créez et lancez des challenges pour motiver vos membres</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl flex-shrink-0">✅</span>
-                <div className="flex-1">
-                  <span className="font-semibold text-white">Communauté engagée :</span>
-                  <span className="text-white/80"> Badges, challenges et actualités du club qui créent du lien</span>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA principal */}
-            <div className="pt-6">
-              <div className="flex flex-col items-start">
-                <Link
-                  href="/signup"
-                  className="inline-block group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105"
+            <div className="grid gap-4">
+              {[
+                "Suggestions personnalisées de partenaires et de matchs selon leur niveau et leur profil",
+                "Historique de tous leurs matchs joués dans votre club",
+                "Statistiques et classement interne au club mis à jour selon leurs victoires et leurs défaites",
+                "Créez vos challenges tout au long de l'année pour animer votre club et permettre aux joueurs de gagner des points, badges et autres récompenses",
+                "Badges à débloquer grâce aux challenges et aux matchs joués (séries de victoires, nombre de matchs joués...)"
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 * i }}
+                  className="group flex items-center gap-6 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-[#BFFF00]/50 hover:bg-white/10 transition-all duration-300"
                 >
-                  <span className="flex items-center gap-2">
-                    Démarrer l'essai gratuit 14 jours
-                    <motion.span
-                      className="inline-block"
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      →
-                    </motion.span>
-                  </span>
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
-                </Link>
-                <p className="text-sm text-white/60 mt-3 text-left pl-6">
-                  Sans CB • Opérationnel en 5 min • Support dédié
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Bloc droit (40%) - Mockups */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : 30 }}
-            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-            className="lg:col-span-2 space-y-6"
-          >
-            {/* Mockup classement */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700 shadow-2xl">
-              <div className="text-sm font-semibold text-white/80 mb-4">
-                CLASSEMENT - CLUB PADEL TOULOUSE
-              </div>
-              <div className="space-y-3">
-                {[
-                  { rank: 1, name: "Marc L.", points: 156, record: "12V-2D", tier: "Or", medal: "🥇" },
-                  { rank: 2, name: "Sophie D.", points: 148, record: "11V-3D", tier: "Or", medal: "🥈" },
-                  { rank: 3, name: "Thomas R.", points: 142, record: "10V-2D", tier: "Argent", medal: "🥉" },
-                  { rank: 4, name: "Julie M.", points: 128, record: "9V-4D", tier: "Argent", medal: "📍" },
-                  { rank: 5, name: "Alex K.", points: 124, record: "9V-5D", tier: "Bronze", medal: "📍" },
-                ].map((player) => (
-                  <div key={player.rank} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{player.medal}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-white text-sm">{player.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-white/60">{player.record}</span>
-                          <span className="text-[10px] text-white/40">• {player.points} pts</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <TierBadge tier={player.tier as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
-                    </div>
+                  <div className="h-12 w-12 shrink-0 rounded-full bg-[#BFFF00]/10 border border-[#BFFF00]/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#BFFF00]/20 transition-all duration-300">
+                    <Check className="h-6 w-6 text-[#BFFF00]" strokeWidth={3} />
                   </div>
-                ))}
-              </div>
+                  <span className="text-white/90 text-lg font-medium leading-relaxed">{item}</span>
+                </motion.div>
+              ))}
             </div>
+          </div>
 
-            {/* Mockup challenges créées par le club */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-4">
-              <h2 className="text-sm font-semibold text-white mb-3">Challenges créées par le club</h2>
-              <ul className="text-xs space-y-2">
-                {[
-                  { title: "Challenge du mois de mars", objective: "Atteindre 100 points ce mois", status: "active", startDate: "1 mars", endDate: "31 mars" },
-                  { title: "Top 10 avril", objective: "Finir dans le top 10 du classement", status: "upcoming", startDate: "1 avril", endDate: "30 avril" },
-                  { title: "Défi Victoires", objective: "Remporter 15 matchs minimum", status: "active", startDate: "10 mars", endDate: "10 avril" },
-                  { title: "Rising Star", objective: "Progresser d'au moins 20 points", status: "upcoming", startDate: "15 avril", endDate: "15 mai" },
-                  { title: "Champion du mois", objective: "Terminer 1er du classement", status: "active", startDate: "1 mars", endDate: "31 mars" },
-                ].map((challenge, idx) => (
-                  <li key={idx} className="rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5">
-                    <div className="flex items-start justify-between gap-1.5">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
-                          <span className="font-medium text-white truncate text-xs">{challenge.title}</span>
-                          {challenge.status === "active" && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30 flex-shrink-0">
-                              En cours
-                            </span>
-                          )}
-                          {challenge.status === "upcoming" && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 flex-shrink-0">
-                              À venir
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-white/50 truncate">{challenge.objective}</div>
-                      </div>
-                      <div className="flex flex-col items-end text-[10px] text-white/60 whitespace-nowrap flex-shrink-0">
-                        <span>{challenge.startDate}</span>
-                        <span className="text-[9px]">→ {challenge.endDate}</span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </motion.div>
-        </div>
+          {/* CTA principal */}
+          <div className="pt-6 flex justify-center">
+            <button
+              onClick={() => setIsContactModalOpen(true)}
+              className="inline-block group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105"
+            >
+              <span className="flex items-center gap-2">
+                Nous contacter
+                <motion.span
+                  className="inline-block"
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  →
+                </motion.span>
+              </span>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+            </button>
+          </div>
+        </motion.div>
 
         {/* Flèche de scroll - Positionnée à la place de la bande de confiance */}
         <motion.div
@@ -277,8 +196,6 @@ export default function ClubsHeroSection() {
           </div>
         </motion.div>
       </div>
-
-
       <style jsx>{`
         @keyframes gradient {
           0%, 100% {
@@ -293,7 +210,7 @@ export default function ClubsHeroSection() {
           animation: gradient 3s ease infinite;
         }
       `}</style>
-    </section>
+    </section >
   );
 }
 
