@@ -298,9 +298,12 @@ export async function middleware(req: NextRequest) {
     "/api/challenges/",
     "/api/player/",
     "/api/referrals/",
+    "/api/admin/check",  // Allow check API
+    "/api/admin/create", // Allow create API
     "/_next/",
     "/images/",
-    "/onboarding/"
+    "/onboarding/",
+    "/admin/access" // Allow dedicated admin access page
   ];
 
   const PUBLIC_PATHS = new Set([

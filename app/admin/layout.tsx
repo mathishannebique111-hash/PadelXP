@@ -16,6 +16,11 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  // NOUVEAU : Exclure la page de récupération du layout protégé
+  if (pathname === '/admin/access') {
+    return <>{children}</>;
+  }
+
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -29,10 +34,10 @@ export default function AdminLayout({
     async function checkAdmin() {
       try {
         const supabase = createClient();
-        
+
         // D'abord vérifier la session
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!session) {
           // Pas de session = rediriger vers login
           if (isMounted) {
@@ -43,7 +48,7 @@ export default function AdminLayout({
 
         // Ensuite récupérer l'utilisateur
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
+
         // Si erreur temporaire, réessayer jusqu'à MAX_RETRIES fois
         if (userError && retryCount < MAX_RETRIES) {
           retryCount++;
@@ -55,7 +60,7 @@ export default function AdminLayout({
           }
           return;
         }
-        
+
         if (!user) {
           // Pas d'utilisateur après tous les essais = rediriger vers login
           if (isMounted) {
@@ -70,9 +75,9 @@ export default function AdminLayout({
           .select("is_admin")
           .eq("id", user.id)
           .maybeSingle();
-        
+
         const userIsAdmin = profile?.is_admin || isAdmin(user.email);
-        
+
         if (!userIsAdmin) {
           // Utilisateur non-admin = rediriger vers home
           if (isMounted) {
@@ -80,7 +85,7 @@ export default function AdminLayout({
           }
           return;
         }
-        
+
         // Tout est OK, autoriser l'accès
         if (isMounted) {
           setUser(user);
@@ -138,16 +143,15 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col fixed h-screen z-30`}
+        className={`${sidebarOpen ? 'w-64' : 'w-20'
+          } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col fixed h-screen z-30`}
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <img 
-              src="/images/Logo.png" 
-              alt="PadelXP" 
+            <img
+              src="/images/Logo.png"
+              alt="PadelXP"
               className="w-8 h-8 object-contain"
             />
             {sidebarOpen && (
@@ -160,18 +164,17 @@ export default function AdminLayout({
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || 
+            const isActive = pathname === item.href ||
               (item.href !== '/admin/dashboard' && pathname.startsWith(item.href));
-            
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
                     ? 'bg-blue-50 text-blue-600 font-semibold'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+                  }`}
               >
                 <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
                 {sidebarOpen && <span className="text-sm">{item.label}</span>}
@@ -209,7 +212,7 @@ export default function AdminLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            
+
             {/* Search bar */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
