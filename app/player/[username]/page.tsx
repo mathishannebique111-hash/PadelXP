@@ -124,7 +124,7 @@ export default async function PublicProfilePage({ params }: Props) {
                             </div>
                         </div>
                         {profile.club_id && (
-                            <div className="absolute -bottom-2 -right-2 bg-slate-900 rounded-full p-1 border border-slate-700 shadow-sm" title={profile.clubs?.name || "Club"}>
+                            <div className="absolute -bottom-2 -right-2 bg-slate-900 rounded-full p-1 border border-slate-700 shadow-sm" title={(profile.clubs as any)?.[0]?.name || "Club"}>
                                 <Shield size={16} className="text-padel-green" />
                             </div>
                         )}
@@ -133,10 +133,10 @@ export default async function PublicProfilePage({ params }: Props) {
                     <h1 className="text-2xl font-bold text-white mb-1">{profile.display_name}</h1>
                     <p className="text-blue-300 font-medium mb-4">{profile.username}</p>
 
-                    {(profile.clubs?.name) && (
+                    {(profile.clubs as any)?.[0]?.name && (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300 mb-6">
                             <Shield size={12} className="text-padel-green" />
-                            <span>{profile.clubs.name}</span>
+                            <span>{(profile.clubs as any)[0].name}</span>
                         </div>
                     )}
 
@@ -145,7 +145,7 @@ export default async function PublicProfilePage({ params }: Props) {
                         <div className="bg-white/5 rounded-2xl p-3 border border-white/5 flex flex-col items-center">
                             <div className="text-xs text-gray-400 mb-1">Niveau</div>
                             <div className="text-xl font-bold text-white flex items-center gap-1">
-                                {profile.niveau_padel ? profile.niveau_padel.toFixed(1) : '-'}
+                                {profile.niveau_padel ? profile.niveau_padel.toFixed(2) : '-'}
                                 <Star size={12} className="text-yellow-400 fill-yellow-400" />
                             </div>
                         </div>

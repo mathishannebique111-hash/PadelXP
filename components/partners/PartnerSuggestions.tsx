@@ -477,7 +477,7 @@ export default function PartnerSuggestions() {
                   {player.niveau_padel && (
                     <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-2 py-0.5 mb-1.5 border border-white/20">
                       <span className="text-[10px] md:text-xs text-white font-medium">
-                        Niveau {player.niveau_padel.toFixed(1)}
+                        Niveau {player.niveau_padel.toFixed(2)}
                       </span>
                     </div>
                   )}

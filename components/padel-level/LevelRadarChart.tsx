@@ -73,7 +73,7 @@ export default function LevelRadarChart({ breakdown }: Props) {
       const initial = categoryInitials[cat] || cat[0].toUpperCase();
       const labelX = centerX + Math.cos(angle) * (maxRadius + 15);
       const labelY = centerY + Math.sin(angle) * (maxRadius + 15);
-      
+
       ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
       ctx.font = isMobile ? "bold 12px sans-serif" : "bold 14px sans-serif";
       ctx.textAlign = "center";
@@ -136,7 +136,7 @@ export default function LevelRadarChart({ breakdown }: Props) {
                   {info.label}
                 </p>
                 <p className="text-base md:text-lg font-bold text-white">
-                  {value.toFixed(1)}/10
+                  {value.toFixed(2)}/10
                 </p>
               </div>
             </div>

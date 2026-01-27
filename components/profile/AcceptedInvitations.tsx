@@ -132,7 +132,7 @@ export default function AcceptedInvitations() {
 
   const getTimeRemaining = (respondedAt: string | null): { hours: number; minutes: number; expired: boolean } | null => {
     if (!respondedAt) return null;
-    
+
     const responded = new Date(respondedAt);
     // L'invitation expire 24h après l'acceptation
     const expiresAt = new Date(responded.getTime() + 24 * 60 * 60 * 1000);
@@ -157,7 +157,7 @@ export default function AcceptedInvitations() {
 
       console.log("[AcceptedInvitations] Récupération téléphone pour:", partnerId);
       console.log("[AcceptedInvitations] User ID:", user.id);
-      
+
       // Vérifier d'abord si une invitation acceptée existe
       const { data: invitationCheck } = await supabase
         .from("match_invitations")
@@ -166,9 +166,9 @@ export default function AcceptedInvitations() {
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .or(`sender_id.eq.${partnerId},receiver_id.eq.${partnerId}`)
         .limit(1);
-      
+
       console.log("[AcceptedInvitations] Vérification invitation:", invitationCheck);
-      
+
       const { data, error } = await supabase.rpc("get_partner_phone", {
         partner_uuid: partnerId,
       });
@@ -179,7 +179,7 @@ export default function AcceptedInvitations() {
       }
 
       console.log("[AcceptedInvitations] Données reçues:", data);
-      
+
       // Si la fonction RPC ne retourne rien mais qu'une invitation acceptée existe,
       // récupérer directement le numéro du profil
       if ((!data || data.length === 0) && invitationCheck && invitationCheck.length > 0) {
@@ -189,9 +189,9 @@ export default function AcceptedInvitations() {
           .select("phone_number, whatsapp_enabled")
           .eq("id", partnerId)
           .maybeSingle();
-        
+
         console.log("[AcceptedInvitations] Profil récupéré:", profileData);
-        
+
         if (profileError) {
           console.error("[AcceptedInvitations] Erreur récupération profil:", profileError);
         } else if (profileData?.phone_number) {
@@ -282,7 +282,7 @@ export default function AcceptedInvitations() {
                   </div>
                 ) : null;
               })()}
-              
+
               <div className="flex items-center gap-3 mb-3">
                 {partner.avatar_url ? (
                   <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border-2 border-white/20">
@@ -305,7 +305,7 @@ export default function AcceptedInvitations() {
                   </p>
                   {partner.niveau_padel && (
                     <p className="text-xs text-gray-400">
-                      Niveau {partner.niveau_padel.toFixed(1)}/10
+                      Niveau {partner.niveau_padel.toFixed(2)}/10
                     </p>
                   )}
                 </div>

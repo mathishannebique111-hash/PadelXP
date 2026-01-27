@@ -395,7 +395,7 @@ export default function SuggestedMatches() {
                                             <span className="text-[10px] uppercase font-bold tracking-wider">Niveau moyen</span>
                                         </div>
                                         <span className="text-sm font-black text-white">
-                                            {pair.avgLevel.toFixed(1)}/10
+                                            {pair.avgLevel.toFixed(2)}/10
                                         </span>
                                     </div>
                                     <div className="flex flex-col items-center justify-center border-l border-white/5">

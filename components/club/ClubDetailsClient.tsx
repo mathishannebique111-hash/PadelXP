@@ -49,7 +49,7 @@ function buildHours(openingHours: OpeningHours | null | undefined) {
     const data = openingHours?.[key];
     const open = formatHour(data?.open ?? null);
     const close = formatHour(data?.close ?? null);
-    const isClosed = data?.closed === true || (!open || !close);
+    const isClosed = !open || !close;
     return {
       key,
       label,
@@ -158,16 +158,16 @@ export default function ClubDetailsClient({
           {/* Infrastructure Column */}
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 mb-4">Infrastructure</h2>
-            <div className="grid gap-2 text-sm">
+            <div className="grid gap-2 text-sm mt-5">
               {infrastructure.length === 0 ? (
                 <div className="rounded-lg border border-white/18 bg-white/10 px-2 py-1.5 text-center text-[10px] text-white/60">
                   Non renseigné
                 </div>
               ) : (
                 infrastructure.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-lg border border-white/18 bg-black/25 px-2 py-1.5 text-white/85">
-                    <span className="uppercase tracking-[0.2em] text-[10px] text-white">{item.label}</span>
-                    <span className="font-semibold text-xs">{item.value}</span>
+                  <div key={item.label} className="flex items-center justify-between rounded-lg border border-transparent bg-white px-2 py-1.5 text-[#071554]">
+                    <span className="uppercase tracking-[0.2em] text-[10px] font-bold">{item.label}</span>
+                    <span className="font-extrabold text-xs">{item.value}</span>
                   </div>
                 ))
               )}

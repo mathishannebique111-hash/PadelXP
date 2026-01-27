@@ -656,7 +656,7 @@ export default function PlayerProfileView({
                 <span>
                   Niveau évalué :{" "}
                   <strong className="text-white">
-                    {player.niveau_padel.toFixed(1)}/10
+                    {player.niveau_padel.toFixed(2)}/10
                   </strong>
                 </span>
               </li>

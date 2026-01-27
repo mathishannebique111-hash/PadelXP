@@ -1,72 +1,104 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { User, MessageCircle, Star, Trash2, ChevronRight, LogOut, Shield } from "lucide-react";
 import PageTitle from "@/components/PageTitle";
-import DeleteAccountButton from "@/components/settings/DeleteAccountButton";
-import ProfilePhotoUpload from "@/components/settings/ProfilePhotoUpload";
-import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
-import PersonalDetailsSettings from "@/components/settings/PersonalDetailsSettings";
-import UsernameSettings from "@/components/settings/UsernameSettings";
-import SupportChatSection from "@/components/settings/SupportChatSection";
-import ReviewsSection from "@/components/settings/ReviewsSection";
 import LogoutButton from "@/components/LogoutButton";
+import Image from "next/image";
 
 export default function SettingsContent() {
+  const menuItems = [
+    {
+      label: "Modifier mon profil",
+      icon: User,
+      href: "/settings/profile",
+      color: "text-blue-400",
+      bgColor: "bg-blue-400/10",
+    },
+    {
+      label: "Support PadelXP",
+      icon: MessageCircle,
+      href: "/settings/support",
+      color: "text-green-400",
+      bgColor: "bg-green-400/10",
+    },
+    {
+      label: "Avis",
+      icon: Star,
+      href: "/settings/reviews",
+      color: "text-yellow-400",
+      bgColor: "bg-yellow-400/10",
+    },
+    {
+      label: "Supprimer mon compte",
+      icon: Trash2,
+      href: "/settings/delete",
+      color: "text-red-400",
+      bgColor: "bg-red-400/10",
+    },
+  ];
+
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen pb-20">
       {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,102,255,0.1),transparent)] z-0 pointer-events-none" />
 
-      {/* Halos animés */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-      </div>
+      <div className="relative z-10 mx-auto w-full max-w-2xl px-4 py-6">
+        <PageTitle title="Paramètres" />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
-        <PageTitle title="Réglages" subtitle="Gérez vos paramètres de compte" />
+        {/* Menu List */}
+        <div className="mt-8 space-y-4">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider ml-2 mb-2">
+            Mon Compte
+          </h3>
 
-        <div className="mt-6 sm:mt-8 space-y-6">
-          <ProfilePhotoUpload />
-          <PersonalDetailsSettings />
-          <UsernameSettings />
-          <WhatsAppSettings />
-          <SupportChatSection />
-          <ReviewsSection />
+          <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/5 backdrop-blur-sm divide-y divide-white/5">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors active:bg-white/10"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full ${item.bgColor} flex items-center justify-center`}>
+                    <item.icon className={`w-5 h-5 ${item.color}`} />
+                  </div>
+                  <span className="font-medium text-white">{item.label}</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-500" />
+              </Link>
+            ))}
+          </div>
+        </div>
 
-          {/* Zone de danger */}
-          <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-red-500/50 bg-red-500/10 p-4 sm:p-5 md:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">Zone de danger</h2>
-            <p className="text-sm text-white/70 mb-4 sm:mb-6">
-              La suppression de votre compte est irréversible.
-            </p>
-            <DeleteAccountButton />
+        {/* Déconnexion */}
+        <div className="mt-8">
+          <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/5 backdrop-blur-sm">
+            <LogoutButton variant="menu" />
+          </div>
+        </div>
+
+        {/* Informations Légales */}
+        <div className="mt-12 text-center">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-4">
+            <Link href="/player/legal" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+              Mentions légales
+            </Link>
+            <Link href="/player/terms" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+              CGU
+            </Link>
+            <Link href="/player/privacy" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+              Confidentialité
+            </Link>
+            <Link href="/player/cookies" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+              Cookies
+            </Link>
           </div>
 
-          {/* Informations Légales */}
-          <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Informations légales</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link href="/player/legal" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline">
-                Mentions légales joueurs
-              </Link>
-              <Link href="/player/terms" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline">
-                CGU joueurs
-              </Link>
-              <Link href="/player/privacy" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline">
-                Confidentialité joueurs
-              </Link>
-              <Link href="/player/cookies" className="text-sm text-white/70 hover:text-white underline-offset-2 hover:underline">
-                Cookies joueurs
-              </Link>
-            </div>
-          </div>
-
-          {/* Bouton de déconnexion */}
-          <div className="flex justify-center pt-4">
-            <LogoutButton variant="dark" />
+          <div className="flex items-center justify-center gap-2 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+            <Image src="/images/logo.png" alt="PadelXP" width={20} height={20} className="w-5 h-5" />
+            <span className="text-xs font-semibold text-white">PadelXP</span>
+            <span className="text-xs text-gray-500">v1.2.0</span>
           </div>
         </div>
       </div>

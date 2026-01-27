@@ -523,7 +523,7 @@ export default function MatchInvitationsReceived() {
                     </p>
                     {sender.niveau_padel && (
                       <p className="text-xs text-gray-400">
-                        Niveau {sender.niveau_padel.toFixed(1)}/10
+                        Niveau {sender.niveau_padel.toFixed(2)}/10
                       </p>
                     )}
                   </div>

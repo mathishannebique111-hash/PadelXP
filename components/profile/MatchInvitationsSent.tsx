@@ -33,7 +33,7 @@ export default function MatchInvitationsSent() {
 
   useEffect(() => {
     loadInvitations();
-    
+
     // Écouter les événements de création/mise à jour d'invitation
     // On n'écoute PAS matchInvitationDeleted car on met à jour l'état local directement
     const handleInvitationEvent = () => {
@@ -41,7 +41,7 @@ export default function MatchInvitationsSent() {
     };
     window.addEventListener("matchInvitationCreated", handleInvitationEvent);
     window.addEventListener("matchInvitationUpdated", handleInvitationEvent);
-    
+
     return () => {
       window.removeEventListener("matchInvitationCreated", handleInvitationEvent);
       window.removeEventListener("matchInvitationUpdated", handleInvitationEvent);
@@ -183,7 +183,7 @@ export default function MatchInvitationsSent() {
 
       console.log("[MatchInvitationsSent] Récupération téléphone pour:", receiverId);
       console.log("[MatchInvitationsSent] User ID:", user.id);
-      
+
       // Vérifier d'abord si une invitation acceptée existe
       const { data: invitationCheck } = await supabase
         .from("match_invitations")
@@ -192,9 +192,9 @@ export default function MatchInvitationsSent() {
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .or(`sender_id.eq.${receiverId},receiver_id.eq.${receiverId}`)
         .limit(1);
-      
+
       console.log("[MatchInvitationsSent] Vérification invitation:", invitationCheck);
-      
+
       const { data, error } = await supabase.rpc("get_partner_phone", {
         partner_uuid: receiverId,
       });
@@ -205,7 +205,7 @@ export default function MatchInvitationsSent() {
       }
 
       console.log("[MatchInvitationsSent] Données reçues:", data);
-      
+
       // Si la fonction RPC ne retourne rien mais qu'une invitation acceptée existe,
       // récupérer directement le numéro du profil
       if ((!data || data.length === 0) && invitationCheck && invitationCheck.length > 0) {
@@ -215,9 +215,9 @@ export default function MatchInvitationsSent() {
           .select("phone_number, whatsapp_enabled")
           .eq("id", receiverId)
           .maybeSingle();
-        
+
         console.log("[MatchInvitationsSent] Profil récupéré:", profileData);
-        
+
         if (profileError) {
           console.error("[MatchInvitationsSent] Erreur récupération profil:", profileError);
         } else if (profileData?.phone_number) {
@@ -267,7 +267,7 @@ export default function MatchInvitationsSent() {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
-      
+
       if (userError || !user) {
         console.error("[MatchInvitationsSent] Erreur authentification", userError);
         showToast("Vous devez être connecté", "error");
@@ -280,7 +280,7 @@ export default function MatchInvitationsSent() {
       // Récupérer l'ID du receiver avant suppression pour l'événement
       const invitationToDelete = invitations.find(inv => inv.id === invitationId);
       const receiverId = invitationToDelete?.receiver_id;
-      
+
       if (!invitationToDelete) {
         console.warn("[MatchInvitationsSent] Invitation non trouvée dans l'état local");
         showToast("Invitation non trouvée", "error");
@@ -325,10 +325,10 @@ export default function MatchInvitationsSent() {
       });
 
       // Déclencher l'événement pour synchroniser les autres composants
-      window.dispatchEvent(new CustomEvent("matchInvitationDeleted", { 
-        detail: { invitationId, receiverId } 
+      window.dispatchEvent(new CustomEvent("matchInvitationDeleted", {
+        detail: { invitationId, receiverId }
       }));
-      
+
       showToast("Invitation supprimée", "success");
     } catch (error) {
       console.error("[MatchInvitationsSent] Erreur exception suppression invitation", error);
@@ -401,7 +401,7 @@ export default function MatchInvitationsSent() {
                   </p>
                   {receiver.niveau_padel && (
                     <p className="text-xs text-gray-400">
-                      Niveau {receiver.niveau_padel.toFixed(1)}/10
+                      Niveau {receiver.niveau_padel.toFixed(2)}/10
                     </p>
                   )}
                 </div>

@@ -20,7 +20,7 @@ interface Conversation {
     is_read_by_user: boolean;
 }
 
-export default function SupportChatSection() {
+export default function SupportChatSection({ fullPage = false }: { fullPage?: boolean }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [newMessage, setNewMessage] = useState("");
@@ -157,6 +157,64 @@ export default function SupportChatSection() {
         }
     };
 
+    if (fullPage) {
+        return (
+            <div className="flex flex-col h-full rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3" ref={messagesEndRef}>
+                    {loading ? (
+                        <div className="flex items-center gap-2 py-4 justify-center h-full">
+                            <Loader2 className="animate-spin text-blue-500" size={20} />
+                            <span className="text-sm text-gray-400">Chargement...</span>
+                        </div>
+                    ) : messages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                            <MessageCircle size={48} className="text-gray-600 mb-4" />
+                            <p className="text-gray-300 font-medium">Aucun message pour le moment</p>
+                            <p className="text-xs text-gray-500 mt-1">Envoyez-nous votre toute première question !</p>
+                        </div>
+                    ) : (
+                        messages.map((msg) => {
+                            const myUserId = userIdRef.current || userId;
+                            const isSentByMe = myUserId && String(msg.sender_id).trim() === String(myUserId).trim();
+                            return (
+                                <div key={msg.id} className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}>
+                                    <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${isSentByMe ? "bg-blue-600 text-white" : "bg-white/10 text-gray-200"}`}>
+                                        <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                                        <p className={`text-[10px] mt-1 text-right ${isSentByMe ? "text-blue-200" : "text-gray-500"}`}>
+                                            {new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
+
+                <div className="p-4 border-t border-white/10 bg-white/5">
+                    <form onSubmit={sendMessage} className="flex gap-2">
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Votre message..."
+                            className="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            disabled={sending || !conversation}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!newMessage.trim() || sending || !conversation}
+                            className="bg-blue-500 text-white rounded-xl w-12 flex items-center justify-center hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {sending ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+
+    // Default Accordion View
     return (
         <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
             <button

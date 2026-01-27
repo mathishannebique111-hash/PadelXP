@@ -14,7 +14,7 @@ interface Review {
     profiles?: { display_name: string } | null;
 }
 
-export default function ReviewsSection() {
+export default function ReviewsSection({ fullPage = false }: { fullPage?: boolean }) {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -121,6 +121,98 @@ export default function ReviewsSection() {
         );
     };
 
+    if (fullPage) {
+        return (
+            <div className="space-y-6">
+                {/* Stats Header */}
+                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+                    <div className="flex flex-col items-center justify-center p-2">
+                        <span className="text-3xl font-bold text-white">{averageRating.toFixed(1)}</span>
+                        <div className="flex gap-0.5 mt-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                    key={star}
+                                    size={12}
+                                    className={`${averageRating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-500"}`}
+                                />
+                            ))}
+                        </div>
+                        <span className="text-xs text-gray-500 mt-1">{reviews.length} avis</span>
+                    </div>
+                    <div className="flex-1 text-sm text-gray-300">
+                        Votre avis compte pour la communauté PadelXP. Partagez votre expérience !
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div className="flex justify-center py-10">
+                        <Loader2 className="animate-spin text-blue-500" size={32} />
+                    </div>
+                ) : (
+                    <>
+                        {/* Form for new review */}
+                        {!hasUserReview && (
+                            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                <h3 className="text-lg font-semibold text-white mb-4">Laisser un avis</h3>
+                                <form onSubmit={handleSubmit}>
+                                    <p className="text-sm text-green-400 mb-4 bg-green-400/10 p-2 rounded-lg inline-block">
+                                        🎁 10 points offerts pour votre premier avis !
+                                    </p>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="text-sm text-gray-300">Votre note :</span>
+                                        {renderStars(rating, true)}
+                                    </div>
+                                    <textarea
+                                        value={comment}
+                                        onChange={(e) => setComment(e.target.value)}
+                                        placeholder="Qu'est-ce qui vous plaît dans PadelXP ? (optionnel)"
+                                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[100px]"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={rating === 0 || submitting}
+                                        className="mt-4 w-full bg-blue-500 text-white rounded-xl px-6 py-3 font-medium hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        {submitting ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+                                        Publier mon avis
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Recent reviews */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-white px-2">Derniers avis</h3>
+                            {reviews.length === 0 ? (
+                                <p className="text-center text-gray-500 py-8 italic">Aucun avis pour le moment. Soyez le premier !</p>
+                            ) : (
+                                reviews.map((review) => (
+                                    <div key={review.id} className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                {renderStars(review.rating)}
+                                            </div>
+                                            <span className="text-xs text-gray-500">
+                                                {new Date(review.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                                            </span>
+                                        </div>
+                                        {review.comment && (
+                                            <p className="text-gray-300 text-sm leading-relaxed">{review.comment}</p>
+                                        )}
+                                        <div className="mt-2 text-xs text-blue-400 font-medium">
+                                            Membre PadelXP
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    }
+
+    // Default Accordion View
     return (
         <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
             <button

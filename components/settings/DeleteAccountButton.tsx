@@ -6,9 +6,10 @@ import { supabaseClient } from "@/lib/supabase";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
 
-export default function DeleteAccountButton() {
-  const [showConfirmation, setShowConfirmation] = useState(false);
+export default function DeleteAccountButton({ forceShow = false }: { forceShow?: boolean }) {
+  const [showConfirmation, setShowConfirmation] = useState(forceShow);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -34,7 +35,7 @@ export default function DeleteAccountButton() {
       // Déconnexion et redirection vers la page d'accueil
       const supabase = supabaseClient();
       await supabase.auth.signOut();
-      
+
       router.push("/");
       router.refresh();
     } catch (err: any) {
@@ -59,8 +60,8 @@ export default function DeleteAccountButton() {
     <div className="space-y-4">
       <div className="rounded-lg border border-red-500/50 bg-red-500/20 p-4">
         <h3 className="text-base sm:text-lg font-semibold text-white mb-3 flex items-center gap-2">
-          <Image 
-            src="/images/Danger page réglages.png" 
+          <Image
+            src="/images/Danger page réglages.png"
             alt="Danger"
             width={24}
             height={24}
@@ -83,8 +84,8 @@ export default function DeleteAccountButton() {
           <li>Toutes les autres données associées à votre compte</li>
         </ul>
         <p className="text-sm text-white/90 font-semibold flex items-center gap-2">
-          <Image 
-            src="/images/Danger page réglages.png" 
+          <Image
+            src="/images/Danger page réglages.png"
             alt="Danger"
             width={20}
             height={20}
@@ -100,11 +101,24 @@ export default function DeleteAccountButton() {
         </div>
       )}
 
+      <div className="flex items-center gap-3 mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+        <input
+          type="checkbox"
+          id="confirm-delete"
+          checked={isConfirmed}
+          onChange={(e) => setIsConfirmed(e.target.checked)}
+          className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 bg-white/10"
+        />
+        <label htmlFor="confirm-delete" className="text-sm text-white/90 cursor-pointer select-none">
+          Je reconnais que cette action est irréversible et je confirme vouloir supprimer mon compte.
+        </label>
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={handleDeleteAccount}
-          disabled={isDeleting}
-          className="flex-1 inline-flex items-center justify-center rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 border border-red-500/50 shadow-[0_6px_20px_rgba(220,38,38,0.3)] hover:shadow-[0_8px_24px_rgba(220,38,38,0.4)] hover:scale-105 active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          disabled={isDeleting || !isConfirmed}
+          className="flex-1 inline-flex items-center justify-center rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 border border-red-500/50 shadow-[0_6px_20px_rgba(220,38,38,0.3)] hover:shadow-[0_8px_24px_rgba(220,38,38,0.4)] hover:scale-105 active:scale-100 transition-all duration-300 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isDeleting ? "Suppression en cours..." : "Oui, supprimer définitivement mon compte"}
         </button>

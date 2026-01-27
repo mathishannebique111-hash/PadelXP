@@ -91,7 +91,7 @@ export default function ProfilePadelInfo({ player }: Props) {
     infoCards.push({
       icon: TrendingUp,
       label: "Niveau évalué",
-      value: `${player.niveau_padel.toFixed(1)}/10`,
+      value: `${player.niveau_padel.toFixed(2)}/10`,
       color: "red",
     });
   }
@@ -121,9 +121,8 @@ export default function ProfilePadelInfo({ player }: Props) {
           return (
             <div
               key={index}
-              className={`border rounded-xl p-4 ${
-                colorClasses[info.color as keyof typeof colorClasses]
-              }`}
+              className={`border rounded-xl p-4 ${colorClasses[info.color as keyof typeof colorClasses]
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Icon size={20} className="flex-shrink-0" />
