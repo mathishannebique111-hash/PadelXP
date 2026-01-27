@@ -42,20 +42,17 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 2 - Description du service</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                PadelXP propose une période d'essai gratuite de 30 jours permettant de découvrir
-                toutes les fonctionnalités de la plateforme.
+                PadelXP propose une plateforme SaaS permettant de transformer l'expérience de vos joueurs
+                grâce à des classements, des challenges et une gamification complète.
               </p>
               <p>
-                À l'issue de cette période, vous pouvez souscrire à un abonnement selon l'une des
-                formules suivantes :
+                L'abonnement au service est unique et sans engagement :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li><strong>Formule Mensuelle :</strong> 99 € TTC / mois</li>
-                <li><strong>Formule Trimestrielle :</strong> 89 € TTC / mois</li>
-                <li><strong>Formule Annuelle :</strong> 82 € TTC / mois</li>
+                <li><strong>Abonnement Mensuel :</strong> 49 € TTC / mois</li>
               </ul>
               <p>
-                Le nombre de membres utilisant la plateforme est illimité pour toutes les formules.
+                Le nombre de joueurs utilisant la plateforme est illimité.
               </p>
             </div>
           </section>
@@ -73,8 +70,7 @@ export default function CGVPage() {
                 sur nos serveurs.
               </p>
               <p>
-                Pour les abonnements mensuels et trimestriels, le paiement est effectué au début
-                de chaque période. Pour l'abonnement annuel, le paiement est effectué une fois par an.
+                Le paiement est effectué au début de chaque période mensuelle.
               </p>
             </div>
           </section>
@@ -98,13 +94,12 @@ export default function CGVPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 5 - Abonnement et renouvellement</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                L'abonnement est conclu pour une durée déterminée (1 mois, 3 mois ou 1 an) et se
-                renouvelle automatiquement par tacite reconduction pour la même durée, sauf résiliation
-                de votre part ou de la nôtre.
+                L'abonnement est conclu pour une durée de 1 mois et se renouvelle automatiquement
+                par tacite reconduction pour la même durée, sauf résiliation de votre part ou de la nôtre.
               </p>
               <p>
-                Vous serez informé par email au moins 7 jours avant chaque renouvellement automatique,
-                indiquant la date de prélèvement et le montant.
+                Vous serez informé par email avant chaque renouvellement automatique, indiquant la date
+                de prélèvement et le montant.
               </p>
               <p>
                 Le renouvellement est effectué automatiquement à la date d'échéance de votre abonnement.

@@ -217,37 +217,14 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
                       Vers niveau {Math.floor(profile.niveau_padel) + 1}
                     </span>
                     <span className="text-xs sm:text-sm text-padel-green font-semibold">
-                      {(() => {
-                        const currentLevel = Math.floor(profile.niveau_padel);
-                        const nextThreshold = currentLevel + 0.5;
-                        const prevThreshold = currentLevel - 0.5;
-                        const progress =
-                          ((profile.niveau_padel - prevThreshold) /
-                            (nextThreshold - prevThreshold)) *
-                          100;
-                        return Math.round(
-                          Math.min(Math.max(progress, 0), 100)
-                        );
-                      })()}
-                      %
+                      {Math.round((profile.niveau_padel % 1) * 100)}%
                     </span>
                   </div>
                   <div className="h-2.5 bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-padel-green transition-all duration-500"
                       style={{
-                        width: `${(() => {
-                          const currentLevel = Math.floor(
-                            profile.niveau_padel
-                          );
-                          const nextThreshold = currentLevel + 0.5;
-                          const prevThreshold = currentLevel - 0.5;
-                          const progress =
-                            ((profile.niveau_padel - prevThreshold) /
-                              (nextThreshold - prevThreshold)) *
-                            100;
-                          return Math.min(Math.max(progress, 0), 100);
-                        })()}%`,
+                        width: `${Math.round((profile.niveau_padel % 1) * 100)}%`,
                       }}
                     />
                   </div>
