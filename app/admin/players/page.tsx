@@ -53,13 +53,16 @@ export default async function AdminPlayersPage({
   const filteredPlayers = (players || []).filter((player) => {
     const playerEmail = player.email?.toLowerCase();
     return playerEmail && !clubEmails.has(playerEmail);
-  });
+  }).map(player => ({
+    ...player,
+    clubs: Array.isArray(player.clubs) ? player.clubs[0] : player.clubs
+  }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Joueurs</h1>
-        <p className="text-gray-600 mt-1">Gestion de tous les joueurs de la plateforme</p>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Joueurs</h1>
+        <p className="text-slate-400 mt-2">Gestion de tous les joueurs de la plateforme.</p>
       </div>
 
       <PlayersListClient

@@ -64,7 +64,7 @@ export default function PlayersListClient({
 
   function handleClubChange(clubId: string) {
     setSelectedClub(clubId);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
     if (clubId === 'all') {
       params.delete('club');
     } else {
@@ -75,7 +75,7 @@ export default function PlayersListClient({
 
   function handleSearchChange(value: string) {
     setSearch(value);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
     if (value) {
       params.set('search', value);
     } else {
@@ -87,37 +87,37 @@ export default function PlayersListClient({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Filtrer par club
             </label>
             <select
               value={selectedClub}
               onChange={(e) => handleClubChange(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all custom-select"
             >
-              <option value="all">Tous les clubs</option>
+              <option value="all" className="bg-slate-900">Tous les clubs</option>
               {clubs.map((club) => (
-                <option key={club.id} value={club.id}>
+                <option key={club.id} value={club.id} className="bg-slate-900">
                   {club.name}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Rechercher
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Nom, email..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
               />
             </div>
           </div>
@@ -125,24 +125,26 @@ export default function PlayersListClient({
       </div>
 
       {/* Players Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-slate-900/60 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-white/5 border-b border-white/5">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Photo</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nom</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Club</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Inscription</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Photo</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Nom</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Club</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Inscription</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-white/5">
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Aucun joueur trouvé</p>
+                  <td colSpan={5} className="px-6 py-16 text-center">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-8 h-8 text-slate-500" />
+                    </div>
+                    <p className="text-slate-400 text-lg">Aucun joueur trouvé</p>
                   </td>
                 </tr>
               ) : (
@@ -154,30 +156,40 @@ export default function PlayersListClient({
                   });
 
                   return (
-                    <tr key={player.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                    <tr key={player.id} className="hover:bg-white/5 transition-colors group">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {player.avatar_url ? (
-                          <Image
-                            src={player.avatar_url}
-                            alt={player.display_name || 'Joueur'}
-                            width={40}
-                            height={40}
-                            className="rounded-full object-cover"
-                          />
+                          <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+                            <Image
+                              src={player.avatar_url}
+                              alt={player.display_name || 'Joueur'}
+                              width={40}
+                              height={40}
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
                         ) : (
-                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            <Users className="w-5 h-5 text-gray-400" />
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                            <span className="text-white font-bold text-xs">
+                              {player.first_name?.[0] || player.display_name?.[0] || 'J'}
+                            </span>
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="font-medium text-white group-hover:text-blue-300 transition-colors">
                           {player.display_name || `${player.first_name} ${player.last_name}`}
                         </p>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{player.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{player.clubs?.name || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{registrationDate}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{player.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                        {player.clubs?.name ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            {player.clubs.name}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{registrationDate}</td>
                     </tr>
                   );
                 })

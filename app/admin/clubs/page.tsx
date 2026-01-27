@@ -66,8 +66,8 @@ export default async function AdminClubsPage() {
   if (error) {
     console.error('Error fetching clubs:', error);
     return (
-      <div className="bg-white rounded-xl border border-red-200 p-6">
-        <p className="text-red-600">Erreur lors du chargement des clubs: {error.message}</p>
+      <div className="bg-red-500/10 rounded-xl border border-red-500/20 p-6 backdrop-blur-sm">
+        <p className="text-red-400">Erreur lors du chargement des clubs: {error.message}</p>
       </div>
     );
   }
@@ -80,7 +80,7 @@ export default async function AdminClubsPage() {
         .select('*', { count: 'exact', head: true })
         .eq('club_id', club.id)
         .not('email', 'is', null);
-      
+
       return {
         ...club,
         playerCount: count || 0,
@@ -89,47 +89,50 @@ export default async function AdminClubsPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Clubs</h1>
-        <p className="text-gray-600 mt-1">Gestion de tous les clubs de la plateforme</p>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Clubs & Complexes</h1>
+        <p className="text-slate-400 mt-2">Gestion de tous les clubs partenaires de la plateforme.</p>
       </div>
 
       {clubsWithPlayerCount.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">Aucun club enregistré</p>
+        <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 p-16 text-center">
+          <div className="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Building2 className="w-10 h-10 text-slate-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-white mb-2">Aucun club enregistré</h3>
+          <p className="text-slate-400 max-w-md mx-auto">Les clubs inscrits apparaîtront ici. Ils pourront gérer leurs terrains et membres.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-slate-900/60 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-white/5 border-b border-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Club
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Date d'inscription
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Type d'abonnement
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Jours restants
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Joueurs
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-white/5">
                 {clubsWithPlayerCount.map((club) => {
                   const subscriptionInfo = getSubscriptionStatus(club);
                   const registrationDate = new Date(club.created_at).toLocaleDateString('fr-FR', {
@@ -139,61 +142,62 @@ export default async function AdminClubsPage() {
                   });
 
                   return (
-                    <tr key={club.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={club.id} className="hover:bg-white/5 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           {club.logo_url ? (
-                            <Image
-                              src={club.logo_url}
-                              alt={club.name}
-                              width={40}
-                              height={40}
-                              className="rounded-lg object-cover"
-                            />
+                            <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                              <Image
+                                src={club.logo_url}
+                                alt={club.name}
+                                width={48}
+                                height={48}
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
                           ) : (
-                            <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                              <Building2 className="w-5 h-5 text-gray-400" />
+                            <div className="w-12 h-12 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center">
+                              <Building2 className="w-6 h-6 text-slate-500 group-hover:text-slate-300 transition-colors" />
                             </div>
                           )}
                           <div>
-                            <p className="font-semibold text-gray-900">{club.name}</p>
-                            <p className="text-sm text-gray-500">{club.email}</p>
+                            <p className="font-semibold text-white group-hover:text-blue-300 transition-colors">{club.name}</p>
+                            <p className="text-sm text-slate-500">{club.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <Calendar className="w-4 h-4 text-slate-600" />
                           {registrationDate}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            subscriptionInfo.type === 'subscription'
-                              ? 'bg-green-100 text-green-800'
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${subscriptionInfo.type === 'subscription'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                               : subscriptionInfo.type === 'trial'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
+                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}
                         >
                           {subscriptionInfo.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                         {subscriptionInfo.type === 'subscription'
                           ? formatSubscriptionType(subscriptionInfo.subscriptionType)
                           : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                         {subscriptionInfo.daysRemaining > 0 ? (
-                          <span className="font-medium">{subscriptionInfo.daysRemaining} jours</span>
+                          <span className="font-medium text-white">{subscriptionInfo.daysRemaining} jours</span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-slate-600">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-slate-400">
                           <Users className="w-4 h-4" />
                           {club.playerCount}
                         </div>
@@ -201,10 +205,10 @@ export default async function AdminClubsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Link
                           href={`/admin/clubs/${club.id}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all text-sm font-medium"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all text-sm font-medium border border-white/10 hover:border-white/20"
                         >
-                          Voir détails
-                          <ArrowRight className="w-4 h-4" />
+                          Détails
+                          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" />
                         </Link>
                       </td>
                     </tr>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Send, Search, Loader2, Filter, Building2, Eye, Trash2, AlertTriangle, X } from "lucide-react";
+import { Send, Search, Loader2, Filter, Building2, Eye, Trash2, AlertTriangle, X, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import { logger } from "@/lib/logger";
 import Link from "next/link";
@@ -126,10 +126,10 @@ export default function AdminMessagesPage() {
   }, []);
 
   const filterConversations = useCallback(() => {
-    const conversationsToFilter = conversationType === 'players' 
-      ? playerConversations 
+    const conversationsToFilter = conversationType === 'players'
+      ? playerConversations
       : clubConversations;
-    
+
     let filtered = [...conversationsToFilter];
 
     // Filtre par club (uniquement pour les joueurs)
@@ -289,7 +289,7 @@ export default function AdminMessagesPage() {
     }
 
     // Charger les messages via l'API admin appropriée selon le type
-    const apiEndpoint = conversationType === 'players' 
+    const apiEndpoint = conversationType === 'players'
       ? `/api/admin/messages?conversation_id=${conv.id}`
       : `/api/admin/club-messages?conversation_id=${conv.id}`;
 
@@ -316,7 +316,7 @@ export default function AdminMessagesPage() {
             }
             return acc;
           }, [] as Message[])
-          .sort((a: Message, b: Message) => 
+          .sort((a: Message, b: Message) =>
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
         setMessages(uniqueMessages);
@@ -406,7 +406,7 @@ export default function AdminMessagesPage() {
       );
 
       // Utiliser la bonne API selon le type de conversation
-      const apiEndpoint = conversationType === 'players' 
+      const apiEndpoint = conversationType === 'players'
         ? "/api/messages/send"
         : "/api/club-messages/send";
 
@@ -428,7 +428,7 @@ export default function AdminMessagesPage() {
       }
 
       const data = await response.json();
-      
+
       if (!data.message) {
         logger.error("[AdminMessages] Réponse API sans message", { data });
         throw new Error("Réponse invalide de l'API");
@@ -452,7 +452,7 @@ export default function AdminMessagesPage() {
         );
       });
       setNewMessage("");
-      
+
       // Recharger tous les messages pour s'assurer d'avoir l'historique complet et à jour
       // Cela garantit qu'on voit tous les messages même si le realtime a un délai
       // On utilise un délai plus court maintenant que la déduplication est en place
@@ -462,7 +462,7 @@ export default function AdminMessagesPage() {
             const reloadEndpoint = conversationType === 'players'
               ? `/api/admin/messages?conversation_id=${selectedConv.id}`
               : `/api/admin/club-messages?conversation_id=${selectedConv.id}`;
-            
+
             const reloadResponse = await fetch(reloadEndpoint, {
               method: "GET",
               credentials: "include",
@@ -495,14 +495,14 @@ export default function AdminMessagesPage() {
     } catch (error) {
       logger.error(
         "[AdminMessages] Erreur envoi message",
-        { 
+        {
           error: error instanceof Error ? error.message : String(error),
           conversationId: selectedConv?.id?.substring(0, 8)
         }
       );
       alert(
-        error instanceof Error 
-          ? `Erreur lors de l'envoi du message: ${error.message}` 
+        error instanceof Error
+          ? `Erreur lors de l'envoi du message: ${error.message}`
           : "Erreur lors de l'envoi du message. Veuillez réessayer."
       );
     } finally {
@@ -541,7 +541,7 @@ export default function AdminMessagesPage() {
       } else {
         setClubConversations((current) => current.filter((c) => c.id !== selectedConv.id));
       }
-      
+
       // Réinitialiser la sélection
       setSelectedConv(null);
       setMessages([]);
@@ -551,14 +551,14 @@ export default function AdminMessagesPage() {
     } catch (error) {
       logger.error(
         "[AdminMessages] Erreur suppression conversation",
-        { 
+        {
           error: error instanceof Error ? error.message : String(error),
           conversationId: selectedConv.id.substring(0, 8)
         }
       );
       alert(
-        error instanceof Error 
-          ? `Erreur lors de la suppression: ${error.message}` 
+        error instanceof Error
+          ? `Erreur lors de la suppression: ${error.message}`
           : "Erreur lors de la suppression. Veuillez réessayer."
       );
     } finally {
@@ -569,7 +569,7 @@ export default function AdminMessagesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <Loader2 className="animate-spin text-blue-500" size={32} />
       </div>
     );
@@ -579,48 +579,46 @@ export default function AdminMessagesPage() {
   const unreadCount = conversationsForUnread.filter((c) => !c.is_read_by_admin).length;
 
   return (
-    <div className="h-[calc(100vh-8rem)] bg-white flex flex-col md:flex-row border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+    <div className="h-[calc(100vh-8rem)] bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row relative z-10">
       {/* Liste des conversations (gauche) */}
-      <div className="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col h-full">
+      <div className="w-full md:w-96 bg-slate-900/40 border-r border-white/5 flex flex-col h-full">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <div className="p-4 border-b border-white/5 bg-white/5">
           {/* Onglets */}
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-2 mb-4">
             <button
               onClick={() => setConversationType('players')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                conversationType === 'players'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${conversationType === 'players'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                }`}
             >
               Joueurs
             </button>
             <button
               onClick={() => setConversationType('clubs')}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                conversationType === 'clubs'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${conversationType === 'clubs'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                }`}
             >
               Clubs
             </button>
           </div>
 
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-bold text-gray-900">Messages</h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-lg font-bold text-white">Messages</h1>
             {unreadCount > 0 && (
-              <span className="px-2.5 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">
+              <span className="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold rounded-full shadow-lg shadow-blue-500/20">
                 {unreadCount}
               </span>
             )}
           </div>
 
           {/* Recherche */}
-          <div className="relative mb-3">
+          <div className="relative mb-4">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
               size={18}
             />
             <input
@@ -628,7 +626,7 @@ export default function AdminMessagesPage() {
               placeholder={conversationType === 'players' ? "Rechercher un joueur..." : "Rechercher un club..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[44px]"
+              className="w-full bg-slate-800/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 min-h-[44px]"
             />
           </div>
 
@@ -636,17 +634,17 @@ export default function AdminMessagesPage() {
           {conversationType === 'players' && (
             <div className="relative">
               <Filter
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
                 size={18}
               />
               <select
                 value={selectedClub}
                 onChange={(e) => setSelectedClub(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer min-h-[44px]"
+                className="w-full bg-slate-800/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 appearance-none cursor-pointer min-h-[44px]"
               >
-                <option value="all">Tous les clubs</option>
+                <option value="all" className="bg-slate-900">Tous les clubs</option>
                 {clubs.map((club) => (
-                  <option key={club.id} value={club.id}>
+                  <option key={club.id} value={club.id} className="bg-slate-900">
                     {club.name}
                   </option>
                 ))}
@@ -656,24 +654,25 @@ export default function AdminMessagesPage() {
         </div>
 
         {/* Liste conversations */}
-        <div className="flex-1 overflow-y-auto bg-white">
+        <div className="flex-1 overflow-y-auto bg-transparent custom-scrollbar">
           {filteredConversations.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-sm text-gray-500">Aucune conversation</p>
+              <p className="text-sm text-slate-500">Aucune conversation</p>
             </div>
           ) : (
             filteredConversations.map((conv) => (
               <button
                 key={conv.id}
                 onClick={() => selectConversation(conv)}
-                className={`w-full p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors text-left ${
-                  selectedConv?.id === conv.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                } active:bg-gray-100`}
+                className={`w-full p-4 border-b border-white/5 hover:bg-white/5 transition-all text-left ${selectedConv?.id === conv.id
+                  ? "bg-gradient-to-r from-blue-600/10 to-transparent border-l-4 border-l-blue-500"
+                  : "border-l-4 border-l-transparent"
+                  } active:bg-white/10`}
               >
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
                   <div className="relative flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden border-2 border-gray-300">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 bg-slate-800">
                       {conversationType === 'players' ? (
                         (conv as PlayerConversation).avatar_url ? (
                           <Image
@@ -684,7 +683,7 @@ export default function AdminMessagesPage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold text-lg">
+                          <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-lg">
                             {(conv as PlayerConversation).first_name?.[0] || ""}
                             {(conv as PlayerConversation).last_name?.[0] || ""}
                           </div>
@@ -699,14 +698,14 @@ export default function AdminMessagesPage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold text-lg">
+                          <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-lg">
                             {(conv as ClubConversation).club_name?.[0] || "C"}
                           </div>
                         )
                       )}
                     </div>
                     {!conv.is_read_by_admin && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white"></div>
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-slate-900 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
                     )}
                   </div>
 
@@ -714,17 +713,16 @@ export default function AdminMessagesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p
-                        className={`text-sm font-semibold truncate ${
-                          !conv.is_read_by_admin
-                            ? "text-gray-900"
-                            : "text-gray-700"
-                        }`}
+                        className={`text-sm font-semibold truncate ${!conv.is_read_by_admin
+                          ? "text-white"
+                          : "text-slate-300"
+                          }`}
                       >
                         {conversationType === 'players'
                           ? `${(conv as PlayerConversation).first_name} ${(conv as PlayerConversation).last_name}`
                           : (conv as ClubConversation).club_name}
                       </p>
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                      <span className="text-xs text-slate-500 ml-2 flex-shrink-0">
                         {new Date(conv.last_message_at).toLocaleDateString(
                           "fr-FR",
                           {
@@ -738,15 +736,15 @@ export default function AdminMessagesPage() {
                     {/* Club (uniquement pour les joueurs) */}
                     {conversationType === 'players' && (
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Building2 size={12} className="text-gray-400" />
-                        <p className="text-xs text-gray-500 truncate">
+                        <Building2 size={12} className="text-slate-500" />
+                        <p className="text-xs text-slate-500 truncate">
                           {(conv as PlayerConversation).club_name || "Aucun club"}
                         </p>
                       </div>
                     )}
 
                     {/* Aperçu message */}
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-slate-500 truncate group-hover:text-slate-400 transition-colors">
                       {conv.last_message_preview || "Aucun message"}
                     </p>
                   </div>
@@ -758,14 +756,14 @@ export default function AdminMessagesPage() {
       </div>
 
       {/* Zone de conversation (droite) */}
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-full bg-slate-900/40">
         {selectedConv ? (
           <>
             {/* Header conversation */}
-            <div className="bg-white border-b border-gray-200 p-4">
+            <div className="bg-white/5 border-b border-white/5 p-4 backdrop-blur-md">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border-2 border-gray-300">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-slate-800">
                     {conversationType === 'players' ? (
                       (selectedConv as PlayerConversation).avatar_url ? (
                         <Image
@@ -776,7 +774,7 @@ export default function AdminMessagesPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold">
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
                           {(selectedConv as PlayerConversation).first_name?.[0] || ""}
                           {(selectedConv as PlayerConversation).last_name?.[0] || ""}
                         </div>
@@ -791,217 +789,156 @@ export default function AdminMessagesPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold">
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
                           {(selectedConv as ClubConversation).club_name?.[0] || "C"}
                         </div>
                       )
                     )}
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-gray-900">
+                    <h2 className="font-bold text-white">
                       {conversationType === 'players'
                         ? `${(selectedConv as PlayerConversation).first_name} ${(selectedConv as PlayerConversation).last_name}`
                         : (selectedConv as ClubConversation).club_name}
                     </h2>
                     {conversationType === 'players' && (
-                      <div className="flex items-center gap-1.5">
-                        <Building2 size={12} className="text-gray-400" />
-                        <p className="text-xs text-gray-500">
-                          {(selectedConv as PlayerConversation).club_name || "Aucun club"}
-                        </p>
-                      </div>
+                      <p className="text-xs text-slate-400">
+                        {(selectedConv as PlayerConversation).email}
+                      </p>
                     )}
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-2">
-                  {conversationType === 'players' && (
-                    <Link
-                      href={`/players/${(selectedConv as PlayerConversation).user_id}`}
-                      target="_blank"
-                      className="px-3 py-1.5 text-xs bg-gray-100 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 min-h-[32px] flex items-center gap-1.5 transition-colors"
-                    >
-                      <Eye size={14} />
-                      <span>Profil</span>
-                    </Link>
-                  )}
+                  {/* Delete button */}
                   <button
                     onClick={handleDeleteClick}
-                    disabled={deleting}
-                    className="px-3 py-1.5 text-xs bg-red-50 border border-red-200 text-red-600 rounded-lg hover:bg-red-100 active:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[32px] flex items-center gap-1.5 transition-colors"
+                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-white/5 rounded-full transition-colors"
                     title="Supprimer la conversation"
                   >
-                    <Trash2 size={14} />
-                    <span className="hidden sm:inline">Supprimer</span>
+                    <Trash2 size={18} />
                   </button>
+
+                  <Link
+                    href={conversationType === 'players'
+                      ? `/admin/players?search=${(selectedConv as PlayerConversation).email}`
+                      : `/admin/clubs/${(selectedConv as ClubConversation).club_id}`
+                    }
+                    className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-colors"
+                    target="_blank"
+                  >
+                    <Eye size={18} />
+                  </Link>
                 </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
-              {messages
-                .filter((msg: Message, index: number, self: Message[]) => 
-                  // Filtrer les doublons par ID (sécurité supplémentaire)
-                  index === self.findIndex((m: Message) => m.id === msg.id)
-                )
-                .sort((a: Message, b: Message) => 
-                  // Trier par date pour garantir l'ordre même après déduplication
-                  new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                )
-                .map((msg) => {
-                  // Déterminer si le message a été envoyé par l'admin actuel
-                  // Utiliser userIdRef pour avoir une valeur synchrone, sinon userId state
-                  const myUserId = userIdRef.current || userId;
-                  const isSentByMe = myUserId !== "" && myUserId !== null && String(msg.sender_id).trim() === String(myUserId).trim();
-                  
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-50">
+                  <MessageSquare size={48} className="mb-2" />
+                  <p>Aucun message pour le moment</p>
+                </div>
+              ) : (
+                messages.map((msg) => {
+                  const isUser = msg.sender_id === userId;
                   return (
                     <div
                       key={msg.id}
-                      className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}
-                    >
-                    <div
-                      className={`max-w-[60%] rounded-2xl px-4 py-3 ${
-                        isSentByMe
-                          ? "bg-blue-500 text-white rounded-br-sm"
-                          : "bg-gray-200 text-gray-900 rounded-bl-sm"
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {msg.content}
-                      </p>
-                      <p
-                        className={`text-[10px] mt-1 ${
-                          isSentByMe ? "text-blue-100" : "text-gray-500"
+                      className={`flex ${isUser ? "justify-end" : "justify-start"
                         }`}
+                    >
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-md ${isUser
+                          ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-br-none"
+                          : "bg-slate-800 border border-white/5 text-slate-200 rounded-bl-none"
+                          }`}
                       >
-                        {new Date(msg.created_at).toLocaleTimeString("fr-FR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+                        <p
+                          className={`text-[10px] mt-1 text-right ${isUser ? "text-blue-200" : "text-slate-500"
+                            }`}
+                        >
+                          {new Date(msg.created_at).toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
-            <div className="bg-white border-t border-gray-200 p-4">
-              <form onSubmit={sendMessage} className="flex gap-3">
+            <div className="p-4 bg-white/5 border-t border-white/5 backdrop-blur-md">
+              <form onSubmit={sendMessage} className="flex gap-2">
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Votre réponse..."
-                  className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[44px]"
+                  placeholder="Écrivez votre message..."
+                  className="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all shadow-inner"
                   disabled={sending}
                 />
                 <button
                   type="submit"
                   disabled={!newMessage.trim() || sending}
-                  className="bg-blue-500 text-white rounded-lg px-6 py-3 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 flex items-center gap-2 font-medium min-h-[44px] active:bg-blue-700 transition-colors"
+                  className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl disabled:opacity-50 disabled:hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-900/20"
                 >
                   {sending ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    <>
-                      <Send size={20} />
-                      <span className="hidden sm:inline">Envoyer</span>
-                    </>
+                    <Send size={20} />
                   )}
                 </button>
               </form>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+                  <div className="flex items-center gap-3 text-red-400 mb-4">
+                    <AlertTriangle size={24} />
+                    <h3 className="text-lg font-bold text-white">Confirmer suppression</h3>
+                  </div>
+                  <p className="text-slate-300 mb-6 text-sm">
+                    Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => setShowDeleteModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                      disabled={deleting}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={deleteConversation}
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-500 rounded-lg shadow-lg shadow-red-900/20 transition-all hover:scale-105"
+                      disabled={deleting}
+                    >
+                      {deleting ? "Suppression..." : "Supprimer"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-4">
-                <Filter size={32} className="text-gray-400" />
-              </div>
-              <p className="text-sm text-gray-500">Sélectionnez une conversation</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8">
+            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6 animate-pulse">
+              <MessageSquare size={48} className="text-slate-600" />
             </div>
+            <p className="text-lg font-medium text-white mb-2">Sélectionnez une conversation</p>
+            <p className="text-sm max-w-xs text-center">Choisissez un joueur ou un club à gauche pour voir les messages.</p>
           </div>
         )}
       </div>
-
-      {/* Modale de confirmation de suppression */}
-      {showDeleteModal && selectedConv && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full border border-gray-200">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
-                  <AlertTriangle className="text-red-600" size={20} />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Supprimer la conversation
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                disabled={deleting}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              <p className="text-sm text-gray-700 mb-4">
-                Êtes-vous sûr de vouloir supprimer la conversation avec{" "}
-                <span className="font-semibold text-gray-900">
-                  {conversationType === 'players'
-                    ? `${(selectedConv as PlayerConversation).first_name} ${(selectedConv as PlayerConversation).last_name}`
-                    : (selectedConv as ClubConversation).club_name}
-                </span>
-                ?
-              </p>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={18} />
-                  <p className="text-sm text-red-800">
-                    <span className="font-semibold">Attention :</span> Cette action est irréversible et supprimera définitivement tous les messages associés à cette conversation.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={deleting}
-                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={deleteConversation}
-                disabled={deleting}
-                className="px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] flex items-center gap-2"
-              >
-                {deleting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={16} />
-                    <span>Suppression...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} />
-                    <span>Supprimer définitivement</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
