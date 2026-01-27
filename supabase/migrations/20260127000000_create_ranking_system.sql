@@ -327,117 +327,94 @@ DECLARE
     -- Variables pour les équipes
     team1_ids UUID[];
     team2_ids UUID[];
-    avg_level_team1 DECIMAL(4,2) := 0;
-    avg_level_team2 DECIMAL(4,2) := 0;
+    avg_level_team1 DECIMAL(4,2) := 4.30;
+    avg_level_team2 DECIMAL(4,2) := 4.30;
     
     -- Variables de boucle et calcul
-    player_id UUID;
     current_level DECIMAL(4,2);
     player_matchs_count INTEGER;
     
-    opp_avg DECIMAL(4,2); -- Moyenne de l'équipe adverse
-    win_prob DECIMAL(4,2); -- Probabilité de victoire (Espérance)
-    k_factor DECIMAL(4,2); -- Facteur K (Vélocité)
-    actual_score DECIMAL(4,2); -- 1 pour victoire, 0 pour défaite
-    level_diff DECIMAL(4,2); -- Différence calculée
-    new_level DECIMAL(4,2); -- Nouveau niveau
+    opp_avg DECIMAL(4,2);
+    win_prob DECIMAL(4,2);
+    k_factor DECIMAL(4,2);
+    actual_score DECIMAL(4,2);
+    level_diff DECIMAL(4,2);
+    new_level DECIMAL(4,2);
     
     -- Curseurs
     participant RECORD;
 BEGIN
-    -- Uniquement si le match vient de se terminer
+    RAISE LOG 'Elo Ranking Trigger (Guest V4.3). Match ID: %, Status: % -> %', NEW.id, OLD.status, NEW.status;
+
     IF NEW.status = 'confirmed' AND OLD.status <> 'confirmed' THEN
     
-        -- A. Récupérer les compositions d'équipes et calculer les moyennes
+        -- A. Calcul des moyennes d'équipe (Inclus Invités avec niveau 4.30 par défaut)
         
-        -- Récupérer les IDs et niveaux pour l'équipe 1
-        SELECT ARRAY_AGG(user_id), AVG(COALESCE(niveau_padel, 5.0))
+        SELECT ARRAY_AGG(user_id), AVG(COALESCE(p.niveau_padel, 4.30))
         INTO team1_ids, avg_level_team1
         FROM match_participants mp
-        JOIN profiles p ON p.id = mp.user_id
-        WHERE mp.match_id = NEW.id AND mp.team = 'team1';
+        LEFT JOIN profiles p ON p.id = mp.user_id
+        WHERE mp.match_id = NEW.id AND mp.team = 1;
 
-        -- Récupérer les IDs et niveaux pour l'équipe 2
-        SELECT ARRAY_AGG(user_id), AVG(COALESCE(niveau_padel, 5.0))
+        SELECT ARRAY_AGG(user_id), AVG(COALESCE(p.niveau_padel, 4.30))
         INTO team2_ids, avg_level_team2
         FROM match_participants mp
-        JOIN profiles p ON p.id = mp.user_id
-        WHERE mp.match_id = NEW.id AND mp.team = 'team2';
+        LEFT JOIN profiles p ON p.id = mp.user_id
+        WHERE mp.match_id = NEW.id AND mp.team = 2;
 
-        -- Si on n'a pas 4 joueurs (ou au moins 1 par équipe), on annule le calcul (sécurité)
+        -- Sécurité
         IF team1_ids IS NULL OR team2_ids IS NULL THEN
             RETURN NEW;
         END IF;
 
-        -- B. Boucle sur tous les participants pour mise à jour individuelle
+        -- B. Boucle de mise à jour (Uniquement pour les vrais joueurs)
         FOR participant IN 
-            SELECT mp.user_id, mp.team, p.niveau_padel, p.matchs_joues
+            SELECT mp.user_id, mp.team, mp.player_type, p.niveau_padel, p.matchs_joues
             FROM match_participants mp
-            JOIN profiles p ON p.id = mp.user_id
+            LEFT JOIN profiles p ON p.id = mp.user_id
             WHERE mp.match_id = NEW.id
         LOOP
-            -- 1. Déterminer le camp et le résultat
-            IF participant.team = 'team1' THEN
+            -- IGNORER LES INVITÉS pour la mise à jour
+            IF participant.player_type = 'guest' OR participant.user_id IS NULL OR participant.niveau_padel IS NULL THEN
+                CONTINUE; 
+            END IF;
+
+            -- 1. Déterminer le score
+            IF participant.team = 1 THEN
                 opp_avg := avg_level_team2;
-                -- Si winner_team est stocké dans matches
-                IF NEW.winner_team = 'team1' THEN actual_score := 1.0; ELSE actual_score := 0.0; END IF;
+                IF NEW.winner_team_id IS NOT NULL AND NEW.winner_team_id = NEW.team1_id THEN actual_score := 1.0; ELSE actual_score := 0.0; END IF;
             ELSE
                 opp_avg := avg_level_team1;
-                IF NEW.winner_team = 'team2' THEN actual_score := 1.0; ELSE actual_score := 0.0; END IF;
+                IF NEW.winner_team_id IS NOT NULL AND NEW.winner_team_id = NEW.team2_id THEN actual_score := 1.0; ELSE actual_score := 0.0; END IF;
             END IF;
 
-            -- Valeur par défaut si niveau null
-            IF participant.niveau_padel IS NULL THEN
-                current_level := 5.0; -- Valeur par défaut safe
-            ELSE
-                current_level := participant.niveau_padel;
-            END IF;
-            
-            IF participant.matchs_joues IS NULL THEN
-                 player_matchs_count := 0;
-            ELSE
-                 player_matchs_count := participant.matchs_joues;
-            END IF;
+            -- 2. Paramètres joueur
+            current_level := participant.niveau_padel;
+            player_matchs_count := COALESCE(participant.matchs_joues, 0);
 
-            -- 2. Calculer la probabilité de victoire (Formule Logistique)
-            -- E = 1 / (1 + 10 ^ ((OppAvg - PlayerLevel) / 2))
-            -- Note: Division par 2.0 pour l'échelle 1-10
+            -- 3. Elo
             win_prob := 1.0 / (1.0 + power(10.0, (opp_avg - current_level) / 2.0));
 
-            -- 3. Déterminer le facteur K (Phases)
-            IF player_matchs_count < 10 THEN
-                k_factor := 0.50; -- Calibration (x3.3)
-            ELSIF player_matchs_count < 20 THEN
-                k_factor := 0.25; -- Transition (x1.6)
-            ELSE
-                k_factor := 0.15; -- Croisière (x1.0)
-            END IF;
+            -- 4. K-Factor
+            IF player_matchs_count < 10 THEN k_factor := 0.50;
+            ELSIF player_matchs_count < 20 THEN k_factor := 0.25;
+            ELSE k_factor := 0.15; END IF;
 
-            -- 4. Calculer la variation (Delta)
+            -- 5. Delta
             level_diff := k_factor * (actual_score - win_prob);
-            
-            -- Calculer nouveau niveau
             new_level := current_level + level_diff;
 
-            -- Bornes de sécurité (0 à 10)
+            -- Bornes
             IF new_level < 0 THEN new_level := 0; END IF;
             IF new_level > 10 THEN new_level := 10; END IF;
 
-            -- 5. Mises à jour en base
-            
-            -- Update Match Participant (Historique)
+            -- 6. Update
             UPDATE match_participants
-            SET 
-                level_before = current_level,
-                level_after = new_level,
-                level_change = level_diff
+            SET level_before = current_level, level_after = new_level, level_change = level_diff
             WHERE match_id = NEW.id AND user_id = participant.user_id;
 
-            -- Update Profile (Nouveau niveau + incrément compteur)
             UPDATE profiles
-            SET 
-                niveau_padel = new_level,
-                matchs_joues = player_matchs_count + 1
+            SET niveau_padel = new_level, matchs_joues = player_matchs_count + 1
             WHERE id = participant.user_id;
             
         END LOOP;

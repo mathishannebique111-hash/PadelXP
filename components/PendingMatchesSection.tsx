@@ -71,10 +71,19 @@ export default function PendingMatchesSection({ onPendingCountChange }: PendingM
                 }, 3000);
             }
         };
+
+        // Listen for matchSubmitted event to refresh the list
+        const handleMatchSubmitted = () => {
+            console.log("[PendingMatchesSection] Match submitted event received, refreshing list...");
+            fetchPendingMatches();
+        };
+
         window.addEventListener('matchFullyConfirmed', handleMatchConfirmed);
+        window.addEventListener('matchSubmitted', handleMatchSubmitted);
 
         return () => {
             window.removeEventListener('matchFullyConfirmed', handleMatchConfirmed);
+            window.removeEventListener('matchSubmitted', handleMatchSubmitted);
         };
     }, [onPendingCountChange, router]);
 

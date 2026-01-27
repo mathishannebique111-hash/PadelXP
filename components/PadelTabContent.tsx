@@ -74,7 +74,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
     };
   }, [supabase]);
 
-  // Écouter les événements de mise à jour du profil
+  // Écouter les événements de mise à jour du profil (Local event + Realtime DB)
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -94,11 +94,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
 
         if (profileData) {
           setProfile((prev: any) => {
-            // Ne mettre à jour que si les valeurs existent dans la DB
-            // Ne pas écraser avec null si on a déjà des valeurs
             const updated = { ...prev };
-
-            // Mettre à jour seulement si la valeur existe dans la DB
             if (profileData.niveau_padel !== null && profileData.niveau_padel !== undefined) {
               updated.niveau_padel = profileData.niveau_padel;
             }
@@ -108,7 +104,6 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
             if (profileData.niveau_recommendations !== null && profileData.niveau_recommendations !== undefined) {
               updated.niveau_recommendations = profileData.niveau_recommendations;
             }
-
             return updated;
           });
         }
@@ -121,12 +116,39 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
       loadProfile();
     };
 
+    // 1. Listen to local custom events
     window.addEventListener("profileUpdated", handleProfileUpdate);
     window.addEventListener("questionnaireCompleted", handleProfileUpdate);
+
+    // 2. Listen to Realtime DB changes on 'profiles' table
+    let channel: any = null;
+    const setupRealtime = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel('public:profiles:' + user.id)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log('Profile updated via Realtime:', payload);
+            loadProfile();
+          }
+        )
+        .subscribe();
+    };
+    setupRealtime();
 
     return () => {
       window.removeEventListener("profileUpdated", handleProfileUpdate);
       window.removeEventListener("questionnaireCompleted", handleProfileUpdate);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [supabase]);
 
@@ -167,7 +189,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
             <div className="flex-1 md:max-w-xs">
               <p className="text-xs text-gray-400 mb-1">Niveau actuel</p>
               <p className="text-lg font-semibold text-white mb-2">
-                {profile.niveau_padel.toFixed(1)}/10
+                {profile.niveau_padel.toFixed(2)}/10
               </p>
               <p className="text-xs text-gray-400 mb-3">
                 {profile.niveau_categorie}
