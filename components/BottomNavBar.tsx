@@ -118,7 +118,7 @@ export default function BottomNavBar() {
 
     // Update active index
     useEffect(() => {
-        let newIndex = 0;
+        let newIndex = -1; // Default to no active tab
         if (pathname === '/home' || pathname?.startsWith('/home')) newIndex = 0;
         else if (pathname === '/match/new' || pathname?.startsWith('/match')) newIndex = 1;
         else if (pathname === '/club' || pathname?.startsWith('/club')) newIndex = 2;
@@ -142,15 +142,17 @@ export default function BottomNavBar() {
             }}
         >
             <nav className="relative flex items-center bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] px-1 py-1 max-w-xs w-full">
-                <div
-                    className="absolute bg-[#172554]/15 rounded-full transition-all duration-300 ease-out"
-                    style={{
-                        height: 'calc(100% - 6px)',
-                        width: '22%',
-                        left: getBubblePosition(),
-                        top: '3px',
-                    }}
-                />
+                {activeIndex !== -1 && (
+                    <div
+                        className="absolute bg-[#172554]/15 rounded-full transition-all duration-300 ease-out"
+                        style={{
+                            height: 'calc(100% - 6px)',
+                            width: '22%',
+                            left: getBubblePosition(),
+                            top: '3px',
+                        }}
+                    />
+                )}
 
                 {navItems.map((item, index) => {
                     const isActive = activeIndex === index;

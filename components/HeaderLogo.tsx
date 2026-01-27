@@ -5,9 +5,7 @@ import { usePathname } from "next/navigation";
 
 export default function HeaderLogo() {
     const pathname = usePathname();
-    const isSettingsPage = pathname === "/settings";
-
-    if (isSettingsPage) return null;
+    // if (isSettingsPage) return null;
 
     return (
         <div className="absolute top-0 left-0 right-0 z-5 pointer-events-none flex justify-center" style={{ top: 'calc(var(--sat, 0px) - 2.5rem)' }}>
