@@ -11,20 +11,20 @@ const getPasswordStrength = (password: string): { strength: number; label: strin
   }
 
   let strength = 0;
-  
+
   // Longueur minimale
   if (password.length >= 8) strength += 1;
   if (password.length >= 12) strength += 1;
-  
+
   // Contient des minuscules
   if (/[a-z]/.test(password)) strength += 1;
-  
+
   // Contient des majuscules
   if (/[A-Z]/.test(password)) strength += 1;
-  
+
   // Contient des chiffres
   if (/[0-9]/.test(password)) strength += 1;
-  
+
   // Contient des caractères spéciaux
   if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
 
@@ -40,14 +40,14 @@ const getPasswordStrength = (password: string): { strength: number; label: strin
 export default function ResetPasswordForm() {
   const router = useRouter();
   const passwordInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const passwordStrength = getPasswordStrength(password);
   const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
   const passwordValid = password.length >= 8;
@@ -78,7 +78,7 @@ export default function ResetPasswordForm() {
 
     try {
       const supabase = createClient();
-      
+
       const { error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
@@ -87,14 +87,14 @@ export default function ResetPasswordForm() {
         // Traduire les messages d'erreur de Supabase
         const errorMessage = updateError.message?.toLowerCase() || '';
         let translatedError = "Une erreur est survenue lors de la réinitialisation.";
-        
+
         if (
-          errorMessage.includes('password') && 
+          errorMessage.includes('password') &&
           (errorMessage.includes('weak') || errorMessage.includes('faible'))
         ) {
           translatedError = "Le mot de passe est trop faible. Utilisez au moins 8 caractères avec des majuscules, minuscules, chiffres et caractères spéciaux.";
         } else if (
-          errorMessage.includes('session') || 
+          errorMessage.includes('session') ||
           errorMessage.includes('token') ||
           errorMessage.includes('expired') ||
           errorMessage.includes('expiré')
@@ -110,17 +110,23 @@ export default function ResetPasswordForm() {
           errorMessage.includes('invalide')
         ) {
           translatedError = "Données invalides. Veuillez vérifier votre mot de passe.";
+        } else if (
+          errorMessage.includes('different from the old password') ||
+          errorMessage.includes('différent de l\'ancien')
+        ) {
+          translatedError = "Votre nouveau mot de passe doit être différent de votre ancien mot de passe.";
         } else if (updateError.message) {
           // Garder le message original s'il n'y a pas de traduction
           translatedError = updateError.message;
         }
-        
+
         setError(translatedError);
         setLoading(false);
         return;
       }
 
-      // Succès - rediriger vers la page de connexion
+      // Succès - déconnecter l'utilisateur pour qu'il se reconnecte avec le nouveau mot de passe
+      await supabase.auth.signOut();
       router.push("/login?password-reset=success");
     } catch (e: any) {
       setError(e?.message || "Une erreur est survenue. Veuillez réessayer.");
@@ -147,13 +153,12 @@ export default function ResetPasswordForm() {
             type={showPassword ? "text" : "password"}
             required
             placeholder="Nouveau mot de passe"
-            className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 pr-10 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-              password.length > 0 && !passwordValid
-                ? "border-red-500/50 focus:ring-red-500"
-                : password.length > 0 && passwordValid
+            className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 pr-10 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${password.length > 0 && !passwordValid
+              ? "border-red-500/50 focus:ring-red-500"
+              : password.length > 0 && passwordValid
                 ? "border-green-500/50 focus:ring-green-500"
                 : "border-white/10 focus:ring-[#0066FF]"
-            }`}
+              }`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
@@ -215,13 +220,12 @@ export default function ResetPasswordForm() {
             </div>
             <div className="h-1 bg-white/10 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-300 ${
-                  passwordStrength.strength <= 2
-                    ? "bg-red-400"
-                    : passwordStrength.strength <= 4
+                className={`h-full transition-all duration-300 ${passwordStrength.strength <= 2
+                  ? "bg-red-400"
+                  : passwordStrength.strength <= 4
                     ? "bg-yellow-400"
                     : "bg-green-400"
-                }`}
+                  }`}
                 style={{ width: `${Math.min((passwordStrength.strength / 6) * 100, 100)}%` }}
               />
             </div>
@@ -239,13 +243,12 @@ export default function ResetPasswordForm() {
             type={showConfirmPassword ? "text" : "password"}
             required
             placeholder="Confirmer le mot de passe"
-            className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 pr-10 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-              confirmPassword.length > 0 && !passwordsMatch
-                ? "border-red-500/50 focus:ring-red-500"
-                : confirmPassword.length > 0 && passwordsMatch
+            className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 pr-10 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${confirmPassword.length > 0 && !passwordsMatch
+              ? "border-red-500/50 focus:ring-red-500"
+              : confirmPassword.length > 0 && passwordsMatch
                 ? "border-green-500/50 focus:ring-green-500"
                 : "border-white/10 focus:ring-[#0066FF]"
-            }`}
+              }`}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={loading}
@@ -343,7 +346,7 @@ export default function ResetPasswordForm() {
         className="w-full rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}
       >
-        {loading ? "Réinitialisation…" : "Réinitialiser le mot de passe"}
+        {loading ? "Mise à jour..." : "Choisir ce nouveau mot de passe"}
       </button>
     </form>
   );

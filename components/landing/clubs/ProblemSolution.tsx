@@ -8,59 +8,59 @@ import { TrendingDown, EyeOff, UserMinus, ZapOff, XCircle } from "lucide-react";
 export default function ProblemSolution() {
   return (
     <section id="problem-solution" className="relative pt-12 pb-24 bg-gradient-to-b from-black to-gray-900">
-      <div className="max-w-7xl mx-auto px-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         {/* Section "Vos défis quotidiens" */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="mb-16"
+          className="mb-12 md:mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-8 text-center flex items-center justify-center gap-3">
-            <XCircle className="w-8 h-8 md:w-10 h-10 text-red-500" />
-            AVANT : LA RÉALITÉ DE NOMBREUX CLUBS / COMPLEXES
+          <h2 className="text-2xl md:text-5xl font-extrabold text-white mb-6 md:mb-8 text-center flex flex-col md:flex-row items-center justify-center gap-3">
+            <XCircle className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
+            <span className="text-center">AVANT : LA RÉALITÉ DE NOMBREUX CLUBS</span>
           </h2>
 
-          <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 rounded-2xl p-8 border-2 border-red-500/30">
+          <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 rounded-2xl p-6 md:p-8 border-2 border-red-500/30">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
-                  <TrendingDown className="w-6 h-6 text-red-500" />
+                <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
+                  <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">Membres déconnectés</h3>
-                  <p className="text-white/70">Ils jouent, repartent, zéro lien communautaire</p>
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">Membres déconnectés</h3>
+                  <p className="text-sm md:text-base text-white/70">Ils jouent, repartent, zéro lien communautaire</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
-                  <EyeOff className="w-6 h-6 text-red-500" />
+                <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
+                  <EyeOff className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">Aucune visibilité sur les performances</h3>
-                  <p className="text-white/70">Impossible de suivre sa progression, classements imprécis, pas de données exploitables</p>
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">Aucune visibilité</h3>
+                  <p className="text-sm md:text-base text-white/70">Impossible de suivre sa progression, classements imprécis</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
-                  <UserMinus className="w-6 h-6 text-red-500" />
+                <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
+                  <UserMinus className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">Une rétention difficile à mettre en place</h3>
-                  <p className="text-white/70">En moyenne, 50% des nouveaux joueurs partent dans les 12 mois</p>
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">Rétention difficile</h3>
+                  <p className="text-sm md:text-base text-white/70">En moyenne, 50% des nouveaux joueurs partent dans les 12 mois</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
-                  <ZapOff className="w-6 h-6 text-red-500" />
+                <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
+                  <ZapOff className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">Pas de stimulation pour les joueurs</h3>
-                  <p className="text-white/70">Aucun système de récompenses ou reconnaissance</p>
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">Pas de stimulation</h3>
+                  <p className="text-sm md:text-base text-white/70">Aucun système de récompenses ou reconnaissance</p>
                 </div>
               </div>
             </div>
@@ -73,9 +73,9 @@ export default function ProblemSolution() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-center mb-12"
+          className="text-center mb-8 md:mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">
             La Solution{" "}
             <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent">
               Padel XP
@@ -84,7 +84,7 @@ export default function ProblemSolution() {
         </motion.div>
 
         {/* 3 colonnes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {[
             {
               emoji: "🎮",
@@ -123,13 +123,13 @@ export default function ProblemSolution() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: idx * 0.1 }}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 border-2 border-[#0066FF]/30 hover:border-[#0066FF]/60 transition-all hover:shadow-[0_0_30px_rgba(0,102,255,0.3)] flex flex-col items-start"
+              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 md:p-8 border-2 border-[#0066FF]/30 hover:border-[#0066FF]/60 transition-all hover:shadow-[0_0_30px_rgba(0,102,255,0.3)] flex flex-col items-start"
             >
-              <div className="mb-6 h-12 flex items-center justify-start" style={{ color: solution.color }}>
-                <BadgeIconDisplay icon={solution.emoji} size={48} className="flex-shrink-0" color={solution.color} />
+              <div className="mb-4 md:mb-6 h-12 flex items-center justify-start" style={{ color: solution.color }}>
+                <BadgeIconDisplay icon={solution.emoji} size={40} className="flex-shrink-0 md:w-12 md:h-12" color={solution.color} />
               </div>
-              <h3 className="text-xl font-bold text-white mb-6 text-left">{solution.title}</h3>
-              <ul className="space-y-4">
+              <h3 className="text-lg md:text-xl font-bold text-white mb-4 md:mb-6 text-left">{solution.title}</h3>
+              <ul className="space-y-3 md:space-y-4">
                 {solution.items.map((item, i) => (
                   <li key={i} className="text-white/80 text-sm flex items-start gap-3">
                     <span

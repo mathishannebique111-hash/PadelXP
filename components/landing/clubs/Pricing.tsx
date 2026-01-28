@@ -26,7 +26,7 @@ export default function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="relative py-24 bg-black overflow-hidden">
+    <section id="pricing" className="relative py-12 md:py-24 bg-black overflow-hidden">
       <ClubsContactModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
       {/* Background effects */}
       <div className="absolute inset-0 opacity-20">
@@ -34,21 +34,21 @@ export default function Pricing() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00CC99] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          className="text-center mb-8 md:mb-12"
         >
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6">
-            Prêt à transformer votre club <br />
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 md:mb-6">
+            Prêt à transformer votre club <br className="hidden md:block" />
             <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent">
               dès aujourd'hui ?
             </span>
           </h2>
-          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-2xl text-white/80 max-w-3xl mx-auto leading-relaxed">
             Rejoignez les clubs qui ont déjà fait le choix de l'excellence.
             <span className="text-white font-semibold"> Contactez-nous pour en savoir plus</span>.
           </p>
@@ -59,7 +59,7 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="bg-gradient-to-br from-[#0066FF]/20 via-[#00CC99]/15 to-[#0066FF]/20 rounded-2xl p-8 md:p-12 border-2 border-[#0066FF]/40 shadow-2xl relative overflow-hidden"
+          className="bg-gradient-to-br from-[#0066FF]/20 via-[#00CC99]/15 to-[#0066FF]/20 rounded-2xl p-6 md:p-12 border-2 border-[#0066FF]/40 shadow-2xl relative overflow-hidden"
         >
           {/* Shimmer effect */}
           <div className="absolute inset-0 opacity-10">
@@ -70,44 +70,44 @@ export default function Pricing() {
 
           <div className="relative z-10">
             {/* Principaux avantages en avant */}
-            <div className="text-center mb-10">
+            <div className="text-center mb-8 md:mb-10">
 
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div className="bg-white/5 rounded-xl p-6 border border-white/10 text-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+                <div className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 text-center">
                   <div className="mb-3 flex justify-center">
-                    <Zap className="w-8 h-8 text-[#BFFF00]" />
+                    <Zap className="w-6 h-6 md:w-8 md:h-8 text-[#BFFF00]" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">En 5 minutes</h3>
-                  <p className="text-white/70 text-sm">Votre club est opérationnel en quelques clics</p>
+                  <h3 className="text-base md:text-lg font-bold text-white mb-1 md:mb-2">En 5 minutes</h3>
+                  <p className="text-white/70 text-xs md:text-sm">Votre club est opérationnel en quelques clics</p>
                 </div>
-                <div className="bg-white/5 rounded-xl p-6 border border-white/10 text-center">
+                <div className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 text-center">
                   <div className="mb-3 flex justify-center">
-                    <InfinityIcon className="w-8 h-8 text-[#BFFF00]" />
+                    <InfinityIcon className="w-6 h-6 md:w-8 md:h-8 text-[#BFFF00]" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Joueurs illimités</h3>
-                  <p className="text-white/70 text-sm">Aucune limite, même avec 300+ joueurs</p>
+                  <h3 className="text-base md:text-lg font-bold text-white mb-1 md:mb-2">Joueurs illimités</h3>
+                  <p className="text-white/70 text-xs md:text-sm">Aucune limite, même avec 300+ joueurs</p>
                 </div>
-                <div className="bg-white/5 rounded-xl p-6 border border-white/10 text-center">
+                <div className="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 text-center">
                   <div className="mb-3 flex justify-center">
-                    <Shield className="w-8 h-8 text-[#BFFF00]" />
+                    <Shield className="w-6 h-6 md:w-8 md:h-8 text-[#BFFF00]" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Sans engagement</h3>
-                  <p className="text-white/70 text-sm">Annulez à tout moment, sans pénalité</p>
+                  <h3 className="text-base md:text-lg font-bold text-white mb-1 md:mb-2">Sans engagement</h3>
+                  <p className="text-white/70 text-xs md:text-sm">Annulez à tout moment, sans pénalité</p>
                 </div>
               </div>
             </div>
 
             {/* CTA Principal */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6 md:mb-8">
               <button
                 onClick={() => setIsContactModalOpen(true)}
-                className="inline-block group relative px-10 py-5 rounded-2xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-extrabold text-xl md:text-2xl shadow-[0_0_40px_rgba(0,204,153,0.6)] hover:shadow-[0_0_60px_rgba(0,204,153,0.8)] transition-all duration-300 hover:scale-105"
+                className="inline-block group relative px-6 py-4 md:px-10 md:py-5 rounded-2xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-extrabold text-lg md:text-2xl shadow-[0_0_40px_rgba(0,204,153,0.6)] hover:shadow-[0_0_60px_rgba(0,204,153,0.8)] transition-all duration-300 hover:scale-105 w-full md:w-auto"
               >
-                <span className="flex items-center justify-center gap-3">
+                <span className="flex items-center justify-center gap-2 md:gap-3">
                   <span>Nous contacter</span>
                   <motion.span
-                    className="inline-block text-2xl"
+                    className="inline-block text-xl md:text-2xl"
                     animate={{ x: [0, 8, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   >
@@ -116,39 +116,39 @@ export default function Pricing() {
                 </span>
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-10 transition-opacity blur-lg" />
               </button>
-              <p className="text-white/60 text-sm mt-4">
+              <p className="text-white/60 text-xs md:text-sm mt-4">
                 Réponse sous 24h ouvrées
               </p>
             </div>
 
             {/* Points de conversion supplémentaires */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-8 border-t border-white/20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-6 md:pt-8 border-t border-white/20 text-left">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
                 <div>
-                  <div className="text-white font-semibold mb-1">100% fonctionnel dès le jour 1</div>
-                  <div className="text-white/70 text-sm">Tous vos joueurs peuvent commencer à jouer et progresser immédiatement</div>
+                  <div className="text-white font-semibold mb-0.5 md:mb-1 text-sm md:text-base">100% fonctionnel dès le jour 1</div>
+                  <div className="text-white/70 text-xs md:text-sm">Tous vos joueurs peuvent commencer à jouer et progresser immédiatement</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
                 <div>
-                  <div className="text-white font-semibold mb-1">Mises à jour régulières</div>
-                  <div className="text-white/70 text-sm">Nouvelles fonctionnalités ajoutées régulièrement pour améliorer l'expérience de vos joueurs</div>
+                  <div className="text-white font-semibold mb-0.5 md:mb-1 text-sm md:text-base">Mises à jour régulières</div>
+                  <div className="text-white/70 text-xs md:text-sm">Nouvelles fonctionnalités ajoutées régulièrement pour améliorer l'expérience de vos joueurs</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
                 <div>
-                  <div className="text-white font-semibold mb-1">Support réactif</div>
-                  <div className="text-white/70 text-sm">Équipe dédiée pour vous accompagner à chaque étape</div>
+                  <div className="text-white font-semibold mb-0.5 md:mb-1 text-sm md:text-base">Support réactif</div>
+                  <div className="text-white/70 text-xs md:text-sm">Équipe dédiée pour vous accompagner à chaque étape</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-[#BFFF00] mt-1 flex-shrink-0" />
                 <div>
-                  <div className="text-white font-semibold mb-1">Gain de temps pour l'équipe</div>
-                  <div className="text-white/70 text-sm">Moins d'administratif, plus de temps pour vos joueurs et l'animation du club</div>
+                  <div className="text-white font-semibold mb-0.5 md:mb-1 text-sm md:text-base">Gain de temps pour l'équipe</div>
+                  <div className="text-white/70 text-xs md:text-sm">Moins d'administratif, plus de temps pour vos joueurs et l'animation du club</div>
                 </div>
               </div>
             </div>

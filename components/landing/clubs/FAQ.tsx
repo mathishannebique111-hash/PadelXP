@@ -40,16 +40,16 @@ export default function FAQ() {
   ];
 
   return (
-    <section className="relative py-24 bg-gradient-to-b from-black to-gray-900">
-      <div className="max-w-4xl mx-auto px-8">
+    <section className="relative py-12 md:py-24 bg-gradient-to-b from-black to-gray-900">
+      <div className="max-w-4xl mx-auto px-4 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-10 md:mb-16"
         >
-          <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
+          <h2 className="text-3xl md:text-6xl font-extrabold text-white mb-4">
             FAQ - Lever les{" "}
             <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent">
               Objections
@@ -57,7 +57,7 @@ export default function FAQ() {
           </h2>
         </motion.div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {faqs.map((faq, idx) => (
             <motion.div
               key={idx}
@@ -69,15 +69,15 @@ export default function FAQ() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-                className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-white/5 transition-colors"
+                className="w-full px-4 py-4 md:px-6 md:py-5 text-left flex items-start md:items-center justify-between hover:bg-white/5 transition-colors gap-3"
               >
-                <span className="font-semibold text-white text-lg pr-4">
+                <span className="font-semibold text-white text-base md:text-lg">
                   Q : {faq.question}
                 </span>
                 <motion.span
                   animate={{ rotate: openIndex === idx ? 180 : 0 }}
                   transition={{ duration: 0.3 }}
-                  className="text-white/60 text-xl flex-shrink-0"
+                  className="text-white/60 text-lg md:text-xl flex-shrink-0 mt-0.5 md:mt-0"
                 >
                   ▼
                 </motion.span>
@@ -91,8 +91,8 @@ export default function FAQ() {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <div className="px-6 py-4 border-t border-gray-700">
-                    <p className="text-white/80 leading-relaxed">
+                  <div className="px-4 py-3 md:px-6 md:py-4 border-t border-gray-700">
+                    <p className="text-white/80 leading-relaxed text-sm md:text-base">
                       R : {faq.answer}
                     </p>
                   </div>

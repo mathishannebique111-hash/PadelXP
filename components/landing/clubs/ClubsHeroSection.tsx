@@ -93,15 +93,15 @@ export default function ClubsHeroSection() {
       </nav>
 
       {/* Contenu principal */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 pt-32 pb-16 flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 pt-24 md:pt-32 pb-12 md:pb-16 flex flex-col items-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 30 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-8 text-center"
+          className="space-y-6 md:space-y-8 text-center"
         >
           {/* Headline principal */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-extrabold text-white leading-tight">
             <span className="block mb-2">Transformez votre club de padel en</span>
             <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block">
               communauté d'élite
@@ -109,17 +109,16 @@ export default function ClubsHeroSection() {
           </h1>
 
           {/* Sous-titre */}
-          <p className="text-xl md:text-2xl text-white/80 leading-relaxed max-w-6xl mx-auto whitespace-nowrap">
+          <p className="text-lg md:text-2xl text-white/80 leading-relaxed max-w-6xl mx-auto">
             Augmentez votre rétention de 20% en transformant l'expérience de vos joueurs.
           </p>
 
           {/* 5 bénéfices clés */}
-          {/* 5 bénéfices clés */}
-          <div className="space-y-6 pt-8 max-w-4xl mx-auto text-left">
-            <p className="text-xl text-white/60 font-medium text-center mb-8">
+          <div className="space-y-6 pt-6 md:pt-8 max-w-4xl mx-auto text-left">
+            <p className="text-lg md:text-xl text-white/60 font-medium text-center mb-6 md:mb-8">
               Voici ce que vous offrez à vos joueurs en rejoignant l'aventure PadelXP :
             </p>
-            <div className="grid gap-4">
+            <div className="grid gap-3 md:gap-4">
               {[
                 "Suggestions personnalisées de partenaires et de matchs selon leur niveau et leur profil",
                 "Historique de tous leurs matchs joués dans votre club",
@@ -133,12 +132,12 @@ export default function ClubsHeroSection() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.1 * i }}
-                  className="group flex items-center gap-6 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-[#BFFF00]/50 hover:bg-white/10 transition-all duration-300"
+                  className="group flex items-start md:items-center gap-4 md:gap-6 p-3 md:p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-[#BFFF00]/50 hover:bg-white/10 transition-all duration-300"
                 >
-                  <div className="h-12 w-12 shrink-0 rounded-full bg-[#BFFF00]/10 border border-[#BFFF00]/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#BFFF00]/20 transition-all duration-300">
-                    <Check className="h-6 w-6 text-[#BFFF00]" strokeWidth={3} />
+                  <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 rounded-full bg-[#BFFF00]/10 border border-[#BFFF00]/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#BFFF00]/20 transition-all duration-300">
+                    <Check className="h-5 w-5 md:h-6 md:w-6 text-[#BFFF00]" strokeWidth={3} />
                   </div>
-                  <span className="text-white/90 text-lg font-medium leading-relaxed">{item}</span>
+                  <span className="text-white/90 text-base md:text-lg font-medium leading-relaxed">{item}</span>
                 </motion.div>
               ))}
             </div>
