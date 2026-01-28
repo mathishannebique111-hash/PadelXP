@@ -20,6 +20,7 @@ const HEADER_SYNONYMS: Record<keyof ParsedMemberRow | "firstName" | "lastName" |
   email: ["email", "e-mail", "mail", "adresse email", "adresse e-mail", "adresse mail"],
   phone: ["telephone", "téléphone", "phone", "mobile", "tél", "tel"],
   notes: ["note", "notes", "commentaire", "commentaires", "remark", "remarks"],
+  raw: [],
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
@@ -342,7 +343,7 @@ export default function ImportExportPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[85vh]">
       <PageTitle title="Import / Export" subtitle="Importez vos membres et exportez vos données en toute simplicité" />
       <div className="rounded-xl border border-white/40 ring-1 ring-white/10 bg-white/5 p-4 space-y-3">
         <h2 className="font-semibold mb-4">Import logo du club</h2>

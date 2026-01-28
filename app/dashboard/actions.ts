@@ -108,3 +108,42 @@ export async function getOrCreateSupportConversation(clubId: string) {
 
     return { conversation: newConv };
 }
+
+export async function getClubConversationMessages(conversationId: string) {
+    if (!conversationId) return { error: "Conversation ID manquant" };
+
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Non authentifié" };
+
+    // Vérifier que l'utilisateur a le droit d'accéder à cette conversation (via club_id)
+    // 1. Récupérer la conversation pour avoir le club_id
+    const { data: conv } = await supabaseAdmin
+        .from("club_conversations")
+        .select("club_id")
+        .eq("id", conversationId)
+        .single();
+
+    if (!conv) return { error: "Conversation introuvable" };
+
+    // 2. Vérifier que l'utilisateur est admin de ce club
+    const userClubId = await getAuthenticatedUserClubId();
+    if (userClubId !== conv.club_id) {
+        return { error: "Non autorisé" };
+    }
+
+    // 3. Récupérer les messages
+    const { data: messages, error } = await supabaseAdmin
+        .from("club_messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+
+    if (error) {
+        console.error("[getClubConversationMessages] Erreur:", error);
+        return { error: "Erreur lors du chargement des messages" };
+    }
+
+    return { messages };
+}

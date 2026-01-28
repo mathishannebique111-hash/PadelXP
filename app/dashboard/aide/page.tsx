@@ -5,7 +5,7 @@ import PageTitle from "../PageTitle";
 import { logger } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Send, MessageCircle } from "lucide-react";
-import { getAuthenticatedUserClubId, getOrCreateSupportConversation } from "../actions";
+import { getAuthenticatedUserClubId, getOrCreateSupportConversation, getClubConversationMessages } from "../actions";
 
 interface Message {
   id: string;
@@ -100,17 +100,14 @@ export default function HelpPage() {
         if (conv) {
           setConversation(conv);
 
-          // Charger les messages existants
-          const { data: msgs, error: msgsError } = await supabase
-            .from("club_messages")
-            .select("*")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: true });
+          // Charger les messages existants via Server Action (bypass RLS)
+          const result = await getClubConversationMessages(conv.id);
+          const msgs = result.messages;
 
-          if (msgsError) {
-            logger.error("[ClubSupport] Erreur chargement messages:", msgsError);
+          if (result.error) {
+            logger.error("[ClubSupport] Erreur chargement messages:", result.error);
           } else if (msgs && isMounted) {
-            const uniqueMessages = msgs
+            const uniqueMessages = (msgs as Message[])
               .reduce((acc: Message[], msg: Message) => {
                 if (!acc.find((m: Message) => m.id === msg.id)) {
                   acc.push(msg);
@@ -249,14 +246,11 @@ export default function HelpPage() {
             setConversation(newConv);
 
             // Charger les messages existants maintenant qu'on a la conversation
-            const { data: msgs } = await supabase
-              .from("club_messages")
-              .select("*")
-              .eq("conversation_id", newConv.id)
-              .order("created_at", { ascending: true });
+            const result = await getClubConversationMessages(newConv.id);
+            const msgs = result.messages;
 
             if (msgs) {
-              const uniqueMessages = msgs
+              const uniqueMessages = (msgs as Message[])
                 .reduce((acc: Message[], msg: Message) => {
                   if (!acc.find((m: Message) => m.id === msg.id)) {
                     acc.push(msg);
@@ -320,7 +314,7 @@ export default function HelpPage() {
 
   if (loadingMessages) {
     return (
-      <div className="relative space-y-6">
+      <div className="relative space-y-6 min-h-screen">
         <div className="pointer-events-none fixed inset-0 z-0">
           <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.18),transparent_70%)] blur-[100px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
