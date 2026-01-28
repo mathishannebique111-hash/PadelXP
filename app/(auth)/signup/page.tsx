@@ -96,7 +96,7 @@ function SignupForm() {
 
       <div className="relative z-[50] w-full max-w-md rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xl p-8 animate-fadeIn">
         <div className="text-sm uppercase tracking-[0.3em] text-white/40 mb-2">Inscription Club</div>
-        <h1 className="text-2xl font-extrabold mb-6">Compte administrateur</h1>
+
 
         {error && (
           <div className="rounded-lg border border-red-500/40 bg-red-500/15 px-4 py-3 text-xs text-red-200 mb-4">
