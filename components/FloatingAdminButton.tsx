@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare, X } from 'lucide-react';
+import { MessageSquare, X, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function FloatingAdminButton() {
@@ -98,9 +98,7 @@ export default function FloatingAdminButton() {
             {isSuccess ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="w-8 h-8 text-white" />
                 </div>
                 <p className="text-white font-semibold">Message envoyé avec succès !</p>
               </div>

@@ -371,16 +371,18 @@ export default function HelpPage() {
                 .filter((msg, index, self) => index === self.findIndex((m) => m.id === msg.id))
                 .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                 .map((msg) => {
-                  const myUserId = userIdRef.current || userId;
-                  const isSentByMe = myUserId !== null && myUserId !== "" && String(msg.sender_id).trim() === String(myUserId).trim();
+                  // Admin messages (is_admin = true) should be on the left (gray)
+                  // Club messages (is_admin = false) should be on the right (blue)
+                  const isFromAdmin = msg.is_admin === true;
+                  const isSentByClub = !isFromAdmin;
 
                   return (
                     <div
                       key={msg.id}
-                      className={`flex ${isSentByMe ? "justify-end" : "justify-start"}`}
+                      className={`flex ${isSentByClub ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${isSentByMe
+                        className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${isSentByClub
                           ? "bg-blue-500 text-white rounded-br-sm"
                           : "bg-white/10 border border-white/20 text-white/90 rounded-bl-sm"
                           }`}
@@ -389,7 +391,7 @@ export default function HelpPage() {
                           {msg.content}
                         </p>
                         <p
-                          className={`text-[10px] mt-1.5 ${isSentByMe ? "text-blue-100" : "text-white/50"
+                          className={`text-[10px] mt-1.5 ${isSentByClub ? "text-blue-100" : "text-white/50"
                             }`}
                         >
                           {new Date(msg.created_at).toLocaleTimeString("fr-FR", {

@@ -8,7 +8,7 @@ import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import Image from "next/image";
 import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
 import { logger } from '@/lib/logger';
-import { AlertTriangle, Clock, CreditCard, ClipboardList } from 'lucide-react';
+import { AlertTriangle, Clock, CreditCard, ClipboardList, Gift } from 'lucide-react';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -196,7 +196,7 @@ export default async function DashboardHome() {
       .select("id")
       .eq("club_id", clubId);
 
-    const userIds = (clubUsers || []).map(u => u.id);
+    const userIds = (clubUsers || []).map((u: { id: string }) => u.id);
 
     if (userIds.length > 0) {
       const { data: participants } = await supabase
@@ -205,7 +205,7 @@ export default async function DashboardHome() {
         .eq("player_type", "user")
         .in("user_id", userIds);
 
-      const matchIds = [...new Set((participants || []).map(p => p.match_id))];
+      const matchIds = [...new Set((participants || []).map((p: { match_id: string }) => p.match_id))];
 
       if (matchIds.length > 0) {
         const { data: matches } = await supabase
@@ -411,14 +411,7 @@ export default async function DashboardHome() {
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="flex-shrink-0 pt-0.5">
-                <Image
-                  src="/images/Facturation et essai club.png"
-                  alt="Abonnement"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 object-contain"
-                  unoptimized
-                />
+                <CreditCard className="w-6 h-6 text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 sm:gap-3 mb-2">
@@ -451,14 +444,7 @@ export default async function DashboardHome() {
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="flex-shrink-0 pt-0.5">
-                <Image
-                  src="/images/Cadeau accueil club.png"
-                  alt="Cadeau"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 object-contain"
-                  unoptimized
-                />
+                <Gift className="w-6 h-6 text-orange-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 sm:gap-3 mb-2">

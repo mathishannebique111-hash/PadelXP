@@ -842,7 +842,7 @@ export default function AdminMessagesPage() {
                 </div>
               ) : (
                 messages.map((msg) => {
-                  const isUser = msg.sender_id === userId;
+                  const isUser = msg.is_admin === true;
                   return (
                     <div
                       key={msg.id}
