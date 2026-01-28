@@ -45,7 +45,7 @@ export default function ForgotPasswordForm() {
 
     try {
       const supabase = createClient();
-      
+
       // Construire l'URL de redirection
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       const redirectUrl = `${siteUrl}/reset-password`;
@@ -81,7 +81,7 @@ export default function ForgotPasswordForm() {
         } else {
           // Traduire les messages d'erreur courants de Supabase
           let translatedError = resetError.message || "Une erreur est survenue. Veuillez réessayer.";
-          
+
           // Traductions des erreurs courantes
           const errorTranslations: Record<string, string> = {
             'email rate limit exceeded': 'Trop de tentatives. Veuillez patienter avant de réessayer.',
@@ -89,15 +89,16 @@ export default function ForgotPasswordForm() {
             'invalid request': 'Requête invalide. Veuillez réessayer.',
             'network error': 'Erreur réseau. Vérifiez votre connexion internet.',
             'service unavailable': 'Service temporairement indisponible. Veuillez réessayer plus tard.',
+            'error sending recovery email': 'Erreur de configuration email. Veuillez contacter le support.',
           };
-          
+
           for (const [key, translation] of Object.entries(errorTranslations)) {
             if (errorMessage.includes(key)) {
               translatedError = translation;
               break;
             }
           }
-          
+
           setError(translatedError);
         }
         setLoading(false);
@@ -160,13 +161,12 @@ export default function ForgotPasswordForm() {
             type="email"
             required
             placeholder="Email"
-            className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-              emailValid === true
+            className={`w-full rounded-lg bg-white/5 border px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 ${emailValid === true
                 ? "border-green-500/50 focus:ring-green-500"
                 : emailValid === false
-                ? "border-red-500/50 focus:ring-red-500"
-                : "border-white/10 focus:ring-[#0066FF]"
-            }`}
+                  ? "border-red-500/50 focus:ring-red-500"
+                  : "border-white/10 focus:ring-[#0066FF]"
+              }`}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
