@@ -12,8 +12,8 @@ const BUCKET_NAME = "club-challenges";
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
   : null;
 
 type ChallengeRecord = {
@@ -53,14 +53,14 @@ function computeStatus(record: ChallengeRecord): "upcoming" | "active" | "comple
 
 async function resolveClubId(userId: string) {
   if (!supabaseAdmin) return null;
-  
+
   // Essayer via le profil (pour les joueurs)
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("club_id, club_slug")
     .eq("id", userId)
     .maybeSingle();
-  
+
   if (profile?.club_id) {
     return profile.club_id;
   }
@@ -99,7 +99,7 @@ async function resolveClubId(userId: string) {
   } catch (authError) {
     logger.warn({ userId: userId.substring(0, 8) + "…", error: authError }, "[api/player/challenges] resolveClubId auth metadata lookup failed");
   }
-  
+
   logger.warn({ userId: userId.substring(0, 8) + "…" }, "[api/player/challenges] resolveClubId: aucun club trouvé pour userId");
   return null;
 }
@@ -145,7 +145,7 @@ function isWinObjective(objective: string) {
 function isDifferentPartnersObjective(objective: string) {
   const lower = objective.toLowerCase();
   return /(partenaire|partenaires|coéquipier|coéquipiers|joueur|joueurs).*(différent|différents|différente|différentes|divers|variés)/.test(lower) ||
-         /(différent|différents|différente|différentes|divers|variés).*(partenaire|partenaires|coéquipier|coéquipiers|joueur|joueurs)/.test(lower);
+    /(différent|différents|différente|différentes|divers|variés).*(partenaire|partenaires|coéquipier|coéquipiers|joueur|joueurs)/.test(lower);
 }
 
 function isConsecutiveWinsObjective(objective: string) {
@@ -154,18 +154,57 @@ function isConsecutiveWinsObjective(objective: string) {
   return /(consécutif|consécutifs|consécutivement|consecutive|consecutives|sans.*défaite|sans.*défaites|d'affilée|de suite|enchaîner|enchaîné|enchaînés)/.test(lower);
 }
 
+// NEW: Clean Sheet - gagner sans perdre de set (2-0, 3-0, etc.)
+function isCleanSheetObjective(objective: string) {
+  const lower = objective.toLowerCase();
+  return /(sans perdre de set|sans concéder de set|sans que l'adversaire.*prenne.*set|2-0|3-0|4-0)/.test(lower);
+}
+
+// NEW: Week-end - jouer le samedi ou dimanche
+function isWeekendObjective(objective: string) {
+  const lower = objective.toLowerCase();
+  return /(week-end|weekend|samedi|dimanche)/.test(lower);
+}
+
+// NEW: Jouer avant une certaine heure - extrait l'heure cible
+function extractBeforeHour(objective: string): number | null {
+  const lower = objective.toLowerCase();
+  // Patterns: "avant X heure(s)", "jusqu'à X heure(s)"
+  const match = lower.match(/(?:avant|jusqu'à|jusqu'a)\s*(\d{1,2})\s*heures?/i);
+  if (match) {
+    const hour = parseInt(match[1], 10);
+    if (hour >= 0 && hour <= 23) return hour;
+  }
+  return null;
+}
+
+// NEW: Jouer après une certaine heure - extrait l'heure cible
+function extractAfterHour(objective: string): number | null {
+  const lower = objective.toLowerCase();
+  // Patterns: "après X heure(s)", "à partir de X heure(s)"
+  const match = lower.match(/(?:après|a partir de|à partir de)\s*(\d{1,2})\s*heures?/i);
+  if (match) {
+    const hour = parseInt(match[1], 10);
+    if (hour >= 0 && hour <= 23) return hour;
+  }
+  return null;
+}
+
 type MatchHistoryItem = {
   matchId: string;
   playedAt: string | null;
   isWinner: boolean;
   partnerId?: string | null; // ID du partenaire (autre joueur de la même équipe)
+  // NEW: Score data for clean sheet detection
+  myScore?: number; // Score de l'équipe du joueur (en sets gagnés)
+  opponentScore?: number; // Score de l'équipe adverse (en sets gagnés)
 };
 
 async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
   if (!supabaseAdmin) return [];
-  
+
   logger.info({ userId: userId.substring(0, 8) + "…" }, "[loadPlayerHistory] Fetching matches for userId");
-  
+
   // ÉTAPE 1: Récupérer les match_ids du joueur (EXACTEMENT comme dans la page historique)
   const { data: userParticipations, error: partError } = await supabaseAdmin
     .from("match_participants")
@@ -206,7 +245,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     match_id: p.match_id,
     user_id: userId,
   }));
-  
+
   const validMatchIdsForPoints = filterMatchesByDailyLimit(
     matchParticipants,
     matches.map((m) => ({
@@ -242,7 +281,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
   return validMatches.map((match) => {
     const team = teamMap.get(match.id) || null;
     const teamNum = typeof team === "number" ? team : team ? Number(team) : null;
-    
+
     let isWinner = false;
     if (match.winner_team_id && teamNum) {
       const participantTeamId = teamNum === 1 ? match.team1_id : match.team2_id;
@@ -252,13 +291,20 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     }
 
     const partnerId = partnerMap.get(match.id) || null;
-    logger.info({ userId: userId.substring(0, 8) + "…", matchId: match.id.substring(0, 8) + "…", team: teamNum, isWinner, partnerId: partnerId?.substring(0, 8) + "…" || null, playedAt: match.played_at }, "[loadPlayerHistory] Match details");
+
+    // NEW: Calculate scores for clean sheet detection
+    const myScore = teamNum === 1 ? match.score_team1 : match.score_team2;
+    const opponentScore = teamNum === 1 ? match.score_team2 : match.score_team1;
+
+    logger.info({ userId: userId.substring(0, 8) + "…", matchId: match.id.substring(0, 8) + "…", team: teamNum, isWinner, partnerId: partnerId?.substring(0, 8) + "…" || null, playedAt: match.played_at, myScore, opponentScore }, "[loadPlayerHistory] Match details");
 
     return {
       matchId: match.id,
       playedAt: match.played_at ?? match.created_at ?? null,
       isWinner,
       partnerId,
+      myScore: myScore ?? undefined,
+      opponentScore: opponentScore ?? undefined,
     };
   });
 }
@@ -268,14 +314,14 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
   const metricIsWin = isWinObjective(record.objective);
   const isDifferentPartners = isDifferentPartnersObjective(record.objective);
   const isConsecutiveWins = isConsecutiveWinsObjective(record.objective);
-  
+
   // Convertir les dates en objets Date et normaliser au début/fin de journée en UTC
   const start = new Date(record.start_date);
   const end = new Date(record.end_date);
-  
+
   // Normaliser au début de la journée (00:00:00) en UTC pour start
   start.setUTCHours(0, 0, 0, 0);
-  
+
   // Normaliser à la fin de la journée (23:59:59) en UTC pour end
   end.setUTCHours(23, 59, 59, 999);
 
@@ -303,12 +349,12 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
   });
 
   let current = 0;
-  
+
   if (isConsecutiveWins && metricIsWin) {
     // Pour les challenges de victoires consécutives : compter la série actuelle (se réinitialise à 0 en cas de défaite)
     // La barre de progression doit refléter la série en cours, pas la meilleure série historique
     let currentStreak = 0;
-    
+
     for (const item of sortedRelevant) {
       if (item.isWinner) {
         currentStreak++;
@@ -319,7 +365,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
         currentStreak = 0;
       }
     }
-    
+
     // Utiliser la série actuelle (currentStreak) au lieu de la meilleure série historique
     // Cela permet à la barre de progression de retomber à 0 si le joueur perd un match
     current = currentStreak;
@@ -327,7 +373,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
   } else if (isDifferentPartners) {
     // Pour les challenges avec partenaires différents, compter uniquement les partenaires uniques
     const uniquePartners = new Set<string>();
-    
+
     sortedRelevant.forEach((item) => {
       if (item.partnerId) {
         // Si l'objectif mentionne "gagner/remporter", ne compter que les victoires
@@ -337,10 +383,59 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
         }
       }
     });
-    
+
     current = uniquePartners.size;
     logger.info({ challengeId: record.id.substring(0, 8) + "…", uniquePartnersCount: uniquePartners.size, uniquePartners: Array.from(uniquePartners).map(id => id.substring(0, 8) + "…") }, "[Challenge] Different partners found");
     logger.info({ challengeId: record.id.substring(0, 8) + "…", metricIsWin }, `[Challenge] Counting ${metricIsWin ? 'wins only' : 'all matches'} with different partners`);
+  } else if (isCleanSheetObjective(record.objective)) {
+    // NEW: Clean Sheet - victoires sans perdre de set (score adversaire = 0)
+    current = sortedRelevant.filter((item) => {
+      // Doit être une victoire ET l'adversaire doit avoir 0 set
+      return item.isWinner && item.opponentScore === 0;
+    }).length;
+    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target }, "[Challenge] Clean Sheet: counting wins with opponent score = 0");
+  } else if (isWeekendObjective(record.objective)) {
+    // NEW: Week-end - matchs joués le samedi ou dimanche
+    const weekendMatches = sortedRelevant.filter((item) => {
+      if (!item.playedAt) return false;
+      const day = new Date(item.playedAt).getDay();
+      return day === 0 || day === 6; // 0 = dimanche, 6 = samedi
+    });
+    // Si l'objectif mentionne "gagner", compter uniquement les victoires du week-end
+    if (metricIsWin) {
+      current = weekendMatches.filter((item) => item.isWinner).length;
+    } else {
+      current = weekendMatches.length;
+    }
+    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, weekendMatchesTotal: weekendMatches.length }, "[Challenge] Weekend: counting matches on Saturday/Sunday");
+  } else if (extractBeforeHour(record.objective) !== null) {
+    // NEW: Jouer avant une certaine heure
+    const targetHour = extractBeforeHour(record.objective)!;
+    const beforeHourMatches = sortedRelevant.filter((item) => {
+      if (!item.playedAt) return false;
+      const hour = new Date(item.playedAt).getHours();
+      return hour < targetHour;
+    });
+    if (metricIsWin) {
+      current = beforeHourMatches.filter((item) => item.isWinner).length;
+    } else {
+      current = beforeHourMatches.length;
+    }
+    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, targetHour }, "[Challenge] Before Hour: counting matches played before specified hour");
+  } else if (extractAfterHour(record.objective) !== null) {
+    // NEW: Jouer après une certaine heure
+    const targetHour = extractAfterHour(record.objective)!;
+    const afterHourMatches = sortedRelevant.filter((item) => {
+      if (!item.playedAt) return false;
+      const hour = new Date(item.playedAt).getHours();
+      return hour >= targetHour;
+    });
+    if (metricIsWin) {
+      current = afterHourMatches.filter((item) => item.isWinner).length;
+    } else {
+      current = afterHourMatches.length;
+    }
+    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, targetHour }, "[Challenge] After Hour: counting matches played after specified hour");
   } else if (metricIsWin) {
     current = sortedRelevant.filter((item) => item.isWinner).length;
   } else {
@@ -381,15 +476,17 @@ export async function GET(request: Request) {
   const records = await loadChallenges(clubId);
   logger.info({ userId: userIdPreview, clubId: clubId.substring(0, 8) + "…", challengesCount: records.length }, "[api/player/challenges] Loaded challenges for club");
   if (records.length > 0) {
-    logger.info({ userId: userIdPreview, challenges: records.map(r => ({
-      id: r.id.substring(0, 8) + "…",
-      title: r.title,
-      start_date: r.start_date,
-      end_date: r.end_date,
-      objective: r.objective
-    })) }, "[Player] Challenges");
+    logger.info({
+      userId: userIdPreview, challenges: records.map(r => ({
+        id: r.id.substring(0, 8) + "…",
+        title: r.title,
+        start_date: r.start_date,
+        end_date: r.end_date,
+        objective: r.objective
+      }))
+    }, "[Player] Challenges");
   }
-  
+
   if (records.length === 0) {
     return NextResponse.json({ challenges: [] });
   }
@@ -397,13 +494,15 @@ export async function GET(request: Request) {
   logger.info({ userId: userIdPreview }, "[api/player/challenges] About to load player history for user");
   const history = await loadPlayerHistory(user.id);
   logger.info({ userId: userIdPreview, matchesCount: history.length }, "[api/player/challenges] Player - Loaded matches from history");
-  
+
   if (history.length > 0) {
-    logger.info({ userId: userIdPreview, recentMatches: history.slice(-5).map(h => ({
-      matchId: h.matchId.substring(0, 8) + "…",
-      playedAt: h.playedAt,
-      isWinner: h.isWinner
-    })) }, "[api/player/challenges] Recent matches");
+    logger.info({
+      userId: userIdPreview, recentMatches: history.slice(-5).map(h => ({
+        matchId: h.matchId.substring(0, 8) + "…",
+        playedAt: h.playedAt,
+        isWinner: h.isWinner
+      }))
+    }, "[api/player/challenges] Recent matches");
   } else {
     logger.warn({ userId: userIdPreview }, "[api/player/challenges] ⚠️ NO MATCHES FOUND for user - this will cause progress to be 0");
   }
@@ -415,7 +514,7 @@ export async function GET(request: Request) {
       .from("challenge_rewards")
       .select("challenge_id")
       .eq("user_id", user.id);
-    
+
     if (rewardsError) {
       logger.warn({ userId: userIdPreview, error: rewardsError.message }, "[api/player/challenges] ⚠️ Could not fetch rewards (table may not exist yet)");
     } else {
@@ -433,7 +532,7 @@ export async function GET(request: Request) {
       // Filtrer les challenges expirés depuis plus d'1 jour
       const endDate = new Date(record.end_date);
       const isExpiredMoreThanOneDay = endDate < oneDayAgo;
-      
+
       if (isExpiredMoreThanOneDay) {
         logger.info({ challengeId: record.id.substring(0, 8) + "…", endDate: record.end_date }, "[Challenge] Filtered out - expired more than 1 day ago");
         return false;
