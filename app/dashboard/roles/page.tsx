@@ -1,3 +1,4 @@
+import { ShieldCheck, UserCheck, Hourglass } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
@@ -12,8 +13,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
   : null;
 
 type Admin = {
@@ -36,7 +37,7 @@ export default async function RolesPage() {
   }
 
   const { clubId } = await getUserClubInfo();
-  
+
   if (!clubId) {
     redirect("/dashboard");
   }
@@ -85,14 +86,14 @@ export default async function RolesPage() {
   // Séparer les admins actifs des invitations en attente
   const activeAdmins = admins.filter((admin) => admin.activated_at !== null);
   const pendingInvitations = admins.filter((admin) => admin.activated_at === null);
-  
+
   // Vérifier si l'utilisateur connecté est le propriétaire
   const isOwner = admins.some((admin) => admin.user_id === user.id && admin.role === "owner");
 
   return (
     <div className="space-y-6">
       <PageTitle title="Rôles et accès" />
-      
+
       {/* Administrateurs actifs */}
       <div className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
         <div className="flex items-center gap-2 mb-5">
@@ -109,71 +110,68 @@ export default async function RolesPage() {
                 return aTime - bTime;
               })
               .map((admin) => {
-              const isCurrent = admin.user_id === user.id;
-              return (
-                <div
-                  key={admin.id}
-                  className={`group relative overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border ${
-                    isCurrent ? "border-emerald-400/50 shadow-[0_0_25px_rgba(16,185,129,0.35)]" : "border-blue-400/20"
-                  } bg-gradient-to-br ${
-                    isCurrent
-                      ? "from-emerald-500/15 via-teal-500/10 to-blue-600/15"
-                      : "from-blue-500/10 via-blue-600/5 to-indigo-600/10"
-                  } p-3 sm:p-4 md:p-5 shadow-lg transition-all hover:shadow-xl hover:border-blue-400/40`}
-                >
-                  {/* Effet de brillance au survol */}
-                  <div className="pointer-events-none absolute -inset-full opacity-0 transition-all duration-700 group-hover:opacity-100">
-                    <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-1000" />
-                  </div>
-
-                  <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30">
-                      {admin.role === "owner" ? (
-                        <Image src="/images/Role et accés club.png" alt="Propriétaire" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
-                      ) : (
-                        <Image src="/images/Administrateur invité page role et accés.png" alt="Administrateur invité" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
-                      )}
+                const isCurrent = admin.user_id === user.id;
+                return (
+                  <div
+                    key={admin.id}
+                    className={`group relative overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl border ${isCurrent ? "border-emerald-400/50 shadow-[0_0_25px_rgba(16,185,129,0.35)]" : "border-blue-400/20"
+                      } bg-gradient-to-br ${isCurrent
+                        ? "from-emerald-500/15 via-teal-500/10 to-blue-600/15"
+                        : "from-blue-500/10 via-blue-600/5 to-indigo-600/10"
+                      } p-3 sm:p-4 md:p-5 shadow-lg transition-all hover:shadow-xl hover:border-blue-400/40`}
+                  >
+                    {/* Effet de brillance au survol */}
+                    <div className="pointer-events-none absolute -inset-full opacity-0 transition-all duration-700 group-hover:opacity-100">
+                      <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/5 to-transparent group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-1000" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
-                        <div className="text-sm sm:text-base font-bold text-white truncate">{admin.email}</div>
-                        {isCurrent && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold text-emerald-200 border border-emerald-400/40 flex-shrink-0">
-                            Vous
-                          </span>
+
+                    <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                      <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30">
+                        {admin.role === "owner" ? (
+                          <Image src="/images/Role et accés club.png" alt="Propriétaire" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+                        ) : (
+                          <Image src="/images/Administrateur invité page role et accés.png" alt="Administrateur invité" width={32} height={32} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium ${
-                            isCurrent ? "text-emerald-100" : "text-blue-200"
-                          }`}
-                        >
-                          {admin.role === "owner" ? (
-                            <>
-                              <span>Propriétaire du compte</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>Administrateur invité</span>
-                            </>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                          <div className="text-sm sm:text-base font-bold text-white truncate">{admin.email}</div>
+                          {isCurrent && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold text-emerald-200 border border-emerald-400/40 flex-shrink-0">
+                              Vous
+                            </span>
                           )}
-                        </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium ${isCurrent ? "text-emerald-100" : "text-blue-200"
+                              }`}
+                          >
+                            {admin.role === "owner" ? (
+                              <>
+                                <span>Propriétaire du compte</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Administrateur invité</span>
+                              </>
+                            )}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="shrink-0 flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto">
-                      <div className="rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500/30 to-indigo-500/30 border border-blue-400/40 px-2.5 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold text-blue-200 shadow-lg backdrop-blur-sm">
-                        {admin.role === "owner" ? "PROPRIÉTAIRE" : "ADMIN"}
+                      <div className="shrink-0 flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto">
+                        <div className="rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500/30 to-indigo-500/30 border border-blue-400/40 px-2.5 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold text-blue-200 shadow-lg backdrop-blur-sm">
+                          {admin.role === "owner" ? "PROPRIÉTAIRE" : "ADMIN"}
+                        </div>
+                        {/* Bouton de suppression uniquement pour le propriétaire et seulement pour les admins invités */}
+                        {isOwner && admin.role === "admin" && (
+                          <RemoveAdminButton adminId={admin.id} adminEmail={admin.email} />
+                        )}
                       </div>
-                      {/* Bouton de suppression uniquement pour le propriétaire et seulement pour les admins invités */}
-                      {isOwner && admin.role === "admin" && (
-                        <RemoveAdminButton adminId={admin.id} adminEmail={admin.email} />
-                      )}
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })
           ) : (
             <div className="rounded-lg sm:rounded-xl border border-white/10 bg-white/5 px-3 sm:px-4 py-6 sm:py-8 text-center">
               <div className="text-2xl sm:text-3xl mb-2 opacity-30">👤</div>
@@ -200,7 +198,7 @@ export default async function RolesPage() {
               >
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
-                    <Image src="/images/Sablier page role et accés.png" alt="Sablier" width={20} height={20} className="w-5 h-5 object-contain" />
+                    <Hourglass className="w-5 h-5 text-amber-500" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-xs sm:text-sm font-medium text-white truncate">{invitation.email}</div>

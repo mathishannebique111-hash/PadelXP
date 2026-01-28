@@ -6,6 +6,7 @@ import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils
 import PageTitle from "../PageTitle";
 import Image from "next/image";
 import LeaderboardContent from "@/components/LeaderboardContent";
+import { Users, History } from 'lucide-react';
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -77,7 +78,7 @@ export default async function ClassementPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 md:space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8 min-h-[85vh]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <PageTitle title="Classement" />
         <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
@@ -86,14 +87,7 @@ export default async function ClassementPage() {
             style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
-            <Image
-              src="/images/Membres page membres.png"
-              alt="Membres"
-              width={16}
-              height={16}
-              className="relative w-4 h-4 object-contain flex-shrink-0"
-              unoptimized
-            />
+            <Users className="relative w-4 h-4 text-blue-200" />
             <span className="relative">{totalPlayers} joueur{totalPlayers > 1 ? "s" : ""}</span>
           </span>
           <span
@@ -101,14 +95,7 @@ export default async function ClassementPage() {
             style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
-            <Image
-              src="/images/Historique des matchs joueur.png"
-              alt="Historique"
-              width={16}
-              height={16}
-              className="relative w-4 h-4 object-contain flex-shrink-0"
-              unoptimized
-            />
+            <History className="relative w-4 h-4 text-blue-200" />
             <span className="relative">{totalMatches} match{totalMatches > 1 ? "s" : ""} comptabilisé{totalMatches > 1 ? "s" : ""}</span>
           </span>
         </div>
@@ -122,6 +109,3 @@ export default async function ClassementPage() {
     </div>
   );
 }
-
-
-

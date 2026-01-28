@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import InvitationCodeCard from "./InvitationCodeCard";
 import PageTitle from "./PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
-import Image from "next/image";
 import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
 import { logger } from '@/lib/logger';
 import { AlertTriangle, Clock, CreditCard, ClipboardList, Gift } from 'lucide-react';

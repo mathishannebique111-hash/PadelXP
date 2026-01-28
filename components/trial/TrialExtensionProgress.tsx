@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { Gift, Users, Swords, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { logger } from '@/lib/logger';
@@ -88,14 +88,14 @@ export default function TrialExtensionProgress({
       label: 'Joueurs',
       current: playersCount,
       target: 10,
-      image: '/images/profil.png',
+      icon_component: <Users className="w-5 h-5 text-emerald-100" />,
       completed: playersCount >= 10,
     },
     {
       label: 'Matchs',
       current: matchesCount,
       target: 20,
-      image: '/images/enregistrer un match.png',
+      icon_component: <Swords className="w-5 h-5 text-emerald-100" />,
       completed: matchesCount >= 20,
     },
   ];
@@ -108,14 +108,7 @@ export default function TrialExtensionProgress({
     <div className="rounded-xl border border-emerald-400/50 bg-gradient-to-br from-emerald-500/20 via-green-600/10 to-emerald-500/20 p-5 mb-6">
       <div className="flex items-start gap-3 mb-4">
         <div className="flex-shrink-0">
-          <Image 
-            src="/images/cadeau accueil club.png" 
-            alt="Cadeau" 
-            width={32} 
-            height={32} 
-            className="w-8 h-8 object-contain"
-            unoptimized
-          />
+          <Gift className="w-8 h-8 text-emerald-300" />
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-bold text-white mb-1">
@@ -136,14 +129,9 @@ export default function TrialExtensionProgress({
             <div key={index} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Image 
-                    src={obj.image} 
-                    alt={obj.label} 
-                    width={20} 
-                    height={20} 
-                    className="w-5 h-5 object-contain flex-shrink-0"
-                    unoptimized
-                  />
+                  <div className="flex-shrink-0">
+                    {obj.icon_component}
+                  </div>
                   <span className="text-sm font-semibold text-white">
                     {obj.label}
                   </span>
@@ -160,15 +148,14 @@ export default function TrialExtensionProgress({
                   <span className="text-white/50"> / {obj.target}</span>
                 </div>
               </div>
-              
+
               {/* Progress bar */}
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    isCompleted
-                      ? 'bg-gradient-to-r from-emerald-400 to-green-500'
-                      : 'bg-gradient-to-r from-blue-400 to-indigo-500'
-                  }`}
+                  className={`h-full rounded-full transition-all duration-500 ${isCompleted
+                    ? 'bg-gradient-to-r from-emerald-400 to-green-500'
+                    : 'bg-gradient-to-r from-blue-400 to-indigo-500'
+                    }`}
                   style={{ width: `${progress}%` }}
                 />
               </div>

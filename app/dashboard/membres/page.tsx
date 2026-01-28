@@ -5,6 +5,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import PageTitle from "../PageTitle";
 import Image from "next/image";
 import DeletePlayerButton from "@/components/members/DeletePlayerButton";
+import { Users } from 'lucide-react';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -119,7 +120,7 @@ export default async function MembersPage() {
   });
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-h-[85vh]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <PageTitle title="Membres" />
         <span
@@ -127,14 +128,7 @@ export default async function MembersPage() {
           style={{ background: "linear-gradient(135deg, rgba(0,102,255,0.25) 0%, rgba(76,29,149,0.25) 100%)", boxShadow: "0 4px 14px rgba(0,0,0,0.25)" }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/15 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-800" />
-          <Image
-            src="/images/Membres page membres.png"
-            alt="Membres"
-            width={16}
-            height={16}
-            className="relative w-4 h-4 object-contain flex-shrink-0"
-            unoptimized
-          />
+          <Users className="relative w-4 h-4 text-blue-200" />
           <span className="relative">
             {filteredMembers.length} joueur{filteredMembers.length > 1 ? "s" : ""}
           </span>
@@ -435,6 +429,3 @@ export default async function MembersPage() {
     </div>
   );
 }
-
-
-
