@@ -200,7 +200,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
                     type="button"
                     onClick={() => {
                       const username = profile.username.startsWith('@') ? profile.username.substring(1) : profile.username;
-                      const url = `${window.location.host === 'localhost:3000' ? 'http://' : 'https://'}${window.location.host}/player/${username}`;
+                      const url = `${window.location.host === 'localhost:3000' ? 'http://' : 'https://'}${window.location.host}/p/${username}`;
 
                       if (navigator.share) {
                         navigator.share({
