@@ -2,8 +2,10 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { HelpCircle } from "lucide-react";
 import PageTitle from "../PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import ChallengeHelpModal from "@/components/challenges/ChallengeHelpModal";
 import { logger } from '@/lib/logger';
 
 type RewardType = "points" | "badge";
@@ -37,6 +39,7 @@ function statusTag(status: ClubChallenge["status"]) {
 }
 
 export default function ChallengesPage() {
+  const [showHelp, setShowHelp] = useState(false);
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -149,9 +152,16 @@ export default function ChallengesPage() {
     }
   };
 
+  const handlePrefill = (title: string, objective: string) => {
+    setName(title);
+    setObjective(objective);
+  };
+
   return (
     <div className="space-y-6">
       <PageTitle title="Challenges" subtitle="Créez des défis motivants pour vos joueurs et suivez-les en un coup d'œil." />
+
+      {showHelp && <ChallengeHelpModal onClose={() => setShowHelp(false)} onPrefill={handlePrefill} />}
 
       {error ? (
         <div className="rounded-2xl border border-rose-400/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
@@ -160,7 +170,17 @@ export default function ChallengesPage() {
       ) : null}
 
       <section className="rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white">Créer un challenge</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-white">Créer un challenge</h2>
+          <button
+            type="button"
+            onClick={() => setShowHelp(true)}
+            className="group flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-500 hover:scale-105 hover:shadow-blue-500/40 active:scale-95"
+          >
+            <HelpCircle size={18} className="text-white/90" />
+            <span>Quel challenge créer ?</span>
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <div className="space-y-2">
@@ -288,7 +308,7 @@ export default function ChallengesPage() {
               const rewardBadgeClasses = challenge.rewardType === "points"
                 ? "border-2 border-yellow-400/30 bg-yellow-400/10 text-yellow-200 shadow-[0_0_20px_rgba(250,204,21,0.15)]"
                 : "border-2 border-violet-400/30 bg-violet-400/10 text-violet-200 shadow-[0_0_20px_rgba(167,139,250,0.15)]";
-              
+
               return (
                 <article
                   key={challenge.id}
@@ -308,7 +328,7 @@ export default function ChallengesPage() {
                         </span>
                         <h3 className="text-2xl font-extrabold tracking-tight text-white drop-shadow-lg">{challenge.title}</h3>
                       </div>
-                      
+
                       {/* Badge récompense élégant */}
                       <div className={`flex items-center gap-2.5 rounded-2xl px-5 py-3 text-sm font-bold backdrop-blur-sm transition-all ${rewardBadgeClasses}`}>
                         {challenge.rewardType === "points" ? (
@@ -317,7 +337,7 @@ export default function ChallengesPage() {
                           <Image src="/images/Badge Centurion.png" alt="Badge" width={20} height={20} className="w-5 h-5 object-contain" />
                         )}
                         <span>
-                          {challenge.rewardType === "points" 
+                          {challenge.rewardType === "points"
                             ? `${challenge.rewardLabel} points`
                             : challenge.rewardLabel}
                         </span>

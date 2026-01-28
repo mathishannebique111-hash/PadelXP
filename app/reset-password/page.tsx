@@ -28,11 +28,33 @@ export default function ResetPasswordPage() {
 
         // 2. Handle PKCE Flow (code in query params)
         const code = searchParams && searchParams.get("code");
+        const error_code = searchParams && searchParams.get("error");
+        const error_description = searchParams && searchParams.get("error_description");
+
+        // Check for errors in URL
+        if (error_code) {
+          console.error("[ResetPassword] Error in URL:", error_code, error_description);
+          setError(error_description || "Le lien est invalide ou a expiré.");
+          setLoading(false);
+          return;
+        }
+
         if (code) {
-          const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+          console.log("[ResetPassword] Attempting PKCE flow with code");
+          const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+
           if (sessionError) {
-            console.error("Error exchanging code for session:", sessionError);
-            setError("Le lien est invalide ou a expiré.");
+            console.error("[ResetPassword] PKCE exchange error:", sessionError);
+
+            // Provide specific error messages
+            const errorMsg = sessionError.message?.toLowerCase() || '';
+            if (errorMsg.includes('expired') || errorMsg.includes('invalid')) {
+              setError("Le lien a expiré. Veuillez demander un nouveau lien de réinitialisation.");
+            } else if (errorMsg.includes('already') || errorMsg.includes('used')) {
+              setError("Ce lien a déjà été utilisé. Veuillez demander un nouveau lien.");
+            } else {
+              setError("Le lien est invalide. Veuillez demander un nouveau lien.");
+            }
             setLoading(false);
             return;
           }
@@ -40,10 +62,16 @@ export default function ResetPasswordPage() {
           // Verify session is active
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            console.log("[ResetPassword] PKCE flow successful");
             setIsValid(true);
             setLoading(false);
             // Clean URL
             window.history.replaceState(null, "", "/reset-password");
+            return;
+          } else {
+            console.error("[ResetPassword] No user after PKCE exchange");
+            setError("Impossible de créer la session. Veuillez réessayer.");
+            setLoading(false);
             return;
           }
         }

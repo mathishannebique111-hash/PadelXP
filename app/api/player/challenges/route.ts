@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { filterMatchesByDailyLimit } from "@/lib/utils/match-limit-utils";
-import { MAX_MATCHES_PER_DAY } from "@/lib/match-constants";
 import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -157,13 +155,19 @@ function isConsecutiveWinsObjective(objective: string) {
 // NEW: Clean Sheet - gagner sans perdre de set (2-0, 3-0, etc.)
 function isCleanSheetObjective(objective: string) {
   const lower = objective.toLowerCase();
-  return /(sans perdre de set|sans concéder de set|sans que l'adversaire.*prenne.*set|2-0|3-0|4-0)/.test(lower);
+  return /(sans perdre de set|sans concéder de set|sans que l'adversaire.*prenne.*set|2-0|3-0|4-0|clean sheet)/.test(lower);
 }
 
 // NEW: Week-end - jouer le samedi ou dimanche
 function isWeekendObjective(objective: string) {
   const lower = objective.toLowerCase();
   return /(week-end|weekend|samedi|dimanche)/.test(lower);
+}
+
+// NEW: 3 Sets - matchs en 3 sets
+function isThreeSetsObjective(objective: string) {
+  const lower = objective.toLowerCase();
+  return /(3 sets|trois sets|match long|long match)/.test(lower);
 }
 
 // NEW: Jouer avant une certaine heure - extrait l'heure cible
@@ -228,6 +232,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     .from("matches")
     .select("id, played_at, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at")
     .in("id", matchIds)
+    .eq("status", "confirmed") // On ne prend que les matchs validés
     .order("played_at", { ascending: true });
 
   logger.info({ userId: userId.substring(0, 8) + "…", matchesCount: matches?.length || 0, error: matchError }, "[loadPlayerHistory] Matches fetched");
@@ -239,26 +244,10 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
 
   logger.info({ userId: userId.substring(0, 8) + "…", matchesCount: matches.length }, "[loadPlayerHistory] ✅ Found matches for user");
 
-  // ÉTAPE 2.5: Filtrer les matchs selon la limite quotidienne (2 matchs par jour)
-  // Seuls les matchs qui comptent pour les points comptent pour les challenges
-  const matchParticipants = userParticipations.map((p) => ({
-    match_id: p.match_id,
-    user_id: userId,
-  }));
-
-  const validMatchIdsForPoints = filterMatchesByDailyLimit(
-    matchParticipants,
-    matches.map((m) => ({
-      id: m.id,
-      played_at: m.played_at ?? m.created_at ?? new Date().toISOString(),
-    })),
-    MAX_MATCHES_PER_DAY
-  );
-
-  logger.info({ userId: userId.substring(0, 8) + "…", validMatches: validMatchIdsForPoints.size, totalMatches: matches.length }, "[loadPlayerHistory] Valid matches after daily limit");
-
-  // Filtrer les matchs pour ne garder que ceux qui respectent la limite quotidienne
-  const validMatches = matches.filter((m) => validMatchIdsForPoints.has(m.id));
+  // ÉTAPE 2.5: NO LIMIT for challenges
+  // Le user veut que tous les matchs validés comptent, sans la limite de 2 par jour.
+  // On garde donc tous les matchs récupérés (qui sont déjà filtrés par status='confirmed')
+  const validMatches = matches;
 
   // ÉTAPE 3: Récupérer tous les participants pour identifier les partenaires
   const { data: allParticipants } = await supabaseAdmin
@@ -293,8 +282,8 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     const partnerId = partnerMap.get(match.id) || null;
 
     // NEW: Calculate scores for clean sheet detection
-    const myScore = teamNum === 1 ? match.score_team1 : match.score_team2;
-    const opponentScore = teamNum === 1 ? match.score_team2 : match.score_team1;
+    const myScore = teamNum === 1 ? Number(match.score_team1) : Number(match.score_team2);
+    const opponentScore = teamNum === 1 ? Number(match.score_team2) : Number(match.score_team1);
 
     logger.info({ userId: userId.substring(0, 8) + "…", matchId: match.id.substring(0, 8) + "…", team: teamNum, isWinner, partnerId: partnerId?.substring(0, 8) + "…" || null, playedAt: match.played_at, myScore, opponentScore }, "[loadPlayerHistory] Match details");
 
@@ -436,6 +425,22 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
       current = afterHourMatches.length;
     }
     logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, targetHour }, "[Challenge] After Hour: counting matches played after specified hour");
+  } else if (isThreeSetsObjective(record.objective)) {
+    // NEW: 3 Sets
+    // On compte les matchs où la somme des sets = 3 (exemple 2-1 ou 1-2)
+    const threeSetsMatches = sortedRelevant.filter((item) => {
+      // myScore et opponentScore sont des nombres (castés précédemment)
+      // Si undefined, on ignore
+      if (item.myScore === undefined || item.opponentScore === undefined) return false;
+      return (item.myScore + item.opponentScore) === 3;
+    });
+
+    if (metricIsWin) {
+      current = threeSetsMatches.filter((item) => item.isWinner).length;
+    } else {
+      current = threeSetsMatches.length;
+    }
+    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target }, "[Challenge] 3 Sets: counting matches with total score = 3");
   } else if (metricIsWin) {
     current = sortedRelevant.filter((item) => item.isWinner).length;
   } else {
