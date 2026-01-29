@@ -1,0 +1,14 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "77W734RDC2.eu.padelxp.player",
+                "paths": [
+                    "/player/*",
+                    "/p/*"
+                ]
+            }
+        ]
+    }
+}
