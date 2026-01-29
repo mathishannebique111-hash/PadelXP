@@ -6,14 +6,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 const APP_SCHEME = 'eu.padelxp.player';
-const IOS_APP_STORE_URL = 'https://apps.apple.com/app/padelxp';
-const ANDROID_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=eu.padelxp.player';
+// Rediriger vers la page /download qui contient les liens corrects vers les stores
+const DOWNLOAD_PAGE_URL = '/download';
 
 export default function ProfileShareRedirectPage() {
     const params = useParams();
     const username = params?.username as string;
     const [isRedirecting, setIsRedirecting] = useState(true);
-    const [showFallback, setShowFallback] = useState(false);
 
     useEffect(() => {
         if (!username) return;
@@ -43,19 +42,14 @@ export default function ProfileShareRedirectPage() {
             window.location.href = deepLinkUrl;
         }, 100);
 
-        // Si l'app n'est pas installée, rediriger vers le store après un délai
+        // Si l'app n'est pas installée, rediriger vers la page /download après un délai
         const fallbackTimeout = setTimeout(() => {
             setIsRedirecting(false);
 
             // Vérifier si on est toujours sur la page (l'app n'a pas été ouverte)
             if (document.visibilityState !== 'hidden') {
-                if (isIOS) {
-                    window.location.href = IOS_APP_STORE_URL;
-                } else if (isAndroid) {
-                    window.location.href = ANDROID_PLAY_STORE_URL;
-                } else {
-                    setShowFallback(true);
-                }
+                // Rediriger vers la page de téléchargement qui contient les bons liens stores
+                window.location.href = DOWNLOAD_PAGE_URL;
             }
         }, 1500);
 
@@ -84,7 +78,7 @@ export default function ProfileShareRedirectPage() {
                 {/* Logo */}
                 <div className="mb-8">
                     <Image
-                        src="/images/logo.png"
+                        src="/images/Logo.png"
                         alt="PadelXP"
                         width={120}
                         height={40}
@@ -97,33 +91,6 @@ export default function ProfileShareRedirectPage() {
                         {/* Spinner */}
                         <div className="w-12 h-12 border-4 border-padel-green/30 border-t-padel-green rounded-full animate-spin mx-auto" />
                         <p className="text-gray-400">Ouverture de l'application...</p>
-                    </>
-                ) : showFallback ? (
-                    <>
-                        <h1 className="text-2xl font-bold">Voir le profil de @{username}</h1>
-                        <p className="text-gray-400">
-                            Téléchargez l'application PadelXP pour voir ce profil et jouer avec d'autres joueurs !
-                        </p>
-                        <div className="flex flex-col gap-3 pt-4">
-                            <a
-                                href={IOS_APP_STORE_URL}
-                                className="bg-white text-black px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition flex items-center justify-center gap-2"
-                            >
-                                📱 Télécharger sur l'App Store
-                            </a>
-                            <a
-                                href={ANDROID_PLAY_STORE_URL}
-                                className="bg-white text-black px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition flex items-center justify-center gap-2"
-                            >
-                                🤖 Télécharger sur Google Play
-                            </a>
-                        </div>
-                        <Link
-                            href={`/player/${username}`}
-                            className="text-sm text-gray-500 hover:text-gray-300 underline mt-4 inline-block"
-                        >
-                            Voir la version web →
-                        </Link>
                     </>
                 ) : (
                     <p className="text-gray-400">Redirection en cours...</p>
