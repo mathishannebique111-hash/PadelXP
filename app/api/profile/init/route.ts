@@ -547,10 +547,29 @@ export async function POST(request: Request) {
     hasProfile: !!existing,
     hasMetadataClubId: !!metadataClubId,
     hasClubAdmin: !!clubAdmin,
-    clubIdForUser: clubIdForUser || null
+    clubIdForUser: clubIdForUser || null,
+    role: userMetadata.role || null
   }, "[api/profile/init] No club found for user");
 
-  // Si on arrive ici, l'utilisateur n'a pas de profil joueur
+  // NOUVEAU: Si l'utilisateur a le rôle "owner" dans ses métadonnées mais pas de club_id,
+  // c'est qu'il a créé un compte club mais n'a pas terminé l'onboarding
+  // On le redirige vers l'onboarding au lieu de retourner une erreur 404
+  const userRole = userMetadata.role as string | undefined;
+  if (userRole === "owner" || userRole === "admin") {
+    logger.info({
+      userId: user.id.substring(0, 8) + "…",
+      email: user.email?.substring(0, 10) + "…",
+      role: userRole
+    }, "[api/profile/init] User has club role but no club, redirecting to onboarding");
+
+    return NextResponse.json({
+      ok: true,
+      redirect: "/onboarding",
+      profile: null,
+    });
+  }
+
+  // Si on arrive ici, l'utilisateur n'a pas de profil joueur ni de rôle club
   // Il doit créer son compte via l'inscription joueurs
   return NextResponse.json(
     { error: "Aucun compte joueur trouvé pour cet email. Créez d'abord votre compte via l'inscription joueurs." },

@@ -37,8 +37,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
   : null;
 
 const optionalText = (max: number) => z.string().trim().max(max).nullish();
@@ -230,6 +230,15 @@ export async function POST(req: Request) {
       .eq("slug", slugCandidate)
       .maybeSingle();
 
+    // Récupérer l'offer_type depuis les user_metadata
+    const { data: currentUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const offerType = currentUser?.user?.user_metadata?.offer_type || 'standard';
+
+    // Calculer la durée de l'essai selon le type d'offre
+    const trialDurationDays = offerType === 'founder' ? 90 : 14;
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + trialDurationDays);
+
     const upsertData: Record<string, any> = {
       name,
       slug: slugCandidate,
@@ -242,11 +251,13 @@ export async function POST(req: Request) {
       website,
       number_of_courts: numberOfCourts,
       court_type,
+      offer_type: offerType,
     };
 
-    // Initialiser trial_start uniquement si c'est un nouveau club (pas d'existant ou trial_start non défini)
+    // Initialiser trial_start et trial_end_date uniquement si c'est un nouveau club (pas d'existant ou trial_start non défini)
     if (!existingClub || !existingClub.trial_start) {
       upsertData.trial_start = new Date().toISOString();
+      upsertData.trial_end_date = trialEndDate.toISOString();
     }
 
     if (logoUrl) {
@@ -273,7 +284,7 @@ export async function POST(req: Request) {
       .select("id")
       .eq("id", userId)
       .maybeSingle();
-    
+
     if (existingProfile) {
       // Supprimer le profil joueur s'il existe pour ce compte club
       await supabaseAdmin
@@ -304,7 +315,7 @@ export async function POST(req: Request) {
     // Créer l'entrée dans club_admins pour définir l'utilisateur comme propriétaire
     // Note: club_id est TEXT dans club_admins, donc on convertit l'UUID en string
     const userEmail = existingUser?.user?.email || ownerEmail || '';
-    
+
     const { data: existingAdmin } = await supabaseAdmin
       .from('club_admins')
       .select('id')
@@ -339,7 +350,7 @@ export async function POST(req: Request) {
     try {
       const { initiateTrial } = await import('@/lib/trial-hybrid');
       const trialResult = await initiateTrial(club.id);
-      
+
       if (!trialResult.success) {
         logger.warn({ clubId: club.id.substring(0, 8) + "…", error: trialResult.error }, "[clubs/register] Could not initialize trial (non-blocking)");
         // Ne pas bloquer la création du compte si l'initialisation de l'essai échoue

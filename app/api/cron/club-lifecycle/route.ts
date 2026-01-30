@@ -14,8 +14,8 @@ const supabaseAdmin = createClient(
 
 /**
  * Combined cron job for club lifecycle management:
- * 1. Suspend clubs after 48h grace period
- * 2. Delete suspended club data after 45 days
+ * 1. Suspend clubs after 7-day grace period (triggers on day 8)
+ * 2. Delete suspended club data after 6 months (180 days)
  * Should be run daily
  */
 export async function GET() {
@@ -26,10 +26,12 @@ export async function GET() {
 
     try {
         // =============================================
-        // PART 1: SUSPEND EXPIRED CLUBS (48h grace)
+        // PART 1: SUSPEND EXPIRED CLUBS (7-day grace period)
         // =============================================
+        // Clubs are suspended on day 8 (7 days grace + 1)
+        const GRACE_PERIOD_DAYS = 7;
         const cutoffTime = new Date();
-        cutoffTime.setHours(cutoffTime.getHours() - 48);
+        cutoffTime.setDate(cutoffTime.getDate() - GRACE_PERIOD_DAYS);
 
         const { data: clubsToSuspend, error: fetchSuspendError } = await supabaseAdmin
             .from('clubs')
@@ -45,8 +47,10 @@ export async function GET() {
                 const trialEndDate = new Date(club.trial_current_end_date || club.trial_end_date);
 
                 if (trialEndDate < cutoffTime) {
+                    // Schedule deletion for 6 months (180 days) after suspension
+                    const DATA_RETENTION_DAYS = 180;
                     const scheduledDeletionAt = new Date();
-                    scheduledDeletionAt.setDate(scheduledDeletionAt.getDate() + 45);
+                    scheduledDeletionAt.setDate(scheduledDeletionAt.getDate() + DATA_RETENTION_DAYS);
 
                     const { error: updateError } = await supabaseAdmin
                         .from('clubs')
@@ -67,7 +71,7 @@ export async function GET() {
         }
 
         // =============================================
-        // PART 2: DELETE SUSPENDED CLUBS (45 days)
+        // PART 2: DELETE SUSPENDED CLUBS (6 months / 180 days)
         // =============================================
         const now = new Date();
 

@@ -130,6 +130,7 @@ function CheckoutContent() {
     trialEndDate: string;
     clientSecret: string;
     isSetupIntent?: boolean;
+    offerType?: 'standard' | 'founder';
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -161,6 +162,7 @@ function CheckoutContent() {
           trialEndDate: data.trialEndDate,
           clientSecret: data.clientSecret,
           isSetupIntent: data.isSetupIntent || false,
+          offerType: data.offerType || 'standard',
         });
         setLoading(false);
       } catch (err) {
@@ -195,7 +197,7 @@ function CheckoutContent() {
     );
   }
 
-  const { subscriptionId, plan, trialEndDate, clientSecret, isSetupIntent } = subscriptionData;
+  const { subscriptionId, plan, trialEndDate, clientSecret, isSetupIntent, offerType = 'standard' } = subscriptionData;
   const firstPaymentDate = calculateFirstPaymentDate(trialEndDate);
   const daysRemaining = Math.ceil((new Date(trialEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
@@ -262,10 +264,10 @@ function CheckoutContent() {
               <div>
                 <div className="text-white/60 text-sm mb-1">Prix</div>
                 <div className="text-white font-semibold text-lg">
-                  {getMonthlyPrice(plan)}€/mois
+                  {getMonthlyPrice(plan, offerType)}€/mois
                   {plan !== 'monthly' && (
                     <span className="text-white/60 text-sm ml-2">
-                      ({getTotalPrice(plan)}€ par an)
+                      ({getTotalPrice(plan, offerType)}€ par an)
                     </span>
                   )}
                 </div>

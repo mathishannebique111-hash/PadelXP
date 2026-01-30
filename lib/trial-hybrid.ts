@@ -12,14 +12,14 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
   : null;
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
-    })
+    apiVersion: '2024-12-18.acacia' as Stripe.LatestApiVersion,
+  })
   : null;
 
 export type TrialStatus = 'active' | 'extended_auto' | 'extended_proposed' | 'extended_manual' | 'expired' | 'converted';
@@ -50,8 +50,19 @@ export async function initiateTrial(clubId: string): Promise<{ success: boolean;
 
   try {
     const now = new Date();
+
+    // Récupérer l'offer_type du club pour déterminer la durée de l'essai
+    const { data: club } = await supabaseAdmin
+      .from('clubs')
+      .select('offer_type')
+      .eq('id', clubId)
+      .single();
+
+    const offerType = club?.offer_type || 'standard';
+    const trialDuration = offerType === 'founder' ? 90 : 14;
+
     const baseEndDate = new Date(now);
-    baseEndDate.setDate(baseEndDate.getDate() + 14);
+    baseEndDate.setDate(baseEndDate.getDate() + trialDuration);
 
     // Essayer d'abord avec les nouveaux champs (système hybride)
     const newSystemUpdate = {
@@ -78,7 +89,7 @@ export async function initiateTrial(clubId: string): Promise<{ success: boolean;
     // Si erreur due à des colonnes manquantes, essayer avec l'ancien système uniquement
     if (error && (error.message?.includes('column') || error.message?.includes('does not exist'))) {
       logger.warn({ clubId: clubId.substring(0, 8) + '…' }, '[trial-hybrid] New trial columns not found, using old system (14 days)');
-      
+
       // Mise à jour avec l'ancien système uniquement (14 jours au lieu de 30)
       const oldSystemUpdate = {
         trial_start_date: now.toISOString(),
@@ -214,7 +225,7 @@ export async function updateEngagementMetrics(clubId: string): Promise<{ success
       const { data, error: storageError } = await supabaseAdmin.storage
         .from('club-challenges')
         .download(`${clubId}.json`);
-      
+
       if (!storageError && data) {
         const text = await data.text();
         const parsed = JSON.parse(text);
@@ -363,13 +374,13 @@ export async function grantAutoExtension(
         await stripe.subscriptions.update(clubWithStripe.stripe_subscription_id, {
           trial_end: trialEndTimestamp,
         });
-        logger.info({ 
+        logger.info({
           clubId: clubId.substring(0, 8) + '…',
           subscriptionId: clubWithStripe.stripe_subscription_id.substring(0, 8) + '…',
           newTrialEnd: newEndDate.toISOString()
         }, '[trial-hybrid] Stripe subscription trial_end updated after auto extension');
       } catch (stripeError: any) {
-        logger.error({ 
+        logger.error({
           clubId: clubId.substring(0, 8) + '…',
           error: stripeError?.message || String(stripeError)
         }, '[trial-hybrid] Error updating Stripe subscription trial_end after auto extension');
@@ -504,13 +515,13 @@ export async function acceptProposedExtension(clubId: string): Promise<{ success
         await stripe.subscriptions.update(clubWithStripe.stripe_subscription_id, {
           trial_end: trialEndTimestamp,
         });
-        logger.info({ 
+        logger.info({
           clubId: clubId.substring(0, 8) + '…',
           subscriptionId: clubWithStripe.stripe_subscription_id.substring(0, 8) + '…',
           newTrialEnd: newEndDate.toISOString()
         }, '[trial-hybrid] Stripe subscription trial_end updated after proposed extension');
       } catch (stripeError: any) {
-        logger.error({ 
+        logger.error({
           clubId: clubId.substring(0, 8) + '…',
           error: stripeError?.message || String(stripeError)
         }, '[trial-hybrid] Error updating Stripe subscription trial_end after proposed extension');
@@ -588,14 +599,14 @@ export async function grantManualExtension(
         await stripe.subscriptions.update(clubWithStripe.stripe_subscription_id, {
           trial_end: trialEndTimestamp,
         });
-        logger.info({ 
+        logger.info({
           clubId: clubId.substring(0, 8) + '…',
           subscriptionId: clubWithStripe.stripe_subscription_id.substring(0, 8) + '…',
           newTrialEnd: newEndDate.toISOString(),
           days
         }, '[trial-hybrid] Stripe subscription trial_end updated after manual extension');
       } catch (stripeError: any) {
-        logger.error({ 
+        logger.error({
           clubId: clubId.substring(0, 8) + '…',
           error: stripeError?.message || String(stripeError)
         }, '[trial-hybrid] Error updating Stripe subscription trial_end after manual extension');

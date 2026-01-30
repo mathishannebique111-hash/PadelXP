@@ -14,8 +14,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
   : null;
 
 export const dynamic = 'force-dynamic';
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     // Pour une subscription en trial, il peut ne pas y avoir de payment_intent immédiatement
     // On doit créer un SetupIntent pour collecter la méthode de paiement
     const invoice = subscription.latest_invoice;
-    
+
     let invoiceObj: Stripe.Invoice | null = null;
     if (invoice && typeof invoice === 'object') {
       invoiceObj = invoice as Stripe.Invoice;
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
     // Essayer de récupérer le payment_intent depuis l'invoice
     if (invoiceObj?.payment_intent) {
       const paymentIntent = invoiceObj.payment_intent;
-      
+
       if (typeof paymentIntent === 'string') {
         try {
           const paymentIntentObj = await stripe.paymentIntents.retrieve(paymentIntent);
@@ -110,15 +110,15 @@ export async function GET(req: NextRequest) {
 
     // Si pas de payment_intent, créer un SetupIntent pour collecter la méthode de paiement
     if (!clientSecret) {
-      logger.info({ 
+      logger.info({
         subscriptionId: subscription.id,
         invoiceStatus: invoiceObj?.status,
         trialEnd: subscription.trial_end
       }, '[get-subscription] No payment_intent found, creating SetupIntent');
 
       try {
-        const customerId = typeof subscription.customer === 'string' 
-          ? subscription.customer 
+        const customerId = typeof subscription.customer === 'string'
+          ? subscription.customer
           : subscription.customer.id;
 
         const setupIntent = await stripe.setupIntents.create({
@@ -133,18 +133,18 @@ export async function GET(req: NextRequest) {
         if (setupIntent.client_secret) {
           clientSecret = setupIntent.client_secret;
           isSetupIntent = true;
-          
-          logger.info({ 
+
+          logger.info({
             subscriptionId: subscription.id,
             setupIntentId: setupIntent.id
           }, '[get-subscription] SetupIntent created successfully');
         }
       } catch (setupError) {
-        logger.error({ 
+        logger.error({
           error: setupError,
           subscriptionId: subscription.id
         }, '[get-subscription] Error creating SetupIntent');
-        
+
         return NextResponse.json(
           { error: 'Erreur lors de la configuration du paiement. Veuillez réessayer.' },
           { status: 500 }
@@ -153,12 +153,12 @@ export async function GET(req: NextRequest) {
     }
 
     if (!clientSecret) {
-      logger.error({ 
+      logger.error({
         subscriptionId: subscription.id,
         hasInvoice: !!invoiceObj,
         invoiceStatus: invoiceObj?.status
       }, '[get-subscription] No client_secret found after all attempts');
-      
+
       return NextResponse.json(
         { error: 'Impossible de récupérer les informations de paiement. Veuillez réessayer.' },
         { status: 500 }
@@ -177,12 +177,22 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Récupérer l'offer_type du club
+    const { data: club } = await supabaseAdmin
+      .from('clubs')
+      .select('offer_type')
+      .eq('id', clubId)
+      .single();
+
+    const offerType = club?.offer_type || 'standard';
+
     return NextResponse.json({
       success: true,
       subscriptionId: subscription.id,
       clientSecret,
       trialEndDate,
       isSetupIntent, // Indique si c'est un SetupIntent ou un PaymentIntent
+      offerType,
     });
   } catch (error) {
     logger.error({

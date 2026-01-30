@@ -605,10 +605,10 @@ export async function middleware(req: NextRequest) {
             .maybeSingle();
 
           if (playerProfile?.club_id) {
-            // Check if their club is suspended
+            // Check if their club is suspended OR if grace period has expired
             const { data: club } = await supabase
               .from('clubs')
-              .select('is_suspended')
+              .select('is_suspended, trial_end_date, trial_current_end_date, subscription_status')
               .eq('id', playerProfile.club_id)
               .single();
 
@@ -617,6 +617,28 @@ export async function middleware(req: NextRequest) {
               const url = req.nextUrl.clone();
               url.pathname = '/player/club-suspended';
               return NextResponse.redirect(url);
+            }
+
+            // Check if grace period has expired (8+ days after trial end, no active subscription)
+            const GRACE_PERIOD_DAYS = 7;
+            const trialEndDate = club?.trial_current_end_date || club?.trial_end_date;
+            const hasActiveSubscription = club?.subscription_status === 'active';
+
+            if (trialEndDate && !hasActiveSubscription) {
+              const now = new Date();
+              const endDate = new Date(trialEndDate);
+              const daysSinceExpiration = Math.floor((now.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+
+              // If more than 7 days since trial expiration, redirect to club-stopped page
+              if (daysSinceExpiration > GRACE_PERIOD_DAYS) {
+                // Allow access to the club-stopped page and the survey API
+                if (!normalizedPathname.startsWith('/player/club-stopped') &&
+                  !normalizedPathname.startsWith('/api/player/club-stopped-survey')) {
+                  const url = req.nextUrl.clone();
+                  url.pathname = '/player/club-stopped';
+                  return NextResponse.redirect(url);
+                }
+              }
             }
           }
         }

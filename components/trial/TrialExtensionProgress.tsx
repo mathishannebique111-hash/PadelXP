@@ -10,6 +10,7 @@ interface TrialExtensionProgressProps {
   playersCount: number;
   matchesCount: number;
   autoExtensionUnlocked: boolean;
+  offerType?: 'standard' | 'founder';
 }
 
 export default function TrialExtensionProgress({
@@ -17,6 +18,7 @@ export default function TrialExtensionProgress({
   playersCount,
   matchesCount,
   autoExtensionUnlocked,
+  offerType = 'standard',
 }: TrialExtensionProgressProps) {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(false);
@@ -78,8 +80,8 @@ export default function TrialExtensionProgress({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId, playersCount, matchesCount, autoExtensionUnlocked]);
 
-  // Si l'extension automatique est déjà débloquée, ne pas afficher
-  if (extensionGranted || autoExtensionUnlocked) {
+  // Si l'extension automatique est déjà débloquée OU si c'est une offre fondateur (déjà 90 jours), ne pas afficher
+  if (extensionGranted || autoExtensionUnlocked || offerType === 'founder') {
     return null;
   }
 

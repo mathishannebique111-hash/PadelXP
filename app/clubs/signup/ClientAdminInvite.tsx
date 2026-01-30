@@ -61,6 +61,15 @@ export default function ClientAdminInvite() {
         storedEmail = window.localStorage.getItem(inviteTokenKey);
       }
 
+      // NOUVEAU: Si aucun token n'est présent, c'est une inscription classique
+      // On redirige vers la page d'inscription principale
+      if (!code && !inviteToken && !accessToken && !refreshToken) {
+        if (!cancelled) {
+          router.replace('/signup');
+        }
+        return;
+      }
+
       try {
         if (code) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);

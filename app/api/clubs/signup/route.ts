@@ -16,6 +16,7 @@ const ClubSignupSchema = z.object({
     .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   firstName: z.string().trim().min(1, "Le prénom est requis"),
   lastName: z.string().trim().min(1, "Le nom est requis"),
+  promoCode: z.string().trim().toUpperCase().optional(),
 });
 
 export async function POST(req: Request) {
@@ -70,7 +71,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const { email, password, firstName, lastName } = parsed.data;
+    const { email, password, firstName, lastName, promoCode } = parsed.data;
+
+    // Valider le code promo si fourni
+    let offerType: 'standard' | 'founder' = 'standard';
+
+    if (promoCode) {
+      const { data: promoData, error: promoError } = await supabaseAdmin
+        .from('promo_codes')
+        .select('offer_type, active')
+        .eq('code', promoCode)
+        .maybeSingle();
+
+      if (!promoError && promoData && promoData.active) {
+        offerType = promoData.offer_type as 'standard' | 'founder';
+        logger.info({ email: email.substring(0, 5) + "…", promoCode, offerType }, "[clubs/signup] Valid promo code applied");
+      } else {
+        logger.warn({ email: email.substring(0, 5) + "…", promoCode }, "[clubs/signup] Invalid or inactive promo code");
+      }
+    }
 
     const fullName = `${firstName} ${lastName}`.trim();
 
@@ -83,6 +102,7 @@ export async function POST(req: Request) {
         first_name: firstName,
         last_name: lastName,
         role: "owner",
+        offer_type: offerType,
       },
     });
 

@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     // Récupérer les informations du club
     const { data: club, error: clubError } = await supabaseAdmin
       .from('clubs')
-      .select('id, trial_start_date, trial_end_date, trial_current_end_date, stripe_customer_id, subscription_status')
+      .select('id, trial_start_date, trial_end_date, trial_current_end_date, stripe_customer_id, subscription_status, offer_type')
       .eq('id', clubId)
       .single();
 
@@ -205,12 +205,14 @@ export async function POST(req: NextRequest) {
         .eq('id', clubId);
     }
 
-    // Récupérer le Price ID
-    const priceId = getStripePriceId(plan);
+    // Récupérer le Price ID avec l'offer_type
+    const offerType = (club as any).offer_type || 'standard';
+    const priceId = getStripePriceId(plan, offerType);
+
     if (!priceId) {
-      logger.error({ plan }, '[create-subscription] Price ID not configured');
+      logger.error({ plan, offerType }, '[create-subscription] Price ID not configured');
       return NextResponse.json(
-        { error: `Price ID non configuré pour le plan ${plan}. Veuillez contacter le support.` },
+        { error: `Price ID non configuré pour le plan ${plan} (offre ${offerType}). Veuillez contacter le support.` },
         { status: 500 }
       );
     }

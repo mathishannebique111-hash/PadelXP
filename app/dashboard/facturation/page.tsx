@@ -62,7 +62,7 @@ export default async function BillingPage() {
   // Forcer le rechargement en ajoutant un timestamp pour éviter le cache
   const { data: club, error: clubError } = await supabase
     .from("clubs")
-    .select("trial_start, trial_start_date, trial_end_date, trial_current_end_date, trial_base_end_date, trial_status, name, selected_plan, plan_selected_at, subscription_status, subscription_started_at, stripe_subscription_id, auto_extension_unlocked, total_players_count, total_matches_count, total_challenges_count")
+    .select("trial_start, trial_start_date, trial_end_date, trial_current_end_date, trial_base_end_date, trial_status, name, selected_plan, plan_selected_at, subscription_status, subscription_started_at, stripe_subscription_id, auto_extension_unlocked, total_players_count, total_matches_count, total_challenges_count, offer_type")
     .eq("id", clubId)
     .maybeSingle()
     .then(result => {
@@ -351,7 +351,9 @@ export default async function BillingPage() {
   const adminContact = user.email;
 
   // Calculer les prix automatiquement
-  const MONTHLY_PRICE = 39;
+  // Prix dynamique selon le type d'offre
+  const offerType = club?.offer_type || 'standard';
+  const MONTHLY_PRICE = offerType === 'founder' ? 39 : 49;
 
 
   // Informations sur une activation programmée après l'essai

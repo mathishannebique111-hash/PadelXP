@@ -86,7 +86,7 @@ export default async function DashboardHome() {
 
   const { data: club, error: clubError } = await supabase
     .from("clubs")
-    .select("name, code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count, subscription_status, selected_plan, subscription_started_at, stripe_subscription_id")
+    .select("name, code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count, subscription_status, selected_plan, subscription_started_at, stripe_subscription_id, offer_type")
     .eq("id", clubId)
     .maybeSingle();
 
@@ -310,6 +310,7 @@ export default async function DashboardHome() {
           playersCount={club?.total_players_count || 0}
           matchesCount={club?.total_matches_count || 0}
           autoExtensionUnlocked={club?.auto_extension_unlocked || false}
+          offerType={club?.offer_type || 'standard'}
         />
       )}
 

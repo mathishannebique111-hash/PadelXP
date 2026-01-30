@@ -76,35 +76,43 @@ export function formatPlanName(plan: PlanType): string {
 /**
  * Calcule le prix mensuel d'un plan
  */
-export function getMonthlyPrice(plan: PlanType): number {
+export function getMonthlyPrice(plan: PlanType, offerType: 'standard' | 'founder' = 'standard'): number {
   switch (plan) {
     case 'monthly':
-      return 99;
+      return offerType === 'founder' ? 39 : 49;
     case 'annual':
-      return 82; // 99 * 0.83
+      // Prix annuel : Founder 390€ (2 mois offerts) / Standard 490€ ?
+      // Pour l'instant on déduit un prix annuel basé sur l'ancien ratio ou on met un placeholder
+      // Ancien : 99 -> 82 (~17%).
+      // 49 -> ~40? 39 -> ~32?
+      // On va dire 17% de réduction environ.
+      return offerType === 'founder' ? 32 : 40;
   }
 }
 
 /**
  * Calcule le prix total d'un plan
  */
-export function getTotalPrice(plan: PlanType): number {
+export function getTotalPrice(plan: PlanType, offerType: 'standard' | 'founder' = 'standard'): number {
   switch (plan) {
     case 'monthly':
-      return 99;
+      return getMonthlyPrice('monthly', offerType);
     case 'annual':
-      return 982; // 82 * 12 (arrondi)
+      return getMonthlyPrice('annual', offerType) * 12;
   }
 }
 
 /**
  * Calcule l'économie par rapport au plan mensuel
  */
-export function calculateSavings(plan: PlanType): { percentage: number; amount: number } {
-  const monthlyPrice = 99;
-  const planMonthlyPrice = getMonthlyPrice(plan);
+export function calculateSavings(plan: PlanType, offerType: 'standard' | 'founder' = 'standard'): { percentage: number; amount: number } {
+  const monthlyPrice = getMonthlyPrice('monthly', offerType);
+  const planMonthlyPrice = getMonthlyPrice(plan, offerType);
+
+  if (plan === 'monthly') return { percentage: 0, amount: 0 };
+
   const percentage = Math.round(((monthlyPrice - planMonthlyPrice) / monthlyPrice) * 100);
-  const amount = monthlyPrice - planMonthlyPrice;
+  const amount = (monthlyPrice - planMonthlyPrice) * 12; // Économie annuelle totale
 
   return { percentage, amount };
 }
@@ -172,11 +180,15 @@ export function calculateCycleEndDate(startDate: Date, plan: PlanType): Date {
 /**
  * Récupère le Price ID Stripe selon le plan
  */
-export function getStripePriceId(plan: PlanType): string {
+export function getStripePriceId(plan: PlanType, offerType: 'standard' | 'founder' = 'standard'): string {
   switch (plan) {
     case 'monthly':
-      return process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || '';
+      return offerType === 'founder'
+        ? process.env.NEXT_PUBLIC_STRIPE_PRICE_FOUNDER_39 || process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || ''
+        : process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_49 || process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || '';
     case 'annual':
+      // Pour l'instant on garde le prix annuel standard pour tout le monde
+      // ou on peut ajouter une logique similaire si un prix annuel fondateur existe
       return process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || '';
   }
 }

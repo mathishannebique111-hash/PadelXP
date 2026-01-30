@@ -7,6 +7,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import ClubHeader from "./ClubHeader";
 import ParallaxHalos from "@/components/ParallaxHalos";
+import TrialGuard from "@/components/trial/TrialGuard";
 import { logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,17 +16,17 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseAdmin =
   SUPABASE_URL && SERVICE_ROLE_KEY
     ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      })
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
     : null;
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  
+
   // Vérifier d'abord la session pour éviter les déconnexions inattendues
   // Si une session existe mais getUser() échoue temporairement, on ne déconnecte pas
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   // Essayer d'obtenir l'utilisateur avec gestion d'erreur gracieuse
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
@@ -33,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user && !session) {
     redirect("/clubs/login?next=/dashboard");
   }
-  
+
   // Si une session existe mais getUser() échoue temporairement, afficher un message d'erreur temporaire
   if (session && !user && userError) {
     logger.warn("[DashboardLayout] Session exists but getUser() failed (temporary error?):", {
@@ -51,7 +52,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
     );
   }
-  
+
   // Si pas d'utilisateur à ce stade, il y a un problème
   if (!user) {
     redirect("/clubs/login?next=/dashboard");
@@ -62,6 +63,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let clubSlug: string | null = null;
   let clubName: string | null = null;
   let clubLogo: string | null = null;
+
+  // Variables pour le trial (initialisées plus tard)
+  let clubTrialEndDate: string | null = null;
+  let clubTrialCurrentEndDate: string | null = null;
+  let clubSubscriptionStatus: string | null = null;
 
   // Vérifier d'abord si l'utilisateur est un admin de club
   if (supabaseAdmin) {
@@ -98,7 +104,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (supabaseAdmin && clubId) {
     const { data: clubRow, error: clubRowError } = await supabaseAdmin
       .from("clubs")
-      .select("name, logo_url, slug")
+      .select("name, logo_url, slug, trial_end_date, trial_current_end_date, subscription_status")
       .eq("id", clubId)
       .maybeSingle();
 
@@ -110,6 +116,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       clubName = clubName ?? (clubRow.name as string | null);
       clubLogo = clubLogo ?? (clubRow.logo_url as string | null);
       clubSlug = clubSlug ?? (clubRow.slug as string | null);
+      // Stocker les infos de trial
+      clubTrialEndDate = clubRow.trial_end_date as string | null;
+      clubTrialCurrentEndDate = clubRow.trial_current_end_date as string | null;
+      clubSubscriptionStatus = clubRow.subscription_status as string | null;
     }
   }
 
@@ -177,6 +187,35 @@ export default async function DashboardLayout({ children }: { children: React.Re
     clubName = "Club";
   }
 
+  // ========================================
+  // TRIAL EXPIRATION & GRACE PERIOD LOGIC
+  // ========================================
+  let isTrialExpired = false;
+  let daysInGrace = 0;
+  let hasActiveSubscription = false;
+  const GRACE_PERIOD_DAYS = 7;
+
+  // Vérifier le statut d'abonnement
+  hasActiveSubscription = clubSubscriptionStatus === 'active';
+
+  // Récupérer la date de fin d'essai (nouveau système ou ancien)
+  const trialEndDate = clubTrialCurrentEndDate || clubTrialEndDate;
+
+  if (trialEndDate && !hasActiveSubscription) {
+    const now = new Date();
+    const endDate = new Date(trialEndDate);
+
+    // Calculer le nombre de jours depuis l'expiration
+    const daysSinceExpiration = Math.floor((now.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Si l'essai est expiré (daysSinceExpiration >= 0)
+    if (daysSinceExpiration >= 0) {
+      isTrialExpired = true;
+      // Calculer les jours restants dans la période de grâce
+      daysInGrace = Math.max(0, GRACE_PERIOD_DAYS - daysSinceExpiration);
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#121212] to-[#1E1E1E] text-white">
       {/* Menu hamburger et volet latéral (visible sur tous les écrans) */}
@@ -218,8 +257,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </div>
         </div>
-        
-        {children}
+
+        <TrialGuard
+          isTrialExpired={isTrialExpired}
+          daysInGrace={daysInGrace}
+          hasActiveSubscription={hasActiveSubscription}
+        >
+          {children}
+        </TrialGuard>
       </main>
     </div>
   );
