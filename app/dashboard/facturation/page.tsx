@@ -346,8 +346,8 @@ export default async function BillingPage() {
     : null;
   const billingEmail = user.email;
   const legalName = club?.name || "";
-  const billingAddress = null;
-  const vatNumber = null;
+  const billingAddress = subscription?.billing_address || null;
+  // vatNumber removed as handled by Stripe directly now
   const adminContact = user.email;
 
   // Calculer les prix automatiquement
@@ -738,7 +738,6 @@ export default async function BillingPage() {
             <BillingInfoSection
               legalName={legalName}
               billingAddress={billingAddress}
-              vatNumber={vatNumber}
               billingEmail={billingEmail}
               adminContact={adminContact}
               paymentMethod={paymentMethod}

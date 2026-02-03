@@ -7,7 +7,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2024-12-18.acacia' as any,
 });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,8 +15,8 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
   : null;
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     // Vérifier que la clé Stripe est configurée
     if (!process.env.STRIPE_SECRET_KEY) {
-      logger.error({}, 'STRIPE_SECRET_KEY is not configured');
+      logger.error('STRIPE_SECRET_KEY is not configured', {});
       return NextResponse.json(
         { error: 'Stripe configuration missing' },
         { status: 500 }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Vérifier l'authentification
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -107,8 +107,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, '[customer-portal] Error');
-    
+    logger.error('[customer-portal] Error', { error: error instanceof Error ? error.message : 'Unknown error' });
+
     return NextResponse.json(
       { error: 'Failed to create customer portal session' },
       { status: 500 }

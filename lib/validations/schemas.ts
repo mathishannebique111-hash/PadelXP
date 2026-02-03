@@ -72,8 +72,16 @@ export const RemoveAdminSchema = z.object({
 
 // 8. Billing update (adresse facturation)
 export const BillingDetailsSchema = z.object({
-  billingEmail: z.string().email(),
-  billingAddress: z.string().min(5).max(500),
+  billingEmail: z.string().email().optional(),
+  billingAddress: z.union([
+    z.string(),
+    z.object({
+      street: z.string().optional(),
+      postal: z.string().optional(),
+      city: z.string().optional(),
+      country: z.string().optional(),
+    })
+  ]).optional(),
   vatNumber: z.string().optional(),
 });
 

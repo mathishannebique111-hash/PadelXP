@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import EditBillingAddress from "./EditBillingAddress";
-import EditVatNumber from "./EditVatNumber";
 import EditBillingEmail from "./EditBillingEmail";
 
 interface BillingAddress {
@@ -16,7 +15,6 @@ interface BillingAddress {
 interface BillingInfoSectionProps {
   legalName: string;
   billingAddress: BillingAddress | null | string;
-  vatNumber: string | null;
   billingEmail: string;
   adminContact: string;
   paymentMethod: {
@@ -32,7 +30,6 @@ interface BillingInfoSectionProps {
 export default function BillingInfoSection({
   legalName,
   billingAddress,
-  vatNumber,
   billingEmail,
   adminContact,
   paymentMethod,
@@ -41,7 +38,6 @@ export default function BillingInfoSection({
 }: BillingInfoSectionProps) {
   const router = useRouter();
   const [showEditAddress, setShowEditAddress] = useState(false);
-  const [showEditVat, setShowEditVat] = useState(false);
   const [showEditEmail, setShowEditEmail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [invoicePreference, setInvoicePreference] = useState(hasInvoicePreference);
@@ -66,7 +62,6 @@ export default function BillingInfoSection({
   const handleUpdateBilling = async (data: {
     billingEmail?: string;
     billingAddress?: BillingAddress | null;
-    vatNumber?: string;
   }) => {
     setLoading(true);
     try {
@@ -158,23 +153,6 @@ export default function BillingInfoSection({
         </button>
       </div>
 
-      {/* TVA */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <div className="text-xs text-white/60 mb-1">TVA (optionnel)</div>
-            <div className="text-sm text-white">{vatNumber || "—"}</div>
-          </div>
-        </div>
-        <button
-          onClick={() => setShowEditVat(true)}
-          className="mt-2 text-xs text-blue-400 hover:text-blue-300 underline transition-colors"
-          disabled={loading}
-        >
-          {vatNumber ? "Modifier" : "Ajouter"}
-        </button>
-      </div>
-
       {/* Email de facturation */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex items-start justify-between mb-2">
@@ -262,16 +240,6 @@ export default function BillingInfoSection({
         />
       )}
 
-      {showEditVat && (
-        <EditVatNumber
-          currentVatNumber={vatNumber}
-          onSave={async (vat) => {
-            await handleUpdateBilling({ vatNumber: vat });
-          }}
-          onClose={() => setShowEditVat(false)}
-        />
-      )}
-
       {showEditEmail && (
         <EditBillingEmail
           currentEmail={billingEmail}
@@ -284,4 +252,3 @@ export default function BillingInfoSection({
     </>
   );
 }
-
