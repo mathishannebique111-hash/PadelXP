@@ -260,11 +260,11 @@ export default function MatchTabs(props: MatchTabsProps) {
   return (
     <Suspense fallback={
       <div className="w-full">
-        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Trouve tes partenaires</div>
-          {/* <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Boost</div> */}
+        <div className="flex items-center justify-between w-full mb-4 sm:mb-6 border-b border-white/10">
+          <div className="px-1 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
+          <div className="px-1 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
+          <div className="px-1 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Trouve tes partenaires</div>
+          {/* <div className="px-1 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Boost</div> */}
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center">
           <div className="text-white/60">Chargement...</div>
