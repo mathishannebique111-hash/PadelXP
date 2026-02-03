@@ -40,7 +40,7 @@ export async function DELETE(request: Request) {
       .from("match_invitations")
       .select("id, sender_id")
       .eq("id", invitationId)
-      .eq("sender_id", user.id)
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .maybeSingle();
 
     if (checkError) {
@@ -72,8 +72,7 @@ export async function DELETE(request: Request) {
     const { error: deleteError } = await supabaseAdmin
       .from("match_invitations")
       .delete()
-      .eq("id", invitationId)
-      .eq("sender_id", user.id);
+      .eq("id", invitationId);
 
     if (deleteError) {
       console.error("[API] Erreur suppression invitation:", deleteError);

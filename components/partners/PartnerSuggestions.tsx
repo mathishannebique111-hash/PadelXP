@@ -195,7 +195,12 @@ export default function PartnerSuggestions() {
 
         if (error) {
           console.error("[PartnerSuggestions] Erreur création invitation", error);
-          showToast("Invitation déjà envoyée", "error");
+
+          if (error.code === '23503') { // Foreign key violation
+            showToast("Ce joueur n'est plus actif.", "error");
+          } else {
+            showToast("Erreur lors de l'envoi de l'invitation", "error");
+          }
           return;
         }
 

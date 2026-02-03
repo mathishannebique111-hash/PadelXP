@@ -461,19 +461,19 @@ export default function MatchInvitationsReceived() {
   return (
     <>
       <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-base md:text-lg font-bold text-white">
-              Invitations à jouer
-            </h3>
-          </div>
-          {invitations.length > 0 && (
+        {invitations.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-emerald-400" />
+              <h3 className="text-base md:text-lg font-bold text-white">
+                Invitations à jouer
+              </h3>
+            </div>
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold">
               {invitations.length}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           {invitations.map((invitation) => {
