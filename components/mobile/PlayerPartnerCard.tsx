@@ -371,7 +371,10 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
 
     setSearching(true);
     try {
-      const params = new URLSearchParams({ q: query });
+      const params = new URLSearchParams({
+        q: query,
+        scope: 'club'
+      });
       const response = await fetch(`/api/players/search?${params.toString()}`, {
         credentials: 'include',
       });
