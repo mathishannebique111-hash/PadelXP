@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
+import { Calendar } from "lucide-react";
 import ClubHeader, { AccentPalette } from "./ClubHeader";
 import ClubDetailsClient from "./ClubDetailsClient";
 
@@ -12,6 +14,7 @@ type OpeningHoursValue = {
 type OpeningHours = Record<string, OpeningHoursValue>;
 
 interface ClubProfileClientProps {
+  clubId?: string | null;
   name: string;
   logoUrl?: string | null;
   description?: string | null;
@@ -24,6 +27,7 @@ interface ClubProfileClientProps {
 }
 
 export default function ClubProfileClient({
+  clubId,
   name,
   logoUrl,
   description,
@@ -47,6 +51,9 @@ export default function ClubProfileClient({
         description={description}
         onAccentChange={handleAccentChange}
       />
+
+
+
       <ClubDetailsClient
         addressLine={addressLine}
         phone={phone}
@@ -59,3 +66,4 @@ export default function ClubProfileClient({
     </div>
   );
 }
+

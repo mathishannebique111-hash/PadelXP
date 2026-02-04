@@ -6,6 +6,7 @@ import ClubProfileClient from "@/components/club/ClubProfileClient";
 import ClubTabs from "@/components/club/ClubTabs";
 import LeaderboardContent from "@/components/LeaderboardContent";
 import ChallengesContent from "@/components/ChallengesContent";
+import TournamentsContent from "@/components/club/TournamentsContent"; // Import ajouté
 import { getUserClubInfo, getClubPublicExtras } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
@@ -32,7 +33,7 @@ export default async function ClubPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = resolvedSearchParams?.tab === 'classement' ? 'classement' : resolvedSearchParams?.tab === 'challenges' ? 'challenges' : 'club';
+  const activeTab = resolvedSearchParams?.tab === 'classement' ? 'classement' : resolvedSearchParams?.tab === 'challenges' ? 'challenges' : resolvedSearchParams?.tab === 'tournaments' ? 'tournaments' : 'club';
 
   if (!user) {
     return (
@@ -201,6 +202,7 @@ export default async function ClubPage({
                   <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon club</div>
                   <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Classement global</div>
                   <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Challenges</div>
+                  <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Tournois</div>
                 </div>
                 <div className="mt-4 sm:mt-6 flex items-center justify-center">
                   <div className="text-white/60">Chargement...</div>
@@ -212,6 +214,7 @@ export default async function ClubPage({
                 clubContent={
                   clubData ? (
                     <ClubProfileClient
+                      clubId={clubId}
                       name={clubData.name}
                       logoUrl={clubData.logoUrl}
                       description={clubData.description}
@@ -237,6 +240,7 @@ export default async function ClubPage({
                   />
                 }
                 challengesContent={<ChallengesContent />}
+                tournamentsContent={<TournamentsContent />}
               />
             </Suspense>
           </div>

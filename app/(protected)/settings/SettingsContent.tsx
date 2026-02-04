@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { User, MessageCircle, Star, Trash2, ChevronRight, LogOut, Shield, Settings } from "lucide-react";
+import { User, MessageCircle, Star, Trash2, ChevronRight, LogOut, Shield, Settings, CalendarCheck } from "lucide-react";
 import PageTitle from "@/components/PageTitle";
 import LogoutButton from "@/components/LogoutButton";
 import Image from "next/image";
@@ -13,6 +13,7 @@ export default function SettingsContent() {
       icon: User,
       href: "/settings/profile",
     },
+
     {
       label: "Support PadelXP",
       icon: MessageCircle,

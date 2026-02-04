@@ -21,12 +21,23 @@ WHERE type NOT IN (
     'chat', 
     'system',
     'partnership_request', 
-    'partnership_accepted', 
+    'partnership_accepted',
+    'partnership_declined',
     'match_proposal', 
     'match_accepted', 
     'match_declined',
     'match_validated',
-    'match_refusal_warning'
+    'match_refusal_warning',
+    'team_challenge_received', 
+    'team_challenge_accepted_step', 
+    'team_challenge_accepted_final', 
+    'team_challenge_refused', 
+    'team_challenge_expired', 
+    'team_challenge_reminder',
+    'match_invitation_received', 
+    'match_invitation_accepted', 
+    'match_invitation_refused', 
+    'match_invitation_expired'
 );
 
 -- 3. Ajouter la nouvelle contrainte avec tous les types requis
@@ -43,11 +54,22 @@ ALTER TABLE public.notifications ADD CONSTRAINT notifications_type_check
     'system',
     'partnership_request', 
     'partnership_accepted', 
+    'partnership_declined',
     'match_proposal', 
     'match_accepted', 
     'match_declined',
     'match_validated',
-    'match_refusal_warning'
+    'match_refusal_warning',
+    'team_challenge_received', 
+    'team_challenge_accepted_step', 
+    'team_challenge_accepted_final', 
+    'team_challenge_refused', 
+    'team_challenge_expired', 
+    'team_challenge_reminder',
+    'match_invitation_received', 
+    'match_invitation_accepted', 
+    'match_invitation_refused', 
+    'match_invitation_expired'
   ));
 
 -- Message de confirmation

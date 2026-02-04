@@ -111,10 +111,14 @@ export async function GET(req: Request) {
       }
     }
 
-    if (!userClubId) {
+    const requestedScope = searchParams.get("scope") || "global";
+
+    // Si l'utilisateur n'a pas de club, il ne peut pas chercher "dans son club"
+    // Mais il peut chercher en global
+    if (!userClubId && requestedScope === "club") {
       const userIdPreview = user.id.substring(0, 8) + "…";
       logger.warn(
-        "[Search API] User without club attempting search",
+        "[Search API] User without club attempting club search",
         { userId: userIdPreview }
       );
       return NextResponse.json({ players: [] }, { status: 403 });
@@ -182,12 +186,25 @@ export async function GET(req: Request) {
 
     // Traiter les profils (Users)
     if (profiles) {
-      profiles.forEach((profile: any) => {
-        if (profile.id === user.id) return;
+      // Vérifier l'existence des utilisateurs dans Auth pour exclure les comptes supprimés (orphelins)
+      const profilePromises = profiles.map(async (profile: any) => {
+        if (profile.id === user.id) return null;
 
         const displayNameLower = (profile.display_name || "").toLowerCase();
         if (displayNameLower.includes("padel") && displayNameLower.includes("club")) {
-          return;
+          return null;
+        }
+
+        // Vérification stricte : L'utilisateur existe-t-il dans Auth ?
+        // Cela permet de filtrer les profils orphelins restant après une suppression de compte
+        try {
+          const { data: authData, error: authError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+          if (authError || !authData.user) {
+            // logger.debug(`[Search API] Profile ${profile.id} is orphaned (no auth user), skipping`);
+            return null;
+          }
+        } catch (e) {
+          return null;
         }
 
         let first_name = profile.first_name || "";
@@ -201,16 +218,23 @@ export async function GET(req: Request) {
 
         const displayName = profile.display_name || `${first_name} ${last_name}`.trim();
 
-        results.push({
+        return {
           id: profile.id,
           first_name,
           last_name,
-          type: "user",
+          type: "user" as const,
           display_name: displayName,
           club_name: profile.clubs?.name || null,
           is_external: profile.club_id !== userClubId,
           email: profile.email || null
-        });
+        };
+      });
+
+      const processedProfiles = await Promise.all(profilePromises);
+
+      // Ajouter les profils valides aux résultats
+      processedProfiles.forEach(p => {
+        if (p) results.push(p);
       });
     }
 

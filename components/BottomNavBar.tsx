@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Swords, Users, Trophy } from 'lucide-react';
+import { Home, Swords, Users, LayoutGrid } from 'lucide-react';
 import { PushNotificationsService } from '@/lib/notifications/push-notifications';
 
 interface NavItem {
@@ -24,7 +24,7 @@ export default function BottomNavBar() {
         { href: '/home', label: 'Profil', icon: <Home size={20} />, navKey: 'home' },
         { href: '/match/new', label: 'Matchs', icon: <Swords size={20} />, navKey: 'match' },
         { href: '/club', label: 'Club', icon: <Users size={20} />, navKey: 'club' },
-        { href: '/tournaments', label: 'Tournois', icon: <Trophy size={20} />, navKey: 'tournaments' },
+        { href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' },
     ];
 
     const fetchCounts = async () => {
@@ -122,7 +122,7 @@ export default function BottomNavBar() {
         if (pathname === '/home' || pathname?.startsWith('/home')) newIndex = 0;
         else if (pathname === '/match/new' || pathname?.startsWith('/match')) newIndex = 1;
         else if (pathname === '/club' || pathname?.startsWith('/club')) newIndex = 2;
-        else if (pathname === '/tournaments' || pathname?.startsWith('/tournaments')) newIndex = 3;
+        else if (pathname === '/book' || pathname?.startsWith('/book') || pathname === '/reservations' || pathname?.startsWith('/reservations')) newIndex = 3;
         setActiveIndex(newIndex);
     }, [pathname]);
 

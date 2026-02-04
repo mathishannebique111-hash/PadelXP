@@ -110,11 +110,10 @@ export default function PlayerAutocomplete({
       // ... (existing logging)
 
       setSearchResults(data);
+
       if (data.length > 0) {
         setShowDropdown(true);
       } else {
-        // Optionnel : Afficher dropdown vide ?
-        setSearchResults([]);
         setShowDropdown(false);
       }
     } catch (error) {
@@ -329,24 +328,8 @@ export default function PlayerAutocomplete({
                 </button>
               ))}
 
-              {value.trim().length > 0 && searchScope !== 'club' && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault(); // Empêcher la perte de focus immédiate
-                    setShowCreateGuest(true);
+              {/* Option "Inviter un nouveau joueur" supprimée à la demande (Step 1239) */}
 
-                    // Pré-remplir les champs si possible
-                    const parts = value.trim().split(/\s+/);
-                    if (parts.length > 0) setGuestFirstName(parts[0]);
-                    if (parts.length > 1) setGuestLastName(parts.slice(1).join(" "));
-                  }}
-                  className="w-full px-4 py-3 text-left text-sm hover:bg-blue-50 transition-colors text-blue-600 font-medium border-t border-gray-100 flex items-center gap-2"
-                >
-                  <UserPlus size={16} />
-                  Inviter "{value}" (Nouvel invité)
-                </button>
-              )}
             </>
           ) : (
             <div className="p-4 bg-gray-50">
