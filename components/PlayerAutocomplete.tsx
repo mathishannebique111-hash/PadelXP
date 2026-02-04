@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import { logger } from '@/lib/logger';
 
@@ -32,6 +33,7 @@ export default function PlayerAutocomplete({
 
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const [showCreateGuest, setShowCreateGuest] = useState(false);
   const [guestFirstName, setGuestFirstName] = useState("");
   const [guestLastName, setGuestLastName] = useState("");
@@ -39,6 +41,29 @@ export default function PlayerAutocomplete({
   const [creatingGuest, setCreatingGuest] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const updatePosition = () => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (showDropdown) {
+      updatePosition();
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+    }
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [showDropdown]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -294,8 +319,15 @@ export default function PlayerAutocomplete({
         <div className="mt-1 text-xs text-red-400">{error}</div>
       )}
 
-      {showDropdown && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-80 overflow-y-auto">
+      {showDropdown && typeof document !== 'undefined' && createPortal(
+        <div
+          style={{
+            top: coords.top + 4,
+            left: coords.left,
+            width: coords.width
+          }}
+          className="fixed z-[999999] rounded-md border border-gray-200 bg-white shadow-lg max-h-80 overflow-y-auto"
+        >
           {!showCreateGuest ? (
             <>
               {searchResults.length > 0 ? (
@@ -392,7 +424,8 @@ export default function PlayerAutocomplete({
               </div>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
