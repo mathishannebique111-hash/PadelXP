@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Calendar, MapPin, Users, Clock, AlertCircle, X, UserPlus, Check } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, AlertCircle, X, UserPlus, Check, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import PlayerAutocomplete from "../PlayerAutocomplete";
@@ -20,6 +20,7 @@ interface Reservation {
         start_time: string;
         end_time: string;
         status: string;
+        payment_method?: string;
         total_price: number;
         expires_at: string | null;
         reservation_participants: { id: string }[];
@@ -51,6 +52,27 @@ export default function ReservationsListContent() {
         { name: "", id: null }
     ]);
     const [inviting, setInviting] = useState(false);
+    const [isPaying, setIsPaying] = useState<string | null>(null);
+
+    const handlePayment = async (reservationId: string) => {
+        setIsPaying(reservationId);
+        try {
+            const res = await fetch(`/api/reservations/${reservationId}/checkout`, {
+                method: "POST",
+            });
+            const data = await res.json();
+            if (res.ok && data.url) {
+                window.location.href = data.url;
+            } else {
+                alert("Erreur: " + (data.error || "Impossible d'initialiser le paiement"));
+                setIsPaying(null);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erreur technique");
+            setIsPaying(null);
+        }
+    };
 
     useEffect(() => {
         loadReservations();
@@ -329,6 +351,29 @@ export default function ReservationsListContent() {
                                         </div>
                                     )}
                                 </Link>
+
+                                {/* Bouton pour payer sa part (Stripe) */}
+                                {filter === "upcoming" && item.reservation.payment_method === 'stripe' && item.payment_status === 'pending' && item.reservation.status === 'pending_payment' && (
+                                    <div className="mt-4 border-t border-white/10 pt-3">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePayment(item.reservation.id);
+                                            }}
+                                            disabled={isPaying === item.reservation.id}
+                                            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white rounded-lg py-2.5 px-4 text-sm font-semibold shadow-lg shadow-green-900/20 transition-all active:scale-[0.98]"
+                                        >
+                                            {isPaying === item.reservation.id ? (
+                                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <CreditCard className="w-4 h-4" />
+                                                    <span>Payer ma part ({item.amount}€)</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Bouton pour inviter les joueurs si nécessaire */}
                                 {needsPlayers(item) && filter === "upcoming" && (

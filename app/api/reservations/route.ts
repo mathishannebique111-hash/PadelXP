@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
                     getAll() {
                         return cookieStore.getAll();
                     },
-                    setAll(cookiesToSet) {
+                    setAll(cookiesToSet: any) {
                         // GET requests don't usually set cookies in Next.js handlers unless needed
                         // but strictly speaking we should just read here.
                         // For SSR auth usually we implement setAll if we want to refresh tokens, 
@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
           start_time,
           end_time,
           status,
+          payment_method,
           total_price,
           expires_at,
           reservation_participants (
@@ -156,9 +157,9 @@ export async function POST(request: NextRequest) {
                     getAll() {
                         return cookieStore.getAll();
                     },
-                    setAll(cookiesToSet) {
+                    setAll(cookiesToSet: any) {
                         try {
-                            cookiesToSet.forEach(({ name, value, options }) => {
+                            cookiesToSet.forEach(({ name, value, options }: any) => {
                                 cookieStore.set(name, value, options);
                             });
                         } catch (e) {

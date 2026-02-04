@@ -11,12 +11,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 const supabaseAdmin = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: { autoRefreshToken: false, persistSession: false }
-      }
-    )
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: { autoRefreshToken: false, persistSession: false }
+    }
+  )
   : null;
 
 export const dynamic = 'force-dynamic';
@@ -74,13 +74,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    logger.info({ eventType: event.type, eventId: event.id }, '[webhook] Event received');
+    logger.info('[webhook] Event received', { eventType: event.type, eventId: event.id });
 
     // Traiter les événements selon leur type
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        logger.info({ sessionId: session.id, mode: session.mode, metadata: session.metadata }, '[webhook] checkout.session.completed');
+        logger.info('[webhook] checkout.session.completed', { sessionId: session.id, mode: session.mode, metadata: session.metadata });
 
         // Si c'est un achat de boost pour un joueur
         if (session.mode === 'payment' && session.metadata?.type === 'player_boost') {
@@ -110,14 +110,38 @@ export async function POST(req: NextRequest) {
           );
 
           if (result.success) {
-            logger.info({
+            logger.info('[webhook] Boost credits added successfully', {
               userId,
               quantity: result.credited,
               priceId: priceId || 'unknown',
               sessionId: session.id,
-            }, '[webhook] Boost credits added successfully');
+            });
           } else {
             logger.error('[webhook] Failed to credit boosts:', result.error);
+          }
+        } else if (session.mode === 'payment' && session.metadata?.reservation_id) {
+          // Paiement partagé d'une réservation
+          const reservationId = session.metadata.reservation_id;
+          const participantId = session.metadata.participant_id;
+          const paymentIntentId = session.payment_intent as string;
+
+          logger.info('[webhook] Processing reservation payment', { reservationId, participantId });
+
+          if (supabaseAdmin) {
+            const { error: updateError } = await supabaseAdmin
+              .from('reservation_participants')
+              .update({
+                payment_status: 'paid',
+                paid_at: new Date().toISOString(),
+                stripe_payment_intent_id: paymentIntentId
+              })
+              .eq('id', participantId);
+
+            if (updateError) {
+              logger.error('[webhook] Failed to update participant payment status', { error: updateError });
+            } else {
+              logger.info('[webhook] Participant marked as paid', { participantId });
+            }
           }
         } else {
           // Le traitement pour les autres types de checkout est déjà fait ailleurs
@@ -129,7 +153,7 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        logger.info({ eventType: event.type, subscriptionId: subscription.id, cancelAtPeriodEnd: subscription.cancel_at_period_end, status: subscription.status }, '[webhook] subscription event');
+        logger.info('[webhook] subscription event', { eventType: event.type, subscriptionId: subscription.id, cancelAtPeriodEnd: subscription.cancel_at_period_end, status: subscription.status });
 
         // Mettre à jour la base de données avec les informations de l'abonnement Stripe
         if (supabaseAdmin && subscription.id) {
@@ -185,8 +209,8 @@ export async function POST(req: NextRequest) {
 
           // Si on a le customer_id, mettre à jour aussi
           if (subscription.customer) {
-            updateData.stripe_customer_id = typeof subscription.customer === 'string' 
-              ? subscription.customer 
+            updateData.stripe_customer_id = typeof subscription.customer === 'string'
+              ? subscription.customer
               : subscription.customer.id;
           }
 
@@ -194,7 +218,7 @@ export async function POST(req: NextRequest) {
             .from('subscriptions')
             .update(updateData)
             .eq('stripe_subscription_id', subscription.id);
-          
+
           logger.info('[webhook] Subscription updated in database:', subscription.id);
         }
         break;
@@ -203,12 +227,12 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         logger.info('[webhook] subscription.deleted:', subscription.id);
-        
+
         // Mettre à jour le statut dans la base de données
         if (supabaseAdmin) {
           await supabaseAdmin
             .from('subscriptions')
-            .update({ 
+            .update({
               status: 'canceled',
               cancel_at_period_end: false,
             })
@@ -220,7 +244,7 @@ export async function POST(req: NextRequest) {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         logger.info('[webhook] invoice.payment_succeeded:', invoice.id);
-        
+
         // Mettre à jour le statut de l'abonnement si nécessaire
         // Générer une facture PDF (voir section facturation)
         break;
@@ -229,7 +253,7 @@ export async function POST(req: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         logger.info('[webhook] invoice.payment_failed:', invoice.id);
-        
+
         // Notifier le client ou mettre à jour le statut
         if (supabaseAdmin && invoice.subscription) {
           await supabaseAdmin
@@ -248,7 +272,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, eventType: event.type });
 
   } catch (error: any) {
-    logger.error({ err: error }, '[webhook] Error processing webhook');
+    logger.error('[webhook] Error processing webhook', { err: error });
     return NextResponse.json(
       { error: `Webhook error: ${error.message}` },
       { status: 500 }
@@ -258,7 +282,7 @@ export async function POST(req: NextRequest) {
 
 // Stripe nécessite que les webhooks acceptent aussi GET pour vérification
 export async function GET() {
-  return NextResponse.json({ 
+  return NextResponse.json({
     message: 'Stripe webhook endpoint',
     status: 'active'
   });
