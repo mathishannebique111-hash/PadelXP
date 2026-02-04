@@ -382,7 +382,7 @@ export default function ReservationsListContent() {
                                 </div>
                                 <p className="text-sm text-gray-400 mb-6">Sélectionnez les 3 autres joueurs pour valider la réservation et envoyer les invitations.</p>
 
-                                <div className="space-y-5">
+                                <div className="space-y-5 pb-40">
                                     {[0, 1, 2].map((i) => (
                                         <div key={i} className="relative" style={{ zIndex: 40 - i }}>
                                             <label className="text-xs font-semibold text-blue-300 uppercase mb-1.5 block">

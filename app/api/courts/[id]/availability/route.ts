@@ -18,6 +18,13 @@ export async function GET(
             return NextResponse.json({ error: "date requis (YYYY-MM-DD)" }, { status: 400 });
         }
 
+        // Lazy Expiration: Nettoyer les réservations expirées à la volée
+        try {
+            await supabase.rpc('expire_unpaid_reservations');
+        } catch (e) {
+            console.error("Lazy expiration failed:", e);
+        }
+
         // Vérifier que le terrain existe
         const { data: court, error: courtError } = await supabase
             .from("courts")

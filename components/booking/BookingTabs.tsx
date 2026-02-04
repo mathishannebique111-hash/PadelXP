@@ -35,7 +35,7 @@ function BookingTabsContent({
     return (
         <div className="w-full">
             {/* Onglets */}
-            <div className="flex items-center sm:justify-center overflow-x-auto gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-center gap-0 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -45,8 +45,8 @@ function BookingTabsContent({
                             newUrl.searchParams.set('tab', tab.id);
                             window.history.replaceState(null, '', newUrl.toString());
                         }}
-                        className={`flex-shrink-0 px-4 sm:px-6 py-2 sm:py-3 text-sm font-semibold transition-all duration-200 relative whitespace-nowrap ${currentTab === tab.id
-                            ? 'text-white border-b-2 border-padel-green'
+                        className={`w-full sm:w-auto px-2 sm:px-6 py-3 text-sm font-semibold transition-all duration-200 relative whitespace-nowrap text-center ${currentTab === tab.id
+                            ? 'text-white'
                             : 'text-white/60 hover:text-white/80'
                             }`}
                     >
