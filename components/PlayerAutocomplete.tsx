@@ -110,12 +110,7 @@ export default function PlayerAutocomplete({
       // ... (existing logging)
 
       setSearchResults(data);
-
-      if (data.length > 0) {
-        setShowDropdown(true);
-      } else {
-        setShowDropdown(false);
-      }
+      setShowDropdown(true);
     } catch (error) {
       logger.error("Error searching players:", error);
     }
@@ -281,7 +276,8 @@ export default function PlayerAutocomplete({
           type="text"
           value={value}
           onChange={handleInputChange}
-          onBlur={handleBlur}
+          // onBlur supprimé pour éviter les fermetures intempestives sur mobile
+          // La fermeture est gérée par le clickOutside
           onFocus={() => {
             if (value.trim()) {
               searchPlayers(value);
@@ -302,31 +298,37 @@ export default function PlayerAutocomplete({
         <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-80 overflow-y-auto">
           {!showCreateGuest ? (
             <>
-              {searchResults.map((player) => (
-                <button
-                  key={`${player.type}-${player.id}`}
-                  type="button"
-                  onClick={() => handleSelectPlayer(player)}
-                  className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">{player.display_name}</span>
-                    <span className="flex items-center gap-2 text-xs">
-                      {player.type === "user" ? (
-                        player.is_external ? (
-                          <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                            <span className="truncate max-w-[100px]">{player.club_name || "Autre club"}</span>
-                          </span>
+              {searchResults.length > 0 ? (
+                searchResults.map((player) => (
+                  <button
+                    key={`${player.type}-${player.id}`}
+                    type="button"
+                    onClick={() => handleSelectPlayer(player)}
+                    className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-gray-900">{player.display_name}</span>
+                      <span className="flex items-center gap-2 text-xs">
+                        {player.type === "user" ? (
+                          player.is_external ? (
+                            <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                              <span className="truncate max-w-[100px]">{player.club_name || "Autre club"}</span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">Inscrit</span>
+                          )
                         ) : (
-                          <span className="text-gray-500">Inscrit</span>
-                        )
-                      ) : (
-                        <span className="text-gray-400 italic">Invité</span>
-                      )}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                          <span className="text-gray-400 italic">Invité</span>
+                        )}
+                      </span>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-500 italic text-center">
+                  Aucun joueur trouvé
+                </div>
+              )}
 
               {/* Option "Inviter un nouveau joueur" supprimée à la demande (Step 1239) */}
 
