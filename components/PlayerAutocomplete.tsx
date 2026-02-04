@@ -46,8 +46,8 @@ export default function PlayerAutocomplete({
     if (wrapperRef.current) {
       const rect = wrapperRef.current.getBoundingClientRect();
       setCoords({
-        top: rect.bottom,
-        left: rect.left,
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
         width: rect.width,
       });
     }
@@ -322,11 +322,12 @@ export default function PlayerAutocomplete({
       {showDropdown && typeof document !== 'undefined' && createPortal(
         <div
           style={{
+            position: 'absolute',
             top: coords.top + 4,
             left: coords.left,
             width: coords.width
           }}
-          className="fixed z-[999999] rounded-md border border-gray-200 bg-white shadow-lg max-h-80 overflow-y-auto"
+          className="z-[999999] rounded-md border border-gray-200 bg-white shadow-lg max-h-80 overflow-y-auto"
         >
           {!showCreateGuest ? (
             <>
