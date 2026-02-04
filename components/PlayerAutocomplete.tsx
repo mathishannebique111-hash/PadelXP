@@ -325,9 +325,10 @@ export default function PlayerAutocomplete({
             position: 'absolute',
             top: coords.top + 4,
             left: coords.left,
-            width: coords.width
+            width: coords.width,
+            zIndex: 2147483647
           }}
-          className="z-[999999] rounded-md border border-gray-200 bg-white shadow-lg max-h-80 overflow-y-auto"
+          className="rounded-md border border-gray-200 bg-white shadow-lg max-h-80 overflow-y-auto"
         >
           {!showCreateGuest ? (
             <>
