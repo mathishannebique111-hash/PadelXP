@@ -331,7 +331,7 @@ export default function ReservationsListContent() {
                                                                     <div className="w-1.5 h-1.5 bg-white rounded-full" />
                                                                 </div>
                                                             )}
-                                                            {isConfirmed && !p.is_organizer && (
+                                                            {isConfirmed && (
                                                                 <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border border-[#1a1c29] rounded-full"></div>
                                                             )}
                                                         </div>

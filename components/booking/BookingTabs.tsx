@@ -9,12 +9,14 @@ interface BookingTabsProps {
     bookingContent: React.ReactNode;
     reservationsContent: React.ReactNode;
     activeTab?: TabType;
+    pendingCount?: number;
 }
 
 function BookingTabsContent({
     bookingContent,
     reservationsContent,
-    activeTab = 'book'
+    activeTab = 'book',
+    pendingCount = 0
 }: BookingTabsProps) {
     const searchParams = useSearchParams();
     const tabFromUrl = searchParams?.get('tab') as TabType | null;
@@ -51,6 +53,12 @@ function BookingTabsContent({
                             }`}
                     >
                         <span>{tab.label}</span>
+                        {tab.id === 'my-reservations' && pendingCount > 0 && (
+                            <span className="absolute top-2 right-1 sm:right-2 flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                            </span>
+                        )}
                         {currentTab === tab.id && (
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
                         )}

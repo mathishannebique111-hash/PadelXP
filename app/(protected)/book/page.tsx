@@ -26,6 +26,13 @@ export default async function BookPage({
     // Récupérer le club de l'utilisateur
     const { clubId, clubName } = await getUserClubInfo();
 
+    const { count: pendingCount } = await supabase
+        .from('reservation_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('payment_status', 'pending')
+        .eq('is_organizer', false);
+
     const activeTab = resolvedSearchParams?.tab === 'my-reservations' ? 'my-reservations' : 'book';
 
     return (
@@ -38,6 +45,7 @@ export default async function BookPage({
                 <div className="mt-6">
                     <BookingTabs
                         activeTab={activeTab}
+                        pendingCount={pendingCount || 0}
                         bookingContent={
                             clubId ? (
                                 <BookingContent clubId={clubId} />
