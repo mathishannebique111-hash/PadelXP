@@ -110,19 +110,24 @@ export default function ReservationsListContent() {
     };
 
     const now = new Date();
+
+    const isReservationValidated = (r: Reservation) => {
+        const participants = r.reservation.reservation_participants || [];
+        const confirmedCount = participants.filter((p: any) =>
+            p.is_organizer || p.payment_status === 'paid' || p.payment_status === 'confirmed'
+        ).length;
+        return confirmedCount >= 4;
+    };
+
     const filteredReservations = reservations.filter((r) => {
         const startTime = new Date(r.reservation.start_time);
 
-        // Show in "upcoming" if future OR (past but status is NOT expired/cancelled, i.e. we want to keep it visible?)
-        // User said: "enlève l'expiration des réservations déjà passées pour que le joueur puisse les voir tout le temps"
-        // This likely means: If I booked it and it passed, I still want to see it? 
-        // Standard behavior: Past = History. 
-        // "pour que le joueur puisse les voir tout le temps" might mean "Show all"?
-        // But we have tabs.
-        // Let's assume they mean: don't auto-expire UNPAID ones instantly from view?
-        // Or simply: ensure logic is strictly time based.
-
-        return filter === "upcoming" ? startTime >= now : startTime < now;
+        if (filter === "upcoming") {
+            return startTime >= now;
+        } else {
+            // Past: only validated
+            return startTime < now && isReservationValidated(r);
+        }
     });
 
     const getStatusBadge = (status: string) => {
@@ -143,9 +148,9 @@ export default function ReservationsListContent() {
     const handleOpenInvite = (res: Reservation) => {
         setSelectedReservation(res);
         setPlayersToAdd([
-            { name: "", id: null },
-            { name: "", id: null },
-            { name: "", id: null }
+            { name: "", id: null, scope: 'club' },
+            { name: "", id: null, scope: 'club' },
+            { name: "", id: null, scope: 'club' }
         ]);
         setIsInviteOpen(true);
     };
@@ -266,10 +271,13 @@ export default function ReservationsListContent() {
                         ).length;
 
                         const isValidated = confirmedCount >= 4;
+                        const isPast = filter === "past";
+                        const Wrapper = isPast ? 'div' : Link;
+                        const wrapperProps = isPast ? { className: "block cursor-default" } : { href: `/reservations/${item.reservation.id}`, className: "block" };
 
                         return (
                             <div key={item.id} className="block bg-white/5 rounded-xl p-4 border border-white/5 hover:bg-white/10 transition-colors">
-                                <Link href={`/reservations/${item.reservation.id}`} className="block">
+                                <Wrapper {...(wrapperProps as any)}>
                                     <div className="flex items-start justify-between mb-3">
                                         <div>
                                             <h3 className="text-white font-semibold text-base">
@@ -355,7 +363,7 @@ export default function ReservationsListContent() {
                                             </span>
                                         </div>
                                     )}
-                                </Link>
+                                </Wrapper>
 
                                 {/* Bouton pour payer sa part (Stripe) */}
                                 {filter === "upcoming" && item.reservation.payment_method === 'stripe' && item.payment_status === 'pending' && item.reservation.status === 'pending_payment' && (
