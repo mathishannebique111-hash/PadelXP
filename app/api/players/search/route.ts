@@ -150,8 +150,6 @@ export async function GET(req: Request) {
 
     if (scope === "club" && userClubId) {
       profilesQuery = profilesQuery.eq("club_id", userClubId);
-    } else if (scope === "global" && userClubId) {
-      profilesQuery = profilesQuery.neq("club_id", userClubId);
     }
 
     profilesQuery = profilesQuery.or(

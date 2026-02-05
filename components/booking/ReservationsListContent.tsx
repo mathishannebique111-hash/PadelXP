@@ -51,6 +51,7 @@ export default function ReservationsListContent() {
         { name: "", id: null },
         { name: "", id: null }
     ]);
+    const [activePlayerInput, setActivePlayerInput] = useState<number | null>(null);
     const [inviting, setInviting] = useState(false);
     const [isPaying, setIsPaying] = useState<string | null>(null);
 
@@ -449,6 +450,8 @@ export default function ReservationsListContent() {
                                                 placeholder={`Rechercher joueur ${i + 2}...`}
                                                 searchScope="global"
                                                 inputClassName="bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:ring-blue-500 transition-all"
+                                                isActive={activePlayerInput === i}
+                                                onFocus={() => setActivePlayerInput(i)}
                                             />
                                         </div>
                                     ))}

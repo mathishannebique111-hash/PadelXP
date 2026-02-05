@@ -16,6 +16,8 @@ interface PlayerAutocompleteProps {
   label?: string;
   searchScope?: 'club' | 'global' | 'guest';
   inputClassName?: string;
+  isActive?: boolean;
+  onFocus?: () => void;
 }
 
 const GUEST_UUID = "00000000-0000-0000-0000-000000000000";
@@ -29,6 +31,8 @@ export default function PlayerAutocomplete({
   label,
   searchScope = 'club',
   inputClassName = "",
+  isActive,
+  onFocus,
 }: PlayerAutocompleteProps) {
 
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
@@ -99,6 +103,14 @@ export default function PlayerAutocomplete({
   useEffect(() => {
     setShowCreateGuest(searchScope === 'guest');
   }, [searchScope]);
+
+  // Force close dropdown when component becomes inactive
+  useEffect(() => {
+    if (isActive === false) {
+      setShowDropdown(false);
+      setShowCreateGuest(false);
+    }
+  }, [isActive]);
 
 
   const handleSelectPlayer = (player: PlayerSearchResult) => {
@@ -309,6 +321,7 @@ export default function PlayerAutocomplete({
           // onBlur supprimé pour éviter les fermetures intempestives sur mobile
           // La fermeture est gérée par le clickOutside
           onFocus={() => {
+            onFocus?.();
             if (value.trim()) {
               searchPlayers(value);
             } else if (searchResults.length > 0) {
