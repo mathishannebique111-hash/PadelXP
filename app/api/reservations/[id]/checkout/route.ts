@@ -88,10 +88,11 @@ export async function POST(
                 club_id: club.id
             },
             payment_intent_data: {
-                transfer_data: {
-                    destination: stripeAccountId,
-                },
+                // Application fee (commission PadelXP) can be added here
+                // application_fee_amount: 100, 
             },
+        }, {
+            stripeAccount: stripeAccountId,
         });
 
         return NextResponse.json({ url: session.url });
