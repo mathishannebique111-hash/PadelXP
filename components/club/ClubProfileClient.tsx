@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Calendar } from "lucide-react";
 import ClubHeader, { AccentPalette } from "./ClubHeader";
 import ClubDetailsClient from "./ClubDetailsClient";
-import StripeConnectCard from "./StripeConnectCard";
 
 type OpeningHoursValue = {
   open: string | null;
@@ -25,7 +24,6 @@ interface ClubProfileClientProps {
   numberOfCourts?: number | null;
   courtType?: string | null;
   openingHours?: OpeningHours | null;
-  isAdmin?: boolean;
 }
 
 export default function ClubProfileClient({
@@ -39,7 +37,6 @@ export default function ClubProfileClient({
   numberOfCourts,
   courtType,
   openingHours,
-  isAdmin = false,
 }: ClubProfileClientProps) {
   const [accent, setAccent] = useState<AccentPalette | null>(null);
   const handleAccentChange = useCallback((palette: AccentPalette) => {
@@ -66,8 +63,6 @@ export default function ClubProfileClient({
         openingHours={openingHours ?? null}
         accent={accent}
       />
-
-      {isAdmin && <StripeConnectCard />}
     </div>
   );
 }

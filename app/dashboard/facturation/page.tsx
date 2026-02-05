@@ -16,6 +16,7 @@ import SubscriptionConfirmationBanner from "@/components/billing/SubscriptionCon
 import GracePeriodTimer from "@/components/billing/GracePeriodTimer";
 import { logger } from '@/lib/logger';
 import { AlertTriangle, Clock, CreditCard, ClipboardList, Info, Check } from 'lucide-react';
+import StripeConnectCard from '@/components/club/StripeConnectCard';
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
 type PlanType = "monthly" | "annual" | null;
@@ -744,6 +745,13 @@ export default async function BillingPage() {
               hasInvoicePreference={true}
             />
           </div>
+        </section>
+
+        {/* Paiements en ligne (Stripe Connect) */}
+        <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Paiements des joueurs</h2>
+          <p className="text-xs sm:text-sm text-white/60 mb-4">Permettez aux joueurs de payer leur réservation en ligne directement sur votre compte.</p>
+          <StripeConnectCard />
         </section>
 
         {/* Prochaine Échéance & Historique */}

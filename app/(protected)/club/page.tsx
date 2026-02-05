@@ -56,17 +56,6 @@ export default async function ClubPage({
   let clubSlug = initialClubSlug;
   let finalClubName = initialClubName;
   let finalClubLogoUrl = initialClubLogoUrl;
-  let isAdmin = false;
-
-  // Vérifier si l'utilisateur est admin du club
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    isAdmin = profile?.role === 'admin';
-  }
 
   if (!clubId && supabaseAdmin) {
     const { data: adminProfile } = await supabaseAdmin
@@ -235,7 +224,6 @@ export default async function ClubPage({
                       numberOfCourts={clubData.numberOfCourts}
                       courtType={clubData.courtType}
                       openingHours={clubData.openingHours}
-                      isAdmin={isAdmin}
                     />
                   ) : (
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
