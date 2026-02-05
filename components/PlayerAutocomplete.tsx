@@ -40,6 +40,7 @@ export default function PlayerAutocomplete({
   const [guestEmail, setGuestEmail] = useState("");
   const [creatingGuest, setCreatingGuest] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updatePosition = () => {
@@ -67,9 +68,13 @@ export default function PlayerAutocomplete({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // Check if click is outside BOTH wrapper AND dropdown (since dropdown is in Portal)
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setShowDropdown(false);
-        // Ne pas fermer le createGuest si on est en mode "guest" explicite
         if (searchScope !== 'guest') {
           setShowCreateGuest(false);
         }
@@ -321,6 +326,7 @@ export default function PlayerAutocomplete({
 
       {showDropdown && typeof document !== 'undefined' && createPortal(
         <div
+          ref={dropdownRef}
           style={{
             position: 'absolute',
             top: coords.top + 4,

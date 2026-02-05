@@ -46,10 +46,10 @@ export default function ReservationsListContent() {
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
     // Array of 3 player names/IDs. we store object { name, id } to handle UI
-    const [playersToAdd, setPlayersToAdd] = useState<{ name: string, id: string | null, scope: 'club' | 'global' | 'guest' }[]>([
-        { name: "", id: null, scope: 'club' },
-        { name: "", id: null, scope: 'club' },
-        { name: "", id: null, scope: 'club' }
+    const [playersToAdd, setPlayersToAdd] = useState<{ name: string, id: string | null }[]>([
+        { name: "", id: null },
+        { name: "", id: null },
+        { name: "", id: null }
     ]);
     const [inviting, setInviting] = useState(false);
     const [isPaying, setIsPaying] = useState<string | null>(null);
@@ -148,9 +148,9 @@ export default function ReservationsListContent() {
     const handleOpenInvite = (res: Reservation) => {
         setSelectedReservation(res);
         setPlayersToAdd([
-            { name: "", id: null, scope: 'club' },
-            { name: "", id: null, scope: 'club' },
-            { name: "", id: null, scope: 'club' }
+            { name: "", id: null },
+            { name: "", id: null },
+            { name: "", id: null }
         ]);
         setIsInviteOpen(true);
     };
@@ -172,11 +172,7 @@ export default function ReservationsListContent() {
         setPlayersToAdd(newPlayers);
     };
 
-    const handleScopeChange = (index: number, val: 'club' | 'global' | 'guest') => {
-        const newPlayers = [...playersToAdd];
-        newPlayers[index].scope = val;
-        setPlayersToAdd(newPlayers);
-    };
+
 
     const handleConfirmInvite = async () => {
         if (!selectedReservation) return;
@@ -446,30 +442,14 @@ export default function ReservationsListContent() {
                                             <label className="text-xs font-semibold text-blue-300 uppercase mb-1.5 block">
                                                 Joueur {i + 2}
                                             </label>
-                                            <div className="relative">
-                                                <PlayerAutocomplete
-                                                    value={playersToAdd[i].name}
-                                                    onChange={(val) => handlePlayerChange(i, val)}
-                                                    onSelect={(player) => handlePlayerSelect(i, player)}
-                                                    placeholder={`Rechercher joueur ${i + 2}...`}
-                                                    searchScope={playersToAdd[i].scope}
-                                                    inputClassName="bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:ring-blue-500 transition-all pr-[100px]"
-                                                />
-                                                <div className={`absolute z-10 flex items-center ${playersToAdd[i].scope === 'guest' ? 'top-3 right-5' : 'right-1 top-[7px]'}`}>
-                                                    <div className="relative">
-                                                        <select
-                                                            value={playersToAdd[i].scope}
-                                                            onChange={(e) => handleScopeChange(i, e.target.value as any)}
-                                                            className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
-                                                        >
-                                                            <option value="club">Club</option>
-                                                            <option value="global">Global</option>
-                                                            <option value="guest">Invité</option>
-                                                        </select>
-                                                        <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <PlayerAutocomplete
+                                                value={playersToAdd[i].name}
+                                                onChange={(val) => handlePlayerChange(i, val)}
+                                                onSelect={(player) => handlePlayerSelect(i, player)}
+                                                placeholder={`Rechercher joueur ${i + 2}...`}
+                                                searchScope="global"
+                                                inputClassName="bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:ring-blue-500 transition-all"
+                                            />
                                         </div>
                                     ))}
                                 </div>
