@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 import { logger } from "@/lib/logger";
 
@@ -11,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // POST /api/stripe/connect - Créer un compte connecté Stripe et générer le lien d'onboarding
 export async function POST(request: NextRequest) {
     try {
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -91,7 +90,7 @@ export async function POST(request: NextRequest) {
 // GET /api/stripe/connect - Récupérer le statut du compte Stripe du club
 export async function GET(request: NextRequest) {
     try {
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {

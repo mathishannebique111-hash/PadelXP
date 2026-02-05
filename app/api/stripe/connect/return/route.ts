@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import Stripe from "stripe";
 import { logger } from "@/lib/logger";
 
@@ -11,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // GET /api/stripe/connect/return - Route de retour après onboarding Stripe
 export async function GET(request: NextRequest) {
     try {
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
             .single();
 
         if (!profile?.club_id) {
-            return NextResponse.redirect(new URL("/club?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
+            return NextResponse.redirect(new URL("/dashboard/facturation?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
         }
 
         const { data: club } = await supabase
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
             .single();
 
         if (!club?.stripe_account_id) {
-            return NextResponse.redirect(new URL("/club?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
+            return NextResponse.redirect(new URL("/dashboard/facturation?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
         }
 
         // Vérifier le statut du compte chez Stripe
@@ -45,14 +44,14 @@ export async function GET(request: NextRequest) {
         if (account.details_submitted) {
             // Onboarding terminé avec succès
             logger.info("Stripe Connect onboarding completed", { clubId: profile.club_id, accountId: club.stripe_account_id });
-            return NextResponse.redirect(new URL("/club?stripe=success", process.env.NEXT_PUBLIC_SITE_URL));
+            return NextResponse.redirect(new URL("/dashboard/facturation?stripe=success", process.env.NEXT_PUBLIC_SITE_URL));
         } else {
             // Onboarding non terminé
-            return NextResponse.redirect(new URL("/club?stripe=incomplete", process.env.NEXT_PUBLIC_SITE_URL));
+            return NextResponse.redirect(new URL("/dashboard/facturation?stripe=incomplete", process.env.NEXT_PUBLIC_SITE_URL));
         }
 
     } catch (error) {
         logger.error("Erreur retour Stripe Connect", { error });
-        return NextResponse.redirect(new URL("/club?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
+        return NextResponse.redirect(new URL("/dashboard/facturation?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
     }
 }
