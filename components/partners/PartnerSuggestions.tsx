@@ -22,13 +22,17 @@ interface SuggestedPlayer {
   compatibilityTags: string[];
 }
 
-export default function PartnerSuggestions() {
+interface PartnerSuggestionsProps {
+  initialSuggestions?: any[];
+}
+
+export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerSuggestionsProps) {
   const router = useRouter();
   const supabase = createClient();
-  const [suggestions, setSuggestions] = useState<SuggestedPlayer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<SuggestedPlayer[]>(initialSuggestions as SuggestedPlayer[]);
+  const [loading, setLoading] = useState(initialSuggestions.length === 0);
   const [error, setError] = useState<string | null>(null);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(initialSuggestions.length > 0);
   const [isInvitingId, setIsInvitingId] = useState<string | null>(null);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [pendingInvitePlayer, setPendingInvitePlayer] =

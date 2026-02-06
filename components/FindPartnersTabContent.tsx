@@ -16,6 +16,7 @@ export default function FindPartnersTabContent() {
   const [hasPartner, setHasPartner] = useState<boolean>(false);
   const [hasActiveChallenges, setHasActiveChallenges] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const supabase = createClient();
 
   const loadProfileData = useCallback(async () => {
@@ -31,7 +32,8 @@ export default function FindPartnersTabContent() {
         { data: profile },
         { data: partnerships },
         { data: sentChallenges },
-        { data: receivedChallenges }
+        { data: receivedChallenges },
+        suggestionsData
       ] = await Promise.all([
         // 1. Profil
         supabase
@@ -63,7 +65,14 @@ export default function FindPartnersTabContent() {
           .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
           .in("status", ["pending", "accepted"])
           .gt("expires_at", new Date().toISOString())
-          .limit(1)
+          .limit(1),
+
+        // 5. Suggestions de partenaires (Direct logic via API simulation or direct DB)
+        // Pour simplifier et optimiser, on peut appeler l'API ici ou faire la requête DB.
+        // Vu la complexité de l'algo de suggestion, on va garder l'API mais l'appeler en parallèle ici
+        fetch('/api/partners/suggestions', {
+          headers: { "Cache-Control": "max-age=10, stale-while-revalidate=60" }
+        }).then(res => res.ok ? res.json() : { suggestions: [] })
       ]);
 
       // Traitement des résultats
@@ -79,6 +88,14 @@ export default function FindPartnersTabContent() {
       const hasActiveChallengesResult = (sentChallenges && sentChallenges.length > 0) ||
         (receivedChallenges && receivedChallenges.length > 0);
       setHasActiveChallenges(hasActiveChallengesResult);
+
+      const hasActiveChallengesResult = (sentChallenges && sentChallenges.length > 0) ||
+        (receivedChallenges && receivedChallenges.length > 0);
+      setHasActiveChallenges(hasActiveChallengesResult);
+
+      if (suggestionsData && suggestionsData.suggestions) {
+        setSuggestions(suggestionsData.suggestions);
+      }
     } catch (error) {
       console.error("[FindPartnersTabContent] Erreur chargement profil:", error);
     } finally {
@@ -139,7 +156,7 @@ export default function FindPartnersTabContent() {
         ) : (
           <>
             {/* Partenaires suggérés */}
-            <PartnerSuggestions />
+            <PartnerSuggestions initialSuggestions={suggestions} />
 
             {/* Propositions de paires envoyées */}
             <MatchInvitationsSent />
