@@ -26,43 +26,55 @@ export default function FindPartnersTabContent() {
         return;
       }
 
-      // Récupérer le profil pour vérifier le niveau
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("niveau_padel, niveau_categorie")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Requêtes parallèles pour optimiser le temps de chargement
+      const [
+        { data: profile },
+        { data: partnerships },
+        { data: sentChallenges },
+        { data: receivedChallenges }
+      ] = await Promise.all([
+        // 1. Profil
+        supabase
+          .from("profiles")
+          .select("niveau_padel, niveau_categorie")
+          .eq("id", user.id)
+          .maybeSingle(),
 
+        // 2. Partenaires (Direct DB query instead of API fetch)
+        supabase
+          .from("player_partnerships")
+          .select("status")
+          .or(`player_id.eq.${user.id},partner_id.eq.${user.id}`)
+          .eq("status", "accepted"),
+
+        // 3. Défis envoyés
+        supabase
+          .from("team_challenges")
+          .select("id")
+          .or(`challenger_player_1_id.eq.${user.id},challenger_player_2_id.eq.${user.id}`)
+          .in("status", ["pending", "accepted"])
+          .gt("expires_at", new Date().toISOString())
+          .limit(1),
+
+        // 4. Défis reçus
+        supabase
+          .from("team_challenges")
+          .select("id")
+          .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
+          .in("status", ["pending", "accepted"])
+          .gt("expires_at", new Date().toISOString())
+          .limit(1)
+      ]);
+
+      // Traitement des résultats
       const hasEvaluatedLevel =
         typeof profile?.niveau_padel === "number" &&
         profile?.niveau_categorie;
 
       setHasLevel(hasEvaluatedLevel || false);
 
-      // Vérifier s'il a un partenaire habituel
-      const response = await fetch('/api/partnerships/list');
-      if (response.ok) {
-        const { partnerships } = await response.json();
-        const hasAcceptedPartner = partnerships.some((p: any) => p.status === 'accepted');
-        setHasPartner(hasAcceptedPartner);
-      }
-
-      // Vérifier s'il a des défis actifs (envoyés ou reçus)
-      const { data: sentChallenges } = await supabase
-        .from("team_challenges")
-        .select("id")
-        .or(`challenger_player_1_id.eq.${user.id},challenger_player_2_id.eq.${user.id}`)
-        .in("status", ["pending", "accepted"])
-        .gt("expires_at", new Date().toISOString())
-        .limit(1);
-
-      const { data: receivedChallenges } = await supabase
-        .from("team_challenges")
-        .select("id")
-        .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
-        .in("status", ["pending", "accepted"])
-        .gt("expires_at", new Date().toISOString())
-        .limit(1);
+      const hasAcceptedPartner = partnerships && partnerships.length > 0;
+      setHasPartner(!!hasAcceptedPartner);
 
       const hasActiveChallengesResult = (sentChallenges && sentChallenges.length > 0) ||
         (receivedChallenges && receivedChallenges.length > 0);
