@@ -11,6 +11,7 @@ import { getUserClubInfo, getClubPublicExtras } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import { logger } from '@/lib/logger';
+import PadelLoader from "@/components/ui/PadelLoader";
 
 export const dynamic = "force-dynamic";
 
@@ -212,8 +213,8 @@ export default async function ClubPage({
                     <span className="text-center whitespace-normal leading-tight">Tournois</span>
                   </div>
                 </div>
-                <div className="mt-4 sm:mt-6 flex items-center justify-center">
-                  <div className="text-white/60">Chargement...</div>
+                <div className="mt-8 flex items-center justify-center">
+                  <PadelLoader />
                 </div>
               </div>
             }>

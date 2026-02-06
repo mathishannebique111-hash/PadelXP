@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import PadelLoader from "@/components/ui/PadelLoader";
 
 type TabType = 'record' | 'history' | 'partners' | 'boost';
 
@@ -272,8 +273,8 @@ export default function MatchTabs(props: MatchTabsProps) {
           </div>
           {/* <div className="px-1 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center">Boost</div> */}
         </div>
-        <div className="mt-4 sm:mt-6 flex items-center justify-center">
-          <div className="text-white/60">Chargement...</div>
+        <div className="mt-8 flex items-center justify-center">
+          <PadelLoader />
         </div>
       </div>
     }>

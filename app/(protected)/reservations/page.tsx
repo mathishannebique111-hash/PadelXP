@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Calendar, MapPin, Users, Clock, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import PadelLoader from "@/components/ui/PadelLoader";
 
 interface Reservation {
     id: string;
@@ -93,7 +94,7 @@ export default function MyReservationsPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-                <div className="text-white/60">Chargement...</div>
+                <PadelLoader />
             </div>
         );
     }
@@ -111,8 +112,8 @@ export default function MyReservationsPage() {
                     <button
                         onClick={() => setFilter("upcoming")}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === "upcoming"
-                                ? "bg-blue-600 text-white"
-                                : "bg-white/10 text-white/70"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white/10 text-white/70"
                             }`}
                     >
                         À venir
@@ -120,8 +121,8 @@ export default function MyReservationsPage() {
                     <button
                         onClick={() => setFilter("past")}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === "past"
-                                ? "bg-blue-600 text-white"
-                                : "bg-white/10 text-white/70"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white/10 text-white/70"
                             }`}
                     >
                         Passées

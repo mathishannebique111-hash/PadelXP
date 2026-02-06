@@ -8,6 +8,7 @@ import FindPartnersTabContent from "@/components/FindPartnersTabContent";
 import BoostContent from "@/components/BoostContent";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
+import PadelLoader from "@/components/ui/PadelLoader";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -120,8 +121,8 @@ export default async function NewMatchPage({
                 <span className="text-center whitespace-normal leading-tight">Trouve tes partenaires</span>
               </div>
             </div>
-            <div className="mt-4 sm:mt-6 flex items-center justify-center">
-              <div className="text-white/60">Chargement...</div>
+            <div className="mt-8 flex items-center justify-center">
+              <PadelLoader />
             </div>
           </div>
         }>

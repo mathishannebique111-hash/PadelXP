@@ -18,6 +18,7 @@ import PlayerProfileTabs from "@/components/PlayerProfileTabs";
 import PadelTabContent from "@/components/PadelTabContent";
 import BadgesContent from "@/components/BadgesContent";
 import HideSplashScreen from "@/components/HideSplashScreen";
+import PadelLoader from "@/components/ui/PadelLoader";
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -302,9 +303,8 @@ export default async function HomePage({
 
         {/* Afficher un message si session existe mais user non disponible (première connexion) */}
         {hasSessionButNoUser && (
-          <div className="mb-4 sm:mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
-            <p className="font-semibold mb-1">⏳ Chargement...</p>
-            <p>Veuillez patienter pendant le chargement de vos données. Le menu hamburger et le logo du club sont disponibles.</p>
+          <div className="mb-4 sm:mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200 flex flex-col items-center justify-center min-h-[150px]">
+            <PadelLoader text="Chargement de vos données..." />
           </div>
         )}
 
@@ -327,8 +327,8 @@ export default async function HomePage({
 
         {/* Si pas de profile/user, afficher un message de chargement mais permettre au layout de s'afficher */}
         {(!profile || !user) && !hasNoAuth && (
-          <div className="mb-4 sm:mb-6">
-            <PageTitle title="Chargement..." subtitle="Le menu hamburger et le logo du club sont disponibles" />
+          <div className="mb-4 sm:mb-6 flex justify-center py-8">
+            <PadelLoader text="Chargement..." />
           </div>
         )}
 

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import PadelLoader from "@/components/ui/PadelLoader";
 
 type TabType = 'club' | 'classement' | 'challenges' | 'tournaments';
 
@@ -105,8 +107,8 @@ export default function ClubTabs(props: ClubTabsProps) {
                         <span className="text-center whitespace-normal leading-tight">Tournois</span>
                     </div>
                 </div>
-                <div className="mt-4 sm:mt-6 flex items-center justify-center">
-                    <div className="text-white/60">Chargement...</div>
+                <div className="mt-8 flex items-center justify-center">
+                    <PadelLoader />
                 </div>
             </div>
         }>
