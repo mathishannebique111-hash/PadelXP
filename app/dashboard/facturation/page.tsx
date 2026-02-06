@@ -748,11 +748,13 @@ export default async function BillingPage() {
         </section>
 
         {/* Paiements en ligne (Stripe Connect) */}
-        <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
-          <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Paiements des joueurs</h2>
-          <p className="text-xs sm:text-sm text-white/60 mb-4">Permettez aux joueurs de payer leur réservation en ligne directement sur votre compte.</p>
-          <StripeConnectCard />
-        </section>
+        {process.env.NODE_ENV === 'development' && (
+          <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Paiements des joueurs</h2>
+            <p className="text-xs sm:text-sm text-white/60 mb-4">Permettez aux joueurs de payer leur réservation en ligne directement sur votre compte.</p>
+            <StripeConnectCard />
+          </section>
+        )}
 
         {/* Prochaine Échéance & Historique */}
         <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/80 ring-1 ring-white/10 bg-white/5 p-4 sm:p-5 md:p-6">

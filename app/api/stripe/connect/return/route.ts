@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { logger } from "@/lib/logger";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: "2025-10-29.clover",
 });
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
+    ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    })
+    : null;
 
 // GET /api/stripe/connect/return - Route de retour après onboarding Stripe
 export async function GET(request: NextRequest) {
@@ -17,21 +27,25 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_SITE_URL));
         }
 
-        // Récupérer le club de l'utilisateur
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("club_id")
-            .eq("id", user.id)
-            .single();
-
-        if (!profile?.club_id) {
+        // Récupérer le club de l'utilisateur via club_admins avec service role
+        if (!supabaseAdmin) {
             return NextResponse.redirect(new URL("/dashboard/facturation?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
         }
 
-        const { data: club } = await supabase
+        const { data: adminEntry } = await supabaseAdmin
+            .from("club_admins")
+            .select("club_id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (!adminEntry?.club_id) {
+            return NextResponse.redirect(new URL("/dashboard/facturation?stripe=error", process.env.NEXT_PUBLIC_SITE_URL));
+        }
+
+        const { data: club } = await supabaseAdmin
             .from("clubs")
             .select("stripe_account_id")
-            .eq("id", profile.club_id)
+            .eq("id", adminEntry.club_id)
             .single();
 
         if (!club?.stripe_account_id) {
@@ -43,7 +57,7 @@ export async function GET(request: NextRequest) {
 
         if (account.details_submitted) {
             // Onboarding terminé avec succès
-            logger.info("Stripe Connect onboarding completed", { clubId: profile.club_id, accountId: club.stripe_account_id });
+            logger.info("Stripe Connect onboarding completed", { clubId: adminEntry.club_id, accountId: club.stripe_account_id });
             return NextResponse.redirect(new URL("/dashboard/facturation?stripe=success", process.env.NEXT_PUBLIC_SITE_URL));
         } else {
             // Onboarding non terminé

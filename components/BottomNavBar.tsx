@@ -24,7 +24,9 @@ export default function BottomNavBar() {
         { href: '/home', label: 'Profil', icon: <Home size={20} />, navKey: 'home' },
         { href: '/match/new', label: 'Matchs', icon: <Swords size={20} />, navKey: 'match' },
         { href: '/club', label: 'Club', icon: <Users size={20} />, navKey: 'club' },
-        { href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' },
+        ...(process.env.NODE_ENV === 'development' ? [
+            { href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' }
+        ] : []),
     ];
 
     const fetchCounts = async () => {

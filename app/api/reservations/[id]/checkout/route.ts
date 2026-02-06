@@ -62,6 +62,10 @@ export async function POST(
             return NextResponse.json({ error: "Ce club n'accepte pas les paiements en ligne" }, { status: 400 });
         }
 
+        // --- CONFIGURATION COMMISSION PADELXP ---
+        // 1% du montant de la réservation (arrondi à l'entier le plus proche)
+        const PADELXP_COMMISSION_CENTS = Math.round(participant.amount * 100 * 0.01);
+
         // 2. Créer la session Stripe Checkout
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
@@ -88,8 +92,7 @@ export async function POST(
                 club_id: club.id
             },
             payment_intent_data: {
-                // Application fee (commission PadelXP) can be added here
-                // application_fee_amount: 100, 
+                application_fee_amount: PADELXP_COMMISSION_CENTS,
             },
         }, {
             stripeAccount: stripeAccountId,
