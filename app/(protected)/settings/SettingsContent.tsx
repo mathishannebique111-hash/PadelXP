@@ -44,7 +44,7 @@ export default function SettingsContent() {
         {/* Menu List */}
         <div className="mt-8 space-y-4">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider ml-2 mb-2">
-            My Account
+            Mon compte
           </h3>
 
           <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/5 backdrop-blur-sm divide-y divide-white/5">
@@ -88,10 +88,9 @@ export default function SettingsContent() {
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-2 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-            <Image src="/images/logo.png" alt="PadelXP" width={20} height={20} className="w-5 h-5" />
-            <span className="text-xs font-semibold text-white">PadelXP</span>
-            <span className="text-xs text-gray-500">v1.2.0</span>
+          <div className="flex flex-col items-center justify-center gap-2 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+            <Image src="/images/Logo sans fond.png" alt="PadelXP" width={120} height={40} className="w-32 h-auto object-contain" />
+            <span className="text-[10px] text-gray-600">v1.2.0</span>
           </div>
         </div>
       </div>

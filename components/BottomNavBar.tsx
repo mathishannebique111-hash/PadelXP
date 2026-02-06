@@ -128,13 +128,19 @@ export default function BottomNavBar() {
         setActiveIndex(newIndex);
     }, [pathname]);
 
-    // Calculate bubble position based on index
+    // Calculate bubble position based on index and item count
     const getBubblePosition = () => {
-        const itemWidth = 25;
-        const bubbleWidth = 22;
-        const offset = (itemWidth - bubbleWidth) / 2;
+        const totalItems = navItems.length;
+        const itemWidth = 100 / totalItems;
+        // Make bubble slightly smaller than the item width (e.g. 85-90% of item width)
+        const bubblePercentage = itemWidth * 0.85;
+        const offset = (itemWidth - bubblePercentage) / 2;
         return `${activeIndex * itemWidth + offset}%`;
     };
+
+    const totalItems = navItems.length;
+    const itemWidth = 100 / totalItems;
+    const bubbleWidthPercentage = itemWidth * 0.85;
 
     return (
         <div
@@ -149,7 +155,7 @@ export default function BottomNavBar() {
                         className="absolute bg-[#172554]/15 rounded-full transition-all duration-300 ease-out"
                         style={{
                             height: 'calc(100% - 6px)',
-                            width: '22%',
+                            width: `${bubbleWidthPercentage}%`,
                             left: getBubblePosition(),
                             top: '3px',
                         }}

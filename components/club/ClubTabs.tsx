@@ -41,7 +41,7 @@ function ClubTabsContent({
     return (
         <div className="w-full">
             {/* Onglets */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10 overflow-x-auto">
+            <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -51,12 +51,12 @@ function ClubTabsContent({
                             newUrl.searchParams.set('tab', tab.id);
                             window.history.replaceState(null, '', newUrl.toString());
                         }}
-                        className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative whitespace-nowrap ${currentTab === tab.id
+                        className={`px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center ${currentTab === tab.id
                             ? 'text-white border-b-2 border-padel-green'
                             : 'text-white/60 hover:text-white/80'
                             }`}
                     >
-                        <span>{tab.label}</span>
+                        <span className="text-center whitespace-normal leading-tight">{tab.label}</span>
                         {currentTab === tab.id && (
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
                         )}
@@ -91,11 +91,19 @@ export default function ClubTabs(props: ClubTabsProps) {
     return (
         <Suspense fallback={
             <div className="w-full">
-                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
-                    <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon club</div>
-                    <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Classement global</div>
-                    <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Challenges</div>
-                    <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Tournois</div>
+                <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
+                    <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                        <span className="text-center whitespace-normal leading-tight">Mon club</span>
+                    </div>
+                    <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                        <span className="text-center whitespace-normal leading-tight">Classement global</span>
+                    </div>
+                    <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                        <span className="text-center whitespace-normal leading-tight">Challenges</span>
+                    </div>
+                    <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                        <span className="text-center whitespace-normal leading-tight">Tournois</span>
+                    </div>
                 </div>
                 <div className="mt-4 sm:mt-6 flex items-center justify-center">
                     <div className="text-white/60">Chargement...</div>

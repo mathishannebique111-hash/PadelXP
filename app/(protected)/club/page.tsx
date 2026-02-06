@@ -198,11 +198,19 @@ export default async function ClubPage({
           <div className="mt-6">
             <Suspense fallback={
               <div className="w-full">
-                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
-                  <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon club</div>
-                  <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Classement global</div>
-                  <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Challenges</div>
-                  <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Tournois</div>
+                <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
+                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                    <span className="text-center whitespace-normal leading-tight">Mon club</span>
+                  </div>
+                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                    <span className="text-center whitespace-normal leading-tight">Classement global</span>
+                  </div>
+                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                    <span className="text-center whitespace-normal leading-tight">Challenges</span>
+                  </div>
+                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                    <span className="text-center whitespace-normal leading-tight">Tournois</span>
+                  </div>
                 </div>
                 <div className="mt-4 sm:mt-6 flex items-center justify-center">
                   <div className="text-white/60">Chargement...</div>

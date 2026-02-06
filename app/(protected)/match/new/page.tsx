@@ -109,11 +109,16 @@ export default async function NewMatchPage({
         </div>
         <Suspense fallback={
           <div className="w-full">
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
-              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Enregistrer</div>
-              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes matchs</div>
-              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Trouve tes partenaires</div>
-              <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Boost</div>
+            <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
+              <div className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                <span className="text-center whitespace-normal leading-tight">Enregistrer</span>
+              </div>
+              <div className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                <span className="text-center whitespace-normal leading-tight">Mes matchs</span>
+              </div>
+              <div className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                <span className="text-center whitespace-normal leading-tight">Trouve tes partenaires</span>
+              </div>
             </div>
             <div className="mt-4 sm:mt-6 flex items-center justify-center">
               <div className="text-white/60">Chargement...</div>
