@@ -109,7 +109,7 @@ export default function ClubsHeroSection() {
           </h1>
 
           {/* Sous-titre */}
-          <p className="text-lg md:text-2xl text-white/80 leading-relaxed max-w-6xl mx-auto">
+          <p className="text-lg md:text-xl text-white/80 leading-relaxed max-w-6xl mx-auto">
             Augmentez votre rétention de 20% en transformant l'expérience de vos joueurs.
           </p>
 
@@ -137,7 +137,7 @@ export default function ClubsHeroSection() {
                   <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 rounded-full bg-[#BFFF00]/10 border border-[#BFFF00]/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#BFFF00]/20 transition-all duration-300">
                     <Check className="h-5 w-5 md:h-6 md:w-6 text-[#BFFF00]" strokeWidth={3} />
                   </div>
-                  <span className="text-white/90 text-base md:text-lg font-medium leading-relaxed">{item}</span>
+                  <span className="text-white/90 text-lg md:text-xl font-medium leading-relaxed">{item}</span>
                 </motion.div>
               ))}
             </div>

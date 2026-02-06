@@ -10,15 +10,16 @@ import { Lightbulb, ArrowRight, Share2 } from "lucide-react";
 
 interface Props {
   profile: any;
+  initialPendingRequest?: { first_name: string; last_name: string } | null;
 }
 
-export default function PadelTabContent({ profile: initialProfile }: Props) {
+export default function PadelTabContent({ profile: initialProfile, initialPendingRequest = null }: Props) {
   const [showWizard, setShowWizard] = useState(false);
   const [profile, setProfile] = useState(initialProfile);
-  const [pendingPartnershipRequest, setPendingPartnershipRequest] = useState<{ first_name: string; last_name: string } | null>(null);
+  const [pendingPartnershipRequest, setPendingPartnershipRequest] = useState<{ first_name: string; last_name: string } | null>(initialPendingRequest);
   const supabase = createClient();
 
-  // Charger les demandes de partenaires reçues
+  // Charger les demandes de partenaires reçues (seulement si pas déjà fournies ou lors d'update)
   useEffect(() => {
     const loadPendingPartnershipRequest = async () => {
       try {
@@ -61,7 +62,10 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
       }
     };
 
-    loadPendingPartnershipRequest();
+    // Si on n'a pas d'info initiale, on charge
+    if (initialPendingRequest === undefined) {
+      loadPendingPartnershipRequest();
+    }
 
     const handleProfileUpdate = () => {
       loadPendingPartnershipRequest();
@@ -136,7 +140,7 @@ export default function PadelTabContent({ profile: initialProfile }: Props) {
             table: 'profiles',
             filter: `id=eq.${user.id}`,
           },
-          (payload) => {
+          (payload: any) => {
             console.log('Profile updated via Realtime:', payload);
             loadProfile();
           }

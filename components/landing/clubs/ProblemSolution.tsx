@@ -40,7 +40,7 @@ export default function ProblemSolution() {
                 </div>
                 <div>
                   <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">Aucune visibilité</h3>
-                  <p className="text-sm md:text-base text-white/70">Impossible de suivre sa progression, classements imprécis</p>
+                  <p className="text-sm md:text-base text-white/70">Impossible de suivre sa progression, niveaux imprécis</p>
                 </div>
               </div>
 

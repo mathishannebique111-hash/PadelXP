@@ -12,23 +12,29 @@ interface PlayerProfileTabsProps {
   profilContent: React.ReactNode;
   statsContent: React.ReactNode;
   badgesContent?: React.ReactNode;
+  initialPendingRequestsCount?: number;
 }
 
 function PlayerProfileTabsContent({
   activeTab = 'profil',
   profilContent,
   statsContent,
-  badgesContent
+  badgesContent,
+  initialPendingRequestsCount = 0
 }: PlayerProfileTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
   const initialTab = tabFromUrl && ['profil', 'stats', 'badges'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
-  const [pendingPartnershipRequestsCount, setPendingPartnershipRequestsCount] = useState(0);
+  const [pendingPartnershipRequestsCount, setPendingPartnershipRequestsCount] = useState(initialPendingRequestsCount);
   const supabase = createClient();
 
   useEffect(() => {
-    loadPendingPartnershipRequestsCount();
+    // Si on n'a pas reçu de count initial (ou si on veut rafraichir), on charge
+    if (initialPendingRequestsCount === 0) {
+      loadPendingPartnershipRequestsCount();
+    }
+
     // Écouter les événements de mise à jour du profil
     const handlePartnershipEvent = () => {
       loadPendingPartnershipRequestsCount();
