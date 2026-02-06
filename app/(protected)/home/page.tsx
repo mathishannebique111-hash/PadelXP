@@ -304,7 +304,7 @@ export default async function HomePage({
         {/* Afficher un message si session existe mais user non disponible (première connexion) */}
         {hasSessionButNoUser && (
           <div className="mb-4 sm:mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200 flex flex-col items-center justify-center min-h-[150px]">
-            <PadelLoader text="Chargement de vos données..." />
+            <PadelLoader />
           </div>
         )}
 
