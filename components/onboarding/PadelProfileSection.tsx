@@ -27,6 +27,7 @@ import {
   Check,
   MessageCircle,
 } from "lucide-react";
+import PadelLoader from "@/components/ui/PadelLoader";
 import { createBrowserClient } from "@supabase/ssr";
 import {
   Dialog,
@@ -387,8 +388,8 @@ export default function PadelProfileSection({
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
-        <div className="text-white/60">Chargement...</div>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6 flex items-center justify-center min-h-[200px]">
+        <PadelLoader />
       </div>
     );
   }

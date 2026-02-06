@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import PadelLoader from "@/components/ui/PadelLoader";
 
 type TabType = 'profil' | 'stats' | 'badges';
 
@@ -135,8 +136,8 @@ export default function PlayerProfileTabs(props: PlayerProfileTabsProps) {
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes stats</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
         </div>
-        <div className="mt-4 sm:mt-6 flex items-center justify-center">
-          <div className="text-white/60">Chargement...</div>
+        <div className="mt-4 sm:mt-6 flex items-center justify-center py-12">
+          <PadelLoader />
         </div>
       </div>
     }>

@@ -9,6 +9,7 @@ import MatchInvitationsReceived from "@/components/profile/MatchInvitationsRecei
 import AcceptedInvitations from "@/components/profile/AcceptedInvitations";
 import ChallengesSent from "@/components/profile/ChallengesSent";
 import ChallengesReceived from "@/components/profile/ChallengesReceived";
+import PadelLoader from "@/components/ui/PadelLoader";
 
 export default function FindPartnersTabContent() {
   const [hasLevel, setHasLevel] = useState<boolean | null>(null);
@@ -108,7 +109,7 @@ export default function FindPartnersTabContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-white/60">Chargement...</div>
+        <PadelLoader />
       </div>
     );
   }

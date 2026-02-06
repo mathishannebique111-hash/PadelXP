@@ -328,7 +328,7 @@ export default async function HomePage({
         {/* Si pas de profile/user, afficher un message de chargement mais permettre au layout de s'afficher */}
         {(!profile || !user) && !hasNoAuth && (
           <div className="mb-4 sm:mb-6 flex justify-center py-8">
-            <PadelLoader text="Chargement..." />
+            <PadelLoader />
           </div>
         )}
 
