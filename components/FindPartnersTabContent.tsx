@@ -89,9 +89,7 @@ export default function FindPartnersTabContent() {
         (receivedChallenges && receivedChallenges.length > 0);
       setHasActiveChallenges(hasActiveChallengesResult);
 
-      const hasActiveChallengesResult = (sentChallenges && sentChallenges.length > 0) ||
-        (receivedChallenges && receivedChallenges.length > 0);
-      setHasActiveChallenges(hasActiveChallengesResult);
+
 
       if (suggestionsData && suggestionsData.suggestions) {
         setSuggestions(suggestionsData.suggestions);
