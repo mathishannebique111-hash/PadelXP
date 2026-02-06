@@ -11,10 +11,25 @@ export default function PadelLoader({ text, className = "" }: PadelLoaderProps) 
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <div
-        className="flex items-center justify-center text-4xl mb-2"
+        className="flex items-center justify-center mb-2 text-padel-green"
         style={{ animation: "bounce 1s ease-in-out infinite" }}
       >
-        🎾
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M2 12h20" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10" />
+          <path d="M12 2a15.3 15.3 0 0 0-4 10 15.3 15.3 0 0 0 4 10" />
+        </svg>
       </div>
       {text && (
         <p className="text-sm font-medium text-gray-500 animate-pulse">{text}</p>

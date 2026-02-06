@@ -8,6 +8,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import AddPhoneModal from "@/components/AddPhoneModal";
 import { showToast } from "@/components/ui/Toast";
+import PadelLoader from "@/components/ui/PadelLoader";
 
 interface SuggestedPlayer {
   id: string;
@@ -379,18 +380,8 @@ export default function PartnerSuggestions() {
   // Si on a déjà chargé une fois et qu'il n'y a pas de suggestions, afficher le message d'état vide
   if (loading && !hasLoadedOnce) {
     return (
-      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-        <div className="mb-4">
-          <h3 className="text-base md:text-lg font-bold text-white">
-            Partenaires suggérés
-          </h3>
-        </div>
-        <div className="flex items-center justify-center py-8">
-          <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-          <span className="ml-2 text-sm text-gray-400">
-            Chargement...
-          </span>
-        </div>
+      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20 min-h-[200px] flex items-center justify-center">
+        <PadelLoader text="Recherche de partenaires..." />
       </div>
     );
   }
