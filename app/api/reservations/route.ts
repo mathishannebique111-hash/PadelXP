@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        return NextResponse.json({ reservations: myReservations });
+        return NextResponse.json({ reservations: myReservations, _debug_user_id: user.id });
     } catch (error) {
         console.error("GET /api/reservations error:", error);
         return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

@@ -79,6 +79,8 @@ export default function ReservationsListContent() {
         loadReservations();
     }, [searchParams]); // Reload when URL specific params change (like tab)
 
+    const [debugUserId, setDebugUserId] = useState<string | null>(null);
+
     async function loadReservations() {
         setLoading(true);
         try {
@@ -87,6 +89,9 @@ export default function ReservationsListContent() {
 
             if (data.reservations) {
                 setReservations(data.reservations);
+            }
+            if (data._debug_user_id) {
+                setDebugUserId(data._debug_user_id);
             }
         } catch (error) {
             console.error("Error loading reservations:", error);
@@ -259,6 +264,8 @@ export default function ReservationsListContent() {
             {/* DEBUG PANEL - TEMPORAIRE */}
             <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-xs text-yellow-200">
                 <p>🔧 DEBUG: API={reservations.length} | Null={reservations.filter(r => !r.reservation).length} | Filtrées={filteredReservations.length} | Mode={filter}</p>
+                <p>UserID: {debugUserId || 'N/A'}</p>
+                <p className="text-[10px] opacity-70">Attendu: d196d41b-bbd8-4270-837c-eeb7f8dc4804</p>
                 <p>Now: {now.toISOString()}</p>
                 {reservations.slice(0, 3).map((r, i) => (
                     <p key={i}>#{i}: {r.reservation?.start_time || 'NULL'} | status={r.reservation?.status || 'N/A'}</p>
