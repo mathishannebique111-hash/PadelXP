@@ -256,6 +256,15 @@ export default function ReservationsListContent() {
                 </button>
             </div>
 
+            {/* DEBUG PANEL - TEMPORAIRE */}
+            <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-xs text-yellow-200">
+                <p>🔧 DEBUG: API={reservations.length} | Null={reservations.filter(r => !r.reservation).length} | Filtrées={filteredReservations.length} | Mode={filter}</p>
+                <p>Now: {now.toISOString()}</p>
+                {reservations.slice(0, 3).map((r, i) => (
+                    <p key={i}>#{i}: {r.reservation?.start_time || 'NULL'} | status={r.reservation?.status || 'N/A'}</p>
+                ))}
+            </div>
+
             <div className="space-y-4">
                 {filteredReservations.length === 0 ? (
                     <div className="text-center py-12 px-4">
