@@ -120,16 +120,23 @@ export default function ReservationsListContent() {
         return confirmedCount >= 4;
     };
 
-    const filteredReservations = reservations.filter((r) => {
-        const startTime = new Date(r.reservation.start_time);
+    const filteredReservations = reservations
+        .filter((r) => r.reservation !== null && r.reservation !== undefined) // Exclure les réservations nulles
+        .filter((r) => {
+            const startTime = new Date(r.reservation.start_time);
 
-        if (filter === "upcoming") {
-            return startTime >= now;
-        } else {
-            // Past: only validated
-            return startTime < now && isReservationValidated(r);
-        }
-    });
+            if (filter === "upcoming") {
+                return startTime >= now;
+            } else {
+                // Past: only validated
+                return startTime < now && isReservationValidated(r);
+            }
+        });
+
+    // DEBUG LOG - à supprimer après
+    console.log("[ReservationsListContent] Total reservations from API:", reservations.length);
+    console.log("[ReservationsListContent] Reservations with null reservation:", reservations.filter(r => !r.reservation).length);
+    console.log("[ReservationsListContent] Filtered (", filter, "):", filteredReservations.length);
 
     const getStatusBadge = (status: string) => {
         switch (status) {

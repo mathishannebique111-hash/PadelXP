@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Sinon, récupérer les réservations de l'utilisateur
+        console.log("GET /api/reservations - User ID:", user.id); // LOG DEBUG
         const { data: myReservations, error } = await supabase
             .from("reservation_participants")
             .select(`
@@ -113,6 +114,8 @@ export async function GET(request: NextRequest) {
             console.error("Error fetching user reservations:", error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        console.log(`Found ${myReservations?.length} reservations for user ${user.id}`); // LOG DEBUG
 
         // Enrichissement manuel des profils (évite les erreurs de jointure sans FK explicite)
         if (myReservations) {
