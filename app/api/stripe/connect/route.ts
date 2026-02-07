@@ -95,9 +95,19 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ url: accountLink.url });
 
-    } catch (error) {
+    } catch (error: any) {
+        console.error("=== ERREUR STRIPE CONNECT ===");
+        console.error("Type:", error?.type);
+        console.error("Code:", error?.code);
+        console.error("Message:", error?.message);
+        console.error("Raw:", error?.raw);
+        console.error("Full error:", JSON.stringify(error, null, 2));
         logger.error("Erreur post Stripe Connect", { error });
-        return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+        return NextResponse.json({
+            error: "Erreur serveur",
+            details: error?.message || "Unknown error",
+            code: error?.code
+        }, { status: 500 });
     }
 }
 

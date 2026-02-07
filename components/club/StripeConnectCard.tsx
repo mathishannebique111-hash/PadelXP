@@ -81,15 +81,25 @@ export default function StripeConnectCard() {
                     <p className="text-white/60 text-sm">
                         Votre club peut recevoir des paiements en ligne. Les joueurs peuvent payer leur part de réservation directement.
                     </p>
-                    <a
-                        href="https://dashboard.stripe.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <button
+                        onClick={async () => {
+                            try {
+                                const res = await fetch('/api/stripe/connect/dashboard', { method: 'POST' });
+                                const data = await res.json();
+                                if (data.url) {
+                                    window.open(data.url, '_blank');
+                                } else {
+                                    alert(data.error || 'Erreur lors de l\'accès au dashboard');
+                                }
+                            } catch (error) {
+                                console.error('Erreur accès dashboard:', error);
+                            }
+                        }}
                         className="inline-flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
                     >
                         Accéder au tableau de bord Stripe
                         <ExternalLink className="w-4 h-4" />
-                    </a>
+                    </button>
                 </div>
             ) : isPartiallyConnected ? (
                 <div className="space-y-3">
