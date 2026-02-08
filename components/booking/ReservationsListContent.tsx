@@ -141,8 +141,8 @@ export default function ReservationsListContent() {
             if (filter === "upcoming") {
                 return startTime >= now;
             } else {
-                // Past: only validated
-                return startTime < now && isReservationValidated(r);
+                // Past: toutes les réservations passées (pas seulement validées)
+                return startTime < now;
             }
         });
 
