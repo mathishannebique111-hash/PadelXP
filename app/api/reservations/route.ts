@@ -97,8 +97,7 @@ export async function GET(request: NextRequest) {
             id,
             user_id,
             is_organizer,
-            payment_status,
-            profiles:user_id (first_name, last_name, avatar_url)
+            payment_status
           ),
           court:court_id (
             id,
