@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.apple.com', // Rare mais possible pour Apple ID
+      },
     ],
   },
   outputFileTracingRoot: path.join(process.cwd()),
