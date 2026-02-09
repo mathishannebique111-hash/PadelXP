@@ -8,10 +8,10 @@ import { Mail, Gift, Loader2, ArrowRight, KeyRound, RefreshCw } from "lucide-rea
 import Image from "next/image";
 
 interface Club {
-    id?: string;
+    id: string;
     name: string;
     slug: string;
-    code_invitation?: string;
+    code_invitation: string;
     logo_url?: string | null;
     city?: string | null;
 }
@@ -23,6 +23,8 @@ export default function PasswordlessSignup() {
     const [step, setStep] = useState<Step>("form");
 
     // Données du formulaire
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [selectedClub, setSelectedClub] = useState<Club | null>(null);
     const [showReferralCode, setShowReferralCode] = useState(false);
@@ -110,6 +112,11 @@ export default function PasswordlessSignup() {
         e.preventDefault();
         setError(null);
 
+        if (!firstName.trim() || !lastName.trim()) {
+            setError("Veuillez renseigner votre nom et prénom.");
+            return;
+        }
+
         if (!email.trim() || !isValidEmail(email)) {
             setError("Veuillez entrer une adresse email valide.");
             return;
@@ -129,11 +136,30 @@ export default function PasswordlessSignup() {
         setLoading(true);
 
         try {
+            // Vérifier si l'email existe déjà (via API serveur)
+            const checkResponse = await fetch("/api/auth/check-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email.trim() }),
+            });
+
+            if (checkResponse.ok) {
+                const { exists } = await checkResponse.json();
+                if (exists) {
+                    setError("Un compte est déjà associé à cette adresse email. Veuillez vous connecter.");
+                    setLoading(false);
+                    return;
+                }
+            }
+
             const supabase = createClient();
 
             // Stocker les métadonnées pour les récupérer après vérification
             sessionStorage.setItem("signup_club_slug", selectedClub.slug);
             sessionStorage.setItem("signup_club_name", selectedClub.name);
+            sessionStorage.setItem("signup_first_name", firstName.trim());
+            sessionStorage.setItem("signup_last_name", lastName.trim());
+
             if (referralCode.trim()) {
                 sessionStorage.setItem("signup_referral_code", referralCode.trim());
             }
@@ -143,6 +169,9 @@ export default function PasswordlessSignup() {
                 options: {
                     shouldCreateUser: true,
                     data: {
+                        first_name: firstName.trim(),
+                        last_name: lastName.trim(),
+                        full_name: `${firstName.trim()} ${lastName.trim()}`,
                         club_slug: selectedClub.slug,
                         referral_code: referralCode.trim() || null,
                     },
@@ -337,6 +366,36 @@ export default function PasswordlessSignup() {
                 {step === "form" ? (
                     /* ========== ÉTAPE 1 : FORMULAIRE ========== */
                     <form onSubmit={handleSendOtp} className="space-y-4">
+                        {/* Nom et Prénom */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
+                                    Prénom <span className="text-red-400">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Thomas"
+                                    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
+                                    Nom <span className="text-red-400">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Dupont"
+                                    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
                         {/* Email */}
                         <div>
                             <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
@@ -374,10 +433,10 @@ export default function PasswordlessSignup() {
                                         type="text"
                                         placeholder="CODE123"
                                         className={`w-full rounded-xl bg-white/5 border pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 transition-all ${referralCodeStatus?.valid
-                                                ? "border-green-500/50 focus:ring-green-500"
-                                                : referralCodeStatus?.valid === false
-                                                    ? "border-red-500/50 focus:ring-red-500"
-                                                    : "border-white/10 focus:ring-[#0066FF]"
+                                            ? "border-green-500/50 focus:ring-green-500"
+                                            : referralCodeStatus?.valid === false
+                                                ? "border-red-500/50 focus:ring-red-500"
+                                                : "border-white/10 focus:ring-[#0066FF]"
                                             }`}
                                         value={referralCode}
                                         onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
