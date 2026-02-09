@@ -1,36 +1,40 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import ClientLogin from "@/app/login/ClientLogin";
+import PasswordlessSignup from "@/components/auth/PasswordlessSignup";
 import HideSplashScreen from "@/components/HideSplashScreen";
 
 export default async function PlayerSignupPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("club_slug")
+      .select("club_slug, first_name")
       .eq("id", user.id)
       .maybeSingle();
 
-    // Si l'utilisateur a déjà un club, rediriger vers /home
-    if (profile?.club_slug) {
-      // TOUJOURS rediriger vers /home pour garantir l'affichage du menu hamburger et du logo du club
-      // /home utilise le layout (protected) qui contient PlayerSidebar et PlayerClubLogo
+    // Si l'utilisateur a un club et un prénom, rediriger vers /home
+    if (profile?.club_slug && profile?.first_name) {
       redirect("/home");
     }
 
-    // Sinon, l'inscription est incomplète - laisser continuer l'étape 2
+    // Si l'utilisateur a un club mais pas de prénom, rediriger vers l'onboarding
+    if (profile?.club_slug && !profile?.first_name) {
+      redirect("/player/onboarding");
+    }
+
+    // Sinon, l'inscription est incomplète - laisser continuer
   }
 
   return (
     <>
       <HideSplashScreen />
       <div className="relative min-h-screen flex flex-col items-center justify-center text-white px-6 overflow-hidden">
-        {/* Background global pour correspondre aux pages joueur */}
+        {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
 
-        {/* Logo en haut de la page */}
+        {/* Logo en haut */}
         <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20 pointer-events-none">
           <img
             src="/images/Logo sans fond.png"
@@ -39,8 +43,9 @@ export default async function PlayerSignupPage() {
           />
         </div>
 
-        <div className="relative z-[50] w-full flex flex-col items-center justify-center flex-1">
-          <ClientLogin />
+        {/* Formulaire d'inscription */}
+        <div className="relative z-[50] w-full flex flex-col items-center justify-center flex-1 pt-24 pb-8">
+          <PasswordlessSignup />
         </div>
       </div>
     </>

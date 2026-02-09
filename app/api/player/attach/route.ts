@@ -13,11 +13,12 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const nameRegex = /^[a-zA-Z0-9À-ÿ\s\-']+$/;
 
 /**
- * Schéma d'attachement joueur : slug/code obligatoires, identités optionnelles mais nettoyées.
+ * Schéma d'attachement joueur : slug obligatoire, code d'invitation optionnel (plus requis).
+ * Le joueur choisit directement son club dans une liste déroulante.
  */
 const playerAttachSchema = z.object({
   slug: z.string().trim().min(1, "Slug requis"),
-  code: z.string().trim().min(1, "Code requis"),
+  code: z.string().trim().optional(), // Plus obligatoire - on garde pour rétrocompatibilité
   firstName: z
     .string()
     .trim()
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
 
     const { data: club, error: clubError } = await supabaseAdmin
       .from("clubs")
-      .select("id, slug, code_invitation, status")
+      .select("id, slug, status")
       .eq("slug", slug)
       .single();
 
@@ -107,10 +108,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Club inactif" }, { status: 403 });
     }
 
-    const expectedCode = String(club.code_invitation || "").trim().toUpperCase();
-    if (!expectedCode || code !== expectedCode) {
-      return NextResponse.json({ error: "Code d’invitation incorrect" }, { status: 403 });
-    }
 
     const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
