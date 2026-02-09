@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Mail, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import SocialLoginButtons from "./SocialLoginButtons";
 
 type Step = "email" | "otp";
 
@@ -199,45 +200,58 @@ export default function PasswordlessLogin() {
             )}
 
             {step === "email" ? (
-                <form onSubmit={handleSendOtp} className="space-y-4">
-                    <div>
-                        <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                            Email
-                        </label>
-                        <div className="relative">
-                            <input
-                                type="email"
-                                required
-                                placeholder="thomas@exemple.com"
-                                className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <div className="space-y-6">
+                    <SocialLoginButtons />
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-white/10"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-[#1a1d2d] px-2 text-white/40">Ou avec email</span>
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3 rounded-xl bg-[#0066FF] hover:bg-[#0055DD] text-white font-semibold text-sm transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <>
-                                Recevoir le code <ArrowRight className="w-4 h-4" />
-                            </>
-                        )}
-                    </button>
+                    <form onSubmit={handleSendOtp} className="space-y-4">
+                        <div>
+                            <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
+                                Email
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="email"
+                                    required
+                                    placeholder="thomas@exemple.com"
+                                    className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                            </div>
+                        </div>
 
-                    <div className="mt-4 text-center text-sm text-white/70">
-                        Pas encore membre ?{" "}
-                        <Link href="/player/signup" className="underline hover:text-white transition-colors">
-                            S'inscrire
-                        </Link>
-                    </div>
-                </form>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-3 rounded-xl bg-[#0066FF] hover:bg-[#0055DD] text-white font-semibold text-sm transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <>
+                                    Recevoir le code <ArrowRight className="w-4 h-4" />
+                                </>
+                            )}
+                        </button>
+
+                        <div className="mt-4 text-center text-sm text-white/70">
+                            Pas encore membre ?{" "}
+                            <Link href="/player/signup" className="underline hover:text-white transition-colors">
+                                S'inscrire
+                            </Link>
+                        </div>
+                    </form>
+                </div>
             ) : (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div className="text-center space-y-2">

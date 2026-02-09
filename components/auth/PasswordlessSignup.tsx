@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import ClubSelector from "./ClubSelector";
 import { Mail, Gift, Loader2, ArrowRight, KeyRound, RefreshCw } from "lucide-react";
 import Image from "next/image";
+import SocialLoginButtons from "./SocialLoginButtons";
 
 interface Club {
     id: string;
@@ -365,126 +366,139 @@ export default function PasswordlessSignup() {
 
                 {step === "form" ? (
                     /* ========== ÉTAPE 1 : FORMULAIRE ========== */
-                    <form onSubmit={handleSendOtp} className="space-y-4">
-                        {/* Nom et Prénom */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                                    Prénom <span className="text-red-400">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Thomas"
-                                    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                                    value={firstName}
-                                    onChange={(e) => setFirstName(e.target.value)}
-                                />
+                    <div className="space-y-6">
+                        <SocialLoginButtons />
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-white/10"></div>
                             </div>
-                            <div>
-                                <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                                    Nom <span className="text-red-400">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Dupont"
-                                    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                                    value={lastName}
-                                    onChange={(e) => setLastName(e.target.value)}
-                                />
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-[#1a1d2d] px-2 text-white/40">Ou avec email</span>
                             </div>
                         </div>
 
-                        {/* Email */}
-                        <div>
-                            <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                                Email <span className="text-red-400">*</span>
-                            </label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                                <input
-                                    type="email"
-                                    required
-                                    placeholder="exemple@email.com"
-                                    className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    autoComplete="email"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Sélecteur de club */}
-                        <ClubSelector
-                            onSelect={setSelectedClub}
-                            selectedClub={selectedClub}
-                        />
-
-                        {/* Code de parrainage */}
-                        {showReferralCode ? (
-                            <div className="space-y-1.5 animate-in slide-in-from-top duration-200">
-                                <label className="block text-xs text-white/70 font-medium ml-1">
-                                    Code de parrainage
-                                </label>
-                                <div className="relative">
-                                    <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <form onSubmit={handleSendOtp} className="space-y-4">
+                            {/* Nom et Prénom */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
+                                        Prénom <span className="text-red-400">*</span>
+                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="CODE123"
-                                        className={`w-full rounded-xl bg-white/5 border pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 transition-all ${referralCodeStatus?.valid
-                                            ? "border-green-500/50 focus:ring-green-500"
-                                            : referralCodeStatus?.valid === false
-                                                ? "border-red-500/50 focus:ring-red-500"
-                                                : "border-white/10 focus:ring-[#0066FF]"
-                                            }`}
-                                        value={referralCode}
-                                        onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
-                                        maxLength={8}
+                                        required
+                                        placeholder="Thomas"
+                                        className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                                        value={firstName}
+                                        onChange={(e) => setFirstName(e.target.value)}
                                     />
                                 </div>
-                                {referralCodeValidating && (
-                                    <p className="text-xs text-white/50 ml-1">Vérification...</p>
-                                )}
-                                {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
-                                    <p className="text-xs text-green-400 ml-1">
-                                        ✓ Parrain : {referralCodeStatus.referrerName}
-                                    </p>
-                                )}
-                                {referralCodeStatus?.valid === false && referralCodeStatus.error && (
-                                    <p className="text-xs text-red-400 ml-1">{referralCodeStatus.error}</p>
-                                )}
+                                <div>
+                                    <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
+                                        Nom <span className="text-red-400">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Dupont"
+                                        className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                                        value={lastName}
+                                        onChange={(e) => setLastName(e.target.value)}
+                                    />
+                                </div>
                             </div>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => setShowReferralCode(true)}
-                                className="text-xs text-white/50 hover:text-white/80 underline transition-colors ml-1"
-                            >
-                                J'ai un code de parrainage
-                            </button>
-                        )}
 
-                        {/* Bouton Submit */}
-                        <button
-                            type="submit"
-                            disabled={loading || !email || !selectedClub}
-                            className="w-full rounded-xl px-4 py-3.5 font-semibold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 mt-6"
-                            style={{
-                                background: "linear-gradient(135deg, #0066FF, #003D99)",
-                                boxShadow: "0 0 20px rgba(0,102,255,0.4)"
-                            }}
-                        >
-                            {loading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
+                            {/* Email */}
+                            <div>
+                                <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
+                                    Email <span className="text-red-400">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                    <input
+                                        type="email"
+                                        required
+                                        placeholder="exemple@email.com"
+                                        className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        autoComplete="email"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Sélecteur de club */}
+                            <ClubSelector
+                                onSelect={setSelectedClub}
+                                selectedClub={selectedClub}
+                            />
+
+                            {/* Code de parrainage */}
+                            {showReferralCode ? (
+                                <div className="space-y-1.5 animate-in slide-in-from-top duration-200">
+                                    <label className="block text-xs text-white/70 font-medium ml-1">
+                                        Code de parrainage
+                                    </label>
+                                    <div className="relative">
+                                        <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                        <input
+                                            type="text"
+                                            placeholder="CODE123"
+                                            className={`w-full rounded-xl bg-white/5 border pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 transition-all ${referralCodeStatus?.valid
+                                                ? "border-green-500/50 focus:ring-green-500"
+                                                : referralCodeStatus?.valid === false
+                                                    ? "border-red-500/50 focus:ring-red-500"
+                                                    : "border-white/10 focus:ring-[#0066FF]"
+                                                }`}
+                                            value={referralCode}
+                                            onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
+                                            maxLength={8}
+                                        />
+                                    </div>
+                                    {referralCodeValidating && (
+                                        <p className="text-xs text-white/50 ml-1">Vérification...</p>
+                                    )}
+                                    {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
+                                        <p className="text-xs text-green-400 ml-1">
+                                            ✓ Parrain : {referralCodeStatus.referrerName}
+                                        </p>
+                                    )}
+                                    {referralCodeStatus?.valid === false && referralCodeStatus.error && (
+                                        <p className="text-xs text-red-400 ml-1">{referralCodeStatus.error}</p>
+                                    )}
+                                </div>
                             ) : (
-                                <>
-                                    Recevoir mon code
-                                    <ArrowRight className="w-4 h-4" />
-                                </>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReferralCode(true)}
+                                    className="text-xs text-white/50 hover:text-white/80 underline transition-colors ml-1"
+                                >
+                                    J'ai un code de parrainage
+                                </button>
                             )}
-                        </button>
-                    </form>
+
+                            {/* Bouton Submit */}
+                            <button
+                                type="submit"
+                                disabled={loading || !email || !selectedClub}
+                                className="w-full rounded-xl px-4 py-3.5 font-semibold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 mt-6"
+                                style={{
+                                    background: "linear-gradient(135deg, #0066FF, #003D99)",
+                                    boxShadow: "0 0 20px rgba(0,102,255,0.4)"
+                                }}
+                            >
+                                {loading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <>
+                                        Recevoir mon code
+                                        <ArrowRight className="w-4 h-4" />
+                                    </>
+                                )}
+                            </button>
+                        </form>
+                    </div>
                 ) : (
                     /* ========== ÉTAPE 2 : VÉRIFICATION OTP ========== */
                     <div className="space-y-6">
