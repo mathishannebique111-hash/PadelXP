@@ -32,6 +32,7 @@ interface PlanningManagerProps {
 interface Court {
     id: string;
     name: string;
+    opening_hours?: any;
 }
 
 interface Reservation {
@@ -60,31 +61,17 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
     const fetchPlanningData = async () => {
         setLoading(true);
         try {
-            // 1. Fetch Courts
+            // 1. Fetch Courts with their specific opening hours
             const { data: courtsData, error: courtsError } = await supabase
                 .from("courts")
-                .select("id, name")
+                .select("id, name, opening_hours")
                 .eq("club_id", clubId)
                 .order("name");
 
             if (courtsError) throw courtsError;
             setCourts(courtsData || []);
 
-            // 2. Fetch Club Opening Hours for this club
-            const { data: clubData, error: clubError } = await supabase
-                .from("clubs")
-                .select("opening_hours")
-                .eq("id", clubId)
-                .single();
-
-            if (clubError) {
-                console.error("Error fetching club opening hours:", clubError);
-                setOpeningHours({}); // Prevent infinite loading even on error
-            } else {
-                setOpeningHours(clubData?.opening_hours || {});
-            }
-
-            // 3. Fetch Reservations for selected date
+            // 2. Fetch Reservations for selected date
             const start = startOfDay(selectedDate).toISOString();
             const end = endOfDay(selectedDate).toISOString();
 
@@ -109,7 +96,6 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
         } catch (error: any) {
             console.error("Error fetching planning:", error);
             toast.error("Erreur lors du chargement du planning");
-            if (!openingHours) setOpeningHours({}); // Safety resolve
         } finally {
             setLoading(false);
         }
@@ -119,40 +105,45 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
         fetchPlanningData();
     }, [selectedDate, clubId]);
 
-    const getSlotTimeRange = () => {
-        if (!openingHours) return { slots: [], closed: false, loading: true };
+    const getMasterTimeline = () => {
+        if (courts.length === 0) return [];
 
         const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
         const dayKey = dayNames[selectedDate.getDay()];
-        const dayConfig = openingHours[dayKey];
 
-        if (!dayConfig || !dayConfig.isOpen) {
-            return { slots: [], closed: true, loading: false };
-        }
+        let earliestStart = 24 * 60; // in minutes
+        let latestEnd = 0;
+        let anyOpen = false;
 
-        const [startH, startM] = dayConfig.openTime.split(":").map(Number);
-        const [endH, endM] = (dayConfig.closeTime || "22:00").split(":").map(Number);
+        courts.forEach(court => {
+            const config = court.opening_hours?.[dayKey];
+            if (config?.isOpen) {
+                anyOpen = true;
+                const [hS, mS] = config.openTime.split(":").map(Number);
+                const [hE, mE] = config.closeTime.split(":").map(Number);
+                earliestStart = Math.min(earliestStart, hS * 60 + mS);
+                latestEnd = Math.max(latestEnd, hE * 60 + mE);
+            }
+        });
 
-        let current = set(startOfDay(selectedDate), { hours: startH, minutes: startM });
-        const endDay = set(startOfDay(selectedDate), { hours: endH, minutes: endM });
+        if (!anyOpen) return [];
 
         const slots = [];
-        while (current < endDay) {
-            slots.push(new Date(current));
-            current = addMinutes(current, 90);
+        let currentTotal = earliestStart;
+        while (currentTotal < latestEnd) {
+            const h = Math.floor(currentTotal / 60);
+            const m = currentTotal % 60;
+            slots.push(set(startOfDay(selectedDate), { hours: h, minutes: m }));
+            currentTotal += 30; // 30 min master step
         }
-
-        return { slots, closed: slots.length === 0, loading: false };
+        return slots;
     };
 
-    const { slots: timeSlots, closed: isClosed, loading: isHoursLoading } = getSlotTimeRange();
+    const masterTimeline = getMasterTimeline();
+    const isClosed = masterTimeline.length === 0;
 
-    const getReservationAt = (courtId: string, slotStart: Date) => {
-        return reservations.find(res => {
-            const resStart = new Date(res.start_time);
-            return res.court_id === courtId && Math.abs(resStart.getTime() - slotStart.getTime()) < 1000;
-        });
-    };
+    // We track which cells are covered by a rowSpan to skip them
+    const occupiedSlots = new Set<string>();
 
     const isSlotPassed = (slotStart: Date) => {
         return isBefore(slotStart, new Date());
@@ -162,10 +153,12 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
 
     const [showBlockModal, setShowBlockModal] = useState(false);
     const [blockSlot, setBlockSlot] = useState<Date | null>(null);
+    const [blockDuration, setBlockDuration] = useState(90);
     const [blockTitle, setBlockTitle] = useState("");
     const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
     const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
     const [saving, setSaving] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const handleBlockClick = (court: Court, slot: Date, existingRes?: Reservation) => {
         if (isSlotPassed(slot)) {
@@ -174,13 +167,28 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
         }
         setSelectedCourt(court);
         setBlockSlot(slot);
+
+        const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const dayKey = dayNames[selectedDate.getDay()];
+        const config = court.opening_hours?.[dayKey];
+        const [closeH, closeM] = (config?.closeTime || "22:00").split(":").map(Number);
+        const courtEnd = set(startOfDay(selectedDate), { hours: closeH, minutes: closeM });
+
+        // Calculate max allowed duration (minutes until closing)
+        const maxDur = (courtEnd.getTime() - slot.getTime()) / (1000 * 60);
+
         if (existingRes) {
             setEditingReservation(existingRes);
             setBlockTitle(existingRes.title || "");
+            const resDuration = (new Date(existingRes.end_time).getTime() - new Date(existingRes.start_time).getTime()) / (1000 * 60);
+            setBlockDuration(resDuration);
         } else {
             setEditingReservation(null);
             setBlockTitle("");
+            // Default to 90 min if possible, otherwise max allowed
+            setBlockDuration(Math.min(90, maxDur));
         }
+        setShowDeleteConfirm(false);
         setShowBlockModal(true);
     };
 
@@ -190,7 +198,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const start_time = blockSlot.toISOString();
-            const end_time = addMinutes(blockSlot, 90).toISOString();
+            const end_time = addMinutes(blockSlot, blockDuration).toISOString();
 
             if (editingReservation) {
                 const { error } = await supabase
@@ -233,7 +241,10 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
 
     const deleteBlock = async () => {
         if (!editingReservation) return;
-        if (!confirm("Voulez-vous vraiment supprimer cette réservation ?")) return;
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            return;
+        }
 
         setSaving(true);
         try {
@@ -298,7 +309,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                 </div>
             </div>
 
-            {loading || isHoursLoading ? (
+            {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                     <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
                     <p className="text-white/40 animate-pulse">Chargement du planning...</p>
@@ -331,53 +342,103 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            {timeSlots.map(slot => (
-                                <tr key={slot.toString()}>
-                                    <td className={`p-3 border-r border-b border-white/10 text-center text-xs font-medium bg-white/5 ${isSlotPassed(slot) ? 'text-red-400/40' : 'text-white/40'}`}>
-                                        {format(slot, "HH:mm")}
-                                    </td>
-                                    {courts.map(court => {
-                                        const res = getReservationAt(court.id, slot);
-                                        const passed = isSlotPassed(slot);
-                                        return (
-                                            <td
-                                                key={`${court.id}-${slot}`}
-                                                className={`p-1 border-b border-white/5 group relative h-16 min-w-[150px] transition-colors ${res ? 'bg-blue-500/10' : passed ? 'bg-red-500/10' : 'hover:bg-white/5'}`}
-                                            >
-                                                {res ? (
-                                                    <button
-                                                        onClick={() => handleBlockClick(court, slot, res)}
-                                                        className="h-full w-full bg-blue-500/20 border border-blue-500/30 rounded-lg p-2 flex flex-col justify-center gap-1 overflow-hidden hover:bg-blue-500/30 transition-colors text-left"
+                            {masterTimeline.map(time => {
+                                const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+                                const dayKey = dayNames[selectedDate.getDay()];
+                                const timeStr = time.toISOString();
+
+                                return (
+                                    <tr key={timeStr}>
+                                        <td className={`p-3 border-r border-b border-white/10 text-center text-xs font-medium bg-white/5 ${isSlotPassed(time) ? 'text-red-400/40' : 'text-white/40'}`}>
+                                            {format(time, "HH:mm")}
+                                        </td>
+                                        {courts.map(court => {
+                                            const courtKey = `${court.id}-${timeStr}`;
+
+                                            // Check if this specific 30-min window is already covered by a previous block's rowSpan
+                                            if (occupiedSlots.has(courtKey)) return null;
+
+                                            const config = court.opening_hours?.[dayKey];
+                                            if (!config?.isOpen) return <td key={court.id} className="border-b border-white/5 bg-black/20" />;
+
+                                            const [hS, mS] = config.openTime.split(":").map(Number);
+                                            const [hE, mE] = (config.closeTime || "22:00").split(":").map(Number);
+                                            const courtStart = set(startOfDay(selectedDate), { hours: hS, minutes: mS });
+                                            const courtEnd = set(startOfDay(selectedDate), { hours: hE, minutes: mE });
+
+                                            if (isBefore(time, courtStart) || !isBefore(time, courtEnd)) {
+                                                return <td key={court.id} className="border-b border-white/5 bg-black/20" />;
+                                            }
+
+                                            // Find a reservation STARTING EXACTLY at this 'time'
+                                            const res = reservations.find(r =>
+                                                r.court_id === court.id &&
+                                                Math.abs(new Date(r.start_time).getTime() - time.getTime()) < 1000
+                                            );
+
+                                            if (res) {
+                                                const resDuration = (new Date(res.end_time).getTime() - new Date(res.start_time).getTime()) / (1000 * 60);
+                                                const rowSpan = Math.ceil(resDuration / 30);
+
+                                                // Mark subsequent 30-min segments as occupied
+                                                for (let i = 1; i < rowSpan; i++) {
+                                                    occupiedSlots.add(`${court.id}-${addMinutes(time, i * 30).toISOString()}`);
+                                                }
+
+                                                return (
+                                                    <td
+                                                        key={courtKey}
+                                                        rowSpan={rowSpan}
+                                                        className="p-1 border-b border-white/5 group relative min-w-[150px] transition-colors bg-blue-500/10"
                                                     >
-                                                        <div className="flex items-center gap-1.5 min-w-0">
-                                                            <Lock className="w-3 h-3 text-blue-400 shrink-0" />
-                                                            <span className="text-[10px] font-bold text-blue-200 uppercase tracking-wider truncate">
-                                                                {res.title || (res.profiles ? (
-                                                                    `${res.profiles.first_name || ''} ${res.profiles.last_name || ''}`.trim() || res.profiles.display_name || 'Réservé'
-                                                                ) : 'Bloqué (Admin)')}
+                                                        <button
+                                                            onClick={() => handleBlockClick(court, time, res)}
+                                                            className="h-full w-full bg-blue-500/20 border border-blue-500/30 rounded-lg p-2 flex flex-col justify-center gap-1 overflow-hidden hover:bg-blue-500/30 transition-colors text-left"
+                                                        >
+                                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                                <Lock className="w-3 h-3 text-blue-400 shrink-0" />
+                                                                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-wider truncate">
+                                                                    {res.title || (res.profiles ? (
+                                                                        `${res.profiles.first_name || ''} ${res.profiles.last_name || ''}`.trim() || res.profiles.display_name || 'Réservé'
+                                                                    ) : 'Bloqué (Admin)')}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[9px] text-blue-400/80">
+                                                                {format(new Date(res.start_time), "HH:mm")} - {format(new Date(res.end_time), "HH:mm")}
                                                             </span>
+                                                        </button>
+                                                    </td>
+                                                );
+                                            }
+
+                                            // If no reservation starts here, check if we're "in the middle" of a reservation that started earlier
+                                            // This is handled by the occupiedSlots.has(courtKey) check at the top.
+
+                                            // Otherwise, render a free cell
+                                            const passed = isSlotPassed(time);
+                                            return (
+                                                <td
+                                                    key={courtKey}
+                                                    className={`p-1 border-b border-white/5 group relative min-w-[150px] transition-colors ${passed ? 'bg-red-500/10' : 'hover:bg-white/5'}`}
+                                                >
+                                                    {passed ? (
+                                                        <div className="h-10 w-full flex items-center justify-center text-red-400/20">
+                                                            <Clock className="w-4 h-4 opacity-50" />
                                                         </div>
-                                                        <span className="text-[9px] text-blue-400/80">
-                                                            {format(new Date(res.start_time), "HH:mm")} - {format(new Date(res.end_time), "HH:mm")}
-                                                        </span>
-                                                    </button>
-                                                ) : passed ? (
-                                                    <div className="h-full w-full flex items-center justify-center text-red-400/20">
-                                                        <Clock className="w-4 h-4 opacity-50" />
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleBlockClick(court, slot)}
-                                                        className="h-full w-full rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white/20 hover:text-white/40 hover:bg-white/5 transition-all"
-                                                    >
-                                                        <Plus className="w-5 h-5" />
-                                                    </button>
-                                                )}
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            ))}
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleBlockClick(court, time)}
+                                                            className="h-10 w-full rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white/20 hover:text-white/40 hover:bg-white/5 transition-all"
+                                                        >
+                                                            <Plus className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -401,15 +462,41 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                         </div>
 
                         <div className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-white/40 ml-1">Titre ou Note (optionnel)</label>
-                                <input
-                                    type="text"
-                                    value={blockTitle}
-                                    onChange={(e) => setBlockTitle(e.target.value)}
-                                    placeholder="Ex: Cours de Padel, Entretien..."
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                                />
+                            <div className="flex gap-4">
+                                <div className="flex-1 space-y-1.5">
+                                    <label className="text-xs font-medium text-white/40 ml-1">Titre ou Note (optionnel)</label>
+                                    <input
+                                        type="text"
+                                        value={blockTitle}
+                                        onChange={(e) => setBlockTitle(e.target.value)}
+                                        placeholder="Ex: Cours de Padel, Entretien..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                    />
+                                </div>
+                                <div className="w-24 space-y-1.5">
+                                    <label className="text-xs font-medium text-white/40 ml-1">Durée (min)</label>
+                                    <select
+                                        value={blockDuration}
+                                        onChange={(e) => setBlockDuration(Number(e.target.value))}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                    >
+                                        {[30, 60, 90, 120].map(dur => {
+                                            const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+                                            const dayKey = dayNames[selectedDate.getDay()];
+                                            const config = selectedCourt?.opening_hours?.[dayKey];
+                                            const [closeH, closeM] = (config?.closeTime || "22:00").split(":").map(Number);
+                                            const courtEnd = set(startOfDay(selectedDate), { hours: closeH, minutes: closeM });
+                                            const maxDur = blockSlot ? (courtEnd.getTime() - blockSlot.getTime()) / (1000 * 60) : 0;
+
+                                            if (dur > maxDur && dur !== blockDuration) return null;
+                                            return <option key={dur} value={dur}>{dur}</option>;
+                                        })}
+                                        {/* Fallback for odd durations like 45, 75 etc if they occur */}
+                                        {![30, 60, 90, 120].includes(blockDuration) && (
+                                            <option value={blockDuration}>{blockDuration}</option>
+                                        )}
+                                    </select>
+                                </div>
                             </div>
 
                             <div className="bg-white/5 rounded-xl p-4 border border-white/5 space-y-3">
@@ -419,39 +506,64 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-white/40">Horaire</span>
-                                    <span className="text-white font-medium">{format(blockSlot, "HH:mm")} - {format(addMinutes(blockSlot, 90), "HH:mm")}</span>
+                                    <span className="text-white font-medium">{format(blockSlot, "HH:mm")} - {format(addMinutes(blockSlot, blockDuration), "HH:mm")}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 pt-2">
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setShowBlockModal(false)}
-                                    className="flex-1 px-4 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors font-medium text-sm"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    onClick={confirmBlock}
-                                    disabled={saving}
-                                    className={`flex-1 px-4 py-2.5 ${editingReservation ? 'bg-blue-500 hover:bg-blue-400' : 'bg-red-500 hover:bg-red-400'} text-white rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 font-bold text-sm transition-all shadow-lg ${editingReservation ? 'shadow-blue-500/20' : 'shadow-red-500/20'}`}
-                                >
-                                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                                    {editingReservation ? "Enregistrer" : "Bloquer"}
-                                </button>
+                        {showDeleteConfirm ? (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
+                                    <p className="text-red-200 text-sm font-medium">
+                                        Voulez-vous vraiment supprimer cette réservation ?
+                                    </p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="flex-1 px-4 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors font-medium text-sm"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={deleteBlock}
+                                        disabled={saving}
+                                        className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 font-bold text-sm transition-all shadow-lg shadow-red-500/20"
+                                    >
+                                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmer la suppression"}
+                                    </button>
+                                </div>
                             </div>
+                        ) : (
+                            <div className="flex flex-col gap-3 pt-2">
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowBlockModal(false)}
+                                        className="flex-1 px-4 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-colors font-medium text-sm"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={confirmBlock}
+                                        disabled={saving}
+                                        className={`flex-1 px-4 py-2.5 ${editingReservation ? 'bg-blue-500 hover:bg-blue-400' : 'bg-red-500 hover:bg-red-400'} text-white rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 font-bold text-sm transition-all shadow-lg ${editingReservation ? 'shadow-blue-500/20' : 'shadow-red-500/20'}`}
+                                    >
+                                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                        {editingReservation ? "Enregistrer" : "Bloquer"}
+                                    </button>
+                                </div>
 
-                            {editingReservation && (
-                                <button
-                                    onClick={deleteBlock}
-                                    disabled={saving}
-                                    className="w-full px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium border border-transparent hover:border-red-500/20"
-                                >
-                                    Supprimer cette réservation
-                                </button>
-                            )}
-                        </div>
+                                {editingReservation && (
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(true)}
+                                        disabled={saving}
+                                        className="w-full px-4 py-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all text-sm font-medium border border-transparent"
+                                    >
+                                        Supprimer cette réservation
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

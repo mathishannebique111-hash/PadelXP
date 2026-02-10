@@ -30,7 +30,7 @@ export default function CourtsManager({ clubId }: { clubId: string }) {
     const [showBlockModal, setShowBlockModal] = useState(false);
     const [blockDate, setBlockDate] = useState("");
     const [blockStart, setBlockStart] = useState("09:00");
-    const [blockEnd, setBlockEnd] = useState("10:00");
+    const [blockDuration, setBlockDuration] = useState(90);
     const [selectedCourtId, setSelectedCourtId] = useState<string | null>(null);
 
     // Peak Hours State (MVP - optimized for single rule)
@@ -128,15 +128,41 @@ export default function CourtsManager({ clubId }: { clubId: string }) {
     };
 
     const confirmBlock = async () => {
-        if (!selectedCourtId || !blockDate || !blockStart || !blockEnd) return;
-        setSaving(true);
+        if (!selectedCourtId || !blockDate || !blockStart) return;
+
+        const court = courts.find(c => c.id === selectedCourtId);
+        if (!court) return;
+
+        const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const dayDate = new Date(blockDate);
+        const dayKey = dayNames[dayDate.getDay()];
+        const config = (court as any).opening_hours?.[dayKey];
+
+        if (config && !config.isOpen) {
+            toast.error("Le terrain est fermé ce jour-là");
+            return;
+        }
 
         const startDateTime = `${blockDate}T${blockStart}:00`;
-        const endDateTime = `${blockDate}T${blockEnd}:00`;
+        const startDate = new Date(startDateTime);
 
-        // Create a "blocked" reservation
-        // Using existing reservations table
-        // Assuming we can create a reservation with a specific status or just 'confirmed' by admin
+        // Calculate max allowed duration
+        let maxDur = 1440; // Default 24h
+        if (config?.closeTime) {
+            const [closeH, closeM] = config.closeTime.split(":").map(Number);
+            const courtEnd = new Date(startDate);
+            courtEnd.setHours(closeH, closeM, 0, 0);
+            maxDur = (courtEnd.getTime() - startDate.getTime()) / (1000 * 60);
+        }
+
+        if (blockDuration > maxDur) {
+            toast.error(`La durée dépasse l'heure de fermeture (${config?.closeTime})`);
+            return;
+        }
+
+        setSaving(true);
+        const endDateTime = new Date(startDate.getTime() + blockDuration * 60000).toISOString();
+
         const { data: { user } } = await supabase.auth.getUser();
 
         const { error } = await supabase
@@ -146,11 +172,9 @@ export default function CourtsManager({ clubId }: { clubId: string }) {
                 created_by: user?.id,
                 start_time: startDateTime,
                 end_time: endDateTime,
-                status: "confirmed", // or 'blocked' if we added it to enum
-                payment_method: "on_site", // admin/manual blocking
-                total_price: 0, // Free blocking
-                // Add a note or metadata if possible to say "Blocked by Admin"
-                // For now, reliance on created_by being the admin
+                status: "confirmed",
+                payment_method: "on_site",
+                total_price: 0,
             } as any);
 
         if (error) {
@@ -270,13 +294,30 @@ export default function CourtsManager({ clubId }: { clubId: string }) {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-white/60 mb-1">Fin</label>
-                                    <input
-                                        type="time"
-                                        value={blockEnd}
-                                        onChange={(e) => setBlockEnd(e.target.value)}
+                                    <label className="block text-sm text-white/60 mb-1">Durée (min)</label>
+                                    <select
+                                        value={blockDuration}
+                                        onChange={(e) => setBlockDuration(Number(e.target.value))}
                                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                                    />
+                                    >
+                                        {[30, 60, 90, 120].map(dur => {
+                                            const court = courts.find(c => c.id === selectedCourtId);
+                                            const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+                                            const dayDate = blockDate ? new Date(blockDate) : new Date();
+                                            const dayKey = dayNames[dayDate.getDay()];
+                                            const config = (court as any)?.opening_hours?.[dayKey];
+
+                                            if (config?.closeTime && blockStart) {
+                                                const [closeH, closeM] = config.closeTime.split(":").map(Number);
+                                                const startDate = new Date(`${blockDate}T${blockStart}`);
+                                                const courtEnd = new Date(startDate);
+                                                courtEnd.setHours(closeH, closeM, 0, 0);
+                                                const maxDur = (courtEnd.getTime() - startDate.getTime()) / (1000 * 60);
+                                                if (dur > maxDur && dur !== blockDuration) return null;
+                                            }
+                                            return <option key={dur} value={dur}>{dur} min</option>;
+                                        })}
+                                    </select>
                                 </div>
                             </div>
                         </div>

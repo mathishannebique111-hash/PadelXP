@@ -79,30 +79,17 @@ export default function ReservationsListContent() {
         loadReservations();
     }, [searchParams]); // Reload when URL specific params change (like tab)
 
-    const [debugUserId, setDebugUserId] = useState<string | null>(null);
-    const [debugInfo, setDebugInfo] = useState<string>("");
 
     async function loadReservations() {
         setLoading(true);
         try {
             const response = await fetch("/api/reservations", { credentials: "include" });
-            const rawText = await response.text();
-            setDebugInfo(`HTTP ${response.status} | Raw: ${rawText.substring(0, 200)}`);
-
-            try {
-                const data = JSON.parse(rawText);
-                if (data.reservations) {
-                    setReservations(data.reservations);
-                }
-                if (data._debug_user_id) {
-                    setDebugUserId(data._debug_user_id);
-                }
-            } catch (parseErr) {
-                setDebugInfo(`Parse error: ${rawText.substring(0, 300)}`);
+            const data = await response.json();
+            if (data.reservations) {
+                setReservations(data.reservations);
             }
         } catch (error) {
             console.error("Error loading reservations:", error);
-            setDebugInfo(`Fetch error: ${String(error)}`);
         } finally {
             setLoading(false);
         }
@@ -146,10 +133,6 @@ export default function ReservationsListContent() {
             }
         });
 
-    // DEBUG LOG - à supprimer après
-    console.log("[ReservationsListContent] Total reservations from API:", reservations.length);
-    console.log("[ReservationsListContent] Reservations with null reservation:", reservations.filter(r => !r.reservation).length);
-    console.log("[ReservationsListContent] Filtered (", filter, "):", filteredReservations.length);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -269,12 +252,6 @@ export default function ReservationsListContent() {
                 </button>
             </div>
 
-            {/* DEBUG PANEL - TEMPORAIRE */}
-            <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-xs text-yellow-200 break-all">
-                <p>🔧 DEBUG: API={reservations.length} | Null={reservations.filter(r => !r.reservation).length} | Filtrées={filteredReservations.length} | Mode={filter}</p>
-                <p>UserID: {debugUserId || 'N/A'}</p>
-                <p className="text-[10px] opacity-70">Response: {debugInfo || 'Loading...'}</p>
-            </div>
 
             <div className="space-y-4">
                 {filteredReservations.length === 0 ? (
