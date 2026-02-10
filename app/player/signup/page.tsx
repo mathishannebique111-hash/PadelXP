@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import PasswordlessSignup from "@/components/auth/PasswordlessSignup";
+import EmailSignup from "@/components/auth/EmailSignup";
 import HideSplashScreen from "@/components/HideSplashScreen";
 
 export default async function PlayerSignupPage() {
@@ -45,7 +45,7 @@ export default async function PlayerSignupPage() {
 
         {/* Formulaire d'inscription */}
         <div className="relative z-[50] w-full flex flex-col items-center justify-center flex-1 pt-24 pb-8">
-          <PasswordlessSignup />
+          <EmailSignup />
         </div>
       </div>
     </>

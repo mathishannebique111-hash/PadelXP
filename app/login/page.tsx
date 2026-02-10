@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import PasswordlessLogin from "@/components/auth/PasswordlessLogin";
+import EmailLogin from "@/components/auth/EmailLogin";
 import Link from "next/link";
 import LoginSuccessMessage from "@/components/auth/LoginSuccessMessage";
 import HideSplashScreen from "@/components/HideSplashScreen";
@@ -67,7 +67,7 @@ export default async function LoginPage({
           <h1 className="text-xl font-extrabold mb-2">Connexion</h1>
           <p className="text-white/70 mb-5 text-xs opacity-70">Bon retour sur PadelXP !</p>
           {showPasswordResetSuccess && <LoginSuccessMessage />}
-          <PasswordlessLogin />
+          <EmailLogin />
         </div>
       </div>
     </>
