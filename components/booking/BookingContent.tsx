@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Calendar, Clock, MapPin, X, Check, Loader2 } from "lucide-react";
+import { Calendar, Clock, MapPin, X, Check, Loader2, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TimeSlot {
@@ -18,6 +18,7 @@ interface Court {
     id: string;
     name: string;
     is_active: boolean;
+    price_hour?: number; // Optional, defaults to club default
     slots: TimeSlot[];
 }
 
@@ -47,7 +48,9 @@ export default function BookingContent({ clubId }: BookingContentProps) {
     const [availabilityCache, setAvailabilityCache] = useState<Record<string, Court[]>>({});
 
     // -- Constants --
-    const PRICE_PER_SLOT = 30; // TODO: Get from club settings?
+    const DEFAULT_PRICE_PER_HOUR = 32; // Default if not set
+    const COMMISSION_PERCENT = 0.022; // 2.2%
+    const COMMISSION_FIXED = 0.25; // 0.25€
 
     // -- Helpers --
     const formatDateKey = (date: Date) => date.toISOString().split("T")[0];
@@ -170,6 +173,26 @@ export default function BookingContent({ clubId }: BookingContentProps) {
 
         setBooking(true);
 
+        // Price Calculation Logic
+        const courtPrice = selectedCourtForSummary.price_hour || DEFAULT_PRICE_PER_HOUR;
+        // Since slots are usually 1h30 (90 mins), we calculate proportional price
+        // BUT usually clubs have a fixed price per slot (e.g. 40€ / 1h30).
+        // Let's assume price_hour IS the price per slot for simplicity in this MVP, 
+        // OR better: Assume 1h30 slot = 1.5 * price_hour.
+        // Given 'PRICE_PER_SLOT = 30' was hardcoded, let's Stick to fixed slot price for now or calculate duration.
+        const start = new Date(slot.start_time);
+        const end = new Date(slot.end_time);
+        const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60); // e.g. 1.5
+
+        let totalPrice = courtPrice;
+        if (durationHours !== 1) {
+            // Adjust if logic dictates. For Padel usually it's fixed 1h30 slot. 
+            // If the court price is "per hour", then totalPrice = courtPrice * durationHours.
+            // Let's assume the DB stores "Price Per Slot" to avoid confusion or "Price Per Hour".
+            // Implementation Decision: Use Duration Multiplier assuming price is hourly.
+            totalPrice = courtPrice * durationHours;
+        }
+
         try {
             const res = await fetch("/api/reservations", {
                 method: "POST",
@@ -179,8 +202,8 @@ export default function BookingContent({ clubId }: BookingContentProps) {
                     court_id: selectedCourtForSummary.id,
                     start_time: slot.start_time,
                     end_time: slot.end_time,
-                    participant_ids: [], // Création sans joueurs externes initialement
-                    total_price: PRICE_PER_SLOT,
+                    participant_ids: [],
+                    total_price: totalPrice, // Security: Server should re-verify this!
                     payment_method: "stripe"
                 })
             });
@@ -219,6 +242,37 @@ export default function BookingContent({ clubId }: BookingContentProps) {
     const getDayName = (date: Date) => new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(date);
     const getDayNumber = (date: Date) => new Intl.DateTimeFormat('fr-FR', { day: '2-digit' }).format(date);
     const getMonthName = (date: Date) => new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(date);
+
+    // -- Pricing Display --
+    const getPriceDetails = () => {
+        if (!selectedCourtForSummary || !selectedTimeSlot) return null;
+
+        const courtPriceHour = selectedCourtForSummary.price_hour || DEFAULT_PRICE_PER_HOUR;
+        const slot = selectedCourtForSummary.slots.find(s => s.start_time === selectedTimeSlot);
+        let duration = 1.5; // Default
+        if (slot) {
+            const start = new Date(slot.start_time);
+            const end = new Date(slot.end_time);
+            duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        }
+
+        const totalPrice = courtPriceHour * duration;
+        const perPlayerPrice = totalPrice / 4;
+
+        // Commission
+        const commission = (perPlayerPrice * COMMISSION_PERCENT) + COMMISSION_FIXED;
+        const totalPerPlayer = perPlayerPrice + commission;
+
+        return {
+            total: totalPrice,
+            perPlayer: perPlayerPrice,
+            commission,
+            totalPerPlayer
+        };
+    };
+
+    const priceDetails = getPriceDetails();
+
 
     return (
         <div className="pb-24 relative min-h-[60vh]">
@@ -389,7 +443,7 @@ export default function BookingContent({ clubId }: BookingContentProps) {
 
             {/* 4. Summary Popup - CENTRÉ */}
             <AnimatePresence>
-                {isSummaryOpen && selectedCourtForSummary && selectedTimeSlot && (
+                {isSummaryOpen && selectedCourtForSummary && selectedTimeSlot && priceDetails && (
                     <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -416,7 +470,6 @@ export default function BookingContent({ clubId }: BookingContentProps) {
 
                             <div className="p-6 space-y-6 overflow-y-auto flex-grow">
                                 <div className="space-y-4">
-                                    {/* Removed frames (bg-white/5 and padding) from icons */}
                                     <div className="flex items-center gap-4">
                                         <Calendar className="w-5 h-5 text-gray-400" />
                                         <div>
@@ -447,9 +500,30 @@ export default function BookingContent({ clubId }: BookingContentProps) {
 
                                     <div className="h-px bg-white/10 my-4" />
 
+                                    {/* Breakdown Calculation */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-400">Prix terrain (total)</span>
+                                            <span className="text-white font-medium">{priceDetails.total.toFixed(2)}€</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-400">Votre part (1/4)</span>
+                                            <span className="text-white font-medium">{priceDetails.perPlayer.toFixed(2)}€</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center gap-1.5 text-gray-400">
+                                                <span>Frais de service</span>
+                                                <Info className="w-3 h-3 cursor-help text-gray-500" />
+                                            </div>
+                                            <span className="text-white font-medium">{priceDetails.commission.toFixed(2)}€</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px bg-white/10 my-2" />
+
                                     <div className="flex items-center justify-between">
-                                        <p className="text-gray-400">Prix total</p>
-                                        <p className="text-2xl font-bold text-white">{PRICE_PER_SLOT}€</p>
+                                        <p className="text-gray-400 font-medium">Total à payer</p>
+                                        <p className="text-2xl font-black text-blue-400">{priceDetails.totalPerPlayer.toFixed(2)}€</p>
                                     </div>
                                 </div>
 
@@ -472,7 +546,7 @@ export default function BookingContent({ clubId }: BookingContentProps) {
                                                 Validation...
                                             </>
                                         ) : (
-                                            "Valider"
+                                            "Payer"
                                         )}
                                     </button>
                                 </div>

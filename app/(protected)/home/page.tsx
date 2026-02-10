@@ -19,6 +19,8 @@ import PadelTabContent from "@/components/PadelTabContent";
 import BadgesContent from "@/components/BadgesContent";
 import HideSplashScreen from "@/components/HideSplashScreen";
 import PadelLoader from "@/components/ui/PadelLoader";
+import PremiumStats from "@/components/club/PremiumStats";
+
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -261,14 +263,14 @@ export default async function HomePage({
                 />
               }
               statsContent={
-                <div className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6">
-                  <div className="w-full max-w-md">
-                    <PlayerSummary profileId={profile.id} />
+                <div className="space-y-6">
+                  <div className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6">
+                    <div className="w-full max-w-md">
+                      <PlayerSummary profileId={profile.id} />
+                    </div>
+                    {/* ... other stats components ... */}
                   </div>
-                  <a href="/match/new" className="inline-flex w-full max-w-md items-center justify-center rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-bold text-black transition-all hover:scale-105 bg-padel-green">Enregistrer un match</a>
-                  <div className="w-full max-w-md">
-                    <ReferralSection userId={profile.id} />
-                  </div>
+                  <PremiumStats />
                 </div>
               }
               badgesContent={<BadgesContent />}

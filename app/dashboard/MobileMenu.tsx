@@ -18,7 +18,8 @@ import {
   CreditCard,
   Download,
   HelpCircle,
-  Settings
+  Settings,
+  Calendar
 } from 'lucide-react';
 
 export default function MobileMenu() {
@@ -52,6 +53,7 @@ export default function MobileMenu() {
     { href: '/dashboard/challenges', label: 'Challenges', icon: Target },
     { href: '/dashboard/tournaments', label: 'Tournois', icon: Medal },
     { href: '/dashboard/roles', label: 'Rôles et accès', icon: UserCog },
+    { href: '/dashboard/reservations', label: 'Réservations & Tarifs', icon: Calendar },
     { href: '/dashboard/facturation', label: 'Abonnement & essai', icon: CreditCard },
     { href: '/dashboard/import-export', label: 'Import / Export', icon: Download },
     { href: '/dashboard/aide', label: 'Aide & Support', icon: HelpCircle },

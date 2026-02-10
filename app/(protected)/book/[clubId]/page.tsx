@@ -76,6 +76,8 @@ export default function BookingPage() {
         loadClubAndCourts();
     }, [clubId, supabase]);
 
+    const [maxDate, setMaxDate] = useState<string>("");
+
     // Charger les disponibilités quand le terrain ou la date change
     useEffect(() => {
         async function loadAvailability() {
@@ -89,6 +91,13 @@ export default function BookingPage() {
                 const data = await response.json();
                 if (data.slots) {
                     setSlots(data.slots);
+                }
+                // Mettre à jour la date max autorisée si retournée par l'API
+                if (data.maxDaysInAdvance) {
+                    const today = new Date();
+                    const max = new Date(today);
+                    max.setDate(today.getDate() + data.maxDaysInAdvance);
+                    setMaxDate(max.toISOString().split("T")[0]);
                 }
             } catch (error) {
                 console.error("Error loading availability:", error);
@@ -162,8 +171,8 @@ export default function BookingPage() {
                                     setSelectedSlot(null);
                                 }}
                                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedCourt?.id === court.id
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-white/10 text-white/70 hover:bg-white/20"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-white/10 text-white/70 hover:bg-white/20"
                                     }`}
                             >
                                 {court.name}
@@ -186,6 +195,7 @@ export default function BookingPage() {
                             setSelectedSlot(null);
                         }}
                         min={new Date().toISOString().split("T")[0]}
+                        max={maxDate}
                         className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </section>
@@ -207,10 +217,10 @@ export default function BookingPage() {
                                     onClick={() => slot.is_available && setSelectedSlot(slot)}
                                     disabled={!slot.is_available}
                                     className={`p-3 rounded-lg text-sm font-medium transition-colors ${!slot.is_available
-                                            ? "bg-red-900/30 text-red-400/50 cursor-not-allowed"
-                                            : selectedSlot?.start_time === slot.start_time
-                                                ? "bg-blue-600 text-white ring-2 ring-blue-400"
-                                                : "bg-white/10 text-white hover:bg-white/20"
+                                        ? "bg-red-900/30 text-red-400/50 cursor-not-allowed"
+                                        : selectedSlot?.start_time === slot.start_time
+                                            ? "bg-blue-600 text-white ring-2 ring-blue-400"
+                                            : "bg-white/10 text-white hover:bg-white/20"
                                         }`}
                                 >
                                     {formatTime(slot.start_time)}
@@ -227,8 +237,8 @@ export default function BookingPage() {
                     onClick={handleContinue}
                     disabled={!selectedSlot}
                     className={`w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition-colors ${selectedSlot
-                            ? "bg-blue-600 text-white hover:bg-blue-700"
-                            : "bg-white/10 text-white/40 cursor-not-allowed"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-white/10 text-white/40 cursor-not-allowed"
                         }`}
                 >
                     <Users className="w-5 h-5" />

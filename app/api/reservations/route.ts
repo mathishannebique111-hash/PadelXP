@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
                         // but in an API route it's tricky. 
                         // Check reference implementation: players/search/route.ts does implement setAll.
                         try {
-                            cookiesToSet.forEach(({ name, value, options }) => {
+                            cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options: any }) => {
                                 cookieStore.set(name, value, options);
                             });
                         } catch (e) {
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
                     },
                     setAll(cookiesToSet: any) {
                         try {
-                            cookiesToSet.forEach(({ name, value, options }: any) => {
+                            cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options: any }) => {
                                 cookieStore.set(name, value, options);
                             });
                         } catch (e) {
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
         // Vérifier que le terrain existe
         const { data: court, error: courtError } = await supabase
             .from("courts")
-            .select("id, club_id, is_active")
+            .select("id, club_id, is_active, price_hour, pricing_rules")
             .eq("id", court_id)
             .single();
 
@@ -222,6 +222,70 @@ export async function POST(request: NextRequest) {
 
         const initialStatus = payment_method === "on_site" ? "confirmed" : "pending_payment";
 
+        // Security: Calculate price server-side
+        // const { total_price } = body; // Don't trust client price blindly
+
+        // Calculate duration in hours
+        const start = new Date(start_time);
+        const end = new Date(end_time);
+        const durationMs = end.getTime() - start.getTime();
+        const durationHours = durationMs / (1000 * 60 * 60);
+
+        if (durationHours <= 0) {
+            return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
+        }
+
+        // Determine applicable price
+        let applicablePricePerHour = court.price_hour || 30; // Fallback
+
+        // Check pricing rules (Peak hours)
+        // Need to fetch pricing_rules. 
+        // Note: We need to update the previous select to include pricing_rules
+        // const { data: court ... } = ... select("id, club_id, is_active, price_hour, pricing_rules") 
+        // But since we can't change the previous select easily without seeing line numbers, 
+        // let's assume we update the select in a separate edit or do a second query (less efficient but safe)
+        // Actually, I can update the select in this same file if I target the select line.
+        // For this Block, I will assume 'court' has the data. 
+        // IMPORTANT: I need to update the select query first or concurrently.
+
+        // Let's implement the logic assuming 'court' has 'pricing_rules'.
+        // I will update the select query in the next step or same transaction if possible.
+
+        if (court.pricing_rules && Array.isArray(court.pricing_rules) && court.pricing_rules.length > 0) {
+            const rule = court.pricing_rules[0]; // MVP: Single rule
+            const dayOfWeek = start.getDay(); // 0 = Sunday
+
+            // Check day
+            if (rule.days.includes(dayOfWeek)) {
+                // Check time
+                // Convert Times to minutes for comparison
+                const getMinutesIds = (timeStr: string) => {
+                    const [h, m] = timeStr.split(':').map(Number);
+                    return h * 60 + m;
+                };
+
+                const startMinutes = start.getHours() * 60 + start.getMinutes();
+                const ruleStart = getMinutesIds(rule.start);
+                const ruleEnd = getMinutesIds(rule.end);
+
+                // Simple overlap check: If the reservation start time is within the peak window
+                if (startMinutes >= ruleStart && startMinutes < ruleEnd) {
+                    applicablePricePerHour = rule.price;
+                }
+            }
+        }
+
+        const calculatedTotalPrice = applicablePricePerHour * durationHours;
+
+        // Optional: Validate matches client (fuzzy match for floats)
+        if (body.total_price && Math.abs(body.total_price - calculatedTotalPrice) > 0.5) {
+            console.warn(`Price mismatch: Client ${body.total_price}, Server ${calculatedTotalPrice}`);
+            // return NextResponse.json({ error: "Prix incorrect. Veuillez rafraîchir." }, { status: 400 });
+            // For now, let's enforce server price
+        }
+
+        const finalTotalPrice = calculatedTotalPrice;
+
         // Créer la réservation
         const { data: reservation, error: reservationError } = await supabase
             .from("reservations")
@@ -232,7 +296,7 @@ export async function POST(request: NextRequest) {
                 end_time,
                 status: initialStatus,
                 payment_method,
-                total_price,
+                total_price: finalTotalPrice,
                 expires_at: expiresAt
             })
             .select()

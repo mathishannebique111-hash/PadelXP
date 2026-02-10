@@ -62,9 +62,41 @@ export async function POST(
             return NextResponse.json({ error: "Ce club n'accepte pas les paiements en ligne" }, { status: 400 });
         }
 
-        // --- CONFIGURATION COMMISSION PADELXP ---
-        // 1% du montant de la réservation (arrondi à l'entier le plus proche)
+        // --- CONFIGURATION FRAIS SERVICE & COMMISSION ---
+        // 1. Frais de Service (Commission PadelXP) pour les NON-PREMIUM
+        // Formule : 2.2% + 0.25€ par transaction, arrondi au centime supérieur
+        // Premium : 0€ de frais
+
+        let serviceFeeCents = 0;
+
+        // Vérifier si l'utilisateur est Premium
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_premium")
+            .eq("id", user.id)
+            .single();
+
+        if (!profile?.is_premium) {
+            // Calcul des frais : (Montant * 2.2%) + 0.25€
+            const feeAmount = (participant.amount * 0.022) + 0.25;
+            // Arrondir au centime supérieur
+            serviceFeeCents = Math.ceil(feeAmount * 100);
+        }
+
         const PADELXP_COMMISSION_CENTS = Math.round(participant.amount * 100 * 0.01);
+        // Note: Stripe Application Fee plafonnée au montant total si nécessaire, mais ici c'est différent.
+        // On veut que PadelXP touche la commission.
+        // Si on utilise destination charges (ce qui semble être le cas via stripeAccount: stripeAccountId),
+        // application_fee_amount est ce que la plateforme (PadelXP) garde.
+
+        // Donc PadelXP garde : Les frais de service (payés par le user en plus) + evt une com sur la part club ? 
+        // L'utilisateur a demandé : "pas de commissions sur les réservations pour les premiums"
+        // Ça sous-entend que pour les non-premium, PadelXP prend ces frais.
+
+        const totalApplicationFee = serviceFeeCents;
+
+        // Le montant total à payer par l'utilisateur inclut le prix du terrain + frais de service
+        const unitAmount = Math.round(participant.amount * 100) + serviceFeeCents;
 
         // 2. Créer la session Stripe Checkout
         const session = await stripe.checkout.sessions.create({
@@ -77,7 +109,7 @@ export async function POST(
                             name: `Réservation Padel - ${club.name}`,
                             description: `${reservation.court.name} - Part individuelle`,
                         },
-                        unit_amount: Math.round(participant.amount * 100), // En centimes
+                        unit_amount: unitAmount, // Prix terrain + Frais service
                     },
                     quantity: 1,
                 },
@@ -89,10 +121,12 @@ export async function POST(
                 reservation_id: reservation.id,
                 participant_id: participant.id,
                 user_id: user.id,
-                club_id: club.id
+                club_id: club.id,
+                is_premium: profile?.is_premium ? "true" : "false",
+                service_fee: serviceFeeCents.toString()
             },
             payment_intent_data: {
-                application_fee_amount: PADELXP_COMMISSION_CENTS,
+                application_fee_amount: totalApplicationFee,
             },
         }, {
             stripeAccount: stripeAccountId,

@@ -58,13 +58,40 @@ export async function GET(
             return NextResponse.json({ error: resError.message }, { status: 500 });
         }
 
+        // --- LOGIQUE PREMIUM : Fenêtre de réservation ---
+        const { data: user } = await supabase.auth.getUser();
+        let maxDaysInAdvance = 7; // Par défaut : 7 jours
+
+        if (user?.user) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("is_premium")
+                .eq("id", user.user.id)
+                .single();
+
+            if (profile?.is_premium) {
+                maxDaysInAdvance = 14;
+            }
+        }
+
+        // Vérifier si la date demandée est dans la fenêtre autorisée
+        const today = new Date();
+        const requestedDate = new Date(date);
+        const diffTime = requestedDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // Si la date est trop lointaine, on retourne une erreur spécifique ou des créneaux vides/indisponibles
+        // Ici on choisit de retourner des créneaux indisponibles avec un statut spécial
+        const isDateAllowed = diffDays <= maxDaysInAdvance;
+
         // Générer les créneaux horaires (de 8h à 22h, par tranches de 1h30)
-        const slots = generateTimeSlots(date, reservations || []);
+        const slots = generateTimeSlots(date, reservations || [], isDateAllowed);
 
         return NextResponse.json({
             court,
             date,
-            slots
+            slots,
+            maxDaysInAdvance
         });
     } catch (error) {
         console.error("GET /api/courts/[id]/availability error:", error);
@@ -87,7 +114,7 @@ interface TimeSlot {
     status?: string;
 }
 
-function generateTimeSlots(date: string, reservations: Reservation[]): TimeSlot[] {
+function generateTimeSlots(date: string, reservations: Reservation[], isDateAllowed: boolean = true): TimeSlot[] {
     const slots: TimeSlot[] = [];
     const slotDurationMinutes = 90; // 1h30
 
@@ -120,7 +147,7 @@ function generateTimeSlots(date: string, reservations: Reservation[]): TimeSlot[
             slots.push({
                 start_time: startTime,
                 end_time: endTime,
-                is_available: !conflictingReservation,
+                is_available: isDateAllowed && !conflictingReservation,
                 reservation_id: conflictingReservation?.id,
                 status: conflictingReservation?.status
             });

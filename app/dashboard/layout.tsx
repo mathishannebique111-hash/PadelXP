@@ -217,14 +217,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#121212] to-[#1E1E1E] text-white">
+    <div className="relative min-h-screen bg-[#121212] flex flex-col text-white">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        html, body { 
+          background-color: #121212 !important; 
+          background: #121212 !important;
+          height: auto !important;
+          min-height: 100vh !important;
+          margin: 0;
+          padding: 0;
+        }
+      ` }} />
       {/* Menu hamburger et volet latéral (visible sur tous les écrans) */}
       <Suspense fallback={null}>
         <MobileMenu />
       </Suspense>
 
       {/* Dynamic gradient overlay + parallax halos */}
-      <div className="pointer-events-none absolute inset-0 z-0">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#121212] to-[#1E1E1E] opacity-50" />
         {/* Stronger soft white glow - changed to blue */}
         <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
         {/* Stronger deep blue glow - changed to lime/yellow */}

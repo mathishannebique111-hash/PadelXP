@@ -16,6 +16,7 @@ interface LeaderboardEntry {
   matches: number;
   isGuest: boolean;
   avatar_url?: string | null;
+  is_premium?: boolean;
 }
 
 interface GlobalLeaderboardTableProps {
@@ -203,10 +204,15 @@ export default function GlobalLeaderboardTable({
                           <User className="text-slate-400 w-2/3 h-2/3" />
                         </div>
                       )}
-                      <span className="truncate block max-w-[80px] sm:max-w-[150px] md:max-w-none text-left">
+                      <span className="truncate block max-w-[80px] sm:max-w-[150px] md:max-w-none text-left flex items-center gap-1">
                         <strong>{finalFirstName || 'Joueur'}</strong>
                         {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
-                        {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
+                        {player.is_premium && (
+                          <span className="inline-flex items-center justify-center bg-gradient-to-r from-yellow-400 to-amber-600 text-[10px] font-bold text-white px-1.5 py-0.5 rounded shadow-sm ml-1" title="Membre Premium">
+                            PRO
+                          </span>
+                        )}
+                        {isCurrentUser ? <span className="hidden sm:inline text-gray-500 font-normal"> (vous)</span> : ''}
                       </span>
                     </div>
                   </td>
