@@ -1668,105 +1668,104 @@ export default function MatchForm({
             )}
           </div>
         </div>
-      </div>
 
-      {/* Tie Break */}
-      <div>
-        <div className="mb-3 flex items-center gap-3">
-          <label className="block text-sm font-medium text-white">Tie Break</label>
-          <button
-            type="button"
-            onClick={() => setHasTieBreak(!hasTieBreak)}
-            className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${hasTieBreak
-              ? "border-[#BFFF00] bg-[#BFFF00] text-black"
-              : "border-white/30 bg-white/5 text-white hover:border-white/50"
-              }`}
-          >
-            {hasTieBreak ? "✓ Activé" : "+ Ajouter"}
-          </button>
-        </div>
-        {hasTieBreak && (
-          <div>
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
-                value={tieBreak.team1Score}
-                onChange={(e) => {
-                  // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
-                  const v = e.target.value.replace(/\D/g, '');
-                  const newTieBreak = { ...tieBreak, team1Score: v };
-                  setTieBreak(newTieBreak);
-
-                  // Nettoyer et réévaluer les erreurs du tie-break
-                  const newErrors = { ...errors };
-                  delete newErrors.tieBreak;
-
-                  // Validation : au moins un des deux scores doit être 7 ou plus
-                  const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                  const team2Score = parseInt(newTieBreak.team2Score) || 0;
-
-                  if (team1Score > 0 && team2Score > 0) {
-                    const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                    if (!hasValidScore) {
-                      newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                    }
-                  }
-
-                  setErrors(newErrors);
-
-                  if (v.length >= 1) {
-                    tieBreakTeam2Ref.current?.focus();
-                  }
-                }}
-                placeholder="0"
-                ref={tieBreakTeam1Ref}
-              />
-              <span className="text-white">-</span>
-              <input
-                type="text"
-                className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
-                value={tieBreak.team2Score}
-                onChange={(e) => {
-                  // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
-                  const v = e.target.value.replace(/\D/g, '');
-                  const newTieBreak = { ...tieBreak, team2Score: v };
-                  setTieBreak(newTieBreak);
-
-                  // Nettoyer et réévaluer les erreurs du tie-break
-                  const newErrors = { ...errors };
-                  delete newErrors.tieBreak;
-
-                  // Validation : au moins un des deux scores doit être 7 ou plus
-                  const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                  const team2Score = parseInt(newTieBreak.team2Score) || 0;
-
-                  if (team1Score > 0 && team2Score > 0) {
-                    const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                    if (!hasValidScore) {
-                      newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                    }
-                  }
-
-                  setErrors(newErrors);
-
-                  if (v.length >= 1) {
-                    const submitBtn = document.querySelector<HTMLButtonElement>('button[type="submit"]');
-                    submitBtn?.focus();
-                  }
-                }}
-                placeholder="0"
-                ref={tieBreakTeam2Ref}
-              />
-            </div>
-            {errors.tieBreak && (
-              <p className="mt-2 text-xs text-red-400">{errors.tieBreak}</p>
-            )}
+        {/* Tie Break */}
+        <div>
+          <div className="mb-3 flex items-center gap-3">
+            <label className="block text-sm font-medium text-white">Tie Break</label>
+            <button
+              type="button"
+              onClick={() => setHasTieBreak(!hasTieBreak)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${hasTieBreak
+                ? "border-[#BFFF00] bg-[#BFFF00] text-black"
+                : "border-white/30 bg-white/5 text-white hover:border-white/50"
+                }`}
+            >
+              {hasTieBreak ? "✓ Activé" : "+ Ajouter"}
+            </button>
           </div>
-        )}
-      </div>
+          {hasTieBreak && (
+            <div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                  value={tieBreak.team1Score}
+                  onChange={(e) => {
+                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
+                    const v = e.target.value.replace(/\D/g, '');
+                    const newTieBreak = { ...tieBreak, team1Score: v };
+                    setTieBreak(newTieBreak);
 
-      {/* Option boost - caché temporairement
+                    // Nettoyer et réévaluer les erreurs du tie-break
+                    const newErrors = { ...errors };
+                    delete newErrors.tieBreak;
+
+                    // Validation : au moins un des deux scores doit être 7 ou plus
+                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
+                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
+
+                    if (team1Score > 0 && team2Score > 0) {
+                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
+                      if (!hasValidScore) {
+                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
+                      }
+                    }
+
+                    setErrors(newErrors);
+
+                    if (v.length >= 1) {
+                      tieBreakTeam2Ref.current?.focus();
+                    }
+                  }}
+                  placeholder="0"
+                  ref={tieBreakTeam1Ref}
+                />
+                <span className="text-white">-</span>
+                <input
+                  type="text"
+                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                  value={tieBreak.team2Score}
+                  onChange={(e) => {
+                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
+                    const v = e.target.value.replace(/\D/g, '');
+                    const newTieBreak = { ...tieBreak, team2Score: v };
+                    setTieBreak(newTieBreak);
+
+                    // Nettoyer et réévaluer les erreurs du tie-break
+                    const newErrors = { ...errors };
+                    delete newErrors.tieBreak;
+
+                    // Validation : au moins un des deux scores doit être 7 ou plus
+                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
+                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
+
+                    if (team1Score > 0 && team2Score > 0) {
+                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
+                      if (!hasValidScore) {
+                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
+                      }
+                    }
+
+                    setErrors(newErrors);
+
+                    if (v.length >= 1) {
+                      const submitBtn = document.querySelector<HTMLButtonElement>('button[type="submit"]');
+                      submitBtn?.focus();
+                    }
+                  }}
+                  placeholder="0"
+                  ref={tieBreakTeam2Ref}
+                />
+              </div>
+              {errors.tieBreak && (
+                <p className="mt-2 text-xs text-red-400">{errors.tieBreak}</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Option boost - caché temporairement
         {!loadingBoostStats && boostStats && (
           <div className="mb-6 rounded-lg border border-padel-green/50 bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 p-4 shadow-xl relative overflow-hidden">
             <div className="flex items-start gap-3 relative z-10">
@@ -1816,130 +1815,130 @@ export default function MatchForm({
         )}
         */}
 
-      <div className="pt-8">
-        <button
-          disabled={loading}
-          className="w-full relative group overflow-hidden rounded-2xl bg-padel-green px-6 py-5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 shadow-[0_10px_30px_rgba(191,255,0,0.3)]"
-        >
-          <div className="relative z-10 flex items-center justify-center gap-3">
-            {loading ? (
-              <div className="w-5 h-5 border-3 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
-            ) : (
-              <Zap size={20} fill="currentColor" />
-            )}
-            {loading ? "ENREGISTREMENT..." : "ENREGISTRER LE MATCH"}
-          </div>
-        </button>
-      </div>
-    </form >
-
-      {/* Search Modal Portal */ }
-  {
-    isSearchModalOpen && typeof document !== 'undefined' && createPortal(
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="w-full max-w-md bg-[#071554] rounded-3xl border border-white/20 shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
+        <div className="pt-8">
           <button
-            onClick={() => setIsSearchModalOpen(false)}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors"
+            disabled={loading}
+            className="w-full relative group overflow-hidden rounded-2xl bg-padel-green px-6 py-5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 shadow-[0_10px_30px_rgba(191,255,0,0.3)]"
           >
-            <X size={24} />
+            <div className="relative z-10 flex items-center justify-center gap-3">
+              {loading ? (
+                <div className="w-5 h-5 border-3 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
+              ) : (
+                <Zap size={20} fill="currentColor" />
+              )}
+              {loading ? "ENREGISTREMENT..." : "ENREGISTRER LE MATCH"}
+            </div>
           </button>
+        </div>
+      </form >
 
-          <div className="mb-6">
-            <h3 className="text-xl font-black text-white flex items-center gap-3">
-              <Search size={24} className="text-padel-green" />
-              {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
-            </h3>
-            <p className="text-sm text-white/50 font-medium">
-              Recherchez par prénom et nom
-            </p>
-          </div>
+      {/* Search Modal Portal */}
+      {
+        isSearchModalOpen && typeof document !== 'undefined' && createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-md bg-[#071554] rounded-3xl border border-white/20 shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
+              <button
+                onClick={() => setIsSearchModalOpen(false)}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors"
+              >
+                <X size={24} />
+              </button>
 
-          <div className="space-y-6">
-            <div className="relative">
-              <div className="absolute right-1 top-[7px] z-20">
+              <div className="mb-6">
+                <h3 className="text-xl font-black text-white flex items-center gap-3">
+                  <Search size={24} className="text-padel-green" />
+                  {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
+                </h3>
+                <p className="text-sm text-white/50 font-medium">
+                  Recherchez par prénom et nom
+                </p>
+              </div>
+
+              <div className="space-y-6">
                 <div className="relative">
-                  <select
-                    value={activeSlot ? scopes[activeSlot] : 'global'}
-                    onChange={(e) => {
-                      const newScope = e.target.value as any;
+                  <div className="absolute right-1 top-[7px] z-20">
+                    <div className="relative">
+                      <select
+                        value={activeSlot ? scopes[activeSlot] : 'global'}
+                        onChange={(e) => {
+                          const newScope = e.target.value as any;
+                          if (activeSlot) {
+                            setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+                          }
+                        }}
+                        className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
+                      >
+                        <option value="global">Global</option>
+                        <option value="guest">Invité</option>
+                      </select>
+                      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <PlayerAutocomplete
+                    value={
+                      activeSlot === 'partner' ? partnerName :
+                        activeSlot === 'opp1' ? opp1Name :
+                          opp2Name
+                    }
+                    onChange={(val) => {
+                      if (activeSlot === 'partner') setPartnerName(val);
+                      else if (activeSlot === 'opp1') setOpp1Name(val);
+                      else if (activeSlot === 'opp2') setOpp2Name(val);
+                    }}
+                    onSelect={(player) => {
                       if (activeSlot) {
-                        setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                        setIsSearchModalOpen(false);
                       }
                     }}
-                    className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
-                  >
-                    <option value="global">Global</option>
-                    <option value="guest">Invité</option>
-                  </select>
-                  <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
+                    searchScope={activeSlot ? scopes[activeSlot] : 'global'}
+                    placeholder="Michel Dupont..."
+                    inputClassName="pr-[90px] h-[46px] rounded-xl text-lg font-bold"
+                  />
                 </div>
+
+                {activeSlot && selectedPlayers[activeSlot] && (
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-padel-green flex items-center justify-center text-[#071554] font-black">
+                        {selectedPlayers[activeSlot]?.first_name?.[0]}{selectedPlayers[activeSlot]?.last_name?.[0]}
+                      </div>
+                      <div>
+                        <p className="text-white font-bold">{selectedPlayers[activeSlot]?.display_name}</p>
+                        <p className="text-white/40 text-xs uppercase tracking-tighter">{selectedPlayers[activeSlot]?.type === 'guest' ? 'Invité' : 'Inscrit'}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (activeSlot) {
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: null }));
+                          if (activeSlot === 'partner') setPartnerName('');
+                          else if (activeSlot === 'opp1') setOpp1Name('');
+                          else if (activeSlot === 'opp2') setOpp2Name('');
+                        }
+                      }}
+                      className="text-red-400 text-xs font-bold uppercase hover:bg-red-400/10 px-2 py-1 rounded"
+                    >
+                      Effacer
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <PlayerAutocomplete
-                value={
-                  activeSlot === 'partner' ? partnerName :
-                    activeSlot === 'opp1' ? opp1Name :
-                      opp2Name
-                }
-                onChange={(val) => {
-                  if (activeSlot === 'partner') setPartnerName(val);
-                  else if (activeSlot === 'opp1') setOpp1Name(val);
-                  else if (activeSlot === 'opp2') setOpp2Name(val);
-                }}
-                onSelect={(player) => {
-                  if (activeSlot) {
-                    setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
-                    setIsSearchModalOpen(false);
-                  }
-                }}
-                searchScope={activeSlot ? scopes[activeSlot] : 'global'}
-                placeholder="Michel Dupont..."
-                inputClassName="pr-[90px] h-[46px] rounded-xl text-lg font-bold"
-              />
-            </div>
-
-            {activeSlot && selectedPlayers[activeSlot] && (
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-padel-green flex items-center justify-center text-[#071554] font-black">
-                    {selectedPlayers[activeSlot]?.first_name?.[0]}{selectedPlayers[activeSlot]?.last_name?.[0]}
-                  </div>
-                  <div>
-                    <p className="text-white font-bold">{selectedPlayers[activeSlot]?.display_name}</p>
-                    <p className="text-white/40 text-xs uppercase tracking-tighter">{selectedPlayers[activeSlot]?.type === 'guest' ? 'Invité' : 'Inscrit'}</p>
-                  </div>
-                </div>
+              <div className="mt-8 flex gap-3">
                 <button
-                  onClick={() => {
-                    if (activeSlot) {
-                      setSelectedPlayers(prev => ({ ...prev, [activeSlot]: null }));
-                      if (activeSlot === 'partner') setPartnerName('');
-                      else if (activeSlot === 'opp1') setOpp1Name('');
-                      else if (activeSlot === 'opp2') setOpp2Name('');
-                    }
-                  }}
-                  className="text-red-400 text-xs font-bold uppercase hover:bg-red-400/10 px-2 py-1 rounded"
+                  onClick={() => setIsSearchModalOpen(false)}
+                  className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors"
                 >
-                  Effacer
+                  Annuler
                 </button>
               </div>
-            )}
-          </div>
-
-          <div className="mt-8 flex gap-3">
-            <button
-              onClick={() => setIsSearchModalOpen(false)}
-              className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      </div>,
-      document.body
-    )
-  }
+            </div>
+          </div>,
+          document.body
+        )
+      }
     </>
   );
 }
