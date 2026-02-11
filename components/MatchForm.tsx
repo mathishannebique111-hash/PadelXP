@@ -1462,11 +1462,11 @@ export default function MatchForm({
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-1.5">
+      <form onSubmit={onSubmit} className="space-y-4">
         {/* Lieu du match (Google Maps Direct) */}
         <div>
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <div className="animate-in fade-in slide-in-from-top-1 duration-200">
               <div className="mb-1 block text-[8px] font-bold text-white/30 uppercase tracking-widest">Rechercher le club (Google Maps) *</div>
               <GooglePlacesAutocomplete
@@ -1501,7 +1501,7 @@ export default function MatchForm({
         </div>
 
         {/* Redesigned Player Selection */}
-        <div className="mb-2">
+        <div className="mb-4">
           <div className="flex flex-col gap-2 max-w-sm mx-auto">
             <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
               {/* Team 1 */}
@@ -1555,7 +1555,7 @@ export default function MatchForm({
           </div>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-3">
           <div>
             <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Équipe gagnante</label>
             <div className="grid grid-cols-2 gap-2">
@@ -1592,9 +1592,9 @@ export default function MatchForm({
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-xl border border-white/10 p-2 sm:p-3 text-center">
+        <div className="bg-white/5 rounded-xl border border-white/10 p-3 sm:p-4 text-center">
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
-          <div className="flex flex-col gap-1 items-center">
+          <div className="flex flex-col gap-2 items-center">
             {sets.map((set, index) => (
               <div key={set.setNumber} className="flex items-center justify-center gap-2">
                 <span className="text-[8px] font-black text-white/30 uppercase w-8 text-left">Set {set.setNumber}</span>
