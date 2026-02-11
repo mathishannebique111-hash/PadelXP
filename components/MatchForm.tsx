@@ -747,11 +747,7 @@ export default function MatchForm({
       }
 
       console.log("🚀 [DEBUG] Fetching Self Profile");
-      // Utiliser l'API pour récupérer le profil (évite les problèmes RLS)
-      const profileRes = await fetch('/api/player/profile', {
-        method: 'GET',
-        credentials: 'include',
-      });
+
       let profileRes;
       let profileData;
       try {
