@@ -1461,11 +1461,11 @@ export default function MatchForm({
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-3">
         {/* Lieu du match (Google Maps Direct) */}
         <div>
-          <label className="mb-4 block text-sm font-bold text-white uppercase tracking-widest opacity-70">Lieu du match</label>
-          <div className="space-y-4">
+          <label className="mb-2 block text-[9px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
+          <div className="space-y-2">
             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="mb-2 block text-[10px] font-bold text-white/50 uppercase tracking-widest">Rechercher le club (Google Maps) *</div>
               <GooglePlacesAutocomplete
@@ -1500,8 +1500,8 @@ export default function MatchForm({
         </div>
 
         {/* Redesigned Player Selection */}
-        <div className="mb-8">
-          <div className="flex flex-col gap-6 max-w-sm mx-auto">
+        <div className="mb-4">
+          <div className="flex flex-col gap-4 max-w-sm mx-auto">
             <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
               {/* Team 1 */}
               <div className="flex-1 grid grid-cols-2 gap-2">
@@ -1551,59 +1551,38 @@ export default function MatchForm({
                 />
               </div>
             </div>
-
-            {/* Display validation errors below the grid */}
-            {(errors.partnerName || errors.opp1Name || errors.opp2Name) && (
-              <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                <ul className="list-disc list-inside space-y-1">
-                  {errors.partnerName && <li className="text-xs text-red-400 font-medium">Partenaire : {errors.partnerName}</li>}
-                  {errors.opp1Name && <li className="text-xs text-red-400 font-medium">Adversaire 1 : {errors.opp1Name}</li>}
-                  {errors.opp2Name && <li className="text-xs text-red-400 font-medium">Adversaire 2 : {errors.opp2Name}</li>}
-                </ul>
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-3">
           <div>
-            <label className="mb-4 block text-sm font-bold text-white uppercase tracking-widest opacity-70">Équipe gagnante</label>
-            <div className="grid grid-cols-2 gap-4">
+            <label className="mb-2 block text-[9px] font-black text-white/40 uppercase tracking-widest">Équipe gagnante</label>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setWinner("1")}
-                className={`group relative overflow-hidden rounded-2xl border-2 px-6 py-5 text-sm font-black transition-all duration-300 ${winner === "1"
-                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_20px_rgba(191,255,0,0.4)]"
+                className={`group relative overflow-hidden rounded-xl border-2 px-4 py-3 text-xs font-black transition-all duration-300 ${winner === "1"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_15px_rgba(191,255,0,0.3)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <Trophy size={18} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
+                  <Trophy size={14} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
                   <span className="uppercase tracking-tight">Équipe 1</span>
                 </div>
-                {winner === "1" && (
-                  <div className="absolute top-0 right-0 w-8 h-8 bg-[#071554]/10 rounded-bl-full flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-[#071554]" />
-                  </div>
-                )}
               </button>
               <button
                 type="button"
                 onClick={() => setWinner("2")}
-                className={`group relative overflow-hidden rounded-2xl border-2 px-6 py-5 text-sm font-black transition-all duration-300 ${winner === "2"
-                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_20px_rgba(191,255,0,0.4)]"
+                className={`group relative overflow-hidden rounded-xl border-2 px-4 py-3 text-xs font-black transition-all duration-300 ${winner === "2"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_15px_rgba(191,255,0,0.3)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <Trophy size={18} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
+                  <Trophy size={14} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
                   <span className="uppercase tracking-tight">Équipe 2</span>
                 </div>
-                {winner === "2" && (
-                  <div className="absolute top-0 right-0 w-8 h-8 bg-[#071554]/10 rounded-bl-full flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-[#071554]" />
-                  </div>
-                )}
               </button>
             </div>
             {errors.winner && (
@@ -1612,21 +1591,19 @@ export default function MatchForm({
           </div>
         </div>
 
-        {/* Section Sets */}
-        {/* Reverted Sets Design */}
-        <div className="bg-white/5 rounded-3xl border border-white/10 p-5 sm:p-6 text-center">
-          <label className="mb-4 block text-[10px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
-          <div className="flex flex-col gap-4 items-center">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-3 sm:p-4 text-center">
+          <label className="mb-2 block text-[9px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
+          <div className="flex flex-col gap-2 items-center">
             {sets.map((set, index) => (
-              <div key={set.setNumber} className="flex items-center justify-center gap-3">
-                <span className="text-[10px] font-black text-white/40 uppercase w-10 text-left">Set {set.setNumber}</span>
-                <div className="flex items-center gap-2">
+              <div key={set.setNumber} className="flex items-center justify-center gap-2">
+                <span className="text-[9px] font-black text-white/40 uppercase w-8 text-left">Set {set.setNumber}</span>
+                <div className="flex items-center gap-1.5">
                   <input
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
-                    className="w-12 h-12 rounded-xl border border-white/10 bg-white/5 text-xl text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                    className="w-9 h-9 rounded-lg border border-white/10 bg-white/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
                     value={set.team1Score}
                     onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                     placeholder="0"
@@ -1638,7 +1615,7 @@ export default function MatchForm({
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
-                    className="w-12 h-12 rounded-xl border border-white/10 bg-white/5 text-xl text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                    className="w-9 h-9 rounded-lg border border-white/10 bg-white/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
                     value={set.team2Score}
                     onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                     placeholder="0"
@@ -1649,121 +1626,63 @@ export default function MatchForm({
                   <button
                     type="button"
                     onClick={() => removeSet(index)}
-                    className="text-red-400 hover:text-red-300"
+                    className="text-red-400/50 hover:text-red-300 p-1"
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                 )}
               </div>
             ))}
 
-            {sets.length < 5 && (
-              <button
-                type="button"
-                onClick={addSet}
-                className="mt-2 text-[10px] font-black text-padel-green uppercase tracking-widest border border-padel-green/30 px-4 py-2 rounded-full hover:bg-padel-green/10 transition-all"
-              >
-                + Ajouter un set
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Tie Break */}
-        <div>
-          <div className="mb-3 flex items-center gap-3">
-            <label className="block text-sm font-medium text-white">Tie Break</label>
-            <button
-              type="button"
-              onClick={() => setHasTieBreak(!hasTieBreak)}
-              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${hasTieBreak
-                ? "border-[#BFFF00] bg-[#BFFF00] text-black"
-                : "border-white/30 bg-white/5 text-white hover:border-white/50"
-                }`}
-            >
-              {hasTieBreak ? "✓ Activé" : "+ Ajouter"}
-            </button>
-          </div>
-          {hasTieBreak && (
-            <div>
-              <div className="flex items-center gap-3">
+            {/* Integrated Tie Break Row */}
+            <div className="flex items-center justify-center gap-2 mt-1 border-t border-white/5 pt-2 w-full max-w-[180px]">
+              <span className="text-[9px] font-black text-padel-green uppercase w-8 text-left">T-B</span>
+              <div className="flex items-center gap-1.5">
                 <input
-                  type="text"
-                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  className="w-9 h-9 rounded-lg border border-padel-green/30 bg-padel-green/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
                   value={tieBreak.team1Score}
                   onChange={(e) => {
-                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
                     const v = e.target.value.replace(/\D/g, '');
-                    const newTieBreak = { ...tieBreak, team1Score: v };
-                    setTieBreak(newTieBreak);
-
-                    // Nettoyer et réévaluer les erreurs du tie-break
-                    const newErrors = { ...errors };
-                    delete newErrors.tieBreak;
-
-                    // Validation : au moins un des deux scores doit être 7 ou plus
-                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
-
-                    if (team1Score > 0 && team2Score > 0) {
-                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                      if (!hasValidScore) {
-                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                      }
-                    }
-
-                    setErrors(newErrors);
-
-                    if (v.length >= 1) {
-                      tieBreakTeam2Ref.current?.focus();
-                    }
+                    setTieBreak({ ...tieBreak, team1Score: v });
+                    setHasTieBreak(v.length > 0 || tieBreak.team2Score.length > 0);
                   }}
                   placeholder="0"
                   ref={tieBreakTeam1Ref}
                 />
-                <span className="text-white">-</span>
+                <span className="text-padel-green/40 font-bold">-</span>
                 <input
-                  type="text"
-                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  className="w-9 h-9 rounded-lg border border-padel-green/30 bg-padel-green/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
                   value={tieBreak.team2Score}
                   onChange={(e) => {
-                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
                     const v = e.target.value.replace(/\D/g, '');
-                    const newTieBreak = { ...tieBreak, team2Score: v };
-                    setTieBreak(newTieBreak);
-
-                    // Nettoyer et réévaluer les erreurs du tie-break
-                    const newErrors = { ...errors };
-                    delete newErrors.tieBreak;
-
-                    // Validation : au moins un des deux scores doit être 7 ou plus
-                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
-
-                    if (team1Score > 0 && team2Score > 0) {
-                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                      if (!hasValidScore) {
-                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                      }
-                    }
-
-                    setErrors(newErrors);
-
-                    if (v.length >= 1) {
-                      const submitBtn = document.querySelector<HTMLButtonElement>('button[type="submit"]');
-                      submitBtn?.focus();
-                    }
+                    setTieBreak({ ...tieBreak, team2Score: v });
+                    setHasTieBreak(v.length > 0 || tieBreak.team1Score.length > 0);
                   }}
                   placeholder="0"
                   ref={tieBreakTeam2Ref}
                 />
               </div>
-              {errors.tieBreak && (
-                <p className="mt-2 text-xs text-red-400">{errors.tieBreak}</p>
-              )}
+              <div className="w-[14px]" />
             </div>
-          )}
+
+            {sets.length < 5 && (
+              <button
+                type="button"
+                onClick={addSet}
+                className="mt-1 text-[8px] font-black text-padel-green uppercase tracking-widest border border-padel-green/20 px-3 py-1.5 rounded-full hover:bg-padel-green/10 transition-all"
+              >
+                + Set
+              </button>
+            )}
+          </div>
         </div>
+
 
         {/* Option boost - caché temporairement
         {!loadingBoostStats && boostStats && (
@@ -1815,16 +1734,16 @@ export default function MatchForm({
         )}
         */}
 
-        <div className="pt-8">
+        <div className="pt-2">
           <button
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-2xl bg-padel-green px-6 py-5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 shadow-[0_10px_30px_rgba(191,255,0,0.3)]"
+            className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-3.5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
           >
-            <div className="relative z-10 flex items-center justify-center gap-3">
+            <div className="relative z-10 flex items-center justify-center gap-2 text-sm">
               {loading ? (
-                <div className="w-5 h-5 border-3 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
               ) : (
-                <Zap size={20} fill="currentColor" />
+                <Zap size={16} fill="currentColor" />
               )}
               {loading ? "ENREGISTREMENT..." : "ENREGISTRER LE MATCH"}
             </div>

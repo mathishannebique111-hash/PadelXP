@@ -43,39 +43,49 @@ export default function PlayerSlotSquare({
             >
                 {player ? (
                     <>
-                        <div className="flex items-center justify-center text-[#071554] text-lg sm:text-2xl font-black mb-1">
-                            {initials || <UserPlus size={20} />}
+                        <div className="flex items-center justify-center mb-1 overflow-hidden rounded-full w-9 h-9 sm:w-11 sm:h-11 bg-[#071554]/10">
+                            {player.avatar_url ? (
+                                <Image
+                                    src={player.avatar_url}
+                                    alt={`${player.first_name} ${player.last_name}`}
+                                    width={44}
+                                    height={44}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="text-[#071554] text-base sm:text-xl font-black">
+                                    {initials || <UserPlus size={18} />}
+                                </div>
+                            )}
                         </div>
                         <div className="px-1 text-center w-full">
-                            <p className="text-[#071554] text-[9px] sm:text-xs font-bold truncate leading-none">
+                            <p className="text-[#071554] text-[8px] sm:text-[10px] font-bold truncate leading-none">
                                 {player.first_name}
                             </p>
-                            <p className="text-[#071554] text-[9px] sm:text-xs font-black truncate uppercase leading-none">
+                            <p className="text-[#071554] text-[8px] sm:text-[10px] font-black truncate uppercase leading-none">
                                 {player.last_name}
                             </p>
                         </div>
                     </>
                 ) : (
-                    <>
-                        <div className="flex items-center justify-center text-white/40 mb-1">
-                            <Plus size={20} className="sm:size-24" />
-                        </div>
-                        <span className="text-white/60 text-[9px] sm:text-xs font-medium uppercase tracking-tighter">
+                    <div className="flex flex-col items-center gap-1">
+                        <Plus size={18} className="text-white/40" />
+                        <span className="text-white/60 text-[8px] font-medium uppercase tracking-tighter">
                             Ajouter
                         </span>
-                    </>
-                )}
-
-                {/* Badge type */}
-                {player?.type === 'guest' && (
-                    <div className="absolute top-1 right-1 bg-blue-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                        Invité
                     </div>
                 )}
             </button>
-            <span className="text-[10px] sm:text-xs font-medium text-white/50 uppercase tracking-widest text-center">
-                {label}
-            </span>
+            <div className="flex flex-col items-center gap-0">
+                <span className="text-[9px] sm:text-xs font-black text-white uppercase tracking-widest leading-none">
+                    {label}
+                </span>
+                {player?.type === 'guest' && (
+                    <span className="text-[7px] font-bold text-blue-400 uppercase tracking-widest leading-none mt-0.5">
+                        Invité
+                    </span>
+                )}
+            </div>
         </div>
     );
 }
