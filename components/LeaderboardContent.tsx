@@ -244,7 +244,7 @@ export default function LeaderboardContent({
           </button>
         ))}
       </div>
-      {leaderboard.length >= 3 && (
+      {leaderboard.length >= 5 && (
         <div className="mb-6 sm:mb-8">
           <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
             <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
@@ -348,14 +348,11 @@ export default function LeaderboardContent({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="px-1 sm:px-2 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100 whitespace-nowrap w-14 sm:w-auto">Rang</th>
-                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap min-w-[120px] sm:min-w-[200px]">Joueur</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap">Niveau</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Points</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden md:table-cell whitespace-nowrap">Winrate</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>V</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wider border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>D</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 hidden sm:table-cell whitespace-nowrap">MJ</th>
+                  <th className="px-1 sm:px-2 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-100 whitespace-nowrap w-12 sm:w-16">Rang</th>
+                  <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-left text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap min-w-[100px] sm:min-w-[180px]">Joueur</th>
+                  <th className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Niveau</th>
+                  <th className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">Points</th>
+                  <th className="px-1 sm:px-2 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap w-10 sm:w-14">Profil</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
@@ -372,16 +369,16 @@ export default function LeaderboardContent({
                   const canViewProfile = !player.isGuest && player.user_id !== currentUserId;
                   return (
                     <tr key={player.user_id} className={rowClass}>
-                      <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-14 sm:w-auto">
-                        <span className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 text-xs sm:text-sm font-bold text-gray-800 shadow-sm">
+                      <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-12 sm:w-16">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 text-[10px] sm:text-xs font-bold text-gray-800 shadow-sm">
                           {player.rank}
                         </span>
                       </td>
-                      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0 min-w-[120px] sm:min-w-[200px]">
-                        <div className="flex items-center gap-2 sm:gap-3">
+                      <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-[10px] sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0 min-w-[100px] sm:min-w-[180px]">
+                        <div className="flex items-center gap-1.5 sm:gap-3">
                           {/* Photo de profil */}
                           {player.avatar_url ? (
-                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
+                            <div className="relative w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
                               <img
                                 src={player.avatar_url}
                                 alt={finalFirstName || 'Joueur'}
@@ -389,40 +386,35 @@ export default function LeaderboardContent({
                               />
                             </div>
                           ) : (
-                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center border border-gray-200">
+                            <div className="relative w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center border border-gray-200">
                               <User className="text-slate-400 w-2/3 h-2/3" />
                             </div>
                           )}
                           {/* Nom du joueur */}
                           <div className="flex-1 min-w-0">
-                            <span className="truncate block max-w-[80px] sm:max-w-none">
+                            <span className="truncate block">
                               <strong>{finalFirstName || 'Joueur'}</strong>
                               {finalLastName ? ' ' + finalLastName.charAt(0).toUpperCase() + '.' : ''}
-                              {isCurrentUser ? <span className="hidden sm:inline"> (vous)</span> : ''}
                             </span>
                           </div>
-                          {/* Bouton Voir profil (uniquement pour les autres joueurs) */}
-                          {canViewProfile && (
-                            <button
-                              type="button"
-                              onClick={() => router.push(`/players/${player.user_id}?from=leaderboard`)}
-                              className="ml-2 p-1.5 sm:p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0 min-h-[32px] min-w-[32px] flex items-center justify-center"
-                              title="Voir le profil"
-                            >
-                              <Eye size={14} className="sm:hidden" />
-                              <Eye size={16} className="hidden sm:block" />
-                            </button>
-                          )}
                         </div>
                       </td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center border-l border-gray-200 first:border-l-0 hidden sm:table-cell">
+                      <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0">
                         <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
                       </td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate >= 51 ? '#10B981' : winRate === 50 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>{player.wins}</td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>{player.losses}</td>
-                      <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell">{player.matches}</td>
+                      <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
+                      <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-10 sm:w-14">
+                        {canViewProfile && (
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/players/${player.user_id}?from=leaderboard`)}
+                            className="p-1 sm:p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors inline-flex items-center justify-center"
+                            title="Voir le profil"
+                          >
+                            <Eye size={14} />
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
