@@ -34,11 +34,12 @@ export async function GET(req: Request) {
         // 2. Récupérer le profil et le partenaire de l'utilisateur
         const { data: profile } = await supabaseAdmin
             .from("profiles")
-            .select("id, club_id, niveau_padel")
+            .select("id, club_id, niveau_padel, department_code")
             .eq("id", user.id)
             .maybeSingle();
 
-        if (!profile?.club_id) {
+        // Si pas de profil, on ne peut rien suggérer
+        if (!profile) {
             return NextResponse.json({ suggestions: [] });
         }
 
@@ -82,7 +83,7 @@ export async function GET(req: Request) {
         // 5. Récupérer les profils avec club_id pour filtrage
         const { data: profiles } = await supabaseAdmin
             .from("profiles")
-            .select("id, first_name, last_name, display_name, avatar_url, niveau_padel, club_id")
+            .select("id, first_name, last_name, display_name, avatar_url, niveau_padel, club_id, department_code")
             .in("id", Array.from(involvedUserIds));
 
         const profilesMap = new Map(profiles?.map(p => [p.id, p]));
@@ -139,6 +140,9 @@ export async function GET(req: Request) {
         const userPairAvgLevel = (userProfile.niveau_padel + partnerProfile.niveau_padel) / 2;
         const userPairAvgWinrate = (getWinrate(user.id) + getWinrate(userPartnerId)) / 2;
 
+        const { searchParams } = new URL(req.url);
+        const departmentFilter = searchParams.get("department");
+
         // 10. Calculer la compatibilité pour chaque paire
         const suggestions = allPartnerships.map(p => {
             const p1 = profilesMap.get(p.player_id);
@@ -146,8 +150,22 @@ export async function GET(req: Request) {
 
             if (!p1?.niveau_padel || !p2?.niveau_padel) return null;
 
-            // FILTRE CLUB : Suggérer uniquement des paires où au moins un joueur est du même club
-            if (p1.club_id !== profile.club_id && p2.club_id !== profile.club_id) return null;
+            // FILTRAGE
+            if (departmentFilter) {
+                // Si filtre département actif : on ne garde que si au moins un des deux joueurs est dans le département
+                if (p1.department_code !== departmentFilter && p2.department_code !== departmentFilter) {
+                    return null;
+                }
+            } else {
+                // Comportement par défaut
+                if (profile.club_id) {
+                    // FILTRE CLUB : Suggérer uniquement des paires où au moins un joueur est du même club
+                    if (p1.club_id !== profile.club_id && p2.club_id !== profile.club_id) return null;
+                } else if (profile.department_code) {
+                    // Fallback freelance : filtre par département utilisateur
+                    if (p1.department_code !== profile.department_code && p2.department_code !== profile.department_code) return null;
+                }
+            }
 
             const pairAvgLevel = (p1.niveau_padel + p2.niveau_padel) / 2;
             const pairAvgWinrate = (getWinrate(p.player_id) + getWinrate(p.partner_id)) / 2;

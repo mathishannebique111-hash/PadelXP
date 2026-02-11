@@ -31,16 +31,34 @@ const DAYS: Array<{ key: string; label: string }> = [
   { key: "sunday", label: "Dimanche" },
 ];
 
-function formatHour(value: string | null | undefined) {
-  if (!value) return null;
+function formatHour(value: string | number | null | undefined) {
+  if (value === null || value === undefined || value === "") return null;
+
+  // Convertir en string si c'est un nombre
+  const stringValue = String(value);
+
   try {
-    const [h, m] = value.split(":");
+    // Si format HH:MM déjà correct
+    if (/^\d{2}:\d{2}$/.test(stringValue)) {
+      return stringValue;
+    }
+
+    // Gestion des nombres ou chaînes simples (ex: "9" ou 9 -> "09:00")
+    if (!stringValue.includes(":")) {
+      const num = parseInt(stringValue, 10);
+      if (!isNaN(num) && num >= 0 && num <= 23) {
+        return `${num.toString().padStart(2, "0")}:00`;
+      }
+      return null;
+    }
+
+    const [h, m] = stringValue.split(":");
     if (Number.isNaN(Number(h)) || Number.isNaN(Number(m))) {
-      return value;
+      return stringValue; // Retourner tel quel si non parsable
     }
     return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
   } catch {
-    return value;
+    return stringValue;
   }
 }
 

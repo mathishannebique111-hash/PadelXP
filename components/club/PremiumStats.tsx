@@ -38,7 +38,14 @@ interface PremiumData {
     insights: {
         luckyDay: { name: string; winrate: number };
         bestMonth: { name: string; winrate: number };
+        goldenHour: { name: string; winrate: number };
         currentForm: number;
+        reaction: { opportunities: number; success: number; rate: number };
+        levelPerformance: {
+            stronger: { label: string; wins: number; total: number };
+            weaker: { label: string; wins: number; total: number };
+            equal: { label: string; wins: number; total: number };
+        };
     };
 }
 
@@ -307,15 +314,24 @@ export default function PremiumStats() {
             </div>
 
             {/* Insights Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {/* Lucky Day */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
-                    {/* Orange accent top border */}
                     <div className="absolute top-0 left-0 w-full h-[3px] bg-orange-500 opacity-80"></div>
                     <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Jour de Chance</span>
                     <span className="text-lg font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
                     <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.luckyDay?.winrate || 0}% de victoires</span>
                 </div>
 
+                {/* Golden Hour */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-[3px] bg-yellow-500 opacity-80"></div>
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Heure de Gloire</span>
+                    <span className="text-lg font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.goldenHour?.name || "-"}</span>
+                    <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.goldenHour?.winrate || 0}% de victoires</span>
+                </div>
+
+                {/* Best Month */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-[3px] bg-purple-500 opacity-80"></div>
                     <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Meilleur Mois</span>
@@ -323,6 +339,7 @@ export default function PremiumStats() {
                     <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.bestMonth?.winrate || 0}% de victoires</span>
                 </div>
 
+                {/* Current Form */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-[3px] bg-emerald-500 opacity-80"></div>
                     <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Forme (5 derniers)</span>
@@ -333,7 +350,51 @@ export default function PremiumStats() {
                     </span>
                     <span className="text-[10px] text-slate-500 mt-1">de victoires</span>
                 </div>
+
+                {/* Reaction Capacity */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500 opacity-80"></div>
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Capacité de Réaction</span>
+                    <span className="text-2xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.reaction?.rate || 0}%</span>
+                    <span className="text-[10px] text-slate-500 mt-1">
+                        {statsData?.insights?.reaction?.success || 0} remontadas / {statsData?.insights?.reaction?.opportunities || 0} 1er sets perdus
+                    </span>
+                </div>
             </div>
+
+            {/* Performance vs Level Section */}
+            {(statsData?.insights?.levelPerformance) && (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-blue-500" /> Performance vs Niveau
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                            { key: 'weaker', color: 'text-green-500', barBy: 'bg-green-500', label: 'vs Plus Faible' },
+                            { key: 'equal', color: 'text-blue-500', barBy: 'bg-blue-500', label: 'vs Équivalent' },
+                            { key: 'stronger', color: 'text-red-500', barBy: 'bg-red-500', label: 'vs Plus Fort' }
+                        ].map((item) => {
+                            // @ts-ignore
+                            const stat = statsData?.insights?.levelPerformance?.[item.key] || { wins: 0, total: 0 };
+                            const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
+                            return (
+                                <div key={item.key} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xs text-slate-400 font-medium">{item.label}</span>
+                                        <span className={`text-sm font-black ${item.color}`}>{winrate}%</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                        <div className={`h-full ${item.barBy}`} style={{ width: `${winrate}%` }}></div>
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 mt-1.5 text-right">
+                                        {stat.wins} vict. / {stat.total} matchs
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Lists */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

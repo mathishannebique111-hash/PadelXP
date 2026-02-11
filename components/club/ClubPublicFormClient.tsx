@@ -54,8 +54,8 @@ function normaliseHours(hours: OpeningHours | null | undefined): OpeningHours {
   DAYS.forEach(({ key }) => {
     const value = hours?.[key] || DEFAULT_HOURS;
     next[key] = {
-      open: value.open ?? null,
-      close: value.close ?? null,
+      open: value.open != null ? String(value.open) : null,
+      close: value.close != null ? String(value.close) : null,
       closed: value.closed ?? false,
     };
   });
@@ -193,29 +193,29 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
               });
             }
           }, 0);
-          } else {
-            const newHours = normaliseHours(null);
-            setOpeningHours(newHours);
-            setOpeningHoursVersion(prev => prev + 1); // Forcer le re-render
-            setLogoUrl(null); // Pas de logo si pas de données
-            // Mettre à jour l'aperçu même si pas de données
-            setTimeout(() => {
-              if (onDataChange) {
-                onDataChange({
-                  street: "",
-                  postal: "",
-                  city: "",
-                  phone: "",
-                  website: "",
-                  description: "",
-                  numberOfCourts: "",
-                  courtType: "",
-                  openingHours: newHours,
-                  logoUrl: null, // Pas de logo si pas de données
-                });
-              }
-            }, 0);
-          }
+        } else {
+          const newHours = normaliseHours(null);
+          setOpeningHours(newHours);
+          setOpeningHoursVersion(prev => prev + 1); // Forcer le re-render
+          setLogoUrl(null); // Pas de logo si pas de données
+          // Mettre à jour l'aperçu même si pas de données
+          setTimeout(() => {
+            if (onDataChange) {
+              onDataChange({
+                street: "",
+                postal: "",
+                city: "",
+                phone: "",
+                website: "",
+                description: "",
+                numberOfCourts: "",
+                courtType: "",
+                openingHours: newHours,
+                logoUrl: null, // Pas de logo si pas de données
+              });
+            }
+          }, 0);
+        }
       }
     } catch (err: any) {
       logger.error("[ClubPublicFormClient] load error", err);
@@ -353,7 +353,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
     if (e) {
       e.preventDefault();
     }
-    
+
     // Vérifier les erreurs d'horaires avant de sauvegarder
     const hasOpeningHoursErrors = Object.keys(openingHoursErrors).length > 0;
     if (hasOpeningHoursErrors) {
@@ -367,15 +367,15 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
       }, 100);
       return;
     }
-    
+
     setSaving(true);
     setError(null);
     setSuccess(null);
-    
+
     // Mémoriser la position de scroll avant la sauvegarde pour éviter que la page bouge
     const scrollPosition = window.scrollY;
     const scrollX = window.scrollX;
-    
+
     try {
       const payload: Record<string, unknown> = {
         address: street.trim() ? street.trim() : null,
@@ -395,7 +395,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
       }
 
       payload.opening_hours = openingHours;
-      
+
       logger.info("[ClubPublicFormClient] Submitting with opening_hours:", JSON.stringify(openingHours, null, 2));
 
       const response = await fetch("/api/clubs/public", {
@@ -411,7 +411,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
 
       const result = await response.json().catch(() => null);
       logger.info("[ClubPublicFormClient] Response result:", JSON.stringify(result, null, 2));
-      
+
       // Mettre à jour les horaires d'ouverture depuis la réponse immédiatement
       // IMPORTANT : Utiliser les horaires de la réponse de sauvegarde, pas ceux du rechargement
       // car le rechargement pourrait retourner d'anciennes données
@@ -423,7 +423,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
         logger.info("[ClubPublicFormClient] Setting opening_hours from result.extras:", JSON.stringify(result.extras.opening_hours, null, 2));
         savedHours = normaliseHours(result.extras.opening_hours);
       }
-      
+
       // Si on a des horaires sauvegardés dans la réponse, les utiliser
       // Sinon, garder les horaires actuels (ceux qu'on vient de sauvegarder)
       if (savedHours) {
@@ -435,7 +435,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
         logger.info("[ClubPublicFormClient] No hours in response, keeping current hours:", JSON.stringify(openingHours, null, 2));
         // On garde openingHours tel quel, pas besoin de setOpeningHours
       }
-      
+
       // Mettre à jour l'aperçu avec les horaires sauvegardés
       const hoursToUse = savedHours || openingHours;
       if (onDataChange && hoursToUse) {
@@ -454,7 +454,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
           });
         }, 0);
       }
-      
+
       // Mettre à jour les autres champs depuis la réponse (sans toucher aux horaires)
       if (result?.club) {
         const club: ClubPayload = result.club;
@@ -470,7 +470,7 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
         const courtsValue = club.number_of_courts ?? extras?.number_of_courts ?? null;
         setNumberOfCourts(courtsValue != null ? String(courtsValue) : "");
         setCourtType(normaliseCourtType(club.court_type ?? extras?.court_type ?? ""));
-        
+
         // CRITICAL: Mettre à jour le logo depuis la réponse
         const updatedLogoUrl = club.logo_url ?? null;
         if (updatedLogoUrl !== logoUrl) {
@@ -494,30 +494,30 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
           }
         }
       }
-      
+
       // Ne PAS recharger avec load() car cela pourrait écraser les horaires qu'on vient de sauvegarder
       // Les données de la réponse de sauvegarde sont suffisantes
 
       setSuccess("Enregistré !");
-      
+
       // Maintenir la position de scroll pour éviter que la page bouge pendant la sauvegarde
       // Utiliser plusieurs tentatives pour s'assurer que le scroll ne change pas
       const restoreScroll = () => {
         window.scrollTo({ top: scrollPosition, left: scrollX, behavior: 'instant' });
       };
-      
+
       // Restaurer immédiatement et plusieurs fois pour contrer tout scroll automatique
       restoreScroll();
       requestAnimationFrame(restoreScroll);
       setTimeout(restoreScroll, 0);
       setTimeout(restoreScroll, 50);
       setTimeout(restoreScroll, 100);
-      
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
       logger.error("[ClubPublicFormClient] submit error", err);
       setError(err?.message || "Erreur lors de l'enregistrement");
-      
+
       // Restaurer la position de scroll même en cas d'erreur
       const restoreScroll = () => {
         window.scrollTo({ top: scrollPosition, left: scrollX, behavior: 'instant' });
@@ -667,11 +667,10 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
                   const hasError = !!openingHoursErrors[key];
                   const isClosed = openingHours[key].closed === true;
                   return (
-                    <div 
-                      key={key} 
-                      className={`rounded-xl border-2 p-4 transition-all ${
-                        hasError ? "border-rose-400/60 bg-rose-500/15" : "border-white/20 bg-black/20"
-                      }`}
+                    <div
+                      key={key}
+                      className={`rounded-xl border-2 p-4 transition-all ${hasError ? "border-rose-400/60 bg-rose-500/15" : "border-white/20 bg-black/20"
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">{label}</p>
@@ -694,11 +693,10 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
                             type="time"
                             value={openingHours[key].open ?? ""}
                             onChange={(event) => updateOpeningHours(key, "open", event.target.value)}
-                            className={`mt-1 w-full rounded-lg border px-2 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-400/30 ${
-                              hasError && !isClosed
+                            className={`mt-1 w-full rounded-lg border px-2 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-400/30 ${hasError && !isClosed
                                 ? "border-rose-400/60 bg-rose-500/15 focus:border-rose-400"
                                 : "border-white/15 bg-white/10 focus:border-blue-400"
-                            }`}
+                              }`}
                             disabled={isClosed}
                           />
                         </div>
@@ -709,11 +707,10 @@ export default function ClubPublicFormClient({ onDataChange, initialLogoUrl }: P
                             type="time"
                             value={openingHours[key].close ?? ""}
                             onChange={(event) => updateOpeningHours(key, "close", event.target.value)}
-                            className={`mt-1 w-full rounded-lg border px-2 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-400/30 ${
-                              hasError && !isClosed
+                            className={`mt-1 w-full rounded-lg border px-2 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-400/30 ${hasError && !isClosed
                                 ? "border-rose-400/60 bg-rose-500/15 focus:border-rose-400"
                                 : "border-white/15 bg-white/10 focus:border-blue-400"
-                            }`}
+                              }`}
                             disabled={isClosed}
                           />
                         </div>

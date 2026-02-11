@@ -1,19 +1,64 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { User, MessageCircle, Star, Trash2, ChevronRight, LogOut, Shield, Settings, CalendarCheck } from "lucide-react";
+import { User, MessageCircle, Star, Trash2, ChevronRight, LogOut, Shield, Settings, CalendarCheck, Bell, X } from "lucide-react";
 import PageTitle from "@/components/PageTitle";
 import LogoutButton from "@/components/LogoutButton";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
+import { PushNotificationsService } from "@/lib/notifications/push-notifications";
+import { showToast } from "@/components/ui/Toast";
 
 export default function SettingsContent() {
+  const [showNotificationBanner, setShowNotificationBanner] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const checkNotificationStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if user has a push token recorded
+      const { data: token } = await supabase
+        .from("push_tokens")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!token) {
+        setShowNotificationBanner(true);
+      }
+    };
+
+    checkNotificationStatus();
+  }, [supabase]);
+
+  const handleEnableNotifications = async () => {
+    setIsActivating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await PushNotificationsService.initialize(user.id);
+        // On vérifie à nouveau si un token a été créé (ou on suppose que c'est bon si pas d'erreur)
+        setShowNotificationBanner(false);
+        showToast("Notifications activées !", "success");
+      }
+    } catch (error) {
+      console.error("Error enabling notifications:", error);
+      showToast("Erreur lors de l'activation", "error");
+    } finally {
+      setIsActivating(false);
+    }
+  };
+
   const menuItems = [
     {
       label: "Modifier mon profil",
       icon: User,
       href: "/settings/profile",
     },
-
     {
       label: "Support PadelXP",
       icon: MessageCircle,
@@ -28,18 +73,50 @@ export default function SettingsContent() {
       label: "Supprimer mon compte",
       icon: Trash2,
       href: "/settings/delete",
-      color: "text-red-400", // Keep red for danger
+      color: "text-red-400",
     },
   ];
 
   return (
     <div className="relative min-h-screen pb-20">
-      {/* Background avec overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
 
       <div className="relative z-10 mx-auto w-full max-w-2xl px-4 py-6">
-
         <PageTitle title="Paramètres" />
+
+        {/* Bannière de notifications - "Cadre léger et discret" */}
+        {showNotificationBanner && (
+          <div className="mt-6 mb-2 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-sm p-4 relative overflow-hidden group">
+              <div className="flex items-start gap-4 relative z-10">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <Bell className="w-5 h-5 text-blue-400" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-white mb-1">Activer les notifications</h4>
+                  <p className="text-xs text-blue-100/60 leading-relaxed mb-3">
+                    Ne ratez plus aucune invitation de match ou défi de vos partenaires.
+                  </p>
+                  <button
+                    onClick={handleEnableNotifications}
+                    disabled={isActivating}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {isActivating ? "Activation..." : "Activer"}
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowNotificationBanner(false)}
+                  className="p-1 hover:bg-white/5 rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4 text-white/30" />
+                </button>
+              </div>
+              {/* Effet de lumière subtil en arrière-plan */}
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 blur-2xl rounded-full" />
+            </div>
+          </div>
+        )}
 
         {/* Menu List */}
         <div className="mt-8 space-y-4">

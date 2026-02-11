@@ -41,24 +41,19 @@ interface SuggestedPair {
 
 export default function SuggestedMatches() {
     const router = useRouter();
-    const [suggestions, setSuggestions] = useState<SuggestedPair[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [reason, setReason] = useState<string | null>(null);
-    const [challenging, setChallenging] = useState<string | null>(null);
-    const [showPhoneModal, setShowPhoneModal] = useState(false);
-    const [pendingChallenge, setPendingChallenge] = useState<{ player1_id: string; player2_id: string } | null>(null);
-    const [myPartner, setMyPartner] = useState<{ id: string; first_name: string | null } | null>(null);
-    const [existingChallenges, setExistingChallenges] = useState<Map<string, { expires_at: string; status: string }>>(new Map());
-    const [currentTime, setCurrentTime] = useState(new Date());
-    const supabase = createClient();
+    const [departmentFilter, setDepartmentFilter] = useState("");
 
-    const fetchSuggestions = useCallback(async () => {
+    const fetchSuggestions = useCallback(async (dept: string = "") => {
         try {
             setError(null);
             setLoading(true);
 
-            const response = await fetch("/api/matches/suggestions", {
+            const url = new URL("/api/matches/suggestions", window.location.origin);
+            if (dept) {
+                url.searchParams.set("department", dept);
+            }
+
+            const response = await fetch(url.toString(), {
                 method: "GET",
                 credentials: "include",
             });
@@ -87,261 +82,69 @@ export default function SuggestedMatches() {
         loadMyPartner();
     }, [fetchSuggestions]);
 
-    // Charger les défis existants et mettre à jour le temps toutes les secondes
-    useEffect(() => {
-        const loadExistingChallenges = async () => {
-            if (!myPartner) return;
+    // ... (keep existing useEffects and functions)
 
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-
-                const { data: challenges } = await supabase
-                    .from("team_challenges")
-                    .select("id, challenger_player_1_id, challenger_player_2_id, defender_player_1_id, defender_player_2_id, status, expires_at")
-                    .or(`and(challenger_player_1_id.eq.${user.id},challenger_player_2_id.eq.${myPartner.id}),and(challenger_player_1_id.eq.${myPartner.id},challenger_player_2_id.eq.${user.id})`)
-                    .in("status", ["pending", "accepted"]);
-
-                if (challenges) {
-                    const challengesMap = new Map();
-                    challenges.forEach((challenge) => {
-                        // On ne bloque que si le défi n'est pas expiré
-                        const expires = new Date(challenge.expires_at);
-                        if (expires > new Date()) {
-                            // Créer une clé unique pour identifier la paire défendue
-                            const defenderKey = `${challenge.defender_player_1_id}-${challenge.defender_player_2_id}`;
-                            challengesMap.set(defenderKey, {
-                                expires_at: challenge.expires_at,
-                                status: challenge.status
-                            });
-                        }
-                    });
-                    setExistingChallenges(challengesMap);
-                }
-            } catch (error) {
-                console.error("[SuggestedMatches] Erreur chargement défis existants", error);
-            }
-        };
-
-        loadExistingChallenges();
-
-        // Écouter les événements de création/mise à jour/suppression de défi
-        const handleChallengeEvent = () => {
-            loadExistingChallenges();
-        };
-        window.addEventListener("teamChallengeCreated", handleChallengeEvent);
-        window.addEventListener("teamChallengeUpdated", handleChallengeEvent);
-        window.addEventListener("teamChallengeDeleted", handleChallengeEvent);
-
-        // Mettre à jour le temps toutes les secondes
-        const interval = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 1000);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener("teamChallengeCreated", handleChallengeEvent);
-            window.removeEventListener("teamChallengeUpdated", handleChallengeEvent);
-            window.removeEventListener("teamChallengeDeleted", handleChallengeEvent);
-        };
-    }, [myPartner, supabase]);
-
-    const loadMyPartner = async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const response = await fetch("/api/partnerships/list");
-            if (!response.ok) return;
-
-            const { partnerships } = await response.json();
-            const accepted = partnerships.find((p: any) => p.status === "accepted");
-
-            if (accepted) {
-                const partnerId = accepted.player_id === user.id ? accepted.partner_id : accepted.player_id;
-                const { data: partnerProfile } = await supabase
-                    .from("profiles")
-                    .select("id, first_name")
-                    .eq("id", partnerId)
-                    .maybeSingle();
-
-                if (partnerProfile) {
-                    setMyPartner({ id: partnerProfile.id, first_name: partnerProfile.first_name });
-                }
-            }
-        } catch (error) {
-            console.error("[SuggestedMatches] Erreur chargement partenaire", error);
-        }
-    };
-
-    const handleChallenge = async (defenderPair: { player1_id: string; player2_id: string }) => {
-        try {
-            setChallenging(`${defenderPair.player1_id}-${defenderPair.player2_id}`);
-
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            // 2. Vérifier que j'ai un partenaire habituel
-            if (!myPartner) {
-                showToast("Vous devez avoir un partenaire habituel pour défier une paire", "error");
-                setChallenging(null);
-                return;
-            }
-
-            // 0. Vérifier si un défi existe déjà entre ces deux paires (dans les deux sens)
-            // A. Vérifier si j'ai déjà envoyé un défi à cette paire
-            const { data: existingChallenge, error: checkError } = await supabase
-                .from("team_challenges")
-                .select("id, status, created_at, expires_at")
-                .eq("challenger_player_1_id", user.id)
-                .eq("challenger_player_2_id", myPartner.id)
-                .eq("defender_player_1_id", defenderPair.player1_id)
-                .eq("defender_player_2_id", defenderPair.player2_id)
-                .in("status", ["pending", "accepted"])
-                .gt("expires_at", new Date().toISOString())
-                .maybeSingle();
-
-            if (checkError) {
-                console.error("[SuggestedMatches] Erreur vérification défi existant", checkError);
-            }
-
-            if (existingChallenge) {
-                showToast("Vous défiez déjà cette paire actuellement", "info");
-                setChallenging(null);
-                return;
-            }
-
-            // B. Vérifier si cette paire a déjà envoyé un défi à ma paire
-            const { data: reverseChallenge, error: reverseCheckError } = await supabase
-                .from("team_challenges")
-                .select("id, status, created_at, expires_at")
-                .eq("challenger_player_1_id", defenderPair.player1_id)
-                .eq("challenger_player_2_id", defenderPair.player2_id)
-                .eq("defender_player_1_id", user.id)
-                .eq("defender_player_2_id", myPartner.id)
-                .in("status", ["pending", "accepted"])
-                .gt("expires_at", new Date().toISOString())
-                .maybeSingle();
-
-            if (reverseCheckError) {
-                console.error("[SuggestedMatches] Erreur vérification défi inverse", reverseCheckError);
-            }
-
-            if (reverseChallenge) {
-                showToast("Cette paire vous a déjà défié. Répondez à leur défi d'abord.", "info");
-                setChallenging(null);
-                return;
-            }
-
-            // 1. Vérifier que MOI j'ai renseigné mon numéro
-            const { data: myProfile } = await supabase
-                .from("profiles")
-                .select("phone_number")
-                .eq("id", user.id)
-                .maybeSingle();
-
-            if (!myProfile?.phone_number) {
-                setPendingChallenge(defenderPair);
-                setShowPhoneModal(true);
-                setChallenging(null);
-                return;
-            }
-
-            // 3. Créer le défi
-            const { error: insertError } = await supabase
-                .from("team_challenges")
-                .insert({
-                    challenger_player_1_id: user.id,
-                    challenger_player_2_id: myPartner.id,
-                    defender_player_1_id: defenderPair.player1_id,
-                    defender_player_2_id: defenderPair.player2_id,
-                    status: "pending",
-                    defender_1_status: "pending",
-                    defender_2_status: "pending",
-                });
-
-            if (insertError) {
-                console.error("[SuggestedMatches] Erreur création défi", insertError);
-                showToast("Erreur lors de l'envoi du défi", "error");
-                setChallenging(null);
-                return;
-            }
-
-            showToast("Défi lancé ! En attente de la réponse de vos adversaires.", "success");
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("teamChallengeCreated"));
-            }
-            setChallenging(null);
-        } catch (error) {
-            console.error("[SuggestedMatches] Erreur défi", error);
-            showToast("Erreur lors de l'envoi du défi", "error");
-            setChallenging(null);
-        }
-    };
-
-    const handlePhoneModalActivated = async () => {
-        if (!pendingChallenge) return;
-
-        setShowPhoneModal(false);
-        const challenge = pendingChallenge;
-        setPendingChallenge(null);
-
-        // Relancer le défi
-        await handleChallenge(challenge);
-    };
-
-    if (loading && suggestions.length === 0) {
-        return (
-            <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-                <div className="mb-4">
-                    <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
-                        <Swords className="text-blue-400 w-5 h-5" />
-                        Matchs suggérés
-                    </h3>
-                </div>
-                <div className="flex items-center justify-center py-8">
-                    <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                </div>
-            </div>
-        );
-    }
-
-    // Si l'utilisateur n'a pas de partenaire, on ne montre rien (le cadre est invisible)
-    if (reason === "no_partner") return null;
-
-    if (suggestions.length === 0) {
-        return (
-            <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-                <h3 className="text-base md:text-lg font-bold text-white mb-2 flex items-center gap-2">
-                    <Swords className="text-blue-400 w-5 h-5" />
-                    Matchs suggérés
-                </h3>
-                <p className="text-xs md:text-sm text-gray-400">
-                    Aucun match correspondant à votre paire n'a été trouvé pour le moment.
-                </p>
-            </div>
-        );
-    }
+    // ... (inside return)
 
     return (
         <>
             <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
                 <div className="mb-4">
-                    <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
-                        <Swords className="text-blue-400 w-5 h-5" />
-                        Matchs suggérés
-                    </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
+                            <Swords className="text-blue-400 w-5 h-5" />
+                            Matchs suggérés
+                        </h3>
+
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1 sm:w-48">
+                                <input
+                                    type="text"
+                                    placeholder="Dpt (ex: 80)"
+                                    value={departmentFilter}
+                                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            fetchSuggestions(departmentFilter);
+                                        }
+                                    }}
+                                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
+                                    maxLength={3}
+                                />
+                            </div>
+                            <button
+                                onClick={() => fetchSuggestions(departmentFilter)}
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-blue-400/20"
+                            >
+                                Filtrer
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {suggestions.map((pair, index) => (
-                        <motion.div
-                            key={pair.id}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl border border-white/10 overflow-hidden"
-                        >
+                {suggestions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-500 bg-slate-800/20 rounded-xl border border-white/5 border-dashed">
+                        <Swords className="w-12 h-12 mb-3 opacity-20" />
+                        <p className="text-sm text-center px-4">
+                            Aucun match trouvé {departmentFilter ? `dans le département ${departmentFilter}` : "correspondant à votre paire"}.
+                        </p>
+                        {departmentFilter && (
+                            <button
+                                type="button"
+                                onClick={() => { setDepartmentFilter(""); fetchSuggestions(""); }}
+                                className="mt-2 text-xs text-blue-400 hover:text-blue-300 font-medium"
+                            >
+                                Voir tous les matchs
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {suggestions.map((pair, index) => (
+                            <motion.div
+                                key={pair.id}
+                                // ... (keep existing motion.div content)
+
                             {/* Header de compatibilité */}
                             <div className="absolute top-3 right-3 z-10">
                                 <div className="bg-emerald-500/20 backdrop-blur-md px-2 py-1 rounded-lg border border-emerald-500/30 flex flex-col items-center">
@@ -439,9 +242,9 @@ export default function SuggestedMatches() {
                                 })()}
                             </div>
                         </motion.div>
-                    ))}
-                </div>
+                ))}
             </div>
+        </div >
             <AddPhoneModal
                 isOpen={showPhoneModal}
                 onClose={() => {

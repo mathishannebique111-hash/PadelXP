@@ -384,8 +384,8 @@ export default function OnboardingWizard() {
       });
 
       if (response.ok) {
-        router.refresh();
-        router.push("/home");
+        // Force a hard navigation to avoid stale cache issues (double onboarding loop)
+        window.location.href = "/home";
       } else {
         const data = await response.json();
         console.error("Erreur:", data.error);
@@ -637,12 +637,6 @@ export default function OnboardingWizard() {
                   style={{ background: "linear-gradient(135deg, #0066FF 0%, #0055DD 100%)" }}
                 >
                   Continuer
-                </button>
-                <button
-                  onClick={handlePostalCodeContinue}
-                  className="w-full text-sm text-white/40 hover:text-white/70 transition-colors py-2"
-                >
-                  Passer cette étape
                 </button>
               </div>
             </motion.div>

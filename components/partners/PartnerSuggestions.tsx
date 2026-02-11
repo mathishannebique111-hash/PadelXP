@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock, UserPlus } from "lucide-react";
+import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock, UserPlus, UserX } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -399,35 +399,7 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
     );
   }
 
-  if (error && suggestions.length === 0) {
-    return (
-      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-        <div className="text-center py-4">
-          <p className="text-sm text-red-400 mb-2">{error}</p>
-          <button
-            type="button"
-            onClick={fetchSuggestions}
-            className="text-xs text-blue-400 active:text-blue-300"
-          >
-            Réessayer
-          </button>
-        </div>
-      </div>
-    );
-  }
 
-  if (suggestions.length === 0) {
-    return (
-      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
-        <h3 className="text-base md:text-lg font-bold text-white mb-2">
-          Partenaires suggérés
-        </h3>
-        <p className="text-xs md:text-sm text-gray-400">
-          Aucun partenaire correspondant à votre profil n'a été trouvé pour le moment.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -464,143 +436,160 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3">
-          {suggestions.map((player) => {
-            const playerName =
-              player.first_name && player.last_name
-                ? `${player.first_name} ${player.last_name}`
-                : player.display_name || "Joueur";
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4 text-center">
+            <p className="text-sm text-red-400 mb-2">{error}</p>
+            <button type="button" onClick={() => fetchSuggestions(departmentFilter)} className="text-xs text-blue-400 underline hover:text-blue-300">Réessayer</button>
+          </div>
+        )}
 
-            // Truncate name if too long
-            const displayName = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
+        {!error && !loading && suggestions.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-slate-500 bg-slate-800/20 rounded-xl border border-white/5 border-dashed">
+            <UserX className="w-12 h-12 mb-3 opacity-20" />
+            <p className="text-sm text-center px-4">Aucun partenaire trouvé {departmentFilter ? `dans le département ${departmentFilter}` : "correspondant à votre profil"}.</p>
+            {departmentFilter && <button type="button" onClick={() => { setDepartmentFilter(""); fetchSuggestions(""); }} className="mt-2 text-xs text-blue-400 hover:text-blue-300 font-medium">Voir tous les partenaires</button>}
+          </div>
+        )}
 
-            const invitationStatus = invitationStatuses.get(player.id);
-            const hasSentInvitation = invitationStatus?.sent || false;
-            const hasReceivedInvitation = invitationStatus?.received || false;
-            const isAccepted = invitationStatus?.isAccepted || false;
-            const senderName = invitationStatus?.senderName;
+        {suggestions.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3">
+            {suggestions.map((player) => {
+              const playerName =
+                player.first_name && player.last_name
+                  ? `${player.first_name} ${player.last_name}`
+                  : player.display_name || "Joueur";
 
-            return (
-              <motion.div
-                key={player.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-800/50 rounded-xl p-2.5 md:p-4 border border-white/10 flex flex-col h-full"
-              >
-                {/* Header: Avatar + Info Centered */}
-                <div className="flex flex-col items-center text-center mb-2.5 flex-1">
-                  {player.avatar_url ? (
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700 overflow-hidden border-2 border-white/20 mb-2 shadow-sm">
-                      <Image
-                        src={player.avatar_url}
-                        alt={playerName}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700 flex items-center justify-center text-white/40 border-2 border-white/20 mb-2 shadow-sm">
-                      <User size={24} />
-                    </div>
-                  )}
+              // Truncate name if too long
+              const displayName = playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName;
 
-                  <h4 className="font-bold text-white text-sm md:text-base leading-tight mb-0.5 line-clamp-1 w-full px-1">
-                    {displayName}
-                  </h4>
+              const invitationStatus = invitationStatuses.get(player.id);
+              const hasSentInvitation = invitationStatus?.sent || false;
+              const hasReceivedInvitation = invitationStatus?.received || false;
+              const isAccepted = invitationStatus?.isAccepted || false;
+              const senderName = invitationStatus?.senderName;
 
-                  {player.niveau_padel && (
-                    <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-2 py-0.5 mb-1.5 border border-white/20">
-                      <span className="text-[10px] md:text-xs text-white font-medium">
-                        Niveau {player.niveau_padel.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Compatibility Bar */}
-                  {player.compatibilityScore !== null && (
-                    <div className="w-full max-w-[100px] flex items-center gap-1.5">
-                      <div className="h-1.5 flex-1 bg-slate-700 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${player.compatibilityScore >= 70
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                            : player.compatibilityScore >= 40
-                              ? "bg-gradient-to-r from-orange-500 to-orange-400"
-                              : "bg-gradient-to-r from-red-500 to-red-400"
-                            }`}
-                          style={{ width: `${player.compatibilityScore}%` }}
+              return (
+                <motion.div
+                  key={player.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-slate-800/50 rounded-xl p-2.5 md:p-4 border border-white/10 flex flex-col h-full"
+                >
+                  {/* Header: Avatar + Info Centered */}
+                  <div className="flex flex-col items-center text-center mb-2.5 flex-1">
+                    {player.avatar_url ? (
+                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700 overflow-hidden border-2 border-white/20 mb-2 shadow-sm">
+                        <Image
+                          src={player.avatar_url}
+                          alt={playerName}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                      <span
-                        className={`text-[10px] font-bold ${player.compatibilityScore >= 70
-                          ? "text-green-400"
-                          : player.compatibilityScore >= 40
-                            ? "text-orange-400"
-                            : "text-red-400"
-                          }`}
-                      >
-                        {player.compatibilityScore}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-
-
-                {/* Actions - Icon Only on Mobile, Text on Desktop if space */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/players/${player.id}?from=partners`)}
-                    className="py-2 px-0 border border-white/10 text-white rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
-                    title="Voir le profil"
-                  >
-                    <Eye size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isAccepted) {
-                        showToast("Invitation déjà acceptée", "error");
-                        return;
-                      }
-                      if (hasSentInvitation) {
-                        showToast("Invitation déjà envoyée", "error");
-                        return;
-                      }
-                      if (hasReceivedInvitation) {
-                        showToast(`Invitation reçue de ${senderName || "ce joueur"}`, "error");
-                        return;
-                      }
-                      handleInviteClick(player);
-                    }}
-                    disabled={isInvitingId === player.id || hasSentInvitation || hasReceivedInvitation || isAccepted}
-                    className={`py-2 px-0 rounded-lg text-xs font-medium flex items-center justify-center transition-all h-9 ${isAccepted
-                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                      : hasSentInvitation
-                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                        : hasReceivedInvitation
-                          ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                          : "bg-padel-green text-[#071554] shadow-lg shadow-padel-green/20 active:scale-95"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {isInvitingId === player.id ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : isAccepted ? (
-                      <CheckCircle2 size={16} />
-                    ) : hasSentInvitation ? (
-                      <Clock size={16} />
-                    ) : hasReceivedInvitation ? (
-                      <MessageCircle size={16} />
                     ) : (
-                      <UserPlus size={16} className="fill-current" />
+                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700 flex items-center justify-center text-white/40 border-2 border-white/20 mb-2 shadow-sm">
+                        <User size={24} />
+                      </div>
                     )}
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+
+                    <h4 className="font-bold text-white text-sm md:text-base leading-tight mb-0.5 line-clamp-1 w-full px-1">
+                      {displayName}
+                    </h4>
+
+                    {player.niveau_padel && (
+                      <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-2 py-0.5 mb-1.5 border border-white/20">
+                        <span className="text-[10px] md:text-xs text-white font-medium">
+                          Niveau {player.niveau_padel.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Compatibility Bar */}
+                    {player.compatibilityScore !== null && (
+                      <div className="w-full max-w-[100px] flex items-center gap-1.5">
+                        <div className="h-1.5 flex-1 bg-slate-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${player.compatibilityScore >= 70
+                              ? "bg-gradient-to-r from-green-500 to-emerald-500"
+                              : player.compatibilityScore >= 40
+                                ? "bg-gradient-to-r from-orange-500 to-orange-400"
+                                : "bg-gradient-to-r from-red-500 to-red-400"
+                              }`}
+                            style={{ width: `${player.compatibilityScore}%` }}
+                          />
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold ${player.compatibilityScore >= 70
+                            ? "text-green-400"
+                            : player.compatibilityScore >= 40
+                              ? "text-orange-400"
+                              : "text-red-400"
+                            }`}
+                        >
+                          {player.compatibilityScore}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+
+
+                  {/* Actions - Icon Only on Mobile, Text on Desktop if space */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/players/${player.id}?from=partners`)}
+                      className="py-2 px-0 border border-white/10 text-white rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
+                      title="Voir le profil"
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isAccepted) {
+                          showToast("Invitation déjà acceptée", "error");
+                          return;
+                        }
+                        if (hasSentInvitation) {
+                          showToast("Invitation déjà envoyée", "error");
+                          return;
+                        }
+                        if (hasReceivedInvitation) {
+                          showToast(`Invitation reçue de ${senderName || "ce joueur"}`, "error");
+                          return;
+                        }
+                        handleInviteClick(player);
+                      }}
+                      disabled={isInvitingId === player.id || hasSentInvitation || hasReceivedInvitation || isAccepted}
+                      className={`py-2 px-0 rounded-lg text-xs font-medium flex items-center justify-center transition-all h-9 ${isAccepted
+                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                        : hasSentInvitation
+                          ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                          : hasReceivedInvitation
+                            ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                            : "bg-padel-green text-[#071554] shadow-lg shadow-padel-green/20 active:scale-95"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {isInvitingId === player.id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : isAccepted ? (
+                        <CheckCircle2 size={16} />
+                      ) : hasSentInvitation ? (
+                        <Clock size={16} />
+                      ) : hasReceivedInvitation ? (
+                        <MessageCircle size={16} />
+                      ) : (
+                        <UserPlus size={16} className="fill-current" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <AddPhoneModal
