@@ -360,7 +360,24 @@ export default function PlayerAutocomplete({
                     className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">{player.display_name}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
+                          {player.avatar_url ? (
+                            <Image
+                              src={player.avatar_url}
+                              alt={player.display_name}
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs font-bold text-gray-400">
+                              {player.first_name?.[0]}{player.last_name?.[0]}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-medium text-gray-900">{player.display_name}</span>
+                      </div>
                       <span className="flex items-center gap-2 text-xs">
                         {player.type === "user" ? (
                           player.is_external ? (

@@ -472,6 +472,7 @@ export default function MatchForm({
             first_name,
             last_name,
             display_name: profileData.display_name || `${first_name} ${last_name}`.trim(),
+            avatar_url: profileData.avatar_url || null,
             type: 'user',
             email: user.email || null,
           });
@@ -1461,13 +1462,13 @@ export default function MatchForm({
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-3">
+      <form onSubmit={onSubmit} className="space-y-1.5">
         {/* Lieu du match (Google Maps Direct) */}
         <div>
-          <label className="mb-2 block text-[9px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
-          <div className="space-y-2">
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="mb-2 block text-[10px] font-bold text-white/50 uppercase tracking-widest">Rechercher le club (Google Maps) *</div>
+          <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
+          <div className="space-y-1">
+            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="mb-1 block text-[8px] font-bold text-white/30 uppercase tracking-widest">Rechercher le club (Google Maps) *</div>
               <GooglePlacesAutocomplete
                 value={unregisteredClubName}
                 onChange={(val) => {
@@ -1500,8 +1501,8 @@ export default function MatchForm({
         </div>
 
         {/* Redesigned Player Selection */}
-        <div className="mb-4">
-          <div className="flex flex-col gap-4 max-w-sm mx-auto">
+        <div className="mb-2">
+          <div className="flex flex-col gap-2 max-w-sm mx-auto">
             <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
               {/* Team 1 */}
               <div className="flex-1 grid grid-cols-2 gap-2">
@@ -1554,33 +1555,33 @@ export default function MatchForm({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-1.5">
           <div>
-            <label className="mb-2 block text-[9px] font-black text-white/40 uppercase tracking-widest">Équipe gagnante</label>
+            <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Équipe gagnante</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setWinner("1")}
-                className={`group relative overflow-hidden rounded-xl border-2 px-4 py-3 text-xs font-black transition-all duration-300 ${winner === "1"
-                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_15px_rgba(191,255,0,0.3)]"
+                className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "1"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_10px_rgba(191,255,0,0.2)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Trophy size={14} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
+                <div className="flex items-center justify-center gap-1.5">
+                  <Trophy size={12} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
                   <span className="uppercase tracking-tight">Équipe 1</span>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setWinner("2")}
-                className={`group relative overflow-hidden rounded-xl border-2 px-4 py-3 text-xs font-black transition-all duration-300 ${winner === "2"
-                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_15px_rgba(191,255,0,0.3)]"
+                className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "2"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_10px_rgba(191,255,0,0.2)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Trophy size={14} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
+                <div className="flex items-center justify-center gap-1.5">
+                  <Trophy size={12} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
                   <span className="uppercase tracking-tight">Équipe 2</span>
                 </div>
               </button>
@@ -1591,19 +1592,19 @@ export default function MatchForm({
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-3 sm:p-4 text-center">
-          <label className="mb-2 block text-[9px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
-          <div className="flex flex-col gap-2 items-center">
+        <div className="bg-white/5 rounded-xl border border-white/10 p-2 sm:p-3 text-center">
+          <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
+          <div className="flex flex-col gap-1 items-center">
             {sets.map((set, index) => (
               <div key={set.setNumber} className="flex items-center justify-center gap-2">
-                <span className="text-[9px] font-black text-white/40 uppercase w-8 text-left">Set {set.setNumber}</span>
-                <div className="flex items-center gap-1.5">
+                <span className="text-[8px] font-black text-white/30 uppercase w-8 text-left">Set {set.setNumber}</span>
+                <div className="flex items-center gap-1">
                   <input
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
-                    className="w-9 h-9 rounded-lg border border-white/10 bg-white/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                    className="w-8 h-8 rounded-lg border border-white/10 bg-white/5 text-sm text-white text-center font-bold focus:border-padel-green focus:outline-none"
                     value={set.team1Score}
                     onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                     placeholder="0"
@@ -1615,7 +1616,7 @@ export default function MatchForm({
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
-                    className="w-9 h-9 rounded-lg border border-white/10 bg-white/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                    className="w-8 h-8 rounded-lg border border-white/10 bg-white/5 text-sm text-white text-center font-bold focus:border-padel-green focus:outline-none"
                     value={set.team2Score}
                     onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                     placeholder="0"
@@ -1626,65 +1627,81 @@ export default function MatchForm({
                   <button
                     type="button"
                     onClick={() => removeSet(index)}
-                    className="text-red-400/50 hover:text-red-300 p-1"
+                    className="text-red-400/50 hover:text-red-300 p-0.5"
                   >
-                    <X size={14} />
+                    <X size={12} />
                   </button>
                 )}
               </div>
             ))}
 
-            {/* Integrated Tie Break Row */}
-            <div className="flex items-center justify-center gap-2 mt-1 border-t border-white/5 pt-2 w-full max-w-[180px]">
-              <span className="text-[9px] font-black text-padel-green uppercase w-8 text-left">T-B</span>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  className="w-9 h-9 rounded-lg border border-padel-green/30 bg-padel-green/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
-                  value={tieBreak.team1Score}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, '');
-                    setTieBreak({ ...tieBreak, team1Score: v });
-                    setHasTieBreak(v.length > 0 || tieBreak.team2Score.length > 0);
-                  }}
-                  placeholder="0"
-                  ref={tieBreakTeam1Ref}
-                />
-                <span className="text-padel-green/40 font-bold">-</span>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  className="w-9 h-9 rounded-lg border border-padel-green/30 bg-padel-green/5 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
-                  value={tieBreak.team2Score}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, '');
-                    setTieBreak({ ...tieBreak, team2Score: v });
-                    setHasTieBreak(v.length > 0 || tieBreak.team1Score.length > 0);
-                  }}
-                  placeholder="0"
-                  ref={tieBreakTeam2Ref}
-                />
+            {/* Integrated Tie Break Row - Optional */}
+            {hasTieBreak && (
+              <div className="flex items-center justify-center gap-2 mt-0.5 border-t border-white/5 pt-1 w-full max-w-[150px]">
+                <span className="text-[8px] font-black text-padel-green uppercase w-8 text-left">T-B</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    className="w-8 h-8 rounded-lg border border-padel-green/30 bg-padel-green/5 text-sm text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                    value={tieBreak.team1Score}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '');
+                      setTieBreak({ ...tieBreak, team1Score: v });
+                    }}
+                    placeholder="0"
+                    ref={tieBreakTeam1Ref}
+                  />
+                  <span className="text-padel-green/40 font-bold">-</span>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    className="w-8 h-8 rounded-lg border border-padel-green/30 bg-padel-green/5 text-sm text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                    value={tieBreak.team2Score}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '');
+                      setTieBreak({ ...tieBreak, team2Score: v });
+                    }}
+                    placeholder="0"
+                    ref={tieBreakTeam2Ref}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHasTieBreak(false)}
+                  className="text-red-400/50 hover:text-red-300 p-0.5"
+                >
+                  <X size={12} />
+                </button>
               </div>
-              <div className="w-[14px]" />
-            </div>
-
-            {sets.length < 5 && (
-              <button
-                type="button"
-                onClick={addSet}
-                className="mt-1 text-[8px] font-black text-padel-green uppercase tracking-widest border border-padel-green/20 px-3 py-1.5 rounded-full hover:bg-padel-green/10 transition-all"
-              >
-                + Set
-              </button>
             )}
+
+            <div className="flex gap-2">
+              {sets.length < 5 && (
+                <button
+                  type="button"
+                  onClick={addSet}
+                  className="mt-1 text-[7px] font-black text-padel-green uppercase tracking-widest border border-padel-green/20 px-2 py-1 rounded-full hover:bg-padel-green/10 transition-all"
+                >
+                  + Set
+                </button>
+              )}
+              {!hasTieBreak && (
+                <button
+                  type="button"
+                  onClick={() => setHasTieBreak(true)}
+                  className="mt-1 text-[7px] font-black text-padel-green uppercase tracking-widest border border-padel-green/20 px-2 py-1 rounded-full hover:bg-padel-green/10 transition-all"
+                >
+                  + Tie-Break
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-
-        {/* Option boost - caché temporairement
+        {/* Option boost - caché temporairement */}
         {!loadingBoostStats && boostStats && (
           <div className="mb-6 rounded-lg border border-padel-green/50 bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 p-4 shadow-xl relative overflow-hidden">
             <div className="flex items-start gap-3 relative z-10">
@@ -1734,22 +1751,22 @@ export default function MatchForm({
         )}
         */}
 
-        <div className="pt-2">
+        <div className="pt-1">
           <button
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-3.5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
+            className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-2.5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
           >
-            <div className="relative z-10 flex items-center justify-center gap-2 text-sm">
+            <div className="relative z-10 flex items-center justify-center gap-1.5 text-xs">
               {loading ? (
-                <div className="w-4 h-4 border-2 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
               ) : (
-                <Zap size={16} fill="currentColor" />
+                <Zap size={14} fill="currentColor" />
               )}
               {loading ? "ENREGISTREMENT..." : "ENREGISTRER LE MATCH"}
             </div>
           </button>
         </div>
-      </form >
+      </form>
 
       {/* Search Modal Portal */}
       {
