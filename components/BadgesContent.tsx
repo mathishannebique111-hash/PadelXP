@@ -83,7 +83,7 @@ export default async function BadgesContent() {
 
   const { data: userProfile } = await supabase
     .from("profiles")
-    .select("club_id, points")
+    .select("club_id, points, referral_count")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -94,12 +94,13 @@ export default async function BadgesContent() {
     : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
 
   let finalChallengePoints = challengePoints;
+  let referralCount = userProfile?.referral_count || 0;
 
   if (!userClubId) {
     try {
       const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
         .from("profiles")
-        .select("club_id, points")
+        .select("club_id, points, referral_count")
         .eq("id", user.id)
         .maybeSingle();
       if (adminProfileError) {
@@ -114,6 +115,10 @@ export default async function BadgesContent() {
         userClubId = adminProfile.club_id;
       }
 
+      if (adminProfile?.referral_count !== undefined) {
+        referralCount = adminProfile.referral_count || 0;
+      }
+
       if (adminProfile?.points !== undefined) {
         finalChallengePoints = typeof adminProfile.points === 'number'
           ? adminProfile.points
@@ -124,13 +129,7 @@ export default async function BadgesContent() {
     }
   }
 
-  if (!userClubId) {
-    return (
-      <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
-        <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d'invitation communiqué par votre club.</p>
-      </div>
-    );
-  }
+  // if (!userClubId) check removed to allow club-less access
 
   // Calculer les stats du joueur
   const { data: mp } = await supabase
@@ -198,7 +197,7 @@ export default async function BadgesContent() {
   const points = wins * 10 + losses * 3;
   const streak = await calculateStreak(supabase, user.id);
 
-  const stats: PlayerStats = { wins, losses, matches, points, streak };
+  const stats: PlayerStats = { wins, losses, matches, points, streak, referralCount };
   const obtainedBadges = getBadges(stats);
   const obtainedBadgeKeys = new Set(obtainedBadges.map(b => `${b.icon}|${b.title}`));
 

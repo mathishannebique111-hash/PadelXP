@@ -13,8 +13,8 @@ const BUCKET_NAME = "club-challenges";
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
   : null;
 
 
@@ -114,18 +114,18 @@ async function saveChallenges(clubId: string, records: ChallengeRecord[]) {
 
 async function resolveClubId(userId: string) {
   if (!supabaseAdmin) return null;
-  
+
   // Essayer via le profil (pour les joueurs)
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("club_id, club_slug")
     .eq("id", userId)
     .maybeSingle();
-  
+
   if (profile?.club_id) {
     return profile.club_id;
   }
-  
+
   // Essayer via club_slug du profil
   if (profile?.club_slug) {
     const { data: club } = await supabaseAdmin
@@ -137,16 +137,16 @@ async function resolveClubId(userId: string) {
       return club.id;
     }
   }
-  
+
   // Essayer via user_metadata (pour les admins de club)
   const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId);
   const clubIdFromMeta = user?.user_metadata?.club_id;
   const clubSlugFromMeta = user?.user_metadata?.club_slug;
-  
+
   if (clubIdFromMeta) {
     return clubIdFromMeta;
   }
-  
+
   if (clubSlugFromMeta) {
     const { data: club } = await supabaseAdmin
       .from("clubs")
@@ -157,7 +157,7 @@ async function resolveClubId(userId: string) {
       return club.id;
     }
   }
-  
+
   logger.warn({ userId: userId.substring(0, 8) + "…" }, "[api/clubs/challenges] resolveClubId: aucun club trouvé pour userId");
   return null;
 }
@@ -179,39 +179,81 @@ export async function GET(request: Request) {
   }
 
   const clubId = await resolveClubId(user.id);
-  if (!clubId) {
-    return NextResponse.json({ challenges: [] });
+
+  // Load club-specific challenges (if user has a club)
+  let filteredRecords: ChallengeRecord[] = [];
+  if (clubId) {
+    const records = await loadChallenges(clubId);
+
+    // Calculer la date d'il y a 1 jour
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+    // Filtrer pour supprimer les challenges terminés depuis plus d'un jour
+    filteredRecords = records.filter((record) => {
+      const endDate = new Date(record.end_date);
+      const status = computeStatus(record);
+
+      // Garder les challenges actifs, à venir, et terminés depuis moins d'un jour
+      if (status === "completed") {
+        return endDate >= oneDayAgo;
+      }
+      return true;
+    });
+
+    // Si des challenges ont été supprimés, sauvegarder la liste mise à jour
+    if (filteredRecords.length < records.length) {
+      try {
+        await saveChallenges(clubId, filteredRecords);
+        logger.info({ clubId: clubId.substring(0, 8) + "…", removedCount: records.length - filteredRecords.length }, `[api/clubs/challenges] Supprimé challenge(s) terminé(s) depuis plus d'un jour`);
+      } catch (error) {
+        logger.error({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] Erreur lors de la sauvegarde après nettoyage");
+      }
+    }
   }
 
-  const records = await loadChallenges(clubId);
-  
-  // Calculer la date d'il y a 1 jour
-  const oneDayAgo = new Date();
-  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-  
-  // Filtrer pour supprimer les challenges terminés depuis plus d'un jour
-  const filteredRecords = records.filter((record) => {
-    const endDate = new Date(record.end_date);
-    const status = computeStatus(record);
-    
-    // Garder les challenges actifs, à venir, et terminés depuis moins d'un jour
-    if (status === "completed") {
-      return endDate >= oneDayAgo;
+  // Load global PadelXP challenges
+  let globalChallenges: any[] = [];
+  try {
+    const { data: globalData } = await supabaseAdmin.storage
+      .from("challenges")
+      .download("__global__/challenges.json");
+    if (globalData) {
+      const text = await globalData.text();
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) {
+        globalChallenges = parsed
+          .filter((gc: any) => {
+            // Only include active or upcoming global challenges
+            const endDate = new Date(gc.end_date);
+            const oneDayAgo = new Date();
+            oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+            return endDate >= oneDayAgo;
+          })
+          .map((gc: any) => ({
+            id: gc.id,
+            title: gc.name || gc.title,
+            startDate: gc.start_date,
+            endDate: gc.end_date,
+            objective: gc.objective,
+            rewardType: "points" as const,
+            rewardLabel: gc.reward,
+            createdAt: gc.created_at,
+            status: (() => {
+              const now = new Date();
+              if (now < new Date(gc.start_date)) return "upcoming";
+              if (now > new Date(gc.end_date)) return "completed";
+              return "active";
+            })(),
+            isGlobal: true,
+          }));
+      }
     }
-    return true;
-  });
-  
-  // Si des challenges ont été supprimés, sauvegarder la liste mise à jour
-  if (filteredRecords.length < records.length) {
-    try {
-      await saveChallenges(clubId, filteredRecords);
-      logger.info({ clubId: clubId.substring(0, 8) + "…", removedCount: records.length - filteredRecords.length }, `[api/clubs/challenges] Supprimé challenge(s) terminé(s) depuis plus d'un jour`);
-    } catch (error) {
-      logger.error({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] Erreur lors de la sauvegarde après nettoyage");
-    }
+  } catch (err) {
+    // Silently fail — global challenges are optional
   }
-  
-  const challenges = filteredRecords
+
+  const clubChallenges = filteredRecords
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
     .map((record) => ({
       id: record.id,
@@ -223,7 +265,11 @@ export async function GET(request: Request) {
       rewardLabel: record.reward_label,
       createdAt: record.created_at,
       status: computeStatus(record),
+      isGlobal: false,
     }));
+
+  // Merge: global challenges first, then club-specific
+  const challenges = [...globalChallenges, ...clubChallenges];
 
   return NextResponse.json({ challenges });
 }

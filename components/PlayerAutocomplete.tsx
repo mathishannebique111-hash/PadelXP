@@ -29,7 +29,7 @@ export default function PlayerAutocomplete({
   error,
   placeholder = "Rechercher un joueur...",
   label,
-  searchScope = 'club',
+  searchScope = 'global',
   inputClassName = "",
   isActive,
   onFocus,
@@ -328,7 +328,7 @@ export default function PlayerAutocomplete({
               setShowDropdown(true);
             }
           }}
-          placeholder={searchScope === 'global' ? "Rechercher dans tout PadelXP..." : "Rechercher dans mon club..."}
+          placeholder={searchScope === 'global' ? "Rechercher un joueur..." : "Rechercher un joueur..."}
           className={`w-full rounded-md border bg-white px-4 py-3 text-sm text-[#071554] focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${inputClassName}`}
         />
       )}

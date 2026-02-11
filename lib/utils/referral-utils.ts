@@ -3,7 +3,6 @@
  */
 
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { creditPlayerBoosts } from "./boost-utils";
 import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,12 +10,11 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createAdminClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
   : null;
 
-const REFERRAL_BOOST_SESSION_ID = "referral_reward";
-const MAX_REFERRALS_PER_USER = 2;
+const PREMIUM_DAYS_PER_REFERRAL = 15;
 
 /**
  * Vérifie si un code de parrainage existe et est valide
@@ -43,7 +41,7 @@ export async function validateReferralCode(code: string): Promise<{
 
   try {
     const normalizedCode = code.trim().toUpperCase();
-    
+
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select("id, display_name, referral_count")
@@ -65,13 +63,7 @@ export async function validateReferralCode(code: string): Promise<{
       };
     }
 
-    // Vérifier que le parrain n'a pas atteint la limite de 2 filleuls
-    if ((profile.referral_count || 0) >= MAX_REFERRALS_PER_USER) {
-      return {
-        valid: false,
-        error: "Ce code de parrainage a atteint la limite de 2 filleuls",
-      };
-    }
+
 
     return {
       valid: true,
@@ -140,8 +132,56 @@ export async function isSelfReferral(userId: string, referralCode: string): Prom
 }
 
 /**
+ * Accorde 15 jours de premium à un joueur (cumule si déjà premium)
+ */
+async function grantPremiumDays(userId: string, days: number = 15): Promise<{ success: boolean; error?: string }> {
+  if (!supabaseAdmin) return { success: false, error: "Service non disponible" };
+
+  try {
+    // Fetch current premium_until
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("premium_until, is_premium")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const now = new Date();
+    let startFrom = now;
+
+    // If user already has active premium, extend from their current end date
+    if (profile?.premium_until) {
+      const currentEnd = new Date(profile.premium_until);
+      if (currentEnd > now) {
+        startFrom = currentEnd;
+      }
+    }
+
+    const newEnd = new Date(startFrom);
+    newEnd.setDate(newEnd.getDate() + days);
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        is_premium: true,
+        premium_until: newEnd.toISOString(),
+      })
+      .eq("id", userId);
+
+    if (error) {
+      logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Error granting premium");
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Exception granting premium");
+    return { success: false, error: "Erreur inconnue" };
+  }
+}
+
+/**
  * Traite un code de parrainage lors de l'inscription d'un nouveau joueur
- * Crée la relation parrain/filleul et attribue les boosts
+ * Crée la relation parrain/filleul et attribue 15 jours de premium aux deux joueurs
  */
 export async function processReferralCode(
   referralCode: string,
@@ -193,29 +233,22 @@ export async function processReferralCode(
       };
     }
 
-    // 4. Vérifier à nouveau la limite (pour éviter les race conditions)
+    // 4. Récupérer le compteur actuel
     const { data: referrerProfile } = await supabaseAdmin
       .from("profiles")
       .select("referral_count")
       .eq("id", referrerId)
       .maybeSingle();
 
-    if (!referrerProfile || (referrerProfile.referral_count || 0) >= MAX_REFERRALS_PER_USER) {
-      return {
-        success: false,
-        error: "Ce code de parrainage a atteint la limite de 2 filleuls",
-      };
-    }
-
-    // 5. Créer la relation de parrainage dans une transaction
+    // 5. Créer la relation de parrainage
     const { data: referral, error: referralError } = await supabaseAdmin
       .from("referrals")
       .insert({
         referrer_id: referrerId,
         referred_id: referredUserId,
         referral_code_used: normalizedCode,
-        referrer_boost_awarded: false,
-        referred_boost_awarded: false,
+        referrer_premium_awarded: false,
+        referred_premium_awarded: false,
       })
       .select("id")
       .single();
@@ -236,34 +269,33 @@ export async function processReferralCode(
     }
 
     // 6. Incrémenter le compteur de parrainages du parrain
+    const newCount = (referrerProfile?.referral_count || 0) + 1;
     const { error: updateError } = await supabaseAdmin
       .from("profiles")
-      .update({ referral_count: (referrerProfile.referral_count || 0) + 1 })
+      .update({ referral_count: newCount })
       .eq("id", referrerId);
 
     if (updateError) {
       logger.error({ referrerId: referrerId.substring(0, 8) + "…", error: updateError }, "[referral-utils] Error updating referral count");
-      // Ne pas échouer complètement, mais logger l'erreur
     }
 
-    // 7. Attribuer les boosts (parrain + filleul)
-    const [referrerBoostResult, referredBoostResult] = await Promise.all([
-      creditPlayerBoosts(referrerId, 1, undefined, REFERRAL_BOOST_SESSION_ID),
-      creditPlayerBoosts(referredUserId, 1, undefined, REFERRAL_BOOST_SESSION_ID),
+    // 7. Attribuer 15 jours de premium aux deux joueurs
+    const [referrerPremium, referredPremium] = await Promise.all([
+      grantPremiumDays(referrerId, 15),
+      grantPremiumDays(referredUserId, 15),
     ]);
 
-    // 8. Marquer les boosts comme attribués
-    const boostAwarded = referrerBoostResult.success && referredBoostResult.success;
-    if (boostAwarded) {
-      await supabaseAdmin
-        .from("referrals")
-        .update({
-          referrer_boost_awarded: referrerBoostResult.success,
-          referred_boost_awarded: referredBoostResult.success,
-        })
-        .eq("id", referral.id);
-    } else {
-      logger.error({ referrerId: referrerId.substring(0, 8) + "…", referredUserId: referredUserId.substring(0, 8) + "…", referrerError: referrerBoostResult.error, referredError: referredBoostResult.error }, "[referral-utils] Error awarding boosts");
+    // 8. Marquer les récompenses comme attribuées
+    await supabaseAdmin
+      .from("referrals")
+      .update({
+        referrer_premium_awarded: referrerPremium.success,
+        referred_premium_awarded: referredPremium.success,
+      })
+      .eq("id", referral.id);
+
+    if (!referrerPremium.success || !referredPremium.success) {
+      logger.error({ referrerId: referrerId.substring(0, 8) + "…", referredUserId: referredUserId.substring(0, 8) + "…", referrerError: referrerPremium.error, referredError: referredPremium.error }, "[referral-utils] Error awarding premium");
     }
 
     return {
@@ -272,7 +304,7 @@ export async function processReferralCode(
       referrerName,
     };
   } catch (error) {
-    logger.error({ code: normalizedCode.substring(0, 5) + "…", referredUserId: referredUserId.substring(0, 8) + "…", error }, "[referral-utils] Exception processing referral code");
+    logger.error({ referredUserId: referredUserId.substring(0, 8) + "…", error }, "[referral-utils] Exception processing referral code");
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -297,7 +329,7 @@ export async function getUserReferralInfo(userId: string): Promise<{
     return {
       referralCode: null,
       referralCount: 0,
-      maxReferrals: MAX_REFERRALS_PER_USER,
+      maxReferrals: Infinity,
       referrals: [],
     };
   }
@@ -314,7 +346,7 @@ export async function getUserReferralInfo(userId: string): Promise<{
       return {
         referralCode: null,
         referralCount: 0,
-        maxReferrals: MAX_REFERRALS_PER_USER,
+        maxReferrals: Infinity,
         referrals: [],
       };
     }
@@ -349,7 +381,7 @@ export async function getUserReferralInfo(userId: string): Promise<{
     return {
       referralCode: profile.referral_code || null,
       referralCount: profile.referral_count || 0,
-      maxReferrals: MAX_REFERRALS_PER_USER,
+      maxReferrals: Infinity,
       referrals: referralsList,
     };
   } catch (error) {
@@ -357,7 +389,7 @@ export async function getUserReferralInfo(userId: string): Promise<{
     return {
       referralCode: null,
       referralCount: 0,
-      maxReferrals: MAX_REFERRALS_PER_USER,
+      maxReferrals: Infinity,
       referrals: [],
     };
   }

@@ -9,7 +9,8 @@ import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';
-import { Trophy, Zap, Mail, Globe, ChevronDown } from "lucide-react";
+import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin } from "lucide-react";
+import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -63,9 +64,9 @@ export default function MatchForm({
     opp1: 'club' | 'global' | 'guest';
     opp2: 'club' | 'global' | 'guest';
   }>({
-    partner: 'club',
-    opp1: 'club',
-    opp2: 'club',
+    partner: 'global',
+    opp1: 'global',
+    opp2: 'global',
   });
 
   // Location state
@@ -380,12 +381,9 @@ export default function MatchForm({
                 setSelectedClubId(profile.club_id);
               }
               setSelfClubName((profile.clubs as any)?.name || null);
-            } else if (allClubs.length > 0) {
-              setSelectedClubId(allClubs[0].id);
             }
-          } else if (allClubs.length > 0) {
-            setSelectedClubId(allClubs[0].id);
           }
+
         }
       } catch (err) {
         logger.error('Error in fetchAllClubs:', err);
@@ -1452,7 +1450,7 @@ export default function MatchForm({
                 className="w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-10 text-sm text-white transition-all focus:border-padel-green focus:ring-1 focus:ring-padel-green outline-none"
                 disabled={loadingClubs}
               >
-                {!loadingClubs && clubs.length === 0 && <option value="" disabled>Aucun club rejoint</option>}
+                <option value="" disabled>-- Sélectionner un club --</option>
                 {clubs.map((club) => (
                   <option key={club.id} value={club.id} className="text-gray-900">
                     {club.name} ({club.city})
@@ -1472,43 +1470,37 @@ export default function MatchForm({
             )}
 
             {isUnregisteredClub && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div>
-                  <label className="mb-2 block text-xs font-medium text-white/70">Nom du club *</label>
-                  <input
-                    type="text"
-                    value={unregisteredClubName}
-                    onChange={(e) => {
-                      setUnregisteredClubName(e.target.value);
-                      if (errors.unregisteredClubName) {
-                        setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
-                      }
-                    }}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white transition-all focus:border-padel-green focus:ring-1 focus:ring-padel-green outline-none placeholder:text-white/20"
-                    placeholder="Ex: Urban Padel..."
-                  />
-                  {errors.unregisteredClubName && (
-                    <p className="mt-1 text-xs text-red-400">{errors.unregisteredClubName}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-medium text-white/70">Ville *</label>
-                  <input
-                    type="text"
-                    value={unregisteredClubCity}
-                    onChange={(e) => {
-                      setUnregisteredClubCity(e.target.value);
-                      if (errors.unregisteredClubCity) {
-                        setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubCity; return n; });
-                      }
-                    }}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white transition-all focus:border-padel-green focus:ring-1 focus:ring-padel-green outline-none placeholder:text-white/20"
-                    placeholder="Ex: Nantes"
-                  />
-                  {errors.unregisteredClubCity && (
-                    <p className="mt-1 text-xs text-red-400">{errors.unregisteredClubCity}</p>
-                  )}
-                </div>
+              <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="mb-2 block text-xs font-medium text-white/70">Rechercher le club (Google Maps) *</div>
+                <GooglePlacesAutocomplete
+                  value={unregisteredClubName}
+                  onChange={(val) => {
+                    setUnregisteredClubName(val);
+                    // Si l'utilisateur tape manuellement, on vide la ville pour le forcer à sélectionner ou à remplir
+                    if (errors.unregisteredClubName) {
+                      setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
+                    }
+                  }}
+                  onSelect={(place) => {
+                    setUnregisteredClubName(place.name);
+                    setUnregisteredClubCity(place.city);
+                    // On pourrait aussi stocker place_id ou address si on voulait
+                    if (errors.unregisteredClubName || errors.unregisteredClubCity) {
+                      setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; delete n.unregisteredClubCity; return n; });
+                    }
+                  }}
+                  placeholder="Ex: Urban Padel Nantes..."
+                />
+                {(errors.unregisteredClubName || errors.unregisteredClubCity) && (
+                  <p className="mt-1 text-xs text-red-400">
+                    {errors.unregisteredClubName || errors.unregisteredClubCity}
+                  </p>
+                )}
+                {unregisteredClubCity && (
+                  <p className="mt-1 text-xs text-padel-green flex items-center gap-1">
+                    <MapPin size={10} /> Ville détectée : {unregisteredClubCity}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -1520,12 +1512,6 @@ export default function MatchForm({
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Vous</label>
               <input className="w-full cursor-not-allowed rounded-md border bg-gray-100 px-4 py-3 text-sm text-[#071554]/60" disabled value="Vous (connecté)" />
-              {selfClubName && (
-                <p className="mt-1.5 text-xs text-white/50 flex items-center gap-1.5 animate-in fade-in duration-300">
-                  <Globe size={12} className="text-padel-green flex-shrink-0" />
-                  <span>points pour classement de (<strong>{selfClubName}</strong>)</span>
-                </p>
-              )}
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-white">Partenaire</label>
@@ -1545,7 +1531,7 @@ export default function MatchForm({
                   }}
                   onSelect={(player) => {
                     setSelectedPlayers((prev) => ({ ...prev, partner: player }));
-                    setScopes((prev) => ({ ...prev, partner: 'club' }));
+                    setScopes((prev) => ({ ...prev, partner: 'global' }));
                   }}
                   placeholder="Prénom et nom complet"
                   error={errors.partnerName}
@@ -1562,7 +1548,6 @@ export default function MatchForm({
                       onChange={(e) => setScopes(prev => ({ ...prev, partner: e.target.value as any }))}
                       className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
                     >
-                      <option value="club">Club</option>
                       <option value="global">Global</option>
                       <option value="guest">Invité</option>
                     </select>
@@ -1572,16 +1557,10 @@ export default function MatchForm({
               </div>
               {selectedPlayers.partner && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.partner.type === "user" ? (
-                    <p className="text-xs text-white/50 flex items-center gap-1.5">
-                      <Globe size={12} className="text-padel-green flex-shrink-0" />
-                      <span>points pour classement de (<strong>{selectedPlayers.partner.club_name || "son club"}</strong>)</span>
-                    </p>
-                  ) : selectedPlayers.partner.email ? (
-                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
-                      <Mail size={12} className="flex-shrink-0" />
-                      <span>Une invitation sera envoyée par email</span>
-                    </p>
+                  <p className="text-xs text-blue-300 flex items-center gap-1.5">
+                    <Mail size={12} className="flex-shrink-0" />
+                    <span>Une invitation sera envoyée par email</span>
+                  </p>
                   ) : null}
                 </div>
               )}
@@ -1610,7 +1589,7 @@ export default function MatchForm({
                   }}
                   onSelect={(player) => {
                     setSelectedPlayers((prev) => ({ ...prev, opp1: player }));
-                    setScopes((prev) => ({ ...prev, opp1: 'club' }));
+                    setScopes((prev) => ({ ...prev, opp1: 'global' }));
                   }}
                   placeholder="Prénom et nom complet"
                   error={errors.opp1Name}
@@ -1627,7 +1606,6 @@ export default function MatchForm({
                       onChange={(e) => setScopes(prev => ({ ...prev, opp1: e.target.value as any }))}
                       className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
                     >
-                      <option value="club">Club</option>
                       <option value="global">Global</option>
                       <option value="guest">Invité</option>
                     </select>
@@ -1637,16 +1615,10 @@ export default function MatchForm({
               </div>
               {selectedPlayers.opp1 && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.opp1.type === "user" ? (
-                    <p className="text-xs text-white/50 flex items-center gap-1.5">
-                      <Globe size={12} className="text-padel-green flex-shrink-0" />
-                      <span>points pour classement de (<strong>{selectedPlayers.opp1.club_name || "son club"}</strong>)</span>
-                    </p>
-                  ) : selectedPlayers.opp1.email ? (
-                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
-                      <Mail size={12} className="flex-shrink-0" />
-                      <span>Une invitation sera envoyée par email</span>
-                    </p>
+                  <p className="text-xs text-blue-300 flex items-center gap-1.5">
+                    <Mail size={12} className="flex-shrink-0" />
+                    <span>Une invitation sera envoyée par email</span>
+                  </p>
                   ) : null}
                 </div>
               )}
@@ -1669,7 +1641,7 @@ export default function MatchForm({
                   }}
                   onSelect={(player) => {
                     setSelectedPlayers((prev) => ({ ...prev, opp2: player }));
-                    setScopes((prev) => ({ ...prev, opp2: 'club' }));
+                    setScopes((prev) => ({ ...prev, opp2: 'global' }));
                   }}
                   placeholder="Prénom et nom complet"
                   error={errors.opp2Name}
@@ -1686,7 +1658,6 @@ export default function MatchForm({
                       onChange={(e) => setScopes(prev => ({ ...prev, opp2: e.target.value as any }))}
                       className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
                     >
-                      <option value="club">Club</option>
                       <option value="global">Global</option>
                       <option value="guest">Invité</option>
                     </select>
@@ -1696,16 +1667,10 @@ export default function MatchForm({
               </div>
               {selectedPlayers.opp2 && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.opp2.type === "user" ? (
-                    <p className="text-xs text-white/50 flex items-center gap-1.5">
-                      <Globe size={12} className="text-padel-green flex-shrink-0" />
-                      <span>points pour classement de (<strong>{selectedPlayers.opp2.club_name || "son club"}</strong>)</span>
-                    </p>
-                  ) : selectedPlayers.opp2.email ? (
-                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
-                      <Mail size={12} className="flex-shrink-0" />
-                      <span>Une invitation sera envoyée par email</span>
-                    </p>
+                  <p className="text-xs text-blue-300 flex items-center gap-1.5">
+                    <Mail size={12} className="flex-shrink-0" />
+                    <span>Une invitation sera envoyée par email</span>
+                  </p>
                   ) : null}
                 </div>
               )}

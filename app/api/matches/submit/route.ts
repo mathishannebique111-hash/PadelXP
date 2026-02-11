@@ -199,10 +199,13 @@ export async function POST(req: Request) {
 
 
 
+      /* 
       if (!userClubId) {
-        logger.error("User without club trying to create match"); // ✅ REMPLACÉ
+        logger.error("User without club trying to create match");
         return NextResponse.json({ error: "Vous devez être rattaché à un club pour enregistrer un match" }, { status: 403 });
       }
+      */
+      // Club is no longer required to record a match (Freelance players)
 
       // LA VALIDATION "MÊME CLUB" A ÉTÉ SUPPRIMÉE POUR PERMETTRE LES MATCHS INTER-CLUBS
       // Les joueurs peuvent désormais provenir de différents clubs.

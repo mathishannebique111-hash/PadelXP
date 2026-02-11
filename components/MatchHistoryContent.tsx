@@ -62,13 +62,7 @@ export default async function MatchHistoryContent() {
     }
   }
 
-  if (!userClubId) {
-    return (
-      <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
-        <p>Vous devez être rattaché à un club pour consulter l'historique des matchs. Contactez votre club / complexe pour obtenir le code d'invitation.</p>
-      </div>
-    );
-  }
+  // if (!userClubId) check removed to allow club-less access
 
   // Récupérer tous les match_ids du joueur (uniquement les matchs où il est un user, pas guest)
   const { data: userParticipations, error: partError } = await supabase

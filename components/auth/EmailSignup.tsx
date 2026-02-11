@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import ClubSelector from "./ClubSelector";
+// AJOUT : Import MapPin
 import { Mail, Gift, Loader2, ArrowRight, Lock, Eye, EyeOff } from "lucide-react";
 
 interface Club {
@@ -19,11 +19,9 @@ export default function EmailSignup() {
     const router = useRouter();
 
     // Form Data
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+
     const [showReferralCode, setShowReferralCode] = useState(false);
     const [referralCode, setReferralCode] = useState("");
 
@@ -100,11 +98,6 @@ export default function EmailSignup() {
         e.preventDefault();
         setError(null);
 
-        if (!firstName.trim() || !lastName.trim()) {
-            setError("Veuillez renseigner votre nom et prénom.");
-            return;
-        }
-
         if (!email.trim() || !isValidEmail(email)) {
             setError("Veuillez entrer une adresse email valide.");
             return;
@@ -112,11 +105,6 @@ export default function EmailSignup() {
 
         if (password.length < 6) {
             setError("Le mot de passe doit contenir au moins 6 caractères.");
-            return;
-        }
-
-        if (!selectedClub) {
-            setError("Veuillez sélectionner votre club.");
             return;
         }
 
@@ -151,43 +139,35 @@ export default function EmailSignup() {
                 password: password,
                 options: {
                     data: {
-                        first_name: firstName.trim(),
-                        last_name: lastName.trim(),
-                        full_name: `${firstName.trim()} ${lastName.trim()}`,
-                        club_slug: selectedClub.slug,
+                        club_slug: null,
                         referral_code: referralCode.trim() || null,
+                        // Les autres champs (nom, prénom, code postal) seront demandés à l'onboarding
                     },
                 },
             });
 
             if (signUpError) {
-                throw new Error(signUpError.message);
+                console.error("Erreur détaillée Supabase:", signUpError);
+                console.error("Message d'erreur:", signUpError.message);
+                console.error("Code d'erreur:", signUpError.status);
+
+                // Si l'utilisateur existe déjà
+                if (signUpError.message.includes("User already registered")) {
+                    setError("Un compte existe déjà avec cet email.");
+                } else if (signUpError.message.includes("Database error saving new user")) {
+                    // Souvent lié à un trigger qui échoue
+                    setError("Erreur technique lors de la création du profil (Database error). Vérifiez la console.");
+                } else {
+                    setError(signUpError.message);
+                }
+                throw signUpError;
             }
 
-            // 3. Attach Club (If session exists immediately)
+            // 3. Redirect to onboarding (no club attachment needed)
             if (data.session) {
-                const attachResponse = await fetch("/api/player/attach", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${data.session.access_token}`,
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        slug: selectedClub.slug,
-                        email: email.trim().toLowerCase(),
-                        referralCode: referralCode.trim() || undefined,
-                    }),
-                });
-
-                const attachData = await attachResponse.json().catch(() => ({}));
-
-                if (attachData.referralProcessed) {
-                    sessionStorage.setItem("referral_reward_received", "true");
-                }
-
                 // Redirect to onboarding
                 router.replace("/player/onboarding");
+
             } else {
                 // Email confirmation required
                 setSuccessMessage("Compte créé ! Veuillez vérifier vos emails pour confirmer votre inscription.");
@@ -202,16 +182,17 @@ export default function EmailSignup() {
 
     if (successMessage) {
         return (
-            <div className="w-full max-w-md mx-auto text-center p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Mail className="w-8 h-8 text-green-400" />
+            <div className="w-full max-w-md mx-auto text-center p-6 animate-in fade-in zoom-in duration-300">
+                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-green-500/30">
+                    <Mail className="w-10 h-10 text-green-400" />
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2">Vérifiez vos emails</h2>
-                <p className="text-white/70 mb-6">{successMessage}</p>
+                <h2 className="text-2xl font-bold text-white mb-3">Vérifiez vos emails</h2>
+                <p className="text-white/70 mb-8 text-lg font-light leading-relaxed">{successMessage}</p>
                 <button
                     onClick={() => router.push("/login")}
-                    className="text-[#0066FF] hover:underline"
+                    className="text-[#0066FF] hover:text-[#0055DD] transition-colors font-medium flex items-center justify-center gap-2 mx-auto group"
                 >
+                    <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
                     Retour à la connexion
                 </button>
             </div>
@@ -219,175 +200,138 @@ export default function EmailSignup() {
     }
 
     return (
-        <div className="w-full max-w-md mx-auto">
-            <div className="rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xl p-6 transition-all duration-300">
+        <div className="w-full max-w-sm mx-auto px-4 mt-8 relative z-10">
+            <div className="text-center mb-6">
+                <h1 className="text-3xl font-bold text-white mb-2 tracking-tight drop-shadow-md">Créer un compte</h1>
+                <p className="text-white/80 font-medium">Rejoignez la communauté PadelXP</p>
+            </div>
 
-                <div className="text-center mb-6">
-                    <h1 className="text-2xl font-extrabold text-white mb-2">Créer mon compte</h1>
-                    <p className="text-sm text-white/60">Rejoignez la communauté PadelXP</p>
-                </div>
+            <div className="rounded-2xl bg-black/40 border border-white/10 p-6 backdrop-blur-md shadow-2xl">
 
                 {error && (
-                    <div className="rounded-lg border border-red-400/50 bg-red-500/10 px-4 py-3 text-sm text-red-400 mb-4 animate-in fade-in duration-200">
-                        {error}
+                    <div className="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-white mb-5 flex items-start gap-3">
+                        <div className="mt-0.5">⚠️</div>
+                        <p>{error}</p>
                     </div>
                 )}
 
-                <form onSubmit={handleSignup} className="space-y-4">
-
-                    {/* Nom et Prénom */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                                Prénom <span className="text-red-400">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                required
-                                placeholder="Thomas"
-                                className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                                Nom <span className="text-red-400">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                required
-                                placeholder="Dupont"
-                                className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                            />
-                        </div>
-                    </div>
+                <form onSubmit={handleSignup} className="space-y-5">
 
                     {/* Email */}
-                    <div>
-                        <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                            Email <span className="text-red-400">*</span>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-white ml-3 tracking-wide">
+                            EMAIL
                         </label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                            <input
-                                type="email"
-                                required
-                                placeholder="exemple@email.com"
-                                className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                autoComplete="email"
-                            />
-                        </div>
+                        <input
+                            type="email"
+                            required
+                            placeholder="exemple@email.com"
+                            className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-white/40 focus:bg-white/20 transition-all font-medium"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                        />
                     </div>
 
                     {/* Password */}
-                    <div>
-                        <label className="block text-xs text-white/70 mb-1.5 font-medium ml-1">
-                            Mot de passe <span className="text-red-400">*</span>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-white ml-3 tracking-wide">
+                            MOT DE PASSE
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                             <input
                                 type={showPassword ? "text" : "password"}
                                 required
-                                placeholder="••••••••"
+                                placeholder="6 caractères min."
                                 minLength={6}
-                                className="w-full rounded-xl bg-white/5 border border-white/10 pl-10 pr-10 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all"
+                                className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:border-white/40 focus:bg-white/20 transition-all font-medium pr-10"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-1"
                             >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
                     </div>
 
-                    {/* Club Selector */}
-                    <ClubSelector
-                        onSelect={setSelectedClub}
-                        selectedClub={selectedClub}
-                    />
-
                     {/* Referral Code */}
-                    {showReferralCode ? (
-                        <div className="space-y-1.5 animate-in slide-in-from-top duration-200">
-                            <label className="block text-xs text-white/70 font-medium ml-1">
-                                Code de parrainage
-                            </label>
-                            <div className="relative">
-                                <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                                <input
-                                    type="text"
-                                    placeholder="CODE123"
-                                    className={`w-full rounded-xl bg-white/5 border pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 transition-all ${referralCodeStatus?.valid
-                                        ? "border-green-500/50 focus:ring-green-500"
-                                        : referralCodeStatus?.valid === false
-                                            ? "border-red-500/50 focus:ring-red-500"
-                                            : "border-white/10 focus:ring-[#0066FF]"
-                                        }`}
-                                    value={referralCode}
-                                    onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
-                                    maxLength={8}
-                                />
+                    <div className="pt-2">
+                        {showReferralCode ? (
+                            <div className="space-y-1.5 animate-in slide-in-from-top-1 duration-200">
+                                <div className="flex justify-between items-center ml-3">
+                                    <label className="text-xs font-bold text-white tracking-wide">
+                                        CODE PARRAINAGE
+                                    </label>
+                                    <button type="button" onClick={() => setShowReferralCode(false)} className="text-white/60 hover:text-white transition-colors text-xs font-medium">Masquer</button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="CODE123"
+                                        className={`w-full bg-white/10 border rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none transition-all uppercase tracking-widest font-mono font-medium ${referralCodeStatus?.valid
+                                            ? "border-green-400 focus:border-green-400 text-green-300 bg-green-900/20"
+                                            : referralCodeStatus?.valid === false
+                                                ? "border-red-400 focus:border-red-400 text-red-300 bg-red-900/20"
+                                                : "border-white/10 focus:border-white/40 focus:bg-white/20"
+                                            }`}
+                                        value={referralCode}
+                                        onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
+                                        maxLength={8}
+                                    />
+                                    {referralCodeStatus?.valid && (
+                                        <Gift className="w-5 h-5 text-green-400 absolute right-4 top-1/2 -translate-y-1/2 drop-shadow-glow" />
+                                    )}
+                                </div>
+                                {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
+                                    <p className="text-xs text-green-300 mt-1 ml-3 flex items-center gap-1 font-medium">
+                                        ✓ Parrain : <span className="font-bold text-white">{referralCodeStatus.referrerName}</span>
+                                    </p>
+                                )}
+                                {referralCodeStatus?.valid === false && (
+                                    <p className="text-xs text-red-300 mt-1 ml-3 font-medium">{referralCodeStatus.error}</p>
+                                )}
                             </div>
-                            {referralCodeValidating && (
-                                <p className="text-xs text-white/50 ml-1">Vérification...</p>
-                            )}
-                            {referralCodeStatus?.valid && referralCodeStatus.referrerName && (
-                                <p className="text-xs text-green-400 ml-1">
-                                    ✓ Parrain : {referralCodeStatus.referrerName}
-                                </p>
-                            )}
-                            {referralCodeStatus?.valid === false && referralCodeStatus.error && (
-                                <p className="text-xs text-red-400 ml-1">{referralCodeStatus.error}</p>
-                            )}
-                        </div>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => setShowReferralCode(true)}
-                            className="text-xs text-white/50 hover:text-white/80 underline transition-colors ml-1"
-                        >
-                            J'ai un code de parrainage
-                        </button>
-                    )}
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setShowReferralCode(true)}
+                                className="text-xs text-white/70 hover:text-white transition-colors flex items-center gap-2 ml-1 p-2 rounded-lg hover:bg-white/5 active:scale-95 duration-200 font-medium"
+                            >
+                                <Gift className="w-4 h-4 text-white" />
+                                J'ai un code de parrainage
+                            </button>
+                        )}
+                    </div>
 
                     <button
                         type="submit"
-                        disabled={loading || !email || !password || !selectedClub || !firstName || !lastName}
-                        className="w-full rounded-xl px-4 py-3.5 font-semibold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 mt-6"
+                        disabled={loading || !email || !password || password.length < 6}
+                        className="w-full rounded-2xl py-4 font-bold text-white text-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-blue-600/20"
                         style={{
-                            background: "linear-gradient(135deg, #0066FF, #003D99)",
-                            boxShadow: "0 0 20px rgba(0,102,255,0.4)"
+                            background: "linear-gradient(135deg, #0066FF, #0044AA)",
                         }}
                     >
                         {loading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                             <>
-                                S'inscrire <ArrowRight className="w-4 h-4" />
+                                S'inscrire <ArrowRight className="w-5 h-5" />
                             </>
                         )}
                     </button>
                 </form>
-
-                <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                    <p className="text-sm text-white/60">
-                        Déjà membre ?{" "}
-                        <a href="/player/login" className="text-[#0066FF] hover:underline font-medium">
-                            Se connecter
-                        </a>
-                    </p>
-                </div>
             </div>
+
+            <p className="text-center text-sm text-white/40 mt-5">
+                Déjà membre ?{" "}
+                <a href="/player/login" className="text-white hover:text-[#0066FF] transition-colors font-medium">
+                    Se connecter
+                </a>
+            </p>
         </div>
     );
 }

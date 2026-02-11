@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Building2, MessageSquare, Settings, Search, Bell, Users } from 'lucide-react';
+import { Home, Building2, MessageSquare, Settings, Search, Bell, Users, Trophy } from 'lucide-react';
 import { isAdmin } from '@/lib/admin-auth';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -136,6 +136,7 @@ export default function AdminLayout({
     { href: '/admin/dashboard', icon: Home, label: 'Tableau de bord' },
     { href: '/admin/clubs', icon: Building2, label: 'Clubs & Complexes' },
     { href: '/admin/players', icon: Users, label: 'Joueurs' },
+    { href: '/admin/challenges', icon: Trophy, label: 'Challenges' },
     { href: '/admin/messages', icon: MessageSquare, label: 'Messagerie' },
     { href: '/admin/settings', icon: Settings, label: 'Paramètres' },
   ];
