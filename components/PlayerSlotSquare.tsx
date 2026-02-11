@@ -26,7 +26,12 @@ export default function PlayerSlotSquare({
         : "";
 
     return (
-        <div className={`flex flex-col items-center gap-2 ${className}`}>
+        <div className={`relative flex flex-col items-center gap-2 ${className}`}>
+            {player?.type === 'guest' && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-bold text-blue-400 uppercase tracking-widest leading-none z-10">
+                    Invité
+                </span>
+            )}
             <button
                 type="button"
                 onClick={onClick}
@@ -95,11 +100,6 @@ export default function PlayerSlotSquare({
                 <span className="text-[9px] sm:text-xs font-black text-white uppercase tracking-widest leading-none">
                     {label}
                 </span>
-                {player?.type === 'guest' && (
-                    <span className="text-[7px] font-bold text-blue-400 uppercase tracking-widest leading-none mt-0.5">
-                        Invité
-                    </span>
-                )}
             </div>
         </div >
     );
