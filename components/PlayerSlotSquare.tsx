@@ -43,7 +43,7 @@ export default function PlayerSlotSquare({
             >
                 {player ? (
                     <>
-                        <div className="flex items-center justify-center mb-1 overflow-hidden rounded-full w-9 h-9 sm:w-11 sm:h-11 bg-[#071554]/10">
+                        <div className="flex items-center justify-center mb-1 overflow-hidden rounded-full w-9 h-9 sm:w-11 sm:h-11 bg-slate-100 border border-gray-200">
                             {player.avatar_url ? (
                                 <Image
                                     src={player.avatar_url}
@@ -53,8 +53,23 @@ export default function PlayerSlotSquare({
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                <div className={`flex items-center justify-center w-full h-full ${isFixed ? 'text-white' : 'text-[#071554]'}`}>
-                                    <UserPlus size={20} strokeWidth={2.5} />
+                                <div className="flex items-center justify-center w-full h-full text-slate-400">
+                                    {/* Use Player icon to match Leaderboard style */}
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="w-2/3 h-2/3"
+                                    >
+                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
                                 </div>
                             )}
                         </div>

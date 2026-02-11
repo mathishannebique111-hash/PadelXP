@@ -1462,7 +1462,7 @@ export default function MatchForm({
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4 pb-24">
         {/* Lieu du match (Google Maps Direct) */}
         <div>
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
@@ -1501,7 +1501,7 @@ export default function MatchForm({
         </div>
 
         {/* Redesigned Player Selection */}
-        <div className="mb-4">
+        <div className="my-6">
           <div className="flex flex-col gap-2 max-w-sm mx-auto">
             <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
               {/* Team 1 */}
@@ -1603,7 +1603,7 @@ export default function MatchForm({
           <label className="mb-2 block text-[10px] font-black text-white/50 uppercase tracking-widest">Scores des sets</label>
           <div className="flex flex-col gap-3 items-center">
             {sets.map((set, index) => (
-              <div key={set.setNumber} className="flex items-center justify-center gap-3">
+              <div key={set.setNumber} className="relative flex items-center justify-center gap-3 w-full">
                 <span className="text-[10px] font-black text-white/30 uppercase w-10 text-left">Set {set.setNumber}</span>
                 <input
                   type="number"
@@ -1632,7 +1632,7 @@ export default function MatchForm({
                   <button
                     type="button"
                     onClick={() => removeSet(index)}
-                    className="text-red-400/50 hover:text-red-300 p-0.5"
+                    className="absolute right-0 sm:right-auto sm:translate-x-12 text-red-400/50 hover:text-red-300 p-0.5"
                   >
                     <X size={12} />
                   </button>
