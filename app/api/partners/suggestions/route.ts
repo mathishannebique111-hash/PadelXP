@@ -58,13 +58,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ suggestions: [] }, { status: 500 });
     }
 
-    if (!currentUserProfile.club_id) {
-      logger.warn(
-        "[PartnersSuggestions] Utilisateur sans club_id",
-        { userId: user.id }
-      );
-      return NextResponse.json({ suggestions: [] });
-    }
 
     // 3. Récupérer les partenaires habituels actuels pour les exclure
     const { data: existingPartnerships } = await supabaseAdmin
