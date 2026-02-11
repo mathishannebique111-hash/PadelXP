@@ -1524,7 +1524,7 @@ export default function MatchForm({
               </div>
 
               {/* VS Badge Centered */}
-              <div className="flex-shrink-0 flex flex-col items-center justify-center pt-2">
+              <div className="flex-shrink-0 flex flex-col items-center justify-center pb-5">
                 <div className="bg-padel-green text-[#071554] px-1.5 py-0.5 rounded text-[10px] font-black uppercase ring-2 ring-[#071554]">
                   VS
                 </div>
@@ -1757,10 +1757,8 @@ export default function MatchForm({
             className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-2.5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
           >
             <div className="relative z-10 flex items-center justify-center gap-1.5 text-xs">
-              {loading ? (
+              {loading && (
                 <div className="w-3.5 h-3.5 border-2 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
-              ) : (
-                <Zap size={14} fill="currentColor" />
               )}
               {loading ? "ENREGISTREMENT..." : "ENREGISTRER LE MATCH"}
             </div>

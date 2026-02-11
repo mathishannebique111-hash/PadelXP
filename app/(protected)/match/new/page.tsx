@@ -87,12 +87,12 @@ export default async function NewMatchPage({
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-2 sm:mb-4">
           <PageTitle title="Matchs" subtitle={clubName ? `Club : ${clubName}` : undefined} />
         </div>
         <Suspense fallback={
           <div className="w-full">
-            <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
+            <div className="grid grid-cols-3 w-full mb-2 sm:mb-4 border-b border-white/10">
               <div className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
                 <span className="text-center whitespace-normal leading-tight">Enregistrer</span>
               </div>

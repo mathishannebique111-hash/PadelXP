@@ -147,7 +147,8 @@ export default function PlayerAutocomplete({
       }
 
       const responseData = await response.json();
-      const data = responseData.players || responseData || [];
+      const data = Array.isArray(responseData.players) ? responseData.players :
+        Array.isArray(responseData) ? responseData : [];
 
       // ... (existing logging)
 
@@ -363,11 +364,9 @@ export default function PlayerAutocomplete({
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
                           {player.avatar_url ? (
-                            <Image
+                            <img
                               src={player.avatar_url}
                               alt={player.display_name}
-                              width={32}
-                              height={32}
                               className="w-full h-full object-cover"
                             />
                           ) : (
