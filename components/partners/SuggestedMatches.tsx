@@ -143,108 +143,113 @@ export default function SuggestedMatches() {
                         {suggestions.map((pair, index) => (
                             <motion.div
                                 key={pair.id}
-                                // ... (keep existing motion.div content)
-
-                            {/* Header de compatibilité */}
-                            <div className="absolute top-3 right-3 z-10">
-                                <div className="bg-emerald-500/20 backdrop-blur-md px-2 py-1 rounded-lg border border-emerald-500/30 flex flex-col items-center">
-                                    <span className="text-[10px] text-emerald-400 font-bold leading-none">
-                                        {pair.compatibilityScore}%
-                                    </span>
-                                    <span className="text-[8px] text-emerald-500/70 uppercase font-bold tracking-tighter">compatibilité</span>
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-white/5 overflow-hidden relative group"
+                            >
+                                {/* Header de compatibilité */}
+                                <div className="absolute top-3 right-3 z-10">
+                                    <div className="bg-emerald-500/20 backdrop-blur-md px-2 py-1 rounded-lg border border-emerald-500/30 flex flex-col items-center">
+                                        <span className="text-[10px] text-emerald-400 font-bold leading-none">
+                                            {pair.compatibilityScore}%
+                                        </span>
+                                        <span className="text-[8px] text-emerald-500/70 uppercase font-bold tracking-tighter">compatibilité</span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="p-4">
-                                {/* Les deux joueurs l'un au dessus de l'autre */}
-                                <div className="flex flex-col gap-3 mb-4">
-                                    {[pair.player1, pair.player2].map((player, idx) => (
-                                        <div key={player.id} className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-3">
-                                                {/* La barre verticale */}
-                                                <div className="w-1 h-8 rounded-full bg-slate-700/50 flex-shrink-0" />
+                                <div className="p-4">
+                                    {/* Les deux joueurs l'un au dessus de l'autre */}
+                                    <div className="flex flex-col gap-3 mb-4">
+                                        {[pair.player1, pair.player2].map((player, idx) => (
+                                            <div key={player.id} className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-3">
+                                                    {/* La barre verticale */}
+                                                    <div className="w-1 h-8 rounded-full bg-slate-700/50 flex-shrink-0" />
 
-                                                {/* L'icône ou l'avatar */}
-                                                {player.avatar_url ? (
-                                                    <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 shadow-lg relative aspect-square flex-shrink-0">
-                                                        <Image
-                                                            src={player.avatar_url}
-                                                            alt={player.name}
-                                                            fill
-                                                            className="object-cover"
-                                                        />
+                                                    {/* L'icône ou l'avatar */}
+                                                    {player.avatar_url ? (
+                                                        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-white/10 shadow-lg relative aspect-square flex-shrink-0">
+                                                            <Image
+                                                                src={player.avatar_url}
+                                                                alt={player.name}
+                                                                fill
+                                                                className="object-cover"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-blue-400/60 border border-white/10 shadow-lg flex-shrink-0">
+                                                            <User size={16} />
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-white truncate text-base leading-tight">
+                                                            {player.name}
+                                                        </p>
                                                     </div>
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-blue-400/60 border border-white/10 shadow-lg flex-shrink-0">
-                                                        <User size={16} />
-                                                    </div>
-                                                )}
-
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-bold text-white truncate text-base leading-tight">
-                                                        {player.name}
-                                                    </p>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Stats de la paire */}
-                                <div className="grid grid-cols-2 gap-2 py-3 border-t border-b border-white/5 mb-4">
-                                    <div className="flex flex-col items-center justify-center">
-                                        <div className="flex items-center gap-1 text-gray-400 mb-0.5">
-                                            <Users size={12} className="text-blue-400" />
-                                            <span className="text-[10px] uppercase font-bold tracking-wider">Niveau moyen</span>
-                                        </div>
-                                        <span className="text-sm font-black text-white">
-                                            {pair.avgLevel.toFixed(2)}/10
-                                        </span>
+                                        ))}
                                     </div>
-                                    <div className="flex flex-col items-center justify-center border-l border-white/5">
-                                        <div className="flex items-center gap-1 text-gray-400 mb-0.5">
-                                            <TrendingUp size={12} className="text-emerald-400" />
-                                            <span className="text-[10px] uppercase font-bold tracking-wider">Victoires moy.</span>
+
+                                    {/* Stats de la paire */}
+                                    <div className="grid grid-cols-2 gap-2 py-3 border-t border-b border-white/5 mb-4">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <div className="flex items-center gap-1 text-gray-400 mb-0.5">
+                                                <Users size={12} className="text-blue-400" />
+                                                <span className="text-[10px] uppercase font-bold tracking-wider">Niveau moyen</span>
+                                            </div>
+                                            <span className="text-sm font-black text-white">
+                                                {pair.avgLevel.toFixed(2)}/10
+                                            </span>
                                         </div>
-                                        <span className="text-sm font-black text-white">
-                                            {pair.avgWinrate}%
-                                        </span>
+                                        <div className="flex flex-col items-center justify-center border-l border-white/5">
+                                            <div className="flex items-center gap-1 text-gray-400 mb-0.5">
+                                                <TrendingUp size={12} className="text-emerald-400" />
+                                                <span className="text-[10px] uppercase font-bold tracking-wider">Victoires moy.</span>
+                                            </div>
+                                            <span className="text-sm font-black text-white">
+                                                {pair.avgWinrate}%
+                                            </span>
+                                        </div>
                                     </div>
+
+                                    {/* Action - Voir la paire / Défier */}
+                                    {(() => {
+                                        const challengeKey = `${pair.player1.id}-${pair.player2.id}`;
+                                        const hasExistingChallenge = existingChallenges.has(challengeKey);
+
+                                        return (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleChallenge({ player1_id: pair.player1.id, player2_id: pair.player2.id })}
+                                                disabled={challenging === `${pair.player1.id}-${pair.player2.id}` || !myPartner || hasExistingChallenge}
+                                                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {hasExistingChallenge ? (
+                                                    "DÉFI EN COURS"
+                                                ) : challenging === `${pair.player1.id}-${pair.player2.id}` ? (
+                                                    <>
+                                                        <Loader2 size={14} className="animate-spin" />
+                                                        Envoi...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Swords size={14} />
+                                                        DÉFIER CETTE PAIRE
+                                                    </>
+                                                )}
+                                            </button>
+                                        );
+                                    })()}
                                 </div>
-
-                                {/* Action - Voir la paire / Défier */}
-                                {(() => {
-                                    const challengeKey = `${pair.player1.id}-${pair.player2.id}`;
-                                    const hasExistingChallenge = existingChallenges.has(challengeKey);
-
-                                    return (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleChallenge({ player1_id: pair.player1.id, player2_id: pair.player2.id })}
-                                            disabled={challenging === `${pair.player1.id}-${pair.player2.id}` || !myPartner || hasExistingChallenge}
-                                            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {hasExistingChallenge ? (
-                                                "DÉFI EN COURS"
-                                            ) : challenging === `${pair.player1.id}-${pair.player2.id}` ? (
-                                                <>
-                                                    <Loader2 size={14} className="animate-spin" />
-                                                    Envoi...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Swords size={14} />
-                                                    DÉFIER CETTE PAIRE
-                                                </>
-                                            )}
-                                        </button>
-                                    );
-                                })()}
-                            </div>
-                        </motion.div>
-                ))}
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </div>
-        </div >
+
             <AddPhoneModal
                 isOpen={showPhoneModal}
                 onClose={() => {
