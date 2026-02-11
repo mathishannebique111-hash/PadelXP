@@ -588,106 +588,49 @@ export default function MatchForm({
   };
 
 
-  const normalizedExpected = expectedFullName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  if (normalizedInput !== normalizedExpected) {
-    setErrors((prev) => ({ ...prev, [fieldName]: `Le nom doit être écrit exactement comme "${expectedFullName}" (prénom et nom complet).` }));
-    return;
-  }
 
-  // Le joueur est valide et le nom saisi correspond exactement, on nettoie l'erreur
-  setErrors((prev) => {
-    const newErrors = { ...prev };
-    delete newErrors[fieldName];
-    return newErrors;
+  // Utiliser UNIQUEMENT first_name et last_name de la base de données
+  // Ne pas extraire depuis display_name - si ces champs sont vides, c'est une erreur
+  const first_name = player.first_name || "";
+  const last_name = player.last_name || "";
+
+  // Construire le nom complet avec prénom + nom
+  const fullName = (first_name && first_name.trim() && last_name && last_name.trim())
+    ? `${first_name.trim()} ${last_name.trim()}`.trim()
+    : player.display_name || "";
+
+  logger.info(`Player validated for "${name}":`, {
+    id: player.id,
+    display_name: fullName,
+    first_name: first_name.trim(),
+    last_name: last_name.trim(),
+    type: player.type,
+    hasCompleteName: !!(first_name && first_name.trim() && last_name && last_name.trim())
   });
 
-  // Stocker le joueur validé dans selectedPlayers (sans modifier le champ de saisie)
-  if (fieldName === 'partnerName') {
-    setSelectedPlayers((prev) => ({ ...prev, partner: (validation.player ?? null) as PlayerSearchResult | null }));
-  } else if (fieldName === 'opp1Name') {
-    setSelectedPlayers((prev) => ({ ...prev, opp1: (validation.player ?? null) as PlayerSearchResult | null }));
-  } else if (fieldName === 'opp2Name') {
-    setSelectedPlayers((prev) => ({ ...prev, opp2: (validation.player ?? null) as PlayerSearchResult | null }));
-  }
-};
+  const type: "user" | "guest" = (player.type || (player.email ? "user" : "guest")) as "user" | "guest";
 
-// Fonction pour valider exactement un nom de joueur (sans création automatique)
-const validateExactPlayer = async (name: string): Promise<{ valid: boolean; player?: PlayerSearchResult | null; error?: string }> => {
-  if (!name.trim()) {
-    return { valid: false, error: "Le nom du joueur est requis" };
-  }
-
-  try {
-    const response = await fetch("/api/players/validate-exact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: 'include',
-      body: JSON.stringify({ playerName: name.trim() }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Erreur serveur' }));
-      logger.error(`Validate exact API error: ${response.status} ${response.statusText}`, { error: errorData });
-
-      if (response.status === 401) {
-        return { valid: false, error: "Erreur d'authentification. Veuillez vous reconnecter." };
-      }
-
-      const errorMessage = errorData.error || 'Erreur lors de la validation du joueur';
-      return { valid: false, error: errorMessage };
-    }
-
-    const data = await response.json();
-
-    if (!data.valid || !data.player) {
-      const errorMessage = data.error || `Aucun joueur trouvé avec le nom exact "${name.trim()}". Vérifiez l'orthographe (lettres, espaces, accents).`;
-      return { valid: false, error: errorMessage };
-    }
-
-    const player = data.player;
-
-    // Utiliser UNIQUEMENT first_name et last_name de la base de données
-    // Ne pas extraire depuis display_name - si ces champs sont vides, c'est une erreur
-    const first_name = player.first_name || "";
-    const last_name = player.last_name || "";
-
-    // Construire le nom complet avec prénom + nom
-    const fullName = (first_name && first_name.trim() && last_name && last_name.trim())
-      ? `${first_name.trim()} ${last_name.trim()}`.trim()
-      : player.display_name || "";
-
-    logger.info(`Player validated for "${name}":`, {
+  return {
+    valid: true,
+    player: {
       id: player.id,
-      display_name: fullName,
       first_name: first_name.trim(),
       last_name: last_name.trim(),
-      type: player.type,
-      hasCompleteName: !!(first_name && first_name.trim() && last_name && last_name.trim())
-    });
-
-    const type: "user" | "guest" = (player.type || (player.email ? "user" : "guest")) as "user" | "guest";
-
-    return {
-      valid: true,
-      player: {
-        id: player.id,
-        first_name: first_name.trim(),
-        last_name: last_name.trim(),
-        type,
-        display_name: type === "guest" ? `${fullName} 👤` : fullName,
-        email: player.email || null,
-        club_name: player.club_name || null,
-        is_external: player.type === "user" && player.club_id !== undefined ? true : undefined, // On verra plus tard si on a besoin de is_external précis
-      },
-    };
-  } catch (error) {
-    logger.error("Error validating exact player:", error instanceof Error ? error.message : String(error));
-    return {
-      valid: false,
-      error: `Erreur lors de la validation du joueur "${name.trim()}". Veuillez réessayer.`
-    };
-  }
+      type,
+      display_name: type === "guest" ? `${fullName} 👤` : fullName,
+      email: player.email || null,
+      club_name: player.club_name || null,
+      is_external: player.type === "user" && player.club_id !== undefined ? true : undefined, // On verra plus tard si on a besoin de is_external précis
+    },
+  };
+} catch (error) {
+  logger.error("Error validating exact player:", error instanceof Error ? error.message : String(error));
+  return {
+    valid: false,
+    error: `Erreur lors de la validation du joueur "${name.trim()}". Veuillez réessayer.`
+  };
+}
 };
 
 const onSubmit = async (e: React.FormEvent) => {
