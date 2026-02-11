@@ -886,7 +886,10 @@ export default function MatchForm({
       ].filter(Boolean) as string[];
 
       if (userPlayers.length !== new Set(userPlayers).size) {
-        setErrors({ partnerName: "Les 4 joueurs doivent être uniques" });
+        logger.warn("❌ Validation failed: Duplicate user players");
+        const msg = "Les 4 joueurs doivent être uniques";
+        setErrors({ partnerName: msg });
+        setErrorMessage(msg);
         setLoading(false);
         return;
       }
@@ -899,26 +902,38 @@ export default function MatchForm({
       ].filter(Boolean) as string[];
 
       if (guestPlayers.length !== new Set(guestPlayers).size) {
-        setErrors({ partnerName: "Les joueurs invités doivent être uniques" });
+        logger.warn("❌ Validation failed: Duplicate guest players");
+        const msg = "Les joueurs invités doivent être uniques. Vous ne pouvez pas sélectionner le même joueur invité deux fois.";
+        setErrors({ partnerName: msg });
+        setErrorMessage(msg);
         setLoading(false);
         return;
       }
 
       // Validation de la localisation
       if (!isUnregisteredClub && !selectedClubId) {
-        setErrors((prev) => ({ ...prev, location: "Veuillez sélectionner un club" }));
+        logger.warn("❌ Validation failed: Missing club");
+        const msg = "Veuillez sélectionner un club";
+        setErrors((prev) => ({ ...prev, location: msg }));
+        setErrorMessage(msg);
         setLoading(false);
         return;
       }
 
       if (isUnregisteredClub) {
         if (!unregisteredClubName.trim()) {
-          setErrors((prev) => ({ ...prev, unregisteredClubName: "Le nom du club est requis" }));
+          logger.warn("❌ Validation failed: Missing unregistered club name");
+          const msg = "Le nom du club est requis";
+          setErrors((prev) => ({ ...prev, unregisteredClubName: msg }));
+          setErrorMessage(msg);
           setLoading(false);
           return;
         }
         if (!unregisteredClubCity.trim()) {
-          setErrors((prev) => ({ ...prev, unregisteredClubCity: "La ville est requise" }));
+          logger.warn("❌ Validation failed: Missing unregistered club city");
+          const msg = "La ville est requise";
+          setErrors((prev) => ({ ...prev, unregisteredClubCity: msg }));
+          setErrorMessage(msg);
           setLoading(false);
           return;
         }
