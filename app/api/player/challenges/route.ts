@@ -519,10 +519,6 @@ export async function GET(request: Request) {
 
   const clubId = await resolveClubId(user.id);
   logger.info({ userId: userIdPreview, clubId: clubId?.substring(0, 8) + "…" || null }, "[api/player/challenges] Resolved clubId for user");
-  if (!clubId) {
-    logger.warn({ userId: userIdPreview }, "[api/player/challenges] No clubId found for user, returning empty challenges");
-    return NextResponse.json({ challenges: [] });
-  }
 
   // Load both Club and Global challenges
   const [clubRecords, globalRecords] = await Promise.all([

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Globe, Trophy, MapPin } from "lucide-react";
 import ChallengeCard from "./ChallengeCard";
 
 interface PlayerChallenge {
@@ -40,24 +41,26 @@ export default function ChallengesList({ challenges }: ChallengesListProps) {
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex bg-white/5 p-1 rounded-xl w-full sm:w-fit mx-auto sm:mx-0">
+      <div className="flex items-center justify-center sm:justify-start gap-2 px-2">
         <button
           onClick={() => setActiveTab('general')}
-          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'general'
-            ? 'bg-padel-green text-slate-900 shadow-lg'
-            : 'text-white/60 hover:text-white hover:bg-white/10'
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'general'
+            ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
+            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
             }`}
         >
-          Général
+          <Globe size={14} />
+          <span>Général</span>
         </button>
         <button
           onClick={() => setActiveTab('club')}
-          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'club'
-            ? 'bg-padel-green text-slate-900 shadow-lg'
-            : 'text-white/60 hover:text-white hover:bg-white/10'
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'club'
+            ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
+            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
             }`}
         >
-          Club
+          <MapPin size={14} />
+          <span>Mon Club</span>
         </button>
       </div>
 
