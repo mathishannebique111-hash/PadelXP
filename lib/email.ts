@@ -288,8 +288,8 @@ export async function sendGuestMatchInvitationEmail(
 
   // No icons to prevent loading issues
   const winnerText = matchDetails.winnerTeam === 1
-    ? `🏆 Équipe gagnante : Équipe 1 (${matchDetails.score})`
-    : `🏆 Équipe gagnante : Équipe 2 (${matchDetails.score})`;
+    ? `Équipe gagnante : Équipe 1 (${matchDetails.score})`
+    : `Équipe gagnante : Équipe 2 (${matchDetails.score})`;
 
   // Generate a unique reference to prevent Gmail trimming/threading
   const uniqueRef = new Date().getTime().toString(36);
@@ -310,81 +310,83 @@ export async function sendGuestMatchInvitationEmail(
                 color-scheme: light dark;
                 supported-color-schemes: light dark;
               }
-              body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #ffffff; }
+              body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #f4f6f8; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #071554, #050C30); color: #ffffff !important; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; color: #333333; }
+              .header { background-color: #071554; color: #ffffff !important; padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
+              .content { background: #ffffff; padding: 30px; border-radius: 0 0 12px 12px; color: #333333; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
               .button { display: inline-block; background: #071554; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 10px 0; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(7, 21, 84, 0.2); }
               .button:hover { background: #0A1E75; }
-              .match-details { background: #ffffff; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #071554; color: #333333; }
-              .match-row { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+              .match-details { background: #f8fafc; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #e2e8f0; }
+              .match-row { padding: 10px 0; border-bottom: 1px solid #e2e8f0; display: flex; flex-direction: column; }
               .match-row:last-child { border-bottom: none; }
-              .match-label { font-size: 12px; color: #888888; text-transform: uppercase; letter-spacing: 0.5px; }
-              .match-value { font-size: 15px; font-weight: 600; color: #333333; margin-top: 2px; }
-              .winner-row { background: linear-gradient(90deg, #f0f4ff, #ffffff); padding: 12px; border-radius: 6px; margin-top: 10px; }
-              .checkbox-section { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0; color: #333333; }
-              .checkbox-label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; color: #555555; }
-              .checkbox-note { font-size: 12px; color: #888888; margin-top: 8px; }
+              .match-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+              .match-value { font-size: 15px; font-weight: 600; color: #0f172a; margin-top: 4px; }
+              
+              /* Winner row design - Always Dark Blue for consistency */
+              .winner-row { background-color: #071554 !important; color: #ffffff !important; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; }
+              .winning-text { color: #ffffff !important; font-size: 16px; font-weight: 700; margin: 0; }
+
+              .checkbox-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0; color: #333333; }
+              .checkbox-label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; color: #475569; }
+              .checkbox-note { font-size: 12px; color: #94a3b8; margin-top: 8px; }
 
               /* Dark Mode Overrides */
               @media (prefers-color-scheme: dark) {
-                body { background-color: #1a1a1a !important; color: #e0e0e0 !important; }
-                .content { background-color: #2d2d2d !important; color: #e0e0e0 !important; }
-                .match-details { background-color: #333333 !important; color: #e0e0e0 !important; border-left-color: #4da6ff !important; }
-                .match-value { color: #ffffff !important; }
-                .match-label { color: #aaaaaa !important; }
-                .match-row { border-bottom-color: #444444 !important; }
-                /* Make winner row dark in dark mode so white text is visible */
-                .winner-row { background: #404040 !important; border: 1px solid #555555 !important; }
-                .checkbox-section { background-color: #333333 !important; border-color: #444444 !important; color: #e0e0e0 !important; }
-                .checkbox-label { color: #cccccc !important; }
-                /* Ensure header text remains white */
-                .header-title { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: 0 0 0 #ffffff; }
-                .header { color: #ffffff !important; }
+                body { background-color: #0f172a !important; }
+                .content { background-color: #1e293b !important; color: #e2e8f0 !important; box-shadow: none; border: 1px solid #334155; }
+                .match-details { background-color: #0f172a !important; border-color: #334155 !important; }
+                .match-value { color: #f1f5f9 !important; }
+                .match-label { color: #94a3b8 !important; }
+                .match-row { border-bottom-color: #334155 !important; }
+                .checkbox-section { background-color: #0f172a !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+                .checkbox-label { color: #cbd5e1 !important; }
+                
+                /* Winner row stays the same but ensures high contrast borders if needed */
+                .winner-row { border: 1px solid #334155; }
               }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1 class="header-title" style="margin: 0; font-size: 24px; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: 0 0 0 #ffffff;">Tu as joué un match !</h1>
+                <h1 class="header-title" style="margin: 0; font-size: 24px; color: #ffffff !important; font-weight: 800;">Tu as joué un match !</h1>
               </div>
               <div class="content">
-                <p>Bonjour <strong>${playerName}</strong>,</p>
-                <p><strong>${matchCreatorName}</strong> a enregistré un match de padel avec toi sur PadelXP.</p>
+                <p style="font-size: 16px;">Bonjour <strong>${playerName}</strong>,</p>
+                <p style="font-size: 16px;"><strong>${matchCreatorName}</strong> a enregistré un match de padel avec toi sur PadelXP.</p>
                 
                 <div class="match-details">
                   <div class="match-row">
-                    <div class="match-label">Lieu</div>
-                    <div class="match-value">${matchDetails.clubName}</div>
+                    <span class="match-label">Lieu</span>
+                    <span class="match-value">${matchDetails.clubName}</span>
                   </div>
                   <div class="match-row">
-                    <div class="match-label">Équipe 1</div>
-                    <div class="match-value">${matchDetails.team1Players}</div>
+                    <span class="match-label">Équipe 1</span>
+                    <span class="match-value">${matchDetails.team1Players}</span>
                   </div>
                   <div class="match-row">
-                    <div class="match-label">Équipe 2</div>
-                    <div class="match-value">${matchDetails.team2Players}</div>
+                    <span class="match-label">Équipe 2</span>
+                    <span class="match-value">${matchDetails.team2Players}</span>
                   </div>
                   <div class="winner-row">
-                    <div class="match-value winning-text">${winnerText}</div>
+                    <p class="winning-text">${winnerText}</p>
                   </div>
                 </div>
 
-                <div style="text-align: center; margin: 25px 0;">
-                  <a href="${targetUrl}" class="button" style="color: #ffffff !important;">Confirmer le match</a>
-                  <p style="font-size: 13px; color: #666; margin-top: 8px;">Clique ci-dessus pour valider ta participation</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${targetUrl}" class="button">Confirmer le match</a>
+                  <p style="font-size: 13px; color: #64748b; margin-top: 12px;">Clique ci-dessus pour valider ta participation</p>
                 </div>
                 
                 <div class="checkbox-section">
                   <label class="checkbox-label">
-                    <input type="checkbox" name="newsletter" style="width: 18px; height: 18px; margin-top: 2px;">
+                    <input type="checkbox" name="newsletter" style="width: 18px; height: 18px; margin-top: 2px; accent-color: #071554;">
                     <span>Je souhaite recevoir les actualités et événements du club par email</span>
                   </label>
                   <p class="checkbox-note">Cette case est optionnelle. Tu peux te désinscrire à tout moment.</p>
                 </div>
                 
-                <p style="margin-top: 30px; font-size: 12px; color: #999; text-align: center;">
+                <p style="margin-top: 30px; font-size: 12px; color: #94a3b8; text-align: center;">
                   Ref: ${uniqueRef} • Si ce n'est pas toi, tu peux ignorer cet email.
                 </p>
               </div>

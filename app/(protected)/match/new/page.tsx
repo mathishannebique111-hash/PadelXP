@@ -6,9 +6,12 @@ import MatchTabs from "@/components/MatchTabs";
 import MatchHistoryContent from "@/components/MatchHistoryContent";
 import FindPartnersTabContent from "@/components/FindPartnersTabContent";
 import BoostContent from "@/components/BoostContent";
+import MobileCrashErrorBoundary from "@/components/MobileCrashErrorBoundary";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
+import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,13 +111,33 @@ export default async function NewMatchPage({
             </div>
           </div>
         }>
-          <MatchTabs
-            activeTab={activeTab}
-            recordContent={<MatchForm selfId={user.id} />}
-            historyContent={<MatchHistoryContent />}
-            partnersContent={<FindPartnersTabContent />}
-            boostContent={<BoostContent />}
-          />
+          <MobileCrashErrorBoundary componentName="MatchTabs">
+            <Suspense fallback={<div className="p-4 text-white">Chargement...</div>}>
+              <MatchTabs
+                activeTab={activeTab}
+                recordContent={
+                  <MobileCrashErrorBoundary componentName="Formulaire Match">
+                    <MatchForm selfId={user.id} />
+                  </MobileCrashErrorBoundary>
+                }
+                historyContent={
+                  <MobileCrashErrorBoundary componentName="Historique">
+                    <MatchHistoryContent />
+                  </MobileCrashErrorBoundary>
+                }
+                partnersContent={
+                  <MobileCrashErrorBoundary componentName="Partenaires">
+                    <FindPartnersTabContent />
+                  </MobileCrashErrorBoundary>
+                }
+                boostContent={
+                  <MobileCrashErrorBoundary componentName="Boosts">
+                    <BoostContent />
+                  </MobileCrashErrorBoundary>
+                }
+              />
+            </Suspense>
+          </MobileCrashErrorBoundary>
         </Suspense>
       </div>
     </div>
