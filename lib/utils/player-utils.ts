@@ -58,22 +58,29 @@ export interface PlayerSearchResult {
  * Retourne le joueur s'il existe, ou une erreur sinon
  */
 export async function validateExactPlayer(fullName: string): Promise<{ valid: boolean; player?: PlayerSearchResult; error?: string }> {
-  console.log("🔍 [validateExactPlayer] Starting validation for:", fullName);
+  // console.log("🔍 [validateExactPlayer] Starting validation for:", fullName);
   if (!fullName || !fullName.trim()) {
-    console.log("❌ [validateExactPlayer] Name is empty");
+    // console.log("❌ [validateExactPlayer] Name is empty");
     return { valid: false, error: "Nom du joueur requis" };
   }
 
   try {
     const url = `/api/player/search?query=${encodeURIComponent(fullName)}&exact=true`;
-    console.log("🔍 [validateExactPlayer] Fetching:", url);
+    // console.log("🔍 [validateExactPlayer] Fetching:", url);
+
+    // Ajouter un timeout de 10 secondes pour éviter que ça tourne indéfiniment
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal
     });
 
-    console.log("🔍 [validateExactPlayer] Response status:", response.status);
+    clearTimeout(timeoutId);
+
+    // console.log("🔍 [validateExactPlayer] Response status:", response.status);
 
     if (!response.ok) {
       console.error("❌ [validateExactPlayer] API error:", response.statusText);
@@ -81,7 +88,7 @@ export async function validateExactPlayer(fullName: string): Promise<{ valid: bo
     }
 
     const data = await response.json();
-    console.log("🔍 [validateExactPlayer] Data received:", data);
+    // console.log("🔍 [validateExactPlayer] Data received:", data);
 
     if (data.players && data.players.length > 0) {
       // Filtrer pour trouver une correspondance exacte (insensible à la casse/accents)
@@ -91,22 +98,26 @@ export async function validateExactPlayer(fullName: string): Promise<{ valid: bo
       const exactMatch = data.players.find((p: PlayerSearchResult) => {
         const full = normalize(`${p.first_name} ${p.last_name}`);
         const isMatch = full === normalizedQuery;
-        console.log(`🔍 [validateExactPlayer] Comparing "${full}" with "${normalizedQuery}" -> ${isMatch}`);
+        // console.log(`🔍 [validateExactPlayer] Comparing "${full}" with "${normalizedQuery}" -> ${isMatch}`);
         return isMatch;
       });
 
       if (exactMatch) {
-        console.log("✅ [validateExactPlayer] Exact match found:", exactMatch);
+        // console.log("✅ [validateExactPlayer] Exact match found:", exactMatch);
         return { valid: true, player: exactMatch };
       } else {
-        console.log("❌ [validateExactPlayer] No exact match after normalization");
+        // console.log("❌ [validateExactPlayer] No exact match after normalization");
       }
     } else {
-      console.log("❌ [validateExactPlayer] No players returned from API");
+      // console.log("❌ [validateExactPlayer] No players returned from API");
     }
 
     return { valid: false, error: "Aucun joueur trouvé avec ce nom exact" };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error("❌ [validateExactPlayer] Timeout exceeded");
+      return { valid: false, error: "Délai d'attente dépassé lors de la vérification. Réessayez." };
+    }
     console.error("❌ [validateExactPlayer] Exception:", error);
     return { valid: false, error: "Erreur technique lors de la validation" };
   }
