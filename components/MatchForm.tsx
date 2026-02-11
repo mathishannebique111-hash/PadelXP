@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import MatchErrorModal from "@/components/MatchErrorModal";
-import type { PlayerSearchResult } from "@/lib/utils/player-utils";
+import { type PlayerSearchResult, validateExactPlayer } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';

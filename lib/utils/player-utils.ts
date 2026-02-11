@@ -52,3 +52,45 @@ export interface PlayerSearchResult {
   is_external?: boolean;
   email?: string | null;
 }
+
+/**
+ * Valide si un joueur existe avec ce nom exact (prénom + nom)
+ * Retourne le joueur s'il existe, ou une erreur sinon
+ */
+export async function validateExactPlayer(fullName: string): Promise<{ valid: boolean; player?: PlayerSearchResult; error?: string }> {
+  if (!fullName || !fullName.trim()) {
+    return { valid: false, error: "Nom du joueur requis" };
+  }
+
+  try {
+    const response = await fetch(`/api/player/search?query=${encodeURIComponent(fullName)}&exact=true`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      return { valid: false, error: "Erreur lors de la recherche du joueur" };
+    }
+
+    const data = await response.json();
+    if (data.players && data.players.length > 0) {
+      // Filtrer pour trouver une correspondance exacte (insensible à la casse/accents)
+      const normalize = (str: string) => str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const normalizedQuery = normalize(fullName);
+
+      const exactMatch = data.players.find((p: PlayerSearchResult) => {
+        const full = normalize(`${p.first_name} ${p.last_name}`);
+        return full === normalizedQuery;
+      });
+
+      if (exactMatch) {
+        return { valid: true, player: exactMatch };
+      }
+    }
+
+    return { valid: false, error: "Aucun joueur trouvé avec ce nom exact" };
+  } catch (error) {
+    console.error("Error validating player:", error);
+    return { valid: false, error: "Erreur technique lors de la validation" };
+  }
+}
