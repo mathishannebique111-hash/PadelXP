@@ -1466,7 +1466,7 @@ export default function MatchForm({
         {/* Lieu du match (Google Maps Direct) */}
         <div>
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
-          <div className="space-y-2">
+          <div className="space-y-1">
             <div className="animate-in fade-in slide-in-from-top-1 duration-200">
               <div className="mb-1 block text-[8px] font-bold text-white/30 uppercase tracking-widest">Rechercher le club (Google Maps) *</div>
               <GooglePlacesAutocomplete
@@ -1599,9 +1599,9 @@ export default function MatchForm({
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-xl border border-white/10 p-3 sm:p-4 text-center">
-          <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
-          <div className="flex flex-col gap-2 items-center">
+        <div className="py-2 text-center">
+          <label className="mb-2 block text-[10px] font-black text-white/50 uppercase tracking-widest">Scores des sets</label>
+          <div className="flex flex-col gap-3 items-center">
             {sets.map((set, index) => (
               <div key={set.setNumber} className="flex items-center justify-center gap-3">
                 <span className="text-[10px] font-black text-white/30 uppercase w-10 text-left">Set {set.setNumber}</span>

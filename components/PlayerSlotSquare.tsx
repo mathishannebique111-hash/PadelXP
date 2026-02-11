@@ -53,8 +53,8 @@ export default function PlayerSlotSquare({
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                <div className={`text-base sm:text-xl font-black ${isFixed ? 'text-white' : 'text-[#071554]'}`}>
-                                    {initials || <UserPlus size={18} />}
+                                <div className={`flex items-center justify-center w-full h-full ${isFixed ? 'text-white' : 'text-[#071554]'}`}>
+                                    <UserPlus size={20} strokeWidth={2.5} />
                                 </div>
                             )}
                         </div>
@@ -86,6 +86,6 @@ export default function PlayerSlotSquare({
                     </span>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
