@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ChallengeCard from "./ChallengeCard";
 
@@ -26,7 +27,7 @@ interface ChallengesListProps {
 
 export default function ChallengesList({ challenges }: ChallengesListProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = React.useState<'general' | 'club'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'club'>('general');
 
   const handleRewardClaimed = () => {
     router.refresh();
@@ -43,8 +44,8 @@ export default function ChallengesList({ challenges }: ChallengesListProps) {
         <button
           onClick={() => setActiveTab('general')}
           className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'general'
-              ? 'bg-padel-green text-slate-900 shadow-lg'
-              : 'text-white/60 hover:text-white hover:bg-white/10'
+            ? 'bg-padel-green text-slate-900 shadow-lg'
+            : 'text-white/60 hover:text-white hover:bg-white/10'
             }`}
         >
           Général
@@ -52,8 +53,8 @@ export default function ChallengesList({ challenges }: ChallengesListProps) {
         <button
           onClick={() => setActiveTab('club')}
           className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'club'
-              ? 'bg-padel-green text-slate-900 shadow-lg'
-              : 'text-white/60 hover:text-white hover:bg-white/10'
+            ? 'bg-padel-green text-slate-900 shadow-lg'
+            : 'text-white/60 hover:text-white hover:bg-white/10'
             }`}
         >
           Club
