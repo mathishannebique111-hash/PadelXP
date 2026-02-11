@@ -231,7 +231,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main content */}
-      <div className={`flex-1 ${sidebarOpen ? 'ml-72' : 'ml-20'} transition-all duration-300 flex flex-col min-h-screen relative z-10`}>
+      <div className={`flex-1 ${sidebarOpen ? 'ml-72' : 'ml-20'} transition-all duration-300 flex flex-col h-screen overflow-y-auto relative z-10 custom-scrollbar`}>
         {/* Header */}
         <header className="h-20 flex items-center justify-between px-8 sticky top-0 z-30 backdrop-blur-md bg-slate-950/70 border-b border-white/5">
           <div className="flex items-center gap-6 flex-1">

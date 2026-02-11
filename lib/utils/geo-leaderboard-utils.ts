@@ -140,21 +140,47 @@ export async function calculateGeoLeaderboard(
             .maybeSingle();
 
         // 2. Build the profiles query based on scope
+        // We filter for non-null emails to ensure we only show active accounts
+        // (guests and deleted accounts typically have no email or have been removed).
         let query = supabaseAdmin
             .from("profiles")
-            .select("id, first_name, last_name, display_name, points, avatar_url, is_premium, department_code, region_code");
+            .select("id, first_name, last_name, display_name, points, avatar_url, is_premium, department_code, region_code, email")
+            .not("email", "is", null);
 
         if (scope === "department" && userProfile?.department_code) {
             query = query.eq("department_code", userProfile.department_code);
-        } else if (scope === "region" && userProfile?.region_code) {
-            query = query.eq("region_code", userProfile.region_code);
+            logger.info("[calculateGeoLeaderboard] Filtering by department", { department: userProfile.department_code });
+        } else if (scope === "region" && userProfile?.department_code) {
+            // Robust region filtering: find all departments in the same region
+            const userDept = userProfile.department_code;
+            const userRegion = DEPARTMENT_TO_REGION[userDept];
+
+            if (userRegion) {
+                const deptsInRegion = Object.entries(DEPARTMENT_TO_REGION)
+                    .filter(([_, region]) => region === userRegion)
+                    .map(([dept, _]) => dept);
+
+                query = query.in("department_code", deptsInRegion);
+                logger.info("[calculateGeoLeaderboard] Filtering by region departments", { region: userRegion, departmentsCount: deptsInRegion.length });
+            } else {
+                logger.warn("[calculateGeoLeaderboard] User department has no region mapping", { userDept });
+                // Fallback to region_code if department mapping fails
+                if (userProfile.region_code) {
+                    query = query.eq("region_code", userProfile.region_code);
+                }
+            }
         }
         // "national" = no geo filter
 
         const { data: profiles, error: profilesError } = await query;
 
-        if (profilesError || !profiles || profiles.length === 0) {
-            if (profilesError) logger.error("[calculateGeoLeaderboard] Error fetching profiles", { error: profilesError.message });
+        if (profilesError) {
+            logger.error("[calculateGeoLeaderboard] Error fetching profiles", { error: { message: profilesError.message, code: profilesError.code, details: profilesError.details } });
+            return [];
+        }
+
+        if (!profiles || profiles.length === 0) {
+            logger.warn("[calculateGeoLeaderboard] No profiles found for criteria", { scope, userId: userId.substring(0, 8) + "…" });
             return [];
         }
 
@@ -162,35 +188,49 @@ export async function calculateGeoLeaderboard(
 
         // 3. Fetch all match_participants for these users
         const userIds = profiles.map(p => p.id);
-        const { data: allParticipants, error: participantsError } = await supabaseAdmin
-            .from("match_participants")
-            .select("user_id, player_type, team, match_id")
-            .in("user_id", userIds)
-            .eq("player_type", "user");
 
-        if (participantsError) {
-            logger.error("[calculateGeoLeaderboard] Error fetching participants", { error: participantsError.message });
-            return [];
+        // Chunk userIds if they are too many (avoid potential query length limits)
+        const userIdsChunks: string[][] = [];
+        for (let i = 0; i < userIds.length; i += 500) {
+            userIdsChunks.push(userIds.slice(i, i + 500));
         }
 
+        let allParticipants: any[] = [];
+        for (const chunk of userIdsChunks) {
+            const { data: chunkParticipants, error: participantsError } = await supabaseAdmin
+                .from("match_participants")
+                .select("user_id, player_type, team, match_id")
+                .in("user_id", chunk)
+                .eq("player_type", "user");
+
+            if (participantsError) {
+                logger.error("[calculateGeoLeaderboard] Error fetching participants chunk", { error: participantsError.message });
+            } else if (chunkParticipants) {
+                allParticipants = [...allParticipants, ...chunkParticipants];
+            }
+        }
+
+        logger.info("[calculateGeoLeaderboard] Participants found", { count: allParticipants.length });
+
         // 4. Fetch all unique matches
-        const uniqueMatchIds = [...new Set((allParticipants || []).map(p => p.match_id))];
+        const uniqueMatchIds = [...new Set(allParticipants.map(p => p.match_id))];
 
         if (uniqueMatchIds.length === 0) {
+            logger.info("[calculateGeoLeaderboard] No matches found for these players, returning base players with challenge points");
             // No matches: return players with challenge points only
-            const allPlayers = profiles.map(p => ({
+            const allPlayersForNames = profiles.map(p => ({
                 first_name: p.first_name || (p.display_name ? p.display_name.split(/\s+/)[0] : ""),
                 last_name: p.last_name || (p.display_name ? p.display_name.split(/\s+/).slice(1).join(" ") : ""),
             }));
 
-            return profiles.map((profile, index) => {
-                const challengePoints = typeof profile.points === 'number' ? profile.points : (parseInt(profile.points, 10) || 0);
+            return profiles.map((profile) => {
+                const challengePoints = typeof profile.points === 'number' ? profile.points : (parseInt(profile.points as any, 10) || 0);
                 const firstName = profile.first_name || (profile.display_name ? profile.display_name.split(/\s+/)[0] : "");
                 const lastName = profile.last_name || (profile.display_name ? profile.display_name.split(/\s+/).slice(1).join(" ") : "");
                 return {
-                    rank: index + 1,
+                    rank: 0,
                     user_id: profile.id,
-                    player_name: getPlayerDisplayName({ first_name: firstName, last_name: lastName }, allPlayers),
+                    player_name: getPlayerDisplayName({ first_name: firstName, last_name: lastName }, allPlayersForNames),
                     points: challengePoints,
                     wins: 0, losses: 0, matches: 0, badges: [], isGuest: false,
                     avatar_url: profile.avatar_url || null,
@@ -209,6 +249,8 @@ export async function calculateGeoLeaderboard(
             logger.error("[calculateGeoLeaderboard] Error fetching matches", { error: matchesError.message });
             return [];
         }
+
+        logger.info("[calculateGeoLeaderboard] Confirmed matches found", { count: allMatches?.length || 0 });
 
         const matchesMap = new Map<string, { winner_team_id: string; team1_id: string; team2_id: string; played_at: string }>();
         (allMatches || []).forEach(m => {
