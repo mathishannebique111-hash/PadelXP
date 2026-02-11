@@ -118,7 +118,7 @@ export function calculatePadelLevel(
   };
   const strengths = identifyStrengths(breakdown);
   const weaknesses = identifyWeaknesses(breakdown);
-  
+
   // Convertir AssessmentResponses en QuestionnaireAnswers pour le nouveau système
   const answers: QuestionnaireAnswers = {
     q1: responses.vitres,
@@ -144,10 +144,10 @@ export function calculatePadelLevel(
     q21: responses.doublesVitres,
     q22: responses.adversaireSup,
   };
-  
+
   // Utiliser le nouveau système de conseils ultra-personnalisés
   const personalizedTips = selectThreeTips(answers, userProfile);
-  
+
   const nextLevelProgress = calculateNextLevelProgress(scoreGlobal, niveau);
 
   return {
@@ -167,33 +167,28 @@ export function calculatePadelLevel(
 }
 
 function getNiveauFromScore(score: number): number {
-  if (score < 1.5) return 1;
-  if (score < 2.5) return 2;
-  if (score < 3.5) return 3;
-  if (score < 4.5) return 4;
-  if (score < 5.5) return 5;
-  if (score < 6.5) return 6;
-  if (score < 7.5) return 7;
-  if (score < 8.5) return 8;
-  if (score < 9.5) return 9;
-  return 10;
+  return Math.round(score * 100) / 100;
 }
 
 function validateHighLevel(
   niveau: number,
   responses: AssessmentResponses
 ): number {
+  // Entier pour la validation
+  const floorNiveau = Math.floor(niveau);
+
   // Validation basée sur le classement FFT et les résultats en tournois
-  if (niveau === 10 && (responses.classementFFT < 9 || responses.tournois < 8)) {
-    return 9;
+  if (floorNiveau === 10 && (responses.classementFFT < 9 || responses.tournois < 8)) {
+    return 9.9;
   }
-  if (niveau === 9 && responses.classementFFT < 7 && responses.tournois < 6) {
-    return 8;
+  if (floorNiveau === 9 && responses.classementFFT < 7 && responses.tournois < 6) {
+    return 8.9;
   }
   return niveau;
 }
 
 function getCategorieFromLevel(niveau: number): string {
+  const floorNiveau = Math.floor(niveau);
   const categories: Record<number, string> = {
     1: "Débutant - Découverte",
     2: "Débutant - Perfectionnement",
@@ -206,7 +201,7 @@ function getCategorieFromLevel(niveau: number): string {
     9: "Pré-Professionnel",
     10: "Professionnel",
   };
-  return categories[niveau] ?? "Non évalué";
+  return categories[floorNiveau] ?? "Non évalué";
 }
 
 function identifyStrengths(breakdown: {

@@ -30,6 +30,7 @@ export type LeaderboardEntry = {
   isGuest: boolean;
   avatar_url: string | null;
   is_premium?: boolean;
+  niveau_padel?: number | null;
 };
 
 /**
@@ -51,7 +52,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
     // Étape 1: Récupérer tous les profils du club (inclure avatar_url)
     const { data: clubProfiles, error: profilesError } = await supabaseAdmin
       .from("profiles")
-      .select("id, first_name, last_name, display_name, points, club_id, avatar_url, is_premium")
+      .select("id, first_name, last_name, display_name, points, club_id, avatar_url, is_premium, niveau_padel")
       .eq("club_id", clubId);
 
     if (profilesError) {
@@ -117,6 +118,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
           isGuest: false,
           avatar_url: profile.avatar_url || null,
           is_premium: profile.is_premium || false,
+          niveau_padel: profile.niveau_padel || null,
         };
       }).sort((a, b) => b.points - a.points).map((entry, index) => ({ ...entry, rank: index + 1 }));
     }
@@ -307,6 +309,7 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
         isGuest: false,
         avatar_url: profile.avatar_url || null,
         is_premium: profile.is_premium || false,
+        niveau_padel: profile.niveau_padel || null,
       };
     });
 

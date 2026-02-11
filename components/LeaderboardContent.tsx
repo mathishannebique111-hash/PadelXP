@@ -400,7 +400,13 @@ export default function LeaderboardContent({
                         </div>
                       </td>
                       <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0">
-                        <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
+                        {player.niveau_padel ? (
+                          <div className="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs sm:text-sm font-bold min-w-[44px]">
+                            {player.niveau_padel.toFixed(2)}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
                       </td>
                       <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
                       <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-10 sm:w-14">

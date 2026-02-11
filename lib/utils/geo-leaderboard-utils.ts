@@ -33,6 +33,7 @@ export type GeoLeaderboardEntry = {
     isGuest: boolean;
     avatar_url: string | null;
     is_premium?: boolean;
+    niveau_padel?: number | null;
 };
 
 /**
@@ -144,7 +145,7 @@ export async function calculateGeoLeaderboard(
         // (guests and deleted accounts typically have no email or have been removed).
         let query = supabaseAdmin
             .from("profiles")
-            .select("id, first_name, last_name, display_name, points, avatar_url, is_premium, department_code, region_code, email")
+            .select("id, first_name, last_name, display_name, points, avatar_url, is_premium, department_code, region_code, email, niveau_padel")
             .not("email", "is", null);
 
         if (scope === "department" && userProfile?.department_code) {
@@ -235,6 +236,7 @@ export async function calculateGeoLeaderboard(
                     wins: 0, losses: 0, matches: 0, badges: [], isGuest: false,
                     avatar_url: profile.avatar_url || null,
                     is_premium: profile.is_premium || false,
+                    niveau_padel: profile.niveau_padel || null,
                 };
             }).sort((a, b) => b.points - a.points).map((e, i) => ({ ...e, rank: i + 1 }));
         }
@@ -360,6 +362,7 @@ export async function calculateGeoLeaderboard(
                 isGuest: false,
                 avatar_url: profile.avatar_url || null,
                 is_premium: profile.is_premium || false,
+                niveau_padel: profile.niveau_padel || null,
             };
         });
 
