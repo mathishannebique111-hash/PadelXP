@@ -140,6 +140,7 @@ export default function BottomNavBar() {
 
     return (
         <div
+            id="bottom-nav-bar"
             className="fixed z-[99999] left-0 right-0 flex justify-center px-6"
             style={{
                 bottom: 'calc(var(--sab, 0px) + 4px)',

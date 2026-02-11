@@ -19,8 +19,8 @@ export default function LevelQuestionCard({
   const selectedValues = Array.isArray(value)
     ? value
     : value !== undefined
-    ? [value]
-    : [];
+      ? [value]
+      : [];
 
   const handleSelect = (points: number) => {
     if (isMultiple) {
@@ -35,7 +35,7 @@ export default function LevelQuestionCard({
   };
 
   return (
-    <div className="bg-slate-800/90 backdrop-blur-sm rounded-2xl p-4 sm:p-5 md:p-6 shadow-2xl border border-slate-700/50 w-full">
+    <div className="w-full">
       {/* Question - taille mobile optimisée */}
       <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 sm:mb-3 leading-tight">
         {question.question}
@@ -66,18 +66,16 @@ export default function LevelQuestionCard({
               whileTap={{ scale: 0.98 }}
               whileHover={{ scale: 1.01 }}
               onClick={() => handleSelect(option.points)}
-              className={`w-full text-left p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 min-h-[44px] sm:min-h-[48px] md:min-h-[52px] ${
-                isSelected
+              className={`w-full text-left p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 min-h-[44px] sm:min-h-[48px] md:min-h-[52px] ${isSelected
                   ? "bg-blue-500/20 border-blue-500 shadow-lg shadow-blue-500/20"
                   : "bg-slate-700/50 border-slate-600 hover:border-slate-500 hover:bg-slate-700/70"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`font-medium text-xs sm:text-sm md:text-base leading-snug ${
-                      isSelected ? "text-blue-300" : "text-white"
-                    }`}
+                    className={`font-medium text-xs sm:text-sm md:text-base leading-snug ${isSelected ? "text-blue-300" : "text-white"
+                      }`}
                   >
                     {option.label}
                   </p>

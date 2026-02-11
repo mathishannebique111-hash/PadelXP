@@ -15,6 +15,7 @@ import LevelQuestionCard from "./LevelQuestionCard";
 import LevelProgressBar from "./LevelProgressBar";
 import LevelResultCard from "./LevelResultCard";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 interface Props {
   onComplete?: (result: any) => void;
@@ -371,45 +372,57 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       initial={{ height: "auto", opacity: 0 }}
       animate={{ height: "100vh", opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed inset-0 z-50 flex flex-col bg-slate-900 overflow-hidden"
+      className="fixed inset-0 z-[100000] flex flex-col bg-[#172554] overflow-hidden"
       style={{ overflow: 'hidden' }}
     >
-      {/* Style global pour masquer le logo du club */}
+      {/* Style global pour masquer le logo du club et la bar de nav */}
       <style jsx global>{`
-        body.questionnaire-open [data-club-logo-container="true"] {
+        body.questionnaire-open [data-club-logo-container="true"],
+        body.questionnaire-open #bottom-nav-bar {
           display: none !important;
         }
       `}</style>
 
-      {/* Header fixe - mobile first, commence en dessous du menu hamburger */}
-      <div className="sticky z-20 bg-slate-900/95 backdrop-blur-sm px-4 pt-4 pb-4 border-b border-slate-800/50 top-[130px] flex-shrink-0">
-        <LevelProgressBar
-          progress={progress}
-          currentStep={currentQuestion + 1}
-          totalSteps={PADEL_QUESTIONS.length}
-        />
+      {/* Header fixe - mobile first, commence en haut de l'écran */}
+      <div className="sticky z-20 px-4 pt-12 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 2rem)' }}>
+        {/* Logo PadelXP en haut */}
+        <div className="flex justify-center mb-10">
+          <Image
+            src="/padelxp-logo-transparent.png"
+            alt="PadelXP Logo"
+            width={160}
+            height={46}
+            priority
+          />
+        </div>
 
-        <div className="mt-2.5 sm:mt-3 flex items-center gap-2">
-          {(() => {
-            const CategoryIcon = CATEGORY_INFO[question.category].Icon;
-            return <CategoryIcon size={16} className="sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />;
-          })()}
-          <span className="text-xs sm:text-sm font-medium text-gray-400">
-            {CATEGORY_INFO[question.category].label}
-          </span>
+        <div className="max-w-3xl mx-auto">
+          <LevelProgressBar
+            progress={progress}
+            currentStep={currentQuestion + 1}
+            totalSteps={PADEL_QUESTIONS.length}
+          />
+
+          <div className="mt-6 flex items-center justify-center gap-2">
+            {(() => {
+              const CategoryIcon = CATEGORY_INFO[question.category].Icon;
+              return <CategoryIcon size={14} className="text-blue-400 flex-shrink-0" />;
+            })()}
+            <span className="text-[10px] uppercase tracking-[0.2em] font-black text-blue-500/80">
+              {CATEGORY_INFO[question.category].label}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Zone pour la question - entre la barre de progression et la barre fixe du bas */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-3 sm:py-4 md:py-6 flex items-center justify-center"
+        className="flex-1 overflow-y-auto px-4 py-2 flex items-start justify-center"
         style={{
           minHeight: 0,
-          paddingTop: 'max(12px, env(safe-area-inset-top, 0px))',
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
         }}
       >
-        <div className="w-full max-w-3xl mx-auto -translate-y-12">
+        <div className="w-full max-w-3xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentQuestion}
@@ -433,7 +446,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       </div>
 
       {/* Boutons fixés en bas - mobile-first, taille augmentée pour "Suivant" */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 px-3 sm:px-4 py-4 sm:py-5 md:py-6 flex-shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] pb-8">
+      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-4 flex-shrink-0 pb-10">
         <div className="flex gap-2 sm:gap-3 max-w-3xl mx-auto w-full">
           <motion.button
             type="button"
