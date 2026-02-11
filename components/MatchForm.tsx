@@ -1271,15 +1271,25 @@ export default function MatchForm({
                 value={unregisteredClubName}
                 onChange={(val) => {
                   setUnregisteredClubName(val);
+                  setIsUnregisteredClub(true);
+                  setSelectedClubId("");
                   if (errors.unregisteredClubName) {
                     setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
+                  }
+                  if (errors.location) {
+                    setErrors(prev => { const n = { ...prev }; delete n.location; return n; });
                   }
                 }}
                 onSelect={(place) => {
                   setUnregisteredClubName(place.name);
                   setUnregisteredClubCity(place.city);
+                  setIsUnregisteredClub(true);
+                  setSelectedClubId("");
                   if (errors.unregisteredClubName || errors.unregisteredClubCity) {
                     setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; delete n.unregisteredClubCity; return n; });
+                  }
+                  if (errors.location) {
+                    setErrors(prev => { const n = { ...prev }; delete n.location; return n; });
                   }
                 }}
                 placeholder="Ex: Urban Padel Nantes..."
