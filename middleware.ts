@@ -300,6 +300,7 @@ export async function middleware(req: NextRequest) {
     "/api/referrals/",
     "/api/admin/check",  // Allow check API
     "/api/admin/create", // Allow create API
+    "/api/guest/",       // Allow guest API
     "/_next/",
     "/images/",
     "/onboarding/",
@@ -337,7 +338,8 @@ export async function middleware(req: NextRequest) {
     "/tournaments",
     "/about",
     "/contact",
-    "/players"
+    "/players",
+    "/guest/confirmation" // Allow guest confirmation page
   ]);
 
   const API_ROUTES_THAT_HANDLE_AUTH = ["/api/matches/", "/api/reviews"];

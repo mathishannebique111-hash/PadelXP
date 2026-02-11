@@ -286,14 +286,10 @@ export async function sendGuestMatchInvitationEmail(
     return;
   }
 
-  // Using public CDN URLs for reliable email client rendering without deployment
-  const tennisBallIcon = `<img src="https://img.icons8.com/color/96/tennis-ball.png" width="32" height="32" style="vertical-align: middle;" alt="Tennis Ball" />`;
-  const trophyIcon = `<img src="https://img.icons8.com/fluency/48/trophy.png" width="16" height="16" style="vertical-align: text-bottom; margin-right: 4px;" alt="Trophy" />`;
-  const mapPinIcon = `<img src="https://img.icons8.com/fluency/48/map-pin.png" width="14" height="14" style="vertical-align: middle; margin-right: 4px;" alt="Location" />`;
-
+  // No icons to prevent loading issues
   const winnerText = matchDetails.winnerTeam === 1
-    ? `${trophyIcon} Équipe gagnante : Équipe 1 (${matchDetails.score})`
-    : `${trophyIcon} Équipe gagnante : Équipe 2 (${matchDetails.score})`;
+    ? `🏆 Équipe gagnante : Équipe 1 (${matchDetails.score})`
+    : `🏆 Équipe gagnante : Équipe 2 (${matchDetails.score})`;
 
   // Generate a unique reference to prevent Gmail trimming/threading
   const uniqueRef = new Date().getTime().toString(36);
@@ -317,7 +313,6 @@ export async function sendGuestMatchInvitationEmail(
               body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #ffffff; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background: linear-gradient(135deg, #071554, #050C30); color: #ffffff !important; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .header-icon { margin-bottom: 10px; }
               .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; color: #333333; }
               .button { display: inline-block; background: #071554; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 10px 0; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(7, 21, 84, 0.2); }
               .button:hover { background: #0A1E75; }
@@ -339,12 +334,11 @@ export async function sendGuestMatchInvitationEmail(
                 .match-value { color: #ffffff !important; }
                 .match-label { color: #aaaaaa !important; }
                 .match-row { border-bottom-color: #444444 !important; }
-                .winner-row { background: #f0f4ff !important; border: 1px solid #444444 !important; } /* Light background for black text in dark mode */
-                /* Force black text effectively in Apple Mail Dark Mode */
-                .winner-text { color: #000000 !important; -webkit-text-fill-color: #000000 !important; text-shadow: 0 0 0 #000000; } 
+                /* Make winner row dark in dark mode so white text is visible */
+                .winner-row { background: #404040 !important; border: 1px solid #555555 !important; }
                 .checkbox-section { background-color: #333333 !important; border-color: #444444 !important; color: #e0e0e0 !important; }
                 .checkbox-label { color: #cccccc !important; }
-                /* Force white text effectively in Apple Mail Dark Mode */
+                /* Ensure header text remains white */
                 .header-title { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: 0 0 0 #ffffff; }
                 .header { color: #ffffff !important; }
               }
@@ -353,7 +347,6 @@ export async function sendGuestMatchInvitationEmail(
           <body>
             <div class="container">
               <div class="header">
-                <div class="header-icon">${tennisBallIcon}</div>
                 <h1 class="header-title" style="margin: 0; font-size: 24px; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: 0 0 0 #ffffff;">Tu as joué un match !</h1>
               </div>
               <div class="content">
@@ -362,7 +355,7 @@ export async function sendGuestMatchInvitationEmail(
                 
                 <div class="match-details">
                   <div class="match-row">
-                    <div class="match-label">${mapPinIcon} Lieu</div>
+                    <div class="match-label">Lieu</div>
                     <div class="match-value">${matchDetails.clubName}</div>
                   </div>
                   <div class="match-row">
@@ -374,7 +367,7 @@ export async function sendGuestMatchInvitationEmail(
                     <div class="match-value">${matchDetails.team2Players}</div>
                   </div>
                   <div class="winner-row">
-                    <div class="match-value winner-text" style="color: #000000 !important; -webkit-text-fill-color: #000000 !important; text-shadow: 0 0 0 #000000;"><span style="color: #000000 !important; -webkit-text-fill-color: #000000 !important;">${winnerText}</span></div>
+                    <div class="match-value winning-text">${winnerText}</div>
                   </div>
                 </div>
 

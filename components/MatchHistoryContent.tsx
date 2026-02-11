@@ -333,8 +333,8 @@ export default async function MatchHistoryContent() {
           const userTeam = userTeamByMatch[match.id];
           const won = match.winner_team === userTeam;
           const matchDate = new Date(match.played_at || match.created_at);
-          const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" });
-          const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
+          const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+          const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
           return (
             <div

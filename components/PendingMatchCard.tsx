@@ -46,8 +46,8 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
     const winnerTeam = match.winner_team_id === match.team1_id ? 1 : 2;
 
     const matchDate = new Date(match.created_at);
-    const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" });
-    const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" });
+    const dateStr = isNaN(matchDate.getTime()) ? "" : matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    const timeStr = isNaN(matchDate.getTime()) ? "" : matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
     const handleConfirm = async () => {
         setIsConfirming(true);
