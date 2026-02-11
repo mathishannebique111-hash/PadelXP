@@ -78,21 +78,47 @@ export async function GET(req: Request) {
     );
 
     // 4. Récupérer TOUS les autres joueurs du même club (hors soi et partenaires habituels)
-    const { data: clubPlayers, error: clubPlayersError } = await supabaseAdmin
+    // 4. Récupérer les candidats
+    // Si un département est spécifié, on cherche dans ce département (mode freelance / déplacement)
+    // Sinon, on cherche dans le club (mode club par défaut)
+    const { searchParams } = new URL(req.url);
+    const departmentFilter = searchParams.get("department");
+
+    let query = supabaseAdmin
       .from("profiles")
       .select("*")
-      .eq("club_id", currentUserProfile.club_id)
       .neq("id", user.id);
 
-    if (clubPlayersError || !clubPlayers) {
-      logger.error("[PartnersSuggestions] Erreur fetch joueurs du club", {
-        error: clubPlayersError,
+    if (departmentFilter) {
+      // Filtrer par département (ex: "80", "76")
+      // On assume que le format stocké est le code département string
+      query = query.eq("department_code", departmentFilter);
+    } else {
+      // Comportement par défaut : filtrer par club si l'utilisateur en a un
+      if (currentUserProfile.club_id) {
+        query = query.eq("club_id", currentUserProfile.club_id);
+      } else {
+        // Fallback pour les utilisateurs sans club et sans filtre : chercher dans leur département par défaut
+        if (currentUserProfile.department_code) {
+          query = query.eq("department_code", currentUserProfile.department_code);
+        } else {
+          // Dernier recours : pas de filtre (pourrait être lourd, on limite)
+          query = query.limit(50);
+        }
+      }
+    }
+
+    const { data: candidates, error: candidatesError } = await query;
+
+    if (candidatesError || !candidates) {
+      logger.error("[PartnersSuggestions] Erreur fetch joueurs", {
+        error: candidatesError,
       });
       return NextResponse.json({ suggestions: [] });
     }
 
     // Exclure les partenaires habituels déjà acceptés
-    const candidateProfiles = clubPlayers.filter(
+    const candidateProfiles = candidates.filter(
       (p) => !existingPartnerIds.has(p.id)
     );
 

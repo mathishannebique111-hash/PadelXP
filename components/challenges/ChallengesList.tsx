@@ -17,6 +17,7 @@ interface PlayerChallenge {
     target: number;
   };
   rewardClaimed: boolean;
+  scope: 'global' | 'club';
 }
 
 interface ChallengesListProps {
@@ -25,30 +26,61 @@ interface ChallengesListProps {
 
 export default function ChallengesList({ challenges }: ChallengesListProps) {
   const router = useRouter();
+  const [activeTab, setActiveTab] = React.useState<'general' | 'club'>('general');
 
   const handleRewardClaimed = () => {
-    // Recharger la page pour mettre à jour les données
     router.refresh();
   };
 
-  if (challenges.length === 0) {
-    return (
-      <div className="rounded-2xl border border-white/20 bg-white/15 px-6 py-14 text-center text-white">
-        Aucun challenge n'a encore été publié par votre club. Revenez bientôt !
-      </div>
-    );
-  }
+  const filteredChallenges = challenges.filter(c =>
+    activeTab === 'general' ? c.scope === 'global' : c.scope === 'club'
+  );
 
   return (
     <div className="space-y-6">
-      {challenges.map((challenge) => (
-        <ChallengeCard
-          key={challenge.id}
-          challenge={challenge}
-          onRewardClaimed={handleRewardClaimed}
-        />
-      ))}
+      {/* Tabs */}
+      <div className="flex bg-white/5 p-1 rounded-xl w-full sm:w-fit mx-auto sm:mx-0">
+        <button
+          onClick={() => setActiveTab('general')}
+          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'general'
+              ? 'bg-padel-green text-slate-900 shadow-lg'
+              : 'text-white/60 hover:text-white hover:bg-white/10'
+            }`}
+        >
+          Général
+        </button>
+        <button
+          onClick={() => setActiveTab('club')}
+          className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'club'
+              ? 'bg-padel-green text-slate-900 shadow-lg'
+              : 'text-white/60 hover:text-white hover:bg-white/10'
+            }`}
+        >
+          Club
+        </button>
+      </div>
+
+      {filteredChallenges.length === 0 ? (
+        <div className="rounded-2xl border border-white/20 bg-white/10 px-6 py-12 text-center">
+          <p className="text-white/60">
+            {activeTab === 'general'
+              ? "Aucun challenge général disponible pour le moment."
+              : "Aucun challenge club disponible pour le moment."}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {filteredChallenges.map((challenge) => (
+            <ChallengeCard
+              key={challenge.id}
+              challenge={challenge}
+              onRewardClaimed={handleRewardClaimed}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
 

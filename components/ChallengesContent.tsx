@@ -19,6 +19,7 @@ interface PlayerChallenge {
         target: number;
     };
     rewardClaimed: boolean;
+    scope: 'global' | 'club';
 }
 
 const supabaseAdmin = createAdminClient(
@@ -153,6 +154,7 @@ export default async function ChallengesContent() {
                                         status,
                                         progress: { current: 0, target },
                                         rewardClaimed: false,
+                                        scope: 'club'
                                     };
                                 });
                             }

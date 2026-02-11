@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { TrendingUp, Users, Zap, Crown, Loader2, Trophy, Skull, Heart } from "lucide-react";
+import { TrendingUp, Crown, Loader2, Trophy, Skull, Heart, Calendar, ArrowRight, Sparkles } from "lucide-react";
 import { Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
@@ -36,7 +36,7 @@ interface PremiumData {
     topNemesis: any[];
     topPartners: any[];
     insights: {
-        maxStreak: number;
+        luckyDay: { name: string; winrate: number };
         bestMonth: { name: string; winrate: number };
         currentForm: number;
     };
@@ -105,29 +105,32 @@ export default function PremiumStats() {
         }
     };
 
-    if (loading) return <div className="p-8 text-white/50 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
+    if (loading) return <div className="p-8 text-slate-500 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
 
     if (!isPremium) {
         return (
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-white/10 p-6 sm:p-8 text-center mt-6">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+            <div className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-6 sm:p-8 text-center mt-6 shadow-xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
                 <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center mb-4 shadow-lg shadow-amber-500/20">
-                        <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-5 shadow-lg">
+                        <Crown className="w-7 h-7 text-yellow-500 fill-yellow-500" />
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Passez au niveau supérieur</h2>
-                    <p className="text-sm sm:text-base text-white/60 mb-6 max-w-md">
-                        Débloquez l'analyse détaillée : évolution de niveau, victimes favorites, némésis et plus encore.
+                    <h2 className="text-xl font-bold text-white mb-2">Passez au niveau supérieur</h2>
+                    <p className="text-sm text-slate-400 mb-6 max-w-sm mx-auto leading-relaxed">
+                        Débloquez l'analyse détaillée de vos performances : évolution, partenaires favoris, némésis et insights exclusifs.
                     </p>
                     <button
                         onClick={handleUpgrade}
                         disabled={upgrading}
-                        className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-xl bg-white text-black text-sm sm:text-base font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-2"
+                        className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all disabled:opacity-70 disabled:hover:scale-100 flex items-center gap-2"
                     >
-                        {upgrading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
-                        Devenir Premium (Gratuit - Test)
+                        {upgrading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                        Découvrir Premium Gratuitement
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
-                    <p className="text-[10px] text-white/30 mt-4">Offre de test interne uniquement.</p>
+                    <p className="text-[10px] text-slate-600 mt-4">Offre découverte sans engagement.</p>
                 </div>
             </div>
         );
@@ -149,9 +152,6 @@ export default function PremiumStats() {
         filteredEvolution = fullEvolution.filter(d => new Date(d.date) >= cutoff);
     }
 
-    // If empty after filtering (e.g. no matches in last week), show at least last point or message
-    // We want to ensure the graph looks good
-
     const chartLabels = filteredEvolution.map(d => new Date(d.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
     const chartValues = filteredEvolution.map(d => d.level);
 
@@ -164,17 +164,17 @@ export default function PremiumStats() {
                 fill: true,
                 backgroundColor: (context: any) => {
                     const ctx = context.chart.ctx;
-                    if (!ctx) return "rgba(251, 191, 36, 0.2)";
+                    if (!ctx) return "rgba(59, 130, 246, 0.1)"; // Blue tint
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                    gradient.addColorStop(0, "rgba(251, 191, 36, 0.2)");
-                    gradient.addColorStop(1, "rgba(251, 191, 36, 0)");
+                    gradient.addColorStop(0, "rgba(59, 130, 246, 0.2)");
+                    gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
                     return gradient;
                 },
-                borderColor: "#f59e0b",
+                borderColor: "#3b82f6", // Blue-500
                 tension: 0.4,
                 pointRadius: 4,
-                pointBackgroundColor: "#1e1e1e",
-                pointBorderColor: "#f59e0b",
+                pointBackgroundColor: "#0f172a",
+                pointBorderColor: "#3b82f6",
                 pointBorderWidth: 2,
             },
         ],
@@ -188,10 +188,10 @@ export default function PremiumStats() {
             tooltip: {
                 mode: "index" as const,
                 intersect: false,
-                backgroundColor: "rgba(30, 30, 30, 0.9)",
-                titleColor: "#fff",
-                bodyColor: "#fbbf24",
-                borderColor: "rgba(255,255,255,0.1)",
+                backgroundColor: "rgba(15, 23, 42, 0.9)",
+                titleColor: "#94a3b8",
+                bodyColor: "#fff",
+                borderColor: "rgba(255,255,255,0.05)",
                 borderWidth: 1,
                 padding: 10,
                 displayColors: false,
@@ -205,61 +205,72 @@ export default function PremiumStats() {
         scales: {
             y: {
                 display: true,
-                grid: { color: "rgba(255,255,255,0.05)" },
-                ticks: { color: "rgba(255,255,255,0.4)", font: { size: 10 } },
+                grid: { color: "rgba(255,255,255,0.03)" },
+                ticks: { color: "rgba(148, 163, 184, 0.6)", font: { size: 10 } },
                 suggestedMin: 0,
                 suggestedMax: 10,
             },
             x: {
                 display: true,
                 grid: { display: false },
-                ticks: { color: "rgba(255,255,255,0.4)", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
+                ticks: { color: "rgba(148, 163, 184, 0.6)", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
             },
         },
     };
 
-    const renderList = (title: string, icon: any, list: any[], colorClass: string) => (
-        <div className="bg-[#0f172a]/40 border border-white/5 rounded-2xl p-4 sm:p-5 backdrop-blur-sm">
-            <h3 className={`text-sm font-bold mb-4 flex items-center gap-2 ${colorClass}`}>
-                {icon} {title}
-            </h3>
-            <div className="space-y-3">
-                {list.length > 0 ? list.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between group">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden ring-2 ring-white/5 group-hover:ring-white/20 transition-all">
-                                {item.avatar_url ? <img src={item.avatar_url} alt={item.name} className="w-full h-full object-cover" /> : null}
+    const renderList = (title: string, icon: any, list: any[], colorClass: string, emptyMessage: string) => {
+        if (list.length === 0) return null; // Hide if empty per user request
+
+        const isPartners = title === "Partenaires Favoris";
+        const isVictims = title === "Mes Victimes";
+
+        return (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-200">
+                    <span className={`p-1.5 rounded-lg bg-slate-800 ${colorClass}`}>{icon}</span> {title}
+                </h3>
+                <div className="space-y-3">
+                    {list.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-800 group-hover:ring-slate-700 transition-all">
+                                    {item.avatar_url ? <img src={item.avatar_url} alt={item.name} className="w-full h-full object-cover" /> : null}
+                                </div>
+                                <span className="text-slate-200 text-sm font-medium truncate max-w-[100px]">{item.name}</span>
                             </div>
-                            <span className="text-white text-sm font-medium truncate max-w-[90px] sm:max-w-[110px]">{item.name}</span>
-                        </div>
-                        <div className="text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                                <span className={`text-xs font-bold ${colorClass.replace("text-", "bg-") / 10}`}>{item.count}</span>
-                                <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">{title === "Top Partenaires" ? "matchs" : (title === "Mes Victimes" ? "vict." : "def.")}</span>
+                            <div className="text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 ${colorClass}`}>
+                                        {isPartners ?
+                                            `${item.count} matchs` :
+                                            `${item.count} ${isVictims ? 'vict.' : 'déf.'} / ${item.total} matchs`
+                                        }
+                                    </span>
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-medium mt-0.5">{item.winrate}% réussite</div>
                             </div>
-                            <div className="text-[10px] text-white/30 font-medium">{item.winrate}% réussite</div>
                         </div>
-                    </div>
-                )) : <p className="text-xs text-white/30 italic py-2 text-center">Aucune donnée disponible</p>}
+                    ))}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <div className="space-y-6 mt-8">
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Crown className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                    Statistiques Premium
+                    <Sparkles className="w-5 h-5 text-yellow-500" />
+                    Statistiques Avancées
                 </h2>
-                <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
+                <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
                     {['1W', '1M', '1Y', 'ALL'].map((range) => (
                         <button
                             key={range}
                             onClick={() => setTimeRange(range as TimeRange)}
                             className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${timeRange === range
-                                ? "bg-yellow-500 text-black shadow-lg shadow-yellow-500/20"
-                                : "text-white/40 hover:text-white hover:bg-white/5"
+                                ? "bg-slate-700 text-white shadow-sm"
+                                : "text-slate-500 hover:text-slate-300"
                                 }`}
                         >
                             {range === '1W' ? '7J' : range === '1M' ? '30J' : range === '1Y' ? '1 AN' : 'Tout'}
@@ -269,66 +280,66 @@ export default function PremiumStats() {
             </div>
 
             {/* Evolution Chart */}
-            <div className="p-5 rounded-2xl bg-[#0f172a]/60 border border-white/5 h-[320px] relative backdrop-blur-sm">
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 h-[300px] relative">
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h3 className="text-sm font-bold text-white mb-0.5">Évolution du niveau</h3>
-                        <p className="text-[10px] text-white/40">Basé sur vos résultats de matchs</p>
+                        <h3 className="text-sm font-bold text-slate-200 mb-0.5">Évolution du niveau</h3>
                     </div>
                     {filteredEvolution.length > 0 && (
                         <div className="text-right">
-                            <span className="text-2xl font-black text-yellow-500">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</span>
-                            <span className="text-[10px] text-white/30 block uppercase tracking-wider">Actuel</span>
+                            <span className="text-2xl font-black text-blue-500">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</span>
+                            <span className="text-[10px] text-slate-500 block uppercase tracking-wider">Niveau Actuel</span>
                         </div>
                     )}
                 </div>
 
                 {filteredEvolution.length > 0 ? (
-                    <div className="h-[230px] w-full">
+                    <div className="h-[210px] w-full">
                         <Line data={chartData} options={chartOptions} />
                     </div>
                 ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white/30 gap-2">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600 gap-2">
                         <TrendingUp className="w-8 h-8 opacity-20" />
                         <p className="text-xs">Pas assez de données sur cette période</p>
-                        <button onClick={() => setTimeRange('ALL')} className="text-[10px] text-yellow-500 underline hover:text-yellow-400">Voir tout l'historique</button>
+                        <button onClick={() => setTimeRange('ALL')} className="text-[10px] text-blue-500 underline hover:text-blue-400">Voir tout l'historique</button>
                     </div>
                 )}
             </div>
 
             {/* Insights Cards */}
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-orange-400/80 font-bold mb-2">Max Streak</span>
-                    <span className="text-xl sm:text-2xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.maxStreak || 0}</span>
-                    <span className="text-[10px] text-white/30 mt-1">victoires consécutives</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
+                    {/* Orange accent top border */}
+                    <div className="absolute top-0 left-0 w-full h-[3px] bg-orange-500 opacity-80"></div>
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Jour de Chance</span>
+                    <span className="text-lg font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
+                    <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.luckyDay?.winrate || 0}% de victoires</span>
                 </div>
 
-                <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-purple-400/80 font-bold mb-2">Meilleur Mois</span>
-                    <span className="text-sm sm:text-base font-bold text-white truncate max-w-full group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
-                    <span className="text-[10px] text-white/30 mt-1">{statsData?.insights?.bestMonth?.winrate || 0}% de victoires</span>
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-[3px] bg-purple-500 opacity-80"></div>
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Meilleur Mois</span>
+                    <span className="text-lg font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
+                    <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.bestMonth?.winrate || 0}% de victoires</span>
                 </div>
 
-                <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-emerald-400/80 font-bold mb-2">Forme Actuelle</span>
-                    <span className={`text-xl sm:text-2xl font-black group-hover:scale-110 transition-transform duration-300 ${(statsData?.insights?.currentForm || 0) >= 60 ? "text-emerald-400" :
-                        (statsData?.insights?.currentForm || 0) >= 40 ? "text-blue-400" : "text-red-400"
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-[3px] bg-emerald-500 opacity-80"></div>
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Forme (5 derniers)</span>
+                    <span className={`text-2xl font-black group-hover:scale-110 transition-transform duration-300 ${(statsData?.insights?.currentForm || 0) >= 60 ? "text-emerald-500" :
+                        (statsData?.insights?.currentForm || 0) >= 40 ? "text-blue-500" : "text-amber-500"
                         }`}>
                         {statsData?.insights?.currentForm || 0}%
                     </span>
-                    <span className="text-[10px] text-white/30 mt-1">sur 5 matchs</span>
+                    <span className="text-[10px] text-slate-500 mt-1">de victoires</span>
                 </div>
             </div>
 
             {/* Lists */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {renderList("Mes Victimes", <Trophy className="w-4 h-4" />, statsData?.topVictims || [], "text-yellow-400")}
-                {renderList("Mes Némésis", <Skull className="w-4 h-4" />, statsData?.topNemesis || [], "text-red-400")}
-                {renderList("Partenaires Favoris", <Heart className="w-4 h-4" />, statsData?.topPartners || [], "text-pink-400")}
+                {renderList("Mes Victimes", <Trophy className="w-4 h-4" />, statsData?.topVictims || [], "text-yellow-500", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
+                {renderList("Mes Bourreaux", <Skull className="w-4 h-4" />, statsData?.topNemesis || [], "text-red-500", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
+                {renderList("Partenaires Favoris", <Heart className="w-4 h-4" />, statsData?.topPartners || [], "text-pink-500", "Jouez des matchs pour voir vos partenaires.")}
             </div>
         </div>
     );

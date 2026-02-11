@@ -105,13 +105,22 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
     }
   }, [supabase]);
 
-  const fetchSuggestions = useCallback(async () => {
+  const [departmentFilter, setDepartmentFilter] = useState("");
+
+  const fetchSuggestions = useCallback(async (dept: string = "") => {
+
+
     try {
       setError(null);
       setLoading(true);
 
+      const url = new URL("/api/partners/suggestions", window.location.origin);
+      if (dept) {
+        url.searchParams.set("department", dept);
+      }
+
       // Utiliser stale-while-revalidate pour un chargement instantané
-      const response = await fetch(`/api/partners/suggestions`, {
+      const response = await fetch(url.toString(), {
         method: "GET",
         credentials: "include",
         // Cache avec stale-while-revalidate pour un chargement quasi-instantané
@@ -424,9 +433,35 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
     <>
       <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
         <div className="mb-4">
-          <h3 className="text-base md:text-lg font-bold text-white">
-            Partenaires suggérés
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <h3 className="text-base md:text-lg font-bold text-white">
+              Partenaires suggérés
+            </h3>
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-48">
+                <input
+                  type="text"
+                  placeholder="Dpt (ex: 80)"
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      fetchSuggestions(departmentFilter);
+                    }
+                  }}
+                  className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
+                  maxLength={3}
+                />
+              </div>
+              <button
+                onClick={() => fetchSuggestions(departmentFilter)}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-blue-400/20"
+              >
+                Filtrer
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3">

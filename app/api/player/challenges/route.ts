@@ -102,30 +102,76 @@ async function resolveClubId(userId: string) {
   return null;
 }
 
-async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
+const CHALLENGES_BUCKET_NAME = "challenges";
+const GLOBAL_CHALLENGES_KEY = "__global__/challenges.json";
+
+interface GlobalChallenge {
+  id: string;
+  title: string;
+  start_date: string;
+  end_date: string;
+  objective: string;
+  reward_type: "points" | "badge";
+  reward_label: string;
+  created_at: string;
+  is_global: true;
+}
+
+// Ensure loadChallenges handles the club bucket correctly
+async function loadClubChallenges(clubId: string): Promise<ChallengeRecord[]> {
   if (!supabaseAdmin) return [];
   const { data, error } = await supabaseAdmin.storage.from(BUCKET_NAME).download(`${clubId}.json`);
   if (error || !data) {
     if (error && !error.message?.toLowerCase().includes("not found")) {
-      logger.warn({ clubId: clubId.substring(0, 8) + "…", error }, "[api/player/challenges] load error");
+      logger.warn({ clubId: clubId.substring(0, 8) + "…", error }, "[api/player/challenges] Club load error");
     }
     return [];
   }
   try {
     const text = await data.text();
-    if (!text || text.trim().length === 0) {
-      logger.warn({ clubId: clubId.substring(0, 8) + "…" }, "[api/player/challenges] Empty JSON for club, returning []");
-      return [];
-    }
+    if (!text || text.trim().length === 0) return [];
     const parsed = JSON.parse(text);
     if (Array.isArray(parsed)) {
-      return parsed as ChallengeRecord[];
+      return parsed.map((record: any) => ({ ...record, scope: 'club' }));
     }
   } catch (err) {
-    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: err }, "[api/player/challenges] invalid JSON");
+    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: err }, "[api/player/challenges] invalid Club JSON");
   }
   return [];
 }
+
+async function loadGlobalChallenges(): Promise<ChallengeRecord[]> {
+  if (!supabaseAdmin) return [];
+  const { data, error } = await supabaseAdmin.storage.from(CHALLENGES_BUCKET_NAME).download(GLOBAL_CHALLENGES_KEY);
+
+  if (error || !data) {
+    // Silent fail for global if not found
+    return [];
+  }
+
+  try {
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      return parsed.map((record: any) => ({
+        id: record.id,
+        club_id: "global", // Dummy value
+        title: record.title || record.name, // Handle legacy
+        start_date: record.start_date,
+        end_date: record.end_date,
+        objective: record.objective,
+        reward_type: record.reward_type || (record.reward ? "points" : "points"),
+        reward_label: record.reward_label || record.reward || "",
+        created_at: record.created_at,
+        scope: 'global'
+      }));
+    }
+  } catch (e) {
+    logger.error("[api/player/challenges] Error parsing global challenges", e);
+  }
+  return [];
+}
+
 
 function extractTarget(objective: string): number {
   const match = objective.match(/(\d+)/);
@@ -478,21 +524,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ challenges: [] });
   }
 
-  const records = await loadChallenges(clubId);
-  logger.info({ userId: userIdPreview, clubId: clubId.substring(0, 8) + "…", challengesCount: records.length }, "[api/player/challenges] Loaded challenges for club");
-  if (records.length > 0) {
-    logger.info({
-      userId: userIdPreview, challenges: records.map(r => ({
-        id: r.id.substring(0, 8) + "…",
-        title: r.title,
-        start_date: r.start_date,
-        end_date: r.end_date,
-        objective: r.objective
-      }))
-    }, "[Player] Challenges");
-  }
+  // Load both Club and Global challenges
+  const [clubRecords, globalRecords] = await Promise.all([
+    clubId ? loadClubChallenges(clubId) : Promise.resolve([]),
+    loadGlobalChallenges()
+  ]);
 
-  if (records.length === 0) {
+  logger.info({
+    userId: userIdPreview,
+    clubId: clubId ? clubId.substring(0, 8) + "…" : null,
+    clubChallenges: clubRecords.length,
+    globalChallenges: globalRecords.length
+  }, "[api/player/challenges] Loaded challenges");
+
+  const allRecords = [...clubRecords, ...globalRecords];
+
+  if (allRecords.length === 0) {
     return NextResponse.json({ challenges: [] });
   }
 
@@ -521,7 +568,7 @@ export async function GET(request: Request) {
       .eq("user_id", user.id);
 
     if (rewardsError) {
-      logger.warn({ userId: userIdPreview, error: rewardsError.message }, "[api/player/challenges] ⚠️ Could not fetch rewards (table may not exist yet)");
+      logger.warn({ userId: userIdPreview, error: rewardsError.message }, "[api/player/challenges] ⚠️ Could not fetch rewards");
     } else {
       claimedSet = new Set(claimedRewards?.map(r => r.challenge_id) || []);
     }
@@ -532,14 +579,13 @@ export async function GET(request: Request) {
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 1 jour = 24h
 
-  const challenges: ChallengeResponse[] = records
+  const challenges: ChallengeResponse[] = allRecords
     .filter((record) => {
       // Filtrer les challenges expirés depuis plus d'1 jour
       const endDate = new Date(record.end_date);
       const isExpiredMoreThanOneDay = endDate < oneDayAgo;
 
       if (isExpiredMoreThanOneDay) {
-        logger.info({ challengeId: record.id.substring(0, 8) + "…", endDate: record.end_date }, "[Challenge] Filtered out - expired more than 1 day ago");
         return false;
       }
       return true;
@@ -559,6 +605,7 @@ export async function GET(request: Request) {
         status: computeStatus(record),
         progress,
         rewardClaimed: claimedSet.has(record.id),
+        scope: (record as any).scope || 'club'
       };
     });
 

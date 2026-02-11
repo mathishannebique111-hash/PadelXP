@@ -232,6 +232,34 @@ export async function getPremiumStatsData() {
             }
         });
 
+        // Lucky Day Calculation (Day with best winrate)
+        const dayStats = new Map<number, { wins: number, total: number }>();
+        matchesSorted.forEach(match => {
+            const date = new Date(match.played_at || match.created_at);
+            const day = date.getDay(); // 0-6
+            const stats = dayStats.get(day) || { wins: 0, total: 0 };
+
+            const myPart = allMatchParticipants.find(p => p.match_id === match.id && p.user_id === user.id);
+            if (myPart) {
+                stats.total++;
+                const isWin = (match.winner_team_id === match.team1_id ? 1 : 2) === myPart.team;
+                if (isWin) stats.wins++;
+                dayStats.set(day, stats);
+            }
+        });
+
+        let luckyDay = { name: "-", winrate: 0 };
+        const days = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+
+        dayStats.forEach((stats, dayIndex) => {
+            if (stats.total >= 2) {
+                const wr = (stats.wins / stats.total) * 100;
+                if (wr >= luckyDay.winrate) {
+                    luckyDay = { name: days[dayIndex], winrate: Math.round(wr) };
+                }
+            }
+        });
+
         // Current Form (Last 5)
         const last5 = matchesSorted.slice(-5);
         let recentWins = 0;
@@ -249,7 +277,7 @@ export async function getPremiumStatsData() {
             topNemesis,
             topPartners,
             insights: {
-                maxStreak,
+                luckyDay,
                 bestMonth,
                 currentForm
             }
