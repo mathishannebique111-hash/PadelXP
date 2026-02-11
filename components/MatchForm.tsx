@@ -1701,7 +1701,7 @@ export default function MatchForm({
           </div>
         </div>
 
-        {/* Option boost - caché temporairement */}
+        {/* Option boost - caché temporairement
         {!loadingBoostStats && boostStats && (
           <div className="mb-6 rounded-lg border border-padel-green/50 bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 p-4 shadow-xl relative overflow-hidden">
             <div className="flex items-start gap-3 relative z-10">
