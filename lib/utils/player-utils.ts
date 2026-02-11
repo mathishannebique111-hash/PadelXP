@@ -45,10 +45,10 @@ export interface PlayerSearchResult {
   id: string;
   first_name: string;
   last_name: string;
+  avatar_url?: string | null;
   type: PlayerType;
   display_name: string;
   club_name?: string | null;
   is_external?: boolean;
   email?: string | null;
 }
-

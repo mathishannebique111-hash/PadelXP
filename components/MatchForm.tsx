@@ -1505,22 +1505,26 @@ export default function MatchForm({
           <div className="flex flex-col gap-2 max-w-sm mx-auto">
             <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
               {/* Team 1 */}
-              <div className="flex-1 grid grid-cols-2 gap-2">
-                <PlayerSlotSquare
-                  label="Vous"
-                  player={selfProfile}
-                  isFixed
-                />
-                <PlayerSlotSquare
-                  label="P"
-                  player={selectedPlayers.partner}
-                  onClick={() => {
-                    setActiveSlot('partner');
-                    setIsSearchModalOpen(true);
-                  }}
-                  isWinner={winner === "1"}
-                  className="w-full"
-                />
+              <div className="flex-1 flex flex-col items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  <PlayerSlotSquare
+                    label=""
+                    player={selfProfile}
+                    isFixed
+                    className="aspect-square"
+                  />
+                  <PlayerSlotSquare
+                    label=""
+                    player={selectedPlayers.partner}
+                    onClick={() => {
+                      setActiveSlot('partner');
+                      setIsSearchModalOpen(true);
+                    }}
+                    isWinner={winner === "1"}
+                    className="w-full aspect-square"
+                  />
+                </div>
+                <span className="text-[10px] font-black uppercase text-white/50 tracking-widest leading-none">Équipe 1</span>
               </div>
 
               {/* VS Badge Centered */}
@@ -1531,25 +1535,28 @@ export default function MatchForm({
               </div>
 
               {/* Team 2 */}
-              <div className="flex-1 grid grid-cols-2 gap-2">
-                <PlayerSlotSquare
-                  label="A1"
-                  player={selectedPlayers.opp1}
-                  onClick={() => {
-                    setActiveSlot('opp1');
-                    setIsSearchModalOpen(true);
-                  }}
-                  isWinner={winner === "2"}
-                />
-                <PlayerSlotSquare
-                  label="A2"
-                  player={selectedPlayers.opp2}
-                  onClick={() => {
-                    setActiveSlot('opp2');
-                    setIsSearchModalOpen(true);
-                  }}
-                  isWinner={winner === "2"}
-                />
+              <div className="flex-1 flex flex-col items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  <PlayerSlotSquare
+                    label=""
+                    player={selectedPlayers.opp1}
+                    onClick={() => {
+                      setActiveSlot('opp1');
+                      setIsSearchModalOpen(true);
+                    }}
+                    isWinner={winner === "2"}
+                  />
+                  <PlayerSlotSquare
+                    label=""
+                    player={selectedPlayers.opp2}
+                    onClick={() => {
+                      setActiveSlot('opp2');
+                      setIsSearchModalOpen(true);
+                    }}
+                    isWinner={winner === "2"}
+                  />
+                </div>
+                <span className="text-[10px] font-black uppercase text-white/50 tracking-widest leading-none">Équipe 2</span>
               </div>
             </div>
           </div>
@@ -1596,33 +1603,31 @@ export default function MatchForm({
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
           <div className="flex flex-col gap-2 items-center">
             {sets.map((set, index) => (
-              <div key={set.setNumber} className="flex items-center justify-center gap-2">
-                <span className="text-[8px] font-black text-white/30 uppercase w-8 text-left">Set {set.setNumber}</span>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={1}
-                    className="w-8 h-8 rounded-lg border border-white/10 bg-white/5 text-sm text-white text-center font-bold focus:border-padel-green focus:outline-none"
-                    value={set.team1Score}
-                    onChange={(e) => updateSet(index, "team1Score", e.target.value)}
-                    placeholder="0"
-                    ref={(el) => { setTeam1Refs.current[index] = el; }}
-                  />
-                  <span className="text-white/20 font-bold">-</span>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={1}
-                    className="w-8 h-8 rounded-lg border border-white/10 bg-white/5 text-sm text-white text-center font-bold focus:border-padel-green focus:outline-none"
-                    value={set.team2Score}
-                    onChange={(e) => updateSet(index, "team2Score", e.target.value)}
-                    placeholder="0"
-                    ref={(el) => { setTeam2Refs.current[index] = el; }}
-                  />
-                </div>
+              <div key={set.setNumber} className="flex items-center justify-center gap-3">
+                <span className="text-[10px] font-black text-white/30 uppercase w-10 text-left">Set {set.setNumber}</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={1}
+                  className="w-10 h-10 rounded-lg border-2 border-transparent bg-white/10 text-lg text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                  value={set.team1Score}
+                  onChange={(e) => updateSet(index, "team1Score", e.target.value)}
+                  placeholder="-"
+                  ref={(el) => { setTeam1Refs.current[index] = el; }}
+                />
+                <span className="text-white/20 font-light text-xl">:</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={1}
+                  className="w-10 h-10 rounded-lg border-2 border-transparent bg-white/10 text-lg text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                  value={set.team2Score}
+                  onChange={(e) => updateSet(index, "team2Score", e.target.value)}
+                  placeholder="-"
+                  ref={(el) => { setTeam2Refs.current[index] = el; }}
+                />
                 {index >= 2 && (
                   <button
                     type="button"

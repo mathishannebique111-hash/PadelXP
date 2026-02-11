@@ -38,7 +38,7 @@ export default function PlayerSlotSquare({
                             ? "bg-white border-white shadow-lg shadow-white/10"
                             : "bg-white/5 border-dashed border-white/30 hover:border-padel-green hover:bg-white/10"
                     }
-          ${isWinner ? "ring-4 ring-padel-green ring-offset-2 ring-offset-[#071554]" : ""}
+          ${isWinner ? "ring-2 ring-padel-green ring-offset-2 ring-offset-[#071554]" : ""}
         `}
             >
                 {player ? (
@@ -53,16 +53,16 @@ export default function PlayerSlotSquare({
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                <div className="text-[#071554] text-base sm:text-xl font-black">
+                                <div className={`text-base sm:text-xl font-black ${isFixed ? 'text-white' : 'text-[#071554]'}`}>
                                     {initials || <UserPlus size={18} />}
                                 </div>
                             )}
                         </div>
                         <div className="px-1 text-center w-full">
-                            <p className="text-[#071554] text-[8px] sm:text-[10px] font-bold truncate leading-none">
+                            <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-bold truncate leading-none`}>
                                 {player.first_name}
                             </p>
-                            <p className="text-[#071554] text-[8px] sm:text-[10px] font-black truncate uppercase leading-none">
+                            <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-black truncate uppercase leading-none`}>
                                 {player.last_name}
                             </p>
                         </div>
