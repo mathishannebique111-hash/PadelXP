@@ -131,25 +131,7 @@ export default async function BadgesPage() {
     }
   }
 
-  if (!userClubId) {
-    return (
-      <div className="relative min-h-screen">
-        {/* Background avec overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
-
-
-        <div className="relative z-10 mx-auto w-full max-w-3xl px-4 pt-20 md:pt-8 pb-8 text-white">
-          <div className="mb-6">
-            <PageTitle title="Badges & récompenses" />
-          </div>
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-white/70 font-normal">
-            <p>Vous devez être rattaché à un club pour accéder à vos badges. Utilisez le code d'invitation communiqué par votre club.</p>
-          </div>
-        </div>
-      </div >
-    );
-  }
+  // if (!userClubId) check removed to allow club-less access
 
   // Calculer les stats du joueur
   const { data: mp } = await supabase

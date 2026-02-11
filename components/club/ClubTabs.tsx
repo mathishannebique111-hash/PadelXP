@@ -13,6 +13,7 @@ interface ClubTabsProps {
     leaderboardContent: React.ReactNode;
     challengesContent?: React.ReactNode;
     tournamentsContent?: React.ReactNode;
+    showClubTab?: boolean;
 }
 
 function ClubTabsContent({
@@ -20,30 +21,41 @@ function ClubTabsContent({
     clubContent,
     leaderboardContent,
     challengesContent,
-    tournamentsContent
+    tournamentsContent,
+    showClubTab = true
 }: ClubTabsProps) {
     const searchParams = useSearchParams();
     const tabFromUrl = searchParams?.get('tab') as TabType | null;
-    const initialTab = tabFromUrl && ['club', 'classement', 'challenges', 'tournaments'].includes(tabFromUrl) ? tabFromUrl : activeTab;
+
+    // Determine the effective initial tab
+    // If club tab is hidden and activeTab was 'club', fallback to 'classement'
+    const effActiveTab = (!showClubTab && activeTab === 'club') ? 'classement' : activeTab;
+
+    const initialTab = tabFromUrl && ['club', 'classement', 'challenges', 'tournaments'].includes(tabFromUrl)
+        ? tabFromUrl
+        : effActiveTab;
+
     const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
 
     useEffect(() => {
         if (tabFromUrl && ['club', 'classement', 'challenges', 'tournaments'].includes(tabFromUrl)) {
             setCurrentTab(tabFromUrl);
+        } else if (!showClubTab && currentTab === 'club') {
+            setCurrentTab('classement');
         }
-    }, [tabFromUrl]);
+    }, [tabFromUrl, showClubTab]);
 
     const tabs = [
         { id: 'club' as TabType, label: 'Mon club' },
         { id: 'classement' as TabType, label: 'Classement global' },
         { id: 'challenges' as TabType, label: 'Challenges' },
         { id: 'tournaments' as TabType, label: 'Tournois' },
-    ];
+    ].filter(tab => showClubTab || tab.id !== 'club');
 
     return (
         <div className="w-full">
             {/* Onglets */}
-            <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
+            <div className={`grid ${showClubTab ? 'grid-cols-4' : 'grid-cols-3'} w-full mb-4 sm:mb-6 border-b border-white/10`}>
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}

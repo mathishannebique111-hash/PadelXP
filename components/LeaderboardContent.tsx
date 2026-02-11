@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, User } from 'lucide-react';
+import { Eye } from 'lucide-react';
+import { User } from 'lucide-react';
+import { MapPin } from 'lucide-react';
+import { Globe } from 'lucide-react';
+import { Map as MapIcon } from 'lucide-react';
 import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
@@ -21,8 +25,8 @@ interface LeaderboardEntry {
 
 interface LeaderboardContentProps {
   initialLeaderboard: LeaderboardEntry[];
-  initialProfilesFirstNameMap: Map<string, string>;
-  initialProfilesLastNameMap: Map<string, string>;
+  initialProfilesFirstNameMap: Record<string, string>;
+  initialProfilesLastNameMap: Record<string, string>;
   currentUserId?: string;
 }
 
@@ -38,8 +42,9 @@ export default function LeaderboardContent({
 }: LeaderboardContentProps) {
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(initialLeaderboard);
-  const [profilesFirstNameMap, setProfilesFirstNameMap] = useState<Map<string, string>>(initialFirstNameMap);
-  const [profilesLastNameMap, setProfilesLastNameMap] = useState<Map<string, string>>(initialLastNameMap);
+  const [profilesFirstNameMap, setProfilesFirstNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialFirstNameMap)));
+  const [profilesLastNameMap, setProfilesLastNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialLastNameMap)));
+  const [scope, setScope] = useState<'department' | 'region' | 'national'>('department');
 
   // Fonction pour recharger le classement depuis l'API
   const reloadLeaderboard = useCallback(async () => {
@@ -48,7 +53,7 @@ export default function LeaderboardContent({
 
       // Utiliser un timestamp unique pour éviter tout cache
       const timestamp = Date.now();
-      const response = await fetch(`/api/leaderboard?t=${timestamp}&_=${Math.random()}`, {
+      const response = await fetch(`/api/leaderboard?scope=${scope}&t=${timestamp}&_=${Math.random()}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -114,7 +119,12 @@ export default function LeaderboardContent({
     } catch (error) {
       console.error('[LeaderboardContent] ❌ Erreur:', error);
     }
-  }, []);
+  }, [scope]);
+
+  // Reload when scope changes
+  useEffect(() => {
+    reloadLeaderboard();
+  }, [scope, reloadLeaderboard]);
 
   // Écouter l'événement de match enregistré + polling + storage events
   useEffect(() => {
@@ -214,6 +224,27 @@ export default function LeaderboardContent({
 
   return (
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
+      {/* Scope filter tabs */}
+      <div className="flex items-center justify-center gap-2 px-2">
+        {[
+          { key: 'department' as const, label: 'Département', icon: MapPin },
+          { key: 'region' as const, label: 'Région', icon: MapIcon },
+          { key: 'national' as const, label: 'France', icon: Globe },
+        ].map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => { setScope(key); }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${scope === key
+              ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
+              : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+              }`}
+          >
+            <Icon size={14} />
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden">{label.slice(0, 4)}.</span>
+          </button>
+        ))}
+      </div>
       {leaderboard.length >= 3 && (
         <div className="mb-6 sm:mb-8">
           <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">

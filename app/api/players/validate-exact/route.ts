@@ -88,18 +88,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!clubId) {
-      logger.error('[validate-exact] No club_id found for user', { userId: shortUserId });
-      return NextResponse.json(
-        {
-          valid: false,
-          error: 'Vous devez être rattaché à un club pour enregistrer un match.',
-        },
-        { status: 403 }
-      );
-    }
-
-    logger.info('[validate-exact] Validating player name globally', { userId: shortUserId, clubId: clubId.substring(0, 8) + "…" });
+    // Club is no longer required for validation (Freelance players)
+    logger.info('[validate-exact] Validating player name globally', { userId: shortUserId, clubId: clubId ? clubId.substring(0, 8) + "…" : 'none' });
 
     const normalizedInput = normalizeForComparison(playerName);
 

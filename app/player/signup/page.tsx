@@ -14,15 +14,13 @@ export default async function PlayerSignupPage() {
       .eq("id", user.id)
       .maybeSingle();
 
-    // Si l'utilisateur a un club et un prénom, rediriger vers /home
-    if (profile?.club_slug && profile?.first_name) {
+    // Si l'utilisateur a un prénom (inscription complète), rediriger vers /home
+    if (profile?.first_name) {
       redirect("/home");
     }
 
-    // Si l'utilisateur a un club mais pas de prénom, rediriger vers l'onboarding
-    if (profile?.club_slug && !profile?.first_name) {
-      redirect("/player/onboarding");
-    }
+    // Sinon, l'inscription est incomplète - rediriger vers l'onboarding
+    redirect("/player/onboarding");
 
     // Sinon, l'inscription est incomplète - laisser continuer
   }

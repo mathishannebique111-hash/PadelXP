@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Building2, MessageSquare, Settings, Search, Bell, Users } from 'lucide-react';
+import { Home, Building2, MessageSquare, Settings, Search, Bell, Users, Trophy } from 'lucide-react';
 import { isAdmin } from '@/lib/admin-auth';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -136,6 +136,7 @@ export default function AdminLayout({
     { href: '/admin/dashboard', icon: Home, label: 'Tableau de bord' },
     { href: '/admin/clubs', icon: Building2, label: 'Clubs & Complexes' },
     { href: '/admin/players', icon: Users, label: 'Joueurs' },
+    { href: '/admin/challenges', icon: Trophy, label: 'Challenges' },
     { href: '/admin/messages', icon: MessageSquare, label: 'Messagerie' },
     { href: '/admin/settings', icon: Settings, label: 'Paramètres' },
   ];
@@ -230,7 +231,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main content */}
-      <div className={`flex-1 ${sidebarOpen ? 'ml-72' : 'ml-20'} transition-all duration-300 flex flex-col min-h-screen relative z-10`}>
+      <div className={`flex-1 ${sidebarOpen ? 'ml-72' : 'ml-20'} transition-all duration-300 flex flex-col h-screen overflow-y-auto relative z-10 custom-scrollbar`}>
         {/* Header */}
         <header className="h-20 flex items-center justify-between px-8 sticky top-0 z-30 backdrop-blur-md bg-slate-950/70 border-b border-white/5">
           <div className="flex items-center gap-6 flex-1">

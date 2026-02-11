@@ -64,7 +64,7 @@ export default function ClubSelector({ onSelect, selectedClub, className = "" }:
     return (
         <div className={`relative ${className}`} ref={dropdownRef}>
             <label className="block text-[10px] text-white/70 mb-1.5 font-medium ml-1">
-                Votre club <span className="text-red-400">*</span>
+                Votre club (optionnel)
             </label>
 
             {/* Bouton qui ouvre le dropdown */}

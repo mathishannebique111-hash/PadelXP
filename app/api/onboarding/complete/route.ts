@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
+import { getDepartmentFromPostalCode, getRegionFromDepartment } from "@/lib/utils/geo-leaderboard-utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { answers, skip } = body;
+    const { answers, skip, postal_code, city } = body;
 
     const serviceClient = createServiceClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -38,6 +39,43 @@ export async function POST(req: Request) {
       if (answers.hand) updateData.hand = answers.hand;
       if (answers.frequency) updateData.frequency = answers.frequency;
       if (answers.best_shot) updateData.best_shot = answers.best_shot;
+    }
+
+    // Gestion des noms (si fournis lors de l'onboarding)
+    if (body.first_name) updateData.first_name = body.first_name;
+    if (body.last_name) updateData.last_name = body.last_name;
+    if (body.first_name || body.last_name) {
+      // Si on met à jour l'un des deux, on recalcule le full_name
+      // On récupère d'abord les valeurs actuelles si l'une manque
+      let firstName = body.first_name;
+      let lastName = body.last_name;
+
+      if (!firstName || !lastName) {
+        const { data: currentProfile } = await serviceClient
+          .from("profiles")
+          .select("first_name, last_name")
+          .eq("id", user.id)
+          .single();
+
+        if (currentProfile) {
+          firstName = firstName || currentProfile.first_name || "";
+          lastName = lastName || currentProfile.last_name || "";
+        }
+      }
+
+      updateData.full_name = `${firstName} ${lastName}`.trim();
+    }
+
+    // Geo fields from postal code
+    if (postal_code) {
+      updateData.postal_code = postal_code;
+      if (city) updateData.city = city;
+      const dept = getDepartmentFromPostalCode(postal_code);
+      if (dept) {
+        updateData.department_code = dept;
+        const region = getRegionFromDepartment(dept);
+        if (region) updateData.region_code = region;
+      }
     }
 
     // Mettre à jour le profil

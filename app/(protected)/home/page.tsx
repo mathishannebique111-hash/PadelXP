@@ -219,12 +219,7 @@ export default async function HomePage({
       <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
 
         {/* Alerts Block */}
-        {hasNoClub && (
-          <div className="mb-4 sm:mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 p-4 text-sm text-yellow-200">
-            <p className="font-semibold mb-1">⚠️ Club non défini</p>
-            <p>Vous devez être rattaché à un club pour accéder au classement. Contactez votre club pour obtenir un code d'invitation.</p>
-          </div>
-        )}
+        {/* hasNoClub warning removed */}
         {hasNoAuth && (
           <div className="mb-4 sm:mb-6 rounded-2xl bg-red-500/10 border border-red-500/30 p-4 text-sm text-red-200">
             <p className="font-semibold mb-1">⚠️ Session requise</p>

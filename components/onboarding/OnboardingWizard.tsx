@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -22,9 +22,10 @@ import {
   Shield,
   ChevronLeft,
   Bell,
+  MapPin,
 } from "lucide-react";
 
-import { PushNotificationsService } from "@/lib/notifications/push-notifications"; // Import du service
+import { PushNotificationsService } from "@/lib/notifications/push-notifications";
 import { createClient } from "@/lib/supabase/client";
 
 type OnboardingAnswers = {
@@ -191,17 +192,82 @@ export default function OnboardingWizard() {
     best_shot: null,
   });
 
-  // Nouvel état pour gérer l'affichage de la page de notifications
+  // Nouvel état pour gérer l'affichage des étapes spéciales
+  const [showIdentityStep, setShowIdentityStep] = useState(false);
+  const [showPostalCodeStep, setShowPostalCodeStep] = useState(false);
   const [showNotificationsStep, setShowNotificationsStep] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skipPostalStep, setSkipPostalStep] = useState(false);
+
+  // Identity state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+
+  // Postal code state
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [cityLoading, setCityLoading] = useState(false);
 
   const question = questions[currentQuestion];
-  // Si on est à l'étape notif, la barre est pleine (100%), sinon on calcule
+  // Progress: questions → identity → postal code → notifications
+  const totalSteps = questions.length + 3; // +1 identity, +1 postal code, +1 notifications
   const progress = showNotificationsStep
     ? 100
-    : ((currentQuestion + 1) / questions.length) * 100;
+    : showPostalCodeStep
+      ? ((questions.length + 2) / totalSteps) * 100
+      : showIdentityStep
+        ? ((questions.length + 1) / totalSteps) * 100
+        : ((currentQuestion + 1) / totalSteps) * 100;
 
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Check for existing profile status and postal code
+  useState(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // Check profile status to prevent looping
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("has_completed_onboarding")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profile?.has_completed_onboarding) {
+          router.replace("/home");
+          return;
+        }
+
+        // Prefill data
+        if (user.user_metadata?.first_name) setFirstName(user.user_metadata.first_name);
+        if (user.user_metadata?.last_name) setLastName(user.user_metadata.last_name);
+
+        if (user.user_metadata?.postal_code) {
+          setPostalCode(user.user_metadata.postal_code);
+          if (user.user_metadata.city) setCity(user.user_metadata.city);
+          setSkipPostalStep(true);
+        }
+      }
+    };
+    checkUser();
+  });
+
+  // Auto-fetch city from postal code via French API
+  const fetchCityFromPostalCode = useCallback(async (code: string) => {
+    if (code.length !== 5) { setCity(""); return; }
+    setCityLoading(true);
+    try {
+      const res = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${code}&fields=nom&limit=1`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.length > 0) setCity(data[0].nom);
+        else setCity("");
+      }
+    } catch { setCity(""); }
+    finally { setCityLoading(false); }
+  }, []);
 
   const getQuestionKey = (id: QuestionId): keyof OnboardingAnswers => {
     const keys: Record<QuestionId, keyof OnboardingAnswers> = {
@@ -242,20 +308,51 @@ export default function OnboardingWizard() {
         setCurrentQuestion((prev) => (prev + 1) as QuestionId);
         setIsTransitioning(false);
       } else {
-        // Fin des questions -> Afficher la page Notifications
-        setShowNotificationsStep(true);
+        // Fin des questions -> Etape Identité
+        setShowIdentityStep(true);
         setIsTransitioning(false);
       }
     }, 400);
   };
 
+  const handleIdentityContinue = () => {
+    setShowIdentityStep(false);
+    // Après identité -> Code postal (sauf si skip)
+    if (skipPostalStep) {
+      setShowPostalCodeStep(false);
+      setShowNotificationsStep(true);
+    } else {
+      setShowPostalCodeStep(true);
+    }
+  };
+
+  const handlePostalCodeContinue = () => {
+    setShowPostalCodeStep(false);
+    setShowNotificationsStep(true);
+  };
+
   const handlePrevious = () => {
     if (showNotificationsStep) {
       setShowNotificationsStep(false);
-      // On reste sur la dernière question, pas besoin de changer l'index
+      // Retourne au code postal seulement si on ne l'a pas sauté
+      if (!skipPostalStep) {
+        setShowPostalCodeStep(true);
+      } else {
+        setShowIdentityStep(true);
+      }
       return;
     }
-
+    if (showPostalCodeStep) {
+      setShowPostalCodeStep(false);
+      setShowIdentityStep(true);
+      return;
+    }
+    if (showIdentityStep) {
+      setShowIdentityStep(false);
+      // Retour à la dernière question
+      setCurrentQuestion((questions.length - 1) as QuestionId);
+      return;
+    }
     if (currentQuestion > 0) {
       setCurrentQuestion((prev) => (prev - 1) as QuestionId);
     }
@@ -278,11 +375,16 @@ export default function OnboardingWizard() {
         },
         body: JSON.stringify({
           answers,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          postal_code: postalCode.trim() || null,
+          city: city.trim() || null,
           skip: false,
         }),
       });
 
       if (response.ok) {
+        router.refresh();
         router.push("/home");
       } else {
         const data = await response.json();
@@ -313,7 +415,7 @@ export default function OnboardingWizard() {
       </div>
 
       {/* Bouton Précédent (en haut à gauche) */}
-      {(currentQuestion > 0 || showNotificationsStep) && (
+      {(currentQuestion > 0 || showPostalCodeStep || showNotificationsStep) && (
         <button
           onClick={handlePrevious}
           className="absolute top-12 left-4 z-50 p-2 text-white/60 hover:text-white/90 transition-colors flex items-center gap-2"
@@ -327,7 +429,7 @@ export default function OnboardingWizard() {
       {/* Contenu principal */}
       <div className="flex-1 flex items-center justify-center px-4 py-20 relative z-10">
         <AnimatePresence mode="wait">
-          {!showNotificationsStep ? (
+          {!showPostalCodeStep && !showNotificationsStep && !showIdentityStep ? (
             /* ================= MODE QUESTION WIZARD ================= */
             <motion.div
               key={`question-container-${currentQuestion}`}
@@ -422,6 +524,128 @@ export default function OnboardingWizard() {
               {/* Bouton Enregistrer (présent pour certaines étapes si besoin, ici caché car réponse direct au clic) */}
 
             </motion.div>
+          ) : showIdentityStep ? (
+            /* ================= MODE IDENTITE ================= */
+            <motion.div
+              key="identity-step"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-md space-y-8"
+            >
+              <div className="text-center space-y-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  Comment vous appelez-vous ?
+                </h1>
+                <p className="text-sm sm:text-base text-white/70">
+                  Pour que vos partenaires puissent vous reconnaître
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-white/80 ml-1 tracking-wide uppercase">Prénom</label>
+                  <input
+                    type="text"
+                    className="w-full rounded-2xl border-2 border-white/20 bg-white/5 px-5 py-4 text-lg text-white placeholder-white/30 focus:outline-none focus:border-blue-500 focus:bg-blue-500/10 transition-all font-semibold"
+                    placeholder="Thomas"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-white/80 ml-1 tracking-wide uppercase">Nom</label>
+                  <input
+                    type="text"
+                    className="w-full rounded-2xl border-2 border-white/20 bg-white/5 px-5 py-4 text-lg text-white placeholder-white/30 focus:outline-none focus:border-blue-500 focus:bg-blue-500/10 transition-all font-semibold"
+                    placeholder="Dupont"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={handleIdentityContinue}
+                  disabled={!firstName.trim() || !lastName.trim()}
+                  className="w-full py-4 rounded-xl font-bold text-white text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95 hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100"
+                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #0055DD 100%)" }}
+                >
+                  Continuer
+                </button>
+              </div>
+            </motion.div>
+          ) : showPostalCodeStep && !showNotificationsStep ? (
+            /* ================= MODE CODE POSTAL ================= */
+            <motion.div
+              key="postal-code-step"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-md space-y-8"
+            >
+              <div className="text-center space-y-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  Où jouez-vous ?
+                </h1>
+                <p className="text-sm sm:text-base text-white/70">
+                  Pour vous classer parmi les joueurs de votre zone
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={5}
+                    placeholder="Code postal (ex: 75015)"
+                    value={postalCode}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 5);
+                      setPostalCode(v);
+                      fetchCityFromPostalCode(v);
+                    }}
+                    className="w-full rounded-2xl border-2 border-white/20 bg-white/5 pl-12 pr-4 py-4 text-lg text-white placeholder-white/30 focus:outline-none focus:border-blue-500 focus:bg-blue-500/10 transition-all text-center tracking-widest font-semibold"
+                  />
+                </div>
+
+                {cityLoading && (
+                  <p className="text-sm text-white/50 text-center">Recherche...</p>
+                )}
+                {city && !cityLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-center gap-2 text-blue-300"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    <span className="font-semibold">{city}</span>
+                  </motion.div>
+                )}
+              </div>
+
+              <div className="space-y-3 pt-4">
+                <button
+                  onClick={handlePostalCodeContinue}
+                  disabled={postalCode.length !== 5 || !city}
+                  className="w-full py-4 rounded-xl font-bold text-white text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95 hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100"
+                  style={{ background: "linear-gradient(135deg, #0066FF 0%, #0055DD 100%)" }}
+                >
+                  Continuer
+                </button>
+                <button
+                  onClick={handlePostalCodeContinue}
+                  className="w-full text-sm text-white/40 hover:text-white/70 transition-colors py-2"
+                >
+                  Passer cette étape
+                </button>
+              </div>
+            </motion.div>
           ) : (
             /* ================= MODE NOTIFICATIONS PAGE (NEW) ================= */
             <motion.div
@@ -505,7 +729,7 @@ export default function OnboardingWizard() {
       </div>
 
       {/* Indicateur de progression (caché sur la page notif pour plus de propreté) */}
-      {!showNotificationsStep && (
+      {!showNotificationsStep && !showPostalCodeStep && (
         <div className="absolute bottom-12 left-0 right-0 flex justify-center">
           <div className="text-sm text-white/60">
             {currentQuestion + 1} / {questions.length}

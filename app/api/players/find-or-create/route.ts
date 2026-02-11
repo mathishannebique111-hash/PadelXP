@@ -97,11 +97,9 @@ export async function POST(request: NextRequest) {
 
     const clubId = profile?.club_id || null;
     logger.info('[find-or-create] Profile/Club:', { clubId: clubId || 'NONE' });
-    if (!clubId) {
-      return NextResponse.json({ error: 'Club required' }, { status: 403 });
-    }
 
     const normalizedQuery = playerName.trim().toLowerCase();
+
 
     // 1. Si un email est fourni, rechercher globalement d'abord
     if (email && email.trim()) {
@@ -248,25 +246,25 @@ export async function POST(request: NextRequest) {
 
 
     // Auto-extension après création de joueur (invite)
-    try {
-      logger.info('[players/find-or-create] Trial check after player signup', { clubId: clubId.substring(0, 8) + "…" });
-      await updateEngagementMetrics(clubId);
-      const eligibility = await checkAutoExtensionEligibility(clubId);
-      logger.info('[players/find-or-create] Trial eligibility', { clubId: clubId.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason });
-      if (eligibility.eligible && eligibility.reason) {
-        const grantRes = await grantAutoExtension(clubId, eligibility.reason);
-        if (grantRes.success) {
-          logger.info('[players/find-or-create] Auto extension granted after player signup', { clubId: clubId.substring(0, 8) + "…", reason: eligibility.reason });
-          // Note: revalidatePath ne peut pas être appelé ici car c'est une route API, pas un Server Component
-        } else {
-          logger.warn('[players/find-or-create] Auto extension grant failed after player signup', { clubId: clubId.substring(0, 8) + "…", error: grantRes.error });
+    if (clubId) {
+      try {
+        logger.info('[players/find-or-create] Trial check after player signup', { clubId: clubId.substring(0, 8) + "…" });
+        await updateEngagementMetrics(clubId);
+        const eligibility = await checkAutoExtensionEligibility(clubId);
+        logger.info('[players/find-or-create] Trial eligibility', { clubId: clubId.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason });
+        if (eligibility.eligible && eligibility.reason) {
+          const grantRes = await grantAutoExtension(clubId, eligibility.reason);
+          if (grantRes.success) {
+            logger.info('[players/find-or-create] Auto extension granted after player signup', { clubId: clubId.substring(0, 8) + "…", reason: eligibility.reason });
+          } else {
+            logger.warn('[players/find-or-create] Auto extension grant failed after player signup', { clubId: clubId.substring(0, 8) + "…", error: grantRes.error });
+          }
         }
-      } else {
-        logger.info('[players/find-or-create] No auto extension (threshold not met or already unlocked)', { clubId: clubId.substring(0, 8) + "…" });
+      } catch (extErr) {
+        logger.error('[players/find-or-create] Auto extension check error', { clubId: clubId.substring(0, 8) + "…", error: (extErr as Error).message });
       }
-    } catch (extErr) {
-      logger.error('[players/find-or-create] Auto extension check error', { clubId: clubId.substring(0, 8) + "…", error: (extErr as Error).message });
     }
+
 
     return NextResponse.json({
       player: {

@@ -26,6 +26,8 @@ const supabaseAdmin = createAdminClient(
   }
 );
 
+import { calculateGeoLeaderboard } from "@/lib/utils/geo-leaderboard-utils";
+
 export default async function ClubPage({
   searchParams,
 }: {
@@ -34,7 +36,9 @@ export default async function ClubPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = resolvedSearchParams?.tab === 'classement' ? 'classement' : resolvedSearchParams?.tab === 'challenges' ? 'challenges' : resolvedSearchParams?.tab === 'tournaments' ? 'tournaments' : 'club';
+  // Default to 'classement' if no club, otherwise 'club' (unless specified)
+  const defaultTab = 'club';
+  const activeTab = resolvedSearchParams?.tab === 'classement' ? 'classement' : resolvedSearchParams?.tab === 'challenges' ? 'challenges' : resolvedSearchParams?.tab === 'tournaments' ? 'tournaments' : defaultTab;
 
   if (!user) {
     return (
@@ -152,30 +156,34 @@ export default async function ClubPage({
     }
   }
 
-  // Récupérer le leaderboard pour l'onglet classement
-  const leaderboardRaw = clubId ? await calculatePlayerLeaderboard(clubId) : [];
+  // Récupérer le leaderboard approprié (Club ou Département)
+  const leaderboardRaw = clubId
+    ? await calculatePlayerLeaderboard(clubId)
+    : await calculateGeoLeaderboard(user.id, "department");
+
   const leaderboard = leaderboardRaw.map((player, index) => ({
     ...player,
     rank: index + 1,
   }));
 
-  // Récupérer les profils pour les noms
-  const profilesFirstNameMap = new Map<string, string>();
-  const profilesLastNameMap = new Map<string, string>();
+  // Récupérer les profils pour les noms (plain objects instead of Maps for serializability)
+  const profilesFirstNameMap: Record<string, string> = {};
+  const profilesLastNameMap: Record<string, string> = {};
 
-  if (leaderboard.length > 0 && clubId) {
+  // Fetch profiles for leaderboard logic (removed strict club_id check)
+  if (leaderboard.length > 0) {
     const userIds = leaderboard.filter(p => !p.isGuest).map(p => p.user_id);
     if (userIds.length > 0) {
+      // NOTE: Removed .eq("club_id", clubId) to support geo leaderboard with players from various clubs
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
         .select("id, first_name, last_name")
-        .in("id", userIds)
-        .eq("club_id", clubId);
+        .in("id", userIds);
 
       if (profiles) {
         profiles.forEach(p => {
-          if (p.first_name) profilesFirstNameMap.set(p.id, p.first_name);
-          if (p.last_name) profilesLastNameMap.set(p.id, p.last_name);
+          if (p.first_name) profilesFirstNameMap[p.id] = p.first_name;
+          if (p.last_name) profilesLastNameMap[p.id] = p.last_name;
         });
       }
     }
@@ -186,74 +194,61 @@ export default async function ClubPage({
       {/* Background inherited from layout */}
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-4 md:pt-8 pb-4 sm:pb-6 md:pb-8">
-        <PageTitle title="Mon club" subtitle={finalClubName || "Informations sur votre club"} />
+        <PageTitle
+          title={clubId ? "Mon club" : "Espace Compétition"}
+          subtitle={clubId ? (finalClubName || "Informations sur votre club") : "Classements et tournois"}
+        />
 
-        {!clubId && (
-          <div className="mt-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-sm text-yellow-200">
-            <p className="font-semibold mb-1">⚠️ Club non défini</p>
-            <p>Vous devez être rattaché à un club pour accéder à cette page.</p>
-          </div>
-        )}
+        {/* Removed 'Club non défini' blocker */}
 
-        {clubId && (
-          <div className="mt-6">
-            <Suspense fallback={
-              <div className="w-full">
-                <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
-                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-                    <span className="text-center whitespace-normal leading-tight">Mon club</span>
-                  </div>
-                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-                    <span className="text-center whitespace-normal leading-tight">Classement global</span>
-                  </div>
-                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-                    <span className="text-center whitespace-normal leading-tight">Challenges</span>
-                  </div>
-                  <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-                    <span className="text-center whitespace-normal leading-tight">Tournois</span>
-                  </div>
+        <div className="mt-6">
+          <Suspense fallback={
+            <div className="w-full">
+              <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
+                <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                  <span className="text-center whitespace-normal leading-tight">Mon club</span>
                 </div>
-                <div className="mt-8 flex items-center justify-center">
-                  <PadelLoader />
-                </div>
+                {/* ... other tabs ... */}
+                <PadelLoader />
               </div>
-            }>
-              <ClubTabs
-                activeTab={activeTab}
-                clubContent={
-                  clubData ? (
-                    <ClubProfileClient
-                      clubId={clubId}
-                      name={clubData.name}
-                      logoUrl={clubData.logoUrl}
-                      description={clubData.description}
-                      addressLine={clubData.addressLine}
-                      phone={clubData.phone}
-                      website={clubData.website}
-                      numberOfCourts={clubData.numberOfCourts}
-                      courtType={clubData.courtType}
-                      openingHours={clubData.openingHours}
-                    />
-                  ) : (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
-                      <p>Erreur lors du chargement des informations du club.</p>
-                    </div>
-                  )
-                }
-                leaderboardContent={
-                  <LeaderboardContent
-                    initialLeaderboard={leaderboard}
-                    initialProfilesFirstNameMap={profilesFirstNameMap}
-                    initialProfilesLastNameMap={profilesLastNameMap}
-                    currentUserId={user?.id}
+            </div>
+          }>
+            <ClubTabs
+              activeTab={activeTab}
+              showClubTab={!!clubId}
+              clubContent={
+                clubData ? (
+                  <ClubProfileClient
+                    clubId={clubId!}
+                    name={clubData.name}
+                    logoUrl={clubData.logoUrl}
+                    description={clubData.description}
+                    addressLine={clubData.addressLine}
+                    phone={clubData.phone}
+                    website={clubData.website}
+                    numberOfCourts={clubData.numberOfCourts}
+                    courtType={clubData.courtType}
+                    openingHours={clubData.openingHours}
                   />
-                }
-                challengesContent={<ChallengesContent />}
-                tournamentsContent={<TournamentsContent />}
-              />
-            </Suspense>
-          </div>
-        )}
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
+                    <p>Erreur lors du chargement des informations du club.</p>
+                  </div>
+                )
+              }
+              leaderboardContent={
+                <LeaderboardContent
+                  initialLeaderboard={leaderboard}
+                  initialProfilesFirstNameMap={profilesFirstNameMap}
+                  initialProfilesLastNameMap={profilesLastNameMap}
+                  currentUserId={user?.id}
+                />
+              }
+              challengesContent={<ChallengesContent />}
+              tournamentsContent={<TournamentsContent />}
+            />
+          </Suspense>
+        </div>
       </div>
     </div>
   );

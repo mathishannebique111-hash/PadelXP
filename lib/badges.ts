@@ -11,6 +11,7 @@ export type PlayerStats = {
   matches: number;
   points: number;
   streak: number;
+  referralCount?: number;
 };
 
 // Tous les badges disponibles
@@ -32,10 +33,12 @@ export const ALL_BADGES: Badge[] = [
   { icon: "Heart", title: "Amour du padel", description: "Jouez 200 matchs au total" },
   // Badges liés aux avis
   { icon: "MessageSquare", title: "Contributeur", description: "Laissez votre premier avis" },
+  // Badge parrainage
+  { icon: "Users", title: "Ambassadeur", description: "Parrainez 2 joueurs" },
 ];
 
 export function getBadges(stats: PlayerStats): Badge[] {
-  const { wins, losses, matches, points, streak } = stats;
+  const { wins, losses, matches, points, streak, referralCount } = stats;
   const result: Badge[] = [];
 
   // Première victoire
@@ -78,6 +81,9 @@ export function getBadges(stats: PlayerStats): Badge[] {
   // Légende / Amour du padel
   if (wins >= 200) result.push(ALL_BADGES[13]);
   if (matches >= 200) result.push(ALL_BADGES[14]);
+
+  // Ambassadeur (2+ parrainages effectués)
+  if ((referralCount || 0) >= 2) result.push(ALL_BADGES[16]);
 
   return result;
 }

@@ -34,19 +34,12 @@ export default async function ClassementPage() {
 
   const { clubId } = await getUserClubInfo();
 
-  if (!clubId) {
-    return (
-      <div className="space-y-4">
-        <PageTitle title="Classement" />
-        <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
-          Aucun club n'est relié à ce compte. Ajoutez un club pour visualiser votre classement.
-        </div>
-      </div>
-    );
-  }
+  // Si pas de club, on utilise le classement géo par défaut (Département)
+  // Sinon on utilise le classement du club
+  const leaderboardRaw = clubId
+    ? await calculatePlayerLeaderboard(clubId)
+    : await calculateGeoLeaderboard(user.id, "department");
 
-  // Utiliser la même fonction de calcul que la page profil du compte joueur pour obtenir les données identiques
-  const leaderboardRaw = await calculatePlayerLeaderboard(clubId);
   const leaderboard = leaderboardRaw.map((player, index) => ({
     ...player,
     rank: index + 1,
@@ -55,9 +48,9 @@ export default async function ClassementPage() {
   const totalPlayers = leaderboard.length;
   const totalMatches = leaderboard.reduce((sum, p) => sum + p.matches, 0);
 
-  // Récupérer les profils pour l'affichage des noms (première partie en gras)
-  const profilesFirstNameMap = new Map<string, string>();
-  const profilesLastNameMap = new Map<string, string>();
+  // Récupérer les profils pour l'affichage des noms
+  const profilesFirstNameMap: Record<string, string> = {};
+  const profilesLastNameMap: Record<string, string> = {};
 
   if (leaderboard.length > 0) {
     const userIds = leaderboard.filter(p => !p.isGuest).map(p => p.user_id);
@@ -65,13 +58,12 @@ export default async function ClassementPage() {
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
         .select("id, first_name, last_name")
-        .in("id", userIds)
-        .eq("club_id", clubId);
+        .in("id", userIds);
 
       if (profiles) {
         profiles.forEach(p => {
-          if (p.first_name) profilesFirstNameMap.set(p.id, p.first_name);
-          if (p.last_name) profilesLastNameMap.set(p.id, p.last_name);
+          if (p.first_name) profilesFirstNameMap[p.id] = p.first_name;
+          if (p.last_name) profilesLastNameMap[p.id] = p.last_name;
         });
       }
     }
@@ -105,6 +97,7 @@ export default async function ClassementPage() {
         initialLeaderboard={leaderboard}
         initialProfilesFirstNameMap={profilesFirstNameMap}
         initialProfilesLastNameMap={profilesLastNameMap}
+        currentUserId={user.id}
       />
     </div>
   );
