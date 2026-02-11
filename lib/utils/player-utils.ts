@@ -58,21 +58,31 @@ export interface PlayerSearchResult {
  * Retourne le joueur s'il existe, ou une erreur sinon
  */
 export async function validateExactPlayer(fullName: string): Promise<{ valid: boolean; player?: PlayerSearchResult; error?: string }> {
+  console.log("🔍 [validateExactPlayer] Starting validation for:", fullName);
   if (!fullName || !fullName.trim()) {
+    console.log("❌ [validateExactPlayer] Name is empty");
     return { valid: false, error: "Nom du joueur requis" };
   }
 
   try {
-    const response = await fetch(`/api/player/search?query=${encodeURIComponent(fullName)}&exact=true`, {
+    const url = `/api/player/search?query=${encodeURIComponent(fullName)}&exact=true`;
+    console.log("🔍 [validateExactPlayer] Fetching:", url);
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
 
+    console.log("🔍 [validateExactPlayer] Response status:", response.status);
+
     if (!response.ok) {
+      console.error("❌ [validateExactPlayer] API error:", response.statusText);
       return { valid: false, error: "Erreur lors de la recherche du joueur" };
     }
 
     const data = await response.json();
+    console.log("🔍 [validateExactPlayer] Data received:", data);
+
     if (data.players && data.players.length > 0) {
       // Filtrer pour trouver une correspondance exacte (insensible à la casse/accents)
       const normalize = (str: string) => str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -80,17 +90,24 @@ export async function validateExactPlayer(fullName: string): Promise<{ valid: bo
 
       const exactMatch = data.players.find((p: PlayerSearchResult) => {
         const full = normalize(`${p.first_name} ${p.last_name}`);
-        return full === normalizedQuery;
+        const isMatch = full === normalizedQuery;
+        console.log(`🔍 [validateExactPlayer] Comparing "${full}" with "${normalizedQuery}" -> ${isMatch}`);
+        return isMatch;
       });
 
       if (exactMatch) {
+        console.log("✅ [validateExactPlayer] Exact match found:", exactMatch);
         return { valid: true, player: exactMatch };
+      } else {
+        console.log("❌ [validateExactPlayer] No exact match after normalization");
       }
+    } else {
+      console.log("❌ [validateExactPlayer] No players returned from API");
     }
 
     return { valid: false, error: "Aucun joueur trouvé avec ce nom exact" };
   } catch (error) {
-    console.error("Error validating player:", error);
+    console.error("❌ [validateExactPlayer] Exception:", error);
     return { valid: false, error: "Erreur technique lors de la validation" };
   }
 }
