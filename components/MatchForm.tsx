@@ -1557,12 +1557,12 @@ export default function MatchForm({
               </div>
               {selectedPlayers.partner && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.partner.type === 'guest' && selectedPlayers.partner.email ? (
+                  {selectedPlayers.partner.type === 'guest' && selectedPlayers.partner.email && (
                     <p className="text-xs text-blue-300 flex items-center gap-1.5">
                       <Mail size={12} className="flex-shrink-0" />
                       <span>Une invitation sera envoyée par email</span>
                     </p>
-                  ) : null}
+                  )}
                 </div>
               )}
             </div>
@@ -1616,12 +1616,12 @@ export default function MatchForm({
               </div>
               {selectedPlayers.opp1 && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.opp1.type === 'guest' && selectedPlayers.opp1.email ? (
+                  {selectedPlayers.opp1.type === 'guest' && selectedPlayers.opp1.email && (
                     <p className="text-xs text-blue-300 flex items-center gap-1.5">
                       <Mail size={12} className="flex-shrink-0" />
                       <span>Une invitation sera envoyée par email</span>
                     </p>
-                  ) : null}
+                  )}
                 </div>
               )}
             </div>
@@ -1669,12 +1669,12 @@ export default function MatchForm({
               </div>
               {selectedPlayers.opp2 && (
                 <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.opp2.type === 'guest' && selectedPlayers.opp2.email ? (
+                  {selectedPlayers.opp2.type === 'guest' && selectedPlayers.opp2.email && (
                     <p className="text-xs text-blue-300 flex items-center gap-1.5">
                       <Mail size={12} className="flex-shrink-0" />
                       <span>Une invitation sera envoyée par email</span>
                     </p>
-                  ) : null}
+                  )}
                 </div>
               )}
             </div>
