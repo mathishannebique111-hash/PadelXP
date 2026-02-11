@@ -9,8 +9,10 @@ import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';
-import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin } from "lucide-react";
+import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search } from "lucide-react";
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
+import PlayerSlotSquare from "./PlayerSlotSquare";
+import { createPortal } from "react-dom";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -68,6 +70,10 @@ export default function MatchForm({
     opp1: 'global',
     opp2: 'global',
   });
+
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<'partner' | 'opp1' | 'opp2' | null>(null);
+  const [selfProfile, setSelfProfile] = useState<PlayerSearchResult | null>(null);
 
   // Location state
   const [clubs, setClubs] = useState<Array<{ id: string; name: string; city: string }>>([]);
@@ -443,6 +449,39 @@ export default function MatchForm({
       fetchOpponent();
     }
   }, [searchParams, supabase]);
+
+  // Fetch self profile for display
+  useEffect(() => {
+    async function fetchSelfProfile() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const profileRes = await fetch('/api/player/profile', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          const first_name = profileData.first_name || profileData.display_name?.split(' ')[0] || '';
+          const last_name = profileData.last_name || profileData.display_name?.split(' ').slice(1).join(' ') || '';
+
+          setSelfProfile({
+            id: user.id,
+            first_name,
+            last_name,
+            display_name: profileData.display_name || `${first_name} ${last_name}`.trim(),
+            type: 'user',
+            email: user.email || null,
+          });
+        }
+      } catch (err) {
+        logger.error('Error fetching self profile:', err);
+      }
+    }
+    fetchSelfProfile();
+  }, [supabase]);
 
   const addSet = () => {
     const nextSetNumber = sets.length + 1;
@@ -1423,463 +1462,311 @@ export default function MatchForm({
       )}
 
       <form onSubmit={onSubmit} className="space-y-6">
+        {/* Lieu du match (Google Maps Direct) */}
         <div>
-          <div className="mb-3 text-base font-semibold text-white">Lieu du match</div>
+          <label className="mb-4 block text-sm font-bold text-white uppercase tracking-widest opacity-70">Lieu du match</label>
           <div className="space-y-4">
-            <div className="relative">
-              <select
-                value={isUnregisteredClub ? "other" : selectedClubId}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "other") {
-                    setIsUnregisteredClub(true);
-                    setSelectedClubId("");
-                  } else {
-                    setIsUnregisteredClub(false);
-                    setSelectedClubId(val);
-                  }
-                  // Clear error
-                  if (errors.location) {
-                    setErrors((prev) => {
-                      const newErrors = { ...prev };
-                      delete newErrors.location;
-                      return newErrors;
-                    });
+            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="mb-2 block text-[10px] font-bold text-white/50 uppercase tracking-widest">Rechercher le club (Google Maps) *</div>
+              <GooglePlacesAutocomplete
+                value={unregisteredClubName}
+                onChange={(val) => {
+                  setUnregisteredClubName(val);
+                  if (errors.unregisteredClubName) {
+                    setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
                   }
                 }}
-                className="w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-10 text-sm text-white transition-all focus:border-padel-green focus:ring-1 focus:ring-padel-green outline-none"
-                disabled={loadingClubs}
-              >
-                <option value="" disabled>-- Sélectionner un club --</option>
-                {clubs.map((club) => (
-                  <option key={club.id} value={club.id} className="text-gray-900">
-                    {club.name} ({club.city})
-                  </option>
-                ))}
-                <option value="other" className="text-gray-900 font-medium text-padel-green">
-                  + Autre club (non listé)
-                </option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-white/50">
-                <ChevronDown className="h-4 w-4" />
+                onSelect={(place) => {
+                  setUnregisteredClubName(place.name);
+                  setUnregisteredClubCity(place.city);
+                  if (errors.unregisteredClubName || errors.unregisteredClubCity) {
+                    setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; delete n.unregisteredClubCity; return n; });
+                  }
+                }}
+                placeholder="Ex: Urban Padel Nantes..."
+              />
+              {(errors.unregisteredClubName || errors.unregisteredClubCity) && (
+                <p className="mt-1 text-xs text-red-400">
+                  {errors.unregisteredClubName || errors.unregisteredClubCity}
+                </p>
+              )}
+              {unregisteredClubCity && (
+                <p className="mt-1 text-[10px] text-padel-green font-bold uppercase tracking-tight flex items-center gap-1">
+                  <MapPin size={10} /> {unregisteredClubCity}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Redesigned Player Selection */}
+        <div className="mb-8">
+          <div className="flex flex-col gap-6 max-w-sm mx-auto">
+            <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
+              {/* Team 1 */}
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <PlayerSlotSquare
+                  label="Vous"
+                  player={selfProfile}
+                  isFixed
+                />
+                <PlayerSlotSquare
+                  label="P"
+                  player={selectedPlayers.partner}
+                  onClick={() => {
+                    setActiveSlot('partner');
+                    setIsSearchModalOpen(true);
+                  }}
+                  isWinner={winner === "1"}
+                  className="w-full"
+                />
+              </div>
+
+              {/* VS Badge Centered */}
+              <div className="flex-shrink-0 flex flex-col items-center justify-center pt-2">
+                <div className="bg-padel-green text-[#071554] px-1.5 py-0.5 rounded text-[10px] font-black uppercase ring-2 ring-[#071554]">
+                  VS
+                </div>
+              </div>
+
+              {/* Team 2 */}
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <PlayerSlotSquare
+                  label="A1"
+                  player={selectedPlayers.opp1}
+                  onClick={() => {
+                    setActiveSlot('opp1');
+                    setIsSearchModalOpen(true);
+                  }}
+                  isWinner={winner === "2"}
+                />
+                <PlayerSlotSquare
+                  label="A2"
+                  player={selectedPlayers.opp2}
+                  onClick={() => {
+                    setActiveSlot('opp2');
+                    setIsSearchModalOpen(true);
+                  }}
+                  isWinner={winner === "2"}
+                />
               </div>
             </div>
 
-            {errors.location && (
-              <p className="text-xs text-red-400">{errors.location}</p>
+            {/* Display validation errors below the grid */}
+            {(errors.partnerName || errors.opp1Name || errors.opp2Name) && (
+              <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <ul className="list-disc list-inside space-y-1">
+                  {errors.partnerName && <li className="text-xs text-red-400 font-medium">Partenaire : {errors.partnerName}</li>}
+                  {errors.opp1Name && <li className="text-xs text-red-400 font-medium">Adversaire 1 : {errors.opp1Name}</li>}
+                  {errors.opp2Name && <li className="text-xs text-red-400 font-medium">Adversaire 2 : {errors.opp2Name}</li>}
+                </ul>
+              </div>
             )}
-
-            {isUnregisteredClub && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="mb-2 block text-xs font-medium text-white/70">Rechercher le club (Google Maps) *</div>
-                <GooglePlacesAutocomplete
-                  value={unregisteredClubName}
-                  onChange={(val) => {
-                    setUnregisteredClubName(val);
-                    // Si l'utilisateur tape manuellement, on vide la ville pour le forcer à sélectionner ou à remplir
-                    if (errors.unregisteredClubName) {
-                      setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
-                    }
-                  }}
-                  onSelect={(place) => {
-                    setUnregisteredClubName(place.name);
-                    setUnregisteredClubCity(place.city);
-                    // On pourrait aussi stocker place_id ou address si on voulait
-                    if (errors.unregisteredClubName || errors.unregisteredClubCity) {
-                      setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; delete n.unregisteredClubCity; return n; });
-                    }
-                  }}
-                  placeholder="Ex: Urban Padel Nantes..."
-                />
-                {(errors.unregisteredClubName || errors.unregisteredClubCity) && (
-                  <p className="mt-1 text-xs text-red-400">
-                    {errors.unregisteredClubName || errors.unregisteredClubCity}
-                  </p>
-                )}
-                {unregisteredClubCity && (
-                  <p className="mt-1 text-xs text-padel-green flex items-center gap-1">
-                    <MapPin size={10} /> Ville détectée : {unregisteredClubCity}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
-        <div>
-          <div className="mb-3 text-base font-semibold text-white">Équipe 1</div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-white">Vous</label>
-              <input className="w-full cursor-not-allowed rounded-md border bg-gray-100 px-4 py-3 text-sm text-[#071554]/60" disabled value="Vous (connecté)" />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-white">Partenaire</label>
-              <div className="relative group">
-                <PlayerAutocomplete
-                  value={partnerName}
-                  onChange={(value) => {
-                    setPartnerName(value);
-                    // Nettoyer l'erreur quand l'utilisateur tape
-                    if (errors.partnerName) {
-                      setErrors((prev) => {
-                        const newErrors = { ...prev };
-                        delete newErrors.partnerName;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                  onSelect={(player) => {
-                    setSelectedPlayers((prev) => ({ ...prev, partner: player }));
-                    setScopes((prev) => ({ ...prev, partner: 'global' }));
-                  }}
-                  placeholder="Prénom et nom complet"
-                  error={errors.partnerName}
-                  searchScope={scopes.partner}
-                  inputClassName="pr-[90px]"
-                />
-                <div className={`absolute z-10 flex items-center ${scopes.partner === 'guest'
-                  ? 'top-3 right-5'
-                  : 'right-1 top-[7px]'
-                  }`}>
-                  <div className="relative">
-                    <select
-                      value={scopes.partner}
-                      onChange={(e) => setScopes(prev => ({ ...prev, partner: e.target.value as any }))}
-                      className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
-                    >
-                      <option value="global">Global</option>
-                      <option value="guest">Invité</option>
-                    </select>
-                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
-                  </div>
-                </div>
-              </div>
-              {selectedPlayers.partner && (
-                <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.partner.type === 'guest' && selectedPlayers.partner.email && (
-                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
-                      <Mail size={12} className="flex-shrink-0" />
-                      <span>Une invitation sera envoyée par email</span>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-3 text-base font-semibold text-white">Équipe 2</div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-white">Joueur 1</label>
-              <div className="relative group">
-                <PlayerAutocomplete
-                  value={opp1Name}
-                  onChange={(value) => {
-                    setOpp1Name(value);
-                    // Nettoyer l'erreur quand l'utilisateur tape
-                    if (errors.opp1Name) {
-                      setErrors((prev) => {
-                        const newErrors = { ...prev };
-                        delete newErrors.opp1Name;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                  onSelect={(player) => {
-                    setSelectedPlayers((prev) => ({ ...prev, opp1: player }));
-                    setScopes((prev) => ({ ...prev, opp1: 'global' }));
-                  }}
-                  placeholder="Prénom et nom complet"
-                  error={errors.opp1Name}
-                  searchScope={scopes.opp1}
-                  inputClassName="pr-[90px]"
-                />
-                <div className={`absolute z-10 flex items-center ${scopes.opp1 === 'guest'
-                  ? 'top-3 right-5'
-                  : 'right-1 top-[7px]'
-                  }`}>
-                  <div className="relative">
-                    <select
-                      value={scopes.opp1}
-                      onChange={(e) => setScopes(prev => ({ ...prev, opp1: e.target.value as any }))}
-                      className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
-                    >
-                      <option value="global">Global</option>
-                      <option value="guest">Invité</option>
-                    </select>
-                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
-                  </div>
-                </div>
-              </div>
-              {selectedPlayers.opp1 && (
-                <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.opp1.type === 'guest' && selectedPlayers.opp1.email && (
-                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
-                      <Mail size={12} className="flex-shrink-0" />
-                      <span>Une invitation sera envoyée par email</span>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-white">Joueur 2</label>
-              <div className="relative group">
-                <PlayerAutocomplete
-                  value={opp2Name}
-                  onChange={(value) => {
-                    setOpp2Name(value);
-                    // Nettoyer l'erreur quand l'utilisateur tape
-                    if (errors.opp2Name) {
-                      setErrors((prev) => {
-                        const newErrors = { ...prev };
-                        delete newErrors.opp2Name;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                  onSelect={(player) => {
-                    setSelectedPlayers((prev) => ({ ...prev, opp2: player }));
-                    setScopes((prev) => ({ ...prev, opp2: 'global' }));
-                  }}
-                  placeholder="Prénom et nom complet"
-                  error={errors.opp2Name}
-                  searchScope={scopes.opp2}
-                  inputClassName="pr-[90px]"
-                />
-                <div className={`absolute z-10 flex items-center ${scopes.opp2 === 'guest'
-                  ? 'top-3 right-5'
-                  : 'right-1 top-[7px]'
-                  }`}>
-                  <div className="relative">
-                    <select
-                      value={scopes.opp2}
-                      onChange={(e) => setScopes(prev => ({ ...prev, opp2: e.target.value as any }))}
-                      className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
-                    >
-                      <option value="global">Global</option>
-                      <option value="guest">Invité</option>
-                    </select>
-                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
-                  </div>
-                </div>
-              </div>
-              {selectedPlayers.opp2 && (
-                <div className="mt-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                  {selectedPlayers.opp2.type === 'guest' && selectedPlayers.opp2.email && (
-                    <p className="text-xs text-blue-300 flex items-center gap-1.5">
-                      <Mail size={12} className="flex-shrink-0" />
-                      <span>Une invitation sera envoyée par email</span>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="mb-3 block text-sm font-medium text-white">Équipe gagnante</label>
-            <div className="flex gap-3">
+            <label className="mb-4 block text-sm font-bold text-white uppercase tracking-widest opacity-70">Équipe gagnante</label>
+            <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
                 onClick={() => setWinner("1")}
-                className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${winner === "1"
-                  ? "border-padel-green bg-padel-green text-[#071554] shadow-lg shadow-padel-green/50"
-                  : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
+                className={`group relative overflow-hidden rounded-2xl border-2 px-6 py-5 text-sm font-black transition-all duration-300 ${winner === "1"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_20px_rgba(191,255,0,0.4)]"
+                  : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
               >
-                <span className="flex items-center gap-1.5"><Trophy size={16} className={`flex-shrink-0 ${winner === "1" ? "text-[#071554]" : "text-white"}`} /> Équipe 1</span>
+                <div className="flex items-center justify-center gap-2">
+                  <Trophy size={18} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
+                  <span className="uppercase tracking-tight">Équipe 1</span>
+                </div>
+                {winner === "1" && (
+                  <div className="absolute top-0 right-0 w-8 h-8 bg-[#071554]/10 rounded-bl-full flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-[#071554]" />
+                  </div>
+                )}
               </button>
               <button
                 type="button"
                 onClick={() => setWinner("2")}
-                className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-all ${winner === "2"
-                  ? "border-padel-green bg-padel-green text-[#071554] shadow-lg shadow-padel-green/50"
-                  : "border-white/30 bg-white/5 text-white hover:border-white/50 hover:bg-white/10"
+                className={`group relative overflow-hidden rounded-2xl border-2 px-6 py-5 text-sm font-black transition-all duration-300 ${winner === "2"
+                  ? "border-padel-green bg-padel-green text-[#071554] shadow-[0_0_20px_rgba(191,255,0,0.4)]"
+                  : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
               >
-                <span className="flex items-center gap-1.5"><Trophy size={16} className={`flex-shrink-0 ${winner === "2" ? "text-[#071554]" : "text-white"}`} /> Équipe 2</span>
+                <div className="flex items-center justify-center gap-2">
+                  <Trophy size={18} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
+                  <span className="uppercase tracking-tight">Équipe 2</span>
+                </div>
+                {winner === "2" && (
+                  <div className="absolute top-0 right-0 w-8 h-8 bg-[#071554]/10 rounded-bl-full flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-[#071554]" />
+                  </div>
+                )}
               </button>
             </div>
             {errors.winner && (
-              <p className="mt-2 text-xs text-red-400">{errors.winner}</p>
+              <p className="mt-3 text-xs text-red-400 font-bold uppercase tracking-tight">{errors.winner}</p>
             )}
           </div>
         </div>
 
         {/* Section Sets */}
-        <div>
-          <label className="mb-3 block text-sm font-medium text-white">Scores des sets *</label>
-          <div className="space-y-4">
+        {/* Reverted Sets Design */}
+        <div className="bg-white/5 rounded-3xl border border-white/10 p-5 sm:p-6 text-center">
+          <label className="mb-4 block text-[10px] font-black text-white/40 uppercase tracking-widest">Scores des sets *</label>
+          <div className="flex flex-col gap-4 items-center">
             {sets.map((set, index) => (
-              <div key={set.setNumber} className="flex items-center gap-3">
+              <div key={set.setNumber} className="flex items-center justify-center gap-3">
+                <span className="text-[10px] font-black text-white/40 uppercase w-10 text-left">Set {set.setNumber}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white min-w-[80px]">Set {set.setNumber}</span>
                   <input
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
-                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] text-center font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-12 h-12 rounded-xl border border-white/10 bg-white/5 text-xl text-white text-center font-bold focus:border-padel-green focus:outline-none"
                     value={set.team1Score}
                     onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                     placeholder="0"
                     ref={(el) => { setTeam1Refs.current[index] = el; }}
                   />
-                  <span className="text-white">-</span>
+                  <span className="text-white/20 font-bold">-</span>
                   <input
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
-                    className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] text-center font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-12 h-12 rounded-xl border border-white/10 bg-white/5 text-xl text-white text-center font-bold focus:border-padel-green focus:outline-none"
                     value={set.team2Score}
                     onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                     placeholder="0"
                     ref={(el) => { setTeam2Refs.current[index] = el; }}
                   />
-                  {errors[`set${set.setNumber}_team1`] && (
-                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_team1`]}</span>
-                  )}
-                  {errors[`set${set.setNumber}_team2`] && (
-                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_team2`]}</span>
-                  )}
-                  {errors[`set${set.setNumber}_min_score`] && (
-                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_min_score`]}</span>
-                  )}
-                  {errors[`set${set.setNumber}_tie`] && (
-                    <span className="text-xs text-red-400">{errors[`set${set.setNumber}_tie`]}</span>
-                  )}
                 </div>
-                {/* Bouton supprimer pour les sets ajoutés (3, 4, 5) */}
                 {index >= 2 && (
                   <button
                     type="button"
                     onClick={() => removeSet(index)}
-                    className="ml-auto rounded-md border border-red-300 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                    className="text-red-400 hover:text-red-300"
                   >
-                    ✕ Supprimer
+                    <X size={16} />
                   </button>
                 )}
               </div>
             ))}
-            {/* Bouton ajouter un set en dessous du 2e set */}
+
             {sets.length < 5 && (
-              <div className="flex justify-start">
-                <button
-                  type="button"
-                  onClick={addSet}
-                  className="rounded-md border border-white/30 bg-white/5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 transition-all"
-                >
-                  + Ajouter un {sets.length === 2 ? "3e" : sets.length === 3 ? "4e" : "5e"} set
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={addSet}
+                className="mt-2 text-[10px] font-black text-padel-green uppercase tracking-widest border border-padel-green/30 px-4 py-2 rounded-full hover:bg-padel-green/10 transition-all"
+              >
+                + Ajouter un set
+              </button>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Tie Break */}
-        <div>
-          <div className="mb-3 flex items-center gap-3">
-            <label className="block text-sm font-medium text-white">Tie Break</label>
-            <button
-              type="button"
-              onClick={() => setHasTieBreak(!hasTieBreak)}
-              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${hasTieBreak
-                ? "border-[#BFFF00] bg-[#BFFF00] text-black"
-                : "border-white/30 bg-white/5 text-white hover:border-white/50"
-                }`}
-            >
-              {hasTieBreak ? "✓ Activé" : "+ Ajouter"}
-            </button>
-          </div>
-          {hasTieBreak && (
-            <div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
-                  value={tieBreak.team1Score}
-                  onChange={(e) => {
-                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
-                    const v = e.target.value.replace(/\D/g, '');
-                    const newTieBreak = { ...tieBreak, team1Score: v };
-                    setTieBreak(newTieBreak);
-
-                    // Nettoyer et réévaluer les erreurs du tie-break
-                    const newErrors = { ...errors };
-                    delete newErrors.tieBreak;
-
-                    // Validation : au moins un des deux scores doit être 7 ou plus
-                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
-
-                    if (team1Score > 0 && team2Score > 0) {
-                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                      if (!hasValidScore) {
-                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                      }
-                    }
-
-                    setErrors(newErrors);
-
-                    if (v.length >= 1) {
-                      tieBreakTeam2Ref.current?.focus();
-                    }
-                  }}
-                  placeholder="0"
-                  ref={tieBreakTeam1Ref}
-                />
-                <span className="text-white">-</span>
-                <input
-                  type="text"
-                  className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
-                  value={tieBreak.team2Score}
-                  onChange={(e) => {
-                    // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
-                    const v = e.target.value.replace(/\D/g, '');
-                    const newTieBreak = { ...tieBreak, team2Score: v };
-                    setTieBreak(newTieBreak);
-
-                    // Nettoyer et réévaluer les erreurs du tie-break
-                    const newErrors = { ...errors };
-                    delete newErrors.tieBreak;
-
-                    // Validation : au moins un des deux scores doit être 7 ou plus
-                    const team1Score = parseInt(newTieBreak.team1Score) || 0;
-                    const team2Score = parseInt(newTieBreak.team2Score) || 0;
-
-                    if (team1Score > 0 && team2Score > 0) {
-                      const hasValidScore = team1Score >= 7 || team2Score >= 7;
-                      if (!hasValidScore) {
-                        newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
-                      }
-                    }
-
-                    setErrors(newErrors);
-
-                    if (v.length >= 1) {
-                      const submitBtn = document.querySelector<HTMLButtonElement>('button[type="submit"]');
-                      submitBtn?.focus();
-                    }
-                  }}
-                  placeholder="0"
-                  ref={tieBreakTeam2Ref}
-                />
-              </div>
-              {errors.tieBreak && (
-                <p className="mt-2 text-xs text-red-400">{errors.tieBreak}</p>
-              )}
-            </div>
-          )}
+      {/* Tie Break */}
+      <div>
+        <div className="mb-3 flex items-center gap-3">
+          <label className="block text-sm font-medium text-white">Tie Break</label>
+          <button
+            type="button"
+            onClick={() => setHasTieBreak(!hasTieBreak)}
+            className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-all ${hasTieBreak
+              ? "border-[#BFFF00] bg-[#BFFF00] text-black"
+              : "border-white/30 bg-white/5 text-white hover:border-white/50"
+              }`}
+          >
+            {hasTieBreak ? "✓ Activé" : "+ Ajouter"}
+          </button>
         </div>
+        {hasTieBreak && (
+          <div>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                value={tieBreak.team1Score}
+                onChange={(e) => {
+                  // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
+                  const v = e.target.value.replace(/\D/g, '');
+                  const newTieBreak = { ...tieBreak, team1Score: v };
+                  setTieBreak(newTieBreak);
 
-        {/* Option boost - caché temporairement
+                  // Nettoyer et réévaluer les erreurs du tie-break
+                  const newErrors = { ...errors };
+                  delete newErrors.tieBreak;
+
+                  // Validation : au moins un des deux scores doit être 7 ou plus
+                  const team1Score = parseInt(newTieBreak.team1Score) || 0;
+                  const team2Score = parseInt(newTieBreak.team2Score) || 0;
+
+                  if (team1Score > 0 && team2Score > 0) {
+                    const hasValidScore = team1Score >= 7 || team2Score >= 7;
+                    if (!hasValidScore) {
+                      newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
+                    }
+                  }
+
+                  setErrors(newErrors);
+
+                  if (v.length >= 1) {
+                    tieBreakTeam2Ref.current?.focus();
+                  }
+                }}
+                placeholder="0"
+                ref={tieBreakTeam1Ref}
+              />
+              <span className="text-white">-</span>
+              <input
+                type="text"
+                className="w-20 rounded-md border bg-white px-3 py-2 text-sm text-[#071554] tabular-nums"
+                value={tieBreak.team2Score}
+                onChange={(e) => {
+                  // Filtrer uniquement les chiffres (pas de limite pour le tie-break)
+                  const v = e.target.value.replace(/\D/g, '');
+                  const newTieBreak = { ...tieBreak, team2Score: v };
+                  setTieBreak(newTieBreak);
+
+                  // Nettoyer et réévaluer les erreurs du tie-break
+                  const newErrors = { ...errors };
+                  delete newErrors.tieBreak;
+
+                  // Validation : au moins un des deux scores doit être 7 ou plus
+                  const team1Score = parseInt(newTieBreak.team1Score) || 0;
+                  const team2Score = parseInt(newTieBreak.team2Score) || 0;
+
+                  if (team1Score > 0 && team2Score > 0) {
+                    const hasValidScore = team1Score >= 7 || team2Score >= 7;
+                    if (!hasValidScore) {
+                      newErrors.tieBreak = "Au moins un des deux scores du tie-break doit être 7 ou plus";
+                    }
+                  }
+
+                  setErrors(newErrors);
+
+                  if (v.length >= 1) {
+                    const submitBtn = document.querySelector<HTMLButtonElement>('button[type="submit"]');
+                    submitBtn?.focus();
+                  }
+                }}
+                placeholder="0"
+                ref={tieBreakTeam2Ref}
+              />
+            </div>
+            {errors.tieBreak && (
+              <p className="mt-2 text-xs text-red-400">{errors.tieBreak}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Option boost - caché temporairement
         {!loadingBoostStats && boostStats && (
           <div className="mb-6 rounded-lg border border-padel-green/50 bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 p-4 shadow-xl relative overflow-hidden">
             <div className="flex items-start gap-3 relative z-10">
@@ -1929,8 +1816,130 @@ export default function MatchForm({
         )}
         */}
 
-        <button disabled={loading} className="w-full rounded-md bg-padel-green px-4 py-3 font-semibold text-blue-950 transition-all hover:bg-padel-green/90 hover:shadow-lg disabled:opacity-50">Enregistrer</button>
-      </form>
+      <div className="pt-8">
+        <button
+          disabled={loading}
+          className="w-full relative group overflow-hidden rounded-2xl bg-padel-green px-6 py-5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 shadow-[0_10px_30px_rgba(191,255,0,0.3)]"
+        >
+          <div className="relative z-10 flex items-center justify-center gap-3">
+            {loading ? (
+              <div className="w-5 h-5 border-3 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
+            ) : (
+              <Zap size={20} fill="currentColor" />
+            )}
+            {loading ? "ENREGISTREMENT..." : "ENREGISTRER LE MATCH"}
+          </div>
+        </button>
+      </div>
+    </form >
+
+      {/* Search Modal Portal */ }
+  {
+    isSearchModalOpen && typeof document !== 'undefined' && createPortal(
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="w-full max-w-md bg-[#071554] rounded-3xl border border-white/20 shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
+          <button
+            onClick={() => setIsSearchModalOpen(false)}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors"
+          >
+            <X size={24} />
+          </button>
+
+          <div className="mb-6">
+            <h3 className="text-xl font-black text-white flex items-center gap-3">
+              <Search size={24} className="text-padel-green" />
+              {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
+            </h3>
+            <p className="text-sm text-white/50 font-medium">
+              Recherchez par prénom et nom
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="relative">
+              <div className="absolute right-1 top-[7px] z-20">
+                <div className="relative">
+                  <select
+                    value={activeSlot ? scopes[activeSlot] : 'global'}
+                    onChange={(e) => {
+                      const newScope = e.target.value as any;
+                      if (activeSlot) {
+                        setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+                      }
+                    }}
+                    className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
+                  >
+                    <option value="global">Global</option>
+                    <option value="guest">Invité</option>
+                  </select>
+                  <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
+                </div>
+              </div>
+
+              <PlayerAutocomplete
+                value={
+                  activeSlot === 'partner' ? partnerName :
+                    activeSlot === 'opp1' ? opp1Name :
+                      opp2Name
+                }
+                onChange={(val) => {
+                  if (activeSlot === 'partner') setPartnerName(val);
+                  else if (activeSlot === 'opp1') setOpp1Name(val);
+                  else if (activeSlot === 'opp2') setOpp2Name(val);
+                }}
+                onSelect={(player) => {
+                  if (activeSlot) {
+                    setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                    setIsSearchModalOpen(false);
+                  }
+                }}
+                searchScope={activeSlot ? scopes[activeSlot] : 'global'}
+                placeholder="Michel Dupont..."
+                inputClassName="pr-[90px] h-[46px] rounded-xl text-lg font-bold"
+              />
+            </div>
+
+            {activeSlot && selectedPlayers[activeSlot] && (
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-padel-green flex items-center justify-center text-[#071554] font-black">
+                    {selectedPlayers[activeSlot]?.first_name?.[0]}{selectedPlayers[activeSlot]?.last_name?.[0]}
+                  </div>
+                  <div>
+                    <p className="text-white font-bold">{selectedPlayers[activeSlot]?.display_name}</p>
+                    <p className="text-white/40 text-xs uppercase tracking-tighter">{selectedPlayers[activeSlot]?.type === 'guest' ? 'Invité' : 'Inscrit'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (activeSlot) {
+                      setSelectedPlayers(prev => ({ ...prev, [activeSlot]: null }));
+                      if (activeSlot === 'partner') setPartnerName('');
+                      else if (activeSlot === 'opp1') setOpp1Name('');
+                      else if (activeSlot === 'opp2') setOpp2Name('');
+                    }
+                  }}
+                  className="text-red-400 text-xs font-bold uppercase hover:bg-red-400/10 px-2 py-1 rounded"
+                >
+                  Effacer
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 flex gap-3">
+            <button
+              onClick={() => setIsSearchModalOpen(false)}
+              className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )
+  }
     </>
   );
 }
