@@ -8,6 +8,7 @@ import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
 import BadgeIcon from "@/components/icons/BadgeIcon";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import BadgesPageClient from '@/components/BadgesPageClient'
+import PremiumBadgeOverlay from "@/components/badges/PremiumBadgeOverlay";
 import { logger } from '@/lib/logger';
 
 export const dynamic = "force-dynamic";
@@ -376,22 +377,7 @@ export default async function BadgesPage() {
 
                   {/* Overlay verrouillage premium */}
                   {isLockedPremium && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/50 backdrop-blur-[2px]">
-                      <div className="mb-2 p-2 rounded-full bg-amber-500/20 border border-amber-500/40">
-                        {/* Lock icon fallback using text since we can't easily import Lock here without adding to imports repeatedly which is messy in replace block. 
-                           Actually, I should add Lock to imports but I'm replacing the loop block. 
-                           I'll use a simple unicode lock or svg for now to be safe and efficient. */}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                      </div>
-                      {badge.obtained && (
-                        <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wide bg-black/60 px-2 py-1 rounded mb-1">
-                          Débloqué
-                        </span>
-                      )}
-                      <Link href="/premium-info" className="text-[10px] font-semibold text-white underline hover:text-amber-300">
-                        Voir Premium
-                      </Link>
-                    </div>
+                    <PremiumBadgeOverlay isObtained={badge.obtained} />
                   )}
 
                   {/* Icône - hauteur fixe */}

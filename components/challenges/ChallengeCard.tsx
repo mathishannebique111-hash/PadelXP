@@ -5,6 +5,7 @@ import Image from "next/image";
 import { logger } from '@/lib/logger';
 import { Calendar, PartyPopper, Trophy, X, AlertCircle, Clock, Loader2 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 
@@ -67,6 +68,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
   const [rewardValue, setRewardValue] = useState("");
   const [hasClaimed, setHasClaimed] = useState(false);
   const [autoCloseTimeout, setAutoCloseTimeout] = useState<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   const now = new Date();
   const endDate = new Date(challenge.endDate);
@@ -262,7 +264,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                   setClaiming(true);
                   const res = await fetch("/api/player/upgrade", { method: "POST" });
                   if (res.ok) {
-                    window.location.reload(); // Recharger pour mettre à jour le statut premium
+                    router.refresh(); // Rafraîchir les composants serveur
                   } else {
                     logger.error("[ChallengeCard] Upgrade failed");
                   }

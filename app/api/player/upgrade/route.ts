@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
@@ -37,6 +38,11 @@ export async function POST() {
         }
 
         logger.info("[api/player/upgrade] User upgraded to premium successfully", { userId: user.id });
+
+        // Invalidate cache for relevant pages
+        revalidatePath("/(protected)/challenges");
+        revalidatePath("/(protected)/badges");
+        revalidatePath("/(protected)/dashboard");
 
         return NextResponse.json({ success: true, message: "Félicitations ! Vous êtes maintenant Premium." });
 
