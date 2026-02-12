@@ -1,0 +1,368 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Copy, Check, Share2, Trophy, Award, Crown, MessageSquare, Lock, Loader2 } from "lucide-react";
+import PageTitle from "@/components/PageTitle";
+import BadgeIconDisplay from "@/components/BadgeIconDisplay";
+import BadgeUnlockedNotifier from "@/components/BadgeUnlockedNotifier";
+import { Badge } from "@/lib/badges";
+import { activatePremium } from "@/app/actions/premium";
+import { toast } from "sonner";
+
+interface ExtendedBadge extends Badge {
+    obtained: boolean;
+}
+
+interface ChallengeBadge {
+    id: string;
+    badge_name: string;
+    badge_emoji: string;
+    earned_at: string;
+}
+
+interface BadgesViewProps {
+    badgesWithStatus: ExtendedBadge[];
+    challengeBadges: ChallengeBadge[];
+    isPremiumUser: boolean;
+    counts: {
+        total: number;
+        obtained: number;
+        challenge: number;
+        premium: number;
+    };
+}
+
+export default function BadgesView({
+    badgesWithStatus,
+    challengeBadges,
+    isPremiumUser,
+    counts,
+}: BadgesViewProps) {
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<"standard" | "challenges" | "premium">("standard");
+    // Local state for optimistic update
+    const [isPremium, setIsPremium] = useState(isPremiumUser);
+
+    useEffect(() => {
+        if (isPremiumUser) {
+            setIsPremium(true);
+        }
+    }, [isPremiumUser]);
+
+    const handlePremiumUnlocked = () => {
+        setIsPremium(true);
+        router.refresh();
+    };
+
+    // Filter logic
+    const standardBadges = badgesWithStatus.filter((b) => !b.isPremium);
+    const premiumBadges = badgesWithStatus.filter((b) => b.isPremium);
+
+    // Prepare notifier data
+    const badgesForNotifier = badgesWithStatus
+        .filter(b => b.obtained)
+        .map((badge, index) => ({
+            id: `${badge.title}-${index}`,
+            name: badge.title,
+            description: badge.description,
+            icon: badge.icon,
+        }));
+
+    return (
+        <>
+            <BadgeUnlockedNotifier unlockedBadges={badgesForNotifier} />
+
+            <div className="relative min-h-screen overflow-hidden bg-[#172554]">
+                {/* Background */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+                <div className="absolute inset-0 opacity-20 pointer-events-none">
+                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+                    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1000ms" }} />
+                </div>
+
+                <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-4 md:pt-8 pb-8">
+
+                    {/* Stats Header */}
+                    <div className="mb-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-sm max-w-md mx-auto">
+                        <div className="flex items-center justify-between gap-2">
+                            {/* Gauche: Total Badges */}
+                            <div className="text-center w-20 sm:w-24 flex-shrink-0">
+                                <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{counts.total}</div>
+                                <div className="text-[10px] sm:text-xs font-semibold text-white/80">Badges</div>
+                            </div>
+
+                            {/* Séparation verticale */}
+                            <div className="w-px h-10 bg-white/30 flex-shrink-0"></div>
+
+                            {/* Droite: Standards, Challenges, Premium */}
+                            <div className="flex-1 flex justify-around items-center gap-2 sm:gap-4 min-w-0">
+                                <div className="text-center">
+                                    <div className="text-xl sm:text-2xl font-bold text-white tabular-nums">{counts.obtained}</div>
+                                    <div className="text-[9px] sm:text-[10px] font-medium text-white/80 uppercase tracking-tight">Standard</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-xl sm:text-2xl font-bold text-white tabular-nums">{counts.challenge}</div>
+                                    <div className="text-[9px] sm:text-[10px] font-medium text-white/80 uppercase tracking-tight">Challenge</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-xl sm:text-2xl font-bold text-amber-400 tabular-nums">{counts.premium || 0}</div>
+                                    <div className="text-[9px] sm:text-[10px] font-medium text-amber-400/90 uppercase tracking-tight">Premium</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="flex justify-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+                        <button
+                            onClick={() => setActiveTab("standard")}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
+                                ? "bg-blue-500 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-400 ring-offset-2 ring-offset-[#172554]"
+                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                                }`}
+                        >
+                            <Award size={14} className="sm:w-4 sm:h-4" />
+                            Standards
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("challenges")}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
+                                ? "bg-yellow-500 text-white shadow-lg shadow-yellow-500/25 ring-2 ring-yellow-400 ring-offset-2 ring-offset-[#172554]"
+                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                                }`}
+                        >
+                            <Trophy size={14} className="sm:w-4 sm:h-4" />
+                            Challenges
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("premium")}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "premium"
+                                ? "bg-amber-600 text-white shadow-lg shadow-amber-600/25 ring-2 ring-amber-500 ring-offset-2 ring-offset-[#172554]"
+                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                                }`}
+                        >
+                            <Crown size={14} className="sm:w-4 sm:h-4" />
+                            Premium
+                        </button>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="min-h-[400px]">
+                        {/* Standard Badges Grid */}
+                        {activeTab === "standard" && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                    {standardBadges.map((badge, idx) => (
+                                        <BadgeCard key={`std-${idx}`} badge={badge} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Challenges Badges Grid */}
+                        {activeTab === "challenges" && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {challengeBadges.length > 0 ? (
+                                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                        {challengeBadges.map((badge) => (
+                                            <div
+                                                key={badge.id}
+                                                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-3 pt-5 pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[180px] items-center text-center"
+                                            >
+                                                <div className="mb-3 flex flex-col items-center gap-3 flex-1">
+                                                    <span className="text-3xl">{badge.badge_emoji}</span>
+                                                    <div className="flex-1">
+                                                        <h3 className="text-sm font-semibold leading-tight text-gray-900">
+                                                            {badge.badge_name}
+                                                        </h3>
+                                                        <p className="mt-1 text-xs leading-relaxed text-gray-600 font-normal">
+                                                            Obtenu via un challenge
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-auto w-full rounded-lg bg-gradient-to-r from-yellow-100 to-amber-100 px-3 py-2 text-xs font-semibold text-yellow-800 tabular-nums">
+                                                    ✓ Débloqué le{" "}
+                                                    {new Date(badge.earned_at).toLocaleDateString("fr-FR")}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-xl bg-white/5 border border-white/10">
+                                        <Trophy size={48} className="text-white/20 mb-4" />
+                                        <h3 className="text-lg font-medium text-white/80">Aucun badge de challenge</h3>
+                                        <p className="text-white/50 text-sm mt-2 max-w-md">
+                                            Participez aux challenges hebdomadaires pour débloquer des badges exclusifs.
+                                        </p>
+                                        <Link
+                                            href="/challenges"
+                                            className="mt-6 px-6 py-2 bg-yellow-500 text-white rounded-full font-medium text-sm hover:bg-yellow-400 transition-colors"
+                                        >
+                                            Voir les challenges
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Premium Badges Grid */}
+                        {activeTab === "premium" && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                    {premiumBadges.map((badge, idx) => (
+                                        <BadgeCard
+                                            key={`prem-${idx}`}
+                                            badge={badge}
+                                            isPremiumGrid
+                                            isLocked={!isPremium}
+                                            onUnlock={handlePremiumUnlocked}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
+
+function BadgeCard({
+    badge,
+    isPremiumGrid = false,
+    isLocked = false,
+    onUnlock
+}: {
+    badge: ExtendedBadge;
+    isPremiumGrid?: boolean;
+    isLocked?: boolean;
+    onUnlock?: () => void;
+}) {
+    const [claiming, setClaiming] = useState(false);
+    const isObtained = badge.obtained;
+    const effectivelyLocked = isLocked || (isPremiumGrid && !isObtained);
+
+    const handleUnlock = async () => {
+        if (claiming) return;
+
+        try {
+            setClaiming(true);
+            const result = await activatePremium();
+            if (result.success) {
+                if (result.verified) {
+                    toast.success("Félicitations ! Premium activé et vérifié.");
+                } else if (result.warning) {
+                    toast.warning(`Activé mais non vérifié: ${result.warning}`);
+                } else {
+                    toast.success("Félicitations ! Vous êtes maintenant Premium.");
+                }
+
+                if (onUnlock) onUnlock();
+            } else {
+                toast.error("Erreur lors de l'activation : " + result.error);
+            }
+        } catch (err) {
+            toast.error("Erreur inattendue");
+            console.error("[BadgeCard] Upgrade error", err);
+        } finally {
+            setClaiming(false);
+        }
+    };
+
+    return (
+        <div
+            className={`group relative rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center overflow-hidden ${effectivelyLocked
+                ? "border-amber-500/30 bg-slate-900/50"
+                : isPremiumGrid
+                    ? "border-yellow-400 bg-gradient-to-br from-yellow-100 via-amber-100 to-yellow-50 shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-yellow-400/50"
+                    : isObtained
+                        ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
+                        : "border-gray-200 bg-gray-50 opacity-75"
+                }`}
+        >
+            {badge.isPremium && (
+                <div className="absolute top-2 right-2 z-10">
+                    <span
+                        className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${effectivelyLocked
+                            ? "bg-amber-500/20 text-amber-500 border-amber-500/30"
+                            : "bg-amber-100 text-amber-700 border-amber-200"
+                            }`}
+                    >
+                        Premium
+                    </span>
+                </div>
+            )}
+
+            {effectivelyLocked && isPremiumGrid && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[4px] text-center p-4">
+                    <div className="mb-2 p-2 rounded-full bg-amber-500/20 border border-amber-500/40">
+                        <Lock className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleUnlock();
+                        }}
+                        disabled={claiming}
+                        className="rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 px-4 py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {claiming ? (
+                            <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <span>Activation...</span>
+                            </>
+                        ) : (
+                            <span>Devenir Premium</span>
+                        )}
+                    </button>
+                </div>
+            )}
+
+            <div
+                className={`flex-shrink-0 mb-3 h-[48px] flex items-center justify-center ${effectivelyLocked ? "opacity-30 blur-[2px]" : ""
+                    }`}
+            >
+                <BadgeIconDisplay
+                    icon={badge.icon}
+                    title={badge.title}
+                    className={`transition-all ${isObtained || effectivelyLocked ? "" : "grayscale opacity-50"
+                        }`}
+                    size={48}
+                />
+            </div>
+
+            <div
+                className={`flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-2 px-1 ${effectivelyLocked ? "opacity-30 blur-[1px]" : ""
+                    }`}
+            >
+                <h3
+                    className={`text-sm font-semibold leading-tight mb-1 text-center ${isObtained && !effectivelyLocked ? "text-gray-900" : "text-gray-500"
+                        }`}
+                >
+                    {badge.title}
+                </h3>
+                <p className="text-xs leading-relaxed text-gray-600 text-center line-clamp-2">
+                    {badge.description}
+                </p>
+            </div>
+
+            <div
+                className={`flex-shrink-0 w-full h-[32px] flex items-center justify-center mt-auto ${effectivelyLocked ? "opacity-0" : ""
+                    }`}
+            >
+                {isObtained ? (
+                    <div className="w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
+                        ✓ Débloqué
+                    </div>
+                ) : (
+                    <div className="w-full h-[32px]" />
+                )}
+            </div>
+        </div>
+    );
+}

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Globe, Trophy, MapPin } from "lucide-react";
 import ChallengeCard from "./ChallengeCard";
@@ -26,13 +28,55 @@ interface PlayerChallenge {
 interface ChallengesListProps {
   challenges: PlayerChallenge[];
   isPremiumUser: boolean;
+  debugInfo?: string;
 }
-
-export default function ChallengesList({ challenges, isPremiumUser }: ChallengesListProps) {
+export default function ChallengesList({ challenges, isPremiumUser = false, debugInfo }: ChallengesListProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'general' | 'club' | 'premium'>('general');
+  // Local state for optimistic update, similar to PremiumStats
+  const [isPremium, setIsPremium] = useState(isPremiumUser);
+
+  // Sync local state with prop only if prop becomes true (to avoid race condition re-locking)
+  useEffect(() => {
+    if (isPremiumUser) {
+      setIsPremium(true);
+    }
+  }, [isPremiumUser]);
+
+  // CLIENT-SIDE VERIFICATION: Check DB directly
+  useEffect(() => {
+    const checkPremiumStatus = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: profile, error } = await supabase
+            .from("profiles")
+            .select("is_premium")
+            .eq("id", user.id)
+            .single();
+
+          // Force update local state if client sees true (Self-healing)
+          if (profile?.is_premium) {
+            setIsPremium(true);
+          }
+        }
+      } catch (e) {
+        // Use silent internal logging if needed
+        console.error("Error checking premium status", e);
+      }
+    };
+
+    checkPremiumStatus();
+  }, []);
 
   const handleRewardClaimed = () => {
+    router.refresh();
+  };
+
+  const handlePremiumUnlocked = () => {
+    setIsPremium(true);
     router.refresh();
   };
 
@@ -95,8 +139,9 @@ export default function ChallengesList({ challenges, isPremiumUser }: Challenges
             <ChallengeCard
               key={challenge.id}
               challenge={challenge}
-              isPremiumUser={isPremiumUser}
+              isPremiumUser={isPremium}
               onRewardClaimed={handleRewardClaimed}
+              onPremiumUnlocked={handlePremiumUnlocked}
             />
           ))}
         </div>

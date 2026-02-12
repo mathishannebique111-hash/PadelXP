@@ -1,14 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import Image from "next/image";
 import PageTitle from "@/components/PageTitle";
 import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
-
-import BadgeIcon from "@/components/icons/BadgeIcon";
-import BadgeIconDisplay from "@/components/BadgeIconDisplay";
-import BadgesPageClient from '@/components/BadgesPageClient'
-import PremiumBadgeOverlay from "@/components/badges/PremiumBadgeOverlay";
+import BadgesView from "@/components/badges/BadgesView";
 import { logger } from '@/lib/logger';
 
 export const dynamic = "force-dynamic";
@@ -255,168 +250,23 @@ export default async function BadgesPage() {
   const challengeBadgesCount = challengeBadges?.length || 0;
   const totalBadgesCount = obtainedCount + challengeBadgesCount;
 
+  const premiumCount = badgesWithStatus.filter((b) => b.isPremium && b.obtained).length;
+  const standardObtainedCount = badgesWithStatus.filter((b) => b.obtained && !b.isPremium).length;
+
+  const counts = {
+    total: totalBadgesCount,
+    obtained: standardObtainedCount,
+    challenge: challengeBadgesCount,
+    premium: premiumCount,
+  };
+
   return (
-    <BadgesPageClient obtainedBadges={obtainedBadges}>
-      <div className="relative min-h-screen overflow-hidden bg-[#172554]">
-        {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-
-        {/* Halos vert et bleu animés */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1000ms" }} />
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-4 md:pt-8 pb-8">
-          <div className="mb-6">
-            <PageTitle title="Badges" />
-          </div>
-
-          {/* Statistiques */}
-          <div className="mb-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-8 border-2 border-blue-400 shadow-xl">
-            <div className="mb-4 text-center">
-              <div className="mb-3 text-3xl font-bold text-white">
-                <span className="text-yellow-300 tabular-nums">{totalBadgesCount}</span>
-                <span className="text-white/80 text-2xl ml-2 font-semibold">Badge{totalBadgesCount > 1 ? "s" : ""} au total</span>
-              </div>
-              <div className="flex justify-center gap-8 text-sm text-white/70 font-normal">
-                <div>
-                  <span className="font-bold text-yellow-300 tabular-nums">{obtainedCount}</span>
-                  <span className="ml-1">badge{obtainedCount > 1 ? "s" : ""} standard{obtainedCount > 1 ? "s" : ""}</span>
-                </div>
-                {challengeBadgesCount > 0 && (
-                  <div>
-                    <span className="font-bold text-yellow-300 tabular-nums">{challengeBadgesCount}</span>
-                    <span className="ml-1">badge{challengeBadgesCount > 1 ? "s" : ""} de challenge{challengeBadgesCount > 1 ? "s" : ""}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {obtainedCount < ALL_BADGES.length && (
-              <div className="text-center">
-                <Link href="/match/new" className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-6 py-3 border-2 border-white/30 hover:bg-white/25 hover:translate-y-[-1px] transition-all cursor-pointer">
-                  <BadgeIconDisplay icon="🎾" size={20} className="flex-shrink-0" />
-                  <span className="text-sm font-semibold text-white">
-                    Jouez des matchs pour débloquer de nouveaux badges !
-                  </span>
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Badges de challenges */}
-          {challengeBadges && challengeBadges.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
-                <Image src="/images/Trophée page badges.png" alt="Trophée" width={24} height={24} className="flex-shrink-0" unoptimized />
-                <span>Badges de Challenges</span>
-              </h2>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                {challengeBadges.map((badge) => (
-                  <div
-                    key={badge.id}
-                    className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-3 pt-5 pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[180px] items-center text-center"
-                  >
-                    <div className="mb-3 flex flex-col items-center gap-3 flex-1">
-                      <span className="text-3xl">
-                        {badge.badge_emoji}
-                      </span>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-semibold leading-tight text-gray-900">
-                          {badge.badge_name}
-                        </h3>
-                        <p className="mt-1 text-xs leading-relaxed text-gray-600 font-normal">
-                          Obtenu via un challenge
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-auto w-full rounded-lg bg-gradient-to-r from-yellow-100 to-amber-100 px-3 py-2 text-xs font-semibold text-yellow-800 tabular-nums">
-                      ✓ Débloqué le {new Date(badge.earned_at).toLocaleDateString('fr-FR')}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Grille des badges standards */}
-          <div className="mb-4">
-            <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
-              <BadgeIconDisplay icon="🎯" size={24} className="flex-shrink-0" />
-              <span>Badges Standards</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {badgesWithStatus.map((badge, idx) => {
-              const isPremiumBadge = badge.title === "Premium";
-              const isLockedPremium = badge.isPremium && !isPremiumUser;
-
-              return (
-                <div
-                  key={idx}
-                  className={`group relative rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center overflow-hidden ${isLockedPremium
-                    ? "border-amber-500/30 bg-slate-900/50"
-                    : isPremiumBadge && badge.obtained
-                      ? "border-yellow-400 bg-gradient-to-br from-yellow-100 via-amber-100 to-yellow-50 shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-yellow-400/50"
-                      : badge.obtained
-                        ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
-                        : "border-gray-200 bg-gray-50 opacity-75"
-                    }`}
-                >
-                  {/* Premium tag */}
-                  {badge.isPremium && (
-                    <div className="absolute top-2 right-2 z-10">
-                      <span className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${isLockedPremium
-                        ? "bg-amber-500/20 text-amber-500 border-amber-500/30"
-                        : "bg-amber-100 text-amber-700 border-amber-200"
-                        }`}>
-                        Premium
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Overlay verrouillage premium */}
-                  {isLockedPremium && (
-                    <PremiumBadgeOverlay isObtained={badge.obtained} />
-                  )}
-
-                  {/* Icône - hauteur fixe */}
-                  <div className={`flex-shrink-0 mb-3 h-[48px] flex items-center justify-center ${isLockedPremium ? "opacity-30 blur-[2px]" : ""}`}>
-                    <BadgeIconDisplay
-                      icon={badge.icon}
-                      title={badge.title}
-                      className={`transition-all ${badge.obtained || isLockedPremium ? "" : "grayscale opacity-50"
-                        }`}
-                      size={48}
-                    />
-                  </div>
-
-                  {/* Zone texte - hauteur limitée pour éviter l'empiètement */}
-                  <div className={`flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-2 px-1 ${isLockedPremium ? "opacity-30 blur-[1px]" : ""}`}>
-                    <h3 className={`text-sm font-semibold leading-tight mb-1 text-center ${badge.obtained && !isLockedPremium ? "text-gray-900" : "text-gray-500"
-                      }`}>
-                      {badge.title}
-                    </h3>
-                    <p className="text-xs leading-relaxed text-gray-600 text-center line-clamp-2">{badge.description}</p>
-                  </div>
-
-                  {/* Zone statut - hauteur fixe en bas, toujours présente pour alignement */}
-                  <div className={`flex-shrink-0 w-full h-[32px] flex items-center justify-center mt-auto ${isLockedPremium ? "opacity-0" : ""}`}>
-                    {badge.obtained ? (
-                      <div className="w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
-                        ✓ Débloqué
-                      </div>
-                    ) : (
-                      <div className="w-full h-[32px]" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </BadgesPageClient>
+    <BadgesView
+      badgesWithStatus={badgesWithStatus}
+      challengeBadges={challengeBadges || []}
+      isPremiumUser={isPremiumUser}
+      counts={counts}
+    />
   );
 }
 

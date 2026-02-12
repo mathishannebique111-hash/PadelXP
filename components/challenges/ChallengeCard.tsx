@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
+import { toast } from "sonner";
+import { activatePremium } from "@/app/actions/premium";
 import { Calendar, PartyPopper, Trophy, X, AlertCircle, Clock, Loader2 } from "lucide-react";
-
 import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import { Lock } from "lucide-react";
 
@@ -30,6 +32,7 @@ interface ChallengeCardProps {
   challenge: PlayerChallenge;
   isPremiumUser?: boolean;
   onRewardClaimed?: () => void;
+  onPremiumUnlocked?: () => void;
 }
 
 function formatRange(startISO: string, endISO: string) {
@@ -62,7 +65,7 @@ function statusClasses(status: PlayerChallenge["status"]) {
   }
 }
 
-export default function ChallengeCard({ challenge, isPremiumUser = false, onRewardClaimed }: ChallengeCardProps) {
+export default function ChallengeCard({ challenge, isPremiumUser = false, onRewardClaimed, onPremiumUnlocked }: ChallengeCardProps) {
   const [claiming, setClaiming] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
   const [rewardValue, setRewardValue] = useState("");
@@ -262,13 +265,26 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
 
                 try {
                   setClaiming(true);
-                  const res = await fetch("/api/player/upgrade", { method: "POST" });
-                  if (res.ok) {
-                    router.refresh(); // Rafraîchir les composants serveur
+                  const result = await activatePremium();
+                  if (result.success) {
+                    if (result.verified) {
+                      toast.success("Félicitations ! Premium activé et vérifié.");
+                    } else if (result.warning) {
+                      toast.warning(`Activé mais non vérifié: ${result.warning}`);
+                    } else {
+                      toast.success("Félicitations ! Vous êtes maintenant Premium.");
+                    }
+
+                    router.refresh(); // Force refresh immediately
+                    if (onRewardClaimed) onRewardClaimed();
+                    if (onPremiumUnlocked) onPremiumUnlocked();
+
+
                   } else {
-                    logger.error("[ChallengeCard] Upgrade failed");
+                    toast.error("Erreur lors de l'activation : " + result.error);
                   }
                 } catch (err) {
+                  toast.error("Erreur inattendue");
                   logger.error("[ChallengeCard] Upgrade error", err);
                 } finally {
                   setClaiming(false);

@@ -22,10 +22,32 @@ export async function activatePremium() {
             .update({ is_premium: true })
             .eq("id", user.id);
 
-        if (error) throw error;
+        if (error) {
+            logger.error("Error updating profile:", error);
+            throw error;
+        }
+
+        // VERIFICATION: Read back the value
+        const { data: check } = await supabaseAdmin
+            .from("profiles")
+            .select("is_premium")
+            .eq("id", user.id)
+            .single();
+
+        logger.info(`[activatePremium] VERIFICATION for ${user.id}: is_premium is now ${check?.is_premium}`);
+
+        if (!check?.is_premium) {
+            logger.error(`[activatePremium] CRITICAL: Update appeared successful but read-back returned false!`);
+            return { success: true, verified: false, warning: "DB Update not persisted immediately" };
+        }
+
+        logger.info(`[activatePremium] Successfully updated is_premium to true for user ${user.id}`);
 
         revalidatePath("/home");
-        return { success: true };
+        revalidatePath("/challenges");
+        revalidatePath("/badges");
+        revalidatePath("/dashboard");
+        return { success: true, verified: true };
     } catch (error) {
         logger.error("Error activating premium:", error);
         return { success: false, error: "Failed to activate premium" };

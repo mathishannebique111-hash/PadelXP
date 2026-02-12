@@ -4,6 +4,7 @@ import CookieConsent from "@/components/cookies/CookieConsent";
 import SafeAreas from './components/SafeAreas';
 import OfflineWrapper from "@/components/OfflineWrapper";
 import SplashOverlay from "@/components/SplashOverlay";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "PadelXP",
@@ -75,6 +76,7 @@ export default async function RootLayout({
         <OfflineWrapper />
         {children}
         <CookieConsent />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

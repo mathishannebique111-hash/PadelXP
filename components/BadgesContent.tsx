@@ -1,11 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import Image from "next/image";
 import { ALL_BADGES, getBadges, type PlayerStats } from "@/lib/badges";
-import BadgesUnlockNotifier from "@/components/BadgesUnlockNotifier";
-import BadgeIconDisplay from "@/components/BadgeIconDisplay";
-import BadgesPageClient from '@/components/BadgesPageClient'
+import BadgesView from "@/components/badges/BadgesView";
 import { logger } from '@/lib/logger';
 
 const supabaseAdmin = createAdminClient(
@@ -83,7 +80,7 @@ export default async function BadgesContent() {
 
   const { data: userProfile } = await supabase
     .from("profiles")
-    .select("club_id, points, referral_count")
+    .select("club_id, points, referral_count, is_premium")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -128,8 +125,6 @@ export default async function BadgesContent() {
       logger.error("[Badges] Unexpected error when fetching profile via admin client", e);
     }
   }
-
-  // if (!userClubId) check removed to allow club-less access
 
   // Calculer les stats du joueur
   const { data: mp } = await supabase
@@ -209,10 +204,17 @@ export default async function BadgesContent() {
   const extraObtained = new Set<string>();
   if ((myReviewsCount || 0) > 0) extraObtained.add("💬|Contributeur");
 
-  let badgesWithStatus = ALL_BADGES.map((badge) => ({
-    ...badge,
-    obtained: obtainedBadgeKeys.has(`${badge.icon}|${badge.title}`) || extraObtained.has(`${badge.icon}|${badge.title}`),
-  }));
+  const isPremiumUser = !!(userProfile as any)?.is_premium;
+
+  let badgesWithStatus = ALL_BADGES.map((badge) => {
+    if (badge.title === "Premium" && isPremiumUser) {
+      return { ...badge, obtained: true };
+    }
+    return {
+      ...badge,
+      obtained: obtainedBadgeKeys.has(`${badge.icon}|${badge.title}`) || extraObtained.has(`${badge.icon}|${badge.title}`),
+    };
+  });
 
   badgesWithStatus = badgesWithStatus.sort((a, b) => {
     const weight = (bd: typeof a) => {
@@ -234,118 +236,30 @@ export default async function BadgesContent() {
   const challengeBadgesCount = challengeBadges?.length || 0;
   const totalBadgesCount = obtainedCount + challengeBadgesCount;
 
+  const premiumCount = badgesWithStatus.filter((b) => b.isPremium && b.obtained).length;
+  // Subtract premium count from obtained count if obtainedCount includes them (it does based on line 240)
+  // Actually line 240 counts ALL obtained badges.
+  // The user wants separate counters.
+  // Let's redefine the counts:
+  // standard: obtained non-premium
+  // premium: obtained premium
+  // challenge: challenge badges
+
+  const standardObtainedCount = badgesWithStatus.filter((b) => b.obtained && !b.isPremium).length;
+
+  const counts = {
+    total: totalBadgesCount,
+    obtained: standardObtainedCount,
+    challenge: challengeBadgesCount,
+    premium: premiumCount,
+  };
+
   return (
-    <BadgesPageClient obtainedBadges={obtainedBadges}>
-      {/* Pop-up de célébration pour les nouveaux badges */}
-      <BadgesUnlockNotifier obtained={obtainedBadges} />
-
-      {/* Statistiques */}
-      <div className="mb-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-sm max-w-xs mx-auto">
-        <div className="flex items-center justify-between gap-2">
-          {/* Gauche: Total Badges - Plus étroit */}
-          <div className="text-center w-20 sm:w-24">
-            <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{totalBadgesCount}</div>
-            <div className="text-[10px] sm:text-xs font-semibold text-white/80">Badges</div>
-          </div>
-          {/* Séparation verticale */}
-          <div className="w-px h-10 bg-white/30"></div>
-          {/* Droite: Standards et Challenges - Plus large */}
-          <div className="flex-1 flex justify-center gap-6 sm:gap-8 min-w-0">
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{obtainedCount}</div>
-              <div className="text-[10px] sm:text-xs font-medium text-white/80 whitespace-nowrap">standards</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{challengeBadgesCount}</div>
-              <div className="text-[10px] sm:text-xs font-medium text-white/80 whitespace-nowrap">challenges</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Badges de challenges */}
-      {challengeBadges && challengeBadges.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-4">
-            <span>Badges de Challenges</span>
-          </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
-            {challengeBadges.map((badge) => (
-              <div
-                key={badge.id}
-                className="rounded-xl bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[140px] sm:h-[180px] items-center text-center"
-              >
-                <div className="mb-2 sm:mb-3 flex flex-col items-center gap-2 sm:gap-3 flex-1">
-                  <div className="h-[32px] sm:h-[40px] flex items-center justify-center mb-1">
-                    <BadgeIconDisplay
-                      icon={badge.badge_emoji}
-                      title={badge.badge_name}
-                      size={32}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xs sm:text-sm font-semibold leading-tight text-gray-900">
-                      {badge.badge_name}
-                    </h3>
-                    <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs leading-relaxed text-gray-600 font-normal">
-                      Obtenu via un challenge
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-auto w-full rounded-lg bg-gradient-to-r from-yellow-100 to-amber-100 px-2 py-1 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-yellow-800 tabular-nums">
-                  ✓ Débloqué le {new Date(badge.earned_at).toLocaleDateString('fr-FR')}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Grille des badges standards */}
-      <div className="mb-4">
-        <h2 className="text-2xl font-semibold text-white mb-4">
-          <span>Badges Standards</span>
-        </h2>
-      </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
-        {badgesWithStatus.map((badge, idx) => (
-          <div
-            key={idx}
-            className={`rounded-xl px-2 pt-3 pb-2 sm:px-3 sm:pt-5 sm:pb-3 transition-all flex flex-col h-[140px] sm:h-[180px] items-center text-center ${badge.obtained
-              ? "bg-white shadow-md hover:scale-105 hover:shadow-xl"
-              : "bg-gray-50 opacity-75"
-              }`}
-          >
-            <div className="flex-shrink-0 mb-2 sm:mb-3 h-[36px] sm:h-[48px] flex items-center justify-center">
-              <BadgeIconDisplay
-                icon={badge.icon}
-                title={badge.title}
-                className={`transition-all ${badge.obtained ? "" : "grayscale opacity-50"
-                  }`}
-                size={36}
-              />
-            </div>
-
-            <div className="flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[60px] sm:max-h-[70px] mb-1 sm:mb-2 px-1">
-              <h3 className={`text-xs sm:text-sm font-semibold leading-tight mb-0.5 sm:mb-1 text-center ${badge.obtained ? "text-gray-900" : "text-gray-500"}`}>
-                {badge.title}
-              </h3>
-              <p className="text-[10px] sm:text-xs leading-relaxed text-gray-600 text-center line-clamp-2">{badge.description}</p>
-            </div>
-
-            <div className="flex-shrink-0 w-full h-[24px] sm:h-[32px] flex items-center justify-center mt-auto">
-              {badge.obtained ? (
-                <div className="w-full rounded-lg bg-[#172554] px-2 py-1 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-semibold text-white tabular-nums">
-                  ✓ Débloqué
-                </div>
-              ) : (
-                <div className="w-full h-[24px] sm:h-[32px]" />
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </BadgesPageClient>
+    <BadgesView
+      badgesWithStatus={badgesWithStatus}
+      challengeBadges={challengeBadges || []}
+      isPremiumUser={isPremiumUser}
+      counts={counts}
+    />
   );
 }
-

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Lock, Loader2 } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { activatePremium } from "@/app/actions/premium";
 
 export default function PremiumBadgeOverlay({ isObtained }: { isObtained: boolean }) {
     const [claiming, setClaiming] = useState(false);
@@ -16,14 +18,19 @@ export default function PremiumBadgeOverlay({ isObtained }: { isObtained: boolea
 
         try {
             setClaiming(true);
-            const res = await fetch("/api/player/upgrade", { method: "POST" });
-            if (res.ok) {
-                // Refresh the route to update server components with new data
+            const result = await activatePremium();
+            if (result.success) {
+                toast.success("Félicitations ! Vous êtes maintenant Premium.");
                 router.refresh();
+                // Fallback de sécurité
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
             } else {
-                logger.error("[PremiumBadgeOverlay] Upgrade failed");
+                toast.error("Erreur lors de l'activation : " + result.error);
             }
         } catch (err) {
+            toast.error("Erreur inattendue");
             logger.error("[PremiumBadgeOverlay] Upgrade error", err);
         } finally {
             setClaiming(false);

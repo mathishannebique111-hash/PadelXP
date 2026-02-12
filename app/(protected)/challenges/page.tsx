@@ -20,6 +20,8 @@ interface PlayerChallenge {
     target: number;
   };
   rewardClaimed: boolean;
+  scope: 'global' | 'club';
+  isPremium?: boolean;
 }
 
 export const dynamic = "force-dynamic";
@@ -47,8 +49,8 @@ function extractTarget(objective: string): number {
 }
 
 export default async function PlayerChallengesPage() {
-  const requestHeaders = headers();
-  const cookieStore = cookies();
+  const requestHeaders = await headers();
+  const cookieStore = await cookies();
   const cookieHeader = cookieStore
     .getAll()
     .map(({ name, value }) => `${name}=${value}`)
@@ -185,6 +187,8 @@ export default async function PlayerChallengesPage() {
                     status,
                     progress: { current: 0, target }, // Target extrait de l'objectif
                     rewardClaimed: false,
+                    scope: 'club', // Default scope since we load from club bucket
+                    isPremium: !!record.is_premium
                   };
                 });
                 logger.info(`[PlayerChallengesPage] Loaded ${challenges.length} challenges from storage fallback`);
@@ -203,20 +207,37 @@ export default async function PlayerChallengesPage() {
   let challengePoints = 0;
   let challengeBadgesCount = 0;
   let isPremiumUser = false;
+  let debugInfo = "DEBUG: No User Found via getUser()";
 
   if (user) {
     // Récupérer les points de challenges et le statut premium depuis le profil
-    const { data: userProfile } = await supabaseAdmin
+    // Utiliser le client standard (request-scoped) pour garantir la fraîcheur des données
+    // 1. Fetch with standard client (RLS applied)
+    const { data: userProfile, error: userError } = await supabase
       .from("profiles")
       .select("points, is_premium")
       .eq("id", user.id)
       .maybeSingle();
 
+    // 2. Fetch with admin client (Bypass RLS) - DEBUG
+    const { data: adminProfile, error: adminError } = await supabaseAdmin
+      .from("profiles")
+      .select("is_premium")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    logger.info(`[PlayerChallengesPage] DATA_CHECK: User=${user.id}`);
+    logger.info(`[PlayerChallengesPage] STANDARD client: is_premium=${userProfile?.is_premium}, error=${userError?.message}`);
+    logger.info(`[PlayerChallengesPage] ADMIN client: is_premium=${adminProfile?.is_premium}, error=${adminError?.message}`);
+
     challengePoints = typeof userProfile?.points === 'number'
       ? userProfile.points
       : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
 
-    isPremiumUser = !!userProfile?.is_premium;
+    // Use Admin result if standard fails, to unblock user while debugging
+    isPremiumUser = !!(userProfile?.is_premium || adminProfile?.is_premium);
+
+    debugInfo = `UID: ${user.id.substring(0, 8)} | STD: ${userProfile?.is_premium} | ADM: ${adminProfile?.is_premium} | ERR: ${userError ? 'Y' : 'N'}/${adminError ? 'Y' : 'N'}`;
 
     // Récupérer les badges de challenges
     const { data: challengeBadges } = await supabaseAdmin
@@ -257,7 +278,12 @@ export default async function PlayerChallengesPage() {
           </div>
         )}
 
-        <ChallengesList challenges={challenges} isPremiumUser={isPremiumUser} />
+        {/* Force re-render when premium status changes by using it in key */}
+        <ChallengesList
+          key={`challenges-${isPremiumUser ? 'premium' : 'free'}`}
+          challenges={challenges}
+          isPremiumUser={isPremiumUser}
+        />
       </div>
     </div>
   );

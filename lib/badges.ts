@@ -29,13 +29,13 @@ export const ALL_BADGES: Badge[] = [
   { icon: "Flame", title: "Série de 15", description: "Gagnez 15 matchs consécutifs" },
   { icon: "Flame", title: "Série de 20", description: "Gagnez 20 matchs consécutifs" },
   { icon: "Milestone", title: "Centurion", description: "Jouez 100 matchs" },
-  { icon: "Gem", title: "Diamant", description: "Atteignez 500 points", isPremium: true },
-  { icon: "Crown", title: "Légende", description: "Gagnez 200 matchs au total", isPremium: true },
+  { icon: "Gem", title: "Diamant", description: "Atteignez 500 points" },
+  { icon: "Crown", title: "Légende", description: "Gagnez 200 matchs au total" },
   { icon: "Heart", title: "Amour du padel", description: "Jouez 200 matchs au total" },
   // Badges liés aux avis
   { icon: "MessageSquare", title: "Contributeur", description: "Laissez votre premier avis" },
   // Badge parrainage
-  { icon: "Users", title: "Ambassadeur", description: "Parrainez 2 joueurs", isPremium: true },
+  { icon: "Users", title: "Ambassadeur", description: "Parrainez 2 joueurs" },
   // Badge Premium
   { icon: "Crown", title: "Premium", description: "Membre Premium PadelXP", isPremium: true },
 ];
