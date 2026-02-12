@@ -13,7 +13,7 @@ dependencies {
     implementation project(':capacitor-push-notifications')
     implementation project(':capacitor-splash-screen')
     implementation project(':capawesome-capacitor-badge')
-
+    implementation "com.android.billingclient:billing:8.3.0"
 }
 
 
