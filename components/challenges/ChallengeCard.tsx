@@ -252,12 +252,38 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             <p className="text-sm text-slate-300 mb-6 max-w-xs">
               Débloquez ce challenge et bien plus encore avec PadelXP Premium.
             </p>
-            <Link
-              href="/premium-info" // Assuming this is the premium info page? Or maybe just /premium
-              className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform"
+            <button
+              onClick={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (claiming) return;
+
+                try {
+                  setClaiming(true);
+                  const res = await fetch("/api/player/upgrade", { method: "POST" });
+                  if (res.ok) {
+                    window.location.reload(); // Recharger pour mettre à jour le statut premium
+                  } else {
+                    logger.error("[ChallengeCard] Upgrade failed");
+                  }
+                } catch (err) {
+                  logger.error("[ChallengeCard] Upgrade error", err);
+                } finally {
+                  setClaiming(false);
+                }
+              }}
+              disabled={claiming}
+              className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Devenir Premium
-            </Link>
+              {claiming ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Activation...</span>
+                </>
+              ) : (
+                <span>Devenir Premium (Gratuit)</span>
+              )}
+            </button>
           </div>
         )}
 

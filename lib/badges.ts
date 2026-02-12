@@ -36,6 +36,8 @@ export const ALL_BADGES: Badge[] = [
   { icon: "MessageSquare", title: "Contributeur", description: "Laissez votre premier avis" },
   // Badge parrainage
   { icon: "Users", title: "Ambassadeur", description: "Parrainez 2 joueurs", isPremium: true },
+  // Badge Premium
+  { icon: "Crown", title: "Premium", description: "Membre Premium PadelXP", isPremium: true },
 ];
 
 export function getBadges(stats: PlayerStats): Badge[] {

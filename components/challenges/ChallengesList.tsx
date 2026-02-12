@@ -30,20 +30,23 @@ interface ChallengesListProps {
 
 export default function ChallengesList({ challenges, isPremiumUser }: ChallengesListProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'general' | 'club'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'club' | 'premium'>('general');
 
   const handleRewardClaimed = () => {
     router.refresh();
   };
 
-  const filteredChallenges = challenges.filter(c =>
-    activeTab === 'general' ? c.scope === 'global' : c.scope === 'club'
-  );
+  const filteredChallenges = challenges.filter(c => {
+    if (activeTab === 'general') return c.scope === 'global' && !c.isPremium;
+    if (activeTab === 'club') return c.scope === 'club' && !c.isPremium;
+    if (activeTab === 'premium') return !!c.isPremium;
+    return false;
+  });
 
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex items-center justify-center sm:justify-start gap-2 px-2">
+      <div className="flex items-center justify-center sm:justify-start gap-2 px-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'general'
@@ -64,6 +67,16 @@ export default function ChallengesList({ challenges, isPremiumUser }: Challenges
           <MapPin size={14} />
           <span>Mon Club</span>
         </button>
+        <button
+          onClick={() => setActiveTab('premium')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'premium'
+            ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-lg shadow-amber-500/10'
+            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+            }`}
+        >
+          <Trophy size={14} className="text-amber-400" />
+          <span>Premium</span>
+        </button>
       </div>
 
       {filteredChallenges.length === 0 ? (
@@ -71,7 +84,9 @@ export default function ChallengesList({ challenges, isPremiumUser }: Challenges
           <p className="text-white/60">
             {activeTab === 'general'
               ? "Aucun challenge général disponible pour le moment."
-              : "Aucun challenge club disponible pour le moment."}
+              : activeTab === 'club'
+                ? "Aucun challenge club disponible pour le moment."
+                : "Aucun challenge Premium disponible pour le moment."}
           </p>
         </div>
       ) : (

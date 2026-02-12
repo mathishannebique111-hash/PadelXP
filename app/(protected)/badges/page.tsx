@@ -170,7 +170,7 @@ export default async function BadgesPage() {
       const validUserIds = new Set((profiles || []).map((p: any) => p.id));
 
       // Filtrer les matchs : ne garder que ceux où tous les participants users appartiennent au même club
-      validMatchIds = matchIds.filter(matchId => {
+      validMatchIds = matchIds.filter((matchId: string) => {
         const participants = (allParticipants || []).filter((p: any) => p.match_id === matchId);
         return participants.every((p: any) =>
           p.player_type === "guest" || validUserIds.has(p.user_id)
@@ -222,10 +222,16 @@ export default async function BadgesPage() {
   if ((myReviewsCount || 0) > 0) extraObtained.add("💬|Contributeur"); // Contributeur: au moins 1 avis
 
   // Créer la liste avec le statut de chaque badge
-  let badgesWithStatus = ALL_BADGES.map((badge) => ({
-    ...badge,
-    obtained: obtainedBadgeKeys.has(`${badge.icon}|${badge.title}`) || extraObtained.has(`${badge.icon}|${badge.title}`),
-  }));
+  let badgesWithStatus = ALL_BADGES.map((badge) => {
+    // Le badge "Premium" est automatiquement débloqué pour les utilisateurs premium
+    if (badge.title === "Premium" && isPremiumUser) {
+      return { ...badge, obtained: true };
+    }
+    return {
+      ...badge,
+      obtained: obtainedBadgeKeys.has(`${badge.icon}|${badge.title}`) || extraObtained.has(`${badge.icon}|${badge.title}`),
+    };
+  });
   // Mettre le badge Contributeur en premier pour qu'il apparaisse sur la première ligne
   badgesWithStatus = badgesWithStatus.sort((a, b) => {
     const weight = (bd: typeof a) => {
@@ -341,6 +347,7 @@ export default async function BadgesPage() {
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
             {badgesWithStatus.map((badge, idx) => {
+              const isPremiumBadge = badge.title === "Premium";
               const isLockedPremium = badge.isPremium && !isPremiumUser;
 
               return (
@@ -348,9 +355,11 @@ export default async function BadgesPage() {
                   key={idx}
                   className={`group relative rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center overflow-hidden ${isLockedPremium
                     ? "border-amber-500/30 bg-slate-900/50"
-                    : badge.obtained
-                      ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
-                      : "border-gray-200 bg-gray-50 opacity-75"
+                    : isPremiumBadge && badge.obtained
+                      ? "border-yellow-400 bg-gradient-to-br from-yellow-100 via-amber-100 to-yellow-50 shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-yellow-400/50"
+                      : badge.obtained
+                        ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
+                        : "border-gray-200 bg-gray-50 opacity-75"
                     }`}
                 >
                   {/* Premium tag */}
