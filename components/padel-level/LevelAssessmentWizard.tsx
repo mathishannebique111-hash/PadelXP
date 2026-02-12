@@ -343,10 +343,10 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       `}</style>
 
       {/* Header fixe - mobile first, commence en haut de l'écran */}
-      <div className="sticky z-20 px-4 pt-2 pb-1 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.5rem)' }}>
+      <div className="sticky z-20 px-4 pt-4 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}>
 
         {/* Logo spécifique au questionnaire RESTAURÉ */}
-        <div className="flex justify-center mb-0.5">
+        <div className="flex justify-center mb-1.5">
           <Image
             src="/padelxp-logo-transparent.png"
             alt="PadelXP Logo"
@@ -406,7 +406,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       </div>
 
       {/* Boutons fixés en bas - mobile-first, taille augmentée pour "Suivant" */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-3 flex-shrink-0 pb-6 sm:pb-10">
+      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-3 flex-shrink-0 pb-10 sm:pb-12">
         <div className="flex gap-2 sm:gap-3 max-w-3xl mx-auto w-full">
           <motion.button
             type="button"
