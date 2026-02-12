@@ -72,26 +72,28 @@ function PremiumContent() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 relative overflow-hidden flex flex-col justify-center">
-            {/* Background Effects */}
+        <div className="min-h-screen bg-slate-950 relative overflow-hidden flex flex-col items-center justify-center font-sans">
+            {/* Background Effects (Subtle) */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] opacity-30" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[100px] opacity-30" />
+                <div className="absolute top-[-20%] right-[-20%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] opacity-20" />
+                <div className="absolute bottom-[-20%] left-[-20%] w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[120px] opacity-20" />
             </div>
 
-            <div className="relative z-10 w-full h-[100dvh] max-w-lg mx-auto flex flex-col pt-safe-top pb-safe-bottom px-4">
+            <div className="relative z-10 w-full h-[100dvh] max-w-md mx-auto flex flex-col pt-12 pb-6 px-6">
 
-                {/* 1. Header Section - Clear and Visible */}
-                <div className="flex-none pt-6 flex flex-col items-center justify-center relative min-h-[15%] w-full">
-                    <button
-                        onClick={() => router.back()}
-                        className="absolute left-0 top-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-50 backdrop-blur-md"
-                        aria-label="Retour"
-                    >
-                        <ArrowLeft className="w-6 h-6" />
-                    </button>
+                {/* 1. Header Section - Fixed Top Area */}
+                <div className="flex-none flex flex-col items-center w-full mb-4">
+                    <div className="w-full flex items-center justify-between mb-2 absolute top-12 left-0 px-6 z-20">
+                        <button
+                            onClick={() => router.back()}
+                            className="p-2 -ml-2 rounded-full bg-slate-800/50 text-white backdrop-blur-md active:scale-95 transition-transform"
+                            aria-label="Retour"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                    </div>
 
-                    <div className="relative w-48 h-16 sm:w-56 sm:h-20 mb-2 mt-4">
+                    <div className="relative w-40 h-16 mt-8 mb-2">
                         <Image
                             src="/padelxp-logo-transparent.png"
                             alt="PadelXP Premium"
@@ -103,70 +105,75 @@ function PremiumContent() {
                             priority
                         />
                     </div>
+                </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none text-center sr-only">
-                        Passez au niveau Supérieur
+                {/* 2. Main Title - Center Stage */}
+                <div className="flex-none text-center mb-6">
+                    <h1 className="text-3xl font-black text-white tracking-tighter leading-none">
+                        PASSEZ AU NIVEAU <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">
+                            SUPÉRIEUR
+                        </span>
                     </h1>
                 </div>
 
-                {/* 2. Main Content - List of Features (No Cards, Stacked) */}
-                <div className="flex-1 flex flex-col justify-center py-4 min-h-0 w-full max-w-sm mx-auto">
-                    <div className="flex flex-col space-y-6">
-                        {features.map((feature, idx) => (
-                            <div key={idx} className="flex items-start gap-4 text-left">
-                                <div className="mt-0.5 shrink-0">
-                                    {feature.icon}
-                                </div>
-                                <div className="flex flex-col">
-                                    <h3 className="text-base sm:text-lg font-bold text-white leading-tight mb-1">{feature.title}</h3>
-                                    <p className="text-xs sm:text-sm text-slate-400 leading-snug">{feature.description}</p>
-                                </div>
+                {/* 3. Features List - Vertical Stack */}
+                <div className="flex-1 flex flex-col justify-start space-y-5 px-2 overflow-y-auto no-scrollbar">
+                    {features.map((feature, idx) => (
+                        <div key={idx} className="flex items-start gap-4">
+                            <div className="p-2 rounded-lg bg-slate-900/50 border border-slate-800/50 shrink-0 mt-0.5">
+                                {feature.icon}
                             </div>
-                        ))}
-                    </div>
+                            <div>
+                                <h3 className="text-base font-bold text-white leading-tight mb-0.5">{feature.title}</h3>
+                                <p className="text-xs text-slate-400 leading-snug">{feature.description}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
-                {/* 3. CTA Section - Locked at Bottom with Safe Area */}
-                <div className="flex-none pb-4 pt-2">
-                    <div className="p-0.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 w-full">
-                        <div className="bg-slate-950 rounded-[14px] p-4 sm:p-5 border border-amber-500/20 flex flex-col gap-3">
+                {/* 4. CTA Section - Locked Bottom */}
+                <div className="flex-none pt-4 mt-auto">
+                    <div className="p-[1px] rounded-2xl bg-gradient-to-r from-amber-500/30 via-yellow-500/30 to-amber-500/30 w-full mb-3">
+                        <div className="bg-slate-900/90 backdrop-blur-xl rounded-[15px] p-4 border border-white/5 flex flex-col gap-3 items-center">
 
-                            <div className="flex flex-col items-center justify-center -mb-1">
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-3xl sm:text-4xl font-black text-white">4.99€</span>
-                                    <span className="text-slate-500 font-medium text-xs sm:text-sm">/mois</span>
-                                </div>
-                                <p className="text-[10px] text-slate-400">Sans engagement. Annulable à tout moment.</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-3xl font-black text-white">4.99€</span>
+                                <span className="text-sm font-medium text-slate-500">/mois</span>
                             </div>
 
                             <button
                                 onClick={handleSubscribe}
                                 disabled={isProcessing}
-                                className="w-full group px-4 py-3 sm:px-6 sm:py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-bold text-sm sm:text-base shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-black text-base shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                             >
                                 {isProcessing ? (
                                     <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <Loader2 className="w-5 h-5 animate-spin" />
                                         <span>Chargement...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <span>Je veux y accéder</span>
-                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                        <span>JE VEUX Y ACCÉDER</span>
+                                        <ArrowRight className="w-5 h-5" />
                                     </>
                                 )}
                             </button>
 
+                            {/* Restore Button */}
                             {isApp && (
                                 <button
                                     onClick={restorePurchases}
-                                    className="w-full text-center text-[10px] text-slate-500 hover:text-slate-400 underline transition-colors -mt-1"
+                                    className="text-[10px] text-slate-500 font-medium underline decoration-slate-700 underline-offset-2 hover:text-slate-300 transition-colors"
                                 >
                                     Déjà membre ? Restaurer mes achats
                                 </button>
                             )}
                         </div>
                     </div>
+                    <p className="text-[9px] text-slate-600 text-center font-medium">
+                        Sans engagement • Annulation à tout moment
+                    </p>
                 </div>
 
             </div>
