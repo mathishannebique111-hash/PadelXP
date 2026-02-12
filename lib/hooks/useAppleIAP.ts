@@ -60,6 +60,7 @@ export const useAppleIAP = () => {
             store.register({
                 id: 'premium_monthly',
                 type: store.PAID_SUBSCRIPTION || 'paid subscription',
+                platform: (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE || 'ios-appstore',
             });
 
             // Gérer les approbations
