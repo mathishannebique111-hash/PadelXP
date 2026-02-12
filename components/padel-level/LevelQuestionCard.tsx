@@ -36,13 +36,13 @@ export default function LevelQuestionCard({
 
   return (
     <div className="w-full">
-      {/* Question - taille mobile optimisée */}
-      <h2 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 sm:mb-3 leading-tight">
+      {/* Question - tighter for mobile */}
+      <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 sm:mb-3 leading-tight">
         {question.question}
       </h2>
 
       {question.description && (
-        <p className="text-xs sm:text-sm text-gray-300 mb-3 sm:mb-4 leading-relaxed">
+        <p className="text-[11px] sm:text-sm text-gray-400 mb-2 sm:mb-4 leading-relaxed line-clamp-2 sm:line-clamp-none">
           {question.description}
         </p>
       )}
@@ -67,8 +67,8 @@ export default function LevelQuestionCard({
               whileHover={{ scale: 1.01 }}
               onClick={() => handleSelect(option.points)}
               className={`w-full text-left p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 min-h-[44px] sm:min-h-[48px] md:min-h-[52px] ${isSelected
-                  ? "bg-blue-500/20 border-blue-500 shadow-lg shadow-blue-500/20"
-                  : "bg-slate-700/50 border-slate-600 hover:border-slate-500 hover:bg-slate-700/70"
+                ? "bg-blue-500/20 border-blue-500 shadow-lg shadow-blue-500/20"
+                : "bg-slate-700/50 border-slate-600 hover:border-slate-500 hover:bg-slate-700/70"
                 }`}
             >
               <div className="flex items-center justify-between gap-2 sm:gap-3">

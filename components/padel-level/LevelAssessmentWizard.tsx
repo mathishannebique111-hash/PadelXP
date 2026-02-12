@@ -148,59 +148,16 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
     return () => clearTimeout(timeoutId);
   }, [currentQuestion, responses, hasStarted, supabase]);
 
-  // Masquer le logo du club quand le questionnaire est ouvert ET visible
-  // Vérifier que le conteneur parent est visible (onglet Padel actif) et que l'utilisateur a commencé
+  // Masquer le logo du club et la navbar quand le questionnaire a commencé
   useEffect(() => {
-    const updateLogoVisibility = () => {
-      const logoContainer = document.querySelector('[data-club-logo-container="true"]');
-      if (!logoContainer) return;
-
-      // Vérifier si l'onglet Padel est visible (notre parent a display: block)
-      const padelTabContent = document.querySelector('[style*="display: block"]');
-      const isWizardVisible = padelTabContent?.textContent?.includes('Commencer le questionnaire') ||
-        padelTabContent?.textContent?.includes('Évaluez votre niveau');
-
-      // Ne masquer le logo QUE si hasStarted ET le wizard est réellement visible (onglet actif)
-      const searchParams = new URLSearchParams(window.location.search);
-      const currentTab = searchParams.get('tab') || 'stats';
-      const isPadelTabActive = currentTab === 'padel';
-
-      if (hasStarted && isPadelTabActive) {
-        document.body.classList.add('questionnaire-open');
-        (logoContainer as HTMLElement).style.display = 'none';
-      } else {
-        document.body.classList.remove('questionnaire-open');
-        (logoContainer as HTMLElement).style.display = '';
-      }
-    };
-
-    updateLogoVisibility();
-
-    // Écouter les changements d'URL (changement d'onglet)
-    const handleUrlChange = () => updateLogoVisibility();
-    window.addEventListener('popstate', handleUrlChange);
-
-    // Observer les changements d'onglet via l'historique
-    const originalPushState = window.history.pushState;
-    const originalReplaceState = window.history.replaceState;
-    window.history.pushState = function (...args) {
-      originalPushState.apply(this, args);
-      updateLogoVisibility();
-    };
-    window.history.replaceState = function (...args) {
-      originalReplaceState.apply(this, args);
-      updateLogoVisibility();
-    };
+    if (hasStarted) {
+      document.body.classList.add('questionnaire-open');
+    } else {
+      document.body.classList.remove('questionnaire-open');
+    }
 
     return () => {
       document.body.classList.remove('questionnaire-open');
-      const logoContainer = document.querySelector('[data-club-logo-container="true"]');
-      if (logoContainer) {
-        (logoContainer as HTMLElement).style.display = '';
-      }
-      window.removeEventListener('popstate', handleUrlChange);
-      window.history.pushState = originalPushState;
-      window.history.replaceState = originalReplaceState;
     };
   }, [hasStarted]);
 
@@ -378,20 +335,23 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       {/* Style global pour masquer le logo du club et la bar de nav */}
       <style jsx global>{`
         body.questionnaire-open [data-club-logo-container="true"],
-        body.questionnaire-open #bottom-nav-bar {
+        body.questionnaire-open #bottom-nav-bar,
+        body.questionnaire-open #site-logo-mobile,
+        body.questionnaire-open .site-header-logo {
           display: none !important;
         }
       `}</style>
 
       {/* Header fixe - mobile first, commence en haut de l'écran */}
-      <div className="sticky z-20 px-4 pt-12 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 2rem)' }}>
-        {/* Logo PadelXP en haut */}
-        <div className="flex justify-center mb-10">
+      <div className="sticky z-20 px-4 pt-2 pb-1 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.5rem)' }}>
+
+        {/* Logo spécifique au questionnaire RESTAURÉ */}
+        <div className="flex justify-center mb-0.5">
           <Image
             src="/padelxp-logo-transparent.png"
             alt="PadelXP Logo"
-            width={160}
-            height={46}
+            width={110}
+            height={32}
             priority
           />
         </div>
@@ -403,12 +363,12 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
             totalSteps={PADEL_QUESTIONS.length}
           />
 
-          <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="mt-2.5 flex items-center justify-center gap-2">
             {(() => {
               const CategoryIcon = CATEGORY_INFO[question.category].Icon;
-              return <CategoryIcon size={14} className="text-blue-400 flex-shrink-0" />;
+              return <CategoryIcon size={12} className="text-blue-400 flex-shrink-0" />;
             })()}
-            <span className="text-[10px] uppercase tracking-[0.2em] font-black text-blue-500/80">
+            <span className="text-[9px] uppercase tracking-[0.2em] font-black text-blue-500/80">
               {CATEGORY_INFO[question.category].label}
             </span>
           </div>
@@ -417,7 +377,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
 
       {/* Zone pour la question - entre la barre de progression et la barre fixe du bas */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-2 flex items-start justify-center"
+        className="flex-1 overflow-y-auto px-4 py-1 flex items-start justify-center"
         style={{
           minHeight: 0,
         }}
@@ -446,17 +406,17 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       </div>
 
       {/* Boutons fixés en bas - mobile-first, taille augmentée pour "Suivant" */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-4 flex-shrink-0 pb-10">
+      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-3 flex-shrink-0 pb-6 sm:pb-10">
         <div className="flex gap-2 sm:gap-3 max-w-3xl mx-auto w-full">
           <motion.button
             type="button"
             whileTap={{ scale: 0.95 }}
             onClick={handleBack}
             disabled={!canGoBack}
-            className="px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 rounded-lg sm:rounded-xl border border-gray-700 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px]"
+            className="px-3 py-2 rounded-lg sm:rounded-xl border border-gray-700 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center min-w-[40px] min-h-[40px]"
           >
-            <ChevronLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
-            <span className="hidden sm:inline">Retour</span>
+            <ChevronLeft size={16} />
+            <span className="hidden sm:inline ml-2">Retour</span>
           </motion.button>
 
           <motion.button
@@ -464,17 +424,17 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
             whileTap={{ scale: 0.95 }}
             onClick={handleNext}
             disabled={!canGoNext}
-            className="flex-1 py-2.5 sm:py-3 md:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[40px] sm:min-h-[44px] md:min-h-[48px]"
+            className="flex-1 py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
           >
             {currentQuestion === PADEL_QUESTIONS.length - 1 ? (
               <>
-                <span className="text-sm sm:text-base">Voir mon niveau</span>
-                <Check size={18} className="sm:w-[20px] sm:h-[20px]" />
+                <span>Voir mon niveau</span>
+                <Check size={18} />
               </>
             ) : (
               <>
-                <span className="text-sm sm:text-base">Suivant</span>
-                <ChevronRight size={18} className="sm:w-[20px] sm:h-[20px]" />
+                <span>Suivant</span>
+                <ChevronRight size={18} />
               </>
             )}
           </motion.button>
@@ -502,7 +462,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
             }
             setHasStarted(false);
           }}
-          className="mt-1.5 sm:mt-3 w-full text-[10px] sm:text-xs md:text-sm text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200 py-1"
+          className="mt-2 w-full text-[10px] text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200 py-1"
         >
           Poursuivre plus tard
         </button>

@@ -90,12 +90,12 @@ export default function ChallengesList({ challenges, isPremiumUser = false, debu
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex items-center justify-center sm:justify-start gap-2 px-2 overflow-x-auto">
+      <div className="flex items-center justify-center gap-3 px-2 overflow-x-auto p-4 scrollbar-hide">
         <button
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'general'
-            ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
-            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+            ? 'bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/50 ring-offset-2 ring-offset-[#172554]'
+            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
             }`}
         >
           <Globe size={14} />
@@ -104,8 +104,8 @@ export default function ChallengesList({ challenges, isPremiumUser = false, debu
         <button
           onClick={() => setActiveTab('club')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'club'
-            ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
-            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+            ? 'bg-[#CCFF00] text-[#172554] shadow-lg shadow-[#CCFF00]/25 ring-2 ring-[#CCFF00] ring-offset-2 ring-offset-[#172554]'
+            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
             }`}
         >
           <MapPin size={14} />
@@ -114,11 +114,11 @@ export default function ChallengesList({ challenges, isPremiumUser = false, debu
         <button
           onClick={() => setActiveTab('premium')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'premium'
-            ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40 shadow-lg shadow-amber-500/10'
-            : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+            ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25 ring-2 ring-amber-400 ring-offset-2 ring-offset-[#172554]'
+            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
             }`}
         >
-          <Trophy size={14} className="text-amber-400" />
+          <Trophy size={14} className={activeTab === 'premium' ? "text-white" : "text-amber-400"} />
           <span>Premium</span>
         </button>
       </div>
