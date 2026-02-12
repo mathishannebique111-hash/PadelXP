@@ -95,7 +95,7 @@ export async function getPremiumStatsData() {
 
         const { data: profiles } = await supabaseAdmin
             .from("profiles")
-            .select("id, first_name, last_name, display_name, avatar_url")
+            .select("id, first_name, last_name, display_name, avatar_url, niveau_padel")
             .in("id", Array.from(allPlayerIds));
 
         const profileMap = new Map(profiles?.map(p => [p.id, p]));
@@ -330,7 +330,9 @@ export async function getPremiumStatsData() {
             if (stats.total >= 2) {
                 const wr = (stats.wins / stats.total) * 100;
                 if (wr > bestMonth.winrate) {
-                    bestMonth = { name, winrate: Math.round(wr) };
+                    // Capitalize first letter
+                    const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+                    bestMonth = { name: capitalized, winrate: Math.round(wr) };
                 }
             }
         });

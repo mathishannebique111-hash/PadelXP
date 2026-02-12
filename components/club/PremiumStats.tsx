@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { TrendingUp, Crown, Loader2, Trophy, Skull, Heart, Calendar, ArrowRight, Sparkles } from "lucide-react";
+import { TrendingUp, Crown, Loader2, Trophy, Skull, Heart, Calendar, ArrowRight, Sparkles, Clock, Swords } from "lucide-react";
 import { Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
@@ -195,12 +195,12 @@ export default function PremiumStats() {
             tooltip: {
                 mode: "index" as const,
                 intersect: false,
-                backgroundColor: "rgba(15, 23, 42, 0.9)",
+                backgroundColor: "rgba(15, 23, 42, 0.95)",
                 titleColor: "#94a3b8",
                 bodyColor: "#fff",
-                borderColor: "rgba(255,255,255,0.05)",
+                borderColor: "rgba(255,255,255,0.1)",
                 borderWidth: 1,
-                padding: 10,
+                padding: 12,
                 displayColors: false,
                 callbacks: {
                     label: function (context: any) {
@@ -212,49 +212,50 @@ export default function PremiumStats() {
         scales: {
             y: {
                 display: true,
-                grid: { color: "rgba(255,255,255,0.03)" },
-                ticks: { color: "rgba(148, 163, 184, 0.6)", font: { size: 10 } },
+                grid: { color: "rgba(255,255,255,0.05)" },
+                ticks: { color: "rgba(148, 163, 184, 0.8)", font: { size: 10, family: 'Inter' } },
                 suggestedMin: 0,
                 suggestedMax: 10,
             },
             x: {
                 display: true,
                 grid: { display: false },
-                ticks: { color: "rgba(148, 163, 184, 0.6)", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
+                ticks: { color: "rgba(148, 163, 184, 0.8)", font: { size: 10, family: 'Inter' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
             },
         },
     };
 
     const renderList = (title: string, icon: any, list: any[], colorClass: string, emptyMessage: string) => {
-        if (list.length === 0) return null; // Hide if empty per user request
+        if (!list || list.length === 0) return null;
 
         const isPartners = title === "Partenaires Favoris";
         const isVictims = title === "Mes Victimes";
 
         return (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
-                <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-200">
-                    <span className={`p-1.5 rounded-lg bg-slate-800 ${colorClass}`}>{icon}</span> {title}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full">
+                <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+                    <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
+                    {title}
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-3 flex-1">
                     {list.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between group">
+                        <div key={idx} className="flex items-center justify-between group p-2 rounded-lg hover:bg-white/5 transition-colors">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-800 group-hover:ring-slate-700 transition-all">
+                                <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-700/50 group-hover:ring-slate-600 transition-all">
                                     {item.avatar_url ? <img src={item.avatar_url} alt={item.name} className="w-full h-full object-cover" /> : null}
                                 </div>
-                                <span className="text-slate-200 text-sm font-medium truncate max-w-[100px]">{item.name}</span>
+                                <div className="flex flex-col">
+                                    <span className="text-slate-200 text-sm font-semibold truncate max-w-[120px]">{item.name}</span>
+                                    <span className="text-[10px] text-slate-500">{item.winrate}% de victoires</span>
+                                </div>
                             </div>
                             <div className="text-right">
-                                <div className="flex items-center justify-end gap-1.5">
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 ${colorClass}`}>
-                                        {isPartners ?
-                                            `${item.count} matchs` :
-                                            `${item.count} ${isVictims ? 'vict.' : 'déf.'} / ${item.total} matchs`
-                                        }
-                                    </span>
-                                </div>
-                                <div className="text-[10px] text-slate-500 font-medium mt-0.5">{item.winrate}% réussite</div>
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 ${colorClass}`}>
+                                    {isPartners ?
+                                        `${item.count} matchs` :
+                                        `${item.count} ${isVictims ? 'vict.' : 'déf.'}`
+                                    }
+                                </span>
                             </div>
                         </div>
                     ))}
@@ -264,130 +265,187 @@ export default function PremiumStats() {
     };
 
     return (
-        <div className="space-y-6 mt-8">
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-yellow-500" />
-                    Statistiques Avancées
-                </h2>
-                <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
+        <div className="space-y-8 mt-10">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-amber-500" />
+                        Statistiques Premium
+                    </h2>
+                    <p className="text-slate-400 text-sm mt-1">Analyse détaillée de vos performances</p>
+                </div>
+
+                <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 shadow-sm">
                     {['1W', '1M', '1Y', 'ALL'].map((range) => (
                         <button
                             key={range}
                             onClick={() => setTimeRange(range as TimeRange)}
-                            className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${timeRange === range
-                                ? "bg-slate-700 text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-300"
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeRange === range
+                                ? "bg-slate-800 text-white shadow-md border border-slate-700"
+                                : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
                                 }`}
                         >
-                            {range === '1W' ? '7J' : range === '1M' ? '30J' : range === '1Y' ? '1 AN' : 'Tout'}
+                            {range === '1W' ? '7J' : range === '1M' ? '30J' : range === '1Y' ? '1 AN' : 'TOUT'}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Evolution Chart */}
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 h-[300px] relative">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 className="text-sm font-bold text-slate-200 mb-0.5">Évolution du niveau</h3>
+            {/* Evolution Chart - Premium Card */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-blue-500" />
+                                Évolution du niveau
+                            </h3>
+                            <p className="text-xs text-slate-500">Votre progression sur la période</p>
+                        </div>
+                        {filteredEvolution.length > 0 && (
+                            <div className="text-right bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+                                <div className="text-2xl font-black text-white">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</div>
+                                <div className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Niveau Actuel</div>
+                            </div>
+                        )}
                     </div>
-                    {filteredEvolution.length > 0 && (
-                        <div className="text-right">
-                            <span className="text-2xl font-black text-blue-500">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</span>
-                            <span className="text-[10px] text-slate-500 block uppercase tracking-wider">Niveau Actuel</span>
+
+                    {filteredEvolution.length > 0 ? (
+                        <div className="h-[250px] w-full">
+                            <Line data={chartData} options={chartOptions} />
+                        </div>
+                    ) : (
+                        <div className="h-[250px] flex flex-col items-center justify-center text-slate-600 gap-3 border border-dashed border-slate-800 rounded-xl bg-slate-800/20">
+                            <TrendingUp className="w-10 h-10 opacity-20" />
+                            <p className="text-sm font-medium">Pas assez de données sur cette période</p>
+                            <button onClick={() => setTimeRange('ALL')} className="text-xs text-blue-400 font-bold hover:text-blue-300 hover:underline">Voir tout l'historique</button>
                         </div>
                     )}
                 </div>
-
-                {filteredEvolution.length > 0 ? (
-                    <div className="h-[210px] w-full">
-                        <Line data={chartData} options={chartOptions} />
-                    </div>
-                ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600 gap-2">
-                        <TrendingUp className="w-8 h-8 opacity-20" />
-                        <p className="text-xs">Pas assez de données sur cette période</p>
-                        <button onClick={() => setTimeRange('ALL')} className="text-[10px] text-blue-500 underline hover:text-blue-400">Voir tout l'historique</button>
-                    </div>
-                )}
             </div>
 
-            {/* Insights Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {/* Lucky Day */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[3px] bg-orange-500 opacity-80"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Jour de Chance</span>
-                    <span className="text-lg font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
-                    <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.luckyDay?.winrate || 0}% de victoires</span>
+            {/* Insights Cards - Premium Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Jour de Gloire */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-amber-500/30 transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
+                    <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center mb-3">
+                        <Calendar className="w-5 h-5 text-amber-500" />
+                    </div>
+                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Jour de Gloire</span>
+                    <span className="text-[10px] text-slate-500 mb-3">Jour où vous gagnez le plus</span>
+                    <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                        <span className="text-[10px] text-amber-500 font-bold">{statsData?.insights?.luckyDay?.winrate || 0}% victoires</span>
+                    </div>
                 </div>
 
-                {/* Golden Hour */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[3px] bg-yellow-500 opacity-80"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Heure de Gloire</span>
-                    <span className="text-lg font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.goldenHour?.name || "-"}</span>
-                    <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.goldenHour?.winrate || 0}% de victoires</span>
+                {/* Heures de Gloire */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-yellow-500/30 transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-yellow-500 to-transparent opacity-50"></div>
+                    <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center mb-3">
+                        <Clock className="w-5 h-5 text-yellow-500" />
+                    </div>
+                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Heures de Gloire</span>
+                    <span className="text-[10px] text-slate-500 mb-3">Heures où vous gagnez le plus</span>
+                    <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300 px-2 line-clamp-1">{statsData?.insights?.goldenHour?.name || "-"}</span>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20">
+                        <span className="text-[10px] text-yellow-500 font-bold">{statsData?.insights?.goldenHour?.winrate || 0}% victoires</span>
+                    </div>
                 </div>
 
-                {/* Best Month */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[3px] bg-purple-500 opacity-80"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Meilleur Mois</span>
-                    <span className="text-lg font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
-                    <span className="text-[10px] text-slate-500 mt-1">{statsData?.insights?.bestMonth?.winrate || 0}% de victoires</span>
+                {/* Meilleur Mois */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50"></div>
+                    <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center mb-3">
+                        <Trophy className="w-5 h-5 text-purple-500" />
+                    </div>
+                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Meilleur Mois</span>
+                    <span className="text-[10px] text-slate-500 mb-3">Période la plus faste</span>
+                    <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
+                        <span className="text-[10px] text-purple-500 font-bold">{statsData?.insights?.bestMonth?.winrate || 0}% victoires</span>
+                    </div>
                 </div>
 
                 {/* Current Form */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[3px] bg-emerald-500 opacity-80"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Forme (5 derniers)</span>
-                    <span className={`text-2xl font-black group-hover:scale-110 transition-transform duration-300 ${(statsData?.insights?.currentForm || 0) >= 60 ? "text-emerald-500" :
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3">
+                        <TrendingUp className="w-5 h-5 text-emerald-500" />
+                    </div>
+                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Forme (5 derniers)</span>
+                    <span className="text-[10px] text-slate-500 mb-3">% victoires sur les 5 derniers matchs</span>
+                    <span className={`text-4xl font-black group-hover:scale-110 transition-transform duration-300 mb-1 ${(statsData?.insights?.currentForm || 0) >= 60 ? "text-emerald-500" :
                         (statsData?.insights?.currentForm || 0) >= 40 ? "text-blue-500" : "text-amber-500"
                         }`}>
                         {statsData?.insights?.currentForm || 0}%
                     </span>
-                    <span className="text-[10px] text-slate-500 mt-1">de victoires</span>
                 </div>
 
                 {/* Reaction Capacity */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500 opacity-80"></div>
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2 pt-2">Capacité de Réaction</span>
-                    <span className="text-2xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.reaction?.rate || 0}%</span>
-                    <span className="text-[10px] text-slate-500 mt-1">
-                        {statsData?.insights?.reaction?.success || 0} remontadas / {statsData?.insights?.reaction?.opportunities || 0} 1er sets perdus
-                    </span>
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-red-500/30 transition-all sm:col-span-2 lg:col-span-2">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+                    <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
+                        <Heart className="w-5 h-5 text-red-500" />
+                    </div>
+                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Capacité de Réaction</span>
+                    <span className="text-[10px] text-slate-500 mb-3">% matchs gagnés après perte du 1er set</span>
+
+                    <div className="flex items-center gap-6 mt-1">
+                        <span className="text-4xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.reaction?.rate || 0}%</span>
+                        <div className="h-8 w-[1px] bg-slate-800"></div>
+                        <div className="flex flex-col items-start">
+                            <span className="text-xs text-slate-300 font-bold">{statsData?.insights?.reaction?.success || 0} remontadas</span>
+                            <span className="text-[10px] text-slate-500">sur {statsData?.insights?.reaction?.opportunities || 0} opportunités</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Performance vs Level Section */}
             {(statsData?.insights?.levelPerformance) && (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-blue-500" /> Performance vs Niveau
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                    <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
+                        <Swords className="w-5 h-5 text-slate-400" />
+                        Performance par adversaire
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
                         {[
-                            { key: 'weaker', color: 'text-green-500', barBy: 'bg-green-500', label: 'vs Plus Faible' },
-                            { key: 'equal', color: 'text-blue-500', barBy: 'bg-blue-500', label: 'vs Équivalent' },
-                            { key: 'stronger', color: 'text-red-500', barBy: 'bg-red-500', label: 'vs Plus Fort' }
+                            { key: 'weaker', color: 'text-emerald-500', barGradient: 'from-emerald-600 to-emerald-400', label: 'vs Plus Faible', icon: <ArrowRight className="w-3 h-3 rotate-45 text-emerald-500" /> },
+                            { key: 'equal', color: 'text-blue-500', barGradient: 'from-blue-600 to-blue-400', label: 'vs Niveau Équivalent', icon: <ArrowRight className="w-3 h-3 text-blue-500" /> },
+                            { key: 'stronger', color: 'text-red-500', barGradient: 'from-red-600 to-red-400', label: 'vs Plus Fort', icon: <ArrowRight className="w-3 h-3 -rotate-45 text-red-500" /> }
                         ].map((item) => {
                             // @ts-ignore
                             const stat = statsData?.insights?.levelPerformance?.[item.key] || { wins: 0, total: 0 };
                             const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
                             return (
-                                <div key={item.key} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-xs text-slate-400 font-medium">{item.label}</span>
-                                        <span className={`text-sm font-black ${item.color}`}>{winrate}%</span>
+                                <div key={item.key} className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30 backdrop-blur-md">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div className="flex items-center gap-2">
+                                            {item.icon}
+                                            <span className="text-xs text-slate-300 font-bold uppercase tracking-wide">{item.label}</span>
+                                        </div>
                                     </div>
-                                    <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                        <div className={`h-full ${item.barBy}`} style={{ width: `${winrate}%` }}></div>
+
+                                    <div className="flex items-end gap-2 mb-3">
+                                        <span className={`text-3xl font-black ${item.color}`}>{winrate}%</span>
+                                        <span className="text-[10px] text-slate-500 font-medium mb-1.5">de réussite</span>
                                     </div>
-                                    <div className="text-[10px] text-slate-500 mt-1.5 text-right">
-                                        {stat.wins} vict. / {stat.total} matchs
+
+                                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                        <div className={`h-full bg-gradient-to-r ${item.barGradient} rounded-full`} style={{ width: `${winrate}%` }}></div>
+                                    </div>
+
+                                    <div className="text-[10px] text-slate-400 mt-2 font-medium flex justify-between">
+                                        <span>{stat.wins} victoires</span>
+                                        <span className="text-slate-600">/</span>
+                                        <span>{stat.total} matchs</span>
                                     </div>
                                 </div>
                             );
@@ -397,10 +455,10 @@ export default function PremiumStats() {
             )}
 
             {/* Lists */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {renderList("Mes Victimes", <Trophy className="w-4 h-4" />, statsData?.topVictims || [], "text-yellow-500", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
-                {renderList("Mes Bourreaux", <Skull className="w-4 h-4" />, statsData?.topNemesis || [], "text-red-500", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
-                {renderList("Partenaires Favoris", <Heart className="w-4 h-4" />, statsData?.topPartners || [], "text-pink-500", "Jouez des matchs pour voir vos partenaires.")}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {renderList("Mes Victimes", <Trophy className="w-4 h-4 text-amber-500" />, statsData?.topVictims || [], "text-amber-500 border-amber-500/20 bg-amber-500/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
+                {renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-red-500" />, statsData?.topNemesis || [], "text-red-500 border-red-500/20 bg-red-500/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
+                {renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-pink-500" />, statsData?.topPartners || [], "text-pink-500 border-pink-500/20 bg-pink-500/10", "Jouez des matchs pour voir vos partenaires.")}
             </div>
         </div>
     );
