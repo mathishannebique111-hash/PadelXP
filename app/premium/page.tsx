@@ -81,16 +81,17 @@ function PremiumContent() {
 
             <div className="relative z-10 w-full h-[100dvh] max-w-lg mx-auto flex flex-col pt-safe-top pb-safe-bottom px-4">
 
-                {/* 1. Header Section - Flex Shrink but clear hierarchy */}
-                <div className="flex-none pt-2 flex flex-col items-center justify-center relative min-h-[15%]">
+                {/* 1. Header Section - Clear and Visible */}
+                <div className="flex-none pt-6 flex flex-col items-center justify-center relative min-h-[15%] w-full">
                     <button
                         onClick={() => router.back()}
-                        className="absolute left-0 top-3 p-2 rounded-full bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors z-20"
+                        className="absolute left-0 top-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-50 backdrop-blur-md"
+                        aria-label="Retour"
                     >
-                        <ArrowLeft className="w-5 h-5 sm:w-6 h-6" />
+                        <ArrowLeft className="w-6 h-6" />
                     </button>
 
-                    <div className="relative w-32 h-10 sm:w-40 sm:h-12 mb-1">
+                    <div className="relative w-48 h-16 sm:w-56 sm:h-20 mb-2 mt-4">
                         <Image
                             src="/padelxp-logo-transparent.png"
                             alt="PadelXP Premium"
@@ -103,29 +104,23 @@ function PremiumContent() {
                         />
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none mb-0.5 text-center">
-                        Passez au niveau <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">
-                            Supérieur
-                        </span>
+                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none text-center sr-only">
+                        Passez au niveau Supérieur
                     </h1>
                 </div>
 
-                {/* 2. Main Content - Features Grid - Grows to fill available space */}
-                <div className="flex-1 flex flex-col justify-center py-2 min-h-0">
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4 h-full max-h-[50vh]">
+                {/* 2. Main Content - List of Features (No Cards, Stacked) */}
+                <div className="flex-1 flex flex-col justify-center py-4 min-h-0 w-full max-w-sm mx-auto">
+                    <div className="flex flex-col space-y-6">
                         {features.map((feature, idx) => (
-                            <div
-                                key={idx}
-                                className="group p-3 sm:p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-amber-500/30 transition-all flex flex-col items-center text-center justify-center h-full"
-                            >
-                                <div className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col items-center justify-center mb-1.5 shrink-0 group-hover:scale-110 transition-transform">
-                                    <div className="text-amber-400 flex items-center justify-center">
-                                        {feature.icon}
-                                    </div>
+                            <div key={idx} className="flex items-start gap-4 text-left">
+                                <div className="mt-0.5 shrink-0">
+                                    {feature.icon}
                                 </div>
-                                <h3 className="text-xs sm:text-sm font-bold text-white mb-0.5 leading-tight">{feature.title}</h3>
-                                <p className="text-[10px] sm:text-xs text-slate-400 leading-tight line-clamp-3 overflow-hidden">{feature.description}</p>
+                                <div className="flex flex-col">
+                                    <h3 className="text-base sm:text-lg font-bold text-white leading-tight mb-1">{feature.title}</h3>
+                                    <p className="text-xs sm:text-sm text-slate-400 leading-snug">{feature.description}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
