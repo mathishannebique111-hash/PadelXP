@@ -117,7 +117,7 @@ export default function PremiumStats() {
                         className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-2"
                     >
                         <Sparkles className="w-4 h-4" />
-                        Découvrir Premium Gratuitement
+                        Devenir premium
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                     <p className="text-[10px] text-slate-600 mt-4">Offre découverte sans engagement.</p>
