@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import Image from "next/image";
 import { Sparkles, Trophy, Award, TrendingUp, Users, Check, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import { createPremiumCheckoutSession } from "@/app/actions/premium";
+import { useAppleIAP } from "@/lib/hooks/useAppleIAP";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -19,8 +20,14 @@ function PremiumContent() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { isApp, loading: iapLoading, purchasePremium, restorePurchases } = useAppleIAP();
 
     const handleSubscribe = async () => {
+        if (isApp) {
+            purchasePremium();
+            return;
+        }
+
         try {
             setLoading(true);
             const returnPath = searchParams ? searchParams.get("returnPath") || "/home" : "/home";
@@ -38,6 +45,8 @@ function PremiumContent() {
             setLoading(false);
         }
     };
+
+    const isProcessing = loading || iapLoading;
 
     const features = [
         {
@@ -143,10 +152,10 @@ function PremiumContent() {
 
                             <button
                                 onClick={handleSubscribe}
-                                disabled={loading}
+                                disabled={isProcessing}
                                 className="w-full group px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-bold text-sm sm:text-base shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center gap-2"
                             >
-                                {loading ? (
+                                {isProcessing ? (
                                     <>
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                         <span>Chargement...</span>
@@ -158,6 +167,15 @@ function PremiumContent() {
                                     </>
                                 )}
                             </button>
+
+                            {isApp && (
+                                <button
+                                    onClick={restorePurchases}
+                                    className="mt-4 text-[10px] sm:text-xs text-slate-500 hover:text-slate-400 underline transition-colors"
+                                >
+                                    Restaurer mes achats
+                                </button>
+                            )}
 
                             <div className="mt-2 sm:mt-3 flex items-center justify-center gap-2 sm:gap-3 text-[8px] sm:text-[9px] text-slate-500 uppercase tracking-widest font-semibold">
                                 <span className="flex items-center gap-1 min-w-max"><Check className="w-2 h-2 sm:w-2.5 h-2.5 text-amber-500" /> Paiement sécurisé</span>
