@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import ProfilePhotoUpload from "@/components/settings/ProfilePhotoUpload";
 import UsernameSettings from "@/components/settings/UsernameSettings";
 import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
+import LocationSettings from "@/components/settings/LocationSettings";
 
 export default function EditProfilePage() {
     return (
@@ -23,6 +24,7 @@ export default function EditProfilePage() {
 
                 <div className="space-y-6">
                     <ProfilePhotoUpload />
+                    <LocationSettings />
                     <UsernameSettings />
                     <WhatsAppSettings />
                 </div>

@@ -49,7 +49,7 @@ function ClubTabsContent({
         { id: 'club' as TabType, label: 'Mon club' },
         { id: 'classement' as TabType, label: 'Classement global' },
         { id: 'challenges' as TabType, label: 'Challenges' },
-        { id: 'tournaments' as TabType, label: 'Tournois' },
+        { id: 'tournaments' as TabType, label: 'Ligues' },
     ].filter(tab => showClubTab || tab.id !== 'club');
 
     return (

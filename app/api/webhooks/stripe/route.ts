@@ -109,6 +109,21 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+  // 1. Handle Player Premium
+  if (subscription.metadata?.type === 'player_premium') {
+    const userId = subscription.metadata.userId;
+    if (userId && supabaseAdmin) {
+      const { error } = await supabaseAdmin.from('profiles').update({ is_premium: true }).eq('id', userId);
+      if (error) {
+        logger.error(`[webhook-stripe] Error enabling premium for user ${userId}`, { error });
+      } else {
+        logger.info(`[webhook-stripe] Enabled premium for user ${userId} via subscription.created`);
+      }
+    }
+    return;
+  }
+
+  // 2. Handle Club Subscription (Existing logic)
   const clubId = subscription.metadata?.club_id;
   if (!clubId || !supabaseAdmin) return;
 
@@ -124,6 +139,18 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  // 1. Handle Player Premium
+  if (subscription.metadata?.type === 'player_premium') {
+    const userId = subscription.metadata.userId;
+    if (userId && supabaseAdmin) {
+      const isActive = subscription.status === 'active' || subscription.status === 'trialing';
+      await supabaseAdmin.from('profiles').update({ is_premium: isActive }).eq('id', userId);
+      logger.info(`[webhook-stripe] Updated premium status for user ${userId} to ${isActive}`);
+    }
+    return;
+  }
+
+  // 2. Handle Club Subscription (Existing logic)
   const clubId = subscription.metadata?.club_id;
   if (!clubId || !supabaseAdmin) return;
 
@@ -141,6 +168,17 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  // 1. Handle Player Premium
+  if (subscription.metadata?.type === 'player_premium') {
+    const userId = subscription.metadata.userId;
+    if (userId && supabaseAdmin) {
+      await supabaseAdmin.from('profiles').update({ is_premium: false }).eq('id', userId);
+      logger.info(`[webhook-stripe] Disabled premium for user ${userId}`);
+    }
+    return;
+  }
+
+  // 2. Handle Club Subscription (Existing logic)
   const clubId = subscription.metadata?.club_id;
   if (!clubId || !supabaseAdmin) return;
   await supabaseAdmin
@@ -173,6 +211,21 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  // 1. Handle Player Premium Fallback
+  // Metadata at session level is always present even if subscription metadata propagation fails
+  if (session.metadata?.type === 'player_premium') {
+    const userId = session.metadata.userId;
+    if (userId && supabaseAdmin) {
+      const { error } = await supabaseAdmin.from('profiles').update({ is_premium: true }).eq('id', userId);
+      if (error) {
+        logger.error(`[webhook-stripe] Error enabling premium for user ${userId} via checkout.completed`, { error });
+      } else {
+        logger.info(`[webhook-stripe] Enabled premium for user ${userId} via checkout.completed`);
+      }
+    }
+  }
+
+  // 2. Existing Participant logic
   const participantId = session.metadata?.participant_id;
 
   if (!participantId || !supabaseAdmin) return;

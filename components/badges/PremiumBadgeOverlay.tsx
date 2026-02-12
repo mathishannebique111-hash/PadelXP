@@ -11,30 +11,10 @@ export default function PremiumBadgeOverlay({ isObtained }: { isObtained: boolea
     const [claiming, setClaiming] = useState(false);
     const router = useRouter();
 
-    const handleUpgrade = async (e: React.MouseEvent) => {
+    const handleUpgrade = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (claiming) return;
-
-        try {
-            setClaiming(true);
-            const result = await activatePremium();
-            if (result.success) {
-                toast.success("Félicitations ! Vous êtes maintenant Premium.");
-                router.refresh();
-                // Fallback de sécurité
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
-            } else {
-                toast.error("Erreur lors de l'activation : " + result.error);
-            }
-        } catch (err) {
-            toast.error("Erreur inattendue");
-            logger.error("[PremiumBadgeOverlay] Upgrade error", err);
-        } finally {
-            setClaiming(false);
-        }
+        router.push(`/premium?returnPath=${window.location.pathname}`);
     };
 
     return (

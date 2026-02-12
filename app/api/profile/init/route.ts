@@ -10,7 +10,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  logger.warn({}, "[api/profile/init] Missing Supabase service configuration");
+  logger.warn("[api/profile/init] Missing Supabase service configuration", {});
 }
 
 export async function POST(request: Request) {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const token = authHeader.slice(7);
     const { data, error } = await serviceClient.auth.getUser(token);
     if (error || !data?.user) {
-      logger.error({ error: error, tokenPreview: token.substring(0, 8) + "…" }, "[api/profile/init] bearer auth error");
+      logger.error("[api/profile/init] bearer auth error", { error: error, tokenPreview: token.substring(0, 8) + "…" });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     user = data.user;
@@ -45,15 +45,15 @@ export async function POST(request: Request) {
   const fullName =
     (user.user_metadata?.full_name as string) ||
     (user.user_metadata?.name as string) ||
-    (user.email ? user.email.split("@")[0] : "Joueur");
+    "Joueur";
 
   // Log pour diagnostic
-  logger.info({
+  logger.info("[api/profile/init] Starting profile init", {
     userId: user.id.substring(0, 8) + "…",
     email: user.email?.substring(0, 10) + "…",
     hasMetadata: !!user.user_metadata,
     metadataClubId: user.user_metadata?.club_id || null
-  }, "[api/profile/init] Starting profile init");
+  });
 
   const { data: existing, error } = await serviceClient
     .from("profiles")
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (error) {
-    logger.error({ error: error, userId: user.id.substring(0, 8) + "…", email: user.email?.substring(0, 10) + "…" }, "[api/profile/init] fetch error");
+    logger.error("[api/profile/init] fetch error", { error: error, userId: user.id.substring(0, 8) + "…", email: user.email?.substring(0, 10) + "…" });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -75,11 +75,11 @@ export async function POST(request: Request) {
   const userMetadata = user.user_metadata || {};
   const metadataClubId = userMetadata.club_id as string | null | undefined;
 
-  logger.info({
+  logger.info("[api/profile/init] Checking club association", {
     userId: user.id.substring(0, 8) + "…",
     email: user.email?.substring(0, 10) + "…",
     metadataClubId: metadataClubId || null
-  }, "[api/profile/init] Checking club association");
+  });
 
   // PRIORITÉ 1: Vérifier dans club_admins par user_id
   const { data: clubAdmin, error: clubAdminError } = await serviceClient
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (clubAdminError) {
-    logger.error({ error: clubAdminError, userId: user.id.substring(0, 8) + "…", email: user.email?.substring(0, 10) + "…" }, "[api/profile/init] Error fetching club_admins by user_id");
+    logger.error("[api/profile/init] Error fetching club_admins by user_id", { error: clubAdminError, userId: user.id.substring(0, 8) + "…", email: user.email?.substring(0, 10) + "…" });
   }
 
   // PRIORITÉ 2: Si pas trouvé par user_id, chercher par email (cas où l'email existe mais user_id est différent ou NULL)
@@ -102,25 +102,25 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (emailAdminError) {
-      logger.error({ error: emailAdminError, email: user.email.substring(0, 10) + "…" }, "[api/profile/init] Error fetching club_admins by email");
+      logger.error("[api/profile/init] Error fetching club_admins by email", { error: emailAdminError, email: user.email.substring(0, 10) + "…" });
     } else if (emailAdmin) {
       clubAdminByEmail = emailAdmin;
-      logger.info({
+      logger.info("[api/profile/init] Found club_admins entry by email", {
         email: user.email.substring(0, 10) + "…",
         foundClubId: emailAdmin.club_id?.substring(0, 8) + "…",
         existingUserId: emailAdmin.user_id?.substring(0, 8) + "…" || "NULL"
-      }, "[api/profile/init] Found club_admins entry by email");
+      });
     }
   }
 
-  logger.info({
+  logger.info("[api/profile/init] Club admin check result", {
     userId: user.id.substring(0, 8) + "…",
     email: user.email?.substring(0, 10) + "…",
     hasClubAdminByUserId: !!clubAdmin,
     hasClubAdminByEmail: !!clubAdminByEmail,
     clubAdminClubId: clubAdmin?.club_id || clubAdminByEmail?.club_id || null,
     clubAdminActivated: !!(clubAdmin?.activated_at || clubAdminByEmail?.activated_at)
-  }, "[api/profile/init] Club admin check result");
+  });
 
   // Priorité : club_admins activé (par user_id) > club_admins par email > métadonnées > club_admins non activé
   if (clubAdmin?.activated_at) {
@@ -129,11 +129,11 @@ export async function POST(request: Request) {
     // Trouvé par email, mettre à jour avec le user_id actuel
     clubIdForUser = clubAdminByEmail.club_id;
 
-    logger.info({
+    logger.info("[api/profile/init] Updating club_admins with current user_id", {
       userId: user.id.substring(0, 8) + "…",
       email: user.email?.substring(0, 10) + "…",
-      clubId: clubIdForUser.substring(0, 8) + "…"
-    }, "[api/profile/init] Updating club_admins with current user_id");
+      clubId: (clubIdForUser || "unknown").substring(0, 8) + "…"
+    });
 
     // Récupérer les infos du club d'abord
     const { data: clubRow } = await serviceClient
@@ -159,13 +159,13 @@ export async function POST(request: Request) {
       .eq("email", user.email!.toLowerCase());
 
     if (updateAdminError) {
-      logger.error({ error: updateAdminError, email: user.email?.substring(0, 10) + "…" }, "[api/profile/init] Error updating club_admins with user_id");
+      logger.error("[api/profile/init] Error updating club_admins with user_id", { error: updateAdminError, email: user.email?.substring(0, 10) + "…" });
       // Ne pas bloquer, continuer avec le club_id trouvé
     } else {
-      logger.info({
+      logger.info("[api/profile/init] Successfully updated club_admins with user_id", {
         userId: user.id.substring(0, 8) + "…",
-        clubId: clubIdForUser.substring(0, 8) + "…"
-      }, "[api/profile/init] Successfully updated club_admins with user_id");
+        clubId: (clubIdForUser || "unknown").substring(0, 8) + "…"
+      });
     }
   } else if (metadataClubId) {
     // Si l'utilisateur a un club_id dans ses métadonnées, vérifier que le club existe
@@ -198,7 +198,7 @@ export async function POST(request: Request) {
           });
 
         if (createAdminError) {
-          logger.warn({ error: createAdminError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] Could not create club_admins entry (non-blocking)");
+          logger.warn("[api/profile/init] Could not create club_admins entry (non-blocking)", { error: createAdminError, userId: user.id.substring(0, 8) + "…", clubId: (clubIdForUser || "unknown").substring(0, 8) + "…" });
         }
       } else if (!clubAdmin.activated_at) {
         // Activer l'entrée existante
@@ -209,7 +209,7 @@ export async function POST(request: Request) {
           .eq("club_id", clubIdForUser);
 
         if (activationError) {
-          logger.warn({ error: activationError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] Could not activate club_admins entry (non-blocking)");
+          logger.warn("[api/profile/init] Could not activate club_admins entry (non-blocking)", { error: activationError, userId: user.id.substring(0, 8) + "…", clubId: (clubIdForUser || "unknown").substring(0, 8) + "…" });
         }
       }
     }
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (activationError) {
-      logger.error({ error: activationError, userId: user.id.substring(0, 8) + "…", clubId: clubAdmin.club_id.substring(0, 8) + "…" }, "[api/profile/init] activation update error");
+      logger.error("[api/profile/init] activation update error", { error: activationError, userId: user.id.substring(0, 8) + "…", clubId: clubAdmin.club_id.substring(0, 8) + "…" });
       return NextResponse.json(
         {
           error:
@@ -258,23 +258,23 @@ export async function POST(request: Request) {
       adminRole = adminCheck.role;
       isClubAdministrator = adminRole === "owner" || adminRole === "admin";
 
-      logger.info({
+      logger.info("[api/profile/init] Club admin role check", {
         userId: user.id.substring(0, 8) + "…",
         clubId: clubIdForUser.substring(0, 8) + "…",
         role: adminRole,
         isAdmin: isClubAdministrator
-      }, "[api/profile/init] Club admin role check");
+      });
     }
   }
 
   // Si l'utilisateur est un admin de club, ne PAS créer/mettre à jour son profil joueur
   // Mettre seulement à jour ses métadonnées et rediriger vers le dashboard
   if (isClubAdministrator && clubIdForUser) {
-    logger.info({
+    logger.info("[api/profile/init] User is club admin, skipping player profile creation", {
       userId: user.id.substring(0, 8) + "…",
       clubId: clubIdForUser.substring(0, 8) + "…",
       role: adminRole
-    }, "[api/profile/init] User is club admin, skipping player profile creation");
+    });
 
     // Récupérer les infos du club pour les métadonnées
     if (!clubSlugForUser || !clubNameForUser || !clubLogoForUser) {
@@ -304,12 +304,12 @@ export async function POST(request: Request) {
         user_metadata: mergedMetadata,
       });
 
-      logger.info({
+      logger.info("[api/profile/init] Updated admin metadata, redirecting to dashboard", {
         userId: user.id.substring(0, 8) + "…",
         clubId: clubIdForUser.substring(0, 8) + "…"
-      }, "[api/profile/init] Updated admin metadata, redirecting to dashboard");
+      });
     } catch (metadataError) {
-      logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (club admin)");
+      logger.warn("[api/profile/init] metadata update warning (club admin)", { error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" });
     }
 
     // Retourner sans profil joueur - l'admin accède seulement au dashboard
@@ -355,7 +355,7 @@ export async function POST(request: Request) {
           clubSlugForUser = ownerMeta.club_slug;
         }
       } catch (ownerMetaError) {
-        logger.warn({ error: ownerMetaError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…", ownerId: ownerId.substring(0, 8) + "…" }, "[api/profile/init] owner metadata lookup warning");
+        logger.warn("[api/profile/init] owner metadata lookup warning", { error: ownerMetaError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…", ownerId: ownerId.substring(0, 8) + "…" });
       }
     }
   }
@@ -406,30 +406,30 @@ export async function POST(request: Request) {
               user_metadata: mergedMetadata,
             });
           } catch (metadataError) {
-            logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (updated profile)");
+            logger.warn("[api/profile/init] metadata update warning (updated profile)", { error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" });
           }
 
           // Auto-extension après ajout d'un joueur au club
           try {
-            logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] Trial check after player added to club');
-            await updateEngagementMetrics(clubIdForUser);
-            const eligibility = await checkAutoExtensionEligibility(clubIdForUser);
-            logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason }, '[profile/init] Trial eligibility');
+            logger.info("[profile/init] Trial check after player added to club", { clubId: String(clubIdForUser).substring(0, 8) + "…" });
+            await updateEngagementMetrics(String(clubIdForUser));
+            const eligibility = await checkAutoExtensionEligibility(String(clubIdForUser));
+            logger.info("[profile/init] Trial eligibility", { clubId: String(clubIdForUser).substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason });
             if (eligibility.eligible && eligibility.reason) {
-              const grantRes = await grantAutoExtension(clubIdForUser, eligibility.reason);
+              const grantRes = await grantAutoExtension(String(clubIdForUser), eligibility.reason);
               if (grantRes.success) {
-                logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", reason: eligibility.reason }, '[profile/init] Auto extension granted after player added to club');
+                logger.info("[api/profile/init] Auto extension granted after player added to club", { clubId: String(clubIdForUser).substring(0, 8) + "…", reason: eligibility.reason });
                 // Rafraîchir les pages frontend
                 revalidatePath('/dashboard');
                 revalidatePath('/dashboard/facturation');
               } else {
-                logger.warn({ clubId: clubIdForUser.substring(0, 8) + "…", error: grantRes.error }, '[profile/init] Auto extension grant failed after player added to club');
+                logger.warn("[api/profile/init] Auto extension grant failed after player added to club", { clubId: String(clubIdForUser).substring(0, 8) + "…", error: grantRes.error });
               }
             } else {
-              logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] No auto extension (threshold not met or already unlocked)');
+              logger.info("[api/profile/init] No auto extension (threshold not met or already unlocked)", { clubId: String(clubIdForUser).substring(0, 8) + "…" });
             }
           } catch (extErr) {
-            logger.error({ clubId: clubIdForUser.substring(0, 8) + "…", error: (extErr as Error).message }, '[profile/init] Auto extension check error');
+            logger.error("[api/profile/init] Auto extension check error", { clubId: String(clubIdForUser).substring(0, 8) + "…", error: (extErr as Error).message });
           }
         }
 
@@ -439,7 +439,7 @@ export async function POST(request: Request) {
         });
       }
       if (updateError) {
-        logger.warn({ error: updateError, userId: user.id.substring(0, 8) + "…" }, "[api/profile/init] update warning");
+        logger.warn("[api/profile/init] update warning", { error: updateError, userId: user.id.substring(0, 8) + "…" });
       }
     }
 
@@ -463,31 +463,31 @@ export async function POST(request: Request) {
           user_metadata: mergedMetadata,
         });
       } catch (metadataError) {
-        logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning");
+        logger.warn("[api/profile/init] metadata update warning", { error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" });
       }
 
       // Auto-extension après ajout d'un joueur au club (profil existant)
       if (!existing.club_id && clubIdForUser) {
         try {
-          logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] Trial check after existing player added to club');
-          await updateEngagementMetrics(clubIdForUser);
-          const eligibility = await checkAutoExtensionEligibility(clubIdForUser);
-          logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason }, '[profile/init] Trial eligibility');
+          logger.info("[profile/init] Trial check after existing player added to club", { clubId: String(clubIdForUser).substring(0, 8) + "…" });
+          await updateEngagementMetrics(String(clubIdForUser));
+          const eligibility = await checkAutoExtensionEligibility(String(clubIdForUser));
+          logger.info("[profile/init] Trial eligibility", { clubId: String(clubIdForUser).substring(0, 8) + "…", eligible: eligibility.eligible, reason: eligibility.reason });
           if (eligibility.eligible && eligibility.reason) {
-            const grantRes = await grantAutoExtension(clubIdForUser, eligibility.reason);
+            const grantRes = await grantAutoExtension(String(clubIdForUser), eligibility.reason);
             if (grantRes.success) {
-              logger.info({ clubId: clubIdForUser.substring(0, 8) + "…", reason: eligibility.reason }, '[profile/init] Auto extension granted after existing player added to club');
+              logger.info("[api/profile/init] Auto extension granted after existing player added to club", { clubId: String(clubIdForUser).substring(0, 8) + "…", reason: eligibility.reason });
               // Rafraîchir les pages frontend
               revalidatePath('/dashboard');
               revalidatePath('/dashboard/facturation');
             } else {
-              logger.warn({ clubId: clubIdForUser.substring(0, 8) + "…", error: grantRes.error }, '[profile/init] Auto extension grant failed after existing player added to club');
+              logger.warn("[api/profile/init] Auto extension grant failed after existing player added to club", { clubId: String(clubIdForUser).substring(0, 8) + "…", error: grantRes.error });
             }
           } else {
-            logger.info({ clubId: clubIdForUser.substring(0, 8) + "…" }, '[profile/init] No auto extension (threshold not met or already unlocked)');
+            logger.info("[api/profile/init] No auto extension (threshold not met or already unlocked)", { clubId: clubIdForUser.substring(0, 8) + "…" });
           }
         } catch (extErr) {
-          logger.error({ clubId: clubIdForUser.substring(0, 8) + "…", error: (extErr as Error).message }, '[profile/init] Auto extension check error');
+          logger.error("[api/profile/init] Auto extension check error", { clubId: clubIdForUser.substring(0, 8) + "…", error: (extErr as Error).message });
         }
       }
     }
@@ -509,12 +509,12 @@ export async function POST(request: Request) {
   // On ne crée pas de profil joueur automatiquement, on le redirige vers le dashboard
   // Vérifier aussi si l'utilisateur a un club_id dans ses métadonnées (même sans club_admins)
   if (clubIdForUser) {
-    logger.info({
+    logger.info("[api/profile/init] Club found, redirecting to dashboard", {
       userId: user.id.substring(0, 8) + "…",
       email: user.email?.substring(0, 10) + "…",
       clubId: clubIdForUser.substring(0, 8) + "…",
       clubSlug: clubSlugForUser || null
-    }, "[api/profile/init] Club found, redirecting to dashboard");
+    });
 
     try {
       const { data: existingUser } = await serviceClient.auth.admin.getUserById(user.id);
@@ -529,7 +529,7 @@ export async function POST(request: Request) {
         user_metadata: mergedMetadata,
       });
     } catch (metadataError) {
-      logger.warn({ error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" }, "[api/profile/init] metadata update warning (admin without profile)");
+      logger.warn("[api/profile/init] metadata update warning (admin without profile)", { error: metadataError, userId: user.id.substring(0, 8) + "…", clubId: clubIdForUser.substring(0, 8) + "…" });
     }
 
     return NextResponse.json({
@@ -541,7 +541,7 @@ export async function POST(request: Request) {
 
 
   // Log détaillé avant de retourner l'erreur
-  logger.warn({
+  logger.warn("[api/profile/init] No club found for user", {
     userId: user.id.substring(0, 8) + "…",
     email: user.email || "no email",
     hasProfile: !!existing,
@@ -549,18 +549,18 @@ export async function POST(request: Request) {
     hasClubAdmin: !!clubAdmin,
     clubIdForUser: clubIdForUser || null,
     role: userMetadata.role || null
-  }, "[api/profile/init] No club found for user");
+  });
 
   // NOUVEAU: Si l'utilisateur a le rôle "owner" dans ses métadonnées mais pas de club_id,
   // c'est qu'il a créé un compte club mais n'a pas terminé l'onboarding
   // On le redirige vers l'onboarding au lieu de retourner une erreur 404
   const userRole = userMetadata.role as string | undefined;
   if (userRole === "owner" || userRole === "admin") {
-    logger.info({
+    logger.info("[api/profile/init] User has club role but no club, redirecting to onboarding", {
       userId: user.id.substring(0, 8) + "…",
       email: user.email?.substring(0, 10) + "…",
       role: userRole
-    }, "[api/profile/init] User has club role but no club, redirecting to onboarding");
+    });
 
     return NextResponse.json({
       ok: true,

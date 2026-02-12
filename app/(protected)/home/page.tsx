@@ -239,7 +239,7 @@ export default async function HomePage({
             <ReferralNotifier />
             <div className="mb-4 sm:mb-6">
               <PageTitle
-                title={`Bienvenue ${profile.display_name} !`}
+                title={`Bienvenue ${profile.first_name && profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.display_name} !`}
                 subtitle={
                   clubName
                     ? `Club : ${clubName}${profile.username ? ` • ${profile.username}` : ''}`

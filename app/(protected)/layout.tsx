@@ -11,6 +11,7 @@ import PopupQueueRenderer from '@/components/notifications/PopupQueueRenderer';
 import HideSplashScreen from '@/components/HideSplashScreen';
 import GlobalNotificationListener from '@/components/notifications/GlobalNotificationListener';
 import ToastContainer from '@/components/ui/Toast';
+import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNotifier';
 
 export default function PlayerAccountLayout({
   children,
@@ -62,6 +63,8 @@ export default function PlayerAccountLayout({
           </div>
           {/* Écouteur global pour les notifications de badges et niveaux */}
           <GlobalNotificationListener />
+          {/* Nouveau : Écouteur pour le succès du paiement Premium */}
+          <PremiumSuccessNotifier />
           {/* Renderer pour afficher les popups de la file d'attente */}
           <PopupQueueRenderer />
           {/* Toast notifications */}

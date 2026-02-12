@@ -47,14 +47,28 @@ export default function LeaderboardContent({
   const [profilesLastNameMap, setProfilesLastNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialLastNameMap)));
   const [scope, setScope] = useState<'department' | 'region' | 'national'>('department');
 
-  // Fonction pour recharger le classement depuis l'API
-  const reloadLeaderboard = useCallback(async () => {
-    try {
-      console.log('[LeaderboardContent] 🔄 Rechargement du classement...');
+  // Cache state: stores data for each scope
+  const [cache, setCache] = useState<Record<string, {
+    leaderboard: LeaderboardEntry[],
+    firstNameMap: Map<string, string>,
+    lastNameMap: Map<string, string>,
+    timestamp: number
+  }>>({
+    department: {
+      leaderboard: initialLeaderboard,
+      firstNameMap: new Map(Object.entries(initialFirstNameMap)),
+      lastNameMap: new Map(Object.entries(initialLastNameMap)),
+      timestamp: Date.now()
+    }
+  });
 
-      // Utiliser un timestamp unique pour éviter tout cache
+  // Fonction pour recharger le classement depuis l'API
+  const fetchLeaderboardForScope = useCallback(async (targetScope: string) => {
+    try {
+      console.log(`[LeaderboardContent] 🔄 Fetching for scope: ${targetScope}...`);
+
       const timestamp = Date.now();
-      const response = await fetch(`/api/leaderboard?scope=${scope}&t=${timestamp}&_=${Math.random()}`, {
+      const response = await fetch(`/api/leaderboard?scope=${targetScope}&t=${timestamp}&_=${Math.random()}`, {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
@@ -64,34 +78,18 @@ export default function LeaderboardContent({
         },
       });
 
-      if (!response.ok) {
-        console.error('[LeaderboardContent] ❌ Erreur API:', response.status, response.statusText);
-        return;
-      }
+      if (!response.ok) return null;
 
       const data = await response.json();
-      console.log('[LeaderboardContent] 📊 Réponse API:', {
-        hasLeaderboard: !!data.leaderboard,
-        count: data.leaderboard?.length || 0,
-        sample: data.leaderboard?.[0] ? {
-          user_id: data.leaderboard[0].user_id.substring(0, 8),
-          points: data.leaderboard[0].points,
-          wins: data.leaderboard[0].wins,
-          losses: data.leaderboard[0].losses,
-          matches: data.leaderboard[0].matches
-        } : null
-      });
 
       if (data.leaderboard && Array.isArray(data.leaderboard)) {
-        console.log('[LeaderboardContent] ✅ Données reçues:', data.leaderboard.length, 'joueurs');
-
-        // Ajouter le rang à chaque joueur
+        // Ajouter le rang
         const leaderboardWithRank = data.leaderboard.map((player: LeaderboardEntry, index: number) => ({
           ...player,
           rank: index + 1,
         }));
 
-        // Extraire les noms depuis player_name
+        // Extraire les noms
         const firstNameMap = new Map<string, string>();
         const lastNameMap = new Map<string, string>();
 
@@ -107,25 +105,89 @@ export default function LeaderboardContent({
           }
         });
 
-        // Forcer la mise à jour avec un nouveau tableau pour garantir le re-render
-        console.log('[LeaderboardContent] 🔄 Mise à jour de l\'état React...');
-        setLeaderboard([...leaderboardWithRank]);
-        setProfilesFirstNameMap(new Map(firstNameMap));
-        setProfilesLastNameMap(new Map(lastNameMap));
-
-        console.log('[LeaderboardContent] ✅ Classement mis à jour ! Points du premier joueur:', leaderboardWithRank[0]?.points);
-      } else {
-        console.warn('[LeaderboardContent] ⚠️ Données invalides:', data);
+        return {
+          leaderboard: leaderboardWithRank,
+          firstNameMap,
+          lastNameMap,
+          timestamp: Date.now()
+        };
       }
     } catch (error) {
-      console.error('[LeaderboardContent] ❌ Erreur:', error);
+      console.error(`[LeaderboardContent] ❌ Error fetching ${targetScope}:`, error);
     }
-  }, [scope]);
+    return null;
+  }, []);
 
-  // Reload when scope changes
+  // Update view from cache or fetch if missing
+  const updateViewFromScope = useCallback(async (targetScope: 'department' | 'region' | 'national') => {
+    // 1. Try to load from cache first (Instant UI update)
+    if (cache[targetScope]) {
+      console.log(`[LeaderboardContent] ⚡️ Cache hit for ${targetScope}`);
+      setLeaderboard(cache[targetScope].leaderboard);
+      setProfilesFirstNameMap(cache[targetScope].firstNameMap);
+      setProfilesLastNameMap(cache[targetScope].lastNameMap);
+
+      // Optional: Refetch in background if cache is too old (> 1 min)
+      if (Date.now() - cache[targetScope].timestamp > 60000) {
+        console.log(`[LeaderboardContent] 🔄 Cache stale for ${targetScope}, refreshing in bg...`);
+        const freshData = await fetchLeaderboardForScope(targetScope);
+        if (freshData) {
+          setCache(prev => ({ ...prev, [targetScope]: freshData }));
+          // Only update view if user is still on this scope
+          if (targetScope === scope) {
+            setLeaderboard(freshData.leaderboard);
+            setProfilesFirstNameMap(freshData.firstNameMap);
+            setProfilesLastNameMap(freshData.lastNameMap);
+          }
+        }
+      }
+    } else {
+      // 2. Not in cache, fetch immediately
+      console.log(`[LeaderboardContent] 💨 Cache miss for ${targetScope}, fetching...`);
+      const data = await fetchLeaderboardForScope(targetScope);
+      if (data) {
+        setCache(prev => ({ ...prev, [targetScope]: data }));
+        setLeaderboard(data.leaderboard);
+        setProfilesFirstNameMap(data.firstNameMap);
+        setProfilesLastNameMap(data.lastNameMap);
+      }
+    }
+  }, [cache, fetchLeaderboardForScope, scope]);
+
+  // Effect: Prefetch other scopes on mount
   useEffect(() => {
-    reloadLeaderboard();
-  }, [scope, reloadLeaderboard]);
+    const scopesToPrefetch = ['department', 'region', 'national'].filter(s => s !== scope && !cache[s]);
+
+    if (scopesToPrefetch.length > 0) {
+      console.log('[LeaderboardContent] 🚀 Prefetching scopes:', scopesToPrefetch);
+      Promise.all(scopesToPrefetch.map(s => fetchLeaderboardForScope(s))).then(results => {
+        setCache(prev => {
+          const newCache = { ...prev };
+          results.forEach((data, index) => {
+            if (data) newCache[scopesToPrefetch[index]] = data;
+          });
+          return newCache;
+        });
+      });
+    }
+  }, []); // Run once on mount
+
+  // Effect: Update view when scope changes
+  useEffect(() => {
+    updateViewFromScope(scope);
+  }, [scope, updateViewFromScope]);
+
+  // Legacy reload function for real-time updates (matches etc)
+  const reloadLegacy = useCallback(async () => {
+    // Force refresh the current scope and update cache
+    const data = await fetchLeaderboardForScope(scope);
+    if (data) {
+      setCache(prev => ({ ...prev, [scope]: data }));
+      setLeaderboard(data.leaderboard);
+      setProfilesFirstNameMap(data.firstNameMap);
+      setProfilesLastNameMap(data.lastNameMap);
+    }
+  }, [fetchLeaderboardForScope, scope]);
 
   // Écouter l'événement de match enregistré + polling + storage events
   useEffect(() => {
@@ -135,16 +197,12 @@ export default function LeaderboardContent({
 
     const doReload = () => {
       console.log('[LeaderboardContent] 🔄 Rechargement du classement...');
-      // Annuler le timeout précédent si existe
-      if (reloadTimeout) {
-        clearTimeout(reloadTimeout);
-      }
+      if (reloadTimeout) clearTimeout(reloadTimeout);
 
       // Attendre 2 secondes pour laisser le temps au match d'être sauvegardé en DB
       reloadTimeout = setTimeout(() => {
         console.log('[LeaderboardContent] ⏱️ Timeout terminé, rechargement...');
-        reloadLeaderboard();
-        // Forcer aussi le rechargement serveur Next.js (backup)
+        reloadLegacy();
         router.refresh();
       }, 2000);
     };
@@ -213,7 +271,7 @@ export default function LeaderboardContent({
       }
       clearInterval(pollingInterval);
     };
-  }, [reloadLeaderboard, router]);
+  }, [reloadLegacy, router]);
 
   const tierForPoints = (points: number) => {
     if (points >= 500) return 'Champion';

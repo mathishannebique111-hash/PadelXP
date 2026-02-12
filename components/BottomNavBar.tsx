@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Swords, Users } from 'lucide-react';
+import { Home, Swords, Users, Trophy } from 'lucide-react';
 import { PushNotificationsService } from '@/lib/notifications/push-notifications';
 
 interface NavItem {
@@ -23,7 +23,7 @@ export default function BottomNavBar() {
     const navItems: NavItem[] = [
         { href: '/home', label: 'Profil', icon: <Home size={20} />, navKey: 'home' },
         { href: '/match/new', label: 'Matchs', icon: <Swords size={20} />, navKey: 'match' },
-        { href: '/club', label: 'Club', icon: <Users size={20} />, navKey: 'club' },
+        { href: '/club', label: 'Compétition', icon: <Trophy size={20} />, navKey: 'club' },
     ];
 
     const fetchCounts = async () => {

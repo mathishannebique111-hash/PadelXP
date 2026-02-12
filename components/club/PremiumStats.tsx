@@ -15,7 +15,7 @@ import {
     Legend,
     Filler,
 } from "chart.js";
-import { activatePremium, getPremiumStatsData } from "@/app/actions/premium";
+import { getPremiumStatsData } from "@/app/actions/premium";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -92,24 +92,8 @@ export default function PremiumStats() {
         }
     }
 
-    const handleUpgrade = async () => {
-        setUpgrading(true);
-        try {
-            const result = await activatePremium();
-            if (result.success) {
-                toast.success("Félicitations ! Vous êtes maintenant Premium.");
-                setIsPremium(true);
-                const data = await getPremiumStatsData();
-                if (data) setStatsData(data as any);
-                router.refresh();
-            } else {
-                toast.error("Erreur lors de l'activation : " + result.error);
-            }
-        } catch (e) {
-            toast.error("Erreur inattendue");
-        } finally {
-            setUpgrading(false);
-        }
+    const handleUpgrade = () => {
+        router.push(`/premium?returnPath=${window.location.pathname}`);
     };
 
     if (loading) return <div className="p-8 text-slate-500 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
@@ -130,10 +114,9 @@ export default function PremiumStats() {
                     </p>
                     <button
                         onClick={handleUpgrade}
-                        disabled={upgrading}
-                        className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all disabled:opacity-70 disabled:hover:scale-100 flex items-center gap-2"
+                        className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-2"
                     >
-                        {upgrading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                        <Sparkles className="w-4 h-4" />
                         Découvrir Premium Gratuitement
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { logger } from '@/lib/logger';
 import { toast } from "sonner";
 import { activatePremium } from "@/app/actions/premium";
-import { Calendar, PartyPopper, Trophy, X, AlertCircle, Clock, Loader2 } from "lucide-react";
+import { Calendar, PartyPopper, Trophy, X, AlertCircle, Clock, Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import Link from "next/link";
@@ -258,49 +258,16 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
               Débloquez ce challenge et bien plus encore avec PadelXP Premium.
             </p>
             <button
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (claiming) return;
-
-                try {
-                  setClaiming(true);
-                  const result = await activatePremium();
-                  if (result.success) {
-                    if (result.verified) {
-                      toast.success("Félicitations ! Premium activé et vérifié.");
-                    } else if (result.warning) {
-                      toast.warning(`Activé mais non vérifié: ${result.warning}`);
-                    } else {
-                      toast.success("Félicitations ! Vous êtes maintenant Premium.");
-                    }
-
-                    router.refresh(); // Force refresh immediately
-                    if (onRewardClaimed) onRewardClaimed();
-                    if (onPremiumUnlocked) onPremiumUnlocked();
-
-
-                  } else {
-                    toast.error("Erreur lors de l'activation : " + result.error);
-                  }
-                } catch (err) {
-                  toast.error("Erreur inattendue");
-                  logger.error("[ChallengeCard] Upgrade error", err);
-                } finally {
-                  setClaiming(false);
-                }
+                router.push(`/premium?returnPath=${window.location.pathname}`);
               }}
-              disabled={claiming}
-              className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-2"
             >
-              {claiming ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Activation...</span>
-                </>
-              ) : (
-                <span>Devenir Premium (Gratuit)</span>
-              )}
+              <Sparkles className="w-4 h-4" />
+              Découvrir Premium Gratuitement
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         )}

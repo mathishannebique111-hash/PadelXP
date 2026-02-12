@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -222,7 +222,7 @@ export default function OnboardingWizard() {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Check for existing profile status and postal code
-  useState(() => {
+  useEffect(() => {
     const checkUser = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -240,19 +240,19 @@ export default function OnboardingWizard() {
           return;
         }
 
-        // Prefill data
+        // Prefill data but DO NOT skip steps
         if (user.user_metadata?.first_name) setFirstName(user.user_metadata.first_name);
         if (user.user_metadata?.last_name) setLastName(user.user_metadata.last_name);
 
         if (user.user_metadata?.postal_code) {
           setPostalCode(user.user_metadata.postal_code);
           if (user.user_metadata.city) setCity(user.user_metadata.city);
-          setSkipPostalStep(true);
+          // We intentionally do not skip the step so the user confirms their location
         }
       }
     };
     checkUser();
-  });
+  }, [router]);
 
   // Auto-fetch city from postal code via French API
   const fetchCityFromPostalCode = useCallback(async (code: string) => {
@@ -384,8 +384,12 @@ export default function OnboardingWizard() {
       });
 
       if (response.ok) {
-        // Force a hard navigation to avoid stale cache issues (double onboarding loop)
-        window.location.href = "/home";
+        // Redirection vers /home avec rafraîchissement forcé
+        router.refresh(); // Invalide le cache client de Next.js
+        setTimeout(() => {
+          // Utiliser router.push pour une transition fluide, mais fallback hard reload si besoin
+          window.location.href = "/home";
+        }, 100);
       } else {
         const data = await response.json();
         console.error("Erreur:", data.error);

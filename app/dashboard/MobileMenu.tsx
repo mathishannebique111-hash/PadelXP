@@ -51,7 +51,7 @@ export default function MobileMenu() {
     { href: '/dashboard/historique', label: 'Historique des matchs', icon: History },
     { href: '/dashboard/page-club', label: 'Page publique du club', icon: Globe },
     { href: '/dashboard/challenges', label: 'Challenges', icon: Target },
-    { href: '/dashboard/tournaments', label: 'Tournois', icon: Medal },
+    { href: '/dashboard/tournaments', label: 'Ligues', icon: Medal },
     { href: '/dashboard/roles', label: 'Rôles et accès', icon: UserCog },
     { href: '/dashboard/reservations', label: 'Réservations & Tarifs', icon: Calendar },
     { href: '/dashboard/facturation', label: 'Abonnement & essai', icon: CreditCard },

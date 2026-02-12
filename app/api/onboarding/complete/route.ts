@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
 import { getDepartmentFromPostalCode, getRegionFromDepartment } from "@/lib/utils/geo-leaderboard-utils";
+import { revalidatePath } from "next/cache";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
     // Préparer les données à mettre à jour
     const updateData: any = {
       has_completed_onboarding: true,
+      email: user.email, // Sync email to profile
     };
 
     // Si ce n'est pas un skip, ajouter les réponses
@@ -64,6 +66,7 @@ export async function POST(req: Request) {
       }
 
       updateData.full_name = `${firstName} ${lastName}`.trim();
+      updateData.display_name = updateData.full_name;
     }
 
     // Geo fields from postal code
@@ -86,8 +89,8 @@ export async function POST(req: Request) {
 
     if (updateError) {
       logger.error(
-        { userId: user.id.substring(0, 8) + "…", error: updateError },
-        "[onboarding/complete] Erreur lors de la mise à jour du profil"
+        "[onboarding/complete] Erreur lors de la mise à jour du profil",
+        { userId: user.id.substring(0, 8) + "…", error: updateError }
       );
       return NextResponse.json(
         { error: "Erreur lors de la sauvegarde" },
@@ -96,15 +99,20 @@ export async function POST(req: Request) {
     }
 
     logger.info(
-      { userId: user.id.substring(0, 8) + "…", skip },
-      "[onboarding/complete] Onboarding complété avec succès"
+      "[onboarding/complete] Onboarding complété avec succès",
+      { userId: user.id.substring(0, 8) + "…", skip }
     );
+
+    // Invalider le cache pour forcer la redirection et éviter le double onboarding
+    revalidatePath("/home");
+    revalidatePath("/player/onboarding");
+    revalidatePath("/(protected)/home", "page");
 
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     logger.error(
-      { error: error?.message || String(error) },
-      "[onboarding/complete] Erreur inattendue"
+      "[onboarding/complete] Erreur inattendue",
+      { error: error?.message || String(error) }
     );
     return NextResponse.json(
       { error: error?.message || "Erreur serveur" },

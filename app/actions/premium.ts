@@ -10,6 +10,11 @@ const supabaseAdmin = createAdminClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+    apiVersion: "2025-10-29.clover",
+});
+
 export async function activatePremium() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -51,6 +56,58 @@ export async function activatePremium() {
     } catch (error) {
         logger.error("Error activating premium:", error);
         return { success: false, error: "Failed to activate premium" };
+    }
+}
+
+export async function createPremiumCheckoutSession(returnPath: string = "/home") {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            throw new Error("Utilisateur non authentifié");
+        }
+
+        const priceId = process.env.STRIPE_PREMIUM_PRICE_ID;
+        if (!priceId) {
+            logger.error("STRIPE_PREMIUM_PRICE_ID is not defined");
+            throw new Error("Stripe configuration error");
+        }
+
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        // Ensure returnPath starts with /
+        const normalizedReturnPath = returnPath.startsWith('/') ? returnPath : `/${returnPath}`;
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ["card"],
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: 1,
+                },
+            ],
+            mode: "subscription",
+            success_url: `${siteUrl}${normalizedReturnPath}?premium_success=true`,
+            cancel_url: `${siteUrl}/premium`,
+            subscription_data: {
+                metadata: {
+                    userId: user.id,
+                    type: "player_premium",
+                },
+            },
+            metadata: {
+                userId: user.id,
+                type: "player_premium",
+            },
+            customer_email: user.email,
+        });
+
+        return { url: session.url };
+    } catch (error: any) {
+        logger.error("Error creating checkout session:", error);
+        console.error("Stripe Checkout Error Details:", JSON.stringify(error, null, 2));
+        // Return structured error instead of throwing to avoid 500 on client
+        return { error: error.message || "Failed to create checkout session" };
     }
 }
 

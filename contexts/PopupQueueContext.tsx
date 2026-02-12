@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { logger } from "@/lib/logger";
 
-export type PopupType = "badge" | "level_up";
+export type PopupType = "badge" | "level_up" | "premium_success";
 
 export interface BadgePopupData {
   type: "badge";
@@ -19,7 +19,11 @@ export interface LevelUpPopupData {
   previousTier?: string;
 }
 
-export type PopupData = BadgePopupData | LevelUpPopupData;
+export interface PremiumSuccessPopupData {
+  type: "premium_success";
+}
+
+export type PopupData = BadgePopupData | LevelUpPopupData | PremiumSuccessPopupData;
 
 interface PopupQueueContextType {
   enqueuePopup: (popup: PopupData) => void;
@@ -45,9 +49,14 @@ function hasBeenShown(popup: PopupData): boolean {
     if (popup.type === "badge") {
       key = `${STORAGE_KEY_PREFIX}badge.${popup.badgeId}`;
       value = `${popup.icon}|${popup.title}`;
-    } else {
+    } else if (popup.type === "level_up") {
       key = `${STORAGE_KEY_PREFIX}level.${popup.tier}`;
       value = popup.tier;
+    } else if (popup.type === "premium_success") {
+      key = `${STORAGE_KEY_PREFIX}premium.welcome`;
+      value = "shown";
+    } else {
+      return false;
     }
 
     const stored = localStorage.getItem(key);
@@ -71,9 +80,14 @@ function markAsShown(popup: PopupData): void {
     if (popup.type === "badge") {
       key = `${STORAGE_KEY_PREFIX}badge.${popup.badgeId}`;
       value = `${popup.icon}|${popup.title}`;
-    } else {
+    } else if (popup.type === "level_up") {
       key = `${STORAGE_KEY_PREFIX}level.${popup.tier}`;
       value = popup.tier;
+    } else if (popup.type === "premium_success") {
+      key = `${STORAGE_KEY_PREFIX}premium.welcome`;
+      value = "shown";
+    } else {
+      return;
     }
 
     localStorage.setItem(key, value);
@@ -144,6 +158,9 @@ export function PopupQueueProvider({ children }: { children: React.ReactNode }) 
         }
         if (p.type === "level_up" && popup.type === "level_up") {
           return p.tier === popup.tier;
+        }
+        if (p.type === "premium_success" && popup.type === "premium_success") {
+          return true;
         }
         return false;
       });

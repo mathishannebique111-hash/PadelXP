@@ -4,13 +4,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Check, Share2, Trophy, Award, Crown, MessageSquare, Lock, Loader2 } from "lucide-react";
+import { Copy, Check, Share2, Trophy, Award, Crown, MessageSquare, Lock, Loader2, Sparkles, ArrowRight } from "lucide-react";
 import PageTitle from "@/components/PageTitle";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import BadgeUnlockedNotifier from "@/components/BadgeUnlockedNotifier";
 import { Badge } from "@/lib/badges";
-import { activatePremium } from "@/app/actions/premium";
-import { toast } from "sonner";
+
 
 interface ExtendedBadge extends Badge {
     obtained: boolean;
@@ -153,7 +152,7 @@ export default function BadgesView({
                     <div className="min-h-[400px]">
                         {/* Standard Badges Grid */}
                         {activeTab === "standard" && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div>
                                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                                     {standardBadges.map((badge, idx) => (
                                         <BadgeCard key={`std-${idx}`} badge={badge} />
@@ -164,7 +163,7 @@ export default function BadgesView({
 
                         {/* Challenges Badges Grid */}
                         {activeTab === "challenges" && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div>
                                 {challengeBadges.length > 0 ? (
                                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                                         {challengeBadges.map((badge) => (
@@ -210,7 +209,7 @@ export default function BadgesView({
 
                         {/* Premium Badges Grid */}
                         {activeTab === "premium" && (
-                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div>
                                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                                     {premiumBadges.map((badge, idx) => (
                                         <BadgeCard
@@ -242,35 +241,12 @@ function BadgeCard({
     isLocked?: boolean;
     onUnlock?: () => void;
 }) {
-    const [claiming, setClaiming] = useState(false);
+    const router = useRouter();
     const isObtained = badge.obtained;
     const effectivelyLocked = isLocked || (isPremiumGrid && !isObtained);
 
-    const handleUnlock = async () => {
-        if (claiming) return;
-
-        try {
-            setClaiming(true);
-            const result = await activatePremium();
-            if (result.success) {
-                if (result.verified) {
-                    toast.success("Félicitations ! Premium activé et vérifié.");
-                } else if (result.warning) {
-                    toast.warning(`Activé mais non vérifié: ${result.warning}`);
-                } else {
-                    toast.success("Félicitations ! Vous êtes maintenant Premium.");
-                }
-
-                if (onUnlock) onUnlock();
-            } else {
-                toast.error("Erreur lors de l'activation : " + result.error);
-            }
-        } catch (err) {
-            toast.error("Erreur inattendue");
-            console.error("[BadgeCard] Upgrade error", err);
-        } finally {
-            setClaiming(false);
-        }
+    const handleUnlock = () => {
+        router.push(`/premium?returnPath=${window.location.pathname}`);
     };
 
     return (
@@ -308,17 +284,11 @@ function BadgeCard({
                             e.stopPropagation();
                             handleUnlock();
                         }}
-                        disabled={claiming}
-                        className="rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 px-4 py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-2"
                     >
-                        {claiming ? (
-                            <>
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                <span>Activation...</span>
-                            </>
-                        ) : (
-                            <span>Devenir Premium</span>
-                        )}
+                        <Sparkles className="w-4 h-4" />
+                        Découvrir Premium Gratuitement
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                 </div>
             )}

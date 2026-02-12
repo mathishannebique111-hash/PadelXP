@@ -121,5 +121,50 @@ export default function PopupQueueRenderer() {
     );
   }
 
+  if (currentPopup.type === "premium_success") {
+    return (
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
+        <div className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-amber-500/30 p-8 shadow-2xl mx-4 text-center overflow-hidden">
+          {/* Background effects */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
+            <div className="absolute top-[-20%] right-[-20%] w-[200px] h-[200px] bg-amber-500 rounded-full blur-[60px]" />
+            <div className="absolute bottom-[-20%] left-[-20%] w-[200px] h-[200px] bg-blue-600 rounded-full blur-[60px]" />
+          </div>
+
+          <button
+            aria-label="Fermer"
+            onClick={closeCurrentPopup}
+            className="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors z-20"
+          >
+            <X size={24} />
+          </button>
+
+          <div className="relative z-10">
+            <div className="mb-6 flex justify-center">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-xl shadow-amber-900/40 transform rotate-3">
+                <Crown size={40} className="text-white drop-shadow-md" />
+              </div>
+            </div>
+
+            <h3 className="mb-3 text-3xl font-black text-white tracking-tight">Félicitations !</h3>
+
+            <div className="bg-slate-800/50 rounded-2xl p-4 mb-8 border border-slate-700">
+              <p className="text-lg text-slate-200 leading-relaxed font-medium">
+                Bienvenue dans la communauté des joueurs premium de PadelXP.
+              </p>
+            </div>
+
+            <button
+              className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-600 px-6 py-4 text-xl font-black text-white shadow-xl shadow-amber-900/30 hover:shadow-amber-900/50 hover:scale-[1.02] active:scale-95 transition-all"
+              onClick={closeCurrentPopup}
+            >
+              À moi de jouer !
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return null;
 }
