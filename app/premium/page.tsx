@@ -48,125 +48,130 @@ function PremiumContent() {
 
     const isProcessing = loading || iapLoading;
 
-
+    const features = [
+        {
+            icon: <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />,
+            title: "Statistiques avancées",
+            description: "Analysez votre jeu avec des graphiques détaillés, suivez votre évolution et identifiez vos points forts."
+        },
+        {
+            icon: <Award className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />,
+            title: "Badges exclusifs",
+            description: "Débloquez des badges uniques réservés aux membres Premium et montrez votre statut sur le terrain."
+        },
+        {
+            icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
+            title: "Challenges exclusifs",
+            description: "Accédez à des défis spéciaux avec des récompenses plus importantes pour booster votre progression."
+        },
+        {
+            icon: <Users className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />,
+            title: "Ligues entre amis",
+            description: "Créez et rejoignez des ligues privées pour vous mesurer à vos amis et collègues."
+        }
+    ];
 
     return (
-        <div className="min-h-screen bg-slate-950 relative overflow-hidden flex flex-col items-center justify-center p-4 py-8 sm:py-12">
+        <div className="min-h-screen bg-slate-950 relative overflow-hidden flex flex-col justify-center">
             {/* Background Effects */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] opacity-30" />
                 <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[100px] opacity-30" />
             </div>
 
-            <div className="relative z-10 w-full max-w-md mx-auto h-[100dvh] flex flex-col px-4 pt-safe-top pb-safe-bottom">
+            <div className="relative z-10 w-full h-[100dvh] max-w-lg mx-auto flex flex-col pt-safe-top pb-safe-bottom px-4">
 
-                {/* 1. Header Section - Compact but Impactful */}
-                <div className="flex-none pt-2 relative flex flex-col items-center">
+                {/* 1. Header Section - Flex Shrink but clear hierarchy */}
+                <div className="flex-none pt-2 flex flex-col items-center justify-center relative min-h-[15%]">
                     <button
                         onClick={() => router.back()}
-                        className="absolute left-0 top-3 p-2 rounded-full bg-slate-800/40 text-slate-300 backdrop-blur-sm border border-slate-700/30 active:scale-95 transition-all z-20"
-                        aria-label="Retour"
+                        className="absolute left-0 top-3 p-2 rounded-full bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors z-20"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-5 h-5 sm:w-6 h-6" />
                     </button>
 
-                    <div className="relative w-32 h-12 mb-1 opacity-90">
+                    <div className="relative w-32 h-10 sm:w-40 sm:h-12 mb-1">
                         <Image
                             src="/padelxp-logo-transparent.png"
-                            alt="PadelXP"
+                            alt="PadelXP Premium"
                             fill
                             className="object-contain"
-                            style={{ filter: 'brightness(0) invert(1)' }}
+                            style={{
+                                filter: 'brightness(0) saturate(100%) invert(74%) sepia(58%) saturate(466%) hue-rotate(357deg) brightness(103%) contrast(107%) drop-shadow(0 0 10px rgba(245, 158, 11, 0.3))'
+                            }}
                             priority
                         />
                     </div>
 
-                    <h1 className="text-3xl font-black text-center leading-none tracking-tight mb-2">
-                        <span className="text-white drop-shadow-lg">PASSEZ </span>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 drop-shadow-sm">GOLD</span>
+                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none mb-0.5 text-center">
+                        Passez au niveau <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500">
+                            Supérieur
+                        </span>
                     </h1>
                 </div>
 
-                {/* 2. Main Content - Features Grid in Center */}
-                <div className="flex-1 flex flex-col justify-center py-2 space-y-3 min-h-0">
-                    {/* Hero Benefit */}
-                    <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-md rounded-2xl p-4 border border-amber-500/20 shadow-lg relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
-                        <div className="flex items-center gap-4 relative z-10">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-amber-900/20 shrink-0">
-                                <TrendingUp className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-white leading-tight">Statistiques Pro</h3>
-                                <p className="text-xs text-slate-300 leading-snug mt-1">Analysez votre jeu comme un pro avec des graphiques détaillés.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Secondary Benefits Grid */}
-                    <div className="grid grid-cols-2 gap-3">
-                        {[
-                            { icon: Trophy, title: "Tournois", desc: "Création illimitée" },
-                            { icon: Users, title: "Ligues", desc: "Invitez vos amis" },
-                            { icon: Award, title: "Badges", desc: "Collection exclusive" },
-                            { icon: Sparkles, title: "Prioritaire", desc: "Support client" }
-                        ].map((item, idx) => (
-                            <div key={idx} className="bg-slate-900/40 border border-slate-800/60 rounded-xl p-3 flex flex-col gap-2 hover:bg-slate-800/40 transition-colors">
-                                <item.icon className="w-5 h-5 text-amber-500" />
-                                <div>
-                                    <div className="font-bold text-sm text-slate-200">{item.title}</div>
-                                    <div className="text-[10px] text-slate-500 leading-tight">{item.desc}</div>
+                {/* 2. Main Content - Features Grid - Grows to fill available space */}
+                <div className="flex-1 flex flex-col justify-center py-2 min-h-0">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 h-full max-h-[50vh]">
+                        {features.map((feature, idx) => (
+                            <div
+                                key={idx}
+                                className="group p-3 sm:p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-amber-500/30 transition-all flex flex-col items-center text-center justify-center h-full"
+                            >
+                                <div className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col items-center justify-center mb-1.5 shrink-0 group-hover:scale-110 transition-transform">
+                                    <div className="text-amber-400 flex items-center justify-center">
+                                        {feature.icon}
+                                    </div>
                                 </div>
+                                <h3 className="text-xs sm:text-sm font-bold text-white mb-0.5 leading-tight">{feature.title}</h3>
+                                <p className="text-[10px] sm:text-xs text-slate-400 leading-tight line-clamp-3 overflow-hidden">{feature.description}</p>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* 3. CTA Section - Locked at Bottom */}
+                {/* 3. CTA Section - Locked at Bottom with Safe Area */}
                 <div className="flex-none pb-4 pt-2">
-                    <div className="bg-slate-900/80 backdrop-blur-xl rounded-[20px] p-1 border border-slate-800 shadow-2xl">
-                        <div className="bg-slate-950/50 rounded-[16px] p-4 text-center border border-white/5">
-                            <div className="flex flex-col items-center justify-center mb-4">
+                    <div className="p-0.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 w-full">
+                        <div className="bg-slate-950 rounded-[14px] p-4 sm:p-5 border border-amber-500/20 flex flex-col gap-3">
+
+                            <div className="flex flex-col items-center justify-center -mb-1">
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-black text-white tracking-tight">4.99€</span>
-                                    <span className="text-sm font-medium text-slate-500">/mois</span>
+                                    <span className="text-3xl sm:text-4xl font-black text-white">4.99€</span>
+                                    <span className="text-slate-500 font-medium text-xs sm:text-sm">/mois</span>
                                 </div>
-                                <div className="text-[10px] text-amber-500/80 font-medium tracking-wide uppercase mt-1 bg-amber-950/30 px-2 py-0.5 rounded-full border border-amber-900/30">
-                                    Sans engagement
-                                </div>
+                                <p className="text-[10px] text-slate-400">Sans engagement. Annulable à tout moment.</p>
                             </div>
 
                             <button
                                 onClick={handleSubscribe}
                                 disabled={isProcessing}
-                                className="w-full relative overflow-hidden group bg-white hover:bg-slate-50 active:bg-slate-200 text-black font-black text-lg py-3.5 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all transform active:scale-[0.98]"
+                                className="w-full group px-4 py-3 sm:px-6 sm:py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-bold text-sm sm:text-base shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                             >
-                                <span className="relative z-10 flex items-center justify-center gap-2">
-                                    {isProcessing ? (
-                                        <>
-                                            <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
-                                            <span className="text-slate-600">Chargement...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            JE PASSE GOLD
-                                            <ArrowRight className="w-5 h-5 -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
-                                        </>
-                                    )}
-                                </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                {isProcessing ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Chargement...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Je veux y accéder</span>
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
                             </button>
 
                             {isApp && (
-                                <button onClick={restorePurchases} className="mt-3 text-[10px] text-slate-600 font-medium hover:text-white transition-colors">
-                                    Déjà membre ? Restaurer les achats
+                                <button
+                                    onClick={restorePurchases}
+                                    className="w-full text-center text-[10px] text-slate-500 hover:text-slate-400 underline transition-colors -mt-1"
+                                >
+                                    Déjà membre ? Restaurer mes achats
                                 </button>
                             )}
                         </div>
                     </div>
-                    <p className="text-[9px] text-slate-600 text-center mt-2 font-medium">
-                        Paiement sécurisé par Apple • Annulation à tout moment
-                    </p>
                 </div>
 
             </div>
