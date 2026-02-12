@@ -230,31 +230,32 @@ export default function PremiumStats() {
 
         const isPartners = title === "Partenaires Favoris";
         const isVictims = title === "Mes Victimes";
+        const isNemesis = title === "Mes Bourreaux";
 
         return (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group hover:border-blue-500/20 transition-all">
+                <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent ${isPartners ? 'via-blue-500' : isVictims ? 'via-emerald-500' : 'via-red-500'} to-transparent opacity-20`}></div>
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
                     <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
                     {title}
                 </h3>
                 <div className="space-y-3 flex-1">
                     {list.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between group p-2 rounded-lg hover:bg-white/5 transition-colors">
+                        <div key={idx} className="flex items-center justify-between group p-2 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-700/50 group-hover:ring-slate-600 transition-all">
+                                <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-800 group-hover:ring-slate-700 transition-all">
                                     {item.avatar_url ? <img src={item.avatar_url} alt={item.name} className="w-full h-full object-cover" /> : null}
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-slate-200 text-sm font-semibold truncate max-w-[120px]">{item.name}</span>
-                                    <span className="text-[10px] text-slate-500">{item.winrate}% de victoires</span>
+                                    <span className="text-[10px] text-slate-500">{item.winrate}% de réussite</span>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <span className={`text-xs font-bold px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 ${colorClass}`}>
-                                    {isPartners ?
-                                        `${item.count} matchs` :
-                                        `${item.count} ${isVictims ? 'vict.' : 'déf.'}`
-                                    }
+                                <span className={`text-[10px] font-bold px-2 py-1 rounded-md bg-slate-950 border border-slate-800 text-slate-400 group-hover:text-white group-hover:border-slate-700 transition-colors`}>
+                                    {isPartners ? `${item.count} matchs` :
+                                        isVictims ? `${item.count} vict. / ${item.total} matchs` :
+                                            `${item.count} déf. / ${item.total} matchs`}
                                 </span>
                             </div>
                         </div>
@@ -329,67 +330,68 @@ export default function PremiumStats() {
             {/* Insights Cards - Premium Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Jour de Gloire */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-amber-500/30 transition-all">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
-                    <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center mb-3">
-                        <Calendar className="w-5 h-5 text-amber-500" />
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30"></div>
+                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <Calendar className="w-5 h-5 text-blue-400" />
                     </div>
                     <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Jour de Gloire</span>
                     <span className="text-[10px] text-slate-500 mb-3">Jour où vous gagnez le plus</span>
                     <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                        <span className="text-[10px] text-amber-500 font-bold">{statsData?.insights?.luckyDay?.winrate || 0}% victoires</span>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                        <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.luckyDay?.winrate || 0}% victoires</span>
                     </div>
                 </div>
 
                 {/* Heures de Gloire */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-yellow-500/30 transition-all">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-yellow-500 to-transparent opacity-50"></div>
-                    <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center mb-3">
-                        <Clock className="w-5 h-5 text-yellow-500" />
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all block">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-30"></div>
+                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <Clock className="w-5 h-5 text-blue-400" />
                     </div>
                     <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Heures de Gloire</span>
                     <span className="text-[10px] text-slate-500 mb-3">Heures où vous gagnez le plus</span>
                     <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300 px-2 line-clamp-1">{statsData?.insights?.goldenHour?.name || "-"}</span>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20">
-                        <span className="text-[10px] text-yellow-500 font-bold">{statsData?.insights?.goldenHour?.winrate || 0}% victoires</span>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                        <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.goldenHour?.winrate || 0}% victoires</span>
                     </div>
                 </div>
 
                 {/* Meilleur Mois */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-purple-500/30 transition-all">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50"></div>
-                    <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center mb-3">
-                        <Trophy className="w-5 h-5 text-purple-500" />
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-300 to-transparent opacity-30"></div>
+                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <Trophy className="w-5 h-5 text-blue-300" />
                     </div>
                     <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Meilleur Mois</span>
                     <span className="text-[10px] text-slate-500 mb-3">Période la plus faste</span>
                     <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20">
-                        <span className="text-[10px] text-purple-500 font-bold">{statsData?.insights?.bestMonth?.winrate || 0}% victoires</span>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                        <span className="text-[10px] text-blue-300 font-bold">{statsData?.insights?.bestMonth?.winrate || 0}% victoires</span>
                     </div>
                 </div>
 
                 {/* Current Form */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3">
-                        <TrendingUp className="w-5 h-5 text-emerald-500" />
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30"></div>
+                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <TrendingUp className="w-5 h-5 text-blue-500" />
                     </div>
                     <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Forme (5 derniers)</span>
                     <span className="text-[10px] text-slate-500 mb-3">% victoires sur les 5 derniers matchs</span>
-                    <span className={`text-4xl font-black group-hover:scale-110 transition-transform duration-300 mb-1 ${(statsData?.insights?.currentForm || 0) >= 60 ? "text-emerald-500" :
-                        (statsData?.insights?.currentForm || 0) >= 40 ? "text-blue-500" : "text-amber-500"
-                        }`}>
+                    <span className={`text-4xl font-black group-hover:scale-110 transition-transform duration-300 mb-1 text-white`}>
                         {statsData?.insights?.currentForm || 0}%
                     </span>
+                    <div className={`mt-1 h-1 w-16 rounded-full ${(statsData?.insights?.currentForm || 0) >= 60 ? "bg-emerald-500" :
+                        (statsData?.insights?.currentForm || 0) >= 40 ? "bg-blue-500" : "bg-amber-500"
+                        }`}></div>
                 </div>
 
                 {/* Reaction Capacity */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-red-500/30 transition-all sm:col-span-2 lg:col-span-2">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
-                    <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
-                        <Heart className="w-5 h-5 text-red-500" />
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all sm:col-span-2 lg:col-span-2">
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-600 to-transparent opacity-30"></div>
+                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                        <Swords className="w-5 h-5 text-blue-600" />
                     </div>
                     <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Capacité de Réaction</span>
                     <span className="text-[10px] text-slate-500 mb-3">% matchs gagnés après perte du 1er set</span>
@@ -417,9 +419,9 @@ export default function PremiumStats() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
                         {[
-                            { key: 'weaker', color: 'text-emerald-500', barGradient: 'from-emerald-600 to-emerald-400', label: 'vs Plus Faible', icon: <ArrowRight className="w-3 h-3 rotate-45 text-emerald-500" /> },
-                            { key: 'equal', color: 'text-blue-500', barGradient: 'from-blue-600 to-blue-400', label: 'vs Niveau Équivalent', icon: <ArrowRight className="w-3 h-3 text-blue-500" /> },
-                            { key: 'stronger', color: 'text-red-500', barGradient: 'from-red-600 to-red-400', label: 'vs Plus Fort', icon: <ArrowRight className="w-3 h-3 -rotate-45 text-red-500" /> }
+                            { key: 'weaker', color: 'text-emerald-400', barGradient: 'from-emerald-600 to-emerald-400', label: 'vs Plus Faible', icon: <ArrowRight className="w-3 h-3 rotate-45 text-emerald-400" /> },
+                            { key: 'equal', color: 'text-blue-400', barGradient: 'from-blue-600 to-blue-400', label: 'vs Niveau Équivalent', icon: <ArrowRight className="w-3 h-3 text-blue-400" /> },
+                            { key: 'stronger', color: 'text-amber-400', barGradient: 'from-amber-600 to-amber-400', label: 'vs Plus Fort', icon: <ArrowRight className="w-3 h-3 -rotate-45 text-amber-400" /> }
                         ].map((item) => {
                             // @ts-ignore
                             const stat = statsData?.insights?.levelPerformance?.[item.key] || { wins: 0, total: 0 };
@@ -456,9 +458,9 @@ export default function PremiumStats() {
 
             {/* Lists */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {renderList("Mes Victimes", <Trophy className="w-4 h-4 text-amber-500" />, statsData?.topVictims || [], "text-amber-500 border-amber-500/20 bg-amber-500/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
-                {renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-red-500" />, statsData?.topNemesis || [], "text-red-500 border-red-500/20 bg-red-500/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
-                {renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-pink-500" />, statsData?.topPartners || [], "text-pink-500 border-pink-500/20 bg-pink-500/10", "Jouez des matchs pour voir vos partenaires.")}
+                {renderList("Mes Victimes", <Trophy className="w-4 h-4 text-amber-400" />, statsData?.topVictims || [], "text-amber-400 border-amber-500/20 bg-amber-500/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
+                {renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-red-400" />, statsData?.topNemesis || [], "text-red-400 border-red-500/20 bg-red-500/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
+                {renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-blue-400" />, statsData?.topPartners || [], "text-blue-400 border-blue-500/20 bg-blue-500/10", "Jouez des matchs pour voir vos partenaires.")}
             </div>
         </div>
     );
