@@ -41,7 +41,79 @@ interface SuggestedPair {
 
 export default function SuggestedMatches() {
     const router = useRouter();
+    const supabase = createClient();
+    const [suggestions, setSuggestions] = useState<SuggestedPair[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reason, setReason] = useState<string | null>(null);
     const [departmentFilter, setDepartmentFilter] = useState("");
+
+    // Missing state from original crash
+    const [myPartner, setMyPartner] = useState<{ id: string; name: string } | null>(null);
+    const [existingChallenges, setExistingChallenges] = useState<Set<string>>(new Set());
+    const [challenging, setChallenging] = useState<string | null>(null);
+    const [showPhoneModal, setShowPhoneModal] = useState(false);
+    const [pendingChallenge, setPendingChallenge] = useState<{ player1_id: string; player2_id: string } | null>(null);
+
+    const loadMyPartner = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: partnership } = await supabase
+                .from("player_partnerships")
+                .select("player_id, partner_id, player:player_id(first_name, last_name, display_name), partner:partner_id(first_name, last_name, display_name)")
+                .eq("status", "accepted")
+                .or(`player_id.eq.${user.id},partner_id.eq.${user.id}`)
+                .maybeSingle();
+
+            if (partnership) {
+                const isPlayer1 = partnership.player_id === user.id;
+                const partnerId = isPlayer1 ? partnership.partner_id : partnership.player_id;
+                const partnerData = isPlayer1 ? (partnership.partner as any) : (partnership.player as any);
+
+                const name = partnerData.first_name && partnerData.last_name
+                    ? `${partnerData.first_name} ${partnerData.last_name}`.trim()
+                    : partnerData.display_name || "Partenaire";
+
+                setMyPartner({ id: partnerId, name });
+            }
+        } catch (error) {
+            console.error("[SuggestedMatches] Erreur chargement partenaire", error);
+        }
+    }, [supabase]);
+
+    const loadExistingChallenges = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Charger les défis actifs (envoyés)
+            const { data: challenges } = await supabase
+                .from("team_challenges")
+                .select("defender_player_1_id, defender_player_2_id")
+                .or(`challenger_player_1_id.eq.${user.id},challenger_player_2_id.eq.${user.id}`)
+                .in("status", ["pending", "accepted"])
+                .gt("expires_at", new Date().toISOString());
+
+            if (challenges) {
+                const challengeSet = new Set<string>();
+                challenges.forEach((c: { defender_player_1_id: string; defender_player_2_id: string }) => {
+                    // Créer une clé unique pour la paire adverse (triée pour cohérence)
+                    const ids = [c.defender_player_1_id, c.defender_player_2_id].sort();
+                    // On ne peut pas facilement matcher exactement les paires suggérées car l'ordre n'est pas garanti
+                    // Mais on peut essayer de reconstruire la clé utilisée dans le rendu
+                    // Dans le rendu : challengeKey = `${pair.player1.id}-${pair.player2.id}`
+                    // Ici on va stocker les deux sens pour être sûr
+                    challengeSet.add(`${c.defender_player_1_id}-${c.defender_player_2_id}`);
+                    challengeSet.add(`${c.defender_player_2_id}-${c.defender_player_1_id}`);
+                });
+                setExistingChallenges(challengeSet);
+            }
+        } catch (error) {
+            console.error("[SuggestedMatches] Erreur chargement défis", error);
+        }
+    }, [supabase]);
 
     const fetchSuggestions = useCallback(async (dept: string = "") => {
         try {
@@ -80,11 +152,94 @@ export default function SuggestedMatches() {
     useEffect(() => {
         fetchSuggestions();
         loadMyPartner();
-    }, [fetchSuggestions]);
+        loadExistingChallenges();
+    }, [fetchSuggestions, loadMyPartner, loadExistingChallenges]);
 
-    // ... (keep existing useEffects and functions)
+    const createChallenge = async (opp1Id: string, opp2Id: string) => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || !myPartner) return;
 
-    // ... (inside return)
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + 48); // 48h expiration
+
+            const { error } = await supabase.from("team_challenges").insert({
+                challenger_player_1_id: user.id,
+                challenger_player_2_id: myPartner.id,
+                defender_player_1_id: opp1Id,
+                defender_player_2_id: opp2Id,
+                status: "pending",
+                defender_1_status: "pending",
+                defender_2_status: "pending",
+                expires_at: expiresAt.toISOString()
+            });
+
+            if (error) throw error;
+
+            showToast("Défi envoyé ! ⚔️", "success");
+
+            // Mise à jour locale
+            setExistingChallenges(prev => {
+                const next = new Set(prev);
+                next.add(`${opp1Id}-${opp2Id}`);
+                next.add(`${opp2Id}-${opp1Id}`);
+                return next;
+            });
+
+            // Déclencher événement global
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("teamChallengeCreated"));
+            }
+
+        } catch (error) {
+            console.error("[SuggestedMatches] Erreur création défi", error);
+            showToast("Erreur lors de l'envoi du défi", "error");
+        }
+    };
+
+    const handleChallenge = async (pair: { player1_id: string, player2_id: string }) => {
+        try {
+            const challengeKey = `${pair.player1_id}-${pair.player2_id}`;
+            setChallenging(challengeKey);
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Vérifier téléphone
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("phone_number")
+                .eq("id", user.id)
+                .maybeSingle();
+
+            if (!profile?.phone_number) {
+                setPendingChallenge(pair);
+                setShowPhoneModal(true);
+                return;
+            }
+
+            await createChallenge(pair.player1_id, pair.player2_id);
+
+        } catch (error) {
+            console.error("[SuggestedMatches] Erreur handleChallenge", error);
+        } finally {
+            setChallenging(null);
+        }
+    };
+
+    const handlePhoneModalActivated = async () => {
+        if (pendingChallenge) {
+            // Un petit délai pour laisser le temps au state de se mettre à jour si nécessaire
+            setChallenging(`${pendingChallenge.player1_id}-${pendingChallenge.player2_id}`);
+            try {
+                await createChallenge(pendingChallenge.player1_id, pendingChallenge.player2_id);
+            } finally {
+                setChallenging(null);
+                setPendingChallenge(null);
+                setShowPhoneModal(false);
+            }
+        }
+    };
 
     return (
         <>
@@ -218,18 +373,18 @@ export default function SuggestedMatches() {
                                     {/* Action - Voir la paire / Défier */}
                                     {(() => {
                                         const challengeKey = `${pair.player1.id}-${pair.player2.id}`;
-                                        const hasExistingChallenge = existingChallenges.has(challengeKey);
+                                        const hasExistingChallenge = existingChallenges.has(challengeKey) || existingChallenges.has(`${pair.player2.id}-${pair.player1.id}`);
 
                                         return (
                                             <button
                                                 type="button"
                                                 onClick={() => handleChallenge({ player1_id: pair.player1.id, player2_id: pair.player2.id })}
-                                                disabled={challenging === `${pair.player1.id}-${pair.player2.id}` || !myPartner || hasExistingChallenge}
+                                                disabled={challenging === challengeKey || !myPartner || hasExistingChallenge}
                                                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 {hasExistingChallenge ? (
                                                     "DÉFI EN COURS"
-                                                ) : challenging === `${pair.player1.id}-${pair.player2.id}` ? (
+                                                ) : challenging === challengeKey ? (
                                                     <>
                                                         <Loader2 size={14} className="animate-spin" />
                                                         Envoi...
