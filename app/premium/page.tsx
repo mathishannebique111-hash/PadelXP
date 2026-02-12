@@ -177,6 +177,16 @@ function PremiumContent() {
                 </div>
 
             </div>
+
+            {/* DEBUG LOGS */}
+            {isApp && (
+                <div className="flex-none w-full bg-black/80 text-green-400 text-[10px] p-2 h-32 overflow-y-auto font-mono z-50 border-t border-white/10">
+                    <div className="font-bold text-white mb-1 sticky top-0 bg-black/80">DEBUG IAP ({useAppleIAP().debugLogs.length})</div>
+                    {useAppleIAP().debugLogs.map((log, i) => (
+                        <div key={i} className="whitespace-pre-wrap border-b border-white/5 pb-0.5 mb-0.5">{log}</div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

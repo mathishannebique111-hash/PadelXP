@@ -16,12 +16,18 @@ export const useAppleIAP = () => {
     const [isInitialized, setIsInitialized] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isApp, setIsApp] = useState(false);
+    const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+    const addLog = (msg: string) => {
+        console.log(msg);
+        setDebugLogs(prev => [...prev.slice(-19), msg]); // Garder les 20 derniers logs
+    };
 
     useEffect(() => {
         // Détecter si on est dans l'app via Capacitor
         try {
             const isNative = Capacitor.isNativePlatform();
-            console.log("[useAppleIAP] Initial check - isNative:", isNative, "Platform:", Capacitor.getPlatform());
+            addLog(`[useAppleIAP] Initial check - isNative: ${isNative}, Platform: ${Capacitor.getPlatform()}`);
 
             if (isNative) {
                 setIsApp(true);
@@ -32,21 +38,21 @@ export const useAppleIAP = () => {
                     attempts++;
                     const store = (window as any).CdvPurchase?.store || (window as any).store;
 
-                    console.log(`[useAppleIAP] Attempt ${attempts}: store found?`, !!store);
+                    addLog(`[useAppleIAP] Attempt ${attempts}: store found? ${!!store}`);
 
                     if (store) {
                         clearInterval(interval);
                         initStore(store);
                     } else if (attempts >= 20) { // 10 secondes (20 * 500ms)
                         clearInterval(interval);
-                        console.error("[useAppleIAP] Abandon : Store introuvable après 10s. Vérifiez que cordova-plugin-purchase est bien présent dans le build natif.");
+                        addLog("[useAppleIAP] Abandon : Store introuvable après 10s.");
                     }
                 }, 500);
 
                 return () => clearInterval(interval);
             }
         } catch (err) {
-            console.error("[useAppleIAP] Error during initialization:", err);
+            addLog(`[useAppleIAP] Error during initialization: ${err}`);
         }
     }, []);
 
@@ -54,45 +60,44 @@ export const useAppleIAP = () => {
         try {
             if (isInitialized) return;
 
-            console.log("[useAppleIAP] Initialisation du store...");
+            addLog("[useAppleIAP] Initialisation du store...");
 
             const platform = (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE || 'ios-appstore';
-            console.log("[useAppleIAP] Debug - Platform:", platform);
-            console.log("[useAppleIAP] Debug - Product Type:", store.PAID_SUBSCRIPTION);
+            addLog(`[useAppleIAP] Debug - Platform: ${platform}`);
 
             // Configuration du produit
-            console.log("[useAppleIAP] Appel de store.register...");
+            addLog("[useAppleIAP] Appel de store.register...");
             store.register({
                 id: 'premium_monthly',
                 type: store.PAID_SUBSCRIPTION || 'paid subscription',
                 platform: platform,
             });
-            console.log("[useAppleIAP] store.register OK");
+            addLog("[useAppleIAP] store.register OK");
 
             // Gérer les approbations
             store.when('premium_monthly').approved((p: any) => {
-                console.info("[useAppleIAP] Produit approuvé par l'App Store.");
+                addLog("[useAppleIAP] Produit approuvé par l'App Store.");
                 validatePurchase(p);
             });
 
             // Gérer les erreurs
             store.error((error: any) => {
-                console.error("[useAppleIAP] Store Error Event:", error);
+                addLog(`[useAppleIAP] Store Error: ${JSON.stringify(error)}`);
                 if (loading) toast.error("Erreur In-App Purchase: " + (error.message || "inconnue"));
                 setLoading(false);
             });
 
             store.ready(() => {
-                console.info("[useAppleIAP] Store prêt et synchronisé.");
+                addLog("[useAppleIAP] Store prêt et synchronisé.");
                 setIsInitialized(true);
             });
 
-            console.log("[useAppleIAP] Appel de store.refresh...");
+            addLog("[useAppleIAP] Appel de store.refresh...");
             store.refresh();
-            console.log("[useAppleIAP] store.refresh OK");
+            addLog("[useAppleIAP] store.refresh OK");
         } catch (err: any) {
             const errorMessage = JSON.stringify(err, Object.getOwnPropertyNames(err));
-            console.error("[useAppleIAP] Erreur fatale dans initStore:", errorMessage);
+            addLog(`[useAppleIAP] Erreur fatale: ${errorMessage}`);
             toast.error("Erreur IAP Init: " + errorMessage);
         }
     };
@@ -127,21 +132,21 @@ export const useAppleIAP = () => {
         const store = (window as any).CdvPurchase?.store || (window as any).store;
 
         if (!store) {
-            console.error("[useAppleIAP] Store non trouvé au clic.");
-            toast.error("Le service de paiement d'Apple n'est pas encore prêt. Réessayez dans un instant.");
+            addLog("[useAppleIAP] Store non trouvé au clic.");
+            toast.error("Service Apple non prêt. Voir logs en bas.");
             return;
         }
 
         setLoading(true);
         try {
-            console.log("[useAppleIAP] Lancement store.order('premium_monthly')...");
+            addLog("[useAppleIAP] Lancement store.order('premium_monthly')...");
             store.order('premium_monthly');
-        } catch (err) {
-            console.error("[useAppleIAP] store.order failed:", err);
+        } catch (err: any) {
+            addLog(`[useAppleIAP] store.order failed: ${err}`);
             toast.error("Impossible d'ouvrir la fenêtre d'achat Apple.");
             setLoading(false);
         }
-    }, [loading]);
+    }, [loading, addLog]);
 
     const restorePurchases = useCallback(() => {
         const store = (window as any).CdvPurchase?.store || (window as any).store;
@@ -155,6 +160,7 @@ export const useAppleIAP = () => {
         isApp,
         loading,
         purchasePremium,
-        restorePurchases
+        restorePurchases,
+        debugLogs
     };
 };
