@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { verifyAppleReceipt } from '@/app/actions/apple';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
 
 declare global {
     interface Window {
@@ -17,99 +18,119 @@ export const useAppleIAP = () => {
     const [isApp, setIsApp] = useState(false);
 
     useEffect(() => {
-        // Détecter si on est dans l'app via le User Agent injecté par capacitor.config.ts
-        const userAgent = window.navigator.userAgent;
-        if (userAgent.includes('PadelXPCapacitor') || !!window.Capacitor) {
-            setIsApp(true);
-            initStore();
+        // Détecter si on est dans l'app via Capacitor
+        try {
+            const isNative = Capacitor.isNativePlatform();
+            console.log("[useAppleIAP] Platform check:", { isNative, platform: Capacitor.getPlatform() });
+
+            if (isNative) {
+                setIsApp(true);
+                // On attend un peu que les plugins soient injectés (CdvPurchase...)
+                const timer = setTimeout(() => {
+                    initStore();
+                }, 1000);
+                return () => clearTimeout(timer);
+            }
+        } catch (err) {
+            console.error("[useAppleIAP] Error during platform detection:", err);
         }
     }, []);
 
     const initStore = () => {
-        const store = window.store;
-        if (!store) {
-            console.warn("[useAppleIAP] 'window.store' non trouvé. Assurez-vous que le plugin cordova-plugin-purchase est installé.");
-            return;
+        try {
+            // Support v13 (CdvPurchase) et v11 (store)
+            const store = (window as any).CdvPurchase?.store || (window as any).store;
+
+            if (!store) {
+                console.warn("[useAppleIAP] Store non trouvé sur window. Attente possible...");
+                return;
+            }
+
+            if (isInitialized) return;
+
+            console.log("[useAppleIAP] Initialisation du store...");
+
+            // Configuration du produit
+            store.register({
+                id: 'premium_monthly',
+                type: store.PAID_SUBSCRIPTION || 'paid subscription',
+            });
+
+            // Gérer les approbations
+            store.when('premium_monthly').approved((p: any) => {
+                console.info("[useAppleIAP] Achat approuvé.");
+                validatePurchase(p);
+            });
+
+            // Gérer les erreurs
+            store.error((error: any) => {
+                console.error("[useAppleIAP] Store Error:", error);
+                // Toast seulement si on est en train d'essayer d'acheter pour pas polluer
+                if (loading) toast.error("Erreur Store: " + (error.message || "inconnue"));
+                setLoading(false);
+            });
+
+            store.ready(() => {
+                console.info("[useAppleIAP] Store prêt.");
+                setIsInitialized(true);
+            });
+
+            store.refresh();
+        } catch (err) {
+            console.error("[useAppleIAP] Erreur critique lors de initStore:", err);
         }
-
-        if (isInitialized) return;
-
-        // Configuration du produit
-        // IMPORTANT: Ces IDs doivent correspondre à ceux créés dans App Store Connect
-        store.register({
-            id: 'premium_monthly',
-            type: store.PAID_SUBSCRIPTION,
-        });
-
-        // Gérer les approbations (quand l'acte d'achat est validé par Apple)
-        store.when('premium_monthly').approved((p: any) => {
-            console.info("[useAppleIAP] Achat approuvé, validation en cours...");
-            validatePurchase(p);
-        });
-
-        // Gérer les erreurs
-        store.error((error: any) => {
-            console.error("[useAppleIAP] Erreur Store:", error);
-            toast.error("Erreur de paiement: " + error.message);
-            setLoading(false);
-        });
-
-        store.ready(() => {
-            console.info("[useAppleIAP] Store prêt.");
-            setIsInitialized(true);
-        });
-
-        store.refresh();
     };
 
     const validatePurchase = async (product: any) => {
         setLoading(true);
         try {
-            // Le reçu est disponible dans product.transaction.appStoreReceipt
-            const receipt = product.transaction?.appStoreReceipt;
+            // Dans v13 c'est parfois transaction.appStoreReceipt
+            const receipt = product.transaction?.appStoreReceipt || product.transaction?.receipt;
 
             if (!receipt) {
-                console.error("[useAppleIAP] Aucun reçu trouvé dans la transaction");
-                toast.error("Échec de validation: Reçu manquant");
+                toast.error("Reçu Apple introuvable.");
                 return;
             }
 
             const result = await verifyAppleReceipt(receipt);
 
             if (result.success) {
-                product.finish();
-                toast.success("Premium activé ! Bienvenue sur PadelXP.");
+                if (typeof product.finish === 'function') product.finish();
+                toast.success("Premium activé !");
                 window.location.href = '/home?premium_success=true';
             } else {
-                console.error("[useAppleIAP] Validation serveur échouée:", result.error);
-                toast.error("Erreur de validation: " + result.error);
+                toast.error("Échec de validation: " + result.error);
             }
         } catch (e) {
-            console.error("[useAppleIAP] Erreur pendant la validation:", e);
-            toast.error("Une erreur réseau est survenue lors de la validation.");
+            toast.error("Erreur réseau lors de la validation.");
         } finally {
             setLoading(false);
         }
     };
 
     const purchasePremium = useCallback(() => {
-        if (!isApp) return;
+        const store = (window as any).CdvPurchase?.store || (window as any).store;
 
-        const store = window.store;
         if (!store) {
-            toast.error("Système de paiement non disponible.");
+            toast.error("Le service de paiement d'Apple n'est pas encore prêt.");
             return;
         }
 
         setLoading(true);
-        store.order('premium_monthly');
-    }, [isApp]);
+        try {
+            store.order('premium_monthly');
+        } catch (err) {
+            console.error("[useAppleIAP] Order failed:", err);
+            toast.error("Impossible de lancer l'achat.");
+            setLoading(false);
+        }
+    }, []);
 
     const restorePurchases = useCallback(() => {
-        const store = window.store;
+        const store = (window as any).CdvPurchase?.store || (window as any).store;
         if (store) {
             store.refresh();
-            toast.info("Restauration des achats en cours...");
+            toast.info("Restauration en cours...");
         }
     }, []);
 
