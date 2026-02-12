@@ -393,8 +393,33 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
   // Si on a déjà chargé une fois et qu'il n'y a pas de suggestions, afficher le message d'état vide
   if (loading && !hasLoadedOnce) {
     return (
-      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20 min-h-[200px] flex items-center justify-center">
-        <PadelLoader text="Recherche de partenaires..." />
+      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
+        <div className="mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div className="h-7 w-40 bg-slate-800 rounded-lg animate-pulse" />
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-full sm:w-48 bg-slate-800 rounded-lg animate-pulse" />
+              <div className="h-9 w-20 bg-slate-800 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-slate-800/30 rounded-xl p-2.5 md:p-4 border border-white/5 flex flex-col h-full animate-pulse">
+              <div className="flex flex-col items-center text-center mb-2.5 flex-1">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700/50 mb-2" />
+                <div className="h-4 w-24 bg-slate-700/50 rounded mb-1.5" />
+                <div className="h-3 w-16 bg-slate-700/50 rounded mb-2" />
+                <div className="h-2 w-full max-w-[100px] bg-slate-700/50 rounded-full" />
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 mt-auto">
+                <div className="h-9 bg-slate-700/50 rounded-lg" />
+                <div className="h-9 bg-slate-700/50 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
