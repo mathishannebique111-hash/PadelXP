@@ -54,14 +54,20 @@ export const useAppleIAP = () => {
         try {
             if (isInitialized) return;
 
-            console.log("[useAppleIAP] Initialisation du store avec IDs...");
+            console.log("[useAppleIAP] Initialisation du store...");
+
+            const platform = (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE || 'ios-appstore';
+            console.log("[useAppleIAP] Debug - Platform:", platform);
+            console.log("[useAppleIAP] Debug - Product Type:", store.PAID_SUBSCRIPTION);
 
             // Configuration du produit
+            console.log("[useAppleIAP] Appel de store.register...");
             store.register({
                 id: 'premium_monthly',
                 type: store.PAID_SUBSCRIPTION || 'paid subscription',
-                platform: (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE || 'ios-appstore',
+                platform: platform,
             });
+            console.log("[useAppleIAP] store.register OK");
 
             // Gérer les approbations
             store.when('premium_monthly').approved((p: any) => {
@@ -81,9 +87,11 @@ export const useAppleIAP = () => {
                 setIsInitialized(true);
             });
 
+            console.log("[useAppleIAP] Appel de store.refresh...");
             store.refresh();
-        } catch (err) {
-            console.error("[useAppleIAP] Erreur fatale dans initStore:", err);
+            console.log("[useAppleIAP] store.refresh OK");
+        } catch (err: any) {
+            console.error("[useAppleIAP] Erreur fatale dans initStore:", JSON.stringify(err, Object.getOwnPropertyNames(err)));
         }
     };
 
