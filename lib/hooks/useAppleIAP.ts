@@ -21,34 +21,40 @@ export const useAppleIAP = () => {
         // Détecter si on est dans l'app via Capacitor
         try {
             const isNative = Capacitor.isNativePlatform();
-            console.log("[useAppleIAP] Platform check:", { isNative, platform: Capacitor.getPlatform() });
+            console.log("[useAppleIAP] Initial check - isNative:", isNative, "Platform:", Capacitor.getPlatform());
 
             if (isNative) {
                 setIsApp(true);
-                // On attend un peu que les plugins soient injectés (CdvPurchase...)
-                const timer = setTimeout(() => {
-                    initStore();
-                }, 1000);
-                return () => clearTimeout(timer);
+
+                // On boucle jusqu'à trouver le store ou abandonner après 10s
+                let attempts = 0;
+                const interval = setInterval(() => {
+                    attempts++;
+                    const store = (window as any).CdvPurchase?.store || (window as any).store;
+
+                    console.log(`[useAppleIAP] Attempt ${attempts}: store found?`, !!store);
+
+                    if (store) {
+                        clearInterval(interval);
+                        initStore(store);
+                    } else if (attempts >= 20) { // 10 secondes (20 * 500ms)
+                        clearInterval(interval);
+                        console.error("[useAppleIAP] Abandon : Store introuvable après 10s. Vérifiez que cordova-plugin-purchase est bien présent dans le build natif.");
+                    }
+                }, 500);
+
+                return () => clearInterval(interval);
             }
         } catch (err) {
-            console.error("[useAppleIAP] Error during platform detection:", err);
+            console.error("[useAppleIAP] Error during initialization:", err);
         }
     }, []);
 
-    const initStore = () => {
+    const initStore = (store: any) => {
         try {
-            // Support v13 (CdvPurchase) et v11 (store)
-            const store = (window as any).CdvPurchase?.store || (window as any).store;
-
-            if (!store) {
-                console.warn("[useAppleIAP] Store non trouvé sur window. Attente possible...");
-                return;
-            }
-
             if (isInitialized) return;
 
-            console.log("[useAppleIAP] Initialisation du store...");
+            console.log("[useAppleIAP] Initialisation du store avec IDs...");
 
             // Configuration du produit
             store.register({
@@ -58,37 +64,35 @@ export const useAppleIAP = () => {
 
             // Gérer les approbations
             store.when('premium_monthly').approved((p: any) => {
-                console.info("[useAppleIAP] Achat approuvé.");
+                console.info("[useAppleIAP] Produit approuvé par l'App Store.");
                 validatePurchase(p);
             });
 
             // Gérer les erreurs
             store.error((error: any) => {
-                console.error("[useAppleIAP] Store Error:", error);
-                // Toast seulement si on est en train d'essayer d'acheter pour pas polluer
-                if (loading) toast.error("Erreur Store: " + (error.message || "inconnue"));
+                console.error("[useAppleIAP] Store Error Event:", error);
+                if (loading) toast.error("Erreur In-App Purchase: " + (error.message || "inconnue"));
                 setLoading(false);
             });
 
             store.ready(() => {
-                console.info("[useAppleIAP] Store prêt.");
+                console.info("[useAppleIAP] Store prêt et synchronisé.");
                 setIsInitialized(true);
             });
 
             store.refresh();
         } catch (err) {
-            console.error("[useAppleIAP] Erreur critique lors de initStore:", err);
+            console.error("[useAppleIAP] Erreur fatale dans initStore:", err);
         }
     };
 
     const validatePurchase = async (product: any) => {
         setLoading(true);
         try {
-            // Dans v13 c'est parfois transaction.appStoreReceipt
             const receipt = product.transaction?.appStoreReceipt || product.transaction?.receipt;
 
             if (!receipt) {
-                toast.error("Reçu Apple introuvable.");
+                toast.error("Reçu Apple manquant pour la validation.");
                 return;
             }
 
@@ -96,13 +100,13 @@ export const useAppleIAP = () => {
 
             if (result.success) {
                 if (typeof product.finish === 'function') product.finish();
-                toast.success("Premium activé !");
+                toast.success("Succès ! Vous êtes maintenant Premium.");
                 window.location.href = '/home?premium_success=true';
             } else {
-                toast.error("Échec de validation: " + result.error);
+                toast.error("Échec de validation serveur: " + result.error);
             }
         } catch (e) {
-            toast.error("Erreur réseau lors de la validation.");
+            toast.error("Erreur réseau (vérification du reçu).");
         } finally {
             setLoading(false);
         }
@@ -112,25 +116,27 @@ export const useAppleIAP = () => {
         const store = (window as any).CdvPurchase?.store || (window as any).store;
 
         if (!store) {
-            toast.error("Le service de paiement d'Apple n'est pas encore prêt.");
+            console.error("[useAppleIAP] Store non trouvé au clic.");
+            toast.error("Le service de paiement d'Apple n'est pas encore prêt. Réessayez dans un instant.");
             return;
         }
 
         setLoading(true);
         try {
+            console.log("[useAppleIAP] Lancement store.order('premium_monthly')...");
             store.order('premium_monthly');
         } catch (err) {
-            console.error("[useAppleIAP] Order failed:", err);
-            toast.error("Impossible de lancer l'achat.");
+            console.error("[useAppleIAP] store.order failed:", err);
+            toast.error("Impossible d'ouvrir la fenêtre d'achat Apple.");
             setLoading(false);
         }
-    }, []);
+    }, [loading]);
 
     const restorePurchases = useCallback(() => {
         const store = (window as any).CdvPurchase?.store || (window as any).store;
         if (store) {
             store.refresh();
-            toast.info("Restauration en cours...");
+            toast.info("Restauration des achats demandée...");
         }
     }, []);
 
