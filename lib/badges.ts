@@ -3,6 +3,7 @@ export type Badge = {
   icon: string;
   title: string;
   description: string;
+  isPremium?: boolean;
 };
 
 export type PlayerStats = {
@@ -25,16 +26,16 @@ export const ALL_BADGES: Badge[] = [
   { icon: "Flame", title: "Série de 10", description: "Gagnez 10 matchs consécutifs" },
   { icon: "Target", title: "Précision", description: "Remportez 5 matchs sans en perdre aucun" },
   { icon: "TrendingUp", title: "En progression", description: "Ayez 5 victoires de plus que de défaites" },
-  { icon: "Flame", title: "série de 15", description: "Gagnez 15 matchs consécutifs" },
-  { icon: "Flame", title: "série de 20", description: "Gagnez 20 matchs consécutifs" },
+  { icon: "Flame", title: "Série de 15", description: "Gagnez 15 matchs consécutifs" },
+  { icon: "Flame", title: "Série de 20", description: "Gagnez 20 matchs consécutifs" },
   { icon: "Milestone", title: "Centurion", description: "Jouez 100 matchs" },
-  { icon: "Gem", title: "Diamant", description: "Atteignez 500 points" },
-  { icon: "Crown", title: "Légende", description: "Gagnez 200 matchs au total" },
+  { icon: "Gem", title: "Diamant", description: "Atteignez 500 points", isPremium: true },
+  { icon: "Crown", title: "Légende", description: "Gagnez 200 matchs au total", isPremium: true },
   { icon: "Heart", title: "Amour du padel", description: "Jouez 200 matchs au total" },
   // Badges liés aux avis
   { icon: "MessageSquare", title: "Contributeur", description: "Laissez votre premier avis" },
   // Badge parrainage
-  { icon: "Users", title: "Ambassadeur", description: "Parrainez 2 joueurs" },
+  { icon: "Users", title: "Ambassadeur", description: "Parrainez 2 joueurs", isPremium: true },
 ];
 
 export function getBadges(stats: PlayerStats): Badge[] {

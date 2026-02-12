@@ -5,6 +5,9 @@ import Image from "next/image";
 import { logger } from '@/lib/logger';
 import { Calendar, PartyPopper, Trophy, X, AlertCircle, Clock, Loader2 } from "lucide-react";
 
+import Link from "next/link";
+import { Lock } from "lucide-react";
+
 interface PlayerChallenge {
   id: string;
   title: string;
@@ -19,10 +22,12 @@ interface PlayerChallenge {
     target: number;
   };
   rewardClaimed: boolean;
+  isPremium?: boolean;
 }
 
 interface ChallengeCardProps {
   challenge: PlayerChallenge;
+  isPremiumUser?: boolean;
   onRewardClaimed?: () => void;
 }
 
@@ -56,7 +61,7 @@ function statusClasses(status: PlayerChallenge["status"]) {
   }
 }
 
-export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeCardProps) {
+export default function ChallengeCard({ challenge, isPremiumUser = false, onRewardClaimed }: ChallengeCardProps) {
   const [claiming, setClaiming] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
   const [rewardValue, setRewardValue] = useState("");
@@ -70,7 +75,9 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
   const isFailed = isExpired && !isCompleted;
   const canClaim = isCompleted && !challenge.rewardClaimed && !hasClaimed && !isExpired;
 
-  logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] "${challenge.title}" - Progress: ${challenge.progress.current}/${challenge.progress.target}, isCompleted: ${isCompleted}, isExpired: ${isExpired}, isFailed: ${isFailed}, canClaim: ${canClaim}, rewardClaimed: ${challenge.rewardClaimed}, hasClaimed: ${hasClaimed}`);
+  const isLocked = challenge.isPremium && !isPremiumUser;
+
+  logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] "${challenge.title}" - Progress: ${challenge.progress.current}/${challenge.progress.target}, isCompleted: ${isCompleted}, isExpired: ${isExpired}, isFailed: ${isFailed}, canClaim: ${canClaim}, rewardClaimed: ${challenge.rewardClaimed}, hasClaimed: ${hasClaimed}, isLocked: ${isLocked}`);
 
   // Nettoyer le timeout si le composant est démonté ou si le pop-up est fermé
   useEffect(() => {
@@ -82,8 +89,8 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
   }, [autoCloseTimeout]);
 
   const claimReward = async () => {
-    if (claiming || challenge.rewardClaimed || hasClaimed) {
-      logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] ❌ Cannot claim: claiming=${claiming}, rewardClaimed=${challenge.rewardClaimed}, hasClaimed=${hasClaimed}`);
+    if (claiming || challenge.rewardClaimed || hasClaimed || isLocked) {
+      logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] ❌ Cannot claim: claiming=${claiming}, rewardClaimed=${challenge.rewardClaimed}, hasClaimed=${hasClaimed}, isLocked=${isLocked}`);
       return;
     }
 
@@ -224,153 +231,188 @@ export default function ChallengeCard({ challenge, onRewardClaimed }: ChallengeC
       )}
 
       {/* Carte du challenge */}
-      <div className={`group relative rounded-2xl border-2 p-4 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
+      <div className={`group relative rounded-2xl border-2 p-1 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted && !isLocked
         ? "border-blue-500 bg-gradient-to-br from-blue-600/10 via-black/40 to-black/20 shadow-blue-500/20"
-        : isFailed
+        : isFailed && !isLocked
           ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
-          : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-xl"
+          : challenge.isPremium
+            ? isLocked
+              ? "border-amber-500/30 bg-slate-900/80"
+              : "border-amber-500/60 bg-gradient-to-br from-amber-500/10 to-black/40 shadow-amber-500/10"
+            : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-xl"
         }`}>
-        {/* Effet brillant style top joueurs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
-          </div>
-        </div>
 
-        {/* En-tête */}
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h3 className="mb-2 text-xl font-bold text-white">{challenge.title}</h3>
-            <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusClasses(challenge.status)}`}>
-              {statusLabel(challenge.status)}
-            </span>
+        {/* Overlay si verrouillé */}
+        {isLocked && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[4px] text-center p-6">
+            <div className="mb-3 p-3 rounded-full bg-amber-500/20 border border-amber-500/40">
+              <Lock className="w-8 h-8 text-amber-400" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Challenge Premium</h3>
+            <p className="text-sm text-slate-300 mb-6 max-w-xs">
+              Débloquez ce challenge et bien plus encore avec PadelXP Premium.
+            </p>
+            <Link
+              href="/premium-info" // Assuming this is the premium info page? Or maybe just /premium
+              className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform"
+            >
+              Devenir Premium
+            </Link>
           </div>
+        )}
 
-          {/* Badge récompense */}
-          <div className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-yellow-500/15 to-amber-600/10 px-3 py-2 shadow ring-1 ring-yellow-400/20">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-yellow-200/80">
-              Récompense
-            </span>
-            <div className="flex items-center gap-1.5">
-              {challenge.rewardType === "points" ? (
-                <Image
-                  src="/images/Étoile points challenges.png"
-                  alt="Étoile"
-                  width={20}
-                  height={20}
-                  className="object-contain"
-                />
-              ) : (
-                <div className="flex items-center gap-1">
+        <div className={`p-4 ${isLocked ? "opacity-30 blur-[1px] pointer-events-none select-none grayscale-[0.5]" : ""}`}>
+          {/* Effet brillant style top joueurs (seulement si non verrouillé) */}
+          {!isLocked && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+              <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
+              </div>
+            </div>
+          )}
+
+          {/* En-tête */}
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <h3 className="mb-2 text-xl font-bold text-white flex items-center gap-2">
+                {challenge.title}
+                {challenge.isPremium && (
+                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                    Premium
+                  </span>
+                )}
+              </h3>
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusClasses(challenge.status)}`}>
+                {statusLabel(challenge.status)}
+              </span>
+            </div>
+
+            {/* Badge récompense */}
+            <div className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-yellow-500/15 to-amber-600/10 px-3 py-2 shadow ring-1 ring-yellow-400/20">
+              <span className="text-[10px] font-medium uppercase tracking-wide text-yellow-200/80">
+                Récompense
+              </span>
+              <div className="flex items-center gap-1.5">
+                {challenge.rewardType === "points" ? (
                   <Image
-                    src="/images/Badge.png"
-                    alt="Badge"
+                    src="/images/Étoile points challenges.png"
+                    alt="Étoile"
                     width={20}
                     height={20}
                     className="object-contain"
                   />
-                </div>
-              )}
-              <span className="text-sm font-bold text-white">
-                {challenge.rewardType === "points"
-                  ? `${challenge.rewardLabel} pts`
-                  : challenge.rewardLabel}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Objectif */}
-        <div className="mb-5 rounded-2xl border border-white/10 bg-gradient-to-br from-[#071554]/80 to-[#071554]/40 p-4 shadow-inner">
-          <div className="mb-3 flex items-start justify-between">
-            <div>
-              <div className="mb-1 text-sm font-medium text-white">Objectif</div>
-              <div className="text-xs text-white">{challenge.objective}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white">
-                {challenge.progress.current}/{challenge.progress.target}
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <Image
+                      src="/images/Badge.png"
+                      alt="Badge"
+                      width={20}
+                      height={20}
+                      className="object-contain"
+                    />
+                  </div>
+                )}
+                <span className="text-sm font-bold text-white">
+                  {challenge.rewardType === "points"
+                    ? `${challenge.rewardLabel} pts`
+                    : challenge.rewardLabel}
+                </span>
               </div>
-              <div className="text-xs font-medium text-white">{Math.round(percentage)}%</div>
             </div>
           </div>
 
-          {/* Barre de progression */}
-          <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
-            <div
-              className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${isCompleted
-                ? "bg-blue-500 shadow-lg shadow-blue-500/50"
-                : "bg-blue-500 shadow-lg shadow-blue-500/30"
-                }`}
-              style={{ width: `${percentage}%` }}
-            />
+          {/* Objectif */}
+          <div className="mb-5 rounded-2xl border border-white/10 bg-gradient-to-br from-[#071554]/80 to-[#071554]/40 p-4 shadow-inner">
+            <div className="mb-3 flex items-start justify-between">
+              <div>
+                <div className="mb-1 text-sm font-medium text-white">Objectif</div>
+                <div className="text-xs text-white">{challenge.objective}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">
+                  {challenge.progress.current}/{challenge.progress.target}
+                </div>
+                <div className="text-xs font-medium text-white">{Math.round(percentage)}%</div>
+              </div>
+            </div>
+
+            {/* Barre de progression */}
+            <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
+              <div
+                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${isCompleted
+                  ? "bg-blue-500 shadow-lg shadow-blue-500/50"
+                  : "bg-blue-500 shadow-lg shadow-blue-500/30"
+                  }`}
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+
+            {/* Indicateur de récompense réclamée */}
+            {challenge.rewardClaimed && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-500/15 px-3 py-2 text-sm font-medium text-blue-300">
+                <span>✅</span>
+                <span>Récompense réclamée</span>
+              </div>
+            )}
           </div>
 
-          {/* Indicateur de récompense réclamée */}
-          {challenge.rewardClaimed && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-500/15 px-3 py-2 text-sm font-medium text-blue-300">
-              <span>✅</span>
-              <span>Récompense réclamée</span>
+          {/* Période */}
+          <div className="mb-4 flex items-center gap-2 text-sm">
+            <Calendar size={16} className="text-white flex-shrink-0" />
+            <span className="font-medium text-white">Période :</span>
+            <span className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</span>
+          </div>
+
+          {/* Bouton récupérer la récompense - En bas du cadre */}
+          {canClaim && !hasClaimed && (
+            <div className="mb-2">
+              <button
+                onClick={claimReward}
+                disabled={claiming}
+                className="group relative w-full overflow-hidden rounded-xl bg-blue-600 px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+              >
+                {/* Effet de brillance animé */}
+                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+
+                {/* Contenu du bouton */}
+                <div className="relative z-10 flex items-center justify-center gap-2">
+                  {claiming ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>Récupération...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-base sm:text-lg">Récupérer la récompense</span>
+                    </>
+                  )}
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Message de challenge terminé */}
+          {isExpired && (
+            <div className={`mb-5 rounded-2xl border px-4 py-3 ${isCompleted
+              ? "border-blue-500/40 bg-blue-500/10"
+              : "border-red-500/40 bg-red-500/10"
+              }`}>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{isCompleted ? "✅" : "❌"}</span>
+                <div>
+                  <div className={`font-bold ${isCompleted ? "text-blue-300" : "text-red-300"}`}>
+                    Challenge terminé
+                  </div>
+                  <div className={`text-sm ${isCompleted ? "text-blue-200/80" : "text-red-200/80"}`}>
+                    {isCompleted
+                      ? "Félicitations ! Vous avez réussi ce challenge !"
+                      : "Ce challenge n'a pas été complété à temps."}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
-
-        {/* Période */}
-        <div className="mb-4 flex items-center gap-2 text-sm">
-          <Calendar size={16} className="text-white flex-shrink-0" />
-          <span className="font-medium text-white">Période :</span>
-          <span className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</span>
-        </div>
-
-        {/* Bouton récupérer la récompense - En bas du cadre */}
-        {canClaim && !hasClaimed && (
-          <div className="mb-2">
-            <button
-              onClick={claimReward}
-              disabled={claiming}
-              className="group relative w-full overflow-hidden rounded-xl bg-blue-600 px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
-            >
-              {/* Effet de brillance animé */}
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
-
-              {/* Contenu du bouton */}
-              <div className="relative z-10 flex items-center justify-center gap-2">
-                {claiming ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Récupération...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-base sm:text-lg">Récupérer la récompense</span>
-                  </>
-                )}
-              </div>
-            </button>
-          </div>
-        )}
-
-        {/* Message de challenge terminé */}
-        {isExpired && (
-          <div className={`mb-5 rounded-2xl border px-4 py-3 ${isCompleted
-            ? "border-blue-500/40 bg-blue-500/10"
-            : "border-red-500/40 bg-red-500/10"
-            }`}>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{isCompleted ? "✅" : "❌"}</span>
-              <div>
-                <div className={`font-bold ${isCompleted ? "text-blue-300" : "text-red-300"}`}>
-                  Challenge terminé
-                </div>
-                <div className={`text-sm ${isCompleted ? "text-blue-200/80" : "text-red-200/80"}`}>
-                  {isCompleted
-                    ? "Félicitations ! Vous avez réussi ce challenge !"
-                    : "Ce challenge n'a pas été complété à temps."}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

@@ -11,6 +11,7 @@ const BUCKET = "challenges";
 const GLOBAL_KEY = "__global__/challenges.json";
 
 // Validation Schema (Same as Club API)
+// Validation Schema (Same as Club API)
 const challengeSchema = z.object({
     name: z.string().trim().min(1, "Le titre est requis").max(100, "Le titre est trop long"),
     objective: z.string().trim().min(1, "L'objectif est requis").max(500, "L'objectif est trop long"),
@@ -18,6 +19,7 @@ const challengeSchema = z.object({
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format de date invalide (YYYY-MM-DD)"),
     rewardType: z.enum(["points", "badge"], { errorMap: () => ({ message: "Type de récompense invalide" }) }),
     rewardLabel: z.string().trim().min(1, "Le label de récompense est requis").max(50, "Le label est trop long"),
+    isPremium: z.boolean().optional().default(false),
 }).refine(
     (data) => {
         const start = new Date(data.startDate + "T00:00:00.000Z");
@@ -37,6 +39,7 @@ interface Challenge {
     reward_label: string;
     created_at: string;
     is_global: true;
+    is_premium?: boolean;
 }
 
 // Ensure bucket exists
@@ -92,6 +95,7 @@ export async function GET() {
             rewardType: c.reward_type || (c as any).reward ? "points" : "points", // Legacy fallback
             rewardLabel: c.reward_label || (c as any).reward || "",
             createdAt: c.created_at,
+            isPremium: !!c.is_premium,
             status: (() => {
                 const now = new Date();
                 const start = new Date(c.start_date);
@@ -166,6 +170,7 @@ export async function POST(req: Request) {
             reward_label: payload.rewardLabel,
             created_at: new Date().toISOString(),
             is_global: true,
+            is_premium: payload.isPremium
         };
 
         challenges.push(newChallenge);

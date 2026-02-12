@@ -38,6 +38,7 @@ type ChallengeResponse = {
   status: "upcoming" | "active" | "completed";
   progress: { current: number; target: number };
   rewardClaimed: boolean;
+  isPremium?: boolean;
 };
 
 function computeStatus(record: ChallengeRecord): "upcoming" | "active" | "completed" {
@@ -95,10 +96,10 @@ async function resolveClubId(userId: string) {
       }
     }
   } catch (authError) {
-    logger.warn({ userId: userId.substring(0, 8) + "…", error: authError }, "[api/player/challenges] resolveClubId auth metadata lookup failed");
+    logger.warn("[api/player/challenges] resolveClubId auth metadata lookup failed", { userId: userId.substring(0, 8) + "…", error: authError });
   }
 
-  logger.warn({ userId: userId.substring(0, 8) + "…" }, "[api/player/challenges] resolveClubId: aucun club trouvé pour userId");
+  logger.warn("[api/player/challenges] resolveClubId: aucun club trouvé pour userId", { userId: userId.substring(0, 8) + "…" });
   return null;
 }
 
@@ -123,7 +124,7 @@ async function loadClubChallenges(clubId: string): Promise<ChallengeRecord[]> {
   const { data, error } = await supabaseAdmin.storage.from(BUCKET_NAME).download(`${clubId}.json`);
   if (error || !data) {
     if (error && !error.message?.toLowerCase().includes("not found")) {
-      logger.warn({ clubId: clubId.substring(0, 8) + "…", error }, "[api/player/challenges] Club load error");
+      logger.warn("[api/player/challenges] Club load error", { clubId: clubId.substring(0, 8) + "…", error });
     }
     return [];
   }
@@ -135,7 +136,7 @@ async function loadClubChallenges(clubId: string): Promise<ChallengeRecord[]> {
       return parsed.map((record: any) => ({ ...record, scope: 'club' }));
     }
   } catch (err) {
-    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: err }, "[api/player/challenges] invalid Club JSON");
+    logger.warn("[api/player/challenges] invalid Club JSON", { clubId: clubId.substring(0, 8) + "…", error: err });
   }
   return [];
 }
@@ -163,7 +164,8 @@ async function loadGlobalChallenges(): Promise<ChallengeRecord[]> {
         reward_type: record.reward_type || (record.reward ? "points" : "points"),
         reward_label: record.reward_label || record.reward || "",
         created_at: record.created_at,
-        scope: 'global'
+        scope: 'global',
+        isPremium: !!record.is_premium
       }));
     }
   } catch (e) {
@@ -253,7 +255,7 @@ type MatchHistoryItem = {
 async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
   if (!supabaseAdmin) return [];
 
-  logger.info({ userId: userId.substring(0, 8) + "…" }, "[loadPlayerHistory] Fetching matches for userId");
+  logger.info("[loadPlayerHistory] Fetching matches for userId", { userId: userId.substring(0, 8) + "…" });
 
   // ÉTAPE 1: Récupérer les match_ids du joueur (EXACTEMENT comme dans la page historique)
   const { data: userParticipations, error: partError } = await supabaseAdmin
@@ -262,16 +264,16 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     .eq("user_id", userId)
     .eq("player_type", "user");
 
-  logger.info({ userId: userId.substring(0, 8) + "…", participationsCount: userParticipations?.length || 0, error: partError }, "[loadPlayerHistory] User participations");
+  logger.info("[loadPlayerHistory] User participations", { userId: userId.substring(0, 8) + "…", participationsCount: userParticipations?.length || 0, error: partError });
 
   if (partError || !userParticipations || userParticipations.length === 0) {
-    logger.warn({ userId: userId.substring(0, 8) + "…" }, "[loadPlayerHistory] ⚠️ NO PARTICIPATIONS found for user");
+    logger.warn("[loadPlayerHistory] ⚠️ NO PARTICIPATIONS found for user", { userId: userId.substring(0, 8) + "…" });
     return [];
   }
 
   const matchIds = userParticipations.map((p) => p.match_id);
   const teamMap = new Map(userParticipations.map((p) => [p.match_id, p.team]));
-  logger.info({ userId: userId.substring(0, 8) + "…", matchIdsCount: matchIds.length }, "[loadPlayerHistory] Found match IDs for user");
+  logger.info("[loadPlayerHistory] Found match IDs for user", { userId: userId.substring(0, 8) + "…", matchIdsCount: matchIds.length });
 
   // ÉTAPE 2: Récupérer les détails des matchs
   const { data: matches, error: matchError } = await supabaseAdmin
@@ -281,14 +283,14 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     .eq("status", "confirmed") // On ne prend que les matchs validés
     .order("played_at", { ascending: true });
 
-  logger.info({ userId: userId.substring(0, 8) + "…", matchesCount: matches?.length || 0, error: matchError }, "[loadPlayerHistory] Matches fetched");
+  logger.info("[loadPlayerHistory] Matches fetched", { userId: userId.substring(0, 8) + "…", matchesCount: matches?.length || 0, error: matchError });
 
   if (matchError || !matches) {
-    logger.warn({ userId: userId.substring(0, 8) + "…", error: matchError }, "[loadPlayerHistory] ⚠️ Error fetching matches");
+    logger.warn("[loadPlayerHistory] ⚠️ Error fetching matches", { userId: userId.substring(0, 8) + "…", error: matchError });
     return [];
   }
 
-  logger.info({ userId: userId.substring(0, 8) + "…", matchesCount: matches.length }, "[loadPlayerHistory] ✅ Found matches for user");
+  logger.info("[loadPlayerHistory] ✅ Found matches for user", { userId: userId.substring(0, 8) + "…", matchesCount: matches.length });
 
   // ÉTAPE 2.5: NO LIMIT for challenges
   // Le user veut que tous les matchs validés comptent, sans la limite de 2 par jour.
@@ -331,7 +333,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
     const myScore = teamNum === 1 ? Number(match.score_team1) : Number(match.score_team2);
     const opponentScore = teamNum === 1 ? Number(match.score_team2) : Number(match.score_team1);
 
-    logger.info({ userId: userId.substring(0, 8) + "…", matchId: match.id.substring(0, 8) + "…", team: teamNum, isWinner, partnerId: partnerId?.substring(0, 8) + "…" || null, playedAt: match.played_at, myScore, opponentScore }, "[loadPlayerHistory] Match details");
+    logger.info("[loadPlayerHistory] Match details", { userId: userId.substring(0, 8) + "…", matchId: match.id.substring(0, 8) + "…", team: teamNum, isWinner, partnerId: partnerId?.substring(0, 8) + "…" || null, playedAt: match.played_at, myScore, opponentScore });
 
     return {
       matchId: match.id,
@@ -360,20 +362,20 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
   // Normaliser à la fin de la journée (23:59:59) en UTC pour end
   end.setUTCHours(23, 59, 59, 999);
 
-  logger.info({ challengeId: record.id.substring(0, 8) + "…", objective: record.objective, target, metricIsWin, isDifferentPartners, isConsecutiveWins, period: { start: start.toISOString(), end: end.toISOString() }, totalMatches: history.length }, "[Challenge] Computing progress");
+  logger.info("[Challenge] Computing progress", { challengeId: record.id.substring(0, 8) + "…", objective: record.objective, target, metricIsWin, isDifferentPartners, isConsecutiveWins, period: { start: start.toISOString(), end: end.toISOString() }, totalMatches: history.length });
 
   const relevant = history.filter((item) => {
     if (!item.playedAt) {
-      logger.info({ challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…" }, "[Challenge] Match excluded: no playedAt");
+      logger.info("[Challenge] Match excluded: no playedAt", { challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…" });
       return false;
     }
     const played = new Date(item.playedAt);
     if (Number.isNaN(played.getTime())) {
-      logger.info({ challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…" }, "[Challenge] Match excluded: invalid date");
+      logger.info("[Challenge] Match excluded: invalid date", { challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…" });
       return false;
     }
     const inPeriod = played >= start && played <= end;
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…", played: played.toISOString(), isWinner: item.isWinner, partnerId: item.partnerId?.substring(0, 8) + "…" || null, inPeriod }, `[Challenge] Match ${inPeriod ? '✅' : '❌'}`);
+    logger.info(`[Challenge] Match ${inPeriod ? '✅' : '❌'}`, { challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…", played: played.toISOString(), isWinner: item.isWinner, partnerId: item.partnerId?.substring(0, 8) + "…" || null, inPeriod });
     return inPeriod;
   });
 
@@ -393,10 +395,10 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     for (const item of sortedRelevant) {
       if (item.isWinner) {
         currentStreak++;
-        logger.info({ challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…", streak: currentStreak }, "[Challenge] Match: VICTOIRE - streak updated");
+        logger.info("[Challenge] Match: VICTOIRE - streak updated", { challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…", streak: currentStreak });
       } else {
         // Une défaite interrompt la série et la réinitialise à 0
-        logger.info({ challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…", previousStreak: currentStreak }, "[Challenge] Match: DÉFAITE - streak interrompu");
+        logger.info("[Challenge] Match: DÉFAITE - streak interrompu", { challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…", previousStreak: currentStreak });
         currentStreak = 0;
       }
     }
@@ -404,7 +406,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     // Utiliser la série actuelle (currentStreak) au lieu de la meilleure série historique
     // Cela permet à la barre de progression de retomber à 0 si le joueur perd un match
     current = currentStreak;
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", currentStreak, target }, "[Challenge] Consecutive wins: current streak");
+    logger.info("[Challenge] Consecutive wins: current streak", { challengeId: record.id.substring(0, 8) + "…", currentStreak, target });
   } else if (isDifferentPartners) {
     // Pour les challenges avec partenaires différents, compter uniquement les partenaires uniques
     const uniquePartners = new Set<string>();
@@ -420,15 +422,15 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     });
 
     current = uniquePartners.size;
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", uniquePartnersCount: uniquePartners.size, uniquePartners: Array.from(uniquePartners).map(id => id.substring(0, 8) + "…") }, "[Challenge] Different partners found");
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", metricIsWin }, `[Challenge] Counting ${metricIsWin ? 'wins only' : 'all matches'} with different partners`);
+    logger.info("[Challenge] Different partners found", { challengeId: record.id.substring(0, 8) + "…", uniquePartnersCount: uniquePartners.size, uniquePartners: Array.from(uniquePartners).map(id => id.substring(0, 8) + "…") });
+    logger.info(`[Challenge] Counting ${metricIsWin ? 'wins only' : 'all matches'} with different partners`, { challengeId: record.id.substring(0, 8) + "…", metricIsWin });
   } else if (isCleanSheetObjective(record.objective)) {
     // NEW: Clean Sheet - victoires sans perdre de set (score adversaire = 0)
     current = sortedRelevant.filter((item) => {
       // Doit être une victoire ET l'adversaire doit avoir 0 set
       return item.isWinner && item.opponentScore === 0;
     }).length;
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target }, "[Challenge] Clean Sheet: counting wins with opponent score = 0");
+    logger.info("[Challenge] Clean Sheet: counting wins with opponent score = 0", { challengeId: record.id.substring(0, 8) + "…", current, target });
   } else if (isWeekendObjective(record.objective)) {
     // NEW: Week-end - matchs joués le samedi ou dimanche
     const weekendMatches = sortedRelevant.filter((item) => {
@@ -442,7 +444,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     } else {
       current = weekendMatches.length;
     }
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, weekendMatchesTotal: weekendMatches.length }, "[Challenge] Weekend: counting matches on Saturday/Sunday");
+    logger.info("[Challenge] Weekend: counting matches on Saturday/Sunday", { challengeId: record.id.substring(0, 8) + "…", current, target, weekendMatchesTotal: weekendMatches.length });
   } else if (extractBeforeHour(record.objective) !== null) {
     // NEW: Jouer avant une certaine heure
     const targetHour = extractBeforeHour(record.objective)!;
@@ -456,7 +458,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     } else {
       current = beforeHourMatches.length;
     }
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, targetHour }, "[Challenge] Before Hour: counting matches played before specified hour");
+    logger.info("[Challenge] Before Hour: counting matches played before specified hour", { challengeId: record.id.substring(0, 8) + "…", current, target, targetHour });
   } else if (extractAfterHour(record.objective) !== null) {
     // NEW: Jouer après une certaine heure
     const targetHour = extractAfterHour(record.objective)!;
@@ -470,7 +472,7 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     } else {
       current = afterHourMatches.length;
     }
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, targetHour }, "[Challenge] After Hour: counting matches played after specified hour");
+    logger.info("[Challenge] After Hour: counting matches played after specified hour", { challengeId: record.id.substring(0, 8) + "…", current, target, targetHour });
   } else if (isThreeSetsObjective(record.objective)) {
     // NEW: 3 Sets
     // On compte les matchs où la somme des sets = 3 (exemple 2-1 ou 1-2)
@@ -486,14 +488,14 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
     } else {
       current = threeSetsMatches.length;
     }
-    logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target }, "[Challenge] 3 Sets: counting matches with total score = 3");
+    logger.info("[Challenge] 3 Sets: counting matches with total score = 3", { challengeId: record.id.substring(0, 8) + "…", current, target });
   } else if (metricIsWin) {
     current = sortedRelevant.filter((item) => item.isWinner).length;
   } else {
     current = sortedRelevant.length;
   }
 
-  logger.info({ challengeId: record.id.substring(0, 8) + "…", current, target, relevantMatches: sortedRelevant.length, type: isConsecutiveWins ? 'consecutive wins' : isDifferentPartners ? 'counting unique partners' : metricIsWin ? 'counting wins only' : 'counting all' }, "[Challenge] Result");
+  logger.info("[Challenge] Result", { challengeId: record.id.substring(0, 8) + "…", current, target, relevantMatches: sortedRelevant.length, type: isConsecutiveWins ? 'consecutive wins' : isDifferentPartners ? 'counting unique partners' : metricIsWin ? 'counting wins only' : 'counting all' });
 
   return {
     current: Math.min(current, target),
@@ -518,7 +520,7 @@ export async function GET(request: Request) {
   const userIdPreview = user.id.substring(0, 8) + "…";
 
   const clubId = await resolveClubId(user.id);
-  logger.info({ userId: userIdPreview, clubId: clubId?.substring(0, 8) + "…" || null }, "[api/player/challenges] Resolved clubId for user");
+  logger.info("[api/player/challenges] Resolved clubId for user", { userId: userIdPreview, clubId: clubId?.substring(0, 8) + "…" || null });
 
   // Load both Club and Global challenges
   const [clubRecords, globalRecords] = await Promise.all([
@@ -526,12 +528,12 @@ export async function GET(request: Request) {
     loadGlobalChallenges()
   ]);
 
-  logger.info({
+  logger.info("[api/player/challenges] Loaded challenges", {
     userId: userIdPreview,
     clubId: clubId ? clubId.substring(0, 8) + "…" : null,
     clubChallenges: clubRecords.length,
     globalChallenges: globalRecords.length
-  }, "[api/player/challenges] Loaded challenges");
+  });
 
   const allRecords = [...clubRecords, ...globalRecords];
 
@@ -539,20 +541,20 @@ export async function GET(request: Request) {
     return NextResponse.json({ challenges: [] });
   }
 
-  logger.info({ userId: userIdPreview }, "[api/player/challenges] About to load player history for user");
+  logger.info("[api/player/challenges] About to load player history for user", { userId: userIdPreview });
   const history = await loadPlayerHistory(user.id);
-  logger.info({ userId: userIdPreview, matchesCount: history.length }, "[api/player/challenges] Player - Loaded matches from history");
+  logger.info("[api/player/challenges] Player - Loaded matches from history", { userId: userIdPreview, matchesCount: history.length });
 
   if (history.length > 0) {
-    logger.info({
+    logger.info("[api/player/challenges] Recent matches", {
       userId: userIdPreview, recentMatches: history.slice(-5).map(h => ({
         matchId: h.matchId.substring(0, 8) + "…",
         playedAt: h.playedAt,
         isWinner: h.isWinner
       }))
-    }, "[api/player/challenges] Recent matches");
+    });
   } else {
-    logger.warn({ userId: userIdPreview }, "[api/player/challenges] ⚠️ NO MATCHES FOUND for user - this will cause progress to be 0");
+    logger.warn("[api/player/challenges] ⚠️ NO MATCHES FOUND for user - this will cause progress to be 0", { userId: userIdPreview });
   }
 
   // Récupérer les récompenses déjà réclamées
@@ -564,12 +566,12 @@ export async function GET(request: Request) {
       .eq("user_id", user.id);
 
     if (rewardsError) {
-      logger.warn({ userId: userIdPreview, error: rewardsError.message }, "[api/player/challenges] ⚠️ Could not fetch rewards");
+      logger.warn("[api/player/challenges] ⚠️ Could not fetch rewards", { userId: userIdPreview, error: rewardsError.message });
     } else {
       claimedSet = new Set(claimedRewards?.map(r => r.challenge_id) || []);
     }
   } catch (err) {
-    logger.warn({ userId: userIdPreview, error: err }, "[api/player/challenges] ⚠️ Exception fetching rewards");
+    logger.warn("[api/player/challenges] ⚠️ Exception fetching rewards", { userId: userIdPreview, error: err });
   }
 
   const now = new Date();
@@ -601,7 +603,8 @@ export async function GET(request: Request) {
         status: computeStatus(record),
         progress,
         rewardClaimed: claimedSet.has(record.id),
-        scope: (record as any).scope || 'club'
+        scope: (record as any).scope || 'club',
+        isPremium: !!(record as any).isPremium
       };
     });
 

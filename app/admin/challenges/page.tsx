@@ -47,6 +47,7 @@ export default function AdminChallengesPage() {
     const [rewardType, setRewardType] = useState<RewardType>("points");
     const [rewardPoints, setRewardPoints] = useState("");
     const [rewardBadgeTitle, setRewardBadgeTitle] = useState("");
+    const [isPremium, setIsPremium] = useState(false);
 
     const [challenges, setChallenges] = useState<GlobalChallenge[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -124,6 +125,7 @@ export default function AdminChallengesPage() {
                     objective,
                     rewardType,
                     rewardLabel,
+                    isPremium,
                 }),
             });
 
@@ -145,6 +147,7 @@ export default function AdminChallengesPage() {
             setRewardType("points");
             setRewardPoints("");
             setRewardBadgeTitle("");
+            setIsPremium(false);
         } catch (err: any) {
             console.error("[AdminChallenges] submit error", err);
             setError(err?.message || "Erreur inattendue lors de la création du challenge");
@@ -311,6 +314,19 @@ export default function AdminChallengesPage() {
                                 />
                             </div>
                         )}
+
+                        <div className="flex items-center gap-3 pt-2">
+                            <input
+                                type="checkbox"
+                                id="isPremium"
+                                checked={isPremium}
+                                onChange={(e) => setIsPremium(e.target.checked)}
+                                className="w-5 h-5 rounded-md border-white/20 bg-white/5 text-blue-600 focus:ring-blue-500/50 focus:ring-offset-0"
+                            />
+                            <label htmlFor="isPremium" className="text-sm font-medium text-white cursor-pointer select-none">
+                                Réservé aux membres Premium 💎
+                            </label>
+                        </div>
                     </div>
 
                     <div className="flex justify-end pt-2">
@@ -346,6 +362,7 @@ export default function AdminChallengesPage() {
                         challenges.map((challenge) => {
                             const tag = statusTag(challenge.status);
                             const isPoints = challenge.rewardType === "points";
+                            const isPremium = (challenge as any).isPremium;
 
                             return (
                                 <article
@@ -358,6 +375,11 @@ export default function AdminChallengesPage() {
                                                 <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${tag.classes}`}>
                                                     {tag.label}
                                                 </span>
+                                                {isPremium && (
+                                                    <span className="inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                        Premium 💎
+                                                    </span>
+                                                )}
                                                 <span className="flex items-center text-xs text-slate-400 gap-1.5">
                                                     <Calendar className="w-3 h-3" />
                                                     {formatRange(challenge.startDate, challenge.endDate)}

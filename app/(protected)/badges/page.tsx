@@ -88,7 +88,7 @@ export default async function BadgesPage() {
   // Récupérer le club_id et les points de challenges de l'utilisateur
   const { data: userProfile } = await supabase
     .from("profiles")
-    .select("club_id, points")
+    .select("club_id, points, is_premium")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -98,6 +98,8 @@ export default async function BadgesPage() {
   const challengePoints = typeof userProfile?.points === 'number'
     ? userProfile.points
     : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
+
+  const isPremiumUser = !!(userProfile as any)?.is_premium;
 
   let finalChallengePoints = challengePoints;
 
@@ -338,45 +340,84 @@ export default async function BadgesPage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {badgesWithStatus.map((badge, idx) => (
-              <div
-                key={idx}
-                className={`rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center ${badge.obtained
-                  ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
-                  : "border-gray-200 bg-gray-50 opacity-75"
-                  }`}
-              >
-                {/* Icône - hauteur fixe */}
-                <div className="flex-shrink-0 mb-3 h-[48px] flex items-center justify-center">
-                  <BadgeIconDisplay
-                    icon={badge.icon}
-                    title={badge.title}
-                    className={`transition-all ${badge.obtained ? "" : "grayscale opacity-50"
-                      }`}
-                    size={48}
-                  />
-                </div>
+            {badgesWithStatus.map((badge, idx) => {
+              const isLockedPremium = badge.isPremium && !isPremiumUser;
 
-                {/* Zone texte - hauteur limitée pour éviter l'empiètement */}
-                <div className="flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-2 px-1">
-                  <h3 className={`text-sm font-semibold leading-tight mb-1 text-center ${badge.obtained ? "text-gray-900" : "text-gray-500"}`}>
-                    {badge.title}
-                  </h3>
-                  <p className="text-xs leading-relaxed text-gray-600 text-center line-clamp-2">{badge.description}</p>
-                </div>
-
-                {/* Zone statut - hauteur fixe en bas, toujours présente pour alignement */}
-                <div className="flex-shrink-0 w-full h-[32px] flex items-center justify-center mt-auto">
-                  {badge.obtained ? (
-                    <div className="w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
-                      ✓ Débloqué
+              return (
+                <div
+                  key={idx}
+                  className={`group relative rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center overflow-hidden ${isLockedPremium
+                    ? "border-amber-500/30 bg-slate-900/50"
+                    : badge.obtained
+                      ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
+                      : "border-gray-200 bg-gray-50 opacity-75"
+                    }`}
+                >
+                  {/* Premium tag */}
+                  {badge.isPremium && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <span className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${isLockedPremium
+                        ? "bg-amber-500/20 text-amber-500 border-amber-500/30"
+                        : "bg-amber-100 text-amber-700 border-amber-200"
+                        }`}>
+                        Premium
+                      </span>
                     </div>
-                  ) : (
-                    <div className="w-full h-[32px]" />
                   )}
+
+                  {/* Overlay verrouillage premium */}
+                  {isLockedPremium && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/50 backdrop-blur-[2px]">
+                      <div className="mb-2 p-2 rounded-full bg-amber-500/20 border border-amber-500/40">
+                        {/* Lock icon fallback using text since we can't easily import Lock here without adding to imports repeatedly which is messy in replace block. 
+                           Actually, I should add Lock to imports but I'm replacing the loop block. 
+                           I'll use a simple unicode lock or svg for now to be safe and efficient. */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                      </div>
+                      {badge.obtained && (
+                        <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wide bg-black/60 px-2 py-1 rounded mb-1">
+                          Débloqué
+                        </span>
+                      )}
+                      <Link href="/premium-info" className="text-[10px] font-semibold text-white underline hover:text-amber-300">
+                        Voir Premium
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Icône - hauteur fixe */}
+                  <div className={`flex-shrink-0 mb-3 h-[48px] flex items-center justify-center ${isLockedPremium ? "opacity-30 blur-[2px]" : ""}`}>
+                    <BadgeIconDisplay
+                      icon={badge.icon}
+                      title={badge.title}
+                      className={`transition-all ${badge.obtained || isLockedPremium ? "" : "grayscale opacity-50"
+                        }`}
+                      size={48}
+                    />
+                  </div>
+
+                  {/* Zone texte - hauteur limitée pour éviter l'empiètement */}
+                  <div className={`flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-2 px-1 ${isLockedPremium ? "opacity-30 blur-[1px]" : ""}`}>
+                    <h3 className={`text-sm font-semibold leading-tight mb-1 text-center ${badge.obtained && !isLockedPremium ? "text-gray-900" : "text-gray-500"
+                      }`}>
+                      {badge.title}
+                    </h3>
+                    <p className="text-xs leading-relaxed text-gray-600 text-center line-clamp-2">{badge.description}</p>
+                  </div>
+
+                  {/* Zone statut - hauteur fixe en bas, toujours présente pour alignement */}
+                  <div className={`flex-shrink-0 w-full h-[32px] flex items-center justify-center mt-auto ${isLockedPremium ? "opacity-0" : ""}`}>
+                    {badge.obtained ? (
+                      <div className="w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
+                        ✓ Débloqué
+                      </div>
+                    ) : (
+                      <div className="w-full h-[32px]" />
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

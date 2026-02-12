@@ -20,13 +20,15 @@ interface PlayerChallenge {
   };
   rewardClaimed: boolean;
   scope: 'global' | 'club';
+  isPremium?: boolean;
 }
 
 interface ChallengesListProps {
   challenges: PlayerChallenge[];
+  isPremiumUser: boolean;
 }
 
-export default function ChallengesList({ challenges }: ChallengesListProps) {
+export default function ChallengesList({ challenges, isPremiumUser }: ChallengesListProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'general' | 'club'>('general');
 
@@ -78,6 +80,7 @@ export default function ChallengesList({ challenges }: ChallengesListProps) {
             <ChallengeCard
               key={challenge.id}
               challenge={challenge}
+              isPremiumUser={isPremiumUser}
               onRewardClaimed={handleRewardClaimed}
             />
           ))}

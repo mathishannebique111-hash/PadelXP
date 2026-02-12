@@ -202,12 +202,13 @@ export default async function PlayerChallengesPage() {
 
   let challengePoints = 0;
   let challengeBadgesCount = 0;
+  let isPremiumUser = false;
 
   if (user) {
-    // Récupérer les points de challenges depuis le profil
-    const { data: userProfile } = await supabase
+    // Récupérer les points de challenges et le statut premium depuis le profil
+    const { data: userProfile } = await supabaseAdmin
       .from("profiles")
-      .select("points")
+      .select("points, is_premium")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -215,24 +216,7 @@ export default async function PlayerChallengesPage() {
       ? userProfile.points
       : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
 
-    // Si pas trouvé, essayer avec admin client
-    if (!userProfile) {
-      try {
-        const { data: adminProfile } = await supabaseAdmin
-          .from("profiles")
-          .select("points")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (adminProfile?.points !== undefined) {
-          challengePoints = typeof adminProfile.points === 'number'
-            ? adminProfile.points
-            : (typeof adminProfile.points === 'string' ? parseInt(adminProfile.points, 10) || 0 : 0);
-        }
-      } catch (e) {
-        logger.error("[PlayerChallengesPage] Error fetching profile via admin client", e);
-      }
-    }
+    isPremiumUser = !!userProfile?.is_premium;
 
     // Récupérer les badges de challenges
     const { data: challengeBadges } = await supabaseAdmin
@@ -273,7 +257,7 @@ export default async function PlayerChallengesPage() {
           </div>
         )}
 
-        <ChallengesList challenges={challenges} />
+        <ChallengesList challenges={challenges} isPremiumUser={isPremiumUser} />
       </div>
     </div>
   );
