@@ -241,6 +241,45 @@ export default function SuggestedMatches() {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
+                <div className="mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div className="h-7 w-40 bg-slate-800 rounded-lg animate-pulse" />
+                        <div className="flex items-center gap-2">
+                            <div className="h-9 w-full sm:w-48 bg-slate-800 rounded-lg animate-pulse" />
+                            <div className="h-9 w-20 bg-slate-800 rounded-lg animate-pulse" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2].map((i) => (
+                        <div key={i} className="bg-slate-800/40 rounded-2xl border border-white/5 h-[300px] animate-pulse relative overflow-hidden">
+                            <div className="absolute top-3 right-3 w-16 h-8 bg-slate-700/50 rounded-lg" />
+                            <div className="p-4 flex flex-col gap-4 h-full">
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-1 h-8 rounded-full bg-slate-700/50" />
+                                        <div className="w-8 h-8 rounded-full bg-slate-700/50" />
+                                        <div className="h-6 w-32 bg-slate-700/50 rounded" />
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-1 h-8 rounded-full bg-slate-700/50" />
+                                        <div className="w-8 h-8 rounded-full bg-slate-700/50" />
+                                        <div className="h-6 w-32 bg-slate-700/50 rounded" />
+                                    </div>
+                                </div>
+                                <div className="mt-auto h-12 w-full bg-slate-700/50 rounded-xl" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
             <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
