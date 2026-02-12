@@ -91,7 +91,9 @@ export const useAppleIAP = () => {
             store.refresh();
             console.log("[useAppleIAP] store.refresh OK");
         } catch (err: any) {
-            console.error("[useAppleIAP] Erreur fatale dans initStore:", JSON.stringify(err, Object.getOwnPropertyNames(err)));
+            const errorMessage = JSON.stringify(err, Object.getOwnPropertyNames(err));
+            console.error("[useAppleIAP] Erreur fatale dans initStore:", errorMessage);
+            toast.error("Erreur IAP Init: " + errorMessage);
         }
     };
 
