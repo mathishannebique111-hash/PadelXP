@@ -250,8 +250,8 @@ export async function getPremiumStatsData() {
 
                 opponents.forEach(op => {
                     const prof = profileMap.get(op.user_id);
-                    if (prof && prof.niveau_padel) {
-                        totalOpponentLevel += prof.niveau_padel;
+                    if (prof && (prof.niveau_padel || prof.niveau_padel === 0)) {
+                        totalOpponentLevel += Number(prof.niveau_padel);
                         opponentCount++;
                     }
                 });
@@ -265,6 +265,8 @@ export async function getPremiumStatsData() {
                     const myLevelAtMatch = histoEntry ? histoEntry.level : currentLevel;
 
                     const diff = avgOpponentLevel - myLevelAtMatch;
+
+                    // logger.info(`[PremiumStats] Match ${match.id}: AvgOpp=${avgOpponentLevel}, MyLevel=${myLevelAtMatch}, Diff=${diff}`);
 
                     if (diff > 0.5) {
                         levelStats.stronger.total++;
