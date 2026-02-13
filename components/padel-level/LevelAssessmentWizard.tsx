@@ -330,13 +330,20 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
   return (
     <motion.div
       initial={{ height: "auto", opacity: 0 }}
-      animate={{ height: "100vh", opacity: 1 }}
+      animate={{ height: ["100vh", "100dvh"], opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed inset-0 z-[100000] flex flex-col bg-[#172554] overflow-hidden"
-      style={{ overflow: 'hidden' }}
+      className="fixed inset-0 z-[100000] flex flex-col bg-slate-950 overflow-hidden touch-none"
+      style={{ height: '100dvh', overscrollBehavior: 'none' }}
     >
       {/* Style global pour masquer le logo du club et la bar de nav */}
       <style jsx global>{`
+        body.questionnaire-open {
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
+          overscroll-behavior: none !important;
+        }
         body.questionnaire-open [data-club-logo-container="true"],
         body.questionnaire-open [data-header-actions="true"],
         body.questionnaire-open #bottom-nav-bar,
@@ -349,15 +356,20 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       {/* Header fixe - mobile first, commence en haut de l'écran */}
       <div className="sticky z-20 px-4 pt-4 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 1rem)' }}>
 
-        {/* Logo spécifique au questionnaire RESTAURÉ EN PREMIER PLAN */}
-        <div className="flex justify-center mb-2 relative z-50">
-          <Image
-            src="/padelxp-logo-transparent.png"
-            alt="PadelXP Logo"
-            width={110}
-            height={32}
-            priority
-          />
+        {/* Logo spécifique au questionnaire */}
+        <div className="flex justify-center mb-1 relative z-50">
+          <div className="relative w-28 h-10">
+            <Image
+              src="/padelxp-logo-transparent.png"
+              alt="PadelXP"
+              fill
+              className="object-contain"
+              style={{
+                filter: 'brightness(1.2) drop-shadow(0 0 8px rgba(59, 130, 246, 0.3))'
+              }}
+              priority
+            />
+          </div>
         </div>
 
         <div className="max-w-3xl mx-auto">
