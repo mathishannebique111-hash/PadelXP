@@ -115,7 +115,7 @@ export default function BadgesView({
                     </div>
 
                     {/* Filters */}
-                    <div className="flex justify-center gap-2 mb-4 overflow-x-auto p-2 scrollbar-hide">
+                    <div className="flex justify-center gap-2 mb-4 overflow-x-auto p-3 scrollbar-hide">
                         <button
                             onClick={() => setActiveTab("standard")}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
@@ -169,7 +169,7 @@ export default function BadgesView({
                                         {challengeBadges.map((badge) => (
                                             <div
                                                 key={badge.id}
-                                                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-4 pb-2 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[160px] items-center text-center"
+                                                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-4 pb-2 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[172px] items-center text-center"
                                             >
                                                 <div className="mb-3 flex flex-col items-center gap-3 flex-1">
                                                     <span className="text-3xl">{badge.badge_emoji}</span>
@@ -251,7 +251,7 @@ function BadgeCard({
 
     return (
         <div
-            className={`group relative rounded-xl border px-2 pt-4 pb-2 transition-all flex flex-col h-[160px] items-center text-center overflow-hidden ${effectivelyLocked
+            className={`group relative rounded-xl border px-2 pt-4 pb-2 transition-all flex flex-col h-[172px] items-center text-center overflow-hidden ${effectivelyLocked
                 ? "border-amber-500/30 bg-slate-900/50"
                 : isPremiumGrid
                     ? "border-yellow-400 bg-gradient-to-br from-yellow-100 via-amber-100 to-yellow-50 shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-yellow-400/50"
@@ -307,7 +307,7 @@ function BadgeCard({
             </div>
 
             <div
-                className={`flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-2 px-1 ${effectivelyLocked ? "opacity-30 blur-[1px]" : ""
+                className={`flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-1 px-1 ${effectivelyLocked ? "opacity-30 blur-[1px]" : ""
                     }`}
             >
                 <h3
