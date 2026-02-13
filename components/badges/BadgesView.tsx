@@ -74,7 +74,7 @@ export default function BadgesView({
         <>
             <BadgeUnlockedNotifier unlockedBadges={badgesForNotifier} />
 
-            <div className="relative z-10 mx-auto w-full max-w-6xl px-2 sm:px-4 pt-2 md:pt-6 pb-8">
+            <div className="relative z-10 mx-auto w-full max-w-6xl px-1 sm:px-4 pt-2 md:pt-6 pb-8">
                 {/* Stats Header */}
 
                 {/* Stats Header */}

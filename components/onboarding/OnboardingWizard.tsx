@@ -197,6 +197,7 @@ export default function OnboardingWizard() {
   const [showPostalCodeStep, setShowPostalCodeStep] = useState(false);
   const [showNotificationsStep, setShowNotificationsStep] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isActivatingNotification, setIsActivatingNotification] = useState(false);
   const [skipPostalStep, setSkipPostalStep] = useState(false);
 
   // Identity state
@@ -364,6 +365,7 @@ export default function OnboardingWizard() {
     setIsSubmitting(true);
 
     if (enableNotifications) {
+      setIsActivatingNotification(true);
       await activePushNotifications();
     }
 
@@ -709,7 +711,7 @@ export default function OnboardingWizard() {
                     background: "linear-gradient(135deg, #0066FF 0%, #0055DD 100%)",
                   }}
                 >
-                  {isSubmitting ? "Activation..." : "Activer les notifications"}
+                  {isActivatingNotification ? "Activation..." : (isSubmitting ? "Finalisation..." : "Activer les notifications")}
                 </button>
 
                 <button

@@ -254,7 +254,7 @@ export default async function HomePage({
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-1.5 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
 
         {/* Alerts Block */}
         {/* hasNoClub warning removed */}

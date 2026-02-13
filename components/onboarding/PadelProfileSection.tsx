@@ -565,7 +565,7 @@ export default function PadelProfileSection({
   };
 
   return (
-    <div className="rounded-2xl border border-white/80 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 sm:p-8 md:p-10 backdrop-blur-sm">
+    <div className="rounded-2xl border border-white/80 bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">

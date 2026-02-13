@@ -341,7 +341,10 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
         body.questionnaire-open [data-header-actions="true"],
         body.questionnaire-open #bottom-nav-bar,
         body.questionnaire-open #site-logo-mobile,
-        body.questionnaire-open .site-header-logo {
+        body.questionnaire-open .site-header-logo,
+        body.questionnaire-open header,
+        body.questionnaire-open .sticky,
+        body.questionnaire-open .fixed:not(.z-\[100000\]) {
           display: none !important;
         }
       `}</style>
