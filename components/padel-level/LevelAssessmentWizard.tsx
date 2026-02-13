@@ -149,18 +149,40 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
   }, [currentQuestion, responses, hasStarted, supabase]);
 
   // Masquer le logo du club et la navbar quand le questionnaire a commencé
+  // Fonction pour notifier la vue native iOS/Capacitor
+  const notifyNativeColor = (color: string) => {
+    if (typeof window === 'undefined') return;
+
+    // Méthode 1: WKWebView message handler (iOS Native)
+    if ((window as any).webkit?.messageHandlers?.updateSafeAreaColor) {
+      (window as any).webkit.messageHandlers.updateSafeAreaColor.postMessage(color);
+    }
+
+    // Méthode 2: Capacitor Custom Event
+    if ((window as any).Capacitor) {
+      try {
+        const event = new CustomEvent('updateSafeAreaColor', { detail: { color } });
+        window.dispatchEvent(event);
+      } catch (e) { }
+    }
+  };
+
   useEffect(() => {
     if (hasStarted) {
       document.body.classList.add('questionnaire-open');
       document.documentElement.classList.add('questionnaire-open');
+      notifyNativeColor('#020617'); // slate-950
     } else {
       document.body.classList.remove('questionnaire-open');
       document.documentElement.classList.remove('questionnaire-open');
+      notifyNativeColor('#172554'); // Retour au bleu club par défaut
     }
 
     return () => {
       document.body.classList.remove('questionnaire-open');
       document.documentElement.classList.remove('questionnaire-open');
+      // On ne remet pas le bleu ici car PlayerSafeAreaColor s'en chargera 
+      // ou le composant parent reprendra le dessus
     };
   }, [hasStarted]);
 
@@ -343,6 +365,13 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
           width: 100% !important;
           height: 100% !important;
           overscroll-behavior: none !important;
+          background-color: #020617 !important;
+        }
+        body.questionnaire-open #__next, 
+        body.questionnaire-open main,
+        body.questionnaire-open .relative.min-h-screen.bg-\[\#172554\] {
+          background-color: #020617 !important;
+          background-image: none !important;
         }
         body.questionnaire-open [data-club-logo-container="true"],
         body.questionnaire-open [data-header-actions="true"],
