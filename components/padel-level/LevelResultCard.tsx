@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Brain,
   Zap,
+  Check,
 } from "lucide-react";
 import type { LevelResult } from "@/lib/padel/levelCalculator";
 import LevelRadarChart from "./LevelRadarChart";
@@ -26,6 +27,7 @@ interface Props {
 export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState<"technique" | "tactique" | "mental">("technique");
 
   const handleSave = async () => {
     if (isSaving || isSaved) return;
@@ -45,12 +47,12 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
 
       if (response.ok) {
         setIsSaved(true);
-        
+
         // Déclencher la mise à jour des suggestions de partenaires
         if (typeof window !== "undefined") {
           // Événement personnalisé pour mettre à jour les suggestions
           window.dispatchEvent(new Event("questionnaireCompleted"));
-          
+
           // Synchroniser avec localStorage pour cross-tab
           try {
             localStorage.setItem("questionnaireCompleted", "true");
@@ -61,7 +63,7 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
           } catch (e) {
             // Ignorer les erreurs localStorage
           }
-          
+
           // Notifier les composants pour mettre à jour le profil sans recharger
           if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("profileUpdated"));
@@ -84,16 +86,16 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 px-4 py-6 pb-24">
+    <div className="min-h-screen bg-[#172554] px-4 py-4 pb-28">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="space-y-6 max-w-3xl mx-auto"
       >
-        {/* En-tête résultat - mobile-first */}
-        <div className="text-center bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+        {/* En-tête résultat - Plus compact */}
+        <div className="text-center bg-slate-950/40 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10"
+            className="absolute inset-0 bg-gradient-to-r from-padel-green/5 to-blue-500/5"
             animate={{
               backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
             }}
@@ -101,20 +103,17 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
           />
 
           <div className="relative z-10">
-            <Trophy
-              size={48}
-              className="mx-auto text-yellow-500 mb-3 md:hidden"
-            />
-            <Trophy
-              size={64}
-              className="mx-auto text-yellow-500 mb-4 hidden md:block"
-            />
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <Trophy
+                size={32}
+                className="text-yellow-500"
+              />
+              <h1 className="text-4xl md:text-5xl font-black text-padel-green">
+                Niveau {result.niveau}/10
+              </h1>
+            </div>
 
-            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 mb-3">
-              Niveau {result.niveau}/10
-            </h1>
-
-            <p className="text-lg md:text-2xl text-gray-300 font-medium">
+            <p className="text-base md:text-xl text-white/90 font-bold uppercase tracking-wider">
               {result.categorie}
             </p>
 
@@ -123,21 +122,17 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-4 inline-block px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full text-white text-sm md:text-base font-bold flex items-center gap-2"
+                className="mt-3 inline-block px-4 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full text-white text-xs font-bold flex items-center gap-2 mx-auto"
               >
-                <Award size={18} />
+                <Award size={14} />
                 Niveau d&apos;élite !
               </motion.div>
             )}
           </div>
         </div>
 
-        {/* Graphique radar */}
-        <div className="bg-slate-800 rounded-2xl p-4 md:p-8 shadow-xl">
-          <h2 className="text-lg md:text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Target size={20} />
-            Analyse détaillée
-          </h2>
+        {/* Graphique radar - Plus petit */}
+        <div className="bg-slate-950/30 border border-white/5 rounded-2xl p-4 md:p-6 shadow-xl">
           <LevelRadarChart breakdown={result.breakdown} />
         </div>
 
@@ -188,90 +183,62 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
           </div>
         </div>
 
-        {/* Conseils - 3 cartes distinctes */}
-        <div className="space-y-4">
-          <h3 className="text-base md:text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Lightbulb size={20} className="text-yellow-400" />
-            Tes conseils personnalisés
-          </h3>
-          
-          <div className="grid grid-cols-1 gap-4">
-            {/* Conseil Technique */}
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-2xl p-4 md:p-6 border border-blue-500/30 shadow-xl"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <Target size={20} className="text-blue-400" />
-                </div>
-                <h4 className="text-base md:text-lg font-bold text-blue-300">
-                  Ton Focus Technique
-                </h4>
-              </div>
-              <p className="text-sm md:text-base text-gray-200 leading-relaxed">
-                {result.tips.technique}
-              </p>
-            </motion.div>
-
-            {/* Conseil Tactique */}
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-2xl p-4 md:p-6 border border-purple-500/30 shadow-xl"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <Brain size={20} className="text-purple-400" />
-                </div>
-                <h4 className="text-base md:text-lg font-bold text-purple-300">
-                  Ton Focus Tactique
-                </h4>
-              </div>
-              <p className="text-sm md:text-base text-gray-200 leading-relaxed">
-                {result.tips.tactique}
-              </p>
-            </motion.div>
-
-            {/* Conseil Mental */}
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-2xl p-4 md:p-6 border border-green-500/30 shadow-xl"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                  <Zap size={20} className="text-green-400" />
-                </div>
-                <h4 className="text-base md:text-lg font-bold text-green-300">
-                  Ton Focus Mental
-                </h4>
-              </div>
-              <p className="text-sm md:text-base text-gray-200 leading-relaxed">
-                {result.tips.mental}
-              </p>
-            </motion.div>
+        {/* Conseils - Système d'onglets pour compacter */}
+        <div className="space-y-3">
+          <div className="flex p-1 bg-slate-950/40 rounded-xl border border-white/10">
+            {(["technique", "tactique", "mental"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all capitalize ${activeTab === tab
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "text-white/40 hover:text-white/60"
+                  }`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
+
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-950/40 border border-white/10 rounded-2xl p-5 shadow-xl min-h-[120px]"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${activeTab === 'technique' ? 'bg-blue-500/20 text-blue-400' :
+                activeTab === 'tactique' ? 'bg-purple-500/20 text-purple-400' :
+                  'bg-emerald-500/20 text-emerald-400'
+                }`}>
+                {activeTab === 'technique' && <Target size={16} />}
+                {activeTab === 'tactique' && <Brain size={16} />}
+                {activeTab === 'mental' && <Zap size={16} />}
+              </div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-tight">
+                Focus {activeTab}
+              </h4>
+            </div>
+            <p className="text-sm text-white/80 leading-relaxed italic">
+              "{result.tips[activeTab]}"
+            </p>
+          </motion.div>
         </div>
 
         {/* Progression vers niveau suivant */}
         {result.niveau < 10 && (
-          <div className="bg-slate-800 rounded-2xl p-4 md:p-6">
+          <div className="bg-slate-950/40 rounded-2xl p-4 border border-white/5">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs md:text-sm text-gray-400">
+              <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">
                 Vers niveau {result.niveau + 1}
               </span>
-              <span className="text-sm md:text-base text-blue-400 font-bold">
+              <span className="text-sm text-padel-green font-black">
                 {Math.round(result.nextLevelProgress)}%
               </span>
             </div>
-            <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
+                className="h-full bg-gradient-to-r from-blue-500 to-padel-green"
                 initial={{ width: 0 }}
                 animate={{ width: `${result.nextLevelProgress}%` }}
                 transition={{ duration: 1, delay: 0.5 }}
@@ -282,24 +249,24 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
       </motion.div>
 
       {/* Boutons fixés en bas - mobile-first */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900 border-t border-slate-800 px-4 py-4">
-        <div className="flex flex-col md:flex-row gap-3 max-w-3xl mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-slate-950/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-8 sm:pb-10">
+        <div className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto">
           <motion.button
             type="button"
             whileTap={{ scale: 0.95 }}
             onClick={handleSave}
             disabled={isSaving || isSaved}
-            className="w-full md:flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 min-h-[44px]"
+            className="w-full sm:flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-900/40"
           >
             {isSaved ? (
               <>
-                <Trophy size={18} />
-                <span>Niveau sauvegardé !</span>
+                <Check size={18} />
+                <span>NIVEAU ENREGISTRÉ</span>
               </>
             ) : (
               <>
                 <Save size={18} />
-                <span>{isSaving ? "Sauvegarde..." : "Sauvegarder"}</span>
+                <span>{isSaving ? "CHARGEMENT..." : "SAUVEGARDER MON NIVEAU"}</span>
               </>
             )}
           </motion.button>
@@ -308,9 +275,9 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
             type="button"
             whileTap={{ scale: 0.95 }}
             onClick={onRetake}
-            className="w-full md:w-auto px-6 py-4 rounded-xl border border-gray-700 text-gray-300 flex items-center justify-center gap-2 min-h-[44px]"
+            className="w-full sm:w-auto px-6 py-4 rounded-xl border border-white/10 text-white/60 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-white/5 transition-colors"
           >
-            <RefreshCw size={18} />
+            <RefreshCw size={14} />
             <span>Refaire</span>
           </motion.button>
         </div>
