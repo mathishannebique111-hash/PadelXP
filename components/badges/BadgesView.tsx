@@ -279,7 +279,7 @@ function BadgeCard({
                         className="group px-3 py-2 rounded-lg bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[10px] font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-1.5"
                     >
                         <Sparkles size={12} />
-                        Découvrir Premium
+                        Devenir Premium
                         <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                     </button>
                 </div>

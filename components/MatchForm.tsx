@@ -14,6 +14,7 @@ import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search } from "
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
 import PlayerSlotSquare from "./PlayerSlotSquare";
 import { createPortal } from "react-dom";
+import LevelAssessmentWizard from "./padel-level/LevelAssessmentWizard";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -33,9 +34,11 @@ const schema = z.object({
 });
 
 export default function MatchForm({
-  selfId
+  selfId,
+  initialHasLevel = true
 }: {
   selfId: string;
+  initialHasLevel?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,6 +95,10 @@ export default function MatchForm({
   const [showMatchLimitInfo, setShowMatchLimitInfo] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
+
+  // Level assessment blocking state
+  const [hasLevel, setHasLevel] = useState(initialHasLevel);
+  const [showAssessment, setShowAssessment] = useState(false);
 
   // Boost state
   const [useBoost, setUseBoost] = useState(false);
@@ -845,13 +852,45 @@ export default function MatchForm({
   };
 
   return (
-    <>
+    <div className="relative">
+      {/* Assessment Wizard Overlay */}
+      {showAssessment && (
+        <LevelAssessmentWizard
+          onComplete={() => {
+            setHasLevel(true);
+            setShowAssessment(false);
+            // Refresh parent page to update level status
+            router.refresh();
+          }}
+        />
+      )}
+
+      {/* Blurred Block UI */}
+      {!hasLevel && !showAssessment && (
+        <div className="absolute inset-x-0 inset-y-0 z-[100] rounded-3xl flex flex-col items-center justify-center p-6 text-center backdrop-blur-md bg-[#071554]/40 border border-white/10 mt-6" style={{ height: '500px' }}>
+          <div className="bg-padel-green/20 p-4 rounded-full mb-6">
+            <Trophy className="w-10 h-10 text-padel-green" />
+          </div>
+          <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">Évaluation requise</h2>
+          <p className="text-white/80 max-w-md mb-8 text-base font-medium leading-relaxed">
+            Veuillez évaluer votre niveau pour pouvoir enregistrer des matchs et faire évoluer votre classement.
+          </p>
+          <button
+            onClick={() => setShowAssessment(true)}
+            className="px-8 py-4 rounded-2xl bg-padel-green text-[#071554] font-black text-lg shadow-[0_0_30px_rgba(191,255,0,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center gap-3 uppercase tracking-wider"
+          >
+            <Zap className="w-5 h-5 fill-current" />
+            Évaluer mon niveau
+          </button>
+        </div>
+      )}
+
       {/* Notification de succès */}
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style={{ animation: "fadeIn 0.3s ease-in" }}>
-          <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl" style={{ animation: "zoomIn 0.3s ease-out" }}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl">
             <div className="text-center">
-              <div className="mb-4 flex items-center justify-center" style={{ animation: "bounce 1s ease-in-out infinite" }}>
+              <div className="mb-4 flex items-center justify-center">
                 <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
               </div>
               <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistré avec succès !</h2>
@@ -864,8 +903,8 @@ export default function MatchForm({
 
       {/* Notification d'avertissement */}
       {warningMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style={{ animation: "fadeIn 0.3s ease-in" }}>
-          <div className="relative mx-4 max-w-md rounded-2xl bg-amber-500 p-8 shadow-2xl" style={{ animation: "zoomIn 0.3s ease-out" }}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative mx-4 max-w-md rounded-2xl bg-amber-500 p-8 shadow-2xl">
             <div className="text-center">
               <div className="mb-4 text-6xl">⚠️</div>
               <h2 className="mb-3 text-2xl font-bold text-white">Attention</h2>
@@ -873,39 +912,7 @@ export default function MatchForm({
               <button
                 onClick={() => {
                   setWarningMessage(null);
-                  // Forcer le rechargement du classement
-                  if (typeof window !== "undefined") {
-                    console.log('[MatchForm] ✅ Match confirmé ! Rechargement du classement...');
-
-                    // Marquer le timestamp du match dans localStorage (pour le polling et cross-tab)
-                    const matchTime = Date.now();
-                    localStorage.setItem('lastMatchTime', matchTime.toString());
-                    localStorage.setItem('matchSubmitted', 'true');
-
-                    // Dispatch l'événement custom (pour les composants sur la même page)
-                    const event = new CustomEvent("matchSubmitted", {
-                      detail: {
-                        timestamp: matchTime
-                      }
-                    });
-                    window.dispatchEvent(event);
-
-                    // Forcer le rechargement de toutes les pages Next.js
-                    router.refresh();
-
-                    // Forcer le rechargement de la page /home si elle est ouverte dans un autre onglet
-                    // En utilisant un événement storage (fonctionne cross-tab)
-                    setTimeout(() => {
-                      localStorage.removeItem('matchSubmitted');
-                    }, 100);
-
-                    console.log('[MatchForm] ✅ Rechargement déclenché');
-                  }
-                  // Rediriger vers l'historique après avoir cliqué sur "Compris"
-                  setTimeout(() => {
-                    logger.info("🔄 Redirecting to match history...");
-                    router.push("/match/new?tab=history");
-                  }, 300);
+                  router.push("/match/new?tab=history");
                 }}
                 className="rounded-xl bg-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/30 backdrop-blur-sm"
               >
@@ -947,7 +954,7 @@ export default function MatchForm({
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-4 pb-24">
+      <form onSubmit={onSubmit} className={`space-y-4 pb-24 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
         {/* Lieu du match (Google Maps Direct) */}
         <div>
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
@@ -1373,6 +1380,6 @@ export default function MatchForm({
           document.body
         )
       }
-    </>
+    </div>
   );
 }

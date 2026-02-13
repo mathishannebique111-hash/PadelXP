@@ -11,7 +11,6 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
 import { redirect } from "next/navigation";
-import { redirect } from "next/navigation";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,15 +44,16 @@ export default async function NewMatchPage({
     );
   }
 
-  // Récupérer le club du joueur en utilisant directement le client admin
+  // Récupérer le profil du joueur en utilisant directement le client admin
   let clubId: string | null = null;
   let clubSlug: string | null = null;
   let clubName: string | null = null;
+  let niveauPadel: number | null = null;
 
   try {
     const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
       .from("profiles")
-      .select("club_id, club_slug, clubs(name)")
+      .select("club_id, club_slug, niveau_padel, clubs(name)")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -70,6 +70,7 @@ export default async function NewMatchPage({
       clubId = adminProfile.club_id || null;
       clubSlug = adminProfile.club_slug || null;
       clubName = (adminProfile.clubs as any)?.name || null;
+      niveauPadel = adminProfile.niveau_padel || null;
     } else {
       logger.warn("[Match/New] No profile found for user via admin client", {
         userId: user.id,
@@ -117,7 +118,7 @@ export default async function NewMatchPage({
                 activeTab={activeTab}
                 recordContent={
                   <MobileCrashErrorBoundary componentName="Formulaire Match">
-                    <MatchForm selfId={user.id} />
+                    <MatchForm selfId={user.id} initialHasLevel={niveauPadel !== null} />
                   </MobileCrashErrorBoundary>
                 }
                 historyContent={
