@@ -301,7 +301,7 @@ export default function LeaderboardContent({
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Scope filter tabs */}
       {!hideFilters && (
-        <div className="flex items-center justify-center gap-2 px-2">
+        <div className="flex items-center justify-center gap-1 px-1">
           {[
             { key: 'club' as const, label: 'Club', icon: Search },
             { key: 'department' as const, label: 'Département', icon: MapPin },
@@ -311,7 +311,7 @@ export default function LeaderboardContent({
             <button
               key={key}
               onClick={() => { setScope(key); }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${scope === key
+              className={`flex items-center gap-1 px-2 py-2 rounded-full text-[10px] sm:text-xs font-semibold transition-all whitespace-nowrap ${scope === key
                 ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
                 : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
                 }`}

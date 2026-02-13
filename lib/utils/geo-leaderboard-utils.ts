@@ -163,6 +163,9 @@ export async function calculateGeoLeaderboard(
                 return [];
             }
         } else if (scope === "department" && userProfile?.department_code) {
+            query = query.eq("department_code", userProfile.department_code);
+            logger.info("[calculateGeoLeaderboard] Filtering by department", { department: userProfile.department_code });
+        } else if (scope === "region" && userProfile?.department_code) {
             // Robust region filtering: find all departments in the same region
             const userDept = userProfile.department_code;
             const userRegion = DEPARTMENT_TO_REGION[userDept];
