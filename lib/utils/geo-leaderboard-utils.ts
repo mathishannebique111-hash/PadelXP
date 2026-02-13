@@ -367,7 +367,7 @@ export async function calculateGeoLeaderboard(
             return {
                 rank: 0,
                 user_id: profile.id,
-                player_name: getPlayerDisplayName({ first_name: firstName, last_name: lastName }, allPlayers),
+                player_name: `${firstName} ${lastName}`.trim(),
                 points,
                 wins: stats.wins,
                 losses: stats.losses,

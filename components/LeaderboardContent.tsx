@@ -421,10 +421,7 @@ export default function LeaderboardContent({
           </p>
           <button
             onClick={() => {
-              const newUrl = new URL(window.location.href);
-              newUrl.searchParams.set('tab', 'club');
-              window.history.replaceState(null, '', newUrl.toString());
-              window.location.reload();
+              router.push('/home?tab=club');
             }}
             className="inline-flex items-center gap-2 text-padel-green font-semibold text-sm hover:underline mt-2"
           >
