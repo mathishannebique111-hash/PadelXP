@@ -335,6 +335,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       {/* Style global pour masquer le logo du club et la bar de nav */}
       <style jsx global>{`
         body.questionnaire-open [data-club-logo-container="true"],
+        body.questionnaire-open [data-header-actions="true"],
         body.questionnaire-open #bottom-nav-bar,
         body.questionnaire-open #site-logo-mobile,
         body.questionnaire-open .site-header-logo {
@@ -343,7 +344,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       `}</style>
 
       {/* Header fixe - mobile first, commence en haut de l'écran */}
-      <div className="sticky z-20 px-4 pt-4 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}>
+      <div className="sticky z-20 px-4 pt-4 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 1rem)' }}>
 
         {/* Logo spécifique au questionnaire RESTAURÉ */}
         <div className="flex justify-center mb-1.5">

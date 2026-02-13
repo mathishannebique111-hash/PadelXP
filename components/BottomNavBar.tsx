@@ -148,7 +148,7 @@ export default function BottomNavBar() {
                 bottom: 'calc(var(--sab, 0px) + 4px)',
             }}
         >
-            <nav className="relative flex items-center bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] px-1 py-1 max-w-xs w-full">
+            <nav id="bottom-nav-bar" className="relative flex items-center bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] px-1 py-1 max-w-xs w-full">
                 {activeIndex !== -1 && (
                     <div
                         className="absolute bg-[#172554]/15 rounded-full transition-all duration-300 ease-out"

@@ -45,6 +45,7 @@ export default function PlayerAccountLayout({
 
           {/* Logo du club + Settings (Top Right) - Logo à gauche, Settings à droite */}
           <div
+            data-header-actions="true"
             className="fixed z-[100] flex flex-row items-center gap-1.5 pointer-events-auto"
             style={{
               top: 'calc(var(--sat, 0px) + 0.75rem)',
