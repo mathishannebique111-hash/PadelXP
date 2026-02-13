@@ -19,12 +19,14 @@ import Image from "next/image";
 
 interface Props {
   onComplete?: (result: any) => void;
+  onCancel?: () => void;
+  forceStart?: boolean;
 }
 
-export default function LevelAssessmentWizard({ onComplete }: Props) {
+export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart = false }: Props) {
   const supabase = createClient();
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [hasStarted, setHasStarted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(forceStart);
   const [responses, setResponses] = useState<
     Record<number, number | number[]>
   >({});
@@ -506,6 +508,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
               console.error("[LevelAssessmentWizard] Erreur sauvegarde avant quitter:", error);
             }
             setHasStarted(false);
+            if (onCancel) onCancel();
           }}
           className="mt-2 w-full text-[10px] text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200 py-1"
         >

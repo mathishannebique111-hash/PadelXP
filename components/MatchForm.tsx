@@ -100,6 +100,18 @@ export default function MatchForm({
   const [hasLevel, setHasLevel] = useState(initialHasLevel);
   const [showAssessment, setShowAssessment] = useState(false);
 
+  // Prevent scroll when blocking overlay is visible
+  useEffect(() => {
+    if (!hasLevel && !showAssessment) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [hasLevel, showAssessment]);
+
   // Boost state
   const [useBoost, setUseBoost] = useState(false);
   const [boostStats, setBoostStats] = useState<{
@@ -856,6 +868,8 @@ export default function MatchForm({
       {/* Assessment Wizard Overlay */}
       {showAssessment && (
         <LevelAssessmentWizard
+          forceStart={true}
+          onCancel={() => setShowAssessment(false)}
           onComplete={() => {
             setHasLevel(true);
             setShowAssessment(false);
@@ -877,9 +891,8 @@ export default function MatchForm({
           </p>
           <button
             onClick={() => setShowAssessment(true)}
-            className="px-8 py-4 rounded-2xl bg-padel-green text-[#071554] font-black text-lg shadow-[0_0_30px_rgba(191,255,0,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center gap-3 uppercase tracking-wider"
+            className="px-8 py-4 rounded-2xl bg-padel-green text-[#071554] font-black text-lg shadow-[0_0_30px_rgba(204,255,0,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center min-w-[200px] uppercase tracking-wider"
           >
-            <Zap className="w-5 h-5 fill-current" />
             Évaluer mon niveau
           </button>
         </div>
