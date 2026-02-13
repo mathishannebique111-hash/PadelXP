@@ -139,7 +139,7 @@ function PremiumContent() {
 
                             <div className="flex items-baseline gap-1">
                                 <span className="text-3xl font-black text-white">
-                                    {isApp && product?.pricing?.price ? product.pricing.price : "4.99€"}
+                                    {isApp ? (product?.pricing?.price || "...") : "4.99€"}
                                 </span>
                                 {(!isApp || !product?.pricing?.price) && (
                                     <span className="text-sm font-medium text-slate-500">/mois</span>

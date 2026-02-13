@@ -48,7 +48,7 @@ export default function JoinClubSection() {
         <div className="max-w-2xl mx-auto py-8 px-4">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
                 <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-xl bg-padel-green/20 flex items-center justify-center">
+                    <div className="w-12 h-12 flex items-center justify-center">
                         <Trophy className="w-6 h-6 text-padel-green" />
                     </div>
                     <div>

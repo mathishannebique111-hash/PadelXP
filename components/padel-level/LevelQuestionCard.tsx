@@ -66,7 +66,7 @@ export default function LevelQuestionCard({
               whileTap={{ scale: 0.98 }}
               whileHover={{ scale: 1.01 }}
               onClick={() => handleSelect(option.points)}
-              className={`w-full text-left p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 min-h-[44px] sm:min-h-[48px] md:min-h-[52px] ${isSelected
+              className={`w-full text-left p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 min-h-[54px] sm:min-h-[60px] md:min-h-[70px] ${isSelected
                 ? "bg-blue-500/20 border-blue-500 shadow-lg shadow-blue-500/20"
                 : "bg-slate-700/50 border-slate-600 hover:border-slate-500 hover:bg-slate-700/70"
                 }`}
