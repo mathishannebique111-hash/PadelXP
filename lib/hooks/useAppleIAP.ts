@@ -66,7 +66,7 @@ export const useAppleIAP = () => {
             addLog(`[useAppleIAP] Platform: ${platform}`);
 
             // 1. Enregistrement des produits possibles
-            const productIds = ['premium_monthly', 'premium'];
+            const productIds = ['premium_monthly'];
             productIds.forEach(id => {
                 store.register({
                     id: id,
@@ -173,35 +173,40 @@ export const useAppleIAP = () => {
 
         setLoading(true);
         try {
-            const productIds = ['premium_monthly', 'premium'];
-            let product = null;
-
-            for (const id of productIds) {
-                product = store.get(id);
-                if (product) {
-                    addLog(`[useAppleIAP] Produit trouvé: ${id}`);
-                    break;
-                }
-            }
+            const productIds = ['premium_monthly'];
+            const product = store.get(productIds[0]);
 
             if (!product) {
-                addLog(`[useAppleIAP] Aucun produit trouvé parmi: ${productIds.join(', ')}`);
+                addLog(`[useAppleIAP] Produit introuvable: ${productIds[0]}`);
                 toast.error("Produit introuvable sur le store.");
                 setLoading(false);
                 return;
             }
 
-            addLog(`[useAppleIAP] Produit ID: ${product.id}, Valide: ${product.valid}, État: ${product.state}, Titre: ${product.title}`);
+            // Diagnostic profond
+            try {
+                addLog(`[useAppleIAP] Diagnostic produit: ${product.id}`);
+                const productShort = {
+                    id: product.id,
+                    state: product.state,
+                    valid: product.valid,
+                    canPurchase: product.canPurchase,
+                    offersCount: product.offers?.length || 0
+                };
+                addLog(`[useAppleIAP] Détails: ${JSON.stringify(productShort)}`);
+            } catch (e) {
+                addLog(`[useAppleIAP] Erreur log détails: ${e}`);
+            }
 
             const offer = product.getOffer();
             if (!offer) {
-                addLog(`[useAppleIAP] Aucune offre trouvée pour ${product.id}. Produit prêt? ${product.state === 'valid' || product.state === 'approved'}`);
+                addLog(`[useAppleIAP] Aucune offre trouvée pour ${product.id}. État: ${product.state}`);
                 toast.error("Offre non disponible actuellement.");
                 setLoading(false);
                 return;
             }
 
-            addLog(`[useAppleIAP] Lancement order sur offre: ${offer.id} (Product: ${product.id})`);
+            addLog(`[useAppleIAP] Lancement order sur offre: ${offer.id} (Type: ${offer.type})`);
             store.order(offer);
         } catch (err: any) {
             addLog(`[useAppleIAP] store.order failed: ${err}`);
