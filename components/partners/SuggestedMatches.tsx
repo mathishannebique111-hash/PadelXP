@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Swords, TrendingUp, Users, User, Loader2 } from "lucide-react";
+import { Eye, Swords, TrendingUp, Users, User, Loader2, Search, Sparkles, MessageCircle, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -154,6 +154,10 @@ export default function SuggestedMatches({ userClubId }: SuggestedMatchesProps) 
             }
 
             const data = await response.json();
+
+            // Sécurité : on ne met à jour que si le scope visé est toujours le scope actif
+            if (scope !== filterScope) return;
+
             setSuggestions(data.suggestions || []);
             setReason(data.reason || null);
         } catch (err) {
@@ -168,7 +172,7 @@ export default function SuggestedMatches({ userClubId }: SuggestedMatchesProps) 
         fetchSuggestions(departmentFilter, filterScope);
         loadMyPartner();
         loadExistingChallenges();
-    }, [fetchSuggestions, loadMyPartner, loadExistingChallenges, departmentFilter, filterScope]);
+    }, [fetchSuggestions, loadMyPartner, loadExistingChallenges, filterScope]);
 
     const createChallenge = async (opp1Id: string, opp2Id: string) => {
         try {
@@ -353,16 +357,16 @@ export default function SuggestedMatches({ userClubId }: SuggestedMatchesProps) 
                                             fetchSuggestions(departmentFilter, 'dept');
                                         }
                                     }}
-                                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
+                                    className="w-full bg-slate-800/50 border border-white/10 rounded-lg pl-3 pr-10 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
                                     maxLength={3}
                                 />
+                                <button
+                                    onClick={() => fetchSuggestions(departmentFilter, 'dept')}
+                                    className="absolute right-1 top-1 bottom-1 bg-blue-600 hover:bg-blue-500 text-white px-2.5 rounded-md transition-colors border border-blue-400/20 flex items-center justify-center"
+                                >
+                                    <Search size={16} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => fetchSuggestions(departmentFilter, 'dept')}
-                                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-blue-400/20"
-                            >
-                                Filtrer
-                            </button>
                         </motion.div>
                     )}
                 </div>
@@ -493,7 +497,7 @@ export default function SuggestedMatches({ userClubId }: SuggestedMatchesProps) 
                         ))}
                     </div>
                 )}
-            </div>
+            </div >
 
             <AddPhoneModal
                 isOpen={showPhoneModal}

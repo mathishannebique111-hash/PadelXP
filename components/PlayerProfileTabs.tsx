@@ -78,10 +78,10 @@ function PlayerProfileTabsContent({
   }, [tabFromUrl]);
 
   const tabs = [
-    { id: 'profil' as TabType, label: 'Mon profil', badge: pendingPartnershipRequestsCount },
-    { id: 'stats' as TabType, label: 'Mes stats' },
-    { id: 'badges' as TabType, label: 'Mes badges' },
-    { id: 'club' as TabType, label: 'Mon club' },
+    { id: 'profil' as TabType, label: 'Profil', badge: pendingPartnershipRequestsCount },
+    { id: 'stats' as TabType, label: 'Stats' },
+    { id: 'badges' as TabType, label: 'Badges' },
+    { id: 'club' as TabType, label: 'Club' },
   ];
 
   return (
@@ -146,10 +146,10 @@ export default function PlayerProfileTabs(props: PlayerProfileTabsProps) {
     <Suspense fallback={
       <div className="w-full">
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon profil</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes stats</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon club</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Profil</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Stats</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Badges</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Club</div>
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center py-12">
           <PadelLoader />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock, UserPlus, UserX, Users } from "lucide-react";
+import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock, UserPlus, UserX, Users, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -159,6 +159,10 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
       }
 
       const data = await response.json();
+
+      // Sécurité : on ne met à jour que si le scope visé est toujours le scope actif
+      if (scope !== filterScope) return;
+
       const fetchedSuggestions = data.suggestions || [];
       setSuggestions(fetchedSuggestions);
       setHasLoadedOnce(true);
@@ -337,7 +341,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
         );
       };
     }
-  }, [fetchSuggestions, checkInvitationStatuses, departmentFilter, filterScope]);
+  }, [fetchSuggestions, checkInvitationStatuses, filterScope]);
 
   // Recharger automatiquement quand un match est soumis ou qu'un questionnaire est complété
   useEffect(() => {
@@ -492,16 +496,16 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                       fetchSuggestions(departmentFilter, 'dept');
                     }
                   }}
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
+                  className="w-full bg-slate-800/50 border border-white/10 rounded-lg pl-3 pr-10 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
                   maxLength={3}
                 />
+                <button
+                  onClick={() => fetchSuggestions(departmentFilter, 'dept')}
+                  className="absolute right-1 top-1 bottom-1 bg-blue-600 hover:bg-blue-500 text-white px-2.5 rounded-md transition-colors border border-blue-400/20 flex items-center justify-center"
+                >
+                  <Search size={16} />
+                </button>
               </div>
-              <button
-                onClick={() => fetchSuggestions(departmentFilter, 'dept')}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-blue-400/20"
-              >
-                Filtrer
-              </button>
             </motion.div>
           )}
         </div>
@@ -663,7 +667,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
             })}
           </div>
         )}
-      </div>
+      </div >
 
       <AddPhoneModal
         isOpen={showPhoneModal}
