@@ -65,23 +65,26 @@ export const useAppleIAP = () => {
             const platform = (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE || 'ios-appstore';
             addLog(`[useAppleIAP] Platform: ${platform}`);
 
-            // 1. Enregistrement du produit
-            store.register({
-                id: 'premium_monthly',
-                type: (window as any).CdvPurchase?.ProductType?.PAID_SUBSCRIPTION || 'paid subscription',
-                platform: platform,
+            // 1. Enregistrement des produits possibles
+            const productIds = ['premium_monthly', 'premium'];
+            productIds.forEach(id => {
+                store.register({
+                    id: id,
+                    type: (window as any).CdvPurchase?.ProductType?.PAID_SUBSCRIPTION || 'paid subscription',
+                    platform: platform,
+                });
             });
 
             // 2. Gestionnaires d'événements v13 (syntaxe sans argument dans .when())
             store.when()
                 .productUpdated((p: any) => {
-                    if (p.id === 'premium_monthly') {
-                        addLog(`[useAppleIAP] Produit chargé: ${p.title} - ${p.pricing?.price || 'n/a'}`);
+                    if (productIds.includes(p.id)) {
+                        addLog(`[useAppleIAP] Produit chargé: ${p.id} (${p.title}) - ${p.pricing?.price || 'n/a'}`);
                     }
                 })
                 .approved((transaction: any) => {
                     addLog(`[useAppleIAP] Transaction approuvée: ${transaction.transactionId}`);
-                    if (transaction.products.some((p: any) => p.id === 'premium_monthly')) {
+                    if (transaction.products.some((p: any) => productIds.includes(p.id))) {
                         validatePurchase(transaction);
                     }
                 })
@@ -170,18 +173,27 @@ export const useAppleIAP = () => {
 
         setLoading(true);
         try {
-            // En v13, on récupère le produit puis l'offre
-            const product = store.get('premium_monthly');
+            const productIds = ['premium_monthly', 'premium'];
+            let product = null;
+
+            for (const id of productIds) {
+                product = store.get(id);
+                if (product) {
+                    addLog(`[useAppleIAP] Produit trouvé: ${id}`);
+                    break;
+                }
+            }
+
             if (!product) {
-                addLog("[useAppleIAP] Produit 'premium_monthly' non trouvé dans le store.");
-                toast.error("Produit introuvable. Assurez-vous d'être sur un appareil iOS avec un compte valide.");
+                addLog(`[useAppleIAP] Aucun produit trouvé parmi: ${productIds.join(', ')}`);
+                toast.error("Produit introuvable. Vérifiez l'ID dans App Store Connect.");
                 setLoading(false);
                 return;
             }
 
             const offer = product.getOffer();
             if (!offer) {
-                addLog("[useAppleIAP] Aucune offre trouvée pour ce produit.");
+                addLog(`[useAppleIAP] Aucune offre trouvée pour le produit ${product.id}`);
                 toast.error("Offre non disponible.");
                 setLoading(false);
                 return;
