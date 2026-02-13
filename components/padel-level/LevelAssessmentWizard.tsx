@@ -383,16 +383,19 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       `}</style>
 
       {/* Header fixe - mobile first, commence en haut de l'écran */}
-      <div className="sticky z-20 px-4 pt-12 pb-4 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 3rem)' }}>
+      <div className="sticky z-20 px-4 pt-6 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 1.5rem)' }}>
 
-        {/* Logo spécifique au questionnaire */}
-        <div className="flex justify-center mb-6 relative z-50">
-          <div className="relative w-32 h-12">
+        {/* Logo spécifique au questionnaire - Forcé au dessus du bloc noir */}
+        <div className="flex justify-center mb-4 relative z-[100001]">
+          <div className="relative w-32 h-10">
             <Image
               src="/padelxp-logo-transparent.png"
               alt="PadelXP"
               fill
               className="object-contain"
+              style={{
+                filter: 'brightness(0) invert(1)' // Force le logo en blanc pour la visibilité sur fond noir sans l'effet doré
+              }}
               priority
             />
           </div>
