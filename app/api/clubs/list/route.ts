@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
+import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -74,11 +75,16 @@ export async function GET() {
       const name = club.name || club.club_name || "Club sans nom";
       const slug = club.slug || club.club_slug || (name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '') : '');
       const code = club.code_invitation || club.invitation_code || club.code || '';
+      const rawLogoUrl = club.logo_url || club.club_logo_url || null;
+      const logo_url = getClubLogoPublicUrl(rawLogoUrl);
+      const city = club.city || club.club_city || null;
 
       return {
         name,
         slug,
         code_invitation: code,
+        logo_url,
+        city,
       };
     }).filter((club: any) => club.name && club.slug && club.name !== "Club sans nom");
 

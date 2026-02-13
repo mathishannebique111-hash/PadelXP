@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     // Parse scope from query params
     const { searchParams } = new URL(request.url);
     const scopeParam = searchParams.get('scope') || 'department';
-    const scope: LeaderboardScope = ['department', 'region', 'national'].includes(scopeParam)
+    const scope: LeaderboardScope = ['club', 'department', 'region', 'national'].includes(scopeParam)
       ? (scopeParam as LeaderboardScope)
       : 'department';
 

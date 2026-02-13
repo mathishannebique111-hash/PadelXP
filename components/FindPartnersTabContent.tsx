@@ -15,6 +15,7 @@ export default function FindPartnersTabContent() {
   const [hasLevel, setHasLevel] = useState<boolean | null>(null);
   const [hasPartner, setHasPartner] = useState<boolean>(false);
   const [hasActiveChallenges, setHasActiveChallenges] = useState<boolean>(false);
+  const [userClubId, setUserClubId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const supabase = createClient();
@@ -38,7 +39,7 @@ export default function FindPartnersTabContent() {
         // 1. Profil
         supabase
           .from("profiles")
-          .select("niveau_padel, niveau_categorie")
+          .select("niveau_padel, niveau_categorie, club_id")
           .eq("id", user.id)
           .maybeSingle(),
 
@@ -81,6 +82,7 @@ export default function FindPartnersTabContent() {
         profile?.niveau_categorie;
 
       setHasLevel(hasEvaluatedLevel || false);
+      setUserClubId(profile?.club_id || null);
 
       const hasAcceptedPartner = partnerships && partnerships.length > 0;
       setHasPartner(!!hasAcceptedPartner);
@@ -154,7 +156,7 @@ export default function FindPartnersTabContent() {
         ) : (
           <>
             {/* Partenaires suggérés */}
-            <PartnerSuggestions initialSuggestions={suggestions} />
+            <PartnerSuggestions initialSuggestions={suggestions} userClubId={userClubId} />
 
             {/* Propositions de paires envoyées */}
             <MatchInvitationsSent />
@@ -181,7 +183,7 @@ export default function FindPartnersTabContent() {
             {/* Matchs suggérés - seulement si le joueur a un partenaire habituel */}
             {hasPartner ? (
               <div className="border-2 border-blue-500/40 rounded-2xl overflow-hidden bg-blue-500/5">
-                <SuggestedMatches />
+                <SuggestedMatches userClubId={userClubId} />
               </div>
             ) : hasActiveChallenges ? (
               <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-6 text-sm text-white/70 font-normal">

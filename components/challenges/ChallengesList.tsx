@@ -28,9 +28,10 @@ interface PlayerChallenge {
 interface ChallengesListProps {
   challenges: PlayerChallenge[];
   isPremiumUser: boolean;
+  hasClub?: boolean;
   debugInfo?: string;
 }
-export default function ChallengesList({ challenges, isPremiumUser = false, debugInfo }: ChallengesListProps) {
+export default function ChallengesList({ challenges, isPremiumUser = false, hasClub = false, debugInfo }: ChallengesListProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'general' | 'club' | 'premium'>('general');
   // Local state for optimistic update, similar to PremiumStats
@@ -129,7 +130,9 @@ export default function ChallengesList({ challenges, isPremiumUser = false, debu
             {activeTab === 'general'
               ? "Aucun challenge général disponible pour le moment."
               : activeTab === 'club'
-                ? "Aucun challenge club disponible pour le moment."
+                ? (hasClub
+                  ? "Aucun challenge club disponible pour le moment."
+                  : "Rejoignez un club pour accéder aux challenges de votre communauté !")
                 : "Aucun challenge Premium disponible pour le moment."}
           </p>
         </div>

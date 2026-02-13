@@ -142,6 +142,7 @@ export async function GET(req: Request) {
 
         const { searchParams } = new URL(req.url);
         const departmentFilter = searchParams.get("department");
+        const scopeFilter = searchParams.get("scope");
 
         // 10. Calculer la compatibilité pour chaque paire
         const suggestions = allPartnerships.map(p => {
@@ -151,7 +152,12 @@ export async function GET(req: Request) {
             if (!p1?.niveau_padel || !p2?.niveau_padel) return null;
 
             // FILTRAGE
-            if (departmentFilter) {
+            if (scopeFilter === "club" && profile.club_id) {
+                // Force club filter: au moins un des deux joueurs doit être du club
+                if (p1.club_id !== profile.club_id && p2.club_id !== profile.club_id) {
+                    return null;
+                }
+            } else if (departmentFilter) {
                 // Si filtre département actif : on ne garde que si au moins un des deux joueurs est dans le département
                 if (p1.department_code !== departmentFilter && p2.department_code !== departmentFilter) {
                     return null;

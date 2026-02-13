@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock, UserPlus, UserX } from "lucide-react";
+import { MessageCircle, Eye, User, Loader2, CheckCircle2, Clock, UserPlus, UserX, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -24,9 +24,10 @@ interface SuggestedPlayer {
 
 interface PartnerSuggestionsProps {
   initialSuggestions?: any[];
+  userClubId?: string | null;
 }
 
-export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerSuggestionsProps) {
+export default function PartnerSuggestions({ initialSuggestions = [], userClubId }: PartnerSuggestionsProps) {
   const router = useRouter();
   const supabase = createClient();
   const [suggestions, setSuggestions] = useState<SuggestedPlayer[]>(initialSuggestions as SuggestedPlayer[]);
@@ -38,6 +39,8 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
   const [pendingInvitePlayer, setPendingInvitePlayer] =
     useState<SuggestedPlayer | null>(null);
   const [invitationStatuses, setInvitationStatuses] = useState<Map<string, { sent: boolean; received: boolean; senderName?: string; isAccepted?: boolean }>>(new Map());
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [filterScope, setFilterScope] = useState<'club' | 'dept'>(userClubId ? 'club' : 'dept');
 
   const checkInvitationStatuses = useCallback(async (players: SuggestedPlayer[]) => {
     try {
@@ -105,17 +108,23 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
     }
   }, [supabase]);
 
-  const [departmentFilter, setDepartmentFilter] = useState("");
-
-  const fetchSuggestions = useCallback(async (dept: string = "") => {
-
+  const fetchSuggestions = useCallback(async (dept: string = "", scope: 'club' | 'dept' = filterScope) => {
+    // Si mode département et pas de département saisi, on vide et on s'arrête
+    if (scope === 'dept' && !dept) {
+      setSuggestions([]);
+      setLoading(false);
+      setHasLoadedOnce(true);
+      return;
+    }
 
     try {
       setError(null);
       setLoading(true);
 
       const url = new URL("/api/partners/suggestions", window.location.origin);
-      if (dept) {
+      if (scope === 'club') {
+        url.searchParams.set("scope", "club");
+      } else if (dept) {
         url.searchParams.set("department", dept);
       }
 
@@ -166,7 +175,7 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
     } finally {
       setLoading(false);
     }
-  }, [checkInvitationStatuses]);
+  }, [checkInvitationStatuses, filterScope]);
 
   const createMatchInvitation = useCallback(
     async (receiverId: string) => {
@@ -234,7 +243,7 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
         showToast("Erreur réseau lors de l'envoi de l'invitation.", "error");
       }
     },
-    [supabase, router, fetchSuggestions]
+    [supabase, router]
   );
 
   const handleInviteClick = useCallback(
@@ -279,11 +288,11 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
 
   // Charger les suggestions au montage
   useEffect(() => {
-    fetchSuggestions();
+    fetchSuggestions(departmentFilter, filterScope);
 
     // Écouter les événements de mise à jour de profil pour rafraîchir les suggestions
     const handleProfileUpdate = () => {
-      fetchSuggestions();
+      fetchSuggestions(departmentFilter, filterScope);
     };
 
     // Écouter les événements d'invitations pour mettre à jour les statuts
@@ -328,7 +337,7 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
         );
       };
     }
-  }, [fetchSuggestions, checkInvitationStatuses]);
+  }, [fetchSuggestions, checkInvitationStatuses, departmentFilter, filterScope]);
 
   // Recharger automatiquement quand un match est soumis ou qu'un questionnaire est complété
   useEffect(() => {
@@ -340,14 +349,14 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
     const handleMatchSubmitted = () => {
       // Délai réduit pour une mise à jour plus rapide
       timeoutId1 = setTimeout(() => {
-        fetchSuggestions();
+        fetchSuggestions(departmentFilter, filterScope);
       }, 1000);
     };
 
     const handleQuestionnaireCompleted = () => {
       // Délai réduit pour une mise à jour plus rapide
       timeoutId2 = setTimeout(() => {
-        fetchSuggestions();
+        fetchSuggestions(departmentFilter, filterScope);
       }, 1000);
     };
 
@@ -371,7 +380,7 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
       if (timeoutId1) clearTimeout(timeoutId1);
       if (timeoutId2) clearTimeout(timeoutId2);
     };
-  }, [fetchSuggestions]);
+  }, [fetchSuggestions, departmentFilter, filterScope]);
 
   // Polling périodique réduit - les événements prennent le relais pour les mises à jour immédiates
   // On utilise stale-while-revalidate donc le cache permet un chargement instantané
@@ -380,14 +389,14 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
       // Recharger seulement si pas en cours de chargement
       setLoading((currentLoading) => {
         if (!currentLoading) {
-          fetchSuggestions();
+          fetchSuggestions(departmentFilter, filterScope);
         }
         return currentLoading;
       });
     }, 120000); // 2 minutes - les événements gèrent les mises à jour immédiates
 
     return () => clearInterval(interval);
-  }, [fetchSuggestions]);
+  }, [fetchSuggestions, departmentFilter, filterScope]);
 
   // Afficher le chargement seulement lors du premier chargement
   // Si on a déjà chargé une fois et qu'il n'y a pas de suggestions, afficher le message d'état vide
@@ -435,7 +444,43 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
               Partenaires suggérés
             </h3>
 
-            <div className="flex items-center gap-2">
+            <div className="flex bg-slate-800/50 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
+              {userClubId && (
+                <button
+                  onClick={() => {
+                    setFilterScope('club');
+                    setDepartmentFilter("");
+                    fetchSuggestions("", 'club');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterScope === 'club'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-white/60 hover:text-white/80'
+                    }`}
+                >
+                  Mon Club
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setFilterScope('dept');
+                  if (departmentFilter) fetchSuggestions(departmentFilter, 'dept');
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterScope === 'dept'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-white/60 hover:text-white/80'
+                  }`}
+              >
+                Département
+              </button>
+            </div>
+          </div>
+
+          {filterScope === 'dept' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 mb-2"
+            >
               <div className="relative flex-1 sm:w-48">
                 <input
                   type="text"
@@ -444,7 +489,7 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
                   onChange={(e) => setDepartmentFilter(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      fetchSuggestions(departmentFilter);
+                      fetchSuggestions(departmentFilter, 'dept');
                     }
                   }}
                   className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
@@ -452,27 +497,30 @@ export default function PartnerSuggestions({ initialSuggestions = [] }: PartnerS
                 />
               </div>
               <button
-                onClick={() => fetchSuggestions(departmentFilter)}
+                onClick={() => fetchSuggestions(departmentFilter, 'dept')}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-blue-400/20"
               >
                 Filtrer
               </button>
-            </div>
-          </div>
+            </motion.div>
+          )}
         </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4 text-center">
             <p className="text-sm text-red-400 mb-2">{error}</p>
-            <button type="button" onClick={() => fetchSuggestions(departmentFilter)} className="text-xs text-blue-400 underline hover:text-blue-300">Réessayer</button>
+            <button type="button" onClick={() => fetchSuggestions(departmentFilter, filterScope)} className="text-xs text-blue-400 underline hover:text-blue-300">Réessayer</button>
           </div>
         )}
 
         {!error && !loading && suggestions.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-500 bg-slate-800/20 rounded-xl border border-white/5 border-dashed">
-            <UserX className="w-12 h-12 mb-3 opacity-20" />
-            <p className="text-sm text-center px-4">Aucun partenaire trouvé {departmentFilter ? `dans le département ${departmentFilter}` : "correspondant à votre profil"}.</p>
-            {departmentFilter && <button type="button" onClick={() => { setDepartmentFilter(""); fetchSuggestions(""); }} className="mt-2 text-xs text-blue-400 hover:text-blue-300 font-medium">Voir tous les partenaires</button>}
+          <div className="bg-slate-800/20 rounded-xl p-8 text-center border border-white/5">
+            <Users className="w-10 h-10 text-white/20 mx-auto mb-3" />
+            <p className="text-white/50 text-sm">
+              {filterScope === 'dept' && !departmentFilter
+                ? "Recherchez un département pour voir les partenaires suggérés"
+                : "Aucun partenaire suggéré pour le moment."}
+            </p>
           </div>
         )}
 

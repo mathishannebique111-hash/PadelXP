@@ -42,8 +42,8 @@ function extractTarget(objective: string): number {
 }
 
 export default async function ChallengesContent() {
-    const requestHeaders = headers();
-    const cookieStore = cookies();
+    const requestHeaders = await headers();
+    const cookieStore = await cookies();
     const cookieHeader = cookieStore
         .getAll()
         .map(({ name, value }) => `${name}=${value}`)
@@ -191,6 +191,8 @@ export default async function ChallengesContent() {
         challengeBadgesCount = challengeBadges?.length || 0;
     }
 
+    const hasClub = !!(user && (await supabaseAdmin.from("profiles").select("club_id").eq("id", user.id).maybeSingle()).data?.club_id);
+
     return (
         <div className="space-y-6">
             {(challengePoints > 0 || challengeBadgesCount > 0) && (
@@ -206,7 +208,7 @@ export default async function ChallengesContent() {
                 </div>
             )}
 
-            <ChallengesList challenges={challenges} />
+            <ChallengesList challenges={challenges} isPremiumUser={false} hasClub={hasClub} />
         </div>
     );
 }

@@ -39,7 +39,11 @@ interface SuggestedPair {
     compatibilityScore: number;
 }
 
-export default function SuggestedMatches() {
+interface SuggestedMatchesProps {
+    userClubId?: string | null;
+}
+
+export default function SuggestedMatches({ userClubId }: SuggestedMatchesProps) {
     const router = useRouter();
     const supabase = createClient();
     const [suggestions, setSuggestions] = useState<SuggestedPair[]>([]);
@@ -47,6 +51,8 @@ export default function SuggestedMatches() {
     const [error, setError] = useState<string | null>(null);
     const [reason, setReason] = useState<string | null>(null);
     const [departmentFilter, setDepartmentFilter] = useState("");
+    const [filterScope, setFilterScope] = useState<'club' | 'dept'>(userClubId ? 'club' : 'dept');
+    // @ts-ignore
 
     // Missing state from original crash
     const [myPartner, setMyPartner] = useState<{ id: string; name: string } | null>(null);
@@ -115,13 +121,22 @@ export default function SuggestedMatches() {
         }
     }, [supabase]);
 
-    const fetchSuggestions = useCallback(async (dept: string = "") => {
+    const fetchSuggestions = useCallback(async (dept: string = "", scope: 'club' | 'dept' = filterScope) => {
+        // Mode département sans recherche : on vide
+        if (scope === 'dept' && !dept) {
+            setSuggestions([]);
+            setLoading(false);
+            return;
+        }
+
         try {
             setError(null);
             setLoading(true);
 
             const url = new URL("/api/matches/suggestions", window.location.origin);
-            if (dept) {
+            if (scope === 'club') {
+                url.searchParams.set("scope", "club");
+            } else if (dept) {
                 url.searchParams.set("department", dept);
             }
 
@@ -147,13 +162,13 @@ export default function SuggestedMatches() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [filterScope]);
 
     useEffect(() => {
-        fetchSuggestions();
+        fetchSuggestions(departmentFilter, filterScope);
         loadMyPartner();
         loadExistingChallenges();
-    }, [fetchSuggestions, loadMyPartner, loadExistingChallenges]);
+    }, [fetchSuggestions, loadMyPartner, loadExistingChallenges, departmentFilter, filterScope]);
 
     const createChallenge = async (opp1Id: string, opp2Id: string) => {
         try {
@@ -290,7 +305,43 @@ export default function SuggestedMatches() {
                             Matchs suggérés
                         </h3>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex bg-slate-800/50 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
+                            {userClubId && (
+                                <button
+                                    onClick={() => {
+                                        setFilterScope('club');
+                                        setDepartmentFilter("");
+                                        fetchSuggestions("", 'club');
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterScope === 'club'
+                                        ? 'bg-blue-600 text-white shadow-lg'
+                                        : 'text-white/60 hover:text-white/80'
+                                        }`}
+                                >
+                                    Mon Club
+                                </button>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setFilterScope('dept');
+                                    if (departmentFilter) fetchSuggestions(departmentFilter, 'dept');
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterScope === 'dept'
+                                    ? 'bg-blue-600 text-white shadow-lg'
+                                    : 'text-white/60 hover:text-white/80'
+                                    }`}
+                            >
+                                Département
+                            </button>
+                        </div>
+                    </div>
+
+                    {filterScope === 'dept' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-2 mb-2"
+                        >
                             <div className="relative flex-1 sm:w-48">
                                 <input
                                     type="text"
@@ -299,7 +350,7 @@ export default function SuggestedMatches() {
                                     onChange={(e) => setDepartmentFilter(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
-                                            fetchSuggestions(departmentFilter);
+                                            fetchSuggestions(departmentFilter, 'dept');
                                         }
                                     }}
                                     className="w-full bg-slate-800/50 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
@@ -307,13 +358,13 @@ export default function SuggestedMatches() {
                                 />
                             </div>
                             <button
-                                onClick={() => fetchSuggestions(departmentFilter)}
+                                onClick={() => fetchSuggestions(departmentFilter, 'dept')}
                                 className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-blue-400/20"
                             >
                                 Filtrer
                             </button>
-                        </div>
-                    </div>
+                        </motion.div>
+                    )}
                 </div>
 
                 {suggestions.length === 0 ? (

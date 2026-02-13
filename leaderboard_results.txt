@@ -1,0 +1,117 @@
+Checking leaderboard for scope: national...
+{"level":"info","time":1771000999060,"hostname":false,"pid":false,"userId":"00000000…","scope":"national","msg":"[calculateGeoLeaderboard] Starting"}
+{"level":"info","time":1771001000304,"hostname":false,"pid":false,"count":23,"scope":"national","msg":"[calculateGeoLeaderboard] Profiles found"}
+{"level":"info","time":1771001000573,"hostname":false,"pid":false,"count":491,"msg":"[calculateGeoLeaderboard] Participants found"}
+{"level":"info","time":1771001001096,"hostname":false,"pid":false,"count":132,"msg":"[calculateGeoLeaderboard] Confirmed matches found"}
+{"level":"info","time":1771001001287,"hostname":false,"pid":false,"msg":"[boost-points-utils] Fetching boosts for multiple users"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Found boosts for win matches"}
+Total players found: 23
+Rank 1: Lilian (ID: d196d41b-bbd8-4270-837c-eeb7f8dc4804, Points: 571)
+Rank 2: Mathis Leclerc (ID: 9d6b442b-a2e4-43c3-8c25-092b96bdb9cf, Points: 419)
+Rank 3: Sarah (ID: b7f53b83-602e-4581-8fd6-ad31afd1774a, Points: 197)
+Rank 4: Manon (ID: b2e368f6-e993-4bc8-8779-55aef2fea2d3, Points: 180)
+Rank 5: Thomas Colin (ID: fa2d2352-7380-449e-b89b-dff63c7dc9b0, Points: 142)
+Rank 6: Mattias (ID: 510e579b-5e51-4f2d-9785-5df56a902ad1, Points: 135)
+Rank 7: Théo (ID: 15d9038e-40c5-4e5c-b65b-d766336c70cc, Points: 126)
+Rank 8: Thomas Dutronc (ID: faa63792-196b-4195-b44b-db1c03dec356, Points: 72)
+Rank 9: Mathis Hannebique (ID: f8ddb587-6037-4cad-a0d9-107bd02d1338, Points: 70)
+Rank 10: Pascal (ID: 8c343b19-7417-4f2e-a8d9-1917db33cd06, Points: 45)
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Found boost uses in database for win matches"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Found boosts for user"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] Boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001417,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Found boosts for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boost found for user match"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] No boosts found for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001418,"hostname":false,"pid":false,"msg":"[boost-points-utils] Total points for user"}
+{"level":"info","time":1771001001429,"hostname":false,"pid":false,"count":23,"scope":"national","msg":"[calculateGeoLeaderboard] Done"}

@@ -19,7 +19,7 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
     })
     : null;
 
-export type LeaderboardScope = "department" | "region" | "national";
+export type LeaderboardScope = "club" | "department" | "region" | "national";
 
 export type GeoLeaderboardEntry = {
     rank: number;
@@ -148,10 +148,21 @@ export async function calculateGeoLeaderboard(
             .select("id, first_name, last_name, display_name, points, avatar_url, is_premium, department_code, region_code, email, niveau_padel")
             .not("email", "is", null);
 
-        if (scope === "department" && userProfile?.department_code) {
-            query = query.eq("department_code", userProfile.department_code);
-            logger.info("[calculateGeoLeaderboard] Filtering by department", { department: userProfile.department_code });
-        } else if (scope === "region" && userProfile?.department_code) {
+        if (scope === "club") {
+            const { data: profile } = await supabaseAdmin
+                .from("profiles")
+                .select("club_id")
+                .eq("id", userId)
+                .maybeSingle();
+
+            if (profile?.club_id) {
+                query = query.eq("club_id", profile.club_id);
+                logger.info("[calculateGeoLeaderboard] Filtering by club", { clubId: profile.club_id });
+            } else {
+                logger.warn("[calculateGeoLeaderboard] User has no club_id for club scope", { userId });
+                return [];
+            }
+        } else if (scope === "department" && userProfile?.department_code) {
             // Robust region filtering: find all departments in the same region
             const userDept = userProfile.department_code;
             const userRegion = DEPARTMENT_TO_REGION[userDept];

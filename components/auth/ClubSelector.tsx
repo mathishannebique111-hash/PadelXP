@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Check } from "lucide-react";
-import Image from "next/image";
 
 interface Club {
     id: string; // Non utilisé pour l'inscription mais utile pour le debug
@@ -77,18 +76,19 @@ export default function ClubSelector({ onSelect, selectedClub, className = "" }:
                 <div className="flex items-center gap-3">
                     {selectedClub ? (
                         <>
-                            <div className="w-8 h-8 rounded-full bg-white/10 p-1 flex-shrink-0">
+                            <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
                                 {selectedClub.logo_url ? (
-                                    <div className="relative w-full h-full rounded-full overflow-hidden">
-                                        <Image
+                                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                        <img
                                             src={selectedClub.logo_url}
                                             alt={selectedClub.name}
-                                            fill
-                                            className="object-cover"
+                                            className="w-full h-full object-contain filter drop-shadow-[0_0_1px_rgba(255,255,255,0.7)]"
                                         />
                                     </div>
                                 ) : (
-                                    <MapPin className="w-full h-full text-white/60 p-1" />
+                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                                        <MapPin className="w-4 h-4 text-white/60" />
+                                    </div>
                                 )}
                             </div>
                             <span className="text-white font-medium text-sm truncate max-w-[200px]">
@@ -136,7 +136,7 @@ export default function ClubSelector({ onSelect, selectedClub, className = "" }:
                     </div>
 
                     {/* Liste des clubs */}
-                    <div className="max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                    <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent p-2 flex flex-col gap-2">
                         {loading ? (
                             <div className="p-8 text-center text-white/40 text-sm">Chargement...</div>
                         ) : filteredClubs.length > 0 ? (
@@ -151,22 +151,23 @@ export default function ClubSelector({ onSelect, selectedClub, className = "" }:
                                             setIsOpen(false);
                                             setSearchTerm("");
                                         }}
-                                        className={`w-full flex items-center gap-3 p-3 transition-colors ${isSelected ? "bg-[#0066FF]/10" : "hover:bg-white/5"
+                                        className={`w-full flex items-center gap-4 p-3 h-[70px] rounded-xl transition-colors ${isSelected ? "bg-[#0066FF]/10" : "hover:bg-white/5"
                                             }`}
                                     >
-                                        <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${isSelected ? 'bg-[#0066FF]/20' : 'bg-white/5'}`}>
-                                            {club.logo_url ? (
-                                                <div className="relative w-full h-full rounded-full overflow-hidden border border-white/10">
-                                                    <Image
+                                        <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
+                                            <div className={`w-12 h-12 flex-shrink-0 overflow-hidden flex items-center justify-center ${!club.logo_url ? (isSelected ? 'rounded-full bg-[#0066FF]/20' : 'rounded-full bg-white/5') : ''}`}>
+                                                {club.logo_url ? (
+                                                    <img
                                                         src={club.logo_url}
                                                         alt={club.name}
-                                                        fill
-                                                        className="object-cover"
+                                                        className="w-full h-full object-contain filter drop-shadow-[0_0_1px_rgba(255,255,255,0.7)]"
                                                     />
-                                                </div>
-                                            ) : (
-                                                <span className="text-sm font-bold text-white/60">{club.name.substring(0, 2).toUpperCase()}</span>
-                                            )}
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <span className="text-sm font-bold text-white/60 tracking-tighter">{club.name.substring(0, 2).toUpperCase()}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex-1 text-left">
                                             <div className={`text-sm font-medium ${isSelected ? 'text-[#0066FF]' : 'text-white'}`}>

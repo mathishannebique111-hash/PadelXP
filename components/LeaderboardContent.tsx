@@ -6,7 +6,7 @@ import { Eye } from 'lucide-react';
 import { User } from 'lucide-react';
 import { MapPin } from 'lucide-react';
 import { Globe } from 'lucide-react';
-import { Map as MapIcon } from 'lucide-react';
+import { Map as MapIcon, Search, ArrowRight } from 'lucide-react';
 import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
@@ -21,7 +21,7 @@ interface LeaderboardEntry {
   matches: number;
   isGuest: boolean;
   avatar_url?: string | null;
-  niveau_padel?: number;
+  niveau_padel?: number | null;
 }
 
 interface LeaderboardContentProps {
@@ -29,6 +29,8 @@ interface LeaderboardContentProps {
   initialProfilesFirstNameMap: Record<string, string>;
   initialProfilesLastNameMap: Record<string, string>;
   currentUserId?: string;
+  userClubId?: string | null;
+  hideFilters?: boolean;
 }
 
 /**
@@ -40,12 +42,14 @@ export default function LeaderboardContent({
   initialProfilesFirstNameMap: initialFirstNameMap,
   initialProfilesLastNameMap: initialLastNameMap,
   currentUserId,
+  userClubId,
+  hideFilters = false,
 }: LeaderboardContentProps) {
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(initialLeaderboard);
   const [profilesFirstNameMap, setProfilesFirstNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialFirstNameMap)));
   const [profilesLastNameMap, setProfilesLastNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialLastNameMap)));
-  const [scope, setScope] = useState<'department' | 'region' | 'national'>('department');
+  const [scope, setScope] = useState<'club' | 'department' | 'region' | 'national'>(userClubId ? 'club' : 'department');
 
   // Cache state: stores data for each scope
   const [cache, setCache] = useState<Record<string, {
@@ -55,10 +59,16 @@ export default function LeaderboardContent({
     timestamp: number
   }>>({
     department: {
-      leaderboard: initialLeaderboard,
-      firstNameMap: new Map(Object.entries(initialFirstNameMap)),
-      lastNameMap: new Map(Object.entries(initialLastNameMap)),
-      timestamp: Date.now()
+      leaderboard: scope === 'department' ? initialLeaderboard : [],
+      firstNameMap: scope === 'department' ? new Map(Object.entries(initialFirstNameMap)) : new Map(),
+      lastNameMap: scope === 'department' ? new Map(Object.entries(initialLastNameMap)) : new Map(),
+      timestamp: scope === 'department' ? Date.now() : 0
+    },
+    club: {
+      leaderboard: scope === 'club' ? initialLeaderboard : [],
+      firstNameMap: scope === 'club' ? new Map(Object.entries(initialFirstNameMap)) : new Map(),
+      lastNameMap: scope === 'club' ? new Map(Object.entries(initialLastNameMap)) : new Map(),
+      timestamp: scope === 'club' ? Date.now() : 0
     }
   });
 
@@ -119,7 +129,13 @@ export default function LeaderboardContent({
   }, []);
 
   // Update view from cache or fetch if missing
-  const updateViewFromScope = useCallback(async (targetScope: 'department' | 'region' | 'national') => {
+  const updateViewFromScope = useCallback(async (targetScope: 'club' | 'department' | 'region' | 'national') => {
+    // 0. Handle restricted access for club scope if user has no club
+    if (targetScope === 'club' && !userClubId) {
+      setLeaderboard([]);
+      return;
+    }
+
     // 1. Try to load from cache first (Instant UI update)
     if (cache[targetScope]) {
       console.log(`[LeaderboardContent] ⚡️ Cache hit for ${targetScope}`);
@@ -156,7 +172,7 @@ export default function LeaderboardContent({
 
   // Effect: Prefetch other scopes on mount
   useEffect(() => {
-    const scopesToPrefetch = ['department', 'region', 'national'].filter(s => s !== scope && !cache[s]);
+    const scopesToPrefetch = ['club', 'department', 'region', 'national'].filter(s => s !== scope && !cache[s]);
 
     if (scopesToPrefetch.length > 0) {
       console.log('[LeaderboardContent] 🚀 Prefetching scopes:', scopesToPrefetch);
@@ -284,25 +300,28 @@ export default function LeaderboardContent({
   return (
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
       {/* Scope filter tabs */}
-      <div className="flex items-center justify-center gap-2 px-2">
-        {[
-          { key: 'department' as const, label: 'Département', icon: MapPin },
-          { key: 'region' as const, label: 'Région', icon: MapIcon },
-          { key: 'national' as const, label: 'France', icon: Globe },
-        ].map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => { setScope(key); }}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${scope === key
-              ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
-              : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
-              }`}
-          >
-            <Icon size={14} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </div>
+      {!hideFilters && (
+        <div className="flex items-center justify-center gap-2 px-2">
+          {[
+            { key: 'club' as const, label: 'Club', icon: Search },
+            { key: 'department' as const, label: 'Département', icon: MapPin },
+            { key: 'region' as const, label: 'Région', icon: MapIcon },
+            { key: 'national' as const, label: 'France', icon: Globe },
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => { setScope(key); }}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${scope === key
+                ? 'bg-blue-500/20 text-blue-300 border border-blue-400/40 shadow-lg shadow-blue-500/10'
+                : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+                }`}
+            >
+              <Icon size={14} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {leaderboard.length >= 5 && (
         <div className="mb-6 sm:mb-8">
           <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
@@ -391,7 +410,28 @@ export default function LeaderboardContent({
           </div>
         </div>
       )}
-      {leaderboard.length > 0 ? (
+      {scope === 'club' && !userClubId ? (
+        <div className="max-w-md mx-auto py-12 px-4 text-center space-y-4">
+          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Search className="w-8 h-8 text-white/20" />
+          </div>
+          <h3 className="text-lg font-bold text-white">Classement réservé aux membres</h3>
+          <p className="text-sm text-white/50 leading-relaxed">
+            Rejoignez un club dans l'onglet "Mon club" pour avoir accès au classement de votre club.
+          </p>
+          <button
+            onClick={() => {
+              const newUrl = new URL(window.location.href);
+              newUrl.searchParams.set('tab', 'club');
+              window.history.replaceState(null, '', newUrl.toString());
+              window.location.reload();
+            }}
+            className="inline-flex items-center gap-2 text-padel-green font-semibold text-sm hover:underline mt-2"
+          >
+            Rejoindre un club <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      ) : leaderboard.length > 0 ? (
         <div className="overflow-hidden">
           <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5">
             <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">

@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
+import { calculateGeoLeaderboard } from "@/lib/utils/geo-leaderboard-utils";
 import PageTitle from "../PageTitle";
 import Image from "next/image";
 import LeaderboardContent from "@/components/LeaderboardContent";
@@ -98,6 +99,7 @@ export default async function ClassementPage() {
         initialProfilesFirstNameMap={profilesFirstNameMap}
         initialProfilesLastNameMap={profilesLastNameMap}
         currentUserId={user.id}
+        hideFilters={true}
       />
     </div>
   );

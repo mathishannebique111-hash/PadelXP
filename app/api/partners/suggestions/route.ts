@@ -76,28 +76,27 @@ export async function GET(req: Request) {
     // Sinon, on cherche dans le club (mode club par défaut)
     const { searchParams } = new URL(req.url);
     const departmentFilter = searchParams.get("department");
+    const scopeFilter = searchParams.get("scope");
 
     let query = supabaseAdmin
       .from("profiles")
       .select("*")
       .neq("id", user.id);
 
-    if (departmentFilter) {
+    if (scopeFilter === "club" && currentUserProfile.club_id) {
+      // Force club filter
+      query = query.eq("club_id", currentUserProfile.club_id);
+    } else if (departmentFilter) {
       // Filtrer par département (ex: "80", "76")
-      // On assume que le format stocké est le code département string
       query = query.eq("department_code", departmentFilter);
     } else {
       // Comportement par défaut : filtrer par club si l'utilisateur en a un
       if (currentUserProfile.club_id) {
         query = query.eq("club_id", currentUserProfile.club_id);
+      } else if (currentUserProfile.department_code) {
+        query = query.eq("department_code", currentUserProfile.department_code);
       } else {
-        // Fallback pour les utilisateurs sans club et sans filtre : chercher dans leur département par défaut
-        if (currentUserProfile.department_code) {
-          query = query.eq("department_code", currentUserProfile.department_code);
-        } else {
-          // Dernier recours : pas de filtre (pourrait être lourd, on limite)
-          query = query.limit(50);
-        }
+        query = query.limit(50);
       }
     }
 

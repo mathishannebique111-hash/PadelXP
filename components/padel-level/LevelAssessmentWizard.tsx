@@ -95,7 +95,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
     loadProgress();
 
     // Écouter les changements d'authentification pour recharger après reconnexion
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
       if (event === 'SIGNED_IN' && session?.user) {
         loadProgress();
       }
@@ -152,12 +152,15 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
   useEffect(() => {
     if (hasStarted) {
       document.body.classList.add('questionnaire-open');
+      document.documentElement.classList.add('questionnaire-open');
     } else {
       document.body.classList.remove('questionnaire-open');
+      document.documentElement.classList.remove('questionnaire-open');
     }
 
     return () => {
       document.body.classList.remove('questionnaire-open');
+      document.documentElement.classList.remove('questionnaire-open');
     };
   }, [hasStarted]);
 

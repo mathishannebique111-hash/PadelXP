@@ -814,31 +814,22 @@ export async function getClubMatchHistory(clubId: string | null, clubSlug?: stri
   const memberIds = members.map((m) => m.id).filter(Boolean);
   const memberIdSet = new Set(memberIds);
 
-  const { data: clubParticipantsRaw, error: participantsError } = await supabaseAdmin
-    .from("match_participants")
-    .select("match_id, user_id, team")
-    .eq("player_type", "user")
-    .in("user_id", memberIds);
-
-  if (participantsError) {
-    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: participantsError }, "[getClubMatchHistory] Failed to load club participants");
-  }
-
-  const clubParticipants = (clubParticipantsRaw || []).filter((p) => p.user_id && memberIdSet.has(p.user_id));
-  const matchIds = [...new Set(clubParticipants.map((p) => p.match_id).filter(Boolean))];
-
-  if (matchIds.length === 0) {
-    return { matches: [], totalMatches: 0, wins: 0, losses: 0, internalMatches: 0 };
-  }
-
+  // Fetch matches directly by location_club_id
   const { data: matchesData, error: matchesError } = await supabaseAdmin
     .from("matches")
-    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at, decided_by_tiebreak")
-    .in("id", matchIds)
+    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at, decided_by_tiebreak, location_club_id")
+    .eq("location_club_id", clubId)
+    .neq("status", "cancelled")
     .order("created_at", { ascending: false });
 
   if (matchesError) {
-    logger.error({ clubId: clubId.substring(0, 8) + "…", error: matchesError }, "[getClubMatchHistory] Failed to load matches");
+    logger.error({ clubId: clubId.substring(0, 8) + "…", error: matchesError }, "[getClubMatchHistory] Failed to load matches by location");
+    return { matches: [], totalMatches: 0, wins: 0, losses: 0, internalMatches: 0 };
+  }
+
+  const matchIds = (matchesData || []).map(m => m.id);
+
+  if (matchIds.length === 0) {
     return { matches: [], totalMatches: 0, wins: 0, losses: 0, internalMatches: 0 };
   }
 

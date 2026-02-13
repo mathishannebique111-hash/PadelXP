@@ -5,13 +5,14 @@ import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
 
-type TabType = 'profil' | 'stats' | 'badges';
+type TabType = 'profil' | 'stats' | 'badges' | 'club';
 
 interface PlayerProfileTabsProps {
   activeTab?: TabType;
   profilContent: React.ReactNode;
   statsContent: React.ReactNode;
   badgesContent?: React.ReactNode;
+  clubContent?: React.ReactNode;
   initialPendingRequestsCount?: number;
 }
 
@@ -20,11 +21,12 @@ function PlayerProfileTabsContent({
   profilContent,
   statsContent,
   badgesContent,
+  clubContent,
   initialPendingRequestsCount = 0
 }: PlayerProfileTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
-  const initialTab = tabFromUrl && ['profil', 'stats', 'badges'].includes(tabFromUrl) ? tabFromUrl : activeTab;
+  const initialTab = tabFromUrl && ['profil', 'stats', 'badges', 'club'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingPartnershipRequestsCount, setPendingPartnershipRequestsCount] = useState(initialPendingRequestsCount);
   const supabase = createClient();
@@ -70,7 +72,7 @@ function PlayerProfileTabsContent({
   };
 
   useEffect(() => {
-    if (tabFromUrl && ['profil', 'stats', 'badges'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['profil', 'stats', 'badges', 'club'].includes(tabFromUrl)) {
       setCurrentTab(tabFromUrl);
     }
   }, [tabFromUrl]);
@@ -79,6 +81,7 @@ function PlayerProfileTabsContent({
     { id: 'profil' as TabType, label: 'Mon profil', badge: pendingPartnershipRequestsCount },
     { id: 'stats' as TabType, label: 'Mes stats' },
     { id: 'badges' as TabType, label: 'Mes badges' },
+    { id: 'club' as TabType, label: 'Mon club' },
   ];
 
   return (
@@ -128,6 +131,11 @@ function PlayerProfileTabsContent({
             {badgesContent}
           </div>
         )}
+        {clubContent && (
+          <div style={{ display: currentTab === 'club' ? 'block' : 'none' }}>
+            {clubContent}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -141,6 +149,7 @@ export default function PlayerProfileTabs(props: PlayerProfileTabsProps) {
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon profil</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes stats</div>
           <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mes badges</div>
+          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Mon club</div>
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center py-12">
           <PadelLoader />

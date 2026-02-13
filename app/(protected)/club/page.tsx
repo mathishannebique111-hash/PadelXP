@@ -12,6 +12,7 @@ import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
+import JoinClubSection from "@/components/club/JoinClubSection";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +37,8 @@ export default async function ClubPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  // Default to 'classement' if no club, otherwise 'club' (unless specified)
-  const defaultTab = 'club';
-  const activeTab = resolvedSearchParams?.tab === 'classement' ? 'classement' : resolvedSearchParams?.tab === 'challenges' ? 'challenges' : resolvedSearchParams?.tab === 'tournaments' ? 'tournaments' : defaultTab;
+  // Default to 'classement'
+  const activeTab = resolvedSearchParams?.tab === 'challenges' ? 'challenges' : resolvedSearchParams?.tab === 'tournaments' ? 'tournaments' : 'classement';
 
   if (!user) {
     return (
@@ -195,8 +195,8 @@ export default async function ClubPage({
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-4 md:pt-8 pb-4 sm:pb-6 md:pb-8">
         <PageTitle
-          title={clubId ? "Mon club" : "Espace Compétition"}
-          subtitle={clubId ? (finalClubName || "Informations sur votre club") : "Classements et tournois"}
+          title="Espace Compétition"
+          subtitle="Classements, Challenges et Ligues"
         />
 
         {/* Removed 'Club non défini' blocker */}
@@ -204,44 +204,30 @@ export default async function ClubPage({
         <div className="mt-6">
           <Suspense fallback={
             <div className="w-full">
-              <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
+              <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
                 <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-                  <span className="text-center whitespace-normal leading-tight">Mon club</span>
+                  <span className="text-center whitespace-normal leading-tight">Classement</span>
                 </div>
-                {/* ... other tabs ... */}
+                <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                  <span className="text-center whitespace-normal leading-tight">Challenges</span>
+                </div>
+                <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                  <span className="text-center whitespace-normal leading-tight">Tournois</span>
+                </div>
+              </div>
+              <div className="mt-8 flex items-center justify-center">
                 <PadelLoader />
               </div>
             </div>
           }>
             <ClubTabs
-              activeTab={activeTab}
-              showClubTab={!!clubId}
-              clubContent={
-                clubData ? (
-                  <ClubProfileClient
-                    clubId={clubId!}
-                    name={clubData.name}
-                    logoUrl={clubData.logoUrl}
-                    description={clubData.description}
-                    addressLine={clubData.addressLine}
-                    phone={clubData.phone}
-                    website={clubData.website}
-                    numberOfCourts={clubData.numberOfCourts}
-                    courtType={clubData.courtType}
-                    openingHours={clubData.openingHours}
-                  />
-                ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
-                    <p>Erreur lors du chargement des informations du club.</p>
-                  </div>
-                )
-              }
               leaderboardContent={
                 <LeaderboardContent
                   initialLeaderboard={leaderboard}
                   initialProfilesFirstNameMap={profilesFirstNameMap}
                   initialProfilesLastNameMap={profilesLastNameMap}
                   currentUserId={user?.id}
+                  userClubId={clubId}
                 />
               }
               challengesContent={<ChallengesContent />}

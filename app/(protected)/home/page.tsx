@@ -10,7 +10,7 @@ import TierBadge from "@/components/TierBadge";
 import RankBadge from "@/components/RankBadge";
 import Link from "next/link";
 import PageTitle from "@/components/PageTitle";
-import { getUserClubInfo } from "@/lib/utils/club-utils";
+import { getUserClubInfo, getClubPublicExtras } from "@/lib/utils/club-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
@@ -20,6 +20,8 @@ import BadgesContent from "@/components/BadgesContent";
 import HideSplashScreen from "@/components/HideSplashScreen";
 import PadelLoader from "@/components/ui/PadelLoader";
 import PremiumStats from "@/components/club/PremiumStats";
+import JoinClubSection from "@/components/club/JoinClubSection";
+import ClubProfileClient from "@/components/club/ClubProfileClient";
 
 
 function tierForPoints(points: number) {
@@ -51,8 +53,8 @@ export default async function HomePage({
 }) {
   const supabase = await createClient();
   const resolvedSearchParams = await searchParams;
-  const activeTab: 'profil' | 'stats' | 'badges' = (resolvedSearchParams?.tab === 'stats' || resolvedSearchParams?.tab === 'badges')
-    ? (resolvedSearchParams.tab as 'stats' | 'badges')
+  const activeTab: 'profil' | 'stats' | 'badges' | 'club' = (resolvedSearchParams?.tab === 'stats' || resolvedSearchParams?.tab === 'badges' || resolvedSearchParams?.tab === 'club')
+    ? (resolvedSearchParams.tab as 'stats' | 'badges' | 'club')
     : 'profil';
 
   // 1. Démarrer toutes les requêtes indépendantes en parallèle
@@ -197,6 +199,42 @@ export default async function HomePage({
     clubLogoUrl = clubLogoUrl ?? clubInfo.clubLogoUrl ?? null;
   }
 
+  // 4. Fetch full club object for ClubProfileClient if needed
+  let fullClubData: any = null;
+  if (profile?.club_id) {
+    const [clubRecordResult, extras] = await Promise.all([
+      supabaseAdmin
+        .from("clubs")
+        .select("*")
+        .eq("id", profile.club_id)
+        .maybeSingle(),
+      getClubPublicExtras(profile.club_id)
+    ]);
+
+    const clubRecord = clubRecordResult.data;
+    if (clubRecord) {
+      const addressLineParts: string[] = [];
+      const addressValue = clubRecord.address ?? extras?.address ?? null;
+      const postalValue = clubRecord.postal_code ?? extras?.postal_code ?? null;
+      const cityValue = clubRecord.city ?? extras?.city ?? null;
+
+      if (addressValue) addressLineParts.push(addressValue);
+      if (postalValue) addressLineParts.push(postalValue);
+      if (cityValue) addressLineParts.push(cityValue);
+
+      fullClubData = {
+        ...clubRecord,
+        description: extras?.description ?? null,
+        address_line: addressLineParts.length ? addressLineParts.join(" · ") : null,
+        phone: clubRecord.phone ?? extras?.phone ?? null,
+        website: clubRecord.website ?? extras?.website ?? null,
+        number_of_courts: clubRecord.number_of_courts ?? extras?.number_of_courts ?? null,
+        court_type: clubRecord.court_type ?? extras?.court_type ?? null,
+        opening_hours: extras?.opening_hours ?? null,
+      };
+    }
+  }
+
   // Fallback Profile Display
   if (!profile && !user && !hasSessionButNoUser) {
     // Cas où vraiment rien n'est chargé, on laisse le loader ou on redirige
@@ -269,6 +307,24 @@ export default async function HomePage({
                 </div>
               }
               badgesContent={<BadgesContent />}
+              clubContent={
+                profile.club_id && fullClubData ? (
+                  <ClubProfileClient
+                    clubId={fullClubData.id}
+                    name={fullClubData.name}
+                    logoUrl={getClubLogoPublicUrl(fullClubData.logo_url)}
+                    description={fullClubData.description}
+                    addressLine={fullClubData.address_line}
+                    phone={fullClubData.phone}
+                    website={fullClubData.website}
+                    numberOfCourts={fullClubData.number_of_courts}
+                    courtType={fullClubData.court_type}
+                    openingHours={fullClubData.opening_hours}
+                  />
+                ) : (
+                  <JoinClubSection />
+                )
+              }
             />
           </>
         )}

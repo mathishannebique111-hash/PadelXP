@@ -74,156 +74,148 @@ export default function BadgesView({
         <>
             <BadgeUnlockedNotifier unlockedBadges={badgesForNotifier} />
 
-            <div className="relative min-h-screen overflow-hidden bg-[#172554]">
-                {/* Background */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
-                <div className="absolute inset-0 opacity-20 pointer-events-none">
-                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-                    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1000ms" }} />
-                </div>
+            <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-2 md:pt-6 pb-8">
+                {/* Stats Header */}
 
-                <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-2 md:pt-6 pb-8">
+                {/* Stats Header */}
+                <div className="mb-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto">
+                    <div className="flex items-center justify-between gap-2">
+                        {/* Gauche: Total Badges */}
+                        <div className="text-center w-20 sm:w-24 flex-shrink-0">
+                            <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{counts.total}</div>
+                            <div className="text-[10px] sm:text-xs font-semibold text-white/80">Badges</div>
+                        </div>
 
-                    {/* Stats Header */}
-                    <div className="mb-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto">
-                        <div className="flex items-center justify-between gap-2">
-                            {/* Gauche: Total Badges */}
-                            <div className="text-center w-20 sm:w-24 flex-shrink-0">
-                                <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{counts.total}</div>
-                                <div className="text-[10px] sm:text-xs font-semibold text-white/80">Badges</div>
+                        {/* Séparation verticale */}
+                        <div className="w-px h-10 bg-white/30 flex-shrink-0"></div>
+
+                        {/* Droite: Standards, Challenges, Premium */}
+                        <div className="flex-1 flex justify-around items-center gap-2 sm:gap-4 min-w-0">
+                            <div className="text-center">
+                                <div className="text-xl sm:text-2xl font-bold text-white tabular-nums">{counts.obtained}</div>
+                                <div className="text-[9px] sm:text-[10px] font-medium text-white/80 uppercase tracking-tight">Standard</div>
                             </div>
-
-                            {/* Séparation verticale */}
-                            <div className="w-px h-10 bg-white/30 flex-shrink-0"></div>
-
-                            {/* Droite: Standards, Challenges, Premium */}
-                            <div className="flex-1 flex justify-around items-center gap-2 sm:gap-4 min-w-0">
-                                <div className="text-center">
-                                    <div className="text-xl sm:text-2xl font-bold text-white tabular-nums">{counts.obtained}</div>
-                                    <div className="text-[9px] sm:text-[10px] font-medium text-white/80 uppercase tracking-tight">Standard</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-xl sm:text-2xl font-bold text-white tabular-nums">{counts.challenge}</div>
-                                    <div className="text-[9px] sm:text-[10px] font-medium text-white/80 uppercase tracking-tight">Challenge</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-xl sm:text-2xl font-bold text-amber-400 tabular-nums">{counts.premium || 0}</div>
-                                    <div className="text-[9px] sm:text-[10px] font-medium text-amber-400/90 uppercase tracking-tight">Premium</div>
-                                </div>
+                            <div className="text-center">
+                                <div className="text-xl sm:text-2xl font-bold text-white tabular-nums">{counts.challenge}</div>
+                                <div className="text-[9px] sm:text-[10px] font-medium text-white/80 uppercase tracking-tight">Challenge</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-xl sm:text-2xl font-bold text-amber-400 tabular-nums">{counts.premium || 0}</div>
+                                <div className="text-[9px] sm:text-[10px] font-medium text-amber-400/90 uppercase tracking-tight">Premium</div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Filters */}
-                    <div className="flex justify-center gap-2 mb-4 overflow-x-auto p-3 scrollbar-hide">
-                        <button
-                            onClick={() => setActiveTab("standard")}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
-                                ? "bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/50 ring-offset-2 ring-offset-[#172554]"
-                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
-                                }`}
-                        >
-                            <Award size={14} className="sm:w-4 sm:h-4" />
-                            Standards
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("challenges")}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
-                                ? "bg-[#CCFF00] text-[#172554] shadow-lg shadow-[#CCFF00]/25 ring-2 ring-[#CCFF00] ring-offset-2 ring-offset-[#172554]"
-                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
-                                }`}
-                        >
-                            <Trophy size={14} className="sm:w-4 sm:h-4" />
-                            Challenges
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("premium")}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "premium"
-                                ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25 ring-2 ring-amber-400 ring-offset-2 ring-offset-[#172554]"
-                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
-                                }`}
-                        >
-                            <Crown size={14} className="sm:w-4 sm:h-4" />
-                            Premium
-                        </button>
-                    </div>
+                {/* Filters */}
+                <div className="flex justify-center gap-2 mb-4 overflow-x-auto p-3 scrollbar-hide">
+                    <button
+                        onClick={() => setActiveTab("standard")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
+                            ? "bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/50 ring-offset-2 ring-offset-[#172554]"
+                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                            }`}
+                    >
+                        <Award size={14} className="sm:w-4 sm:h-4" />
+                        Standards
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("challenges")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
+                            ? "bg-[#CCFF00] text-[#172554] shadow-lg shadow-[#CCFF00]/25 ring-2 ring-[#CCFF00] ring-offset-2 ring-offset-[#172554]"
+                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                            }`}
+                    >
+                        <Trophy size={14} className="sm:w-4 sm:h-4" />
+                        Challenges
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("premium")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "premium"
+                            ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25 ring-2 ring-amber-400 ring-offset-2 ring-offset-[#172554]"
+                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                            }`}
+                    >
+                        <Crown size={14} className="sm:w-4 sm:h-4" />
+                        Premium
+                    </button>
+                </div>
 
-                    {/* Content Area */}
-                    <div className="min-h-[400px]">
-                        {/* Standard Badges Grid */}
-                        {activeTab === "standard" && (
-                            <div>
-                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                    {standardBadges.map((badge, idx) => (
-                                        <BadgeCard key={`std-${idx}`} badge={badge} />
-                                    ))}
-                                </div>
+                {/* Content Area */}
+                <div className="min-h-[400px]">
+                    {/* Standard Badges Grid */}
+                    {activeTab === "standard" && (
+                        <div>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                {standardBadges.map((badge, idx) => (
+                                    <BadgeCard key={`std-${idx}`} badge={badge} />
+                                ))}
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        {/* Challenges Badges Grid */}
-                        {activeTab === "challenges" && (
-                            <div>
-                                {challengeBadges.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                        {challengeBadges.map((badge) => (
-                                            <div
-                                                key={badge.id}
-                                                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-4 pb-2 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[172px] items-center text-center"
-                                            >
-                                                <div className="mb-3 flex flex-col items-center gap-3 flex-1">
-                                                    <span className="text-3xl">{badge.badge_emoji}</span>
-                                                    <div className="flex-1">
-                                                        <h3 className="text-sm font-semibold leading-tight text-gray-900">
-                                                            {badge.badge_name}
-                                                        </h3>
-                                                        <p className="mt-1 text-xs leading-relaxed text-gray-600 font-normal">
-                                                            Obtenu via un challenge
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-auto w-full rounded-lg bg-gradient-to-r from-yellow-100 to-amber-100 px-3 py-2 text-xs font-semibold text-yellow-800 tabular-nums">
-                                                    ✓ Débloqué le{" "}
-                                                    {new Date(badge.earned_at).toLocaleDateString("fr-FR")}
+                    {/* Challenges Badges Grid */}
+                    {activeTab === "challenges" && (
+                        <div>
+                            {challengeBadges.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                    {challengeBadges.map((badge) => (
+                                        <div
+                                            key={badge.id}
+                                            className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-4 pb-2 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[172px] items-center text-center"
+                                        >
+                                            <div className="mb-3 flex flex-col items-center gap-3 flex-1">
+                                                <span className="text-3xl">{badge.badge_emoji}</span>
+                                                <div className="flex-1">
+                                                    <h3 className="text-sm font-semibold leading-tight text-gray-900">
+                                                        {badge.badge_name}
+                                                    </h3>
+                                                    <p className="mt-1 text-xs leading-relaxed text-gray-600 font-normal">
+                                                        Obtenu via un challenge
+                                                    </p>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-xl bg-white/5 border border-white/10">
-                                        <Trophy size={48} className="text-white/20 mb-4" />
-                                        <h3 className="text-lg font-medium text-white/80">Aucun badge de challenge</h3>
-                                        <p className="text-white/50 text-sm mt-2 max-w-md">
-                                            Participez aux challenges hebdomadaires pour débloquer des badges exclusifs.
-                                        </p>
-                                        <Link
-                                            href="/challenges"
-                                            className="mt-6 px-6 py-2 bg-[#CCFF00] text-[#172554] rounded-full font-medium text-sm hover:brightness-110 transition-all shadow-lg shadow-[#CCFF00]/20"
-                                        >
-                                            Voir les challenges
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Premium Badges Grid */}
-                        {activeTab === "premium" && (
-                            <div>
-                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                    {premiumBadges.map((badge, idx) => (
-                                        <BadgeCard
-                                            key={`prem-${idx}`}
-                                            badge={badge}
-                                            isPremiumGrid
-                                            isLocked={!isPremium}
-                                            onUnlock={handlePremiumUnlocked}
-                                        />
+                                            <div className="mt-auto w-full rounded-lg bg-gradient-to-r from-yellow-100 to-amber-100 px-3 py-2 text-xs font-semibold text-yellow-800 tabular-nums">
+                                                ✓ Débloqué le{" "}
+                                                {new Date(badge.earned_at).toLocaleDateString("fr-FR")}
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-xl bg-white/5 border border-white/10">
+                                    <Trophy size={48} className="text-white/20 mb-4" />
+                                    <h3 className="text-lg font-medium text-white/80">Aucun badge de challenge</h3>
+                                    <p className="text-white/50 text-sm mt-2 max-w-md">
+                                        Participez aux challenges hebdomadaires pour débloquer des badges exclusifs.
+                                    </p>
+                                    <Link
+                                        href="/challenges"
+                                        className="mt-6 px-6 py-2 bg-[#CCFF00] text-[#172554] rounded-full font-medium text-sm hover:brightness-110 transition-all shadow-lg shadow-[#CCFF00]/20"
+                                    >
+                                        Voir les challenges
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Premium Badges Grid */}
+                    {activeTab === "premium" && (
+                        <div>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                {premiumBadges.map((badge, idx) => (
+                                    <BadgeCard
+                                        key={`prem-${idx}`}
+                                        badge={badge}
+                                        isPremiumGrid
+                                        isLocked={!isPremium}
+                                        onUnlock={handlePremiumUnlocked}
+                                    />
+                                ))}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </>
