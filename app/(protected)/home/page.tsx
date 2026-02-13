@@ -82,29 +82,29 @@ export default async function HomePage({
     // On ne peut pas facilement tout joindre si les FK ne sont pas STRICTES,
     // mais on peut lancer les promesses en //
 
-    // A. Récupération Profil
+    // A. Récupération Profil + Club en une seule fois via Admin Client (plus rapide)
     const profilePromise = (async () => {
-      let fetchedProfile = null;
-      // Essai standard
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-      fetchedProfile = data;
+      try {
+        const { data: adminProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("*, clubs(id, name, logo_url)")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      // Fallback Admin si échec
-      if (!fetchedProfile || !fetchedProfile.club_id) {
-        try {
-          const { data: adminProfile } = await supabaseAdmin
-            .from("profiles")
-            .select("id, display_name, first_name, last_name, email, club_id, club_slug, username")
-            .eq("id", user.id)
-            .maybeSingle();
-          if (adminProfile) {
-            fetchedProfile = fetchedProfile ? { ...fetchedProfile, ...adminProfile } : adminProfile;
-          }
-        } catch (e) {
-          logger.error("[Home] Unexpected error fetching admin profile", e);
+        if (adminProfile) {
+          return {
+            ...adminProfile,
+            club_data: adminProfile.clubs
+          };
         }
+
+        // Fallback user client if admin fails or returns nothing
+        const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+        return data;
+      } catch (e) {
+        logger.error("[Home] Unexpected error fetching profile", e);
+        return null;
       }
-      return fetchedProfile;
     })();
 
     // B. Récupération Partenariats (Pending Requests)
@@ -157,36 +157,24 @@ export default async function HomePage({
       }
     }
 
-    // 3. Récupération Info Club (si profile existe)
+    // 3. Récupération Info Club (déjà jointe ou fetch si besoin)
     if (profile?.club_id) {
-      // Optimisation : Tenter de récupérer le club directement
-      // Note: On pourrait aussi paralleliser ça avec les partenariats si on avait le club_id avant,
-      // mais on a besoin du profil pour avoir le club_id.
-      // Cependant, c'est déjà beaucoup mieux que le client-side waterfall.
-
-      let fetchedClub: { name: any; logo_url: any; } | null = null;
-
-      // Essai Admin (plus fiable pour les données club)
-      const { data: clubData } = await supabaseAdmin
-        .from("clubs")
-        .select("id, name, logo_url")
-        .eq("id", profile.club_id)
-        .maybeSingle();
-
-      if (clubData) fetchedClub = clubData;
-      else {
-        // Fallback standard
-        const { data: stdClub } = await supabase
+      const fetchedClub = profile.club_data || null;
+      if (fetchedClub) {
+        clubName = fetchedClub.name;
+        clubLogoUrl = getClubLogoPublicUrl(fetchedClub.logo_url);
+      } else {
+        // Fallback fetch if not joined (rare)
+        const { data: clubData } = await supabaseAdmin
           .from("clubs")
           .select("id, name, logo_url")
           .eq("id", profile.club_id)
           .maybeSingle();
-        fetchedClub = stdClub;
-      }
 
-      if (fetchedClub) {
-        clubName = fetchedClub.name;
-        clubLogoUrl = getClubLogoPublicUrl(fetchedClub.logo_url);
+        if (clubData) {
+          clubName = clubData.name;
+          clubLogoUrl = getClubLogoPublicUrl(clubData.logo_url);
+        }
       }
     }
   }

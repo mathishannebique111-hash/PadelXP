@@ -881,7 +881,7 @@ export default function MatchForm({
 
       {/* Blurred Block UI */}
       {!hasLevel && !showAssessment && (
-        <div className="absolute inset-x-0 inset-y-0 z-[100] rounded-3xl flex flex-col items-center justify-center p-6 text-center backdrop-blur-md bg-[#071554]/40 border border-white/10 mt-6" style={{ height: '500px' }}>
+        <div className="absolute inset-x-0 inset-y-0 z-[100] rounded-3xl flex flex-col items-center justify-center p-6 pb-20 text-center backdrop-blur-md bg-[#071554]/40 border border-white/10 mt-6" style={{ height: '500px' }}>
           <div className="bg-padel-green/20 p-4 rounded-full mb-6">
             <Trophy className="w-10 h-10 text-padel-green" />
           </div>
