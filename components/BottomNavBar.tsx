@@ -25,7 +25,7 @@ export default function BottomNavBar() {
         { href: '/match/new', label: 'Matchs', icon: <Swords size={20} />, navKey: 'match' },
         { href: '/club', label: 'Compétition', icon: <Trophy size={20} />, navKey: 'club' },
         // TEMPORAIRE: Activé pour tester le flux de paiement Stripe Connect
-        { href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' },
+        // { href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' },
     ];
 
     const fetchCounts = async () => {
