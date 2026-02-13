@@ -82,10 +82,10 @@ export default function BadgesView({
                     <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1000ms" }} />
                 </div>
 
-                <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-4 md:pt-8 pb-8">
+                <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-2 md:pt-6 pb-8">
 
                     {/* Stats Header */}
-                    <div className="mb-8 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-sm max-w-md mx-auto">
+                    <div className="mb-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto">
                         <div className="flex items-center justify-between gap-2">
                             {/* Gauche: Total Badges */}
                             <div className="text-center w-20 sm:w-24 flex-shrink-0">
@@ -115,7 +115,7 @@ export default function BadgesView({
                     </div>
 
                     {/* Filters */}
-                    <div className="flex justify-center gap-3 mb-8 overflow-x-auto p-4 scrollbar-hide">
+                    <div className="flex justify-center gap-2 mb-4 overflow-x-auto p-2 scrollbar-hide">
                         <button
                             onClick={() => setActiveTab("standard")}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
@@ -153,7 +153,7 @@ export default function BadgesView({
                         {/* Standard Badges Grid */}
                         {activeTab === "standard" && (
                             <div>
-                                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                     {standardBadges.map((badge, idx) => (
                                         <BadgeCard key={`std-${idx}`} badge={badge} />
                                     ))}
@@ -165,11 +165,11 @@ export default function BadgesView({
                         {activeTab === "challenges" && (
                             <div>
                                 {challengeBadges.length > 0 ? (
-                                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                         {challengeBadges.map((badge) => (
                                             <div
                                                 key={badge.id}
-                                                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-3 pt-5 pb-3 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[180px] items-center text-center"
+                                                className="rounded-xl border border-yellow-500 bg-gradient-to-br from-yellow-50 to-amber-50 shadow-lg px-2 pt-4 pb-2 transition-all hover:scale-105 hover:shadow-2xl flex flex-col h-[160px] items-center text-center"
                                             >
                                                 <div className="mb-3 flex flex-col items-center gap-3 flex-1">
                                                     <span className="text-3xl">{badge.badge_emoji}</span>
@@ -210,7 +210,7 @@ export default function BadgesView({
                         {/* Premium Badges Grid */}
                         {activeTab === "premium" && (
                             <div>
-                                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                     {premiumBadges.map((badge, idx) => (
                                         <BadgeCard
                                             key={`prem-${idx}`}
@@ -251,7 +251,7 @@ function BadgeCard({
 
     return (
         <div
-            className={`group relative rounded-xl border px-3 pt-5 pb-3 transition-all flex flex-col h-[180px] items-center text-center overflow-hidden ${effectivelyLocked
+            className={`group relative rounded-xl border px-2 pt-4 pb-2 transition-all flex flex-col h-[160px] items-center text-center overflow-hidden ${effectivelyLocked
                 ? "border-amber-500/30 bg-slate-900/50"
                 : isPremiumGrid
                     ? "border-yellow-400 bg-gradient-to-br from-yellow-100 via-amber-100 to-yellow-50 shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-yellow-400/50"
@@ -294,7 +294,7 @@ function BadgeCard({
             )}
 
             <div
-                className={`flex-shrink-0 mb-3 h-[48px] flex items-center justify-center ${effectivelyLocked ? "opacity-30 blur-[2px]" : ""
+                className={`flex-shrink-0 mb-2 h-[40px] flex items-center justify-center ${effectivelyLocked ? "opacity-30 blur-[2px]" : ""
                     }`}
             >
                 <BadgeIconDisplay
@@ -302,7 +302,7 @@ function BadgeCard({
                     title={badge.title}
                     className={`transition-all ${isObtained || effectivelyLocked ? "" : "grayscale opacity-50"
                         }`}
-                    size={48}
+                    size={40}
                 />
             </div>
 
