@@ -20,7 +20,7 @@ function PremiumContent() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { isApp, loading: iapLoading, purchasePremium, restorePurchases, debugLogs } = useAppleIAP();
+    const { isApp, loading: iapLoading, purchasePremium, restorePurchases, debugLogs, product } = useAppleIAP();
 
     const handleSubscribe = async () => {
         if (isApp) {
@@ -138,8 +138,12 @@ function PremiumContent() {
                         <div className="bg-slate-900/90 backdrop-blur-xl rounded-[15px] p-4 border border-white/5 flex flex-col gap-3 items-center">
 
                             <div className="flex items-baseline gap-1">
-                                <span className="text-3xl font-black text-white">4.99€</span>
-                                <span className="text-sm font-medium text-slate-500">/mois</span>
+                                <span className="text-3xl font-black text-white">
+                                    {isApp && product?.pricing?.price ? product.pricing.price : "4.99€"}
+                                </span>
+                                {(!isApp || !product?.pricing?.price) && (
+                                    <span className="text-sm font-medium text-slate-500">/mois</span>
+                                )}
                             </div>
 
                             <button

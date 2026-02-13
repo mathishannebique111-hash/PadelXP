@@ -17,6 +17,7 @@ export const useAppleIAP = () => {
     const [loading, setLoading] = useState(false);
     const [isApp, setIsApp] = useState(false);
     const [debugLogs, setDebugLogs] = useState<string[]>([]);
+    const [product, setProduct] = useState<any>(null);
 
     const addLog = (msg: string) => {
         console.log(msg);
@@ -80,6 +81,7 @@ export const useAppleIAP = () => {
                 .productUpdated((p: any) => {
                     if (productIds.includes(p.id)) {
                         addLog(`[useAppleIAP] Produit chargé: ${p.id} - ${p.title} - ${p.pricing?.price || 'n/a'} - Valide: ${p.valid} - État: ${p.state}`);
+                        setProduct(p);
                     }
                 })
                 .approved((transaction: any) => {
@@ -173,11 +175,11 @@ export const useAppleIAP = () => {
 
         setLoading(true);
         try {
-            const productIds = ['premium_monthly'];
-            const product = store.get(productIds[0]);
+            const productId = 'premium_monthly';
+            const productToBuy = store.get(productId);
 
-            if (!product) {
-                addLog(`[useAppleIAP] Produit introuvable: ${productIds[0]}`);
+            if (!productToBuy) {
+                addLog(`[useAppleIAP] Produit introuvable: ${productId}`);
                 toast.error("Produit introuvable sur le store.");
                 setLoading(false);
                 return;
@@ -185,22 +187,22 @@ export const useAppleIAP = () => {
 
             // Diagnostic profond
             try {
-                addLog(`[useAppleIAP] Diagnostic produit: ${product.id}`);
+                addLog(`[useAppleIAP] Diagnostic produit: ${productToBuy.id}`);
                 const productShort = {
-                    id: product.id,
-                    state: product.state,
-                    valid: product.valid,
-                    canPurchase: product.canPurchase,
-                    offersCount: product.offers?.length || 0
+                    id: productToBuy.id,
+                    state: productToBuy.state,
+                    valid: productToBuy.valid,
+                    canPurchase: productToBuy.canPurchase,
+                    offersCount: productToBuy.offers?.length || 0
                 };
                 addLog(`[useAppleIAP] Détails: ${JSON.stringify(productShort)}`);
             } catch (e) {
                 addLog(`[useAppleIAP] Erreur log détails: ${e}`);
             }
 
-            const offer = product.getOffer();
+            const offer = productToBuy.getOffer();
             if (!offer) {
-                addLog(`[useAppleIAP] Aucune offre trouvée pour ${product.id}. État: ${product.state}`);
+                addLog(`[useAppleIAP] Aucune offre trouvée pour ${productToBuy.id}. État: ${productToBuy.state}`);
                 toast.error("Offre non disponible actuellement.");
                 setLoading(false);
                 return;
@@ -226,6 +228,7 @@ export const useAppleIAP = () => {
     return {
         isApp,
         loading,
+        product,
         purchasePremium,
         restorePurchases,
         debugLogs
