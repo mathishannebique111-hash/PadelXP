@@ -60,70 +60,101 @@ export const useAppleIAP = () => {
         try {
             if (isInitialized) return;
 
-            addLog("[useAppleIAP] Initialisation du store...");
+            addLog("[useAppleIAP] Configuration du store v13...");
 
             const platform = (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE || 'ios-appstore';
-            addLog(`[useAppleIAP] Debug - Platform: ${platform}`);
+            addLog(`[useAppleIAP] Platform: ${platform}`);
 
-            // Configuration du produit
-            addLog("[useAppleIAP] Appel de store.register...");
+            // 1. Enregistrement du produit
             store.register({
                 id: 'premium_monthly',
-                type: store.PAID_SUBSCRIPTION || 'paid subscription',
+                type: (window as any).CdvPurchase?.ProductType?.PAID_SUBSCRIPTION || 'paid subscription',
                 platform: platform,
             });
-            addLog("[useAppleIAP] store.register OK");
 
-            // Gérer les approbations
-            store.when('premium_monthly').approved((p: any) => {
-                addLog("[useAppleIAP] Produit approuvé par l'App Store.");
-                validatePurchase(p);
-            });
+            // 2. Gestionnaires d'événements v13 (syntaxe sans argument dans .when())
+            store.when()
+                .productUpdated((p: any) => {
+                    if (p.id === 'premium_monthly') {
+                        addLog(`[useAppleIAP] Produit chargé: ${p.title} - ${p.pricing?.price || 'n/a'}`);
+                    }
+                })
+                .approved((transaction: any) => {
+                    addLog(`[useAppleIAP] Transaction approuvée: ${transaction.transactionId}`);
+                    if (transaction.products.some((p: any) => p.id === 'premium_monthly')) {
+                        validatePurchase(transaction);
+                    }
+                })
+                .verified((receipt: any) => {
+                    addLog("[useAppleIAP] Reçu vérifié serveur.");
+                    if (typeof receipt.finish === 'function') receipt.finish();
+                });
 
             // Gérer les erreurs
             store.error((error: any) => {
-                addLog(`[useAppleIAP] Store Error: ${JSON.stringify(error)}`);
-                if (loading) toast.error("Erreur In-App Purchase: " + (error.message || "inconnue"));
+                const errStr = JSON.stringify(error);
+                addLog(`[useAppleIAP] Store Error: ${errStr}`);
+                if (loading) toast.error("Erreur Apple Pay: " + (error.message || "inconnue"));
                 setLoading(false);
             });
 
             store.ready(() => {
-                addLog("[useAppleIAP] Store prêt et synchronisé.");
+                addLog("[useAppleIAP] Store prêt (Ready).");
                 setIsInitialized(true);
             });
 
-            addLog("[useAppleIAP] Appel de store.refresh...");
-            store.refresh();
-            addLog("[useAppleIAP] store.refresh OK");
+            // 3. Initialisation v13 (Remplace refresh)
+            addLog("[useAppleIAP] Appel de store.initialize...");
+            store.initialize([platform]).then((errors: any) => {
+                if (errors && errors.length > 0) {
+                    addLog(`[useAppleIAP] Erreurs init: ${JSON.stringify(errors)}`);
+                } else {
+                    addLog("[useAppleIAP] store.initialize OK");
+                }
+            }).catch((err: any) => {
+                addLog(`[useAppleIAP] store.initialize CRASH: ${err}`);
+            });
+
         } catch (err: any) {
             const errorMessage = JSON.stringify(err, Object.getOwnPropertyNames(err));
-            addLog(`[useAppleIAP] Erreur fatale: ${errorMessage}`);
+            addLog(`[useAppleIAP] Erreur fatale init: ${errorMessage}`);
             toast.error("Erreur IAP Init: " + errorMessage);
+            setLoading(false);
         }
     };
 
-    const validatePurchase = async (product: any) => {
+    const validatePurchase = async (transaction: any) => {
         setLoading(true);
         try {
-            const receipt = product.transaction?.appStoreReceipt || product.transaction?.receipt;
+            // En v13, le reçu est souvent dans transaction.parentReceipt.nativeData ou via le store
+            const receipt = transaction.appStoreReceipt ||
+                transaction.parentReceipt?.nativeData?.transactionReceipt ||
+                (window as any).CdvPurchase?.appStoreReceipt; // Fallback possible
+
+            addLog(`[useAppleIAP] Validation du reçu (longueur: ${receipt?.length || 0})`);
 
             if (!receipt) {
-                toast.error("Reçu Apple manquant pour la validation.");
+                addLog("[useAppleIAP] Erreur: Reçu manquant dans la transaction.");
+                toast.error("Le reçu de paiement n'a pas pu être récupéré.");
+                setLoading(false);
                 return;
             }
 
             const result = await verifyAppleReceipt(receipt);
 
             if (result.success) {
-                if (typeof product.finish === 'function') product.finish();
+                addLog("[useAppleIAP] Validation serveur réussie !");
+                if (typeof transaction.finish === 'function') await transaction.finish();
                 toast.success("Succès ! Vous êtes maintenant Premium.");
                 window.location.href = '/home?premium_success=true';
             } else {
-                toast.error("Échec de validation serveur: " + result.error);
+                addLog(`[useAppleIAP] Échec validation serveur: ${result.error}`);
+                toast.error("Échec de validation: " + result.error);
+                setLoading(false);
             }
         } catch (e) {
-            toast.error("Erreur réseau (vérification du reçu).");
-        } finally {
+            addLog(`[useAppleIAP] Erreur réseau validation: ${e}`);
+            toast.error("Erreur réseau lors de la vérification.");
             setLoading(false);
         }
     };
@@ -133,17 +164,34 @@ export const useAppleIAP = () => {
 
         if (!store) {
             addLog("[useAppleIAP] Store non trouvé au clic.");
-            toast.error("Service Apple non prêt. Voir logs en bas.");
+            toast.error("Le service d'achat n'est pas encore prêt.");
             return;
         }
 
         setLoading(true);
         try {
-            addLog("[useAppleIAP] Lancement store.order('premium_monthly')...");
-            store.order('premium_monthly');
+            // En v13, on récupère le produit puis l'offre
+            const product = store.get('premium_monthly');
+            if (!product) {
+                addLog("[useAppleIAP] Produit 'premium_monthly' non trouvé dans le store.");
+                toast.error("Produit introuvable. Assurez-vous d'être sur un appareil iOS avec un compte valide.");
+                setLoading(false);
+                return;
+            }
+
+            const offer = product.getOffer();
+            if (!offer) {
+                addLog("[useAppleIAP] Aucune offre trouvée pour ce produit.");
+                toast.error("Offre non disponible.");
+                setLoading(false);
+                return;
+            }
+
+            addLog(`[useAppleIAP] Lancement commande sur l'offre: ${offer.id}`);
+            store.order(offer);
         } catch (err: any) {
             addLog(`[useAppleIAP] store.order failed: ${err}`);
-            toast.error("Impossible d'ouvrir la fenêtre d'achat Apple.");
+            toast.error("Impossible d'ouvrir la fenêtre d'achat.");
             setLoading(false);
         }
     }, [loading, addLog]);
@@ -151,8 +199,8 @@ export const useAppleIAP = () => {
     const restorePurchases = useCallback(() => {
         const store = (window as any).CdvPurchase?.store || (window as any).store;
         if (store) {
-            store.refresh();
-            toast.info("Restauration des achats demandée...");
+            addLog("[useAppleIAP] Restauration des achats...");
+            store.restorePurchases();
         }
     }, []);
 
