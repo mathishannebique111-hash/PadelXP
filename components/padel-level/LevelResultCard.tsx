@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Trophy,
@@ -86,11 +87,29 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#172554] px-4 py-4 pb-28">
+    <div className="min-h-screen bg-[#172554] pb-28">
+      {/* Header fixe avec logo - Identique au questionnaire */}
+      <div className="sticky top-0 z-50 px-4 pt-6 pb-2 bg-[#172554]/80 backdrop-blur-md" style={{ paddingTop: 'calc(var(--sat, 0px) + 1.5rem)' }}>
+        <div className="flex justify-center mb-4 relative z-[100001]">
+          <div className="relative w-32 h-10">
+            <Image
+              src="/padelxp-logo-transparent.png"
+              alt="PadelXP"
+              fill
+              className="object-contain"
+              style={{
+                filter: 'brightness(0) invert(1)'
+              }}
+              priority
+            />
+          </div>
+        </div>
+      </div>
+
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="space-y-6 max-w-3xl mx-auto"
+        className="space-y-6 max-w-3xl mx-auto px-4 mt-4"
       >
         {/* En-tête résultat - Plus compact */}
         <div className="text-center bg-slate-950/40 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
