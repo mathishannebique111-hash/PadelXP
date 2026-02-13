@@ -383,7 +383,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       `}</style>
 
       {/* Header fixe - mobile first, commence en haut de l'écran */}
-      <div className="sticky z-20 px-4 pt-10 pb-4 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 2.5rem)' }}>
+      <div className="sticky z-20 px-4 pt-12 pb-4 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 3rem)' }}>
 
         {/* Logo spécifique au questionnaire */}
         <div className="flex justify-center mb-6 relative z-50">
@@ -393,9 +393,6 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
               alt="PadelXP"
               fill
               className="object-contain"
-              style={{
-                filter: 'brightness(0) saturate(100%) invert(74%) sepia(58%) saturate(466%) hue-rotate(357deg) brightness(103%) contrast(107%) drop-shadow(0 0 10px rgba(245, 158, 11, 0.3))'
-              }}
               priority
             />
           </div>
