@@ -58,7 +58,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
             setCurrentQuestion(dbProgress.currentQuestion);
             setResponses(dbProgress.responses);
             if (dbProgress.currentQuestion > 0) {
-              setHasStarted(true);
+              // On charge la progression mais on ne déclenche pas setHasStarted(true) auto
             }
             // Synchroniser localStorage avec la DB
             localStorage.setItem(`questionnaire_progress_${user.id}`, JSON.stringify(dbProgress));
@@ -75,7 +75,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
               setCurrentQuestion(parsed.currentQuestion);
               setResponses(parsed.responses);
               if (parsed.currentQuestion > 0) {
-                setHasStarted(true);
+                // On charge la progression mais on ne déclenche pas setHasStarted(true) auto
               }
               // Synchroniser avec la DB si on a trouvé dans localStorage
               await supabase
