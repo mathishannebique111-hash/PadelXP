@@ -341,10 +341,7 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
         body.questionnaire-open [data-header-actions="true"],
         body.questionnaire-open #bottom-nav-bar,
         body.questionnaire-open #site-logo-mobile,
-        body.questionnaire-open .site-header-logo,
-        body.questionnaire-open header,
-        body.questionnaire-open .sticky,
-        body.questionnaire-open .fixed:not(.z-\[100000\]) {
+        body.questionnaire-open .site-header-logo {
           display: none !important;
         }
       `}</style>
@@ -352,8 +349,8 @@ export default function LevelAssessmentWizard({ onComplete }: Props) {
       {/* Header fixe - mobile first, commence en haut de l'écran */}
       <div className="sticky z-20 px-4 pt-4 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 1rem)' }}>
 
-        {/* Logo spécifique au questionnaire RESTAURÉ */}
-        <div className="flex justify-center mb-1.5">
+        {/* Logo spécifique au questionnaire RESTAURÉ EN PREMIER PLAN */}
+        <div className="flex justify-center mb-2 relative z-50">
           <Image
             src="/padelxp-logo-transparent.png"
             alt="PadelXP Logo"
