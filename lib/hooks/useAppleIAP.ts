@@ -79,7 +79,7 @@ export const useAppleIAP = () => {
             store.when()
                 .productUpdated((p: any) => {
                     if (productIds.includes(p.id)) {
-                        addLog(`[useAppleIAP] Produit chargé: ${p.id} (${p.title}) - ${p.pricing?.price || 'n/a'}`);
+                        addLog(`[useAppleIAP] Produit chargé: ${p.id} - ${p.title} - ${p.pricing?.price || 'n/a'} - Valide: ${p.valid} - État: ${p.state}`);
                     }
                 })
                 .approved((transaction: any) => {
@@ -186,20 +186,22 @@ export const useAppleIAP = () => {
 
             if (!product) {
                 addLog(`[useAppleIAP] Aucun produit trouvé parmi: ${productIds.join(', ')}`);
-                toast.error("Produit introuvable. Vérifiez l'ID dans App Store Connect.");
+                toast.error("Produit introuvable sur le store.");
                 setLoading(false);
                 return;
             }
+
+            addLog(`[useAppleIAP] Produit ID: ${product.id}, Valide: ${product.valid}, État: ${product.state}, Titre: ${product.title}`);
 
             const offer = product.getOffer();
             if (!offer) {
-                addLog(`[useAppleIAP] Aucune offre trouvée pour le produit ${product.id}`);
-                toast.error("Offre non disponible.");
+                addLog(`[useAppleIAP] Aucune offre trouvée pour ${product.id}. Produit prêt? ${product.state === 'valid' || product.state === 'approved'}`);
+                toast.error("Offre non disponible actuellement.");
                 setLoading(false);
                 return;
             }
 
-            addLog(`[useAppleIAP] Lancement commande sur l'offre: ${offer.id}`);
+            addLog(`[useAppleIAP] Lancement order sur offre: ${offer.id} (Product: ${product.id})`);
             store.order(offer);
         } catch (err: any) {
             addLog(`[useAppleIAP] store.order failed: ${err}`);
