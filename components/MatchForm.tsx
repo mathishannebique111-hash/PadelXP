@@ -640,15 +640,20 @@ export default function MatchForm({
       if (isTieBreakMatch) {
         if (!hasTieBreak || !tieBreak.team1Score || !tieBreak.team2Score) {
           setsErrors.tieBreak = "Un tie-break est obligatoire en cas d'égalité de sets.";
+          setErrorMessage("Un tie-break est obligatoire en cas d'égalité de sets.");
         } else if (!setsErrors.tieBreak) {
           // Vérifier que le tie-break est à l'avantage de l'équipe gagnante
           const tieBreakTeam1 = parseInt(tieBreak.team1Score);
           const tieBreakTeam2 = parseInt(tieBreak.team2Score);
 
           if (winner === "1" && tieBreakTeam1 <= tieBreakTeam2) {
-            setsErrors.tieBreak = "L'équipe 1 doit avoir gagné le tie-break pour être déclarée vainqueur.";
+            const msg = "Le tie-break doit être en faveur de l'équipe gagnante";
+            setsErrors.tieBreak = msg;
+            setErrorMessage(msg);
           } else if (winner === "2" && tieBreakTeam2 <= tieBreakTeam1) {
-            setsErrors.tieBreak = "L'équipe 2 doit avoir gagné le tie-break pour être déclarée vainqueur.";
+            const msg = "Le tie-break doit être en faveur de l'équipe gagnante";
+            setsErrors.tieBreak = msg;
+            setErrorMessage(msg);
           }
         }
       } else if (Object.keys(setsErrors).length === 0) { // Only perform normal winner validation if no other errors yet
@@ -868,7 +873,7 @@ export default function MatchForm({
   };
 
   return (
-    <div className="relative h-full flex flex-col overflow-hidden">
+    <div className="relative h-full flex flex-col overflow-hidden overscroll-none touch-none">
       {/* Assessment Wizard Overlay */}
       {showAssessment && (
         <LevelAssessmentWizard

@@ -81,6 +81,21 @@ function MatchTabsContent({
     }
   }, [tabFromUrl]);
 
+  // Bloquer le scroll du body quand on est sur l'onglet d'enregistrement
+  useEffect(() => {
+    if (currentTab === 'record') {
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100dvh';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+    };
+  }, [currentTab]);
+
   // Fetch pending matches count for badge
   useEffect(() => {
     const fetchPendingCount = async () => {
@@ -235,7 +250,7 @@ function MatchTabsContent({
       </div>
 
       {/* Contenu des onglets */}
-      <div className="mt-4 sm:mt-6">
+      <div className="mt-4 sm:mt-6 h-full overflow-hidden">
         <div className={currentTab === 'record' ? 'block h-full overflow-hidden' : 'hidden'}>
           {recordContent}
         </div>

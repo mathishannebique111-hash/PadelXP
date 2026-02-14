@@ -71,7 +71,7 @@ export default async function MatchHistoryContent() {
     .eq("user_id", user.id)
     .eq("player_type", "user");
 
-  logger.info("[MatchHistory] User participations:", userParticipations, "Error:", partError);
+  logger.info("[MatchHistory] User participations fetched", { count: userParticipations?.length });
 
   if (partError) {
     logger.error("Error fetching participations:", partError);
@@ -124,7 +124,7 @@ export default async function MatchHistoryContent() {
     };
   });
 
-  logger.info("[MatchHistory] All matches fetched:", allMatches, "Error:", matchesError);
+  logger.info("[MatchHistory] All matches fetched", { count: allMatches?.length });
 
   if (matchesError) {
     logger.error("Error fetching matches:", matchesError);
@@ -156,7 +156,7 @@ export default async function MatchHistoryContent() {
     const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
     const guestIds = [...new Set(allParticipants.filter(p => p.player_type === "guest" && p.guest_player_id).map(p => p.guest_player_id))];
 
-    logger.info("[MatchHistory] Enriching with names - User IDs:", userIds.length, "Guest IDs:", guestIds.length);
+    logger.info("[MatchHistory] Enriching with names", { userIds: userIds.length, guestIds: guestIds.length });
 
     const profilesMap = new Map<string, string>();
     if (userIds.length > 0) {
@@ -185,7 +185,7 @@ export default async function MatchHistoryContent() {
 
     const guestsMap = new Map<string, { first_name: string; last_name: string }>();
     if (guestIds.length > 0) {
-      const { data: guests, error: guestsError } = await supabase
+      const { data: guests, error: guestsError } = await supabaseAdmin
         .from("guest_players")
         .select("id, first_name, last_name")
         .in("id", guestIds);

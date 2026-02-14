@@ -154,15 +154,33 @@ export async function GET(req: Request) {
             }
 
             const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+            // Récupérer les informations des joueurs invités
+            const guestIds = (participants || [])
+                .filter(p => p.player_type === "guest" && p.guest_player_id)
+                .map(p => p.guest_player_id);
+
+            const { data: guests } = await supabaseAdmin
+                .from("guest_players")
+                .select("id, first_name, last_name")
+                .in("id", guestIds);
+
+            const guestMap = new Map((guests || []).map(g => [g.id, g]));
+
             const currentUserProfile = profileMap.get(user.id);
             const currentUserClubId = currentUserProfile?.club_id;
 
             // Enrichir les participants avec les noms et clubs
             const enrichedParticipants = (participants || []).map(p => {
-                const profile = profileMap.get(p.user_id);
-                const displayName = profile?.display_name ||
-                    `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() ||
-                    'Joueur';
+                const profile = p.player_type === "user" ? profileMap.get(p.user_id) : null;
+                const guest = p.player_type === "guest" ? guestMap.get(p.guest_player_id) : null;
+
+                let displayName = 'Joueur';
+                if (p.player_type === "user" && profile) {
+                    displayName = profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Joueur';
+                } else if (p.player_type === "guest" && guest) {
+                    displayName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || 'Joueur';
+                }
 
                 // Vérifier si ce participant a confirmé
                 const hasConfirmed = (confirmations || []).some(
