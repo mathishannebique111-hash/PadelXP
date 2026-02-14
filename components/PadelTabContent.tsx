@@ -209,7 +209,7 @@ export default function PadelTabContent({ profile: initialProfile, initialPendin
                       if (navigator.share) {
                         navigator.share({
                           title: `Profil PadelXP de ${profile.display_name}`,
-                          text: `Découvre mon profil PadelXP et mes stats !`,
+                          text: `Découvre mon profil PadelXP !`,
                           url: url
                         }).catch(console.error);
                       } else {

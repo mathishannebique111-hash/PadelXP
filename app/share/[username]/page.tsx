@@ -137,7 +137,7 @@ export default async function ShareProfilePage({ params }: Props) {
     };
 
     return (
-        <div className="min-h-[100dvh] bg-[#071554] text-white flex flex-col items-center justify-center p-2 pt-1 relative overflow-y-auto">
+        <div className="min-h-[100dvh] bg-[#172554] text-white flex flex-col items-center justify-center p-2 pt-1 relative overflow-y-auto">
             {/* Background Effects */}
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(0,102,255,0.15),transparent_60%)] pointer-events-none" />
             <div className={`absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-${tierConfig.colors.split(' ')[1]} opacity-[0.03] blur-[120px] rounded-full pointer-events-none`} />
