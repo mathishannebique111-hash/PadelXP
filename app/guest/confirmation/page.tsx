@@ -165,7 +165,7 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
                 <div className="text-center mb-6">
                     <div className="flex justify-center mb-3">
                         <Image
-                            src="/padelxp-logo-transparent.png"
+                            src="/padelxp-logo-white-new.png"
                             alt="PadelXP"
                             width={220}
                             height={80}

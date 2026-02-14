@@ -128,6 +128,13 @@ export default function MatchForm({
   const tieBreakTeam1Ref = useRef<HTMLInputElement | null>(null);
   const tieBreakTeam2Ref = useRef<HTMLInputElement | null>(null);
 
+  const handleInputBlur = () => {
+    // Scroll to top to reset any viewport shift caused by the keyboard on mobile
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  };
+
   // Vérifier si l'utilisateur a déjà cliqué sur "Compris" pour le cadre d'information
   useEffect(() => {
     async function checkMatchLimitInfoStatus() {
@@ -1139,6 +1146,7 @@ export default function MatchForm({
                   onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                   placeholder="-"
                   ref={(el) => { setTeam1Refs.current[index] = el; }}
+                  onBlur={handleInputBlur}
                 />
                 <span className="text-white/20 font-light text-lg">:</span>
                 <input
@@ -1151,6 +1159,7 @@ export default function MatchForm({
                   onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                   placeholder="-"
                   ref={(el) => { setTeam2Refs.current[index] = el; }}
+                  onBlur={handleInputBlur}
                 />
                 {index >= 2 && (
                   <button
@@ -1181,6 +1190,7 @@ export default function MatchForm({
                     }}
                     placeholder="0"
                     ref={tieBreakTeam1Ref}
+                    onBlur={handleInputBlur}
                   />
                   <span className="text-padel-green/40 font-bold">-</span>
                   <input
@@ -1195,6 +1205,7 @@ export default function MatchForm({
                     }}
                     placeholder="0"
                     ref={tieBreakTeam2Ref}
+                    onBlur={handleInputBlur}
                   />
                 </div>
                 <button
