@@ -250,8 +250,8 @@ function MatchTabsContent({
       </div>
 
       {/* Contenu des onglets */}
-      <div className="mt-4 sm:mt-6 h-full overflow-hidden">
-        <div className={currentTab === 'record' ? 'block h-full overflow-y-auto pb-20' : 'hidden'}>
+      <div className="mt-2 sm:mt-6 flex-1 min-h-0 overflow-hidden">
+        <div className={currentTab === 'record' ? 'block h-full overflow-y-auto overscroll-contain pb-32' : 'hidden'}>
           {recordContent}
         </div>
         <div className={currentTab === 'history' ? 'block' : 'hidden'}>

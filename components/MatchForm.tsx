@@ -880,7 +880,7 @@ export default function MatchForm({
   };
 
   return (
-    <div className="relative h-full flex flex-col overflow-y-auto overscroll-contain px-1">
+    <div className="relative h-auto flex flex-col overflow-visible px-1">
       {/* Assessment Wizard Overlay */}
       {showAssessment && (
         <LevelAssessmentWizard
@@ -1304,6 +1304,9 @@ export default function MatchForm({
             </div>
           </button>
         </div>
+
+        {/* Espace supplémentaire pour permettre de remonter le bouton au-dessus de la nav barre */}
+        <div className="h-24 sm:h-0" />
       </form>
 
       {/* Search Modal Portal */}
