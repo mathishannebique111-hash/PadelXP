@@ -134,7 +134,7 @@ export default async function ShareProfilePage({ params }: Props) {
 
             <div className="relative z-10 w-full max-w-sm">
                 {/* Logo PadelXP en haut */}
-                <div className="flex justify-center mb-2">
+                <div className="flex justify-center mb-1">
                     <Image src="/images/logo-share-card.png" alt="PadelXP" width={110} height={35} className="object-contain" />
                 </div>
 
