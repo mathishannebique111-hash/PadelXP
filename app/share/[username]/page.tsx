@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props) {
     };
 }
 
-export default async function PublicProfilePage({ params }: Props) {
+export default async function ShareProfilePage({ params }: Props) {
     const resolvedParams = await params;
     let username = decodeURIComponent(resolvedParams.username);
 

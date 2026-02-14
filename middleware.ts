@@ -83,6 +83,11 @@ export async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname === '/api/stripe/webhook') {
     return NextResponse.next();
   }
+
+  // Debug pour la route /share
+  if (req.nextUrl.pathname.startsWith('/share')) {
+    console.log('[Middleware] Share route accessed:', req.nextUrl.pathname);
+  }
   // 1) Si la requête vient de Vercel Cron, on la laisse passer (pas de rate limiting)
   if (req.headers.get("x-vercel-cron") === "1") {
     return NextResponse.next();
@@ -301,7 +306,7 @@ export async function middleware(req: NextRequest) {
     "/api/admin/check",  // Allow check API
     "/api/admin/create", // Allow create API
     "/api/guest/",       // Allow guest API
-    "/share/",           // Public profile sharing card
+    "/share",            // Public profile sharing card
     "/_next/",
     "/images/",
     "/onboarding/",
