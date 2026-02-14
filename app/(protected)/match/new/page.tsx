@@ -83,7 +83,7 @@ export default async function NewMatchPage({
 
 
   return (
-    <div className="relative h-[100dvh] overflow-hidden">
+    <div className="relative min-h-screen">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />

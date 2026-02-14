@@ -81,20 +81,6 @@ function MatchTabsContent({
     }
   }, [tabFromUrl]);
 
-  // Bloquer le scroll du body quand on est sur l'onglet d'enregistrement
-  useEffect(() => {
-    if (currentTab === 'record') {
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100dvh';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-    };
-  }, [currentTab]);
 
   // Fetch pending matches count for badge
   useEffect(() => {
@@ -216,7 +202,7 @@ function MatchTabsContent({
   ];
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       {/* Onglets */}
       <div className="grid grid-cols-3 w-full mb-2 sm:mb-4 border-b border-white/10">
         {tabs.map((tab) => (
@@ -250,8 +236,8 @@ function MatchTabsContent({
       </div>
 
       {/* Contenu des onglets */}
-      <div className="mt-2 sm:mt-6 flex-1 min-h-0 overflow-hidden">
-        <div className={currentTab === 'record' ? 'block h-full overflow-y-auto overscroll-contain pb-32' : 'hidden'}>
+      <div className="mt-2 sm:mt-6">
+        <div className={currentTab === 'record' ? 'block' : 'hidden'}>
           {recordContent}
         </div>
         <div className={currentTab === 'history' ? 'block' : 'hidden'}>
