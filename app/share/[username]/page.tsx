@@ -25,9 +25,19 @@ export async function generateMetadata({ params }: Props) {
     const resolvedParams = await params;
     const username = decodeURIComponent(resolvedParams.username);
 
+    const description = `Découvre mon profil PadelXP !`;
     return {
         title: `Profil de ${username} - PadelXP`,
-        description: `Découvre mon profil PadelXP !`,
+        description: description,
+        openGraph: {
+            title: `Profil de ${username} - PadelXP`,
+            description: description,
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `Profil de ${username} - PadelXP`,
+            description: description,
+        }
     };
 }
 
@@ -127,14 +137,14 @@ export default async function ShareProfilePage({ params }: Props) {
     };
 
     return (
-        <div className="h-[100dvh] bg-[#071554] text-white flex flex-col items-center justify-center p-2 pt-4 relative overflow-hidden">
+        <div className="min-h-[100dvh] bg-[#071554] text-white flex flex-col items-center justify-center p-2 pt-1 relative overflow-y-auto">
             {/* Background Effects */}
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(0,102,255,0.15),transparent_60%)] pointer-events-none" />
             <div className={`absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-${tierConfig.colors.split(' ')[1]} opacity-[0.03] blur-[120px] rounded-full pointer-events-none`} />
 
             <div className="relative z-10 w-full max-w-sm">
                 {/* Logo PadelXP en haut */}
-                <div className="flex justify-center mb-0.5">
+                <div className="flex justify-center mb-0">
                     <Image src="/images/logo-share-card.png" alt="PadelXP" width={110} height={35} className="object-contain" />
                 </div>
 
