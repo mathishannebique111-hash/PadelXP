@@ -58,8 +58,13 @@ export default async function HomePage({
     : 'profil';
 
   // 1. Démarrer toutes les requêtes indépendantes en parallèle
-  const { data: { session } } = await supabase.auth.getSession();
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const [sessionResult, userResult] = await Promise.all([
+    supabase.auth.getSession(),
+    supabase.auth.getUser()
+  ]);
+
+  const session = sessionResult.data.session;
+  const { data: { user }, error: userError } = userResult;
 
   // Si session mais pas user, log le warning
   const hasSessionButNoUser = session && !user && userError;

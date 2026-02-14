@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
 
@@ -29,7 +29,9 @@ function PlayerProfileTabsContent({
   const initialTab = tabFromUrl && ['profil', 'stats', 'badges', 'club'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingPartnershipRequestsCount, setPendingPartnershipRequestsCount] = useState(initialPendingRequestsCount);
+  const [loadedTabs, setLoadedTabs] = useState<Set<TabType>>(new Set([initialTab]));
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     // Si on n'a pas reçu de count initial (ou si on veut rafraichir), on charge
@@ -40,6 +42,8 @@ function PlayerProfileTabsContent({
     // Écouter les événements de mise à jour du profil
     const handlePartnershipEvent = () => {
       loadPendingPartnershipRequestsCount();
+      // Forcer le rafraîchissement des Server Components
+      router.refresh();
     };
     window.addEventListener("profileUpdated", handlePartnershipEvent);
     return () => {
@@ -74,6 +78,7 @@ function PlayerProfileTabsContent({
   useEffect(() => {
     if (tabFromUrl && ['profil', 'stats', 'badges', 'club'].includes(tabFromUrl)) {
       setCurrentTab(tabFromUrl);
+      setLoadedTabs(prev => new Set(prev).add(tabFromUrl));
     }
   }, [tabFromUrl]);
 
@@ -93,6 +98,7 @@ function PlayerProfileTabsContent({
             key={tab.id}
             onClick={() => {
               setCurrentTab(tab.id);
+              setLoadedTabs(prev => new Set(prev).add(tab.id));
               // Mettre à jour l'URL sans recharger la page pour que le reload() garde l'onglet
               const newUrl = new URL(window.location.href);
               newUrl.searchParams.set('tab', tab.id);
@@ -118,20 +124,26 @@ function PlayerProfileTabsContent({
         ))}
       </div>
 
-      {/* Contenu des onglets - GARDER TOUS MONTÉS pour les event listeners */}
+      {/* Contenu des onglets - LAZY LOADED pour éviter de charger PlayerSummary/etc si pas utile */}
       <div className="mt-4 sm:mt-6">
         <div style={{ display: currentTab === 'profil' ? 'block' : 'none' }}>
           {profilContent}
         </div>
-        <div style={{ display: currentTab === 'stats' ? 'block' : 'none' }}>
-          {statsContent}
-        </div>
-        {badgesContent && (
+
+        {/* On ne monte les autres onglets que s'ils ont été visités au moins une fois */}
+        {loadedTabs.has('stats') && (
+          <div style={{ display: currentTab === 'stats' ? 'block' : 'none' }}>
+            {statsContent}
+          </div>
+        )}
+
+        {badgesContent && loadedTabs.has('badges') && (
           <div style={{ display: currentTab === 'badges' ? 'block' : 'none' }}>
             {badgesContent}
           </div>
         )}
-        {clubContent && (
+
+        {clubContent && loadedTabs.has('club') && (
           <div style={{ display: currentTab === 'club' ? 'block' : 'none' }}>
             {clubContent}
           </div>

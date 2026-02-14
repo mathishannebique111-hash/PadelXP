@@ -27,165 +27,208 @@ const supabaseAdmin = createAdminClient(
 export default async function PlayerSummary({ profileId }: { profileId: string }) {
   const supabase = await createClient();
 
-  // Récupérer le club_id ET les points de challenges du joueur (utiliser admin pour bypass RLS)
-  const { data: playerProfile } = await supabaseAdmin
-    .from("profiles")
-    .select("club_id, points")
-    .eq("id", profileId)
-    .maybeSingle();
+  // 1. Charger tout ce qui est indépendant en parallèle (Admin pour bypass RLS sur données critiques)
+  const [playerProfileResult, matchParticipantsResult, reviewsResult] = await Promise.all([
+    supabaseAdmin
+      .from("profiles")
+      .select("club_id, points")
+      .eq("id", profileId)
+      .maybeSingle(),
+    supabase
+      .from("match_participants")
+      .select("match_id, team")
+      .eq("user_id", profileId)
+      .eq("player_type", "user"),
+    supabase
+      .from("reviews")
+      .select("rating, comment")
+      .eq("user_id", profileId)
+  ]);
 
+  const playerProfile = playerProfileResult.data;
   const playerClubId = playerProfile?.club_id || null;
-  // S'assurer que challengePoints est un nombre (peut être string, null, undefined dans la DB)
   const challengePoints = typeof playerProfile?.points === 'number'
     ? playerProfile.points
     : (typeof playerProfile?.points === 'string' ? parseInt(playerProfile.points, 10) || 0 : 0);
 
-  logger.info(`[PlayerSummary] Player ${profileId.substring(0, 8)} - Challenge points from DB:`, challengePoints, `(type: ${typeof challengePoints})`);
-  logger.info(`[PlayerSummary] Player profile data:`, playerProfile);
+  const mp = matchParticipantsResult.data;
+  const myReviews = reviewsResult.data;
 
-  // Calcule les stats globales
-  // Utiliser une approche en deux étapes pour éviter les problèmes RLS
-  const { data: mp, error: mpError } = await supabase
-    .from("match_participants")
-    .select("match_id, team")
-    .eq("user_id", profileId)
-    .eq("player_type", "user");
+  logger.info(`[PlayerSummary] Player ${profileId.substring(0, 8)} - Challenge points from DB`, { challengePoints, type: typeof challengePoints });
+  logger.info(`[PlayerSummary] Player profile data`, { playerProfile });
 
-  if (mpError) {
-    logger.error("[PlayerSummary] Error fetching participants:", mpError);
-  }
-
+  // Initialisation des variables de stats
   let wins = 0;
   let losses = 0;
   let setsWon = 0;
   let setsLost = 0;
   let matches = 0;
-
-  // Initialiser filteredMp et winMatches pour qu'ils soient toujours définis
-  let filteredMp: any[] = [];
+  let streak = 0;
+  let currentWinStreak = 0;
   let winMatches = new Set<string>();
-  let validMatchIdsForPoints = new Set<string>(); // Déclarer en dehors pour être accessible dans le calcul de la série
+  let filteredMp: any[] = [];
+
+  // Stats pour les badges (peuvent différer si un club est présent)
+  let badgeWins = 0;
+  let badgeLosses = 0;
+  let badgeMatches = 0;
+  let badgePoints = 0;
+  let badgeStreak = 0;
 
   if (mp && mp.length) {
     const matchIds = mp.map((m: any) => m.match_id);
-    logger.info("[PlayerSummary] Fetching matches for player:", profileId, "Match IDs:", matchIds.length);
+    logger.info(`[PlayerSummary] Fetching matches for player ${profileId}`, { matchIdsCount: matchIds.length });
 
-    // IMPORTANT: Récupérer TOUS les matchs du joueur d'abord pour appliquer la limite quotidienne
-    // (comme dans home/page.tsx, on applique la limite quotidienne avant de filtrer par club)
+    // 2. Charger TOUS les matchs en UNE SEULE requête pour éviter les waterfalls (streak/badges/points)
     const { data: allMs, error: allMsError } = await supabase
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, played_at, created_at")
       .in("id", matchIds)
-      .eq("status", "confirmed");
+      .eq("status", "confirmed")
+      .order("created_at", { ascending: false }); // Order by created_at for consistent streak calculation
 
     if (allMsError) {
-      logger.error("[PlayerSummary] Error fetching all matches:", allMsError);
+      logger.error("[PlayerSummary] Error fetching matches:", allMsError);
     }
 
-    // Filtrer les matchs selon la limite quotidienne de 2 matchs par jour sur TOUS les matchs
-    // (tous clubs confondus, comme dans home/page.tsx)
-    validMatchIdsForPoints = filterMatchesByDailyLimit(
-      mp.map((p: any) => ({ match_id: p.match_id, user_id: profileId })),
-      (allMs || []).map((m: any) => ({ id: m.id, played_at: m.played_at || m.created_at })),
-      MAX_MATCHES_PER_DAY
-    );
+    if (allMs && allMs.length) {
+      const byId: Record<string, any> = {};
+      allMs.forEach((m: any) => {
+        if (!m.winner_team_id || !m.team1_id || !m.team2_id) {
+          logger.warn("[PlayerSummary] Skipping match without winner_team_id:", m.id);
+          return;
+        }
+        byId[m.id] = {
+          winner_team: m.winner_team_id === m.team1_id ? 1 : 2,
+          score_team1: m.score_team1 || 0,
+          score_team2: m.score_team2 || 0,
+          created_at: m.created_at || m.played_at // Use played_at as fallback for created_at
+        };
+      });
 
-    logger.info("[PlayerSummary] Valid matches after daily limit:", validMatchIdsForPoints.size);
-    logger.info("[PlayerSummary] Valid match IDs for points:", Array.from(validMatchIdsForPoints));
-
-    // Si on a un club_id, filtrer les matchs pour ne garder que ceux du même club
-    // IMPORTANT: Utiliser la même logique que home/page.tsx pour garantir la cohérence
-    // Si on a un club_id, on NE filtre PLUS les matchs pour ne garder que ceux du même club
-    // Les matchs inter-clubs comptent désormais pour les statistiques personnelles
-    let validMatchIds = matchIds;
-    // Logique de filtrage "même club" supprimée (anciennement ici lines 99-147)
-    logger.info("[PlayerSummary] Cross-club stats enabled - using all match IDs:", validMatchIds.length);
-
-    // Construire byId à partir de tous les matchs (allMs) pour avoir toutes les données nécessaires
-    const byId: Record<string, { winner_team: number; score_team1: number; score_team2: number }> = {};
-    (allMs || []).forEach((m: any) => {
-      if (!m.winner_team_id || !m.team1_id || !m.team2_id) {
-        logger.warn("[PlayerSummary] Skipping match without winner_team_id:", m.id);
-        return;
-      }
-
-      const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
-      byId[m.id] = {
-        winner_team,
-        score_team1: m.score_team1 || 0,
-        score_team2: m.score_team2 || 0
-      };
-    });
-
-    // Filtrer mp pour ne garder que les matchs valides (même club) ET qui respectent la limite quotidienne
-    // IMPORTANT: Appliquer le filtre club ET limite quotidienne (comme dans home/page.tsx)
-    filteredMp = mp.filter((p: any) => {
-      const isValidForClub = !playerClubId || validMatchIds.includes(p.match_id);
-      const isValidForDailyLimit = validMatchIdsForPoints.has(p.match_id);
-      const matchExists = byId[p.match_id] !== undefined; // Le match doit exister dans byId et avoir des données valides
-      const hasValidWinner = matchExists && byId[p.match_id]?.winner_team !== undefined;
-      const shouldInclude = isValidForClub && isValidForDailyLimit && hasValidWinner;
-
-      if (!shouldInclude) {
-        logger.info(`[PlayerSummary] Excluding match ${p.match_id}: club=${isValidForClub}, dailyLimit=${isValidForDailyLimit}, exists=${matchExists}, validWinner=${hasValidWinner}`);
-      }
-
-      return shouldInclude;
-    });
-
-    logger.info("[PlayerSummary] Filtered matches count:", filteredMp.length);
-    logger.info("[PlayerSummary] Filtered match IDs:", filteredMp.map((p: any) => p.match_id));
-
-    // Collecter les matchs gagnés pour le calcul de boosts
-    winMatches = new Set<string>();
-
-    filteredMp.forEach((p: any) => {
-      const match = byId[p.match_id];
-      if (!match) return;
-
-      matches += 1;
-
-      const won = match.winner_team === p.team;
-      if (won) {
-        wins += 1;
-        winMatches.add(p.match_id);
-      } else {
-        losses += 1;
-      }
-
-      if (p.team === 1) {
-        setsWon += match.score_team1 || 0;
-        setsLost += match.score_team2 || 0;
-      } else {
-        setsWon += match.score_team2 || 0;
-        setsLost += match.score_team1 || 0;
-      }
-    });
-
-    logger.info("[PlayerSummary] Player stats calculated:", { matches, wins, losses, setsWon, setsLost });
-    logger.info("[PlayerSummary] Filtered matches count:", filteredMp.length);
-    logger.info("[PlayerSummary] Win matches count:", winMatches.size);
-    logger.info("[PlayerSummary] Win matches:", Array.from(winMatches));
-  }
-  // Calcul du bonus XP pour le premier avis valide ( +10 XP une seule fois )
-  // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
-  let reviewsBonus = 0;
-  {
-    const { data: myReviews } = await supabase
-      .from("reviews")
-      .select("rating, comment")
-      .eq("user_id", profileId);
-
-    if (myReviews && myReviews.length > 0) {
-      // Vérifier si au moins un avis est valide
-      const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
-      const hasValidReview = myReviews.some((r: any) =>
-        isReviewValidForBonus(r.rating || 0, r.comment || null)
+      // Logic for Points & Winrate (with daily limit)
+      const validMatchIdsForPoints = filterMatchesByDailyLimit(
+        mp.map((p: any) => ({ match_id: p.match_id, user_id: profileId })),
+        allMs.map((m: any) => ({ id: m.id, played_at: m.played_at || m.created_at })),
+        MAX_MATCHES_PER_DAY
       );
+      logger.info("[PlayerSummary] Valid matches after daily limit:", validMatchIdsForPoints.size);
 
-      if (hasValidReview) {
-        reviewsBonus = 10;
+      // CALCUL STATS GLOBALES (Points, Winrate, Sets)
+      filteredMp = mp.filter((p: any) => validMatchIdsForPoints.has(p.match_id) && byId[p.match_id]);
+      logger.info("[PlayerSummary] Filtered matches count for points:", filteredMp.length);
+
+      filteredMp.forEach((p: any) => {
+        const match = byId[p.match_id];
+        matches += 1;
+        const won = match.winner_team === p.team;
+        if (won) {
+          wins += 1;
+          winMatches.add(p.match_id);
+        } else {
+          losses += 1;
+        }
+
+        if (p.team === 1) {
+          setsWon += match.score_team1;
+          setsLost += match.score_team2;
+        } else {
+          setsWon += match.score_team2;
+          setsLost += match.score_team1;
+        }
+      });
+      logger.info("[PlayerSummary] Player stats calculated", { matches, wins, losses, setsWon, setsLost });
+
+      // CALCUL STREAKS (basé sur validMatchIdsForPoints)
+      const matchesSortedAsc = [...filteredMp].sort((a: any, b: any) => {
+        const aCreatedAt = byId[a.match_id].created_at || "";
+        const bCreatedAt = byId[b.match_id].created_at || "";
+        return aCreatedAt.localeCompare(bCreatedAt);
+      });
+      let rollingStreak = 0;
+      for (const p of matchesSortedAsc) {
+        if (byId[p.match_id].winner_team === p.team) {
+          rollingStreak++;
+          if (rollingStreak > streak) streak = rollingStreak;
+        } else {
+          rollingStreak = 0;
+        }
       }
+
+      currentWinStreak = 0;
+      const matchesSortedDesc = [...filteredMp].sort((a: any, b: any) => {
+        const aCreatedAt = byId[a.match_id].created_at || "";
+        const bCreatedAt = byId[b.match_id].created_at || "";
+        return bCreatedAt.localeCompare(aCreatedAt);
+      });
+      for (const p of matchesSortedDesc) {
+        if (byId[p.match_id].winner_team === p.team) {
+          currentWinStreak++;
+        } else {
+          break;
+        }
+      }
+      logger.info("[PlayerSummary] Streak calculated", { best: streak, current: currentWinStreak });
+
+
+      // CALCUL BADGES (sans limite quotidienne, potentiellement filtré par club)
+      let validMatchIdsForBadges = matchIds;
+      if (playerClubId) {
+        // Pour les badges, on garde le filtrage club strict
+        const { data: allParticipants } = await supabase
+          .from("match_participants")
+          .select("match_id, user_id, player_type")
+          .in("match_id", matchIds)
+          .eq("player_type", "user");
+
+        const participantUserIds = [...new Set((allParticipants || []).map((p: any) => p.user_id).filter(Boolean))];
+        const { data: clubProfiles } = await supabaseAdmin
+          .from("profiles")
+          .select("id, club_id")
+          .in("id", participantUserIds)
+          .eq("club_id", playerClubId);
+
+        const validUserIdsForClub = new Set((clubProfiles || []).map((p: any) => p.id));
+        validMatchIdsForBadges = matchIds.filter((matchId: string) => {
+          const participants = (allParticipants || []).filter((p: any) => p.match_id === matchId);
+          return participants.every((p: any) => p.player_type === "guest" || validUserIdsForClub.has(p.user_id));
+        });
+      }
+
+      const filteredMpForBadges = mp.filter((p: any) => validMatchIdsForBadges.includes(p.match_id) && byId[p.match_id]);
+      filteredMpForBadges.forEach((p: any) => {
+        if (byId[p.match_id].winner_team === p.team) badgeWins++;
+        else badgeLosses++;
+      });
+      badgeMatches = filteredMpForBadges.length;
+      badgePoints = badgeWins * 10 + badgeLosses * 3;
+
+      // Badge Streak
+      const mpBadgeSorted = [...filteredMpForBadges].sort((a: any, b: any) => {
+        const aCreatedAt = byId[a.match_id].created_at || "";
+        const bCreatedAt = byId[b.match_id].created_at || "";
+        return bCreatedAt.localeCompare(aCreatedAt);
+      });
+      let curBadgeStreak = 0;
+      let bestBadgeStreak = 0;
+      for (const p of [...mpBadgeSorted].reverse()) { // Process in ascending order for best streak
+        if (byId[p.match_id].winner_team === p.team) {
+          curBadgeStreak++;
+          if (curBadgeStreak > bestBadgeStreak) bestBadgeStreak = curBadgeStreak;
+        } else {
+          curBadgeStreak = 0;
+        }
+      }
+      badgeStreak = bestBadgeStreak;
+    }
+  }
+
+  // Calcul bonus avis
+  let reviewsBonus = 0;
+  if (myReviews && myReviews.length > 0) {
+    const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
+    if (myReviews.some((r: any) => isReviewValidForBonus(r.rating || 0, r.comment || null))) {
+      reviewsBonus = 10;
     }
   }
 
@@ -199,7 +242,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
     winMatchIds: Array.from(winMatches).map(id => id.substring(0, 8))
   });
 
-  // Calculer les points avec boosts
+  // Calcul final des points
   const points = await calculatePointsWithBoosts(
     wins,
     losses,
@@ -221,213 +264,10 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   }
   const tier = tierForPoints(points);
 
-  // Calculer les séries de victoires (meilleure et en cours)
-  // IMPORTANT: Seuls les matchs qui respectent la limite quotidienne comptent pour la série
-  let streak = 0;
-  let currentWinStreak = 0;
-  if (mp && mp.length) {
-    const matchIds = mp.map((m: any) => m.match_id);
-
-    const { data: ms, error: msStreakError } = await supabase
-      .from("matches")
-      .select("id, winner_team_id, team1_id, team2_id, created_at, played_at")
-      .in("id", matchIds)
-      .eq("status", "confirmed")
-      .order("created_at", { ascending: false });
-
-    if (msStreakError) {
-      // Extraire les propriétés de l'erreur de manière sécurisée
-      const errorDetails: Record<string, any> = {};
-      if (msStreakError?.message) errorDetails.message = msStreakError.message;
-      if (msStreakError?.details) errorDetails.details = msStreakError.details;
-      if (msStreakError?.hint) errorDetails.hint = msStreakError.hint;
-      if (msStreakError?.code) errorDetails.code = msStreakError.code;
-
-      // Filtrer les valeurs null/undefined avant de logger
-      const filteredDetails = Object.fromEntries(
-        Object.entries(errorDetails).filter(([_, v]) => v != null && v !== "")
-      );
-
-      // Ne logger que si on a des détails valides après filtrage
-      // Éviter de logger des objets vides qui polluent la console
-      const hasValidDetails = Object.keys(filteredDetails).length > 0;
-
-      if (hasValidDetails) {
-        logger.error("[PlayerSummary] Error fetching matches for streak:", filteredDetails);
-      } else {
-        // Si l'erreur existe mais n'a pas de propriétés standard, 
-        // on vérifie si c'est une vraie erreur ou juste un état vide
-        const errorString = String(msStreakError);
-        const isMeaningfulError = errorString !== "[object Object]" && errorString !== "null" && errorString !== "undefined";
-
-        // Ne logger que si l'erreur a un contenu significatif
-        if (isMeaningfulError) {
-          logger.warn("[PlayerSummary] Error fetching matches for streak (no standard properties):", errorString);
-        }
-        // Sinon, on ignore silencieusement pour éviter la pollution de la console
-      }
-    }
-
-    if (ms && ms.length > 0) {
-      // Filtrer les matchs pour ne garder que ceux qui respectent la limite quotidienne
-      // Utiliser validMatchIdsForPoints qui a déjà été calculé plus haut
-      const validMatchesForStreak = ms.filter((m: any) => {
-        // Si validMatchIdsForPoints a été calculé (dans le scope précédent), l'utiliser
-        if (validMatchIdsForPoints.size > 0) {
-          return validMatchIdsForPoints.has(m.id);
-        }
-        // Fallback: recalculer si validMatchIdsForPoints n'est pas disponible
-        const matchParticipants = mp.map((p: any) => ({ match_id: p.match_id, user_id: profileId }));
-        const validIds = filterMatchesByDailyLimit(
-          matchParticipants,
-          ms.map((m: any) => ({ id: m.id, played_at: m.played_at || m.created_at || new Date().toISOString() })),
-          MAX_MATCHES_PER_DAY
-        );
-        return validIds.has(m.id);
-      });
-
-      const byId: Record<string, number> = {};
-      validMatchesForStreak.forEach((m: any) => {
-        if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
-        const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
-        byId[m.id] = winner_team;
-      });
-
-      // Filtrer mp pour ne garder que les matchs valides
-      const validMpForStreak = mp.filter((p: any) => byId[p.match_id] !== undefined);
-
-      const matchesSortedDesc = [...validMpForStreak].sort((a: any, b: any) => {
-        const aMatch = validMatchesForStreak.find((m: any) => m.id === a.match_id);
-        const bMatch = validMatchesForStreak.find((m: any) => m.id === b.match_id);
-        return (bMatch?.created_at || "").localeCompare(aMatch?.created_at || "");
-      });
-      const matchesSortedAsc = [...matchesSortedDesc].reverse();
-
-      let rollingStreak = 0;
-      for (const p of matchesSortedAsc) {
-        if (!byId[p.match_id]) continue;
-        const won = byId[p.match_id] === p.team;
-        if (won) {
-          rollingStreak++;
-          if (rollingStreak > streak) streak = rollingStreak;
-        } else {
-          rollingStreak = 0;
-        }
-      }
-
-      currentWinStreak = 0;
-      for (const p of matchesSortedDesc) {
-        if (!byId[p.match_id]) continue;
-        const won = byId[p.match_id] === p.team;
-        if (won) {
-          currentWinStreak++;
-        } else {
-          break;
-        }
-      }
-    }
-  }
-
-  logger.info("[PlayerSummary] Streak calculated:", { best: streak, current: currentWinStreak });
-
   // IMPORTANT: Calculer les stats pour les badges EXACTEMENT comme dans la page badges
   // (sans limite quotidienne, points simples wins*10 + losses*3)
   // Cela garantit que le nombre de badges affiché correspond à celui de la page badges
-  let badgeWins = 0;
-  let badgeLosses = 0;
-  let badgeMatches = 0;
-  let badgePoints = 0;
-  let badgeStreak = 0;
-
-  // Recalculer les stats SANS limite quotidienne (comme dans la page badges)
-  if (mp && mp.length) {
-    const matchIds = mp.map((m: any) => m.match_id);
-
-    let validMatchIdsForBadges = matchIds;
-    if (playerClubId) {
-      // Récupérer tous les participants de ces matchs
-      const { data: allParticipants } = await supabase
-        .from("match_participants")
-        .select("match_id, user_id, player_type")
-        .in("match_id", matchIds)
-        .eq("player_type", "user");
-
-      // Récupérer les profils pour vérifier les club_id - utiliser admin pour bypass RLS
-      const participantUserIds = [...new Set((allParticipants || []).map((p: any) => p.user_id).filter(Boolean))];
-      const { data: profiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id, club_id")
-        .in("id", participantUserIds)
-        .eq("club_id", playerClubId);
-
-      const validUserIds = new Set((profiles || []).map((p: any) => p.id));
-
-      // Filtrer les matchs : ne garder que ceux où tous les participants users appartiennent au même club
-      validMatchIdsForBadges = matchIds.filter(matchId => {
-        const participants = (allParticipants || []).filter((p: any) => p.match_id === matchId);
-        return participants.every((p: any) =>
-          p.player_type === "guest" || validUserIds.has(p.user_id)
-        );
-      });
-    }
-
-    const { data: msForBadges } = await supabase
-      .from("matches")
-      .select("id, winner_team_id, team1_id, team2_id, created_at")
-      .in("id", validMatchIdsForBadges)
-      .eq("status", "confirmed");
-
-    const byIdForBadges: Record<string, number> = {};
-    (msForBadges || []).forEach((m: any) => {
-      if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
-      const winner_team = m.winner_team_id === m.team1_id ? 1 : 2;
-      byIdForBadges[m.id] = winner_team;
-    });
-
-    // Filtrer mp pour ne garder que les matchs valides (sans limite quotidienne)
-    const filteredMpForBadges = playerClubId
-      ? mp.filter((p: any) => validMatchIdsForBadges.includes(p.match_id))
-      : mp;
-
-    filteredMpForBadges.forEach((p: any) => {
-      if (byIdForBadges[p.match_id] === p.team) badgeWins += 1;
-      else if (byIdForBadges[p.match_id]) badgeLosses += 1;
-    });
-    badgeMatches = filteredMpForBadges.filter((p: any) => !!byIdForBadges[p.match_id]).length;
-
-    // Calculer le streak pour les badges (comme dans la page badges)
-    if (msForBadges && msForBadges.length > 0) {
-      const winnerByMatch: Record<string, number> = {};
-      msForBadges.forEach((m: any) => {
-        if (!m.winner_team_id || !m.team1_id || !m.team2_id) return;
-        winnerByMatch[m.id] = m.winner_team_id === m.team1_id ? 1 : 2;
-      });
-
-      // Trier les participations par date du match desc
-      const mpSorted = [...filteredMpForBadges].sort((a: any, b: any) => {
-        const aDate = msForBadges.find((m: any) => m.id === a.match_id)?.created_at || "";
-        const bDate = msForBadges.find((m: any) => m.id === b.match_id)?.created_at || "";
-        return bDate.localeCompare(aDate);
-      });
-
-      let currentStreak = 0;
-      let bestStreak = 0;
-      for (const p of mpSorted) {
-        const winnerTeam = winnerByMatch[p.match_id];
-        if (!winnerTeam) continue;
-        if (winnerTeam === p.team) {
-          currentStreak += 1;
-          if (currentStreak > bestStreak) bestStreak = currentStreak;
-        } else {
-          currentStreak = 0;
-        }
-      }
-      badgeStreak = bestStreak;
-    }
-  }
-
-  // Points simples pour les badges (comme dans la page badges)
-  badgePoints = badgeWins * 10 + badgeLosses * 3;
+  // These are already calculated in the `if (mp && mp.length)` block as badgeWins, badgeLosses, etc.
 
   // Calcul des badges dynamiques basés sur les stats (EXACTEMENT comme la page badges)
   const statsForBadges: PlayerStats = { wins: badgeWins, losses: badgeLosses, matches: badgeMatches, points: badgePoints, streak: badgeStreak };
@@ -437,17 +277,14 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
   // Badges liés aux avis: Contributeur (premier avis valide du joueur)
   // Un avis est valide si rating > 3 OU (rating <= 3 ET words > 6)
-  const { data: myReviewsForBadge } = await supabase
-    .from("reviews")
-    .select("rating, comment")
-    .eq("user_id", profileId);
+  // myReviews is already fetched at the beginning
 
   // Ajouter les badges d'avis au Set (évite les doublons)
   const extraObtained = new Set<string>();
-  if (myReviewsForBadge && myReviewsForBadge.length > 0) {
+  if (myReviews && myReviews.length > 0) {
     // Vérifier si au moins un avis est valide
     const { isReviewValidForBonus } = await import("@/lib/utils/review-utils");
-    const hasValidReviewForBadge = myReviewsForBadge.some((r: any) =>
+    const hasValidReviewForBadge = myReviews.some((r: any) =>
       isReviewValidForBonus(r.rating || 0, r.comment || null)
     );
 
