@@ -127,19 +127,19 @@ export default async function ShareProfilePage({ params }: Props) {
     };
 
     return (
-        <div className="min-h-screen bg-[#071554] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="h-[100dvh] bg-[#071554] text-white flex flex-col items-center justify-center p-2 relative overflow-hidden">
             {/* Background Effects */}
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(0,102,255,0.15),transparent_60%)] pointer-events-none" />
             <div className={`absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-${tierConfig.colors.split(' ')[1]} opacity-[0.03] blur-[120px] rounded-full pointer-events-none`} />
 
             <div className="relative z-10 w-full max-w-sm">
                 {/* Logo PadelXP en haut */}
-                <div className="flex justify-center mb-3">
-                    <Image src="/images/logo-share-card.png" alt="PadelXP" width={120} height={38} className="object-contain" />
+                <div className="flex justify-center mb-2">
+                    <Image src="/images/logo-share-card.png" alt="PadelXP" width={110} height={35} className="object-contain" />
                 </div>
 
                 {/* THE CARD */}
-                <div className={`bg-white/[0.03] backdrop-blur-2xl border ${tierConfig.border} rounded-[2.5rem] p-5 flex flex-col items-center text-center shadow-2xl ${tierConfig.glow} relative overflow-hidden group`}>
+                <div className={`bg-white/[0.03] backdrop-blur-2xl border ${tierConfig.border} rounded-[2rem] p-4 sm:p-5 flex flex-col items-center text-center shadow-2xl ${tierConfig.glow} relative overflow-hidden group`}>
 
                     {/* Animated shine effect */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
@@ -175,7 +175,7 @@ export default async function ShareProfilePage({ params }: Props) {
                     </div>
 
                     {/* Player Identity */}
-                    <div className="mb-4">
+                    <div className="mb-3">
                         <h1 className="text-xl font-black text-white tracking-tight mb-0.5">{profile.display_name}</h1>
                         <p className="text-white/40 font-medium text-sm flex items-center justify-center gap-2">
                             {profile.username}
@@ -191,19 +191,19 @@ export default async function ShareProfilePage({ params }: Props) {
                     </div>
 
                     {/* PRECISE LEVEL - BIG HIGHLIGHT */}
-                    <div className="w-full mb-4 relative">
+                    <div className="w-full mb-3 relative">
                         <div className="absolute inset-0 bg-white/5 blur-xl rounded-full" />
-                        <div className="relative bg-white/5 rounded-3xl p-3.5 border border-white/10">
+                        <div className="relative bg-white/5 rounded-2xl p-3 border border-white/10">
                             <div className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/40 mb-1">Niveau</div>
-                            <div className="text-4xl font-black text-white flex items-center justify-center gap-2">
+                            <div className="text-3xl font-black text-white flex items-center justify-center gap-2">
                                 {profile.niveau_padel ? profile.niveau_padel.toFixed(2) : '3.00'}
-                                <Star size={20} className="text-padel-green fill-padel-green animate-pulse" />
+                                <Star size={18} className="text-padel-green fill-padel-green animate-pulse" />
                             </div>
                         </div>
                     </div>
 
                     {/* Characteristics Grid */}
-                    <div className="grid grid-cols-2 gap-2 w-full mb-4">
+                    <div className="grid grid-cols-2 gap-2 w-full mb-3">
                         <div className="bg-white/5 rounded-2xl p-2 border border-white/5 flex flex-col items-center">
                             <ArrowLeftRight size={14} className="text-padel-green mb-1" />
                             <div className="text-[9px] uppercase font-bold text-white/30 mb-0.5">Position</div>
@@ -233,7 +233,7 @@ export default async function ShareProfilePage({ params }: Props) {
                 </div>
 
                 {/* Footnote */}
-                <p className="text-center text-white/20 text-[10px] mt-2 uppercase tracking-[0.2em] font-medium">
+                <p className="text-center text-white/20 text-[10px] mt-1.5 uppercase tracking-[0.2em] font-medium">
                     © 2026 PadelXP • L'élite du Padel
                 </p>
             </div>
