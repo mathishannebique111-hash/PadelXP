@@ -2,8 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { Trophy, Star, Shield, ArrowLeftRight, Hand, Zap, Calendar, MapPin } from "lucide-react";
+import JoinCommunityButton from "@/components/player/JoinCommunityButton";
 
 // Client admin pour bypass RLS (lecture profil public)
 const supabaseAdmin = createAdminClient(
@@ -77,11 +77,6 @@ export default async function PublicProfilePage({ params }: Props) {
     if (error || !profile) {
         console.error("Error fetching profile:", error);
         return notFound();
-    }
-
-    // Si c'est mon propre profil, rediriger vers /home?tab=profil
-    if (currentUser && profile.id === currentUser.id) {
-        redirect('/home?tab=profil');
     }
 
     const points = profile.global_points || 0;
@@ -233,15 +228,9 @@ export default async function PublicProfilePage({ params }: Props) {
                         </div>
                     </div>
 
-                    {/* Actions - Interactive for app users */}
+                    {/* CTA Button */}
                     <div className="w-full">
-                        <Link
-                            href={`/match/new?opponentId=${profile.id}`}
-                            className="w-full py-4 px-6 bg-padel-green hover:bg-padel-green/90 text-black font-extrabold rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg shadow-padel-green/20 text-lg uppercase tracking-tight"
-                        >
-                            <Trophy size={22} fill="black" />
-                            Défier ce joueur
-                        </Link>
+                        <JoinCommunityButton />
                     </div>
                 </div>
 

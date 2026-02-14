@@ -104,7 +104,7 @@ export async function middleware(req: NextRequest) {
     );
 
     if (isClubUrl) {
-      logger.info({ path: normalizedPathname }, "[Middleware] Club URL blocked in mobile app");
+      logger.info("[Middleware] Club URL blocked in mobile app", { path: normalizedPathname });
       const url = req.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);
@@ -132,7 +132,7 @@ export async function middleware(req: NextRequest) {
 
       if (user) {
         // Utilisateur connecté → aller vers /home
-        logger.info({ userId: user.id }, "[Middleware] iOS app: User authenticated, redirecting to /home");
+        logger.info("[Middleware] iOS app: User authenticated, redirecting to /home", { userId: user.id });
         const url = req.nextUrl.clone();
         url.pathname = "/home";
         return NextResponse.redirect(url);
@@ -157,7 +157,7 @@ export async function middleware(req: NextRequest) {
       );
 
       if (isPlayerUrl) {
-        logger.info({ path: normalizedPathname }, "[Middleware] Player URL blocked on website");
+        logger.info("[Middleware] Player URL blocked on website", { path: normalizedPathname });
         const url = req.nextUrl.clone();
         url.pathname = "/download";
         return NextResponse.redirect(url);
@@ -168,7 +168,7 @@ export async function middleware(req: NextRequest) {
 
 
   // RATE LIMITING - Appliqué avant toute autre logique
-  const ip = req.ip ?? req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
+  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "127.0.0.1";
   const pathnameForRateLimit = normalizedPathname;
 
 
@@ -225,7 +225,7 @@ export async function middleware(req: NextRequest) {
             rateLimitId = user.id;
           }
         } catch (e) {
-          logger.warn({ error: e instanceof Error ? e.message : String(e) }, "[Middleware] Unable to resolve user for match rate-limit, fallback to IP");
+          logger.warn("[Middleware] Unable to resolve user for match rate-limit, fallback to IP", { error: e instanceof Error ? e.message : String(e) });
         }
       }
       rateLimitId = rateLimitId || ip;
@@ -233,7 +233,7 @@ export async function middleware(req: NextRequest) {
 
 
       if (matchSubmitRatelimit) {
-        const { success, remaining, reset } = await matchSubmitRatelimit.limit(rateLimitId);
+        const { success, remaining, reset } = await matchSubmitRatelimit.limit(rateLimitId || ip);
         if (!success) {
           return NextResponse.json(
             { error: "Trop de matchs soumis. Limite: 5 matchs par 5 minutes.", retryAfter: reset },
@@ -301,6 +301,7 @@ export async function middleware(req: NextRequest) {
     "/api/admin/check",  // Allow check API
     "/api/admin/create", // Allow create API
     "/api/guest/",       // Allow guest API
+    "/share/",           // Public profile sharing card
     "/_next/",
     "/images/",
     "/onboarding/",
@@ -483,7 +484,7 @@ export async function middleware(req: NextRequest) {
 
 
   if (session && !user && userError) {
-    logger.warn({ errorCode: userError?.code, errorMessage: userError?.message, path: normalizedPathname?.substring(0, 30) + "…" || 'unknown' }, "[Middleware] Session exists but getUser() failed (temporary error?):");
+    logger.warn("[Middleware] Session exists but getUser() failed (temporary error?):", { errorCode: userError?.code, errorMessage: userError?.message, path: normalizedPathname?.substring(0, 30) + "…" || 'unknown' });
     if (isProtected) {
       const now = Date.now();
       res.cookies.set("last_activity", now.toString(), {
@@ -646,7 +647,7 @@ export async function middleware(req: NextRequest) {
         }
       } catch (e) {
         // Log error but don't block access in case of DB issues
-        logger.warn({ error: e instanceof Error ? e.message : String(e) }, "[Middleware] Error checking club suspension status");
+        logger.warn("[Middleware] Error checking club suspension status", { error: e instanceof Error ? e.message : String(e) });
       }
     }
   }

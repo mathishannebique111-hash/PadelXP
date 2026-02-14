@@ -24,7 +24,7 @@ export default function ProfileShareRedirectPage() {
 
         // Si on est sur desktop, rediriger vers la page web
         if (!isMobile) {
-            window.location.href = `/player/${username}`;
+            window.location.href = `/share/${username}`;
             return;
         }
 
