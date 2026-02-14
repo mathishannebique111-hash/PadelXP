@@ -880,7 +880,7 @@ export default function MatchForm({
   };
 
   return (
-    <div className="relative h-full flex flex-col overflow-hidden overscroll-none touch-none">
+    <div className="relative h-full flex flex-col overflow-y-auto overscroll-contain px-1">
       {/* Assessment Wizard Overlay */}
       {showAssessment && (
         <LevelAssessmentWizard
