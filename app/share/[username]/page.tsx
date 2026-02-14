@@ -127,7 +127,7 @@ export default async function ShareProfilePage({ params }: Props) {
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0F1E] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[#071554] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Background Effects */}
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(0,102,255,0.15),transparent_60%)] pointer-events-none" />
             <div className={`absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-${tierConfig.colors.split(' ')[1]} opacity-[0.03] blur-[120px] rounded-full pointer-events-none`} />
@@ -210,12 +210,12 @@ export default async function ShareProfilePage({ params }: Props) {
                             <div className="text-xs font-bold text-white/80">{(translate.side as any)[profile.preferred_side] || '-'}</div>
                         </div>
                         <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5 flex flex-col items-center">
-                            <Hand size={16} className="text-[#071554] mb-1.5" />
+                            <Hand size={16} className="text-white mb-1.5" />
                             <div className="text-[9px] uppercase font-bold text-white/30 mb-0.5">Main</div>
                             <div className="text-xs font-bold text-white/80">{(translate.hand as any)[profile.hand] || '-'}</div>
                         </div>
                         <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5 flex flex-col items-center">
-                            <Zap size={16} className="text-[#071554] mb-1.5" />
+                            <Zap size={16} className="text-white mb-1.5" />
                             <div className="text-[9px] uppercase font-bold text-white/30 mb-0.5">Signature</div>
                             <div className="text-xs font-bold text-white/80">{(translate.shot as any)[profile.best_shot] || '-'}</div>
                         </div>
