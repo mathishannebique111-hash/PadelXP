@@ -634,20 +634,24 @@ export default function MatchForm({
         }
       }
 
-      // Cas spécial : match décidé au tie-break (1-1 avec tie-break)
-      const isTieBreakMatch = team1Wins === 1 && team2Wins === 1 && hasTieBreak && tieBreak.team1Score && tieBreak.team2Score;
+      // Cas spécial : match décidé au tie-break (égalité de sets gagnés)
+      const isTieBreakMatch = team1Wins === team2Wins && team1Wins > 0;
 
-      if (isTieBreakMatch && !setsErrors.tieBreak) {
-        // Vérifier que le tie-break est à l'avantage de l'équipe gagnante
-        const tieBreakTeam1 = parseInt(tieBreak.team1Score);
-        const tieBreakTeam2 = parseInt(tieBreak.team2Score);
+      if (isTieBreakMatch) {
+        if (!hasTieBreak || !tieBreak.team1Score || !tieBreak.team2Score) {
+          setsErrors.tieBreak = "Un tie-break est obligatoire en cas d'égalité de sets.";
+        } else if (!setsErrors.tieBreak) {
+          // Vérifier que le tie-break est à l'avantage de l'équipe gagnante
+          const tieBreakTeam1 = parseInt(tieBreak.team1Score);
+          const tieBreakTeam2 = parseInt(tieBreak.team2Score);
 
-        if (winner === "1" && tieBreakTeam1 <= tieBreakTeam2) {
-          setsErrors.tieBreak = "L'équipe 1 doit avoir un score supérieur à celui de l'équipe 2";
-        } else if (winner === "2" && tieBreakTeam2 <= tieBreakTeam1) {
-          setsErrors.tieBreak = "L'équipe 2 doit avoir un score supérieur à celui de l'équipe 1";
+          if (winner === "1" && tieBreakTeam1 <= tieBreakTeam2) {
+            setsErrors.tieBreak = "L'équipe 1 doit avoir gagné le tie-break pour être déclarée vainqueur.";
+          } else if (winner === "2" && tieBreakTeam2 <= tieBreakTeam1) {
+            setsErrors.tieBreak = "L'équipe 2 doit avoir gagné le tie-break pour être déclarée vainqueur.";
+          }
         }
-      } else if (!isTieBreakMatch) {
+      } else if (Object.keys(setsErrors).length === 0) { // Only perform normal winner validation if no other errors yet
         // Validation normale : l'équipe gagnante doit avoir plus de sets gagnés
         if (winner === "1" && team1Wins <= team2Wins) {
           setsErrors.winner = "L'équipe 1 doit avoir gagné au moins un set de plus que l'équipe 2. Vérifiez que vous n'avez pas inversé les scores.";
@@ -864,7 +868,7 @@ export default function MatchForm({
   };
 
   return (
-    <div className="relative">
+    <div className="relative h-full flex flex-col overflow-hidden">
       {/* Assessment Wizard Overlay */}
       {showAssessment && (
         <LevelAssessmentWizard
@@ -1271,12 +1275,12 @@ export default function MatchForm({
         )}
         */}
 
-        <div className="pt-0.5">
+        <div className="pt-2 pb-4">
           <button
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-2 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
+            className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-3.5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
           >
-            <div className="relative z-10 flex items-center justify-center gap-1.5 text-[11px]">
+            <div className="relative z-10 flex items-center justify-center gap-1.5 text-sm">
               {loading && (
                 <div className="w-3.5 h-3.5 border-2 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
               )}
