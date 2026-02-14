@@ -56,8 +56,6 @@ export default async function ShareProfilePage({ params }: Props) {
                 avatar_url, 
                 niveau_padel, 
                 global_points, 
-                matches_played, 
-                matches_won,
                 club_id,
                 city,
                 level,
