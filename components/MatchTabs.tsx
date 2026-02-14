@@ -203,7 +203,7 @@ function MatchTabsContent({
   return (
     <div className="w-full">
       {/* Onglets */}
-      <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
+      <div className="grid grid-cols-3 w-full mb-2 sm:mb-4 border-b border-white/10">
         {tabs.map((tab) => (
           <button
             key={tab.id}

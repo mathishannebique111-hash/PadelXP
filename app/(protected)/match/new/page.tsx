@@ -90,8 +90,8 @@ export default async function NewMatchPage({
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
-        <div className="mb-2 sm:mb-4">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-2 sm:px-4 md:px-6 lg:px-8 pb-2">
+        <div className="mb-1 sm:mb-2">
           <PageTitle title="Matchs" subtitle={clubName ? `Club : ${clubName}` : undefined} />
         </div>
         <Suspense fallback={

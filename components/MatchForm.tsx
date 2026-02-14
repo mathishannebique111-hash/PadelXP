@@ -967,7 +967,7 @@ export default function MatchForm({
         </div>
       )}
 
-      <form onSubmit={onSubmit} className={`space-y-4 pb-24 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
+      <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
         {/* Lieu du match (Google Maps Direct) */}
         <div>
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
@@ -1016,8 +1016,8 @@ export default function MatchForm({
         </div>
 
         {/* Redesigned Player Selection */}
-        <div className="my-6">
-          <div className="flex flex-col gap-2 max-w-sm mx-auto">
+        <div className="my-2">
+          <div className="flex flex-col gap-1 max-w-sm mx-auto">
             <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
               {/* Team 1 */}
               <div className="flex-1 flex flex-col items-center gap-2">
@@ -1044,7 +1044,7 @@ export default function MatchForm({
 
               {/* VS Badge Centered */}
               <div className="flex-shrink-0 flex flex-col items-center justify-center pb-5">
-                <div className="bg-padel-green text-[#071554] px-1.5 py-0.5 rounded text-[10px] font-black uppercase ring-2 ring-[#071554]">
+                <div className="bg-padel-green text-[#071554] px-1 py-0.5 rounded text-[8px] font-black uppercase ring-2 ring-[#071554]">
                   VS
                 </div>
               </div>
@@ -1071,16 +1071,16 @@ export default function MatchForm({
                     isWinner={winner === "2"}
                   />
                 </div>
-                <span className="text-[10px] font-black uppercase text-white/50 tracking-widest leading-none">Équipe 2</span>
+                <span className="text-[9px] font-black uppercase text-white/50 tracking-widest leading-none">Équipe 2</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div>
             <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Équipe gagnante</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 type="button"
                 onClick={() => setWinner("1")}
@@ -1114,30 +1114,30 @@ export default function MatchForm({
           </div>
         </div>
 
-        <div className="py-2 text-center">
-          <label className="mb-2 block text-[10px] font-black text-white/50 uppercase tracking-widest">Scores des sets</label>
-          <div className="flex flex-col gap-3 items-center">
+        <div className="py-1 text-center">
+          <label className="mb-1 block text-[9px] font-black text-white/50 uppercase tracking-widest">Scores des sets</label>
+          <div className="flex flex-col gap-2 items-center">
             {sets.map((set, index) => (
-              <div key={set.setNumber} className="relative flex items-center justify-center gap-3 w-full">
-                <span className="text-[10px] font-black text-white/30 uppercase w-10 text-left">Set {set.setNumber}</span>
+              <div key={set.setNumber} className="relative flex items-center justify-center gap-2 w-full">
+                <span className="text-[9px] font-black text-white/30 uppercase w-8 text-left">Set {set.setNumber}</span>
                 <input
                   type="number"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={1}
-                  className="w-10 h-10 rounded-lg border-2 border-transparent bg-white/10 text-lg text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                  className="w-9 h-9 rounded-lg border-2 border-transparent bg-white/10 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
                   value={set.team1Score}
                   onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                   placeholder="-"
                   ref={(el) => { setTeam1Refs.current[index] = el; }}
                 />
-                <span className="text-white/20 font-light text-xl">:</span>
+                <span className="text-white/20 font-light text-lg">:</span>
                 <input
                   type="number"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={1}
-                  className="w-10 h-10 rounded-lg border-2 border-transparent bg-white/10 text-lg text-white text-center font-bold focus:border-padel-green focus:outline-none"
+                  className="w-9 h-9 rounded-lg border-2 border-transparent bg-white/10 text-base text-white text-center font-bold focus:border-padel-green focus:outline-none"
                   value={set.team2Score}
                   onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                   placeholder="-"
@@ -1271,12 +1271,12 @@ export default function MatchForm({
         )}
         */}
 
-        <div className="pt-1">
+        <div className="pt-0.5">
           <button
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-2.5 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
+            className="w-full relative group overflow-hidden rounded-xl bg-padel-green px-4 py-2 font-black text-[#071554] uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 shadow-[0_5px_15px_rgba(191,255,0,0.2)]"
           >
-            <div className="relative z-10 flex items-center justify-center gap-1.5 text-xs">
+            <div className="relative z-10 flex items-center justify-center gap-1.5 text-[11px]">
               {loading && (
                 <div className="w-3.5 h-3.5 border-2 border-[#071554]/30 border-t-[#071554] rounded-full animate-spin" />
               )}

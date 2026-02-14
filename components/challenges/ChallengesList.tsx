@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Globe, Trophy, MapPin } from "lucide-react";
+import { Globe, Trophy, MapPin, Search, ArrowRight } from "lucide-react";
 import ChallengeCard from "./ChallengeCard";
 
 interface PlayerChallenge {
@@ -126,15 +126,33 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
 
       {filteredChallenges.length === 0 ? (
         <div className="rounded-2xl border border-white/20 bg-white/10 px-6 py-12 text-center">
-          <p className="text-white/60">
-            {activeTab === 'general'
-              ? "Aucun challenge général disponible pour le moment."
-              : activeTab === 'club'
-                ? (hasClub
-                  ? "Aucun challenge club disponible pour le moment."
-                  : "Rejoignez un club pour accéder aux challenges de votre communauté !")
-                : "Aucun challenge Premium disponible pour le moment."}
-          </p>
+          {activeTab === 'general' ? (
+            <p className="text-white/60">Aucun challenge général disponible pour le moment.</p>
+          ) : activeTab === 'club' ? (
+            hasClub ? (
+              <p className="text-white/60">Aucun challenge club disponible pour le moment.</p>
+            ) : (
+              <div className="max-w-md mx-auto py-4 px-4 text-center space-y-4">
+                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-white/20" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Classement réservé aux membres</h3>
+                <p className="text-sm text-white/50 leading-relaxed">
+                  Rejoignez un club dans l'onglet "Mon club" pour avoir accès aux challenges de votre club.
+                </p>
+                <button
+                  onClick={() => {
+                    router.push('/home?tab=club');
+                  }}
+                  className="inline-flex items-center gap-2 text-padel-green font-semibold text-sm hover:underline mt-2"
+                >
+                  Rejoindre un club <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )
+          ) : (
+            <p className="text-white/60">Aucun challenge Premium disponible pour le moment.</p>
+          )}
         </div>
       ) : (
         <div className="space-y-6">

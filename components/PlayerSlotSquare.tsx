@@ -26,7 +26,7 @@ export default function PlayerSlotSquare({
         : "";
 
     return (
-        <div className={`relative flex flex-col items-center gap-2 ${className}`}>
+        <div className={`relative flex flex-col items-center gap-1 ${className}`}>
             {player?.type === 'guest' && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-bold text-blue-400 uppercase tracking-widest leading-none z-10">
                     Invité
@@ -36,7 +36,7 @@ export default function PlayerSlotSquare({
                 type="button"
                 onClick={onClick}
                 disabled={isFixed}
-                className={`relative aspect-square w-full rounded-2xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 overflow-hidden
+                className={`relative aspect-square w-full rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 overflow-hidden
           ${isFixed
                         ? "bg-white/5 border-white/10 cursor-default"
                         : player
@@ -48,7 +48,7 @@ export default function PlayerSlotSquare({
             >
                 {player ? (
                     <>
-                        <div className="flex items-center justify-center mb-1 overflow-hidden rounded-full w-9 h-9 sm:w-11 sm:h-11 bg-slate-100 border border-gray-200">
+                        <div className="flex items-center justify-center mb-0.5 overflow-hidden rounded-full w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 border border-gray-200">
                             {player.avatar_url ? (
                                 <Image
                                     src={player.avatar_url}
