@@ -11,7 +11,7 @@ export default function MatchTabBlockingOverlay({ type, onEvaluate }: MatchTabBl
         : "Veuillez évaluez votre niveau pour pouvoir confirmer vos matchs et consulter votre historique.";
 
     return (
-        <div className="absolute inset-0 z-50 rounded-3xl flex flex-col items-center justify-center p-6 text-center backdrop-blur-md bg-[#071554]/40 border border-white/10" style={{ minHeight: '400px' }}>
+        <div className="absolute inset-0 z-50 rounded-3xl flex flex-col items-center justify-start p-6 pt-20 text-center backdrop-blur-md bg-[#071554]/40 border border-white/10" style={{ minHeight: '400px' }}>
             <div className="bg-padel-green/20 p-4 rounded-full mb-6">
                 <Trophy className="w-10 h-10 text-padel-green" />
             </div>
