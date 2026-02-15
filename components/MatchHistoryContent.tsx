@@ -62,16 +62,12 @@ export default async function MatchHistoryContent() {
     }
   }
 
-  // if (!userClubId) check removed to allow club-less access
-
   // Récupérer tous les match_ids du joueur (uniquement les matchs où il est un user, pas guest)
   const { data: userParticipations, error: partError } = await supabase
     .from("match_participants")
     .select("match_id, team")
     .eq("user_id", user.id)
     .eq("player_type", "user");
-
-  logger.info("[MatchHistory] User participations fetched", { count: userParticipations?.length });
 
   if (partError) {
     logger.error("Error fetching participations:", partError);
@@ -88,10 +84,7 @@ export default async function MatchHistoryContent() {
     );
   }
 
-  // Récupérer tous les matchs correspondants (on filtrera après par club)
   const matchIds = userParticipations.map((p: any) => p.match_id);
-
-  logger.info("[MatchHistory] Match IDs to fetch:", matchIds);
 
   if (matchIds.length === 0) {
     return (
@@ -104,16 +97,13 @@ export default async function MatchHistoryContent() {
     );
   }
 
-  // Récupérer tous les matchs correspondants (on filtrera après par club)
-  // NOUVEAU: Filtrer uniquement les matchs confirmés
   const { data: allMatches, error: matchesError } = await supabase
     .from("matches")
     .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, score_details, created_at, played_at, decided_by_tiebreak, status, location_club_id, is_registered_club")
     .in("id", matchIds)
-    .or("status.eq.confirmed,status.is.null") // Matchs confirmés OU anciens matchs sans statut
+    .or("status.eq.confirmed,status.is.null")
     .order("created_at", { ascending: false });
 
-  // Transformer les données pour générer winner_team et score formaté
   const transformedMatches = (allMatches || []).map((match: any) => {
     const winner_team = match.winner_team_id === match.team1_id ? 1 : 2;
     const score = `${match.score_team1 || 0}-${match.score_team2 || 0}`;
@@ -124,18 +114,9 @@ export default async function MatchHistoryContent() {
     };
   });
 
-  logger.info("[MatchHistory] All matches fetched", { count: allMatches?.length });
-
   if (matchesError) {
     logger.error("Error fetching matches:", matchesError);
   }
-
-  // NOTE: On ne retourne pas "Aucun match" ici car on veut afficher la section PendingMatchesSection
-  // même si l'historique est vide.
-
-
-  // Récupérer les détails de tous les participants pour chaque match
-  logger.info("[MatchHistory] Fetching participants for match IDs:", matchIds);
 
   const { data: participantsSimple, error: simpleError } = await supabase
     .from("match_participants")
@@ -148,38 +129,20 @@ export default async function MatchHistoryContent() {
 
   let allParticipants: any[] = participantsSimple || [];
   let participantsByMatch: Record<string, any[]> = {};
-  let validMatchIds: Set<string> = new Set();
-  logger.info("[MatchHistory] Participants fetched (base):", allParticipants.length);
 
-  // Enrichir avec les noms des joueurs
   if (allParticipants.length > 0) {
     const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
     const guestIds = [...new Set(allParticipants.filter(p => p.player_type === "guest" && p.guest_player_id).map(p => p.guest_player_id))];
 
-    logger.info("[MatchHistory] Enriching with names", { userIds: userIds.length, guestIds: guestIds.length });
-
     const profilesMap = new Map<string, string>();
     if (userIds.length > 0) {
-      let profilesQuery = supabaseAdmin
+      const { data: profiles, error: profilesError } = await supabaseAdmin
         .from("profiles")
         .select("id, display_name")
         .in("id", userIds);
 
-      // CORRECTION: Ne PAS filtrer par club ici. On veut charger les noms de TOUS les participants
-      // même s'ils sont dans un autre club.
-      // if (userClubId) {
-      //   profilesQuery = profilesQuery.eq("club_id", userClubId);
-      // }
-
-      const { data: profiles, error: profilesError } = await profilesQuery;
-
-      if (profilesError) {
-        logger.error("❌ Error fetching profiles:", profilesError);
-      } else if (profiles) {
-        profiles.forEach(p => {
-          profilesMap.set(p.id, p.display_name);
-        });
-        logger.info("[MatchHistory] Profiles loaded:", profiles.length);
+      if (profiles && !profilesError) {
+        profiles.forEach(p => profilesMap.set(p.id, p.display_name));
       }
     }
 
@@ -190,56 +153,13 @@ export default async function MatchHistoryContent() {
         .select("id, first_name, last_name")
         .in("id", guestIds);
 
-      if (guestsError) {
-        logger.error("❌ Error fetching guest players:", guestsError);
-      } else if (guests) {
+      if (guests && !guestsError) {
         guests.forEach(g => guestsMap.set(g.id, { first_name: g.first_name, last_name: g.last_name }));
-        logger.info("[MatchHistory] Guest players loaded:", guests.length);
       }
     }
 
-    const validUserIds = new Set(profilesMap.keys());
-
-    // CORRECTION: On commente le filtrage par club. On veut afficher tout le monde.
-    // const filteredParticipants = userClubId
-    //   ? allParticipants.filter((p: any) => {
-    //     if (p.player_type === "user" && p.user_id) {
-    //       return validUserIds.has(p.user_id);
-    //     }
-    //     return p.player_type === "guest";
-    //   })
-    //   : allParticipants;
-
-    // Pour l'instant on garde tous les participants
-    const filteredParticipants = allParticipants;
-
-    logger.info("[MatchHistory] Participants after filtering:", filteredParticipants.length);
-
-    const participantsByMatchTemp = filteredParticipants.reduce((acc: Record<string, any[]>, p: any) => {
-      if (!acc[p.match_id]) {
-        acc[p.match_id] = [];
-      }
-      acc[p.match_id].push(p);
-      return acc;
-    }, {});
-
-    const validMatchIds = new Set<string>();
-    Object.entries(participantsByMatchTemp).forEach(([matchId, participants]: [string, any[]]) => {
-      // CORRECTION: Plus besoin de vérifier que tout le monde est dans le même club
-      // const userParticipants = participants.filter((p: any) => p.player_type === "user" && p.user_id);
-      // const allUsersInSameClub = userParticipants.every((p: any) => validUserIds.has(p.user_id));
-
-      // On accepte tous les matchs
-      validMatchIds.add(matchId);
-    });
-
-    logger.info("[MatchHistory] Valid matches (all users in same club):", validMatchIds.size);
-
-    const finalFilteredParticipants = filteredParticipants.filter((p: any) => validMatchIds.has(p.match_id));
-
-    const enrichedParticipants = finalFilteredParticipants.map(p => {
+    allParticipants = allParticipants.map(p => {
       const enriched: any = { ...p };
-
       if (p.player_type === "user" && p.user_id) {
         const displayName = profilesMap.get(p.user_id);
         enriched.profiles = displayName ? { display_name: displayName } : null;
@@ -247,41 +167,18 @@ export default async function MatchHistoryContent() {
         const guest = guestsMap.get(p.guest_player_id);
         enriched.guest_players = guest || null;
       }
-
       return enriched;
     });
 
-    logger.info("[MatchHistory] Participants enriched:", enrichedParticipants.length);
-
-    allParticipants = enrichedParticipants;
-
-    participantsByMatch = enrichedParticipants.reduce((acc: Record<string, any[]>, participant: any) => {
-      if (!acc[participant.match_id]) {
-        acc[participant.match_id] = [];
-      }
-      acc[participant.match_id].push(participant);
-      return acc;
-    }, {});
-  } else {
     participantsByMatch = allParticipants.reduce((acc: Record<string, any[]>, participant: any) => {
-      if (!acc[participant.match_id]) {
-        acc[participant.match_id] = [];
-      }
+      if (!acc[participant.match_id]) acc[participant.match_id] = [];
       acc[participant.match_id].push(participant);
       return acc;
     }, {});
   }
 
-  let validMatchIdsForDisplay: Set<string>;
-  if (validMatchIds.size > 0 && userClubId) {
-    validMatchIdsForDisplay = validMatchIds;
-  } else {
-    validMatchIdsForDisplay = new Set(transformedMatches.map((m: any) => m.id));
-  }
+  const finalMatches = transformedMatches;
 
-  const finalMatches = transformedMatches.filter((match: any) => validMatchIdsForDisplay.has(match.id));
-
-  // Récupérer les informations de lieu pour tous les matchs
   const clubIds = [...new Set(finalMatches.filter((m: any) => m.location_club_id && m.is_registered_club).map((m: any) => m.location_club_id))];
   const unregClubIds = [...new Set(finalMatches.filter((m: any) => m.location_club_id && !m.is_registered_club).map((m: any) => m.location_club_id))];
 
@@ -303,28 +200,15 @@ export default async function MatchHistoryContent() {
     (unregisteredClubs || []).forEach(c => locationNamesMap.set(c.id, `${c.name} (${c.city})`));
   }
 
-  logger.info("[MatchHistory] Final matches after filtering:", finalMatches.length);
-
   const userTeamByMatch: Record<string, number> = {};
   userParticipations.forEach((p: any) => {
     userTeamByMatch[p.match_id] = p.team;
   });
 
-  let totalWins = 0;
-  let totalLosses = 0;
-  finalMatches.forEach((match: any) => {
-    const userTeam = userTeamByMatch[match.id];
-    const won = match.winner_team === userTeam;
-    if (won) totalWins++;
-    else totalLosses++;
-  });
-
   return (
     <>
-      {/* Section des matchs en attente de confirmation */}
       <PendingMatchesSection />
 
-      {/* Liste des matchs confirmés */}
       <div className="space-y-4">
         {finalMatches.map((match: any) => {
           const participants = participantsByMatch[match.id] || [];
@@ -339,12 +223,12 @@ export default async function MatchHistoryContent() {
           return (
             <div
               key={match.id}
-              className={`rounded-2xl border-2 p-2 transition-all ${won
+              className={`rounded-2xl border-2 p-3 transition-all ${won
                 ? "border-green-300 bg-green-50"
                 : "border-red-300 bg-red-50"
                 }`}
             >
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className={`text-2xl flex items-center`}>
                     {won ? <Check size={24} className="text-green-600 flex-shrink-0" /> : <X size={24} className="text-red-500 flex-shrink-0" />}
@@ -359,32 +243,27 @@ export default async function MatchHistoryContent() {
                     {match.location_club_id && (
                       <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#071554]/60">
                         <MapPin className="h-3 w-3 opacity-70" />
-                        <span className="truncate max-w-[150px]">{locationNamesMap.get(match.location_club_id) || "Lieu inconnu"}</span>
-                      </div>
-                    )}
-                    {match.decided_by_tiebreak && (
-                      <div className={`mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${won
-                        ? "border-amber-300 bg-amber-50 text-amber-700"
-                        : "border-red-300 bg-red-50 text-red-700"
-                        }`}>
-                        <span>⚡</span>
-                        <span>{won ? "Tie-break" : "Tie-break"}</span>
+                        <span className="truncate max-w-[150px] text-ellipsis">{locationNamesMap.get(match.location_club_id) || "Lieu inconnu"}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                {match.score && (
-                  <div className={`rounded-lg bg-white px-3 py-1.5 text-sm font-bold tabular-nums ${won ? "text-[#071554]" : "text-[#071554]"}`}>
-                    {match.score}
-                  </div>
-                )}
+
+                {/* Score des sets en haut à droite */}
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-gray-100 shadow-sm">
+                  <span className="text-sm font-bold text-gray-900 tabular-nums">
+                    {match.score_team1}-{match.score_team2}
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2">
                 {/* Équipe 1 */}
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="mb-2 text-[10px] font-normal uppercase tracking-wide text-[#071554]/70 flex items-center gap-1">Équipe 1 {match.winner_team === 1 && <Trophy size={14} className="flex-shrink-0 text-[#071554]" />}</div>
-                  <div className="divide-y divide-gray-100">
+                <div className="rounded-lg border border-gray-100 bg-white p-2">
+                  <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                    Équipe 1 {match.winner_team === 1 && <Trophy size={12} className="text-amber-500" />}
+                  </div>
+                  <div className="space-y-1">
                     {team1.map((p: any) => {
                       const isGuest = p.player_type === "guest";
                       const displayName = isGuest && p.guest_players
@@ -393,18 +272,11 @@ export default async function MatchHistoryContent() {
                       const isCurrentUser = !isGuest && p.user_id === user.id;
 
                       return (
-                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1">
-                          {isCurrentUser ? (
-                            <>
-                              <span className="text-sm font-semibold text-[#071554] tracking-tight">{displayName}</span>
-                              <span className="rounded-full bg-padel-green px-2 py-0.5 text-xs font-bold text-[#071554] shadow-sm">VOUS</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm font-normal text-gray-900 tracking-tight">{displayName}</span>
-                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-xs font-normal text-gray-600">Invité</span>}
-                            </>
-                          )}
+                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center justify-between">
+                          <span className={`text-[11px] truncate max-w-[85%] ${isCurrentUser ? "font-bold text-[#071554]" : "font-medium text-gray-700"}`}>
+                            {displayName}
+                          </span>
+                          {isCurrentUser && <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>}
                         </div>
                       );
                     })}
@@ -412,9 +284,11 @@ export default async function MatchHistoryContent() {
                 </div>
 
                 {/* Équipe 2 */}
-                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                  <div className="mb-2 text-[10px] font-normal uppercase tracking-wide text-[#071554]/70 flex items-center gap-1">Équipe 2 {match.winner_team === 2 && <Trophy size={14} className="flex-shrink-0 text-[#071554]" />}</div>
-                  <div className="divide-y divide-gray-100">
+                <div className="rounded-lg border border-gray-100 bg-white p-2">
+                  <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                    Équipe 2 {match.winner_team === 2 && <Trophy size={12} className="text-amber-500" />}
+                  </div>
+                  <div className="space-y-1">
                     {team2.map((p: any) => {
                       const isGuest = p.player_type === "guest";
                       const displayName = isGuest && p.guest_players
@@ -423,18 +297,11 @@ export default async function MatchHistoryContent() {
                       const isCurrentUser = !isGuest && p.user_id === user.id;
 
                       return (
-                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center gap-2 py-1">
-                          {isCurrentUser ? (
-                            <>
-                              <span className="text-sm font-semibold text-[#071554] tracking-tight">{displayName}</span>
-                              <span className="rounded-full bg-padel-green px-2 py-0.5 text-xs font-bold text-[#071554] shadow-sm">VOUS</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm font-normal text-gray-900 tracking-tight">{displayName}</span>
-                              {isGuest && <span className="rounded-full border border-gray-300/80 bg-gray-50 px-2 py-0.5 text-xs font-normal text-gray-600">Invité</span>}
-                            </>
-                          )}
+                        <div key={isGuest ? `guest_${p.guest_player_id}` : p.user_id} className="flex items-center justify-between">
+                          <span className={`text-[11px] truncate max-w-[85%] ${isCurrentUser ? "font-bold text-[#071554]" : "font-medium text-gray-700"}`}>
+                            {displayName}
+                          </span>
+                          {isCurrentUser && <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>}
                         </div>
                       );
                     })}
@@ -442,14 +309,16 @@ export default async function MatchHistoryContent() {
                 </div>
               </div>
 
-              {/* Affichage du score exact central pour l'historique */}
-              <div className="mt-3 mb-1 flex justify-center">
-                <div className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-[#071554] text-padel-green shadow-lg border border-[#172554]/20">
-                  <span className="text-xl font-black tabular-nums">
-                    {(match as any).score_details || `${match.score_team1}-${match.score_team2}`}
-                  </span>
+              {/* Score détaillé centré dessous */}
+              {match.score_details && (
+                <div className="mt-3 flex justify-center">
+                  <div className="inline-flex items-center px-4 py-1 rounded-lg bg-[#071554]/5 border border-[#071554]/10">
+                    <span className="text-sm font-bold text-[#071554] tabular-nums">
+                      {match.score_details}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
@@ -457,4 +326,3 @@ export default async function MatchHistoryContent() {
     </>
   );
 }
-

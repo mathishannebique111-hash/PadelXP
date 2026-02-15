@@ -216,60 +216,8 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
 
                         <div className="bg-black/20 rounded-lg p-3 text-center mb-6 border border-white/5">
                             <div className="text-[9px] text-blue-200/50 uppercase tracking-wider mb-1">Score final</div>
-                            <div className="text-2xl font-mono font-bold text-white leading-none tracking-tight">
+                            <div className="text-lg font-bold text-white leading-none tracking-tight">
                                 {match.score_details || `${match.score_team1} - ${match.score_team2}`}
-                            </div>
-                            {/* Note: we display sets total score here. Ideally we'd show set details if available in separate table or JSON column, 
-                  but match.score_team* is total sets won usually, or games? 
-                  Ah, schema says score_team1 is integer (sets won). 
-                  Wait, matches table stores sets_won? 
-                  The API saves score_team1 as sets won. 
-                  But usually we want to see set scores (6-3 6-4). 
-                  Usually stored in specific table or column? 
-                  The API saves sets in `matches`? No, sets are implicit?
-                  Ah, check match schema. `match_sets` table? 
-                  The migration did not show `match_sets`.
-                  Actually, match creation API insert into `matches`.
-                  It inserts `score_team1` (int, sets won).
-                  But sets details are NOT in `matches`?
-                  Wait. API creates `matches` but WHERE ARE THE SETS STORED?
-                  Line 485 of API: `insert(matchData)`. matchData has score_team1/2.
-                  Line 226: Validating sets.
-                  BUT I DON'T SEE INSERT INTO A `sets` TABLE in the API code I read!
-                  Line 517: `await supabaseAdmin.from("match_participants").insert...`
-                  
-                  WHERE ARE THE SET SCORES SAVED?
-                  Maybe I missed an insert into `match_sets` in the API file? 
-                  
-                  Let's re-check API file quickly.
-                  If sets are not saved, that's a HUGE bug.
-                  But user says in email: "Score: 6-3 6-4".
-                  So it must be saved.
-                  
-                  Ah! Maybe `score_team1` IS the sets string?
-                  No, schema says integer usually.
-                  
-                  Let's assume for now I display "Sets gagnés: X - Y".
-                  If I can't find set details easily, I won't display 6-3 6-4.
-                  Wait, `lib/email.ts` received `matchDetails.score` ("6-3 6-4").
-                  Where did it get it?
-                  In API: `const scoreString = sets.map(s => ...).join(" ")`.
-                  It computed it from the `sets` variable in memory.
-                  But did it SAVE it?
-                  
-                  If it didn't save it to DB, I can't retrieve it now.
-                  Unless `matches` has a `score` text column?
-                  Checking `create_match_confirmations_system.sql`... nope.
-                  
-                  If I want to show the detailed score on this page, I need to fetch it.
-                  If it's not in DB, I can't.
-                  This might be a pre-existing issue.
-                  
-                  However, I will just show "Vainqueur: Equipe X" and "Sets: X - Y".
-                  That's better than nothing.
-              */}
-                            <div className="text-sm text-gray-400 mt-1">
-                                (Nombre de sets gagnés)
                             </div>
                         </div>
 
