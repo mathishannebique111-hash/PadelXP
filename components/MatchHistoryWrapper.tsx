@@ -25,6 +25,7 @@ export default function MatchHistoryWrapper({ initialHasLevel, children }: Match
             {showAssessment && (
                 <div className="fixed inset-0 z-[100000]">
                     <LevelAssessmentWizard
+                        forceStart={true}
                         onComplete={() => {
                             setHasLevel(true);
                             setShowAssessment(false);
