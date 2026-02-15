@@ -14,6 +14,8 @@ import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search } from "
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
 import PlayerSlotSquare from "./PlayerSlotSquare";
 import { createPortal } from "react-dom";
+import LevelAssessmentWizard from "./padel-level/LevelAssessmentWizard";
+import MatchTabBlockingOverlay from "./MatchTabBlockingOverlay";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -33,9 +35,11 @@ const schema = z.object({
 });
 
 export default function MatchForm({
-  selfId
+  selfId,
+  initialHasLevel = true
 }: {
   selfId: string;
+  initialHasLevel?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,6 +96,27 @@ export default function MatchForm({
   const [showMatchLimitInfo, setShowMatchLimitInfo] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
+
+  // Level assessment blocking state
+  const [hasLevel, setHasLevel] = useState(initialHasLevel);
+  const [showAssessment, setShowAssessment] = useState(false);
+
+  // Prevent scroll when blocking overlay is visible
+  useEffect(() => {
+    if (!hasLevel && !showAssessment) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [hasLevel, showAssessment]);
+
+  // Sync props if changed (e.g. from parent/other component refresh)
+  useEffect(() => {
+    setHasLevel(initialHasLevel);
+  }, [initialHasLevel]);
 
   // Boost state
   const [useBoost, setUseBoost] = useState(false);
@@ -862,6 +887,28 @@ export default function MatchForm({
 
   return (
     <div className="relative h-full flex flex-col">
+      {/* Assessment Wizard Overlay */}
+      {showAssessment && (
+        <LevelAssessmentWizard
+          forceStart={true}
+          onCancel={() => setShowAssessment(false)}
+          onComplete={() => {
+            setHasLevel(true);
+            setShowAssessment(false);
+            // Refresh parent page to update global state and other components
+            router.refresh();
+          }}
+        />
+      )}
+
+      {/* Blurred Block UI */}
+      {!hasLevel && !showAssessment && (
+        <MatchTabBlockingOverlay
+          type="record"
+          onEvaluate={() => setShowAssessment(true)}
+        />
+      )}
+
       {/* Notification de succès */}
       {showSuccess && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -935,7 +982,7 @@ export default function MatchForm({
         )
       }
 
-      <form onSubmit={onSubmit} className="space-y-3 pb-2 transition-all duration-500">
+      <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
         {/* Lieu du match (Google Maps Direct) */}
         <div>
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>

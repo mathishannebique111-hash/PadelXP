@@ -4,6 +4,7 @@ import MatchForm from "@/components/MatchForm";
 import PageTitle from "@/components/PageTitle";
 import MatchTabs from "@/components/MatchTabs";
 import MatchHistoryContent from "@/components/MatchHistoryContent";
+import MatchHistoryWrapper from "@/components/MatchHistoryWrapper";
 import FindPartnersTabContent from "@/components/FindPartnersTabContent";
 import BoostContent from "@/components/BoostContent";
 import MobileCrashErrorBoundary from "@/components/MobileCrashErrorBoundary";
@@ -116,16 +117,17 @@ export default async function NewMatchPage({
             <Suspense fallback={<div className="p-4 text-white">Chargement...</div>}>
               <MatchTabs
                 activeTab={activeTab}
-                initialHasLevel={niveauPadel !== null}
                 recordContent={
                   <MobileCrashErrorBoundary componentName="Formulaire Match">
-                    <MatchForm selfId={user.id} />
+                    <MatchForm selfId={user.id} initialHasLevel={niveauPadel !== null} />
                   </MobileCrashErrorBoundary>
                 }
                 historyContent={
-                  <MobileCrashErrorBoundary componentName="Historique">
-                    <MatchHistoryContent />
-                  </MobileCrashErrorBoundary>
+                  <MatchHistoryWrapper initialHasLevel={niveauPadel !== null}>
+                    <Suspense fallback={<div className="p-4 text-white">Chargement...</div>}>
+                      <MatchHistoryContent />
+                    </Suspense>
+                  </MatchHistoryWrapper>
                 }
                 partnersContent={
                   <MobileCrashErrorBoundary componentName="Partenaires">

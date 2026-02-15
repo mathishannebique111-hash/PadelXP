@@ -4,8 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
-import MatchTabBlockingOverlay from './MatchTabBlockingOverlay';
-import LevelAssessmentWizard from './padel-level/LevelAssessmentWizard';
 
 type TabType = 'record' | 'history' | 'partners' | 'boost';
 
@@ -15,7 +13,6 @@ interface MatchTabsProps {
   historyContent: React.ReactNode;
   partnersContent?: React.ReactNode;
   boostContent?: React.ReactNode;
-  initialHasLevel?: boolean;
 }
 
 function MatchTabsContent({
@@ -23,8 +20,7 @@ function MatchTabsContent({
   recordContent,
   historyContent,
   partnersContent,
-  boostContent,
-  initialHasLevel = true
+  boostContent
 }: MatchTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
@@ -34,8 +30,6 @@ function MatchTabsContent({
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(null);
   const [pendingChallengesCount, setPendingChallengesCount] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [hasLevel, setHasLevel] = useState(initialHasLevel);
-  const [showAssessment, setShowAssessment] = useState(false);
   const router = useRouter();
 
   // Persistent read state
@@ -255,45 +249,13 @@ function MatchTabsContent({
       </div>
 
       {/* Contenu des onglets */}
-      <div className="mt-2 sm:mt-6 relative">
-        {/* Questionnaire de niveau */}
-        {showAssessment && (
-          <div className="fixed inset-0 z-[100000]">
-            <LevelAssessmentWizard
-              onComplete={(result) => {
-                setHasLevel(true);
-                setShowAssessment(false);
-                router.refresh();
-              }}
-              onCancel={() => setShowAssessment(false)}
-            />
-          </div>
-        )}
-
-        <div className={`${currentTab === 'record' ? 'block' : 'hidden'} relative`} key={`${refreshKey}-record`}>
-          <div className={!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}>
-            {recordContent}
-          </div>
-          {!hasLevel && (
-            <MatchTabBlockingOverlay
-              type="record"
-              onEvaluate={() => setShowAssessment(true)}
-            />
-          )}
+      <div className="mt-2 sm:mt-6">
+        <div className={currentTab === 'record' ? 'block' : 'hidden'} key={refreshKey}>
+          {recordContent}
         </div>
-
-        <div className={`${currentTab === 'history' ? 'block' : 'hidden'} relative`} key={`${refreshKey}-history`}>
-          <div className={!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}>
-            {historyContent}
-          </div>
-          {!hasLevel && (
-            <MatchTabBlockingOverlay
-              type="history"
-              onEvaluate={() => setShowAssessment(true)}
-            />
-          )}
+        <div className={currentTab === 'history' ? 'block' : 'hidden'} key={refreshKey}>
+          {historyContent}
         </div>
-
         {partnersContent && (
           <div className={currentTab === 'partners' ? 'block' : 'hidden'} key={refreshKey}>
             {partnersContent}
