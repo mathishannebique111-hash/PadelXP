@@ -354,6 +354,32 @@ export default function MatchForm({
     fetchSelfProfile();
   }, [supabase]);
 
+  const resetForm = () => {
+    setPartnerName("");
+    setOpp1Name("");
+    setOpp2Name("");
+    setWinner("1");
+    setSets([
+      { setNumber: 1, team1Score: "", team2Score: "" },
+      { setNumber: 2, team1Score: "", team2Score: "" },
+    ]);
+    setHasTieBreak(false);
+    setTieBreak({ team1Score: "", team2Score: "" });
+    setSelectedPlayers({
+      partner: null,
+      opp1: null,
+      opp2: null,
+    });
+    setSelectedClubId("");
+    setIsUnregisteredClub(false);
+    setUnregisteredClubName("");
+    setUnregisteredClubCity("");
+    setErrors({});
+    setUseBoost(false);
+    setErrorMessage(null);
+    setWarningMessage(null);
+  };
+
   // ... (addSet, removeSet, updateSet functions retained as is)
 
   const addSet = () => {
@@ -838,6 +864,9 @@ export default function MatchForm({
           setTimeout(() => {
             router.refresh();
           }, 500);
+
+          // Réinitialiser le formulaire pour que si on y retourne il soit vide
+          resetForm();
 
           // Redirection automatique seulement si pas d'avertissement
           setTimeout(() => {

@@ -29,6 +29,7 @@ function MatchTabsContent({
   const [pendingMatchesCount, setPendingMatchesCount] = useState<number | null>(null);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(null);
   const [pendingChallengesCount, setPendingChallengesCount] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
 
   // Persistent read state
@@ -110,6 +111,7 @@ function MatchTabsContent({
     // Listen for matchFullyConfirmed event to decrement badge
     const handleMatchConfirmed = () => {
       setPendingMatchesCount(prev => (prev !== null ? Math.max(0, prev - 1) : 0));
+      setRefreshKey(prev => prev + 1);
       router.refresh();
     };
     window.addEventListener('matchFullyConfirmed', handleMatchConfirmed);
@@ -117,6 +119,7 @@ function MatchTabsContent({
     // Also listen for matchSubmitted to refresh pending counts
     const handleMatchSubmitted = () => {
       fetchPendingCount();
+      setRefreshKey(prev => prev + 1);
       router.refresh();
     };
     window.addEventListener('matchSubmitted', handleMatchSubmitted);
@@ -250,7 +253,7 @@ function MatchTabsContent({
         <div className={currentTab === 'record' ? 'block' : 'hidden'}>
           {recordContent}
         </div>
-        <div className={currentTab === 'history' ? 'block' : 'hidden'}>
+        <div className={currentTab === 'history' ? 'block' : 'hidden'} key={refreshKey}>
           {historyContent}
         </div>
         {partnersContent && (
