@@ -108,7 +108,7 @@ export default async function MatchHistoryContent() {
   // NOUVEAU: Filtrer uniquement les matchs confirmés
   const { data: allMatches, error: matchesError } = await supabase
     .from("matches")
-    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at, played_at, decided_by_tiebreak, status, location_club_id, is_registered_club")
+    .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, score_details, created_at, played_at, decided_by_tiebreak, status, location_club_id, is_registered_club")
     .in("id", matchIds)
     .or("status.eq.confirmed,status.is.null") // Matchs confirmés OU anciens matchs sans statut
     .order("created_at", { ascending: false });
@@ -445,9 +445,9 @@ export default async function MatchHistoryContent() {
               {/* Affichage du score exact central pour l'historique */}
               <div className="mt-3 mb-1 flex justify-center">
                 <div className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-[#071554] text-padel-green shadow-lg border border-[#172554]/20">
-                  <span className="text-xl font-black tabular-nums">{match.score_team1}</span>
-                  <span className="text-white/30 font-bold">-</span>
-                  <span className="text-xl font-black tabular-nums">{match.score_team2}</span>
+                  <span className="text-xl font-black tabular-nums">
+                    {(match as any).score_details || `${match.score_team1}-${match.score_team2}`}
+                  </span>
                 </div>
               </div>
             </div>

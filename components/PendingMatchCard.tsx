@@ -20,6 +20,7 @@ interface PendingMatch {
     team2_id: string;
     score_team1: number;
     score_team2: number;
+    score_details?: string;
     created_at: string;
     participants: Participant[];
     creator_name: string;
@@ -143,7 +144,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                     </div>
                 </div>
                 <div className="rounded-md bg-white px-2 py-1 text-sm font-bold text-gray-900 tabular-nums shadow-sm border border-gray-100">
-                    {match.score_team1}-{match.score_team2}
+                    {match.score_details || `${match.score_team1}-${match.score_team2}`}
                 </div>
             </div>
 
@@ -206,9 +207,9 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
             {/* Affichage du score exact central */}
             <div className="mb-3 flex justify-center">
                 <div className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-[#071554] text-padel-green shadow-lg border border-[#172554]/20">
-                    <span className="text-xl font-black tabular-nums">{match.score_team1}</span>
-                    <span className="text-white/30 font-bold">-</span>
-                    <span className="text-xl font-black tabular-nums">{match.score_team2}</span>
+                    <span className="text-xl font-black tabular-nums">
+                        {match.score_details || `${match.score_team1}-${match.score_team2}`}
+                    </span>
                 </div>
             </div>
 

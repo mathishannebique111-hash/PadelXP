@@ -77,6 +77,7 @@ export async function GET(req: Request) {
         team2_id,
         score_team1,
         score_team2,
+        score_details,
         created_at,
         status,
         location_club_id,

@@ -466,6 +466,12 @@ export async function POST(req: Request) {
     }
 
 
+    // Construire le score détaillé (ex: "7-5 / 4-6")
+    const score_details = [
+      ...sets.map(s => `${s.team1Score}-${s.team2Score}`),
+      ...(tieBreak && tieBreak.team1Score && tieBreak.team2Score ? [`${tieBreak.team1Score}-${tieBreak.team2Score}`] : [])
+    ].join(" / ");
+
     // Préparer les données d'insertion selon le schéma Supabase
     const matchData = {
       team1_id,
@@ -473,6 +479,7 @@ export async function POST(req: Request) {
       winner_team_id,
       score_team1,
       score_team2,
+      score_details, // ✅ AJOUTÉ
       played_at: new Date().toISOString(),
       decided_by_tiebreak,
       status: 'pending', // Match en attente de confirmation
@@ -605,10 +612,8 @@ export async function POST(req: Request) {
       if (guestsError) {
         logger.error("Error fetching guest details", { error: guestsError.message });
       } else if (guests) {
-        // Construire le score lisible (ex: "6-3 6-4")
-        const scoreString = sets
-          .map(s => `${s.team1Score}-${s.team2Score}`)
-          .join(" ");
+        // Utiliser le score détaillé (ex: "7-5 / 4-6")
+        const scoreString = score_details;
 
         // Récupérer le nom du club
         let clubName = "Club non spécifié";

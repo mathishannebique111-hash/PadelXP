@@ -79,6 +79,7 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
       status, 
       score_team1, 
       score_team2,
+      score_details,
       winner_team_id,
       team1_id,
       location_club_id, 
@@ -216,7 +217,7 @@ export default async function GuestConfirmationPage({ searchParams }: PageProps)
                         <div className="bg-black/20 rounded-lg p-3 text-center mb-6 border border-white/5">
                             <div className="text-[9px] text-blue-200/50 uppercase tracking-wider mb-1">Score final</div>
                             <div className="text-2xl font-mono font-bold text-white leading-none tracking-tight">
-                                {match.score_team1} - {match.score_team2}
+                                {match.score_details || `${match.score_team1} - ${match.score_team2}`}
                             </div>
                             {/* Note: we display sets total score here. Ideally we'd show set details if available in separate table or JSON column, 
                   but match.score_team* is total sets won usually, or games? 
