@@ -371,6 +371,19 @@ export async function POST(req: Request) {
           }
           logger.info("Points distribution completed successfully.");
         }
+
+        // Revalider les chemins pour rafraîchir les données
+        try {
+          const { revalidatePath } = await import("next/cache");
+          revalidatePath("/match/new");
+          revalidatePath("/home");
+          revalidatePath("/dashboard");
+          revalidatePath("/dashboard/historique");
+          revalidatePath("/dashboard/classement");
+          logger.info("Paths revalidated after match confirmation");
+        } catch (revError) {
+          logger.warn("Revalidation failed after confirmation", { error: (revError as Error).message });
+        }
       } catch (distError) {
         logger.error("Error distributing points", { error: (distError as Error).message });
         // On ne bloque pas la réponse, le match EST confirmé.

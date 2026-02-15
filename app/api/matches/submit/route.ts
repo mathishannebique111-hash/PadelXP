@@ -900,6 +900,7 @@ export async function POST(req: Request) {
       revalidatePath("/challenges");
       revalidatePath("/");
       revalidatePath("/matches/history");
+      revalidatePath("/match/new");
       revalidatePath("/boost");
       logger.info("All paths revalidated successfully"); // ✅ REMPLACÉ
     } catch (revalidateError) {

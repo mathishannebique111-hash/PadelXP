@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
 
@@ -29,6 +29,7 @@ function MatchTabsContent({
   const [pendingMatchesCount, setPendingMatchesCount] = useState<number | null>(null);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(null);
   const [pendingChallengesCount, setPendingChallengesCount] = useState<number | null>(null);
+  const router = useRouter();
 
   // Persistent read state
   const [viewedMatchesCount, setViewedMatchesCount] = useState(0);
@@ -109,12 +110,21 @@ function MatchTabsContent({
     // Listen for matchFullyConfirmed event to decrement badge
     const handleMatchConfirmed = () => {
       setPendingMatchesCount(prev => (prev !== null ? Math.max(0, prev - 1) : 0));
+      router.refresh();
     };
     window.addEventListener('matchFullyConfirmed', handleMatchConfirmed);
+
+    // Also listen for matchSubmitted to refresh pending counts
+    const handleMatchSubmitted = () => {
+      fetchPendingCount();
+      router.refresh();
+    };
+    window.addEventListener('matchSubmitted', handleMatchSubmitted);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('matchFullyConfirmed', handleMatchConfirmed);
+      window.removeEventListener('matchSubmitted', handleMatchSubmitted);
     };
   }, []);
 
