@@ -441,6 +441,15 @@ export default async function MatchHistoryContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Affichage du score exact central pour l'historique */}
+              <div className="mt-3 mb-1 flex justify-center">
+                <div className="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-[#071554] text-padel-green shadow-lg border border-[#172554]/20">
+                  <span className="text-xl font-black tabular-nums">{match.score_team1}</span>
+                  <span className="text-white/30 font-bold">-</span>
+                  <span className="text-xl font-black tabular-nums">{match.score_team2}</span>
+                </div>
+              </div>
             </div>
           );
         })}

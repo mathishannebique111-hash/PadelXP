@@ -190,7 +190,7 @@ export default function BadgesView({
                                         Participez aux challenges hebdomadaires pour débloquer des badges exclusifs.
                                     </p>
                                     <Link
-                                        href="/challenges"
+                                        href="/club?tab=challenges"
                                         className="mt-6 px-6 py-2 bg-[#CCFF00] text-[#172554] rounded-full font-medium text-sm hover:brightness-110 transition-all shadow-lg shadow-[#CCFF00]/20"
                                     >
                                         Voir les challenges

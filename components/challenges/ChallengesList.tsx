@@ -44,6 +44,17 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
     }
   }, [isPremiumUser]);
 
+  // Read filter from URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const filter = params.get('filter');
+      if (filter === 'club') setActiveTab('club');
+      else if (filter === 'premium') setActiveTab('premium');
+      else if (filter === 'general') setActiveTab('general');
+    }
+  }, []);
+
   // CLIENT-SIDE VERIFICATION: Check DB directly
   useEffect(() => {
     const checkPremiumStatus = async () => {

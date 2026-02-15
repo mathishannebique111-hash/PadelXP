@@ -196,7 +196,6 @@ export default async function ClubPage({
       <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-4 md:pt-8 pb-4 sm:pb-6 md:pb-8">
         <PageTitle
           title="Espace Compétition"
-          subtitle="Classements, Challenges et Ligues"
         />
 
         {/* Removed 'Club non défini' blocker */}
