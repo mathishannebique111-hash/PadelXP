@@ -14,7 +14,6 @@ import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search } from "
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
 import PlayerSlotSquare from "./PlayerSlotSquare";
 import { createPortal } from "react-dom";
-import LevelAssessmentWizard from "./padel-level/LevelAssessmentWizard";
 
 const schema = z.object({
   winner: z.enum(["1", "2"]),
@@ -34,11 +33,9 @@ const schema = z.object({
 });
 
 export default function MatchForm({
-  selfId,
-  initialHasLevel = true
+  selfId
 }: {
   selfId: string;
-  initialHasLevel?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,22 +92,6 @@ export default function MatchForm({
   const [showMatchLimitInfo, setShowMatchLimitInfo] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
-
-  // Level assessment blocking state
-  const [hasLevel, setHasLevel] = useState(initialHasLevel);
-  const [showAssessment, setShowAssessment] = useState(false);
-
-  // Prevent scroll when blocking overlay is visible
-  useEffect(() => {
-    if (!hasLevel && !showAssessment) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [hasLevel, showAssessment]);
 
   // Boost state
   const [useBoost, setUseBoost] = useState(false);
@@ -353,32 +334,6 @@ export default function MatchForm({
     }
     fetchSelfProfile();
   }, [supabase]);
-
-  const resetForm = () => {
-    setPartnerName("");
-    setOpp1Name("");
-    setOpp2Name("");
-    setWinner("1");
-    setSets([
-      { setNumber: 1, team1Score: "", team2Score: "" },
-      { setNumber: 2, team1Score: "", team2Score: "" },
-    ]);
-    setHasTieBreak(false);
-    setTieBreak({ team1Score: "", team2Score: "" });
-    setSelectedPlayers({
-      partner: null,
-      opp1: null,
-      opp2: null,
-    });
-    setSelectedClubId("");
-    setIsUnregisteredClub(false);
-    setUnregisteredClubName("");
-    setUnregisteredClubCity("");
-    setErrors({});
-    setUseBoost(false);
-    setErrorMessage(null);
-    setWarningMessage(null);
-  };
 
   // ... (addSet, removeSet, updateSet functions retained as is)
 
@@ -865,9 +820,6 @@ export default function MatchForm({
             router.refresh();
           }, 500);
 
-          // Réinitialiser le formulaire pour que si on y retourne il soit vide
-          resetForm();
-
           // Redirection automatique seulement si pas d'avertissement
           setTimeout(() => {
             logger.info("🔄 Redirecting to match history...");
@@ -910,39 +862,6 @@ export default function MatchForm({
 
   return (
     <div className="relative h-full flex flex-col">
-      {/* Assessment Wizard Overlay */}
-      {showAssessment && (
-        <LevelAssessmentWizard
-          forceStart={true}
-          onCancel={() => setShowAssessment(false)}
-          onComplete={() => {
-            setHasLevel(true);
-            setShowAssessment(false);
-            // Refresh parent page to update level status
-            router.refresh();
-          }}
-        />
-      )}
-
-      {/* Blurred Block UI */}
-      {!hasLevel && !showAssessment && (
-        <div className="absolute inset-x-0 inset-y-0 z-[100] rounded-3xl flex flex-col items-center justify-center p-6 pb-20 text-center backdrop-blur-md bg-[#071554]/40 border border-white/10 mt-6" style={{ height: '500px' }}>
-          <div className="bg-padel-green/20 p-4 rounded-full mb-6">
-            <Trophy className="w-10 h-10 text-padel-green" />
-          </div>
-          <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">Évaluation requise</h2>
-          <p className="text-white/80 max-w-md mb-8 text-base font-medium leading-relaxed">
-            Veuillez évaluer votre niveau pour pouvoir enregistrer des matchs et faire évoluer votre classement.
-          </p>
-          <button
-            onClick={() => setShowAssessment(true)}
-            className="px-8 py-4 rounded-2xl bg-padel-green text-[#071554] font-black text-lg shadow-[0_0_30px_rgba(204,255,0,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center min-w-[200px] uppercase tracking-wider"
-          >
-            Évaluer mon niveau
-          </button>
-        </div>
-      )}
-
       {/* Notification de succès */}
       {showSuccess && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -960,26 +879,28 @@ export default function MatchForm({
       )}
 
       {/* Notification d'avertissement */}
-      {warningMessage && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="relative mx-4 max-w-md rounded-2xl bg-amber-500 p-8 shadow-2xl">
-            <div className="text-center">
-              <div className="mb-4 text-6xl">⚠️</div>
-              <h2 className="mb-3 text-2xl font-bold text-white">Attention</h2>
-              <p className="mb-6 text-base text-white/90">{warningMessage}</p>
-              <button
-                onClick={() => {
-                  setWarningMessage(null);
-                  router.push("/match/new?tab=history");
-                }}
-                className="rounded-xl bg-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/30 backdrop-blur-sm"
-              >
-                Compris
-              </button>
+      {
+        warningMessage && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="relative mx-4 max-w-md rounded-2xl bg-amber-500 p-8 shadow-2xl">
+              <div className="text-center">
+                <div className="mb-4 text-6xl">⚠️</div>
+                <h2 className="mb-3 text-2xl font-bold text-white">Attention</h2>
+                <p className="mb-6 text-base text-white/90">{warningMessage}</p>
+                <button
+                  onClick={() => {
+                    setWarningMessage(null);
+                    router.push("/match/new?tab=history");
+                  }}
+                  className="rounded-xl bg-white/20 px-6 py-3 font-semibold text-white transition-all hover:bg-white/30 backdrop-blur-sm"
+                >
+                  Compris
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <MatchErrorModal
         isOpen={!!errorMessage}
@@ -988,31 +909,33 @@ export default function MatchForm({
       />
 
       {/* Message d'information sur la limite de 2 matchs par jour */}
-      {showMatchLimitInfo === true && (
-        <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 text-2xl">ℹ️</div>
-            <div className="flex-1">
-              <p className="text-sm text-white/90">
-                Pour <strong className="font-semibold text-amber-300">garder un classement fiable et équitable</strong>, vous pouvez enregistrer jusqu'à <strong className="font-semibold text-amber-300">2 matchs par jour</strong> qui comptent pour vos points.
-                Cette limite permet d'éviter que des joueurs n'enregistrent un nombre excessif de matchs en une seule journée, ce qui pourrait fausser le classement et rendre la compétition moins équitable pour tous.
-              </p>
-              <p className="mt-2 text-sm text-white/80">
-                Si vous enregistrez un 3<sup>ème</sup> match ou plus dans la même journée, celui-ci sera enregistré dans l'historique mais <strong className="font-semibold text-amber-300">aucun point ne sera ajouté à votre classement</strong>.
-                Les autres joueurs qui n'ont pas atteint la limite de 2 matchs recevront leurs points normalement.
-              </p>
-              <button
-                onClick={handleUnderstoodClick}
-                className="mt-4 rounded-lg bg-amber-500/20 border border-amber-500/40 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-amber-500/30 hover:border-amber-500/60"
-              >
-                Compris
-              </button>
+      {
+        showMatchLimitInfo === true && (
+          <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 text-2xl">ℹ️</div>
+              <div className="flex-1">
+                <p className="text-sm text-white/90">
+                  Pour <strong className="font-semibold text-amber-300">garder un classement fiable et équitable</strong>, vous pouvez enregistrer jusqu'à <strong className="font-semibold text-amber-300">2 matchs par jour</strong> qui comptent pour vos points.
+                  Cette limite permet d'éviter que des joueurs n'enregistrent un nombre excessif de matchs en une seule journée, ce qui pourrait fausser le classement et rendre la compétition moins équitable pour tous.
+                </p>
+                <p className="mt-2 text-sm text-white/80">
+                  Si vous enregistrez un 3<sup>ème</sup> match ou plus dans la même journée, celui-ci sera enregistré dans l'historique mais <strong className="font-semibold text-amber-300">aucun point ne sera ajouté à votre classement</strong>.
+                  Les autres joueurs qui n'ont pas atteint la limite de 2 matchs recevront leurs points normalement.
+                </p>
+                <button
+                  onClick={handleUnderstoodClick}
+                  className="mt-4 rounded-lg bg-amber-500/20 border border-amber-500/40 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-amber-500/30 hover:border-amber-500/60"
+                >
+                  Compris
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
+      <form onSubmit={onSubmit} className="space-y-3 pb-2 transition-all duration-500">
         {/* Lieu du match (Google Maps Direct) */}
         <div>
           <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>

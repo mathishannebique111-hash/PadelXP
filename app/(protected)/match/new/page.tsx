@@ -116,9 +116,10 @@ export default async function NewMatchPage({
             <Suspense fallback={<div className="p-4 text-white">Chargement...</div>}>
               <MatchTabs
                 activeTab={activeTab}
+                initialHasLevel={niveauPadel !== null}
                 recordContent={
                   <MobileCrashErrorBoundary componentName="Formulaire Match">
-                    <MatchForm selfId={user.id} initialHasLevel={niveauPadel !== null} />
+                    <MatchForm selfId={user.id} />
                   </MobileCrashErrorBoundary>
                 }
                 historyContent={
