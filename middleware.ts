@@ -306,6 +306,7 @@ export async function middleware(req: NextRequest) {
     "/api/admin/check",  // Allow check API
     "/api/admin/create", // Allow create API
     "/api/guest/",       // Allow guest API
+    "/api/contact/",     // Allow public contact forms
     "/share",            // Public profile sharing card
     "/_next/",
     "/images/",
