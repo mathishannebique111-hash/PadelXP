@@ -3,7 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Camera, Loader2, Check, Trash2 } from "lucide-react";
+import { Camera as CameraIcon, Loader2, Check, Trash2 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import ProfilePhotoCrop from "@/components/auth/ProfilePhotoCrop";
 
 export default function ProfilePhotoUpload() {
@@ -259,8 +261,49 @@ export default function ProfilePhotoUpload() {
     }
   };
 
-  const handleClick = () => {
-    fileInputRef.current?.click();
+  const handleClick = async () => {
+    // SOLUTION ANDROID PHOTO PICKER : Utiliser le plugin natif Capacitor sur Android uniquement
+    // Cela évite de demander la permission READ_MEDIA_IMAGES qui est très restrictive sur Google Play
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+      try {
+        const photo = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false, // On garde notre propre modal de recadrage pour la cohérence UI
+          resultType: CameraResultType.Uri,
+          source: CameraSource.Photos, // Source = Galerie
+          promptLabelHeader: "Ma photo",
+          promptLabelPhoto: "Choisir dans la galerie",
+          promptLabelPicture: "Prendre une photo"
+        });
+
+        if (photo.webPath) {
+          // Récupérer le blob de l'image sélectionnée
+          const response = await fetch(photo.webPath);
+          const blob = await response.blob();
+
+          setError(null);
+          setUploadSuccess(false);
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const imageSrc = reader.result as string;
+            setImageToCrop(imageSrc);
+            setShowCropModal(true);
+          };
+          reader.readAsDataURL(blob);
+        }
+      } catch (err: any) {
+        // Ne pas afficher d'erreur si l'utilisateur a simplement annulé
+        if (err.message !== "User cancelled photos app") {
+          console.error("[ProfilePhotoUpload] Erreur Capacitor Camera:", err);
+          setError("Impossible d'ouvrir la galerie");
+        }
+      }
+    } else {
+      // COMPORTEMENT ORIGINAL POUR IOS / WEB / AUTRES :
+      // On utilise l'input file standard qui fonctionne très bien sur iOS
+      fileInputRef.current?.click();
+    }
   };
 
   const handleDeleteClick = () => {
@@ -364,7 +407,7 @@ export default function ProfilePhotoUpload() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-                <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-white/40" />
+                <CameraIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white/40" />
               </div>
             )}
           </div>
@@ -415,7 +458,7 @@ export default function ProfilePhotoUpload() {
                 </>
               ) : (
                 <>
-                  <Camera className="w-4 h-4" />
+                  <CameraIcon className="w-4 h-4" />
                   <span>{avatarUrl ? "Modifier la photo" : "Ajouter une photo"}</span>
                 </>
               )}
