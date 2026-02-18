@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Sparkles, Trophy, Award, TrendingUp, Users, ArrowRight, Loader2, ArrowLeft } from "lucide-react";
 import { createPremiumCheckoutSession } from "@/app/actions/premium";
 import { useAppleIAP } from "@/lib/hooks/useAppleIAP";
@@ -137,13 +138,16 @@ function PremiumContent() {
                     <div className="p-[1px] rounded-2xl bg-gradient-to-r from-amber-500/30 via-yellow-500/30 to-amber-500/30 w-full mb-3">
                         <div className="bg-slate-900/90 backdrop-blur-xl rounded-[15px] p-4 border border-white/5 flex flex-col gap-3 items-center">
 
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-3xl font-black text-white">
-                                    {isApp ? (product?.pricing?.price || "...") : "4.99€"}
-                                </span>
-                                {(!isApp || !product?.pricing?.price) && (
-                                    <span className="text-sm font-medium text-slate-500">/mois</span>
-                                )}
+                            <div className="flex flex-col items-center gap-0.5">
+                                <span className="text-[10px] uppercase font-black tracking-widest text-amber-500/80">ABONNEMENT MENSUEL</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl font-black text-white">
+                                        {isApp ? (product?.pricing?.price || "...") : "4.99€"}
+                                    </span>
+                                    {(!isApp || !product?.pricing?.price) && (
+                                        <span className="text-sm font-medium text-slate-500">/mois</span>
+                                    )}
+                                </div>
                             </div>
 
                             <button
@@ -158,25 +162,35 @@ function PremiumContent() {
                                     </>
                                 ) : (
                                     <>
-                                        <span>JE VEUX Y ACCÉDER</span>
+                                        <span>DÉMARRER MON PASS PREMIUM</span>
                                         <ArrowRight className="w-5 h-5" />
                                     </>
                                 )}
                             </button>
 
-                            {/* Restore Button */}
-                            {isApp && (
-                                <button
-                                    onClick={restorePurchases}
-                                    className="text-[10px] text-slate-500 font-medium underline decoration-slate-700 underline-offset-2 hover:text-slate-300 transition-colors"
-                                >
-                                    Déjà membre ? Restaurer mes achats
-                                </button>
-                            )}
+                            {/* Restore and Legal Buttons */}
+                            <div className="flex flex-col items-center gap-2 mt-1">
+                                {isApp && (
+                                    <button
+                                        onClick={restorePurchases}
+                                        className="text-[10px] text-slate-500 font-medium underline decoration-slate-700 underline-offset-2 hover:text-slate-300 transition-colors"
+                                    >
+                                        Déjà membre ? Restaurer mes achats
+                                    </button>
+                                )}
+                                <div className="flex items-center gap-3">
+                                    <Link href="/player/terms" className="text-[9px] text-slate-600 hover:text-slate-400 underline underline-offset-2">
+                                        Conditions d'utilisation
+                                    </Link>
+                                    <Link href="/player/privacy" className="text-[9px] text-slate-600 hover:text-slate-400 underline underline-offset-2">
+                                        Confidentialité
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <p className="text-[9px] text-slate-600 text-center font-medium">
-                        Sans engagement • Annulation à tout moment
+                        Renouvellement automatique de 4.99€/mois • Annulation à tout moment dans iTunes
                     </p>
                 </div>
 

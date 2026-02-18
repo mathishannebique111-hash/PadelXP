@@ -10,15 +10,31 @@ import { createClient } from "@/lib/supabase/client";
 import { PushNotificationsService } from "@/lib/notifications/push-notifications";
 import { showToast } from "@/components/ui/Toast";
 
+import { useAppleIAP } from "@/lib/hooks/useAppleIAP";
+import { CreditCard } from "lucide-react";
+
 export default function SettingsContent() {
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const supabase = createClient();
+  const { isApp, manageSubscriptions } = useAppleIAP();
 
   useEffect(() => {
-    const checkNotificationStatus = async () => {
+    const checkUserStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Check premium status
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_premium")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.is_premium) {
+        setIsPremium(true);
+      }
 
       // Check if user has a push token recorded
       const { data: token } = await supabase
@@ -32,7 +48,7 @@ export default function SettingsContent() {
       }
     };
 
-    checkNotificationStatus();
+    checkUserStatus();
   }, [supabase]);
 
   const handleEnableNotifications = async () => {
@@ -140,6 +156,30 @@ export default function SettingsContent() {
             ))}
           </div>
         </div>
+
+        {/* Section Abonnement (Apple Compliance) */}
+        {isApp && isPremium && (
+          <div className="mt-8 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider ml-2 mb-2">
+              Abonnement
+            </h3>
+            <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/5 backdrop-blur-sm">
+              <button
+                onClick={manageSubscriptions}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors active:bg-white/10 text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <CreditCard className="w-6 h-6 text-amber-400" />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-white">Gérer mon Pass Premium</span>
+                    <span className="text-[10px] text-gray-400 font-normal">Annuler ou modifier sur l'App Store</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Déconnexion */}
         <div className="mt-8">

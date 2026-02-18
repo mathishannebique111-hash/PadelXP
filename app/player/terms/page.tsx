@@ -27,7 +27,7 @@ export default function PlayerTermsPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Article 1 - Objet et champ d'application</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Les présentes Conditions Générales d'Utilisation (CGU) régissent l'utilisation gratuite
+                Les présentes Conditions Générales d'Utilisation (CGU) régissent l'utilisation
                 de la plateforme PadelXP en tant que joueur. PadelXP est une solution destinée aux
                 complexes de padel pour gérer les leaderboards, classements et ligues.
               </p>
@@ -36,34 +36,31 @@ export default function PlayerTermsPage() {
                 présentes CGU. Si vous n'acceptez pas ces conditions, vous ne devez pas utiliser le service.
               </p>
               <p>
-                <strong>Important :</strong> L'utilisation de PadelXP en tant que joueur est entièrement
-                <strong className="text-emerald-300"> gratuite</strong>. Aucun paiement ne vous sera demandé.
+                <strong>Important :</strong> L'utilisation de base de PadelXP en tant que joueur est
+                <strong className="text-emerald-300"> gratuite</strong>. Toutefois, des fonctionnalités
+                avancées (Pass Premium) sont disponibles via un abonnement payant (voir Article 15).
               </p>
             </div>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">Article 2 - Description du service gratuit</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Article 2 - Description du service</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                En tant que joueur, PadelXP vous offre gratuitement l'accès aux fonctionnalités suivantes :
+                En tant que joueur, PadelXP vous offre l'accès aux fonctionnalités suivantes :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>Consultation des classements et leaderboards de votre club</li>
-                <li>Enregistrement de vos matchs de padel</li>
-                <li>Suivi de vos statistiques de jeu (victoires, défaites, points, classement)</li>
-                <li>Consultation et déblocage de badges</li>
-                <li>Participation aux défis et compétitions organisés par votre club</li>
-                <li>Consultation de l'historique de vos matchs</li>
-                <li>Possibilité de laisser un avis sur votre club</li>
+                <li>Consultation des classements et leaderboards de votre club (Gratuit)</li>
+                <li>Enregistrement de vos matchs de padel (Gratuit)</li>
+                <li>Suivi de vos statistiques de jeu (Gratuit)</li>
+                <li>Consultation et déblocage de badges de base (Gratuit)</li>
+                <li>Participation aux défis publics de votre club (Gratuit)</li>
+                <li>Consulter l'historique de vos matchs (Gratuit)</li>
+                <li>Statistiques avancées, badges exclusifs et défis Premium (Payant - Pass Premium)</li>
               </ul>
               <p>
-                Le service est accessible via un navigateur web. Une connexion internet est nécessaire
+                Le service est accessible via un navigateur web ou l'application mobile. Une connexion internet est nécessaire
                 pour utiliser la plateforme.
-              </p>
-              <p className="bg-emerald-500/10 border border-emerald-400/30 rounded-lg p-4 mt-4">
-                <strong className="text-emerald-300">✓ Service gratuit :</strong> Aucun abonnement,
-                aucun paiement requis. Votre accès à la plateforme en tant que joueur est entièrement gratuit.
               </p>
             </div>
           </section>
@@ -327,7 +324,41 @@ export default function PlayerTermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-white mb-4">Article 14 - Dispositions diverses</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Article 15 - Pass Premium (Abonnement auto-renouvelable)</h2>
+            <div className="space-y-4 text-white/80">
+              <p>
+                PadelXP propose une option payante appelée "Pass Premium". Cet abonnement permet au joueur
+                d'accéder à des fonctionnalités exclusives : statistiques avancées, badges exclusifs,
+                défis premium et ligues privées entre amis.
+              </p>
+              <div className="bg-amber-500/10 border border-amber-400/30 rounded-lg p-4">
+                <ul className="list-disc list-inside space-y-2">
+                  <li><strong>Titre :</strong> Pass Premium</li>
+                  <li><strong>Durée :</strong> 1 mois</li>
+                  <li><strong>Prix :</strong> 4,99 € TTC par mois</li>
+                </ul>
+              </div>
+              <p>
+                <strong>Renouvellement automatique :</strong> L'abonnement est auto-renouvelable. Le paiement
+                sera débité de votre compte iTunes (ou via Stripe sur le web) lors de la confirmation de l'achat.
+                L'abonnement se renouvelle automatiquement sauf si le renouvellement automatique est désactivé
+                au moins 24 heures avant la fin de la période en cours.
+              </p>
+              <p>
+                <strong>Gestion de l'abonnement :</strong> Le compte sera débité pour le renouvellement dans les
+                24 heures précédant la fin de la période en cours, au tarif de 4,99 €. Les abonnements peuvent
+                être gérés par l'utilisateur et le renouvellement automatique peut être désactivé en accédant
+                aux paramètres du compte de l'utilisateur après l'achat.
+              </p>
+              <p>
+                <strong>Annulation :</strong> Vous pouvez annuler votre abonnement à tout moment. L'accès aux
+                fonctionnalités Premium continuera jusqu'à la fin de la période de facturation en cours.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-white mb-4">Article 16 - Dispositions diverses</h2>
             <div className="space-y-2 text-white/80">
               <p>
                 <strong>Intégralité de l'accord :</strong> Les présentes CGU, ainsi que notre{" "}

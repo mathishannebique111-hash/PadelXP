@@ -366,7 +366,7 @@ export default function OnboardingWizard() {
 
     if (enableNotifications) {
       setIsActivatingNotification(true);
-      await activePushNotifications();
+      activePushNotifications(); // Lancer en arrière-plan sans bloquer la suite
     }
 
     try {
@@ -387,11 +387,10 @@ export default function OnboardingWizard() {
 
       if (response.ok) {
         // Redirection vers /home avec rafraîchissement forcé
-        router.refresh(); // Invalide le cache client de Next.js
         setTimeout(() => {
-          // Utiliser router.push pour une transition fluide, mais fallback hard reload si besoin
-          window.location.href = "/home";
-        }, 100);
+          // Utiliser router.push pour une transition fluide
+          router.push("/home");
+        }, 300); // Un peu plus de délai pour s'assurer que Supabase a bien persisté
       } else {
         const data = await response.json();
         console.error("Erreur:", data.error);

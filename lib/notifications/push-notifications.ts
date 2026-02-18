@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export class PushNotificationsService {
     private static supabase = createClient();
+    private static isInitialized = false;
 
     static async initialize(userId: string) {
         if (Capacitor.getPlatform() === "web") {
@@ -12,25 +13,41 @@ export class PushNotificationsService {
             return;
         }
 
+        if (this.isInitialized) {
+            console.log("[PushNotifications] Already initialized");
+            return;
+        }
+
         try {
-            // 1. Demander la permission
+            // 1. Demander la permission (Android 13+ et iOS)
             const permission = await PushNotifications.requestPermissions();
 
             if (permission.receive === "granted") {
-                // 2. S'enregistrer auprès du service natif (APNs/FCM)
-                await PushNotifications.register();
+                // Vérifier si nous sommes sur Android pour s'assurer que c'est sécurisé
+                // Dans certains cas, appeler register sans google-services.json peut crash
+                await this.registerNative(userId);
             }
+        } catch (error) {
+            console.error("[PushNotifications] Erreur lors de la demande de permissions:", error);
+        }
+    }
 
-            // 3. Écouter l'enregistrement réussi pour obtenir le token
+    private static async registerNative(userId: string) {
+        try {
+            // 2. Écouter l'enregistrement réussi AVANT d'appeler register
             PushNotifications.addListener("registration", async (token) => {
                 console.log("[PushNotifications] Token reçu:", token.value);
                 await this.saveToken(userId, token.value);
             });
 
-            // 4. Écouter les erreurs
+            // 3. Écouter les erreurs
             PushNotifications.addListener("registrationError", (error) => {
-                console.error("[PushNotifications] Erreur enregistrement:", error.error);
+                console.error("[PushNotifications] Erreur enregistrement natif:", error.error);
             });
+
+            // 4. S'enregistrer auprès du service natif (APNs/FCM)
+            await PushNotifications.register();
+            this.isInitialized = true;
 
             // 5. Écouter les notifications reçues (quand l'app est ouverte)
             PushNotifications.addListener("pushNotificationReceived", (notification) => {
@@ -66,9 +83,8 @@ export class PushNotificationsService {
                     window.location.href = "/player/history";
                 }
             });
-
-        } catch (error) {
-            console.error("[PushNotifications] Erreur initialisation:", error);
+        } catch (e) {
+            console.error("[PushNotifications] Erreur critique lors de l'enregistrement natif (Vérifiez google-services.json):", e);
         }
     }
 
@@ -99,6 +115,7 @@ export class PushNotificationsService {
 
         try {
             await PushNotifications.removeAllListeners();
+            this.isInitialized = false;
         } catch (error) {
             console.error("[PushNotifications] Erreur désenregistrement:", error);
         }

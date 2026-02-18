@@ -225,12 +225,22 @@ export const useAppleIAP = () => {
         }
     }, []);
 
+    const manageSubscriptions = useCallback(() => {
+        if (Capacitor.getPlatform() === 'ios') {
+            window.location.href = "https://apps.apple.com/account/subscriptions";
+        } else {
+            // Pour Android ou Web (si Stripe portal non dispo)
+            toast.info("Veuillez gérer votre abonnement via les paramètres de votre compte.");
+        }
+    }, []);
+
     return {
         isApp,
         loading,
         product,
         purchasePremium,
         restorePurchases,
+        manageSubscriptions,
         debugLogs
     };
 };

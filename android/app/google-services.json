@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "120179944186",
+    "project_id": "padelxp-862ec",
+    "storage_bucket": "padelxp-862ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:120179944186:android:20a32a68ffd7423de7b743",
+        "android_client_info": {
+          "package_name": "eu.padelxp.player"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaoMIeIvCQV3YjMj18V0xkvChCc0DkGoU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
