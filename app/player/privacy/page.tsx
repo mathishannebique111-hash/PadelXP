@@ -31,9 +31,8 @@ export default function PlayerPrivacyPage() {
               </p>
               <p>
                 <strong>PadelXP</strong><br />
-                [Adresse complète]<br />
-                Email : contact@padelxp.com<br />
-                [Téléphone - À compléter]
+                Adresse : 6 rue Pino, 20200 Bastia, France<br />
+                Email : contactpadelxp@gmail.com<br />
               </p>
               <p>
                 Pour toute question relative à la protection de vos données personnelles en tant que
@@ -50,7 +49,7 @@ export default function PlayerPrivacyPage() {
               <h3 className="text-xl font-semibold text-white mt-4 mb-2">2.1. Données d'identification</h3>
               <ul className="list-disc list-inside ml-4 space-y-1">
                 <li><strong>Nom et prénom :</strong> Pour vous identifier dans les classements et matchs</li>
-                <li><strong>Email :</strong> Pour créer votre compte et vous contacter si nécessaire (optionnel pour les joueurs)</li>
+                <li><strong>Email :</strong> Pour créer votre compte et vous contacter si nécessaire</li>
                 <li><strong>Photo de profil :</strong> Si vous choisissez d'en ajouter une (optionnel)</li>
               </ul>
 
@@ -152,8 +151,8 @@ export default function PlayerPrivacyPage() {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">7. Vos droits</h2>
+          <section id="delete-account">
+            <h2 className="text-2xl font-bold text-white mb-4">7. Vos droits et suppression de compte</h2>
             <div className="space-y-2 text-white/80">
               <p>
                 Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez des droits suivants :
@@ -173,7 +172,7 @@ export default function PlayerPrivacyPage() {
                 <li>Accéder à votre espace personnel pour consulter ou modifier vos données</li>
                 <li>Demander l'export de vos données via l'API : <code className="bg-white/10 px-2 py-1 rounded">/api/rgpd/export-data</code></li>
                 <li>Demander la suppression de votre compte via l'API : <code className="bg-white/10 px-2 py-1 rounded">/api/rgpd/delete-account</code></li>
-                <li>Nous contacter par email à contact@padelxp.com</li>
+                <li>Nous contacter par email à contactpadelxp@gmail.com</li>
               </ul>
             </div>
           </section>
@@ -259,8 +258,8 @@ export default function PlayerPrivacyPage() {
 
           <section>
             <p className="text-sm text-white/60 mt-12">
-              Pour toute question relative à cette politique de confidentialité, vous pouvez nous contacter
-              à contact@padelxp.com.
+              Pour toute question relative à cette politique de confidentialité ou pour demander la suppression de vos données, vous pouvez nous contacter
+              à contactpadelxp@gmail.com.
             </p>
           </section>
         </div>

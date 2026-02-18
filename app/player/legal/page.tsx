@@ -37,7 +37,6 @@ export default function PlayerLegalPage() {
             <div className="space-y-2 text-white/80">
               <p><strong>Adresse du siège social :</strong> 6 rue Pino, 20200 Bastia, France</p>
               <p><strong>Email :</strong> contactpadelxp@gmail.com</p>
-              <p><strong>Téléphone :</strong> 06 43 53 10 39</p>
               <p><strong>Directeur de publication :</strong> Mathis Hannebique</p>
             </div>
           </section>
