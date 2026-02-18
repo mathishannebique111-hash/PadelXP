@@ -208,9 +208,9 @@ export async function GET(req: Request) {
                 compatibilityScore: totalScore
             };
         })
-            .filter(s => s !== null && s.compatibilityScore >= 55) // Filtrer les paires peu compatibles (minimum 55%)
+            .filter(s => s !== null && s.compatibilityScore >= 20) // Filtrer les paires peu compatibles (minimum 20% au lieu de 55% pour être plus permissif)
             .sort((a, b) => b!.compatibilityScore - a!.compatibilityScore)
-            .slice(0, 10);
+            .slice(0, 20); // Augmenter la limite à 20 résultats
 
         return NextResponse.json({ suggestions });
     } catch (error) {
