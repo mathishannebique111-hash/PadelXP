@@ -22,7 +22,9 @@ export default function LegalPage() {
             <h2 className="text-2xl font-bold text-white mb-4">1. Identité de l'éditeur</h2>
             <div className="space-y-2 text-white/80">
               <p><strong>Nom :</strong> Mathis Hannebique</p>
-              <p><strong>Statut :</strong> En cours d'immatriculation (micro-entreprise)</p>
+              <p><strong>Statut :</strong> Entrepreneur individuel</p>
+              <p><strong>SIRET :</strong> 10126623700011</p>
+              <p><strong>SIREN :</strong> 101266237</p>
               <p><strong>Directeur de publication :</strong> Mathis Hannebique</p>
             </div>
           </section>

@@ -22,23 +22,23 @@ export default function PlayerLegalPage() {
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">1. Identité de l'entreprise</h2>
             <div className="space-y-2 text-white/80">
-              <p><strong>Dénomination sociale :</strong> [À compléter - PadelXP]</p>
-              <p><strong>Forme juridique :</strong> [À compléter - SARL, SAS, EURL, Auto-entrepreneur, etc.]</p>
-              <p><strong>Numéro SIRET :</strong> [À compléter]</p>
-              <p><strong>Numéro SIREN :</strong> [À compléter - si société]</p>
-              <p><strong>Capital social :</strong> [À compléter - si société]</p>
-              <p><strong>RCS :</strong> [À compléter - numéro d'inscription au RCS]</p>
-              <p><strong>Ville du greffe :</strong> [À compléter]</p>
+              <p><strong>Dénomination sociale :</strong> Mathis Hannebique</p>
+              <p><strong>Forme juridique :</strong> Entrepreneur individuel</p>
+              <p><strong>Numéro SIRET :</strong> 10126623700011</p>
+              <p><strong>Numéro SIREN :</strong> 101266237</p>
+              <p><strong>Code APE :</strong> 63.12Z</p>
+              <p><strong>Date d'immatriculation au RNE :</strong> 16/02/2026</p>
+              <p><strong>Ville du greffe :</strong> Bastia (2B)</p>
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-white mb-4">2. Coordonnées</h2>
             <div className="space-y-2 text-white/80">
-              <p><strong>Adresse du siège social :</strong> [À compléter]</p>
-              <p><strong>Email :</strong> contact@padelxp.com</p>
-              <p><strong>Téléphone :</strong> [À compléter]</p>
-              <p><strong>Directeur de publication :</strong> [À compléter - Nom et prénom]</p>
+              <p><strong>Adresse du siège social :</strong> 6 rue Pino, 20200 Bastia, France</p>
+              <p><strong>Email :</strong> contactpadelxp@gmail.com</p>
+              <p><strong>Téléphone :</strong> 06 43 53 10 39</p>
+              <p><strong>Directeur de publication :</strong> Mathis Hannebique</p>
             </div>
           </section>
 
