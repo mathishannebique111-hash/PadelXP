@@ -169,10 +169,8 @@ export default function PlayerPrivacyPage() {
                 Pour exercer ces droits, vous pouvez :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>Accéder à votre espace personnel pour consulter ou modifier vos données</li>
-                <li>Demander l'export de vos données via l'API : <code className="bg-white/10 px-2 py-1 rounded">/api/rgpd/export-data</code></li>
-                <li>Demander la suppression de votre compte via l'API : <code className="bg-white/10 px-2 py-1 rounded">/api/rgpd/delete-account</code></li>
-                <li>Nous contacter par email à contactpadelxp@gmail.com</li>
+                <li><strong>Via l'application :</strong> Connectez-vous, rendez-vous dans les <strong>"Paramètres"</strong> (icône ⚙️) puis cliquez sur <strong>"Supprimer mon compte"</strong>.</li>
+                <li><strong>Par email :</strong> Contactez-nous à contactpadelxp@gmail.com pour demander la suppression manuelle de vos données.</li>
               </ul>
             </div>
           </section>
