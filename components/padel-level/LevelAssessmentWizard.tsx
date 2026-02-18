@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Save, RefreshCw } from "lucide-react";
 import {
   PADEL_QUESTIONS,
   CATEGORY_INFO,
@@ -13,7 +13,7 @@ import {
 } from "@/lib/padel/levelCalculator";
 import LevelQuestionCard from "./LevelQuestionCard";
 import LevelProgressBar from "./LevelProgressBar";
-import LevelResultCard from "./LevelResultCard";
+import LevelResultContent from "./LevelResultContent";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 
@@ -32,6 +32,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
   >({});
   const [isCompleted, setIsCompleted] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   // Charger la progression sauvegardée au montage et après reconnexion
   useEffect(() => {
@@ -40,7 +42,6 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // PRIORITÉ 1: Charger depuis la DB (source de vérité, persiste après déconnexion)
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("questionnaire_progress")
@@ -59,16 +60,11 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
           if (dbProgress.currentQuestion !== undefined && dbProgress.responses) {
             setCurrentQuestion(dbProgress.currentQuestion);
             setResponses(dbProgress.responses);
-            if (dbProgress.currentQuestion > 0) {
-              // On charge la progression mais on ne déclenche pas setHasStarted(true) auto
-            }
-            // Synchroniser localStorage avec la DB
             localStorage.setItem(`questionnaire_progress_${user.id}`, JSON.stringify(dbProgress));
-            return; // On a trouvé dans la DB, on s'arrête là
+            return;
           }
         }
 
-        // PRIORITÉ 2: Fallback sur localStorage (si pas de données en DB)
         const savedProgress = localStorage.getItem(`questionnaire_progress_${user.id}`);
         if (savedProgress) {
           try {
@@ -76,14 +72,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
             if (parsed.currentQuestion !== undefined && parsed.responses) {
               setCurrentQuestion(parsed.currentQuestion);
               setResponses(parsed.responses);
-              if (parsed.currentQuestion > 0) {
-                // On charge la progression mais on ne déclenche pas setHasStarted(true) auto
-              }
-              // Synchroniser avec la DB si on a trouvé dans localStorage
-              await supabase
-                .from("profiles")
-                .update({ questionnaire_progress: parsed })
-                .eq("id", user.id);
+              await supabase.from("profiles").update({ questionnaire_progress: parsed }).eq("id", user.id);
             }
           } catch (e) {
             console.error("[LevelAssessmentWizard] Erreur parsing localStorage:", e);
@@ -96,7 +85,6 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
 
     loadProgress();
 
-    // Écouter les changements d'authentification pour recharger après reconnexion
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
       if (event === 'SIGNED_IN' && session?.user) {
         loadProgress();
@@ -123,44 +111,24 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
           updatedAt: new Date().toISOString()
         };
 
-        // Sauvegarder dans localStorage (rapide)
         try {
           localStorage.setItem(`questionnaire_progress_${user.id}`, JSON.stringify(progressData));
-        } catch (e) {
-          console.warn("[LevelAssessmentWizard] Erreur localStorage:", e);
-        }
+        } catch (e) { }
 
-        // Sauvegarder dans la DB (persistant - PRIORITAIRE)
-        const { error: dbError } = await supabase
-          .from("profiles")
-          .update({ questionnaire_progress: progressData })
-          .eq("id", user.id);
-
-        if (dbError) {
-          console.error("[LevelAssessmentWizard] Erreur sauvegarde DB:", dbError);
-          // Si la colonne n'existe pas encore, on continue quand même avec localStorage
-        }
-      } catch (error) {
-        console.error("[LevelAssessmentWizard] Erreur sauvegarde progression:", error);
-      }
+        await supabase.from("profiles").update({ questionnaire_progress: progressData }).eq("id", user.id);
+      } catch (error) { }
     };
 
-    // Délai pour éviter trop de sauvegardes
     const timeoutId = setTimeout(saveProgress, 300);
     return () => clearTimeout(timeoutId);
   }, [currentQuestion, responses, hasStarted, supabase]);
 
   // Masquer le logo du club et la navbar quand le questionnaire a commencé
-  // Fonction pour notifier la vue native iOS/Capacitor
   const notifyNativeColor = (color: string) => {
     if (typeof window === 'undefined') return;
-
-    // Méthode 1: WKWebView message handler (iOS Native)
     if ((window as any).webkit?.messageHandlers?.updateSafeAreaColor) {
       (window as any).webkit.messageHandlers.updateSafeAreaColor.postMessage(color);
     }
-
-    // Méthode 2: Capacitor Custom Event
     if ((window as any).Capacitor) {
       try {
         const event = new CustomEvent('updateSafeAreaColor', { detail: { color } });
@@ -173,26 +141,22 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
     if (hasStarted) {
       document.body.classList.add('questionnaire-open');
       document.documentElement.classList.add('questionnaire-open');
-      notifyNativeColor('#020617'); // slate-950
+      notifyNativeColor('#020617');
     } else {
       document.body.classList.remove('questionnaire-open');
       document.documentElement.classList.remove('questionnaire-open');
-      notifyNativeColor('#172554'); // Retour au bleu club par défaut
+      notifyNativeColor('#172554');
     }
 
     return () => {
       document.body.classList.remove('questionnaire-open');
       document.documentElement.classList.remove('questionnaire-open');
-      // On ne remet pas le bleu ici car PlayerSafeAreaColor s'en chargera 
-      // ou le composant parent reprendra le dessus
     };
   }, [hasStarted]);
 
-  // Ne pas cacher le menu hamburger pendant le questionnaire pour mobile
-  // Le menu reste visible et la barre de progression commence en dessous
   const question = PADEL_QUESTIONS[currentQuestion];
   const progress = ((currentQuestion + 1) / PADEL_QUESTIONS.length) * 100;
-  const canGoNext = responses[question.id] !== undefined;
+  const canGoNext = responses[question?.id] !== undefined;
   const canGoBack = currentQuestion > 0;
 
   const handleAnswer = (value: number | number[]) => {
@@ -214,67 +178,116 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
     setCurrentQuestion((prev) => prev - 1);
   };
 
+  const handleRetake = () => {
+    setIsCompleted(false);
+    setCurrentQuestion(0);
+    setResponses({});
+    setResult(null);
+    setIsSaved(false);
+  };
+
+  const handleSaveResult = async () => {
+    if (isSaving || isSaved || !result) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/padel-level/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          niveau: result.niveau,
+          categorie: result.categorie,
+          breakdown: result.breakdown,
+          recommendations: [result.tips.technique, result.tips.tactique, result.tips.mental],
+        }),
+      });
+
+      if (response.ok) {
+        setIsSaved(true);
+
+        // Notifier les autres composants
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("questionnaireCompleted"));
+          window.dispatchEvent(new CustomEvent("profileUpdated"));
+          window.dispatchEvent(new CustomEvent("questionnaireCompleted"));
+
+          try {
+            localStorage.setItem("questionnaireCompleted", "true");
+            setTimeout(() => localStorage.removeItem("questionnaireCompleted"), 1000);
+          } catch (e) { }
+        }
+
+        // Nettoyer la progression sauvegardée
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from("profiles").update({ questionnaire_progress: null }).eq("id", user.id);
+            localStorage.removeItem(`questionnaire_progress_${user.id}`);
+          }
+        } catch (error) {
+          console.error("[LevelAssessmentWizard] Erreur nettoyage progression:", error);
+        }
+
+        // Fermer le wizard après un court délai
+        setTimeout(() => {
+          setIsCompleted(false);
+          setHasStarted(false);
+          setCurrentQuestion(0);
+          setResponses({});
+          setResult(null);
+          if (onComplete) onComplete(result);
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("[LevelAssessmentWizard] Erreur sauvegarde niveau:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const calculateResult = async () => {
     const get = (id: number): number =>
       (responses[id] as number | undefined) ?? 0;
 
     const mappedResponses: AssessmentResponses = {
-      // Technique (Questions 1-7)
-      vitres: get(1), // Gestion des balles après rebond sur la vitre de fond
-      coupsBase: get(2), // Régularité en fond de court
-      service: get(3), // Qualité de votre service
-      volee: get(4), // Niveau à la volée
-      smash: get(5), // Gestion des lobs adverses
-      lobs: get(6), // Qualité et fréquence de vos lobs
-      coupFiable: get(7), // Quel est votre coup le plus fiable sous pression
-      // Tactique (Questions 8-13)
-      transitions: get(8), // Zone de confort et positionnement
-      lectureJeu: get(9), // Anticipation et lecture du jeu
-      communication: get(10), // Communication avec le partenaire
-      tempo: get(11), // Contrôle du tempo
-      strategie: get(12), // Construction des points
-      ratioRisque: get(13), // Votre ratio Risque / Réussite
-      // Expérience (Questions 14-18)
-      passeSportif: get(14), // Quel est votre passé sportif
-      frequence: get(15), // Fréquence de jeu
-      tournois: get(16), // Niveau de tournoi le plus élevé joué
-      resultats: get(17), // Meilleurs résultats
-      classementFFT: get(18), // Votre classement FFT
-      // Physique (Questions 19-20)
-      endurance: get(19), // Endurance sur match long
-      pression: get(20), // Gestion de la pression
-      // Situations (Questions 21-22)
-      doublesVitres: get(21), // Balles en double vitre
-      adversaireSup: get(22), // Contre niveau supérieur
+      vitres: get(1),
+      coupsBase: get(2),
+      service: get(3),
+      volee: get(4),
+      smash: get(5),
+      lobs: get(6),
+      coupFiable: get(7),
+      transitions: get(8),
+      lectureJeu: get(9),
+      communication: get(10),
+      tempo: get(11),
+      strategie: get(12),
+      ratioRisque: get(13),
+      passeSportif: get(14),
+      frequence: get(15),
+      tournois: get(16),
+      resultats: get(17),
+      classementFFT: get(18),
+      endurance: get(19),
+      pression: get(20),
+      doublesVitres: get(21),
+      adversaireSup: get(22),
     };
 
-    // Récupérer le profil utilisateur pour obtenir le côté préféré
     let userProfile: { preferred_side?: "left" | "right" | "indifferent" | null } | undefined;
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("preferred_side")
-          .eq("id", user.id)
-          .maybeSingle();
-
+        const { data: profile } = await supabase.from("profiles").select("preferred_side").eq("id", user.id).maybeSingle();
         if (profile) {
-          userProfile = {
-            preferred_side: profile.preferred_side as "left" | "right" | "indifferent" | null,
-          };
+          userProfile = { preferred_side: profile.preferred_side as "left" | "right" | "indifferent" | null };
         }
       }
-    } catch (error) {
-      console.error("[LevelAssessmentWizard] Erreur récupération profil:", error);
-      // Continuer sans le profil si erreur
-    }
+    } catch (error) { }
 
     const calculatedResult = calculatePadelLevel(mappedResponses, userProfile);
     setResult(calculatedResult);
     setIsCompleted(true);
-
-    if (onComplete) onComplete(calculatedResult);
   };
 
   if (!hasStarted) {
@@ -316,41 +329,6 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
     );
   }
 
-  if (isCompleted && result) {
-    return (
-      <LevelResultCard
-        result={result}
-        onRetake={() => {
-          setIsCompleted(false);
-          setCurrentQuestion(0);
-          setResponses({});
-        }}
-        onSaved={async () => {
-          // Nettoyer la progression sauvegardée après sauvegarde du niveau
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              // Supprimer la progression de la DB
-              await supabase
-                .from("profiles")
-                .update({ questionnaire_progress: null })
-                .eq("id", user.id);
-              // Supprimer de localStorage
-              localStorage.removeItem(`questionnaire_progress_${user.id}`);
-            }
-          } catch (error) {
-            console.error("[LevelAssessmentWizard] Erreur nettoyage progression:", error);
-          }
-          // Fermer le wizard après sauvegarde
-          setIsCompleted(false);
-          setHasStarted(false);
-          setCurrentQuestion(0);
-          setResponses({});
-        }}
-      />
-    );
-  }
-
   return (
     <motion.div
       initial={{ height: "auto", opacity: 0 }}
@@ -359,7 +337,6 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
       className="fixed inset-0 z-[100000] flex flex-col bg-slate-950 overflow-hidden touch-none"
       style={{ height: '100dvh', overscrollBehavior: 'none' }}
     >
-      {/* Style global pour masquer le logo du club et la bar de nav */}
       <style jsx global>{`
         body.questionnaire-open {
           overflow: hidden !important;
@@ -384,10 +361,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
         }
       `}</style>
 
-      {/* Header fixe - mobile first, commence en haut de l'écran */}
+      {/* Header fixe */}
       <div className="sticky z-20 px-4 pt-6 pb-2 flex-shrink-0" style={{ paddingTop: 'calc(var(--sat, 0px) + 1.5rem)' }}>
-
-        {/* Logo spécifique au questionnaire - Forcé au dessus du bloc noir */}
         <div className="flex justify-center mb-4 relative z-[100001]">
           <div className="relative w-32 h-10">
             <Image
@@ -395,9 +370,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               alt="PadelXP"
               fill
               className="object-contain"
-              style={{
-                filter: 'brightness(0) invert(1)' // Force le logo en blanc pour la visibilité sur fond noir sans l'effet doré
-              }}
+              style={{ filter: 'brightness(0) invert(1)' }}
               priority
             />
           </div>
@@ -405,115 +378,146 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
 
         <div className="max-w-3xl mx-auto">
           <LevelProgressBar
-            progress={progress}
-            currentStep={currentQuestion + 1}
+            progress={isCompleted ? 100 : progress}
+            currentStep={isCompleted ? PADEL_QUESTIONS.length : currentQuestion + 1}
             totalSteps={PADEL_QUESTIONS.length}
           />
 
-          <div className="mt-2.5 flex items-center justify-center gap-2">
-            {(() => {
-              const CategoryIcon = CATEGORY_INFO[question.category].Icon;
-              return <CategoryIcon size={12} className="text-blue-400 flex-shrink-0" />;
-            })()}
-            <span className="text-[9px] uppercase tracking-[0.2em] font-black text-blue-500/80">
-              {CATEGORY_INFO[question.category].label}
-            </span>
-          </div>
+          {!isCompleted && (
+            <div className="mt-2.5 flex items-center justify-center gap-2">
+              {(() => {
+                const CategoryIcon = CATEGORY_INFO[question.category].Icon;
+                return <CategoryIcon size={12} className="text-blue-400 flex-shrink-0" />;
+              })()}
+              <span className="text-[9px] uppercase tracking-[0.2em] font-black text-blue-500/80">
+                {CATEGORY_INFO[question.category].label}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Zone pour la question - entre la barre de progression et la barre fixe du bas */}
-      <div
-        className="flex-1 overflow-y-auto px-4 py-1 flex items-start justify-center"
-        style={{
-          minHeight: 0,
-        }}
-      >
-        <div className="w-full max-w-3xl mx-auto">
+      {/* Contenu - Questions ou Résultats */}
+      <div className="flex-1 overflow-y-auto px-4 py-1 flex items-start justify-center" style={{ minHeight: 0 }}>
+        <div className="w-full max-w-3xl mx-auto pb-32">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={currentQuestion}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{
-                duration: 0.3,
-                ease: [0.4, 0, 0.2, 1]
-              }}
-              className="w-full"
-            >
-              <LevelQuestionCard
-                question={question}
-                value={responses[question.id]}
-                onChange={handleAnswer}
-              />
-            </motion.div>
+            {!isCompleted ? (
+              <motion.div
+                key={currentQuestion}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="w-full"
+              >
+                <LevelQuestionCard
+                  question={question}
+                  value={responses[question.id]}
+                  onChange={handleAnswer}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="result"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full mt-4"
+              >
+                <LevelResultContent result={result} />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
 
-      {/* Boutons fixés en bas - mobile-first, taille augmentée pour "Suivant" */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-3 flex-shrink-0 pb-10 sm:pb-12">
-        <div className="flex gap-2 sm:gap-3 max-w-3xl mx-auto w-full">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.95 }}
-            onClick={handleBack}
-            disabled={!canGoBack}
-            className="px-3 py-2 rounded-lg sm:rounded-xl border border-gray-700 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center min-w-[40px] min-h-[40px]"
-          >
-            <ChevronLeft size={16} />
-            <span className="hidden sm:inline ml-2">Retour</span>
-          </motion.button>
+      {/* Boutons Footer */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-3 flex-shrink-0 pb-10 sm:pb-12 bg-slate-950/80 backdrop-blur-md border-t border-white/5">
+        {!isCompleted ? (
+          <div className="max-w-3xl mx-auto w-full">
+            <div className="flex gap-2 sm:gap-3">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={handleBack}
+                disabled={!canGoBack}
+                className="px-3 py-2 rounded-lg sm:rounded-xl border border-gray-700 text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center min-w-[40px] min-h-[40px]"
+              >
+                <ChevronLeft size={16} />
+                <span className="hidden sm:inline ml-2">Précédent</span>
+              </motion.button>
 
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.95 }}
-            onClick={handleNext}
-            disabled={!canGoNext}
-            className="flex-1 py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
-          >
-            {currentQuestion === PADEL_QUESTIONS.length - 1 ? (
-              <>
-                <span>Voir mon niveau</span>
-                <Check size={18} />
-              </>
-            ) : (
-              <>
-                <span>Suivant</span>
-                <ChevronRight size={18} />
-              </>
-            )}
-          </motion.button>
-        </div>
-        <button
-          type="button"
-          onClick={async () => {
-            // Sauvegarder la progression avant de quitter
-            try {
-              const { data: { user } } = await supabase.auth.getUser();
-              if (user) {
-                const progressData = {
-                  currentQuestion,
-                  responses,
-                  updatedAt: new Date().toISOString()
-                };
-                localStorage.setItem(`questionnaire_progress_${user.id}`, JSON.stringify(progressData));
-                await supabase
-                  .from("profiles")
-                  .update({ questionnaire_progress: progressData })
-                  .eq("id", user.id);
-              }
-            } catch (error) {
-              console.error("[LevelAssessmentWizard] Erreur sauvegarde avant quitter:", error);
-            }
-            setHasStarted(false);
-            if (onCancel) onCancel();
-          }}
-          className="mt-2 w-full text-[10px] text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200 py-1"
-        >
-          Poursuivre plus tard
-        </button>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={handleNext}
+                disabled={!canGoNext}
+                className="flex-1 py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
+              >
+                {currentQuestion === PADEL_QUESTIONS.length - 1 ? (
+                  <>
+                    <span>Voir mon niveau</span>
+                    <Check size={18} />
+                  </>
+                ) : (
+                  <>
+                    <span>Suivant</span>
+                    <ChevronRight size={18} />
+                  </>
+                )}
+              </motion.button>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (user) {
+                    const progressData = { currentQuestion, responses, updatedAt: new Date().toISOString() };
+                    localStorage.setItem(`questionnaire_progress_${user.id}`, JSON.stringify(progressData));
+                    await supabase.from("profiles").update({ questionnaire_progress: progressData }).eq("id", user.id);
+                  }
+                } catch (error) { }
+                setHasStarted(false);
+                if (onCancel) onCancel();
+              }}
+              className="mt-3 w-full text-[10px] text-gray-400 underline decoration-dotted underline-offset-2 active:text-gray-200"
+            >
+              Poursuivre plus tard
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto w-full">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSaveResult}
+              disabled={isSaving || isSaved}
+              className="w-full sm:flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-900/40"
+            >
+              {isSaved ? (
+                <>
+                  <Check size={18} />
+                  <span>NIVEAU ENREGISTRÉ</span>
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  <span>{isSaving ? "CHARGEMENT..." : "ENREGISTRER MON NIVEAU"}</span>
+                </>
+              )}
+            </motion.button>
+
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRetake}
+              className="w-full sm:w-auto px-6 py-4 rounded-xl border border-white/10 text-white/60 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-white/5 transition-colors"
+            >
+              <RefreshCw size={14} />
+              <span>Refaire</span>
+            </motion.button>
+          </div>
+        )}
       </div>
     </motion.div>
   );
