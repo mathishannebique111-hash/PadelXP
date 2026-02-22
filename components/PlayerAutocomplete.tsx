@@ -276,7 +276,6 @@ export default function PlayerAutocomplete({
                   onChange={(e) => setGuestFirstName(e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   placeholder="Prénom"
-                  autoFocus
                 />
               </div>
               <div>
@@ -423,7 +422,6 @@ export default function PlayerAutocomplete({
                     onChange={(e) => setGuestFirstName(e.target.value)}
                     className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                     placeholder="Prénom"
-                    autoFocus
                   />
                 </div>
                 <div>
