@@ -1329,50 +1329,80 @@ export default function MatchForm({
                   <Search size={24} className="text-padel-green" />
                   {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
                 </h3>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm text-white/50 font-medium">
-                    Recherchez par prénom et nom
-                  </p>
-                  <select
-                    value={activeSlot ? scopes[activeSlot] : 'global'}
-                    onChange={(e) => {
-                      if (!activeSlot) return;
-                      const newScope = e.target.value as 'global' | 'guest' | 'anonymous';
+                <p className="text-sm text-white/50 font-medium mt-1">
+                  Recherchez par prénom et nom
+                </p>
+              </div>
 
-                      if (newScope === 'anonymous') {
-                        // Vérifier limite 1 anonyme
-                        const hasAnonymous = Object.values(selectedPlayers).some(
-                          (p) => p && p.display_name === 'Joueur Anonyme'
-                        );
-                        if (hasAnonymous) {
-                          alert("Vous avez déjà choisi un joueur anonyme");
-                          e.target.value = scopes[activeSlot]; // Reset select
-                          return;
+              {/* ====== FILTRES GLOBAL / INVITÉ / ANONYME ====== */}
+              <div className="flex gap-1 mb-4 bg-white/5 rounded-xl p-1 border border-white/10">
+                {([
+                  { key: 'global' as const, label: 'Global', icon: '🌐' },
+                  { key: 'guest' as const, label: 'Invité', icon: '✉️' },
+                  { key: 'anonymous' as const, label: 'Anonyme', icon: '👤' },
+                ] as const).map(({ key, label, icon }) => {
+                  const currentScope = activeSlot ? scopes[activeSlot] : 'global';
+                  const isActive = currentScope === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        if (!activeSlot) return;
+
+                        // 1. Fermer le clavier IMMÉDIATEMENT
+                        const wasKeyboardOpen = document.activeElement instanceof HTMLInputElement ||
+                          document.activeElement instanceof HTMLTextAreaElement;
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
                         }
-                        const anonymousPlayer: PlayerSearchResult = {
-                          id: crypto.randomUUID(),
-                          first_name: 'Joueur',
-                          last_name: 'Anonyme',
-                          display_name: 'Joueur Anonyme',
-                          type: 'guest',
-                          email: null,
+
+                        // 2. Fonction qui fait le vrai changement de scope
+                        const doScopeChange = () => {
+                          if (key === 'anonymous') {
+                            const hasAnonymous = Object.values(selectedPlayers).some(
+                              (p) => p && p.display_name === 'Joueur Anonyme'
+                            );
+                            if (hasAnonymous) {
+                              alert("Vous avez déjà choisi un joueur anonyme");
+                              return;
+                            }
+                            const anonymousPlayer: PlayerSearchResult = {
+                              id: crypto.randomUUID(),
+                              first_name: 'Joueur',
+                              last_name: 'Anonyme',
+                              display_name: 'Joueur Anonyme',
+                              type: 'guest',
+                              email: null,
+                            };
+                            setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                            if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                            else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                            else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                            setIsSearchModalOpen(false);
+                          } else {
+                            setScopes(prev => ({ ...prev, [activeSlot]: key }));
+                          }
                         };
-                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
-                        if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
-                        else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
-                        else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
-                        setIsSearchModalOpen(false);
-                      } else {
-                        setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
-                      }
-                    }}
-                    className="text-xs rounded-lg bg-white/10 text-white border border-white/20 px-2 py-1.5 font-bold"
-                  >
-                    <option value="global">🌐 Global</option>
-                    <option value="guest">✉️ Invité</option>
-                    <option value="anonymous">👤 Anonyme</option>
-                  </select>
-                </div>
+
+                        // 3. Si le clavier était ouvert, attendre qu'il se ferme (300ms)
+                        //    Sinon, exécuter immédiatement
+                        if (wasKeyboardOpen) {
+                          setTimeout(doScopeChange, 350);
+                        } else {
+                          doScopeChange();
+                        }
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${isActive
+                        ? 'bg-white text-[#071554] shadow-md'
+                        : 'text-white/60 hover:bg-white/10 hover:text-white'
+                        }`}
+                    >
+                      <span>{icon}</span>
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="space-y-6">
