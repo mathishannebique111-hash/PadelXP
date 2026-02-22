@@ -1304,11 +1304,23 @@ export default function MatchForm({
       {/* Search Modal Portal */}
       {
         isSearchModalOpen && typeof document !== 'undefined' && createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-md bg-[#071554] rounded-3xl border border-white/20 shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={(e) => {
+              // Fermer la modal si clic sur le backdrop (pas le contenu)
+              if (e.target === e.currentTarget) {
+                setIsSearchModalOpen(false);
+              }
+            }}
+          >
+            <div
+              className="w-full max-w-md bg-[#071554] rounded-3xl border border-white/20 shadow-2xl p-6 relative animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
+                type="button"
                 onClick={() => setIsSearchModalOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors z-10"
               >
                 <X size={24} />
               </button>
@@ -1319,63 +1331,58 @@ export default function MatchForm({
                   {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
                 </h3>
                 <p className="text-sm text-white/50 font-medium">
-                  Recherchez par prénom et nom
+                  Recherchez par pr&eacute;nom et nom
                 </p>
               </div>
 
               {/* ====== FILTRES GLOBAL / INVITÉ / ANONYME ====== */}
               <div className="flex gap-1 mb-4 bg-white/5 rounded-xl p-1 border border-white/10">
-                {[
+                {([
                   { key: 'global' as const, label: 'Global', icon: <Globe size={14} /> },
-                  { key: 'guest' as const, label: 'Invité', icon: <Mail size={14} /> },
-                  { key: 'anonymous' as const, label: 'Anonyme', icon: <span className="text-sm">👤</span> },
-                ].map(({ key, label, icon }) => {
+                  { key: 'guest' as const, label: 'Invit\u00e9', icon: <Mail size={14} /> },
+                  { key: 'anonymous' as const, label: 'Anonyme', icon: <span className="text-sm">{'\ud83d\udc64'}</span> },
+                ] as const).map(({ key, label, icon }) => {
                   const currentScope = activeSlot ? scopes[activeSlot] : 'global';
                   const isActive = currentScope === key;
                   return (
                     <button
                       key={key}
                       type="button"
-                      onClick={() => {
-                        // Forcer la fermeture du clavier sur mobile
-                        if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Fermer le clavier
+                        if (document.activeElement instanceof HTMLElement) {
                           document.activeElement.blur();
                         }
-                        // Fix Safari iOS : forcer le recalcul du viewport après fermeture du clavier
-                        if (typeof window !== 'undefined') {
-                          setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 50);
-                        }
 
-                        if (activeSlot) {
-                          // Si mode anonyme, vérifier s'il n'y en a pas déjà un
-                          if (key === 'anonymous') {
-                            const hasAnonymous = Object.values(selectedPlayers).some(
-                              (p) => p && p.type === 'guest' && p.last_name === 'Anonyme'
-                            );
-                            if (hasAnonymous) {
-                              alert("Vous avez déjà choisi un joueur anonyme");
-                              return; // Bloque la sélection
-                            }
+                        if (!activeSlot) return;
+
+                        if (key === 'anonymous') {
+                          // V\u00e9rifier limite 1 anonyme
+                          const hasAnonymous = Object.values(selectedPlayers).some(
+                            (p) => p && p.display_name === 'Joueur Anonyme'
+                          );
+                          if (hasAnonymous) {
+                            alert("Vous avez d\u00e9j\u00e0 choisi un joueur anonyme");
+                            return;
                           }
-
+                          const anonymousPlayer: PlayerSearchResult = {
+                            id: crypto.randomUUID(),
+                            first_name: 'Joueur',
+                            last_name: 'Anonyme',
+                            display_name: 'Joueur Anonyme',
+                            type: 'guest',
+                            email: null,
+                          };
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                          if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                          else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                          else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                          setIsSearchModalOpen(false);
+                        } else {
                           setScopes(prev => ({ ...prev, [activeSlot]: key }));
-
-                          // Si mode anonyme, sélectionner directement un joueur fantôme
-                          if (key === 'anonymous') {
-                            const anonymousPlayer: PlayerSearchResult = {
-                              id: crypto.randomUUID(),
-                              first_name: 'Joueur',
-                              last_name: 'Anonyme',
-                              display_name: 'Joueur Anonyme',
-                              type: 'guest',
-                              email: null,
-                            };
-                            setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
-                            if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
-                            else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
-                            else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
-                            setIsSearchModalOpen(false);
-                          }
                         }
                       }}
                       className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${isActive
@@ -1391,33 +1398,30 @@ export default function MatchForm({
               </div>
 
               <div className="space-y-6">
-                {/* Zone de contenu selon le scope sélectionné */}
-                {activeSlot && scopes[activeSlot] !== 'anonymous' && (
-                  <div className="relative">
-                    <PlayerAutocomplete
-                      key={`autocomplete-${activeSlot}-${activeSlot ? scopes[activeSlot] : 'global'}`}
-                      value={
-                        activeSlot === 'partner' ? partnerName :
-                          activeSlot === 'opp1' ? opp1Name :
-                            opp2Name
+                {/* PlayerAutocomplete - toujours mont\u00e9, masqu\u00e9 via CSS si scope anonyme */}
+                <div className={activeSlot && scopes[activeSlot] === 'anonymous' ? 'hidden' : 'relative'}>
+                  <PlayerAutocomplete
+                    value={
+                      activeSlot === 'partner' ? partnerName :
+                        activeSlot === 'opp1' ? opp1Name :
+                          opp2Name
+                    }
+                    onChange={(val) => {
+                      if (activeSlot === 'partner') setPartnerName(val);
+                      else if (activeSlot === 'opp1') setOpp1Name(val);
+                      else if (activeSlot === 'opp2') setOpp2Name(val);
+                    }}
+                    onSelect={(player) => {
+                      if (activeSlot) {
+                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                        setIsSearchModalOpen(false);
                       }
-                      onChange={(val) => {
-                        if (activeSlot === 'partner') setPartnerName(val);
-                        else if (activeSlot === 'opp1') setOpp1Name(val);
-                        else if (activeSlot === 'opp2') setOpp2Name(val);
-                      }}
-                      onSelect={(player) => {
-                        if (activeSlot) {
-                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
-                          setIsSearchModalOpen(false);
-                        }
-                      }}
-                      searchScope={activeSlot ? scopes[activeSlot] as 'club' | 'global' | 'guest' : 'global'}
-                      placeholder="Michel Dupont..."
-                      inputClassName="h-[46px] rounded-xl text-lg font-bold"
-                    />
-                  </div>
-                )}
+                    }}
+                    searchScope={activeSlot ? (scopes[activeSlot] === 'anonymous' ? 'global' : scopes[activeSlot]) as 'club' | 'global' | 'guest' : 'global'}
+                    placeholder="Michel Dupont..."
+                    inputClassName="h-[46px] rounded-xl text-lg font-bold"
+                  />
+                </div>
 
                 {activeSlot && selectedPlayers[activeSlot] && (
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
@@ -1427,10 +1431,11 @@ export default function MatchForm({
                       </div>
                       <div>
                         <p className="text-white font-bold">{selectedPlayers[activeSlot]?.display_name}</p>
-                        <p className="text-white/40 text-xs uppercase tracking-tighter">{selectedPlayers[activeSlot]?.type === 'guest' ? 'Invité' : 'Inscrit'}</p>
+                        <p className="text-white/40 text-xs uppercase tracking-tighter">{selectedPlayers[activeSlot]?.type === 'guest' ? 'Invit\u00e9' : 'Inscrit'}</p>
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => {
                         if (activeSlot) {
                           setSelectedPlayers(prev => ({ ...prev, [activeSlot]: null }));
@@ -1449,6 +1454,7 @@ export default function MatchForm({
 
               <div className="mt-8 flex gap-3">
                 <button
+                  type="button"
                   onClick={() => setIsSearchModalOpen(false)}
                   className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors"
                 >
