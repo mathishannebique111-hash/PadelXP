@@ -1404,7 +1404,7 @@ export default function MatchForm({
               </div>
 
               {/* ====== FILTRES GLOBAL / INVITÉ / ANONYME ====== */}
-              <div className="flex gap-1 mb-4 bg-white/5 rounded-xl p-1 border border-white/10">
+              <div className="flex gap-1 mb-4 bg-white/5 rounded-xl p-1 border border-white/10" role="tablist">
                 {([
                   { key: 'global' as const, label: 'Global', icon: '🌐' },
                   { key: 'guest' as const, label: 'Invité', icon: '✉️' },
@@ -1412,51 +1412,66 @@ export default function MatchForm({
                 ] as const).map(({ key, label, icon }) => {
                   const currentScope = activeSlot ? scopes[activeSlot] : 'global';
                   const isActive = currentScope === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      // onPointerDown + preventDefault est CRUCIAL ici sur iOS.
-                      // Ça empêche le navigateur d'enlever le focus à l'input de recherche
-                      // (ce qui déclencherait son onBlur et créerait un conflit de state avec le onTap)
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        if (!activeSlot) return;
+                  const radioId = `scope-${key}-${activeSlot || 'default'}`;
 
-                        if (key === 'anonymous') {
-                          const hasAnonymous = Object.values(selectedPlayers).some(
-                            (p) => p && p.display_name === 'Joueur Anonyme'
-                          );
-                          if (hasAnonymous) {
-                            alert("Vous avez déjà choisi un joueur anonyme");
-                            return;
-                          }
-                          const anonymousPlayer: PlayerSearchResult = {
-                            id: crypto.randomUUID(),
-                            first_name: 'Joueur',
-                            last_name: 'Anonyme',
-                            display_name: 'Joueur Anonyme',
-                            type: 'guest',
-                            email: null,
-                          };
-                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
-                          if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
-                          else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
-                          else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
-                          setIsSearchModalOpen(false);
-                        } else {
-                          // Simple changement de mode sans délai
-                          setScopes(prev => ({ ...prev, [activeSlot]: key }));
-                        }
-                      }}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${isActive
+                  return (
+                    <label
+                      key={key}
+                      htmlFor={radioId}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer select-none ${isActive
                         ? 'bg-white text-[#071554] shadow-md'
                         : 'text-white/60 hover:bg-white/10 hover:text-white'
                         }`}
+                      role="tab"
+                      aria-selected={isActive}
                     >
+                      <input
+                        type="radio"
+                        id={radioId}
+                        name={`scope-${activeSlot || 'default'}`}
+                        value={key}
+                        checked={isActive}
+                        className="sr-only" // Hide the actual radio button
+                        onChange={(e) => {
+                          if (!activeSlot) return;
+
+                          // Sur iOS, s'assurer que le clavier se ferme proprement lors du changement de radio
+                          if (document.activeElement instanceof HTMLElement) {
+                            document.activeElement.blur();
+                          }
+
+                          if (key === 'anonymous') {
+                            const hasAnonymous = Object.values(selectedPlayers).some(
+                              (p) => p && p.display_name === 'Joueur Anonyme'
+                            );
+                            if (hasAnonymous) {
+                              alert("Vous avez déjà choisi un joueur anonyme");
+                              // Revert radio selection if aborted
+                              e.preventDefault();
+                              return;
+                            }
+                            const anonymousPlayer: PlayerSearchResult = {
+                              id: crypto.randomUUID(),
+                              first_name: 'Joueur',
+                              last_name: 'Anonyme',
+                              display_name: 'Joueur Anonyme',
+                              type: 'guest',
+                              email: null,
+                            };
+                            setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                            if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                            else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                            else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                            setIsSearchModalOpen(false);
+                          } else {
+                            // Update React state based on native radio input change
+                            setScopes(prev => ({ ...prev, [activeSlot]: key }));
+                          }
+                        }}
+                      />
                       <span>{icon}</span>
                       {label}
-                    </button>
+                    </label>
                   );
                 })}
               </div>
