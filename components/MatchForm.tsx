@@ -1341,8 +1341,25 @@ export default function MatchForm({
                       key={key}
                       type="button"
                       onClick={() => {
+                        // Forcer la fermeture du clavier sur mobile (Safari iOS bugge si l'input disparaît alors qu'il est focus)
+                        if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+
                         if (activeSlot) {
+                          // Si mode anonyme, vérifier s'il n'y en a pas déjà un
+                          if (key === 'anonymous') {
+                            const hasAnonymous = Object.values(selectedPlayers).some(
+                              (p) => p && p.type === 'guest' && p.last_name === 'Anonyme'
+                            );
+                            if (hasAnonymous) {
+                              alert("Vous avez déjà choisi un joueur anonyme");
+                              return; // Bloque la sélection
+                            }
+                          }
+
                           setScopes(prev => ({ ...prev, [activeSlot]: key }));
+
                           // Si mode anonyme, sélectionner directement un joueur fantôme
                           if (key === 'anonymous') {
                             const anonymousPlayer: PlayerSearchResult = {
@@ -1362,8 +1379,8 @@ export default function MatchForm({
                         }
                       }}
                       className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${isActive
-                          ? 'bg-white text-[#071554] shadow-md'
-                          : 'text-white/60 hover:bg-white/10 hover:text-white'
+                        ? 'bg-white text-[#071554] shadow-md'
+                        : 'text-white/60 hover:bg-white/10 hover:text-white'
                         }`}
                     >
                       {icon}
