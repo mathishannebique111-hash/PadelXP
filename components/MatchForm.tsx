@@ -1473,9 +1473,17 @@ export default function MatchForm({
                       role="tab"
                       aria-selected={isActive}
                       onPointerDown={(e) => {
-                        // preventDefault + stopPropagation empêche :
-                        // 1. Le navigateur de retirer le focus de l'input actif (pas de blur parasite)
-                        // 2. L'événement mousedown de remonter jusqu'au document (pas de handleClickOutside)
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      // mousedown séparé car stopPropagation sur pointerdown NE bloque PAS mousedown
+                      // (ce sont des types d'événements différents).
+                      // handleClickOutside de PlayerAutocomplete écoute sur mousedown.
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
 
