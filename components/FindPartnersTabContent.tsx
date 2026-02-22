@@ -48,7 +48,9 @@ export default function FindPartnersTabContent() {
           .from("player_partnerships")
           .select("status")
           .or(`player_id.eq.${user.id},partner_id.eq.${user.id}`)
-          .eq("status", "accepted"),
+          .eq("status", "accepted")
+          .then(res => res)
+          .catch(() => ({ data: null, error: { message: 'partnerships query failed' } })),
 
         // 3. Défis envoyés
         supabase

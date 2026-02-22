@@ -1301,9 +1301,9 @@ export default function MatchForm({
         </div>
       </form>
 
-      {/* Search Modal Portal */}
+      {/* Search Modal - rendu inline (pas de createPortal pour éviter les freezes Safari iOS) */}
       {
-        isSearchModalOpen && typeof document !== 'undefined' && createPortal(
+        isSearchModalOpen && (
           <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={(e) => {
@@ -1459,8 +1459,7 @@ export default function MatchForm({
                 </button>
               </div>
             </div>
-          </div>,
-          document.body
+          </div>
         )
       }
     </div>
