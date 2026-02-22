@@ -1395,30 +1395,59 @@ export default function MatchForm({
               </div>
 
               <div className="space-y-6">
-                {/* PlayerAutocomplete - toujours mont\u00e9, masqu\u00e9 via CSS si scope anonyme */}
-                <div className={activeSlot && scopes[activeSlot] === 'anonymous' ? 'hidden' : 'relative'}>
-                  <PlayerAutocomplete
-                    value={
-                      activeSlot === 'partner' ? partnerName :
-                        activeSlot === 'opp1' ? opp1Name :
-                          opp2Name
-                    }
-                    onChange={(val) => {
-                      if (activeSlot === 'partner') setPartnerName(val);
-                      else if (activeSlot === 'opp1') setOpp1Name(val);
-                      else if (activeSlot === 'opp2') setOpp2Name(val);
-                    }}
-                    onSelect={(player) => {
-                      if (activeSlot) {
-                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
-                        setIsSearchModalOpen(false);
+                {/* Mode Global : PlayerAutocomplete pour chercher un joueur */}
+                {activeSlot && scopes[activeSlot] === 'global' && (
+                  <div className="relative">
+                    <PlayerAutocomplete
+                      value={
+                        activeSlot === 'partner' ? partnerName :
+                          activeSlot === 'opp1' ? opp1Name :
+                            opp2Name
                       }
-                    }}
-                    searchScope={activeSlot ? (scopes[activeSlot] === 'anonymous' ? 'global' : scopes[activeSlot]) as 'club' | 'global' | 'guest' : 'global'}
-                    placeholder="Michel Dupont..."
-                    inputClassName="h-[46px] rounded-xl text-lg font-bold"
-                  />
-                </div>
+                      onChange={(val) => {
+                        if (activeSlot === 'partner') setPartnerName(val);
+                        else if (activeSlot === 'opp1') setOpp1Name(val);
+                        else if (activeSlot === 'opp2') setOpp2Name(val);
+                      }}
+                      onSelect={(player) => {
+                        if (activeSlot) {
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                          setIsSearchModalOpen(false);
+                        }
+                      }}
+                      searchScope="global"
+                      placeholder="Michel Dupont..."
+                      inputClassName="h-[46px] rounded-xl text-lg font-bold"
+                    />
+                  </div>
+                )}
+
+                {/* Mode Invité : formulaire inline directement dans MatchForm */}
+                {activeSlot && scopes[activeSlot] === 'guest' && (
+                  <div className="relative">
+                    <PlayerAutocomplete
+                      value={
+                        activeSlot === 'partner' ? partnerName :
+                          activeSlot === 'opp1' ? opp1Name :
+                            opp2Name
+                      }
+                      onChange={(val) => {
+                        if (activeSlot === 'partner') setPartnerName(val);
+                        else if (activeSlot === 'opp1') setOpp1Name(val);
+                        else if (activeSlot === 'opp2') setOpp2Name(val);
+                      }}
+                      onSelect={(player) => {
+                        if (activeSlot) {
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                          setIsSearchModalOpen(false);
+                        }
+                      }}
+                      searchScope="guest"
+                      placeholder="Michel Dupont..."
+                      inputClassName="h-[46px] rounded-xl text-lg font-bold"
+                    />
+                  </div>
+                )}
 
                 {activeSlot && selectedPlayers[activeSlot] && (
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
