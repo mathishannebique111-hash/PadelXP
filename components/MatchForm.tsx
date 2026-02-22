@@ -34,6 +34,126 @@ const schema = z.object({
   unregisteredClubCity: z.string().optional(),
 });
 
+function GuestFormInline({
+  onGuestCreated
+}: {
+  onGuestCreated: (player: PlayerSearchResult) => void;
+}) {
+  const [guestFirstName, setGuestFirstName] = useState("");
+  const [guestLastName, setGuestLastName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [creatingGuest, setCreatingGuest] = useState(false);
+
+  const handleCreateGuest = async () => {
+    if (!guestFirstName.trim() || !guestLastName.trim()) return;
+
+    setCreatingGuest(true);
+    try {
+      const fullName = `${guestFirstName.trim()} ${guestLastName.trim()}`.trim();
+      const response = await fetch("/api/players/find-or-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({
+          playerName: fullName,
+          email: guestEmail.trim() || undefined
+        }),
+      });
+
+      if (response.ok) {
+        const { player } = await response.json();
+
+        if (!player) {
+          alert("Impossible de trouver ou créer le joueur");
+          return;
+        }
+
+        const nameParts = player.display_name.trim().split(/\s+/);
+        const first_name = nameParts[0] || "";
+        const last_name = nameParts.slice(1).join(" ") || "";
+        const type: "user" | "guest" = (player.type as "user" | "guest") || "guest";
+
+        const playerResult: PlayerSearchResult = {
+          id: player.id,
+          first_name,
+          last_name,
+          type,
+          display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
+          email: player.email || guestEmail.trim() || null,
+        };
+
+        onGuestCreated(playerResult);
+        setGuestFirstName("");
+        setGuestLastName("");
+        setGuestEmail("");
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || "Impossible de trouver ou créer le joueur";
+        alert(`Erreur: ${errorMessage}`);
+      }
+    } catch (error) {
+      logger.error("Error creating guest:", error);
+      alert("Erreur lors de la création du joueur");
+    } finally {
+      setCreatingGuest(false);
+    }
+  };
+
+  return (
+    <div className="bg-slate-800/90 rounded-xl border border-white/10 p-4">
+      <div className="mb-4 flex items-center gap-2">
+        <Mail size={16} className="text-blue-400" />
+        <h4 className="text-sm font-semibold text-white">Inviter par email</h4>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-semibold text-white/70 mb-1">Prénom*</label>
+          <input
+            type="text"
+            value={guestFirstName}
+            onChange={(e) => setGuestFirstName(e.target.value)}
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
+            placeholder="Prénom"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-white/70 mb-1">Nom*</label>
+          <input
+            type="text"
+            value={guestLastName}
+            onChange={(e) => setGuestLastName(e.target.value)}
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
+            placeholder="Nom"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-white/70 mb-1">Email <span className="text-white/40 font-normal">(Optionnel, pour invitation)</span></label>
+          <input
+            type="email"
+            value={guestEmail}
+            onChange={(e) => setGuestEmail(e.target.value)}
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
+            placeholder="email@exemple.com"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleCreateGuest}
+          disabled={creatingGuest || !guestFirstName.trim() || !guestLastName.trim()}
+          className="w-full mt-4 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center shadow-lg transition-colors"
+        >
+          {creatingGuest ? (
+            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0 mr-2" />
+          ) : null}
+          Ajouter cet invité
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function MatchForm({
   selfId,
   initialHasLevel = true
@@ -79,12 +199,6 @@ export default function MatchForm({
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<'partner' | 'opp1' | 'opp2' | null>(null);
   const [selfProfile, setSelfProfile] = useState<PlayerSearchResult | null>(null);
-
-  // States pour le formulaire "Invité" intégré à MatchForm
-  const [guestFirstName, setGuestFirstName] = useState("");
-  const [guestLastName, setGuestLastName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [creatingGuest, setCreatingGuest] = useState(false);
 
   // Location state
   // const [clubs, setClubs] = useState<Array<{ id: string; name: string; city: string }>>([]); // Legacy
@@ -289,69 +403,6 @@ export default function MatchForm({
       cancelled = true;
     };
   }, [supabase]);
-
-  const handleCreateGuest = async () => {
-    if (!guestFirstName.trim() || !guestLastName.trim() || !activeSlot) {
-      return;
-    }
-
-    setCreatingGuest(true);
-    try {
-      const fullName = `${guestFirstName.trim()} ${guestLastName.trim()}`.trim();
-      const response = await fetch("/api/players/find-or-create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({
-          playerName: fullName,
-          email: guestEmail.trim() || undefined
-        }),
-      });
-
-      if (response.ok) {
-        const { player } = await response.json();
-
-        if (!player) {
-          alert("Impossible de trouver ou créer le joueur");
-          return;
-        }
-
-        const nameParts = player.display_name.trim().split(/\s+/);
-        const first_name = nameParts[0] || "";
-        const last_name = nameParts.slice(1).join(" ") || "";
-
-        const type: "user" | "guest" = (player.type as "user" | "guest") || "guest";
-
-        const playerResult: PlayerSearchResult = {
-          id: player.id,
-          first_name,
-          last_name,
-          type,
-          display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
-          email: player.email || guestEmail.trim() || null,
-        };
-
-        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: playerResult }));
-        if (activeSlot === 'partner') setPartnerName(playerResult.display_name);
-        else if (activeSlot === 'opp1') setOpp1Name(playerResult.display_name);
-        else if (activeSlot === 'opp2') setOpp2Name(playerResult.display_name);
-
-        setIsSearchModalOpen(false);
-        setGuestFirstName("");
-        setGuestLastName("");
-        setGuestEmail("");
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || "Impossible de trouver ou créer le joueur";
-        alert(`Erreur: ${errorMessage}`);
-      }
-    } catch (error) {
-      logger.error("Error creating guest:", error);
-      alert("Erreur lors de la création du joueur");
-    } finally {
-      setCreatingGuest(false);
-    }
-  };
 
   // Legacy fetchAllClubs removed to prevent auto-selection.
   // We want the user to EXPLICITLY select a location via Google Maps.
@@ -1504,59 +1555,16 @@ export default function MatchForm({
                   </div>
                 )}
 
-                {/* Mode Invité : Formulaire inline directement dans MatchForm */}
+                {/* Mode Invité : Formulaire inline isolé */}
                 {activeSlot && scopes[activeSlot] === 'guest' && (
-                  <div className="bg-slate-800/90 rounded-xl border border-white/10 p-4">
-                    <div className="mb-4 flex items-center gap-2">
-                      <Mail size={16} className="text-blue-400" />
-                      <h4 className="text-sm font-semibold text-white">Inviter par email</h4>
-                    </div>
+                  <GuestFormInline onGuestCreated={(playerResult) => {
+                    setSelectedPlayers(prev => ({ ...prev, [activeSlot]: playerResult }));
+                    if (activeSlot === 'partner') setPartnerName(playerResult.display_name);
+                    else if (activeSlot === 'opp1') setOpp1Name(playerResult.display_name);
+                    else if (activeSlot === 'opp2') setOpp2Name(playerResult.display_name);
 
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Prénom*</label>
-                        <input
-                          type="text"
-                          value={guestFirstName}
-                          onChange={(e) => setGuestFirstName(e.target.value)}
-                          className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
-                          placeholder="Prénom"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Nom*</label>
-                        <input
-                          type="text"
-                          value={guestLastName}
-                          onChange={(e) => setGuestLastName(e.target.value)}
-                          className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
-                          placeholder="Nom"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Email <span className="text-white/40 font-normal">(Optionnel, pour invitation)</span></label>
-                        <input
-                          type="email"
-                          value={guestEmail}
-                          onChange={(e) => setGuestEmail(e.target.value)}
-                          className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
-                          placeholder="email@exemple.com"
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleCreateGuest}
-                        disabled={creatingGuest || !guestFirstName.trim() || !guestLastName.trim()}
-                        className="w-full mt-4 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center shadow-lg transition-colors"
-                      >
-                        {creatingGuest ? (
-                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0 mr-2" />
-                        ) : null}
-                        Ajouter cet invité
-                      </button>
-                    </div>
-                  </div>
+                    setIsSearchModalOpen(false);
+                  }} />
                 )}
 
                 {activeSlot && selectedPlayers[activeSlot] && (
