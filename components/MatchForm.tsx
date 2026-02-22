@@ -67,9 +67,9 @@ export default function MatchForm({
   });
 
   const [scopes, setScopes] = useState<{
-    partner: 'club' | 'global' | 'guest';
-    opp1: 'club' | 'global' | 'guest';
-    opp2: 'club' | 'global' | 'guest';
+    partner: 'club' | 'global' | 'guest' | 'anonymous';
+    opp1: 'club' | 'global' | 'guest' | 'anonymous';
+    opp2: 'club' | 'global' | 'guest' | 'anonymous';
   }>({
     partner: 'global',
     opp1: 'global',
@@ -1317,7 +1317,7 @@ export default function MatchForm({
                 <X size={24} />
               </button>
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <h3 className="text-xl font-black text-white flex items-center gap-3">
                   <Search size={24} className="text-padel-green" />
                   {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
@@ -1327,49 +1327,79 @@ export default function MatchForm({
                 </p>
               </div>
 
-              <div className="space-y-6">
-                <div className="relative">
-                  <div className="absolute right-1 top-[7px] z-20">
-                    <div className="relative">
-                      <select
-                        value={activeSlot ? scopes[activeSlot] : 'global'}
-                        onChange={(e) => {
-                          const newScope = e.target.value as any;
-                          if (activeSlot) {
-                            setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+              {/* ====== FILTRES GLOBAL / INVITÉ / ANONYME ====== */}
+              <div className="flex gap-1 mb-4 bg-white/5 rounded-xl p-1 border border-white/10">
+                {[
+                  { key: 'global' as const, label: 'Global', icon: <Globe size={14} /> },
+                  { key: 'guest' as const, label: 'Invité', icon: <Mail size={14} /> },
+                  { key: 'anonymous' as const, label: 'Anonyme', icon: <span className="text-sm">👤</span> },
+                ].map(({ key, label, icon }) => {
+                  const currentScope = activeSlot ? scopes[activeSlot] : 'global';
+                  const isActive = currentScope === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        if (activeSlot) {
+                          setScopes(prev => ({ ...prev, [activeSlot]: key }));
+                          // Si mode anonyme, sélectionner directement un joueur fantôme
+                          if (key === 'anonymous') {
+                            const anonymousPlayer: PlayerSearchResult = {
+                              id: crypto.randomUUID(),
+                              first_name: 'Joueur',
+                              last_name: 'Anonyme',
+                              display_name: 'Joueur Anonyme',
+                              type: 'guest',
+                              email: null,
+                            };
+                            setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                            if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                            else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                            else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                            setIsSearchModalOpen(false);
                           }
-                        }}
-                        className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
-                      >
-                        <option value="global">Global</option>
-                        <option value="guest">Invité</option>
-                      </select>
-                      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
-                    </div>
-                  </div>
+                        }
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${isActive
+                          ? 'bg-white text-[#071554] shadow-md'
+                          : 'text-white/60 hover:bg-white/10 hover:text-white'
+                        }`}
+                    >
+                      {icon}
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
 
-                  <PlayerAutocomplete
-                    value={
-                      activeSlot === 'partner' ? partnerName :
-                        activeSlot === 'opp1' ? opp1Name :
-                          opp2Name
-                    }
-                    onChange={(val) => {
-                      if (activeSlot === 'partner') setPartnerName(val);
-                      else if (activeSlot === 'opp1') setOpp1Name(val);
-                      else if (activeSlot === 'opp2') setOpp2Name(val);
-                    }}
-                    onSelect={(player) => {
-                      if (activeSlot) {
-                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
-                        setIsSearchModalOpen(false);
+              <div className="space-y-6">
+                {/* Zone de contenu selon le scope sélectionné */}
+                {activeSlot && scopes[activeSlot] !== 'anonymous' && (
+                  <div className="relative">
+                    <PlayerAutocomplete
+                      value={
+                        activeSlot === 'partner' ? partnerName :
+                          activeSlot === 'opp1' ? opp1Name :
+                            opp2Name
                       }
-                    }}
-                    searchScope={activeSlot ? scopes[activeSlot] : 'global'}
-                    placeholder="Michel Dupont..."
-                    inputClassName="pr-[90px] h-[46px] rounded-xl text-lg font-bold"
-                  />
-                </div>
+                      onChange={(val) => {
+                        if (activeSlot === 'partner') setPartnerName(val);
+                        else if (activeSlot === 'opp1') setOpp1Name(val);
+                        else if (activeSlot === 'opp2') setOpp2Name(val);
+                      }}
+                      onSelect={(player) => {
+                        if (activeSlot) {
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                          setIsSearchModalOpen(false);
+                        }
+                      }}
+                      searchScope={activeSlot ? scopes[activeSlot] as 'club' | 'global' | 'guest' : 'global'}
+                      placeholder="Michel Dupont..."
+                      inputClassName="h-[46px] rounded-xl text-lg font-bold"
+                    />
+                  </div>
+                )}
 
                 {activeSlot && selectedPlayers[activeSlot] && (
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
