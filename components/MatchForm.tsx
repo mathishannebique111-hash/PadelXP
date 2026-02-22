@@ -1416,50 +1416,37 @@ export default function MatchForm({
                     <button
                       key={key}
                       type="button"
-                      onClick={() => {
+                      // onPointerDown + preventDefault est CRUCIAL ici sur iOS.
+                      // Ça empêche le navigateur d'enlever le focus à l'input de recherche
+                      // (ce qui déclencherait son onBlur et créerait un conflit de state avec le onTap)
+                      onPointerDown={(e) => {
+                        e.preventDefault();
                         if (!activeSlot) return;
 
-                        // 1. Fermer le clavier IMMÉDIATEMENT
-                        const wasKeyboardOpen = document.activeElement instanceof HTMLInputElement ||
-                          document.activeElement instanceof HTMLTextAreaElement;
-                        if (document.activeElement instanceof HTMLElement) {
-                          document.activeElement.blur();
-                        }
-
-                        // 2. Fonction qui fait le vrai changement de scope
-                        const doScopeChange = () => {
-                          if (key === 'anonymous') {
-                            const hasAnonymous = Object.values(selectedPlayers).some(
-                              (p) => p && p.display_name === 'Joueur Anonyme'
-                            );
-                            if (hasAnonymous) {
-                              alert("Vous avez déjà choisi un joueur anonyme");
-                              return;
-                            }
-                            const anonymousPlayer: PlayerSearchResult = {
-                              id: crypto.randomUUID(),
-                              first_name: 'Joueur',
-                              last_name: 'Anonyme',
-                              display_name: 'Joueur Anonyme',
-                              type: 'guest',
-                              email: null,
-                            };
-                            setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
-                            if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
-                            else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
-                            else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
-                            setIsSearchModalOpen(false);
-                          } else {
-                            setScopes(prev => ({ ...prev, [activeSlot]: key }));
+                        if (key === 'anonymous') {
+                          const hasAnonymous = Object.values(selectedPlayers).some(
+                            (p) => p && p.display_name === 'Joueur Anonyme'
+                          );
+                          if (hasAnonymous) {
+                            alert("Vous avez déjà choisi un joueur anonyme");
+                            return;
                           }
-                        };
-
-                        // 3. Si le clavier était ouvert, attendre qu'il se ferme (300ms)
-                        //    Sinon, exécuter immédiatement
-                        if (wasKeyboardOpen) {
-                          setTimeout(doScopeChange, 350);
+                          const anonymousPlayer: PlayerSearchResult = {
+                            id: crypto.randomUUID(),
+                            first_name: 'Joueur',
+                            last_name: 'Anonyme',
+                            display_name: 'Joueur Anonyme',
+                            type: 'guest',
+                            email: null,
+                          };
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                          if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                          else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                          else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                          setIsSearchModalOpen(false);
                         } else {
-                          doScopeChange();
+                          // Simple changement de mode sans délai
+                          setScopes(prev => ({ ...prev, [activeSlot]: key }));
                         }
                       }}
                       className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 ${isActive
