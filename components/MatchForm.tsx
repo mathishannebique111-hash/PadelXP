@@ -281,7 +281,7 @@ export default function MatchForm({
     loadBoostStats();
     const interval = setInterval(() => {
       if (!cancelled) loadBoostStats();
-    }, 2000);
+    }, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -1341,9 +1341,13 @@ export default function MatchForm({
                       key={key}
                       type="button"
                       onClick={() => {
-                        // Forcer la fermeture du clavier sur mobile (Safari iOS bugge si l'input disparaît alors qu'il est focus)
+                        // Forcer la fermeture du clavier sur mobile
                         if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
                           document.activeElement.blur();
+                        }
+                        // Fix Safari iOS : forcer le recalcul du viewport après fermeture du clavier
+                        if (typeof window !== 'undefined') {
+                          setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 50);
                         }
 
                         if (activeSlot) {
@@ -1395,6 +1399,7 @@ export default function MatchForm({
                 {activeSlot && scopes[activeSlot] !== 'anonymous' && (
                   <div className="relative">
                     <PlayerAutocomplete
+                      key={`autocomplete-${activeSlot}-${activeSlot ? scopes[activeSlot] : 'global'}`}
                       value={
                         activeSlot === 'partner' ? partnerName :
                           activeSlot === 'opp1' ? opp1Name :
