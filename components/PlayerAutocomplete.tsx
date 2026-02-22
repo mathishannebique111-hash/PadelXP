@@ -59,7 +59,8 @@ export default function PlayerAutocomplete({
   };
 
   useEffect(() => {
-    if (showDropdown) {
+    // Ne PAS attacher les listeners en mode guest (pas de dropdown à positionner)
+    if (showDropdown && searchScope !== 'guest') {
       updatePosition();
       window.addEventListener("scroll", updatePosition, true);
       window.addEventListener("resize", updatePosition);
@@ -68,20 +69,20 @@ export default function PlayerAutocomplete({
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [showDropdown]);
+  }, [showDropdown, searchScope]);
 
   useEffect(() => {
+    // En mode guest, pas besoin du listener click outside (pas de dropdown)
+    if (searchScope === 'guest') return;
+
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      // Check if click is outside BOTH wrapper AND dropdown (since dropdown is in Portal)
       if (
         wrapperRef.current && !wrapperRef.current.contains(target) &&
         dropdownRef.current && !dropdownRef.current.contains(target)
       ) {
         setShowDropdown(false);
-        if (searchScope !== 'guest') {
-          setShowCreateGuest(false);
-        }
+        setShowCreateGuest(false);
       }
     }
 
@@ -259,7 +260,7 @@ export default function PlayerAutocomplete({
       )}
 
       {searchScope === 'guest' ? (
-        <div className="bg-slate-800/90 rounded-xl border border-white/10 p-4 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md shadow-xl">
+        <div className="bg-slate-800 rounded-xl border border-white/10 p-4">
           <div className="mb-4 flex justify-between items-center">
             <h4 className="text-sm font-semibold text-white flex items-center gap-2">
               <Mail size={16} className="text-blue-400" /> Inviter par email
@@ -335,7 +336,7 @@ export default function PlayerAutocomplete({
         <div className="mt-1 text-xs text-red-400">{error}</div>
       )}
 
-      {showDropdown && typeof document !== 'undefined' && createPortal(
+      {showDropdown && searchScope !== 'guest' && typeof document !== 'undefined' && createPortal(
         <div
           ref={dropdownRef}
           style={{
