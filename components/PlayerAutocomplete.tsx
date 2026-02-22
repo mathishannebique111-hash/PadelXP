@@ -59,8 +59,7 @@ export default function PlayerAutocomplete({
   };
 
   useEffect(() => {
-    // Ne PAS attacher les listeners en mode guest (pas de dropdown à positionner)
-    if (showDropdown && searchScope !== 'guest') {
+    if (showDropdown) {
       updatePosition();
       window.addEventListener("scroll", updatePosition, true);
       window.addEventListener("resize", updatePosition);
@@ -69,20 +68,20 @@ export default function PlayerAutocomplete({
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [showDropdown, searchScope]);
+  }, [showDropdown]);
 
   useEffect(() => {
-    // En mode guest, pas besoin du listener click outside (pas de dropdown)
-    if (searchScope === 'guest') return;
-
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
+      // Check if click is outside BOTH wrapper AND dropdown (since dropdown is in Portal)
       if (
         wrapperRef.current && !wrapperRef.current.contains(target) &&
         dropdownRef.current && !dropdownRef.current.contains(target)
       ) {
         setShowDropdown(false);
-        setShowCreateGuest(false);
+        if (searchScope !== 'guest') {
+          setShowCreateGuest(false);
+        }
       }
     }
 
@@ -260,7 +259,7 @@ export default function PlayerAutocomplete({
       )}
 
       {searchScope === 'guest' ? (
-        <div className="bg-slate-800 rounded-xl border border-white/10 p-4">
+        <div className="bg-slate-800/90 rounded-xl border border-white/10 p-4 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md shadow-xl">
           <div className="mb-4 flex justify-between items-center">
             <h4 className="text-sm font-semibold text-white flex items-center gap-2">
               <Mail size={16} className="text-blue-400" /> Inviter par email
@@ -277,6 +276,7 @@ export default function PlayerAutocomplete({
                   onChange={(e) => setGuestFirstName(e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   placeholder="Prénom"
+                  autoFocus
                 />
               </div>
               <div>
@@ -319,6 +319,8 @@ export default function PlayerAutocomplete({
           type="text"
           value={value}
           onChange={handleInputChange}
+          // onBlur supprimé pour éviter les fermetures intempestives sur mobile
+          // La fermeture est gérée par le clickOutside
           onFocus={() => {
             onFocus?.();
             if (value.trim()) {
@@ -336,7 +338,7 @@ export default function PlayerAutocomplete({
         <div className="mt-1 text-xs text-red-400">{error}</div>
       )}
 
-      {showDropdown && searchScope !== 'guest' && typeof document !== 'undefined' && createPortal(
+      {showDropdown && typeof document !== 'undefined' && createPortal(
         <div
           ref={dropdownRef}
           style={{
@@ -421,6 +423,7 @@ export default function PlayerAutocomplete({
                     onChange={(e) => setGuestFirstName(e.target.value)}
                     className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                     placeholder="Prénom"
+                    autoFocus
                   />
                 </div>
                 <div>
