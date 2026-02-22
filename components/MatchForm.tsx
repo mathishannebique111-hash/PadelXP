@@ -1374,7 +1374,7 @@ export default function MatchForm({
       {
         isSearchModalOpen && (
           <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60"
+            className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-[10vh] md:items-center md:pt-4 bg-[#071554]/60 overflow-y-auto"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setIsSearchModalOpen(false);
