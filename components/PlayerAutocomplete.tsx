@@ -46,7 +46,6 @@ export default function PlayerAutocomplete({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const updatePosition = () => {
     if (wrapperRef.current) {
@@ -92,29 +91,18 @@ export default function PlayerAutocomplete({
 
   // Reset search when scope changes
   useEffect(() => {
-    // Annuler TOUS les timeouts en cours avant de changer quoi que ce soit
-    if (blurTimeoutRef.current) {
-      clearTimeout(blurTimeoutRef.current);
-      blurTimeoutRef.current = null;
-    }
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-      searchTimeoutRef.current = null;
-    }
-
     setSearchResults([]);
     setShowDropdown(false);
-    setShowCreateGuest(searchScope === 'guest');
-    // NE PAS appeler searchPlayers ici — évite un fetch réseau parasite
+    if (value && searchScope !== 'guest') {
+      searchPlayers(value);
+    }
   }, [searchScope]);
 
-  // Nettoyage global au démontage
+  // Si on passe en mode guest, on affiche le formulaire
+  // Si on quitte le mode guest, on cache le formulaire
   useEffect(() => {
-    return () => {
-      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    };
-  }, []);
+    setShowCreateGuest(searchScope === 'guest');
+  }, [searchScope]);
 
   // Force close dropdown when component becomes inactive
   useEffect(() => {
@@ -195,10 +183,8 @@ export default function PlayerAutocomplete({
 
   const handleBlur = () => {
     // Fermer le dropdown après un court délai pour permettre le clic
-    if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
-    blurTimeoutRef.current = setTimeout(() => {
+    setTimeout(() => {
       setShowDropdown(false);
-      blurTimeoutRef.current = null;
     }, 200);
   };
 
@@ -273,7 +259,7 @@ export default function PlayerAutocomplete({
       )}
 
       {searchScope === 'guest' ? (
-        <div className="bg-slate-800 rounded-xl border border-white/10 p-4">
+        <div className="bg-slate-800/90 rounded-xl border border-white/10 p-4 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md shadow-xl">
           <div className="mb-4 flex justify-between items-center">
             <h4 className="text-sm font-semibold text-white flex items-center gap-2">
               <Mail size={16} className="text-blue-400" /> Inviter par email
