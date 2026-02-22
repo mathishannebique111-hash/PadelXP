@@ -1348,24 +1348,21 @@ export default function MatchForm({
                     <button
                       key={key}
                       type="button"
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onClick={() => {
+                        if (!activeSlot) return;
 
-                        // Fermer le clavier
+                        // Fermer le clavier si ouvert
                         if (document.activeElement instanceof HTMLElement) {
                           document.activeElement.blur();
                         }
 
-                        if (!activeSlot) return;
-
                         if (key === 'anonymous') {
-                          // V\u00e9rifier limite 1 anonyme
+                          // Vérifier limite 1 anonyme
                           const hasAnonymous = Object.values(selectedPlayers).some(
                             (p) => p && p.display_name === 'Joueur Anonyme'
                           );
                           if (hasAnonymous) {
-                            alert("Vous avez d\u00e9j\u00e0 choisi un joueur anonyme");
+                            alert("Vous avez déjà choisi un joueur anonyme");
                             return;
                           }
                           const anonymousPlayer: PlayerSearchResult = {

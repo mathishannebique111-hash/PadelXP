@@ -188,17 +188,6 @@ export default function PlayerAutocomplete({
     }, 200);
   };
 
-  const handleInputBlur = () => {
-    // Scroll to top to reset any viewport shift caused by the keyboard on mobile iOS
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      // Safari requires a slight delay sometimes
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'auto' });
-      }, 100);
-    }
-  };
-
   const handleCreateGuest = async () => {
     if (!guestFirstName.trim() || !guestLastName.trim()) {
       return;
@@ -285,7 +274,6 @@ export default function PlayerAutocomplete({
                   type="text"
                   value={guestFirstName}
                   onChange={(e) => setGuestFirstName(e.target.value)}
-                  onBlur={handleInputBlur}
                   className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   placeholder="Prénom"
                 />
@@ -296,7 +284,6 @@ export default function PlayerAutocomplete({
                   type="text"
                   value={guestLastName}
                   onChange={(e) => setGuestLastName(e.target.value)}
-                  onBlur={handleInputBlur}
                   className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   placeholder="Nom"
                 />
@@ -308,7 +295,6 @@ export default function PlayerAutocomplete({
                 type="email"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                onBlur={handleInputBlur}
                 className="w-full rounded-lg border border-white/10 bg-slate-900/50 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                 placeholder="email@exemple.com"
               />
@@ -332,7 +318,6 @@ export default function PlayerAutocomplete({
           type="text"
           value={value}
           onChange={handleInputChange}
-          onBlur={handleInputBlur}
           onFocus={() => {
             onFocus?.();
             if (value.trim()) {
@@ -433,7 +418,6 @@ export default function PlayerAutocomplete({
                     type="text"
                     value={guestFirstName}
                     onChange={(e) => setGuestFirstName(e.target.value)}
-                    onBlur={handleInputBlur}
                     className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                     placeholder="Prénom"
                   />
@@ -444,7 +428,6 @@ export default function PlayerAutocomplete({
                     type="text"
                     value={guestLastName}
                     onChange={(e) => setGuestLastName(e.target.value)}
-                    onBlur={handleInputBlur}
                     className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                     placeholder="Nom"
                   />
@@ -455,7 +438,6 @@ export default function PlayerAutocomplete({
                     type="email"
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
-                    onBlur={handleInputBlur}
                     className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                     placeholder="email@exemple.com"
                   />
