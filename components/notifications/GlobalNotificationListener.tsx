@@ -6,6 +6,7 @@ import { usePopupQueue } from "@/contexts/PopupQueueContext";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import { PushNotificationsService } from "@/lib/notifications/push-notifications";
+import { usePathname } from "next/navigation";
 
 /**
  * Composant global qui écoute les événements de badges et de niveau
@@ -17,6 +18,13 @@ export default function GlobalNotificationListener() {
     const { enqueuePopup } = usePopupQueue();
     const lastCheckedRef = useRef<string | null>(null);
     const supabase = createClient();
+    const pathname = usePathname();
+
+    // Effet séparé pour initialiser les notifications push uniquement sur la page Profil (/home)
+    useEffect(() => {
+        if (!user?.id || pathname !== '/home') return;
+        PushNotificationsService.initialize(user.id);
+    }, [user?.id, pathname]);
 
     useEffect(() => {
         if (!user?.id) return;
@@ -112,7 +120,7 @@ export default function GlobalNotificationListener() {
                     table: "notifications",
                     filter: `user_id=eq.${user.id}`,
                 },
-                (payload) => {
+                (payload: any) => {
                     const notification = payload.new as any;
 
                     if (notification.type === "badge_unlocked") {
@@ -140,12 +148,10 @@ export default function GlobalNotificationListener() {
             )
             .subscribe();
 
-        // Initialiser les notifications push
-        PushNotificationsService.initialize(user.id);
-
         return () => {
             supabase.removeChannel(channel);
-            PushNotificationsService.unregister();
+            // On ne désinscrit plus le service natif ici pour ne pas le couper quand on change de page
+            // PushNotificationsService.unregister(); 
         };
     }, [user?.id, enqueuePopup, supabase]);
 

@@ -195,9 +195,7 @@ export default function OnboardingWizard() {
   // Nouvel état pour gérer l'affichage des étapes spéciales
   const [showIdentityStep, setShowIdentityStep] = useState(false);
   const [showPostalCodeStep, setShowPostalCodeStep] = useState(false);
-  const [showNotificationsStep, setShowNotificationsStep] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isActivatingNotification, setIsActivatingNotification] = useState(false);
   const [skipPostalStep, setSkipPostalStep] = useState(false);
 
   // Identity state
@@ -210,15 +208,13 @@ export default function OnboardingWizard() {
   const [cityLoading, setCityLoading] = useState(false);
 
   const question = questions[currentQuestion];
-  // Progress: questions → identity → postal code → notifications
-  const totalSteps = questions.length + 3; // +1 identity, +1 postal code, +1 notifications
-  const progress = showNotificationsStep
-    ? 100
-    : showPostalCodeStep
-      ? ((questions.length + 2) / totalSteps) * 100
-      : showIdentityStep
-        ? ((questions.length + 1) / totalSteps) * 100
-        : ((currentQuestion + 1) / totalSteps) * 100;
+  // Progress: questions → identity → postal code
+  const totalSteps = questions.length + 2; // +1 identity, +1 postal code
+  const progress = showPostalCodeStep
+    ? ((questions.length + 2) / totalSteps) * 100
+    : showIdentityStep
+      ? ((questions.length + 1) / totalSteps) * 100
+      : ((currentQuestion + 1) / totalSteps) * 100;
 
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -281,17 +277,7 @@ export default function OnboardingWizard() {
     return keys[id];
   };
 
-  const activePushNotifications = async () => {
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await PushNotificationsService.initialize(user.id);
-      }
-    } catch (e) {
-      console.error("Erreur activation notifications:", e);
-    }
-  };
+
 
   const handleAnswer = async (value: string) => {
     if (isTransitioning) return;
@@ -320,29 +306,17 @@ export default function OnboardingWizard() {
     setShowIdentityStep(false);
     // Après identité -> Code postal (sauf si skip)
     if (skipPostalStep) {
-      setShowPostalCodeStep(false);
-      setShowNotificationsStep(true);
+      handleFinalize(false);
     } else {
       setShowPostalCodeStep(true);
     }
   };
 
   const handlePostalCodeContinue = () => {
-    setShowPostalCodeStep(false);
-    setShowNotificationsStep(true);
+    handleFinalize(false);
   };
 
   const handlePrevious = () => {
-    if (showNotificationsStep) {
-      setShowNotificationsStep(false);
-      // Retourne au code postal seulement si on ne l'a pas sauté
-      if (!skipPostalStep) {
-        setShowPostalCodeStep(true);
-      } else {
-        setShowIdentityStep(true);
-      }
-      return;
-    }
     if (showPostalCodeStep) {
       setShowPostalCodeStep(false);
       setShowIdentityStep(true);
@@ -360,14 +334,8 @@ export default function OnboardingWizard() {
   };
 
   // Fin du wizard : Sauvegarde + Redirection
-  // Appelé soit par le bouton "Activer", soit par "Pas maintenant"
   const handleFinalize = async (enableNotifications: boolean) => {
     setIsSubmitting(true);
-
-    if (enableNotifications) {
-      setIsActivatingNotification(true);
-      activePushNotifications(); // Lancer en arrière-plan sans bloquer la suite
-    }
 
     try {
       const response = await fetch("/api/onboarding/complete", {
@@ -420,7 +388,7 @@ export default function OnboardingWizard() {
       </div>
 
       {/* Bouton Précédent (en haut à gauche) */}
-      {(currentQuestion > 0 || showPostalCodeStep || showNotificationsStep) && (
+      {(currentQuestion > 0 || showPostalCodeStep) && (
         <button
           onClick={handlePrevious}
           className="absolute top-12 left-4 z-50 p-2 text-white/60 hover:text-white/90 transition-colors flex items-center gap-2"
@@ -434,7 +402,7 @@ export default function OnboardingWizard() {
       {/* Contenu principal */}
       <div className="flex-1 flex items-center justify-center px-4 py-20 relative z-10">
         <AnimatePresence mode="wait">
-          {!showPostalCodeStep && !showNotificationsStep && !showIdentityStep ? (
+          {!showPostalCodeStep && !showIdentityStep ? (
             /* ================= MODE QUESTION WIZARD ================= */
             <motion.div
               key={`question-container-${currentQuestion}`}
@@ -582,7 +550,7 @@ export default function OnboardingWizard() {
                 </button>
               </div>
             </motion.div>
-          ) : showPostalCodeStep && !showNotificationsStep ? (
+          ) : showPostalCodeStep ? (
             /* ================= MODE CODE POSTAL ================= */
             <motion.div
               key="postal-code-step"
@@ -645,90 +613,12 @@ export default function OnboardingWizard() {
                 </button>
               </div>
             </motion.div>
-          ) : (
-            /* ================= MODE NOTIFICATIONS PAGE (NEW) ================= */
-            <motion.div
-              key="notifications-step"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-              className="w-full max-w-md flex flex-col items-center justify-center text-center space-y-8"
-            >
-              {/* Logo de l'application */}
-              <div className="relative w-32 h-32 mb-4 animate-in zoom-in duration-500">
-                <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full" />
-                <img
-                  src="/images/Logo sans fond.png"
-                  alt="PadelXP Logo"
-                  className="w-full h-full object-contain relative z-10 drop-shadow-2xl"
-                />
-              </div>
-
-              {/* Titre et Explications */}
-              <div className="space-y-4">
-                <h1 className="text-3xl font-extrabold text-white">
-                  Restez connecté au jeu
-                </h1>
-                <p className="text-white/80 text-base leading-relaxed px-2">
-                  Activez les notifications pour être alerté instantanément lorsqu'un joueur vous invite à un match ou qu'une place se libère.
-                </p>
-                <div className="flex flex-col gap-4 pt-4 text-sm text-white/80 text-left max-w-xs mx-auto">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                      <Bell className="w-4 h-4 text-blue-400" />
-                    </div>
-                    <span>Reçois tes <strong>invitations aux matchs</strong></span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                      <Zap className="w-4 h-4 text-orange-400" />
-                    </div>
-                    <span>Sois <strong>défié</strong> par les autres joueurs</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                      <Trophy className="w-4 h-4 text-yellow-400" />
-                    </div>
-                    <span>Sois informé des derniers <strong>challenges</strong> de ton club</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-4 h-4 text-green-400" />
-                    </div>
-                    <span>Valide tes scores et <strong>monte au classement</strong></span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="w-full space-y-4 pt-8">
-                <button
-                  onClick={() => handleFinalize(true)}
-                  disabled={isSubmitting}
-                  className="w-full py-4 rounded-xl font-bold text-white text-lg shadow-lg shadow-blue-500/30 transition-transform active:scale-95 hover:scale-[1.02]"
-                  style={{
-                    background: "linear-gradient(135deg, #0066FF 0%, #0055DD 100%)",
-                  }}
-                >
-                  {isActivatingNotification ? "Activation..." : (isSubmitting ? "Finalisation..." : "Activer les notifications")}
-                </button>
-
-                <button
-                  onClick={() => handleFinalize(false)}
-                  disabled={isSubmitting}
-                  className="text-sm text-white/40 hover:text-white/70 transition-colors py-2"
-                >
-                  Pas maintenant
-                </button>
-              </div>
-
-            </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
       </div>
 
-      {/* Indicateur de progression (caché sur la page notif pour plus de propreté) */}
-      {!showNotificationsStep && !showPostalCodeStep && (
+      {/* Indicateur de progression */}
+      {!showPostalCodeStep && (
         <div className="absolute bottom-12 left-0 right-0 flex justify-center">
           <div className="text-sm text-white/60">
             {currentQuestion + 1} / {questions.length}
