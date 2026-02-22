@@ -28,6 +28,8 @@ interface PendingMatch {
     current_user_confirmed: boolean;
     confirmation_count: number;
     confirmations_needed: number;
+    team1_confirmed: boolean;
+    team2_confirmed: boolean;
     location_name?: string;
 }
 
@@ -78,11 +80,15 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
         }
     };
 
-    // Calculer le nombre de confirmations effectif (incluant la confirmation locale si applicable)
-    const effectiveConfirmationCount = confirmed ? match.confirmation_count + 1 : match.confirmation_count;
+    // Calculer le statut de confirmation par équipe
+    const team1HasConfirmed = confirmed
+        ? (match.team1_confirmed || team1.some(p => p.is_current_user))
+        : match.team1_confirmed;
+    const team2HasConfirmed = confirmed
+        ? (match.team2_confirmed || team2.some(p => p.is_current_user))
+        : match.team2_confirmed;
     const isUserConfirmed = confirmed || match.current_user_confirmed;
-    // Détecter si le match est entièrement confirmé (3 joueurs ou plus)
-    const isFullyConfirmed = effectiveConfirmationCount >= 3;
+    const isFullyConfirmed = team1HasConfirmed && team2HasConfirmed;
 
     // Auto-hide et notification après confirmation complète
     useEffect(() => {
@@ -226,10 +232,10 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
             }
 
             <div className="flex items-center justify-between h-9">
-                <div className="text-[10px] font-medium text-gray-500 bg-white/50 px-2 py-1 rounded-full">
-                    <span className={isFullyConfirmed ? "text-green-600 font-bold" : ""}>
-                        {effectiveConfirmationCount}/3 confirmations
-                    </span>
+                <div className="text-[10px] font-medium text-gray-500 bg-white/50 px-2 py-1 rounded-full flex items-center gap-1">
+                    <span className={team1HasConfirmed ? "text-green-600" : "text-gray-400"}>Éq.1 {team1HasConfirmed ? "✓" : "✗"}</span>
+                    <span className="text-gray-300">|</span>
+                    <span className={team2HasConfirmed ? "text-green-600" : "text-gray-400"}>Éq.2 {team2HasConfirmed ? "✓" : "✗"}</span>
                 </div>
 
                 <div className="relative h-full flex items-center">

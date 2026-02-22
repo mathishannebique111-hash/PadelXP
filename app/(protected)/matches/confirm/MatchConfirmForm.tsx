@@ -103,7 +103,7 @@ export default function MatchConfirmForm() {
             <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
           </div>
           <h1 className="mb-4 text-2xl font-bold text-gray-900">Match confirmé !</h1>
-          <p className="mb-6 text-gray-600">Votre confirmation a été enregistrée. Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.</p>
+          <p className="mb-6 text-gray-600">Votre confirmation a été enregistrée. Le match sera validé lorsqu'un joueur de chaque équipe aura confirmé.</p>
           <p className="mb-6 text-sm text-gray-500">Redirection en cours...</p>
         </div>
       </div>
@@ -207,7 +207,7 @@ export default function MatchConfirmForm() {
           <div className="mb-6">
             <div className="rounded-lg bg-[#071554]/5 p-4 border border-[#071554]/10">
               <p className="text-sm text-[#071554]/80 font-medium leading-relaxed">
-                Le match sera validé et les points seront distribués lorsque <span className="text-[#071554] font-bold">2 joueurs sur 3</span> auront confirmé.
+                Le match sera validé et les points seront distribués lorsqu'<span className="text-[#071554] font-bold">un joueur de chaque équipe</span> aura confirmé.
               </p>
             </div>
           </div>

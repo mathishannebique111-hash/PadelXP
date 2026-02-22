@@ -254,15 +254,28 @@ export async function POST(req: Request) {
     // Count confirmations
     const { data: confirmations } = await adminClient
       .from("match_confirmations")
-      .select("id")
+      .select("id, user_id, guest_player_id")
       .eq("match_id", matchId)
       .eq("confirmed", true);
 
     const confirmationCount = confirmations?.length || 0;
     logger.info("POST /api/matches/confirm - Confirmation count", { count: confirmationCount });
 
-    // Règle simplifiée : 3 confirmations requises (sur 4 joueurs)
-    const totalUserParticipants = 3;
+    // Vérifier si chaque équipe a au moins 1 confirmation
+    const { data: participants } = await adminClient
+      .from("match_participants")
+      .select("user_id, guest_player_id, team")
+      .eq("match_id", matchId);
+
+    const confirmedUserIds = new Set((confirmations || []).map(c => c.user_id).filter(Boolean));
+    const confirmedGuestIds = new Set((confirmations || []).map(c => c.guest_player_id).filter(Boolean));
+
+    const team1Confirmed = (participants || []).some(p =>
+      p.team === 1 && (confirmedUserIds.has(p.user_id) || confirmedGuestIds.has(p.guest_player_id))
+    );
+    const team2Confirmed = (participants || []).some(p =>
+      p.team === 2 && (confirmedUserIds.has(p.user_id) || confirmedGuestIds.has(p.guest_player_id))
+    );
 
     // Fetch the updated match status (the trigger might have already confirmed it)
     const { data: updatedMatch } = await adminClient
@@ -394,17 +407,18 @@ export async function POST(req: Request) {
         message: "Match confirmé ! Les points ont été ajoutés au classement.",
         matchConfirmed: true,
         confirmationCount,
-        totalRequired: 3
+        team1Confirmed: true,
+        team2Confirmed: true
       });
     }
 
     return NextResponse.json({
       success: true,
-      message: "Confirmation enregistrée. En attente des autres joueurs.",
+      message: "Confirmation enregistrée. En attente d'un joueur de l'autre équipe.",
       matchConfirmed: false,
       confirmationCount,
-      confirmationsNeeded: Math.max(0, 3 - confirmationCount),
-      totalRequired: 3
+      team1Confirmed,
+      team2Confirmed
     });
 
   } catch (error) {

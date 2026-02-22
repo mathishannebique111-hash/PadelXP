@@ -237,9 +237,21 @@ export async function GET(req: Request) {
                 c => c.user_id === user.id && c.confirmed
             );
 
-            // Règle simplifiée : 3 confirmations requises (sur 4 joueurs)
+            // Règle : 1 joueur confirmé par équipe
             const confirmationCount = (confirmations || []).filter(c => c.confirmed).length;
-            const neededForFullSum = 3 - confirmationCount;
+
+            // Vérifier si chaque équipe a au moins 1 confirmation
+            const confirmedUserIds = new Set((confirmations || []).filter(c => c.confirmed).map(c => c.user_id).filter(Boolean));
+            const confirmedGuestIds = new Set((confirmations || []).filter(c => c.confirmed).map(c => c.guest_player_id).filter(Boolean));
+
+            const team1Confirmed = enrichedParticipants.some(p =>
+                p.team === 1 && (confirmedUserIds.has(p.user_id) || confirmedGuestIds.has(p.guest_player_id))
+            );
+            const team2Confirmed = enrichedParticipants.some(p =>
+                p.team === 2 && (confirmedUserIds.has(p.user_id) || confirmedGuestIds.has(p.guest_player_id))
+            );
+
+            const confirmationsNeeded = (team1Confirmed ? 0 : 1) + (team2Confirmed ? 0 : 1);
 
             return {
                 ...match,
@@ -248,7 +260,9 @@ export async function GET(req: Request) {
                 creator_id: creator?.user_id,
                 current_user_confirmed: currentUserConfirmed,
                 confirmation_count: confirmationCount,
-                confirmations_needed: Math.max(0, neededForFullSum),
+                confirmations_needed: confirmationsNeeded,
+                team1_confirmed: team1Confirmed,
+                team2_confirmed: team2Confirmed,
                 location_name: match.location_club_id ? (locationNamesMap.get(match.location_club_id) || "Lieu inconnu") : "Lieu non précisé"
             };
         }));

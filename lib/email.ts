@@ -54,7 +54,7 @@ export async function sendMatchConfirmationEmail(
                 <a href="${confirmationUrl}" class="button">Confirmer le match</a>
                 <p>Si ce score est incorrect, vous pouvez ignorer cet email ou contacter ${matchCreatorName}.</p>
                 <p style="margin-top: 30px; font-size: 12px; color: #666;">
-                  Le match sera validé lorsque 2 joueurs sur 3 auront confirmé.
+                  Le match sera validé lorsqu'un joueur de chaque équipe aura confirmé.
                 </p>
               </div>
             </div>
