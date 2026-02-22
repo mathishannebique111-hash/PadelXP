@@ -23,7 +23,15 @@ export default function GlobalNotificationListener() {
     // Effet séparé pour initialiser les notifications push uniquement sur la page Profil (/home)
     useEffect(() => {
         if (!user?.id || pathname !== '/home') return;
-        PushNotificationsService.initialize(user.id);
+
+        // Petit délai pour s'assurer que le bridge Capacitor est prêt
+        // (important après la navigation depuis l'onboarding)
+        const timer = setTimeout(() => {
+            console.log("[GlobalNotificationListener] Triggering push init on /home for user:", user.id);
+            PushNotificationsService.initialize(user.id);
+        }, 1500);
+
+        return () => clearTimeout(timer);
     }, [user?.id, pathname]);
 
     useEffect(() => {
