@@ -34,126 +34,6 @@ const schema = z.object({
   unregisteredClubCity: z.string().optional(),
 });
 
-function GuestFormInline({
-  onGuestCreated
-}: {
-  onGuestCreated: (player: PlayerSearchResult) => void;
-}) {
-  const [guestFirstName, setGuestFirstName] = useState("");
-  const [guestLastName, setGuestLastName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [creatingGuest, setCreatingGuest] = useState(false);
-
-  const handleCreateGuest = async () => {
-    if (!guestFirstName.trim() || !guestLastName.trim()) return;
-
-    setCreatingGuest(true);
-    try {
-      const fullName = `${guestFirstName.trim()} ${guestLastName.trim()}`.trim();
-      const response = await fetch("/api/players/find-or-create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({
-          playerName: fullName,
-          email: guestEmail.trim() || undefined
-        }),
-      });
-
-      if (response.ok) {
-        const { player } = await response.json();
-
-        if (!player) {
-          alert("Impossible de trouver ou créer le joueur");
-          return;
-        }
-
-        const nameParts = player.display_name.trim().split(/\s+/);
-        const first_name = nameParts[0] || "";
-        const last_name = nameParts.slice(1).join(" ") || "";
-        const type: "user" | "guest" = (player.type as "user" | "guest") || "guest";
-
-        const playerResult: PlayerSearchResult = {
-          id: player.id,
-          first_name,
-          last_name,
-          type,
-          display_name: type === "guest" ? `${player.display_name} 👤` : player.display_name,
-          email: player.email || guestEmail.trim() || null,
-        };
-
-        onGuestCreated(playerResult);
-        setGuestFirstName("");
-        setGuestLastName("");
-        setGuestEmail("");
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || "Impossible de trouver ou créer le joueur";
-        alert(`Erreur: ${errorMessage}`);
-      }
-    } catch (error) {
-      logger.error("Error creating guest:", error);
-      alert("Erreur lors de la création du joueur");
-    } finally {
-      setCreatingGuest(false);
-    }
-  };
-
-  return (
-    <div className="bg-slate-800/90 rounded-xl border border-white/10 p-4">
-      <div className="mb-4 flex items-center gap-2">
-        <Mail size={16} className="text-blue-400" />
-        <h4 className="text-sm font-semibold text-white">Inviter par email</h4>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <label className="block text-xs font-semibold text-white/70 mb-1">Prénom*</label>
-          <input
-            type="text"
-            value={guestFirstName}
-            onChange={(e) => setGuestFirstName(e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
-            placeholder="Prénom"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-white/70 mb-1">Nom*</label>
-          <input
-            type="text"
-            value={guestLastName}
-            onChange={(e) => setGuestLastName(e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
-            placeholder="Nom"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-white/70 mb-1">Email <span className="text-white/40 font-normal">(Optionnel, pour invitation)</span></label>
-          <input
-            type="email"
-            value={guestEmail}
-            onChange={(e) => setGuestEmail(e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400 font-medium"
-            placeholder="email@exemple.com"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleCreateGuest}
-          disabled={creatingGuest || !guestFirstName.trim() || !guestLastName.trim()}
-          className="w-full mt-4 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center shadow-lg transition-colors"
-        >
-          {creatingGuest ? (
-            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0 mr-2" />
-          ) : null}
-          Ajouter cet invité
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function MatchForm({
   selfId,
   initialHasLevel = true
@@ -1425,7 +1305,7 @@ export default function MatchForm({
       {
         isSearchModalOpen && (
           <div
-            className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-[10vh] md:items-center md:pt-4 bg-[#071554]/60 overflow-y-auto"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setIsSearchModalOpen(false);
@@ -1449,88 +1329,53 @@ export default function MatchForm({
                   <Search size={24} className="text-padel-green" />
                   {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
                 </h3>
-                <p className="text-sm text-white/50 font-medium mt-1">
-                  Recherchez par prénom et nom
-                </p>
-              </div>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-sm text-white/50 font-medium">
+                    Recherchez par prénom et nom
+                  </p>
+                  <select
+                    value={activeSlot ? scopes[activeSlot] : 'global'}
+                    onChange={(e) => {
+                      if (!activeSlot) return;
+                      const newScope = e.target.value as 'global' | 'guest' | 'anonymous';
 
-              {/* ====== FILTRES GLOBAL / INVITÉ / ANONYME ====== */}
-              {/* Onglets visuels en <div> pur — pas de button/label/radio pour éviter
-                  tout événement natif de formulaire qui pourrait interférer avec le clavier iOS.
-                  Reproduit EXACTEMENT le même flux que le <select> qui fonctionnait. */}
-              <div className="flex gap-1 mb-4 bg-white/5 rounded-xl p-1 border border-white/10">
-                {([
-                  { key: 'global' as const, label: 'Global', icon: '🌐' },
-                  { key: 'guest' as const, label: 'Invité', icon: '✉️' },
-                  { key: 'anonymous' as const, label: 'Anonyme', icon: '👤' },
-                ] as const).map(({ key, label, icon }) => {
-                  const currentScope = activeSlot ? scopes[activeSlot] : 'global';
-                  const isActive = currentScope === key;
-
-                  return (
-                    <div
-                      key={key}
-                      role="tab"
-                      aria-selected={isActive}
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      // mousedown séparé car stopPropagation sur pointerdown NE bloque PAS mousedown
-                      // (ce sont des types d'événements différents).
-                      // handleClickOutside de PlayerAutocomplete écoute sur mousedown.
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        if (!activeSlot) return;
-
-                        if (key === 'anonymous') {
-                          const hasAnonymous = Object.values(selectedPlayers).some(
-                            (p) => p && p.display_name === 'Joueur Anonyme'
-                          );
-                          if (hasAnonymous) {
-                            alert("Vous avez déjà choisi un joueur anonyme");
-                            return;
-                          }
-                          const anonymousPlayer: PlayerSearchResult = {
-                            id: crypto.randomUUID(),
-                            first_name: 'Joueur',
-                            last_name: 'Anonyme',
-                            display_name: 'Joueur Anonyme',
-                            type: 'guest',
-                            email: null,
-                          };
-                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
-                          if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
-                          else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
-                          else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
-                          setIsSearchModalOpen(false);
-                        } else {
-                          // Juste changer le scope — PlayerAutocomplete reste monté
-                          setScopes(prev => ({ ...prev, [activeSlot]: key }));
+                      if (newScope === 'anonymous') {
+                        // Vérifier limite 1 anonyme
+                        const hasAnonymous = Object.values(selectedPlayers).some(
+                          (p) => p && p.display_name === 'Joueur Anonyme'
+                        );
+                        if (hasAnonymous) {
+                          alert("Vous avez déjà choisi un joueur anonyme");
+                          e.target.value = scopes[activeSlot]; // Reset select
+                          return;
                         }
-                      }}
-                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold cursor-pointer select-none ${isActive
-                        ? 'bg-white text-[#071554] shadow-md'
-                        : 'text-white/60 active:bg-white/10'
-                        }`}
-                    >
-                      <span>{icon}</span>
-                      {label}
-                    </div>
-                  );
-                })}
+                        const anonymousPlayer: PlayerSearchResult = {
+                          id: crypto.randomUUID(),
+                          first_name: 'Joueur',
+                          last_name: 'Anonyme',
+                          display_name: 'Joueur Anonyme',
+                          type: 'guest',
+                          email: null,
+                        };
+                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                        if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                        else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                        else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                        setIsSearchModalOpen(false);
+                      } else {
+                        setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+                      }
+                    }}
+                    className="text-xs rounded-lg bg-white/10 text-white border border-white/20 px-2 py-1.5 font-bold"
+                  >
+                    <option value="global">🌐 Global</option>
+                    <option value="guest">✉️ Invité</option>
+                    <option value="anonymous">👤 Anonyme</option>
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-6">
-                {/* PlayerAutocomplete TOUJOURS monté (jamais démonté) pour les modes non-anonymous.
-                    C'est EXACTEMENT ce que faisait la version <select> qui fonctionnait.
-                    Le searchScope est passé dynamiquement, PlayerAutocomplete gère le reste en interne. */}
                 {activeSlot && scopes[activeSlot] !== 'anonymous' && (
                   <div className="relative">
                     <PlayerAutocomplete
