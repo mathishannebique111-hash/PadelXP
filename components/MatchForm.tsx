@@ -279,12 +279,8 @@ export default function MatchForm({
       }
     }
     loadBoostStats();
-    const interval = setInterval(() => {
-      if (!cancelled) loadBoostStats();
-    }, 30000);
     return () => {
       cancelled = true;
-      clearInterval(interval);
     };
   }, [supabase]);
 
