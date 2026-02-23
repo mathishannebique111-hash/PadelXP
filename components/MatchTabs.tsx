@@ -250,7 +250,7 @@ function MatchTabsContent({
 
       {/* Contenu des onglets — seul l'onglet actif est monté pour éviter
           la cascade de requêtes API simultanées (= 429 Too Many Requests) */}
-      <div className="mt-2 sm:mt-6" key={refreshKey}>
+      <div className="mt-2 sm:mt-6">
         {currentTab === 'record' && recordContent}
         {currentTab === 'history' && historyContent}
         {currentTab === 'partners' && partnersContent}
