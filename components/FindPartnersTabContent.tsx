@@ -43,12 +43,11 @@ export default function FindPartnersTabContent() {
           .eq("id", user.id)
           .maybeSingle(),
 
-        // 2. Partenaires (Direct DB query instead of API fetch)
+        // 2. Partenaires (corrigé: filtre status intégré dans le .or pour éviter 400 PostgREST)
         supabase
           .from("player_partnerships")
           .select("status")
-          .or(`player_id.eq.${user.id},partner_id.eq.${user.id}`)
-          .eq("status", "accepted")
+          .or(`and(player_id.eq.${user.id},status.eq.accepted),and(partner_id.eq.${user.id},status.eq.accepted)`)
           .then(res => res)
           .catch(() => ({ data: null, error: { message: 'partnerships query failed' } })),
 
