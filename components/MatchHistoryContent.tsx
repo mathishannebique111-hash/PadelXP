@@ -131,8 +131,8 @@ export default async function MatchHistoryContent() {
   let participantsByMatch: Record<string, any[]> = {};
 
   if (allParticipants.length > 0) {
-    const userIds = [...new Set(allParticipants.filter(p => p.player_type === "user" && p.user_id).map(p => p.user_id))];
-    const guestIds = [...new Set(allParticipants.filter(p => p.player_type === "guest" && p.guest_player_id).map(p => p.guest_player_id))];
+    const userIds = [...new Set(allParticipants.map(p => p.user_id).filter(Boolean))];
+    const guestIds = [...new Set(allParticipants.map(p => p.guest_player_id).filter(Boolean))];
 
     const profilesMap = new Map<string, string>();
     if (userIds.length > 0) {
@@ -160,10 +160,11 @@ export default async function MatchHistoryContent() {
 
     allParticipants = allParticipants.map(p => {
       const enriched: any = { ...p };
-      if (p.player_type === "user" && p.user_id) {
+      if (p.user_id) {
         const displayName = profilesMap.get(p.user_id);
         enriched.profiles = displayName ? { display_name: displayName } : null;
-      } else if (p.player_type === "guest" && p.guest_player_id) {
+      }
+      if (p.guest_player_id) {
         const guest = guestsMap.get(p.guest_player_id);
         enriched.guest_players = guest || null;
       }
@@ -266,9 +267,18 @@ export default async function MatchHistoryContent() {
                   <div className="space-y-1">
                     {team1.map((p: any) => {
                       const isGuest = p.player_type === "guest";
-                      const displayName = isGuest && p.guest_players
-                        ? `${p.guest_players.first_name} ${p.guest_players.last_name}`.trim()
-                        : p.profiles?.display_name || "Joueur";
+                      let displayName = "Joueur";
+                      if (isGuest) {
+                        if (p.guest_players) {
+                          displayName = `${p.guest_players.first_name || ''} ${p.guest_players.last_name || ''}`.trim() || "Joueur invité";
+                        } else if (p.profiles) {
+                          displayName = p.profiles.display_name || "Joueur invité";
+                        } else {
+                          displayName = "Joueur anonyme";
+                        }
+                      } else if (p.profiles) {
+                        displayName = p.profiles.display_name || "Joueur";
+                      }
                       const isCurrentUser = !isGuest && p.user_id === user.id;
 
                       return (
@@ -291,9 +301,18 @@ export default async function MatchHistoryContent() {
                   <div className="space-y-1">
                     {team2.map((p: any) => {
                       const isGuest = p.player_type === "guest";
-                      const displayName = isGuest && p.guest_players
-                        ? `${p.guest_players.first_name} ${p.guest_players.last_name}`.trim()
-                        : p.profiles?.display_name || "Joueur";
+                      let displayName = "Joueur";
+                      if (isGuest) {
+                        if (p.guest_players) {
+                          displayName = `${p.guest_players.first_name || ''} ${p.guest_players.last_name || ''}`.trim() || "Joueur invité";
+                        } else if (p.profiles) {
+                          displayName = p.profiles.display_name || "Joueur invité";
+                        } else {
+                          displayName = "Joueur anonyme";
+                        }
+                      } else if (p.profiles) {
+                        displayName = p.profiles.display_name || "Joueur";
+                      }
                       const isCurrentUser = !isGuest && p.user_id === user.id;
 
                       return (

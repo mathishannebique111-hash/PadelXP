@@ -173,14 +173,20 @@ export async function GET(req: Request) {
 
             // Enrichir les participants avec les noms et clubs
             const enrichedParticipants = (participants || []).map(p => {
-                const profile = p.player_type === "user" ? profileMap.get(p.user_id) : null;
-                const guest = p.player_type === "guest" ? guestMap.get(p.guest_player_id) : null;
+                const profile = profileMap.get(p.user_id);
+                const guest = guestMap.get(p.guest_player_id);
 
                 let displayName = 'Joueur';
-                if (p.player_type === "user" && profile) {
+                if (p.player_type === "guest") {
+                    if (guest) {
+                        displayName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || 'Joueur invité';
+                    } else if (profile) {
+                        displayName = profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Joueur invité';
+                    } else {
+                        displayName = 'Joueur anonyme';
+                    }
+                } else if (profile) {
                     displayName = profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Joueur';
-                } else if (p.player_type === "guest" && guest) {
-                    displayName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || 'Joueur';
                 }
 
                 // Vérifier si ce participant a confirmé
