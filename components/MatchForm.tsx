@@ -1365,49 +1365,61 @@ export default function MatchForm({
                   <Search size={24} className="text-padel-green" />
                   {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
                 </h3>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-sm text-white/50 font-medium">
+                <div className="mt-2">
+                  <p className="text-sm text-white/50 font-medium mb-3">
                     Recherchez par prénom et nom
                   </p>
-                  <select
-                    value={activeSlot ? scopes[activeSlot] : 'global'}
-                    onChange={(e) => {
-                      if (!activeSlot) return;
-                      const newScope = e.target.value as 'global' | 'guest' | 'anonymous';
 
-                      if (newScope === 'anonymous') {
-                        // Vérifier limite 1 anonyme
-                        const hasAnonymous = Object.values(selectedPlayers).some(
-                          (p) => p && p.display_name === 'Joueur Anonyme'
-                        );
-                        if (hasAnonymous) {
-                          alert("Vous avez déjà choisi un joueur anonyme");
-                          e.target.value = scopes[activeSlot]; // Reset select
-                          return;
-                        }
-                        const anonymousPlayer: PlayerSearchResult = {
-                          id: crypto.randomUUID(),
-                          first_name: 'Joueur',
-                          last_name: 'Anonyme',
-                          display_name: 'Joueur Anonyme',
-                          type: 'guest',
-                          email: null,
-                        };
-                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
-                        if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
-                        else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
-                        else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
-                        setIsSearchModalOpen(false);
-                      } else {
-                        setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
-                      }
-                    }}
-                    className="text-xs rounded-lg bg-white/10 text-white border border-white/20 px-2 py-1.5 font-bold"
-                  >
-                    <option value="global">🌐 Global</option>
-                    <option value="guest">✉️ Invité</option>
-                    <option value="anonymous">👤 Anonyme</option>
-                  </select>
+                  {/* Boutons type onglets à la place du select */}
+                  <div className="flex bg-white/5 p-1 rounded-xl w-full">
+                    {[
+                      { id: 'global', label: '🌐 Global' },
+                      { id: 'guest', label: '✉️ Invité' },
+                      { id: 'anonymous', label: '👤 Anonyme' }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault(); // Pour éviter un submit accidentel sur iOS/Safari
+                          if (!activeSlot) return;
+                          const newScope = tab.id as 'global' | 'guest' | 'anonymous';
+
+                          if (newScope === 'anonymous') {
+                            // Vérifier limite 1 anonyme
+                            const hasAnonymous = Object.values(selectedPlayers).some(
+                              (p) => p && p.display_name === 'Joueur Anonyme'
+                            );
+                            if (hasAnonymous) {
+                              alert("Vous avez déjà choisi un joueur anonyme");
+                              return;
+                            }
+                            const anonymousPlayer: PlayerSearchResult = {
+                              id: crypto.randomUUID(),
+                              first_name: 'Joueur',
+                              last_name: 'Anonyme',
+                              display_name: 'Joueur Anonyme',
+                              type: 'guest',
+                              email: null,
+                            };
+                            setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                            if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                            else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                            else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                            setIsSearchModalOpen(false);
+                          } else {
+                            setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+                          }
+                        }}
+                        className={`flex-1 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all ${(activeSlot && scopes[activeSlot] === tab.id)
+                            ? 'bg-padel-green text-[#071554] shadow-sm'
+                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                          }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
