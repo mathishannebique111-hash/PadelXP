@@ -230,7 +230,7 @@ export default async function ClubPage({
                 />
               }
               challengesContent={<ChallengesContent />}
-              tournamentsContent={<TournamentsContent />}
+              tournamentsContent={<TournamentsContent isBetaUser={user?.email === 'capucine@gmail.com'} />}
             />
           </Suspense>
         </div>
