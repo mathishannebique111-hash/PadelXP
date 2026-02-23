@@ -2,6 +2,10 @@
 -- Migration : Système de Ligues Privées
 -- ============================================
 
+-- Nettoyage des anciennes tables si elles existent (pour éviter l'erreur "column does not exist")
+DROP TABLE IF EXISTS league_players CASCADE;
+DROP TABLE IF EXISTS leagues CASCADE;
+
 -- 1. Table principale des ligues
 CREATE TABLE IF NOT EXISTS leagues (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -11,9 +15,9 @@ CREATE TABLE IF NOT EXISTS leagues (
     max_matches_per_player INT NOT NULL CHECK (max_matches_per_player IN (5, 10, 15)),
     max_players INT NOT NULL CHECK (max_players >= 4 AND max_players <= 15),
     duration_weeks INT NOT NULL CHECK (duration_weeks >= 2 AND duration_weeks <= 6),
-    starts_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    ends_at TIMESTAMPTZ NOT NULL,
-    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'finished')),
+    starts_at TIMESTAMPTZ,
+    ends_at TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'finished')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

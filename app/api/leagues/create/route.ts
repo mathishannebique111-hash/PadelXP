@@ -56,10 +56,6 @@ export async function POST(req: Request) {
             attempts++;
         }
 
-        // Calculer la date de fin
-        const starts_at = new Date();
-        const ends_at = new Date(starts_at.getTime() + duration_weeks * 7 * 24 * 60 * 60 * 1000);
-
         // Créer la ligue
         const { data: league, error: leagueError } = await supabaseAdmin
             .from("leagues")
@@ -70,9 +66,7 @@ export async function POST(req: Request) {
                 max_matches_per_player,
                 max_players,
                 duration_weeks,
-                starts_at: starts_at.toISOString(),
-                ends_at: ends_at.toISOString(),
-                status: "active",
+                status: "pending",
             })
             .select()
             .single();

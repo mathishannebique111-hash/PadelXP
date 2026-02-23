@@ -141,7 +141,8 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
         setTimeout(() => setCopiedCode(null), 2000);
     };
 
-    const getRemainingDays = (endsAt: string) => {
+    const getRemainingDays = (endsAt: string | null) => {
+        if (!endsAt) return null;
         const now = new Date();
         const end = new Date(endsAt);
         const diff = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
@@ -297,24 +298,30 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Clock size={12} />
-                                                {isExpired ? (
+                                                {league.status === 'pending' ? (
+                                                    <span className="text-amber-400 font-bold">En attente</span>
+                                                ) : isExpired ? (
                                                     <span className="text-red-400">Terminée</span>
                                                 ) : (
                                                     <span>{remainingDays}j restants</span>
                                                 )}
                                             </span>
-                                            <span className="ml-auto text-white/30">
-                                                {league.my_matches_played}/{league.max_matches_per_player} matchs
-                                            </span>
+                                            {league.status !== 'pending' && (
+                                                <span className="ml-auto text-white/30">
+                                                    {league.my_matches_played}/{league.max_matches_per_player} matchs
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Mini jauge de progression */}
-                                        <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-padel-green rounded-full transition-all duration-300"
-                                                style={{ width: `${Math.min(100, (league.my_matches_played / league.max_matches_per_player) * 100)}%` }}
-                                            />
-                                        </div>
+                                        {league.status !== 'pending' && (
+                                            <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-padel-green rounded-full transition-all duration-300"
+                                                    style={{ width: `${Math.min(100, (league.my_matches_played / league.max_matches_per_player) * 100)}%` }}
+                                                />
+                                            </div>
+                                        )}
                                     </button>
                                 </div>
                             );

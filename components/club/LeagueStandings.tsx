@@ -81,7 +81,9 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         </span>
                         <span className="flex items-center gap-1">
                             <Clock size={12} />
-                            {league.is_expired ? (
+                            {league.status === 'pending' ? (
+                                <span className="text-amber-400 font-bold">En attente</span>
+                            ) : league.is_expired ? (
                                 <span className="text-red-400 font-bold">Terminée</span>
                             ) : (
                                 <span>{league.remaining_days}j restants</span>
@@ -146,8 +148,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         <div className="text-center">
                             {player.rank <= 3 ? (
                                 <span className={`text-sm font-black ${player.rank === 1 ? "text-amber-400" :
-                                        player.rank === 2 ? "text-slate-400" :
-                                            "text-amber-700"
+                                    player.rank === 2 ? "text-slate-400" :
+                                        "text-amber-700"
                                     }`}>{player.rank}</span>
                             ) : (
                                 <span className="text-xs text-white/40 font-bold">{player.rank}</span>
@@ -169,8 +171,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                             <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all duration-300 ${player.matches_played >= league.max_matches_per_player
-                                            ? "bg-amber-400"
-                                            : "bg-padel-green"
+                                        ? "bg-amber-400"
+                                        : "bg-padel-green"
                                         }`}
                                     style={{ width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` }}
                                 />

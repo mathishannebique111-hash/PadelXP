@@ -81,16 +81,22 @@ export async function GET(
         });
 
         // Calculer le temps restant
-        const now = new Date();
-        const endsAt = new Date(league.ends_at);
-        const remainingMs = Math.max(0, endsAt.getTime() - now.getTime());
-        const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+        let remainingDays = null;
+        let isExpired = false;
+
+        if (league.status !== "pending" && league.ends_at) {
+            const now = new Date();
+            const endsAt = new Date(league.ends_at);
+            const remainingMs = Math.max(0, endsAt.getTime() - now.getTime());
+            remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+            isExpired = remainingMs <= 0;
+        }
 
         return NextResponse.json({
             league: {
                 ...league,
                 remaining_days: remainingDays,
-                is_expired: remainingMs <= 0,
+                is_expired: isExpired,
             },
             standings,
         });

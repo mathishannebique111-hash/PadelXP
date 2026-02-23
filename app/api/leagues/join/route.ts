@@ -36,14 +36,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Code d'invitation invalide" }, { status: 404 });
         }
 
-        // Vérifier que la ligue est active
-        if (league.status !== "active") {
-            return NextResponse.json({ error: "Cette ligue est terminée" }, { status: 400 });
-        }
-
-        // Vérifier la date de fin
-        if (new Date(league.ends_at) < new Date()) {
-            return NextResponse.json({ error: "Cette ligue est expirée" }, { status: 400 });
+        // Vérifier que la ligue est en attente de joueurs
+        if (league.status !== "pending") {
+            return NextResponse.json({ error: "Cette ligue est déjà démarrée ou terminée" }, { status: 400 });
         }
 
         // Vérifier si déjà membre
@@ -79,6 +74,25 @@ export async function POST(req: Request) {
         if (joinError) {
             console.error("[leagues/join] Error:", joinError);
             return NextResponse.json({ error: "Erreur lors de l'inscription" }, { status: 500 });
+        }
+
+        // Vérifier si la ligue est maintenant pleine
+        if (count !== null && count + 1 >= league.max_players) {
+            const starts_at = new Date();
+            const ends_at = new Date(starts_at.getTime() + league.duration_weeks * 7 * 24 * 60 * 60 * 1000);
+
+            const { error: updateError } = await supabaseAdmin
+                .from("leagues")
+                .update({
+                    status: "active",
+                    starts_at: starts_at.toISOString(),
+                    ends_at: ends_at.toISOString()
+                })
+                .eq("id", league.id);
+
+            if (updateError) {
+                console.error("[leagues/join] Update league status error:", updateError);
+            }
         }
 
         return NextResponse.json({ success: true, league_name: league.name }, { status: 200 });

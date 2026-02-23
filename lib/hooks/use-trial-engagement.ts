@@ -23,7 +23,7 @@ export async function updateTrialEngagementAfterAction(clubId: string): Promise<
 
       if (result.success) {
         logger.info({ clubId: clubId.substring(0, 8) + '…', reason: eligibility.reason }, '[use-trial-engagement] Auto extension granted after action');
-        
+
         // TODO: Envoyer notification in-app et email
         // await sendTrialEmail(clubId, 'auto_extension_granted');
         // await sendInAppNotification(clubId, 'auto_extension_granted');
@@ -40,7 +40,7 @@ export async function updateTrialEngagementAfterAction(clubId: string): Promise<
  */
 export async function incrementDashboardLoginCount(clubId: string): Promise<void> {
   try {
-    const { createClient as createServiceClient } = await import('@supabase/supabase-js');
+    const { createClient: createServiceClient } = await import('@supabase/supabase-js');
     const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -69,7 +69,7 @@ export async function incrementDashboardLoginCount(clubId: string): Promise<void
  */
 export async function incrementInvitationsSentCount(clubId: string): Promise<void> {
   try {
-    const { createClient as createServiceClient } = await import('@supabase/supabase-js');
+    const { createClient: createServiceClient } = await import('@supabase/supabase-js');
     const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
