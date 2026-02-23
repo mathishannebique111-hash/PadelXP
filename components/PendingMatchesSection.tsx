@@ -103,7 +103,7 @@ export default function PendingMatchesSection({ onPendingCountChange }: PendingM
     return (
         <div className="mb-6">
             <div className="mb-4 flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white">
+                <h3 className="text-base font-semibold text-white ml-1">
                     Matchs en attente de confirmation
                 </h3>
                 <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">

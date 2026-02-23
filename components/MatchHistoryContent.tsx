@@ -211,6 +211,11 @@ export default async function MatchHistoryContent() {
       <PendingMatchesSection />
 
       <div className="space-y-4">
+        {finalMatches.length > 0 && (
+          <h3 className="text-base font-semibold text-white ml-1 mb-1">
+            Matchs validés
+          </h3>
+        )}
         {finalMatches.map((match: any) => {
           const participants = participantsByMatch[match.id] || [];
           const team1 = participants.filter((p: any) => p.team === 1);

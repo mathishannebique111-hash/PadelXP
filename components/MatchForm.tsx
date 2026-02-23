@@ -1017,10 +1017,10 @@ export default function MatchForm({
       <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
         {/* Lieu du match (Google Maps Direct) */}
         <div>
-          <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
+          <label className="mb-1 ml-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
           <div className="space-y-1">
             <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <div className="mb-1 block text-[8px] font-bold text-white/30 uppercase tracking-widest">Rechercher le club (Google Maps) *</div>
+              <div className="mb-1 ml-1 block text-[8px] font-bold text-white/30 uppercase tracking-widest">Rechercher le club *</div>
               <GooglePlacesAutocomplete
                 value={unregisteredClubName}
                 onChange={(val) => {
@@ -1126,7 +1126,7 @@ export default function MatchForm({
 
         <div className="space-y-2">
           <div>
-            <label className="mb-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Équipe gagnante</label>
+            <label className="mb-1 ml-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Équipe gagnante</label>
             <div className="grid grid-cols-2 gap-1.5">
               <button
                 type="button"
@@ -1412,8 +1412,8 @@ export default function MatchForm({
                           }
                         }}
                         className={`flex-1 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all ${(activeSlot && scopes[activeSlot] === tab.id)
-                            ? 'bg-padel-green text-[#071554] shadow-sm'
-                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                          ? 'bg-padel-green text-[#071554] shadow-sm'
+                          : 'text-white/60 hover:text-white hover:bg-white/5'
                           }`}
                       >
                         {tab.label}
