@@ -88,6 +88,10 @@ export default function MatchForm({
   const [unregisteredClubCity, setUnregisteredClubCity] = useState("");
   // const [loadingClubs, setLoadingClubs] = useState(true); // Legacy
 
+  // League state
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string>("");
+  const [activeLeagues, setActiveLeagues] = useState<Array<{ id: string; name: string; player_count: number; max_players: number }>>([]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -117,6 +121,21 @@ export default function MatchForm({
   useEffect(() => {
     setHasLevel(initialHasLevel);
   }, [initialHasLevel]);
+
+  // Charger les ligues actives du joueur
+  useEffect(() => {
+    const fetchActiveLeagues = async () => {
+      try {
+        const res = await fetch("/api/leagues/my-leagues", { credentials: "include" });
+        const data = await res.json();
+        const active = (data.leagues || []).filter((l: any) => l.status === "active");
+        setActiveLeagues(active);
+      } catch (e) {
+        // Silencieux — pas de ligue n'est pas une erreur
+      }
+    };
+    fetchActiveLeagues();
+  }, []);
 
   // Boost state
   const [useBoost, setUseBoost] = useState(false);
@@ -739,6 +758,7 @@ export default function MatchForm({
         isUnregisteredClub,
         unregisteredClubName,
         unregisteredClubCity,
+        leagueId: selectedLeagueId || undefined,
       };
 
       console.log("🚀 [DEBUG] Preparing to submit payload");
@@ -1061,6 +1081,30 @@ export default function MatchForm({
             </div>
           </div>
         </div>
+
+        {/* Sélecteur de ligue (optionnel, affiché uniquement si le joueur a des ligues actives) */}
+        {activeLeagues.length > 0 && (
+          <div>
+            <label className="mb-1 ml-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Ligue (optionnel)</label>
+            <select
+              value={selectedLeagueId}
+              onChange={(e) => setSelectedLeagueId(e.target.value)}
+              className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50 appearance-none"
+            >
+              <option value="" className="bg-[#0a0f2c]">Aucune ligue</option>
+              {activeLeagues.map((league) => (
+                <option key={league.id} value={league.id} className="bg-[#0a0f2c]">
+                  {league.name} ({league.player_count}/{league.max_players})
+                </option>
+              ))}
+            </select>
+            {selectedLeagueId && (
+              <p className="mt-1 text-[10px] text-amber-400 font-bold ml-1">
+                ⚠️ Tous les joueurs doivent être membres de cette ligue
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Redesigned Player Selection */}
         <div className="my-2">

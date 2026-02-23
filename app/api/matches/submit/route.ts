@@ -59,6 +59,7 @@ const matchSubmitSchema = z.object({
   isUnregisteredClub: z.boolean().default(false),
   unregisteredClubName: z.string().optional(),
   unregisteredClubCity: z.string().optional(),
+  leagueId: z.string().uuid().optional(),
 });
 
 
@@ -102,7 +103,7 @@ export async function POST(req: Request) {
     }
 
 
-    const { players, winner, sets, tieBreak, useBoost, locationClubId, isUnregisteredClub, unregisteredClubName, unregisteredClubCity } = parsedBody.data;
+    const { players, winner, sets, tieBreak, useBoost, locationClubId, isUnregisteredClub, unregisteredClubName, unregisteredClubCity, leagueId } = parsedBody.data;
 
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -210,6 +211,63 @@ export async function POST(req: Request) {
       // LA VALIDATION "MÊME CLUB" A ÉTÉ SUPPRIMÉE POUR PERMETTRE LES MATCHS INTER-CLUBS
       // Les joueurs peuvent désormais provenir de différents clubs.
       // Le classement sera géré individuellement pour chaque joueur dans son club respectif.
+    }
+
+
+    // Validation ligue (si une ligue est sélectionnée)
+    if (leagueId) {
+      logger.info("Validating league membership", { leagueId });
+
+      // Vérifier que la ligue existe et est active
+      const { data: league, error: leagueError } = await supabaseAdmin
+        .from("leagues")
+        .select("id, status, ends_at, max_players")
+        .eq("id", leagueId)
+        .maybeSingle();
+
+      if (leagueError || !league) {
+        logger.error("League not found", { leagueId });
+        return NextResponse.json({ error: "Ligue introuvable" }, { status: 400 });
+      }
+
+      if (league.status !== "active") {
+        logger.error("League is not active", { leagueId, status: league.status });
+        return NextResponse.json({ error: "Cette ligue n'est pas encore active ou est terminée" }, { status: 400 });
+      }
+
+      if (league.ends_at && new Date(league.ends_at) < new Date()) {
+        logger.error("League has expired", { leagueId });
+        return NextResponse.json({ error: "Cette ligue est expirée" }, { status: 400 });
+      }
+
+      // Vérifier que TOUS les joueurs "user" sont membres de la ligue
+      const userPlayerIds = players
+        .filter((p) => p.player_type === "user")
+        .map((p) => p.user_id);
+
+      const { data: leagueMembers, error: membersError } = await supabaseAdmin
+        .from("league_players")
+        .select("player_id")
+        .eq("league_id", leagueId)
+        .in("player_id", userPlayerIds);
+
+      if (membersError) {
+        logger.error("Error checking league membership", { error: membersError.message });
+        return NextResponse.json({ error: "Erreur de vérification de la ligue" }, { status: 500 });
+      }
+
+      const memberIds = new Set((leagueMembers || []).map((m) => m.player_id));
+      const nonMembers = userPlayerIds.filter((id) => !memberIds.has(id));
+
+      if (nonMembers.length > 0) {
+        logger.error("Some players are not league members", { nonMembers });
+        return NextResponse.json(
+          { error: "Tous les joueurs du match doivent être membres de la ligue sélectionnée" },
+          { status: 400 }
+        );
+      }
+
+      logger.info("League membership validated", { leagueId, memberCount: memberIds.size });
     }
 
 
@@ -484,7 +542,8 @@ export async function POST(req: Request) {
       decided_by_tiebreak,
       status: 'pending', // Match en attente de confirmation
       location_club_id: finalLocationClubId,
-      is_registered_club: isRegisteredClub
+      is_registered_club: isRegisteredClub,
+      league_id: leagueId || null
     };
 
     logger.debug("Match data prepared for insertion"); // ✅ REMPLACÉ

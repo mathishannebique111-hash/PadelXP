@@ -296,7 +296,7 @@ export async function POST(req: Request) {
         // 1. Récupérer les détails complets du match et des participants
         const { data: fullMatch } = await adminClient
           .from("matches")
-          .select("id, winner_team_id, team1_id, team2_id, location_club_id")
+          .select("id, winner_team_id, team1_id, team2_id, location_club_id, league_id")
           .eq("id", matchId)
           .single();
 
@@ -396,6 +396,24 @@ export async function POST(req: Request) {
           logger.info("Paths revalidated after match confirmation");
         } catch (revError) {
           logger.warn("Revalidation failed after confirmation", { error: (revError as Error).message });
+        }
+
+        // === LEAGUE POINTS (isolé, ne bloque jamais le match classique) ===
+        if (fullMatch?.league_id) {
+          try {
+            const { processLeagueMatchStats } = await import("@/lib/utils/league-match-utils");
+            await processLeagueMatchStats(
+              adminClient,
+              matchId,
+              fullMatch.league_id,
+              participants || [],
+              fullMatch.winner_team_id,
+              { team1_id: fullMatch.team1_id, team2_id: fullMatch.team2_id }
+            );
+            logger.info("League points distributed successfully", { leagueId: fullMatch.league_id });
+          } catch (leagueError) {
+            logger.error("League stats error (non-blocking)", { error: (leagueError as Error).message });
+          }
         }
       } catch (distError) {
         logger.error("Error distributing points", { error: (distError as Error).message });
