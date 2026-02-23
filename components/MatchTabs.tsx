@@ -248,24 +248,13 @@ function MatchTabsContent({
         ))}
       </div>
 
-      {/* Contenu des onglets */}
-      <div className="mt-2 sm:mt-6">
-        <div className={currentTab === 'record' ? 'block' : 'hidden'} key={refreshKey}>
-          {recordContent}
-        </div>
-        <div className={currentTab === 'history' ? 'block' : 'hidden'} key={refreshKey}>
-          {historyContent}
-        </div>
-        {partnersContent && (
-          <div className={currentTab === 'partners' ? 'block' : 'hidden'} key={refreshKey}>
-            {partnersContent}
-          </div>
-        )}
-        {boostContent && (
-          <div className={currentTab === 'boost' ? 'block' : 'hidden'} key={refreshKey}>
-            {boostContent}
-          </div>
-        )}
+      {/* Contenu des onglets — seul l'onglet actif est monté pour éviter
+          la cascade de requêtes API simultanées (= 429 Too Many Requests) */}
+      <div className="mt-2 sm:mt-6" key={refreshKey}>
+        {currentTab === 'record' && recordContent}
+        {currentTab === 'history' && historyContent}
+        {currentTab === 'partners' && partnersContent}
+        {currentTab === 'boost' && boostContent}
       </div>
     </div>
   );
