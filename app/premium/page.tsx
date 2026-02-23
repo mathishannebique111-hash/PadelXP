@@ -114,7 +114,7 @@ function PremiumContent() {
                 </div>
 
                 {/* 3. Features List - Vertical Stack */}
-                <div className="flex-1 flex flex-col justify-start space-y-5 px-2 overflow-y-auto no-scrollbar">
+                <div className="flex-1 flex flex-col justify-center space-y-5 px-2 overflow-y-auto no-scrollbar">
                     {features.map((feature, idx) => (
                         <div key={idx} className="flex items-start gap-4">
                             <div className="p-2 rounded-lg bg-slate-900/50 border border-slate-800/50 shrink-0 mt-0.5">
@@ -137,11 +137,9 @@ function PremiumContent() {
                                 <span className="text-[10px] uppercase font-black tracking-widest text-amber-500/80">ABONNEMENT MENSUEL</span>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-3xl font-black text-white">
-                                        {isApp ? (product?.pricing?.price || "...") : "4.99€"}
+                                        {isApp && product?.pricing?.price ? product.pricing.price : "4.99€"}
                                     </span>
-                                    {(!isApp || !product?.pricing?.price) && (
-                                        <span className="text-sm font-medium text-slate-500">/mois</span>
-                                    )}
+                                    <span className="text-sm font-medium text-slate-500">/mois</span>
                                 </div>
                             </div>
 

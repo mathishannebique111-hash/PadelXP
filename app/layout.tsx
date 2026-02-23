@@ -75,8 +75,13 @@ export default async function RootLayout({
         <SafeAreas />
         <OfflineWrapper />
         {children}
-        <CookieConsent />
-        <Toaster position="top-center" richColors />
+        <Toaster
+          position="top-center"
+          richColors
+          toastOptions={{
+            style: { marginTop: isApp ? 'var(--sat, 65px)' : '10px' }
+          }}
+        />
       </body>
     </html>
   );
