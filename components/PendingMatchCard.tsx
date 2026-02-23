@@ -92,7 +92,11 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
 
     // Auto-hide et notification après confirmation complète
     useEffect(() => {
-        if (isFullyConfirmed && !isHiding) {
+        // CORRECTION BOUCLE INFINIE : Ne lancer l'auto-hide et le refresh (dispatch event)
+        // QUE si la confirmation vient d'être faite par l'utilisateur courant (confirmed = true).
+        // Si le match arrive déjà fullyConfirmed de l'API (match "coincé" en état pending),
+        // on ne doit SURTOUT PAS dispatch d'event, sinon ça lance une boucle de refresh infinie.
+        if (isFullyConfirmed && !isHiding && confirmed) {
             const timer = setTimeout(() => {
                 setIsHiding(true);
                 // Dispatch custom event pour notifier les autres composants
@@ -102,7 +106,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [isFullyConfirmed, isHiding, match.id]);
+    }, [isFullyConfirmed, isHiding, match.id, confirmed]);
 
     // Ne pas rendre si la carte est en train de disparaître (après l'animation)
     if (isHiding) {
