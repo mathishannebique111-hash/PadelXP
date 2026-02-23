@@ -64,11 +64,6 @@ function PremiumContent() {
             icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
             title: "Challenges exclusifs",
             description: "Accédez à des défis spéciaux avec des récompenses plus importantes pour booster votre progression."
-        },
-        {
-            icon: <Users className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />,
-            title: "Ligues entre amis",
-            description: "Créez et rejoignez des ligues privées pour vous mesurer à vos amis et collègues."
         }
     ];
 

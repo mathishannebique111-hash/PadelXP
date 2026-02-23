@@ -217,11 +217,29 @@ export const useAppleIAP = () => {
         }
     }, [loading, addLog]);
 
-    const restorePurchases = useCallback(() => {
+    const restorePurchases = useCallback(async () => {
         const store = (window as any).CdvPurchase?.store || (window as any).store;
-        if (store) {
+        if (!store) {
+            toast.error("Le service d'achat n'est pas prêt.");
+            return;
+        }
+
+        try {
+            setLoading(true);
             addLog("[useAppleIAP] Restauration des achats...");
-            store.restorePurchases();
+            toast.info("Recherche de vos achats en cours...", { duration: 4000 });
+
+            await store.restorePurchases();
+
+            // On laisse un petit délai pour que la validation serveur ait le temps de répondre
+            setTimeout(() => {
+                setLoading(false);
+            }, 3000);
+
+        } catch (error: any) {
+            addLog(`[useAppleIAP] Erreur lors de la restauration: ${error}`);
+            toast.error("Erreur lors de la restauration.");
+            setLoading(false);
         }
     }, []);
 
