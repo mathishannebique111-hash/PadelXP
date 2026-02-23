@@ -523,6 +523,42 @@ export default function MatchForm({
 
       logger.info("🔧 Preparing players data...");
 
+      // Créer les joueurs anonymes dans la base de données AVANT de soumettre
+      // Sinon le guest_player_id pointe vers un UUID qui n'existe pas → erreur de foreign key
+      const playersToCheck = [
+        { key: 'partner' as const, player: partner },
+        { key: 'opp1' as const, player: opp1 },
+        { key: 'opp2' as const, player: opp2 },
+      ];
+
+      for (const { key, player } of playersToCheck) {
+        if (player && player.display_name === 'Joueur Anonyme' && player.type === 'guest') {
+          try {
+            const res = await fetch('/api/players/find-or-create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ playerName: 'Joueur Anonyme' }),
+            });
+            if (res.ok) {
+              const { player: createdPlayer } = await res.json();
+              if (createdPlayer) {
+                const updatedPlayer: PlayerSearchResult = {
+                  ...player,
+                  id: createdPlayer.id,
+                  type: createdPlayer.type || 'guest',
+                };
+                if (key === 'partner') partner = updatedPlayer;
+                else if (key === 'opp1') opp1 = updatedPlayer;
+                else if (key === 'opp2') opp2 = updatedPlayer;
+              }
+            }
+          } catch (e) {
+            logger.error(`Failed to create anonymous player for ${key}`, e);
+          }
+        }
+      }
+
       // Préparer les données pour l'API avec le nouveau format
       // Pour les joueurs invités, générer un UUID unique pour chaque user_id
       // pour éviter les violations de clé primaire (match_id, user_id)
