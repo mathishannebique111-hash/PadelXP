@@ -67,9 +67,9 @@ export default function MatchForm({
   });
 
   const [scopes, setScopes] = useState<{
-    partner: 'club' | 'global' | 'guest';
-    opp1: 'club' | 'global' | 'guest';
-    opp2: 'club' | 'global' | 'guest';
+    partner: 'club' | 'global' | 'guest' | 'anonymous';
+    opp1: 'club' | 'global' | 'guest' | 'anonymous';
+    opp2: 'club' | 'global' | 'guest' | 'anonymous';
   }>({
     partner: 'global',
     opp1: 'global',
@@ -279,12 +279,8 @@ export default function MatchForm({
       }
     }
     loadBoostStats();
-    const interval = setInterval(() => {
-      if (!cancelled) loadBoostStats();
-    }, 2000);
     return () => {
       cancelled = true;
-      clearInterval(interval);
     };
   }, [supabase]);
 
@@ -1305,71 +1301,106 @@ export default function MatchForm({
         </div>
       </form>
 
-      {/* Search Modal Portal */}
+      {/* Search Modal */}
       {
-        isSearchModalOpen && typeof document !== 'undefined' && createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-md bg-[#071554] rounded-3xl border border-white/20 shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
+        isSearchModalOpen && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#071554]/60"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setIsSearchModalOpen(false);
+              }
+            }}
+          >
+            <div
+              className="w-full max-w-md bg-[#071554] rounded-3xl border border-white/20 shadow-2xl p-6 relative"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
+                type="button"
                 onClick={() => setIsSearchModalOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/70 transition-colors z-10"
               >
                 <X size={24} />
               </button>
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <h3 className="text-xl font-black text-white flex items-center gap-3">
                   <Search size={24} className="text-padel-green" />
                   {activeSlot === 'partner' ? 'Ajouter un partenaire' : 'Ajouter un adversaire'}
                 </h3>
-                <p className="text-sm text-white/50 font-medium">
-                  Recherchez par prénom et nom
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-sm text-white/50 font-medium">
+                    Recherchez par prénom et nom
+                  </p>
+                  <select
+                    value={activeSlot ? scopes[activeSlot] : 'global'}
+                    onChange={(e) => {
+                      if (!activeSlot) return;
+                      const newScope = e.target.value as 'global' | 'guest' | 'anonymous';
+
+                      if (newScope === 'anonymous') {
+                        // Vérifier limite 1 anonyme
+                        const hasAnonymous = Object.values(selectedPlayers).some(
+                          (p) => p && p.display_name === 'Joueur Anonyme'
+                        );
+                        if (hasAnonymous) {
+                          alert("Vous avez déjà choisi un joueur anonyme");
+                          e.target.value = scopes[activeSlot]; // Reset select
+                          return;
+                        }
+                        const anonymousPlayer: PlayerSearchResult = {
+                          id: crypto.randomUUID(),
+                          first_name: 'Joueur',
+                          last_name: 'Anonyme',
+                          display_name: 'Joueur Anonyme',
+                          type: 'guest',
+                          email: null,
+                        };
+                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                        if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
+                        else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
+                        else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
+                        setIsSearchModalOpen(false);
+                      } else {
+                        setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+                      }
+                    }}
+                    className="text-xs rounded-lg bg-white/10 text-white border border-white/20 px-2 py-1.5 font-bold"
+                  >
+                    <option value="global">🌐 Global</option>
+                    <option value="guest">✉️ Invité</option>
+                    <option value="anonymous">👤 Anonyme</option>
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-6">
-                <div className="relative">
-                  <div className="absolute right-1 top-[7px] z-20">
-                    <div className="relative">
-                      <select
-                        value={activeSlot ? scopes[activeSlot] : 'global'}
-                        onChange={(e) => {
-                          const newScope = e.target.value as any;
-                          if (activeSlot) {
-                            setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
-                          }
-                        }}
-                        className="appearance-none bg-white text-[#071554] text-[10px] font-bold rounded-md pl-2 pr-6 border-2 border-[#071554] cursor-pointer outline-none h-[32px] flex items-center"
-                      >
-                        <option value="global">Global</option>
-                        <option value="guest">Invité</option>
-                      </select>
-                      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#071554] stroke-[3px] pointer-events-none" />
-                    </div>
-                  </div>
-
-                  <PlayerAutocomplete
-                    value={
-                      activeSlot === 'partner' ? partnerName :
-                        activeSlot === 'opp1' ? opp1Name :
-                          opp2Name
-                    }
-                    onChange={(val) => {
-                      if (activeSlot === 'partner') setPartnerName(val);
-                      else if (activeSlot === 'opp1') setOpp1Name(val);
-                      else if (activeSlot === 'opp2') setOpp2Name(val);
-                    }}
-                    onSelect={(player) => {
-                      if (activeSlot) {
-                        setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
-                        setIsSearchModalOpen(false);
+                {activeSlot && scopes[activeSlot] !== 'anonymous' && (
+                  <div className="relative">
+                    <PlayerAutocomplete
+                      value={
+                        activeSlot === 'partner' ? partnerName :
+                          activeSlot === 'opp1' ? opp1Name :
+                            opp2Name
                       }
-                    }}
-                    searchScope={activeSlot ? scopes[activeSlot] : 'global'}
-                    placeholder="Michel Dupont..."
-                    inputClassName="pr-[90px] h-[46px] rounded-xl text-lg font-bold"
-                  />
-                </div>
+                      onChange={(val) => {
+                        if (activeSlot === 'partner') setPartnerName(val);
+                        else if (activeSlot === 'opp1') setOpp1Name(val);
+                        else if (activeSlot === 'opp2') setOpp2Name(val);
+                      }}
+                      onSelect={(player) => {
+                        if (activeSlot) {
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                          setIsSearchModalOpen(false);
+                        }
+                      }}
+                      searchScope={activeSlot ? scopes[activeSlot] as 'club' | 'global' | 'guest' : 'global'}
+                      placeholder="Michel Dupont..."
+                      inputClassName="h-[46px] rounded-xl text-lg font-bold"
+                    />
+                  </div>
+                )}
 
                 {activeSlot && selectedPlayers[activeSlot] && (
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
@@ -1383,6 +1414,7 @@ export default function MatchForm({
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => {
                         if (activeSlot) {
                           setSelectedPlayers(prev => ({ ...prev, [activeSlot]: null }));
@@ -1401,6 +1433,7 @@ export default function MatchForm({
 
               <div className="mt-8 flex gap-3">
                 <button
+                  type="button"
                   onClick={() => setIsSearchModalOpen(false)}
                   className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors"
                 >
@@ -1408,8 +1441,7 @@ export default function MatchForm({
                 </button>
               </div>
             </div>
-          </div>,
-          document.body
+          </div>
         )
       }
     </div>
