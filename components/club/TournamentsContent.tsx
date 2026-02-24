@@ -21,6 +21,7 @@ interface League {
     is_creator: boolean;
     my_matches_played: number;
     my_points: number;
+    format: string;
 }
 
 // Placeholder "Coming Soon" pour les non-beta
@@ -75,7 +76,24 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
     const [formDuration, setFormDuration] = useState(4);
     const [formMaxMatches, setFormMaxMatches] = useState(10);
     const [formMaxPlayers, setFormMaxPlayers] = useState(8);
+    const [formFormat, setFormFormat] = useState("standard");
     const [creating, setCreating] = useState(false);
+
+    const handleFormatChange = (newFormat: string) => {
+        setFormFormat(newFormat);
+        if (newFormat === "divisions") {
+            if (![8, 12, 16].includes(formMaxPlayers)) {
+                setFormMaxPlayers(8);
+            }
+            // Enforce minimum 6 weeks duration for divisions (and make it even)
+            if (formDuration < 6) {
+                setFormDuration(6);
+            } else if (formDuration % 2 !== 0) {
+                setFormDuration(formDuration + 1 <= 12 ? formDuration + 1 : 12);
+            }
+            setFormMaxMatches(3);
+        }
+    };
 
     // Si pas beta, afficher le placeholder
     if (!isBetaUser) {
@@ -114,6 +132,7 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
                     duration_weeks: formDuration,
                     max_matches_per_player: formMaxMatches,
                     max_players: formMaxPlayers,
+                    format: formFormat,
                 }),
             });
             const data = await res.json();
@@ -126,6 +145,7 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
             toast.info(`Code d'invitation : ${data.invite_code}`, { duration: 10000 });
             setShowCreateForm(false);
             setFormName("");
+            setFormFormat("standard");
             fetchLeagues();
         } catch (e) {
             toast.error("Erreur lors de la création");
@@ -196,6 +216,18 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
                         />
                     </div>
 
+                    <div>
+                        <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 ml-1">Format de ligue</label>
+                        <select
+                            value={formFormat}
+                            onChange={(e) => handleFormatChange(e.target.value)}
+                            className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
+                        >
+                            <option value="standard">🏆 Championnat (Classement global)</option>
+                            <option value="divisions">📊 Poules (Montées/Descentes)</option>
+                        </select>
+                    </div>
+
                     <div className="grid grid-cols-3 gap-3">
                         <div>
                             <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 ml-1">Durée</label>
@@ -204,23 +236,41 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
                                 onChange={(e) => setFormDuration(Number(e.target.value))}
                                 className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
                             >
-                                <option value={2}>2 sem.</option>
-                                <option value={3}>3 sem.</option>
-                                <option value={4}>4 sem.</option>
-                                <option value={5}>5 sem.</option>
-                                <option value={6}>6 sem.</option>
+                                {formFormat === "divisions" ? (
+                                    <>
+                                        <option value={6}>6 sem.</option>
+                                        <option value={8}>8 sem.</option>
+                                        <option value={10}>10 sem.</option>
+                                        <option value={12}>12 sem.</option>
+                                    </>
+                                ) : (
+                                    <>
+                                        <option value={2}>2 sem.</option>
+                                        <option value={3}>3 sem.</option>
+                                        <option value={4}>4 sem.</option>
+                                        <option value={5}>5 sem.</option>
+                                        <option value={6}>6 sem.</option>
+                                    </>
+                                )}
                             </select>
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 ml-1">Matchs</label>
                             <select
-                                value={formMaxMatches}
+                                value={formFormat === "divisions" ? 3 : formMaxMatches}
                                 onChange={(e) => setFormMaxMatches(Number(e.target.value))}
-                                className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
+                                disabled={formFormat === "divisions"}
+                                className={`w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50 ${formFormat === "divisions" ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
-                                <option value={5}>5</option>
-                                <option value={10}>10</option>
-                                <option value={15}>15</option>
+                                {formFormat === "divisions" ? (
+                                    <option value={3}>3 / phase</option>
+                                ) : (
+                                    <>
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={15}>15</option>
+                                    </>
+                                )}
                             </select>
                         </div>
                         <div>
@@ -230,9 +280,13 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
                                 onChange={(e) => setFormMaxPlayers(Number(e.target.value))}
                                 className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
                             >
-                                {Array.from({ length: 12 }, (_, i) => i + 4).map(n => (
-                                    <option key={n} value={n}>{n}</option>
-                                ))}
+                                {formFormat === "divisions" ? (
+                                    [8, 12, 16].map(n => <option key={n} value={n}>{n}</option>)
+                                ) : (
+                                    Array.from({ length: 12 }, (_, i) => i + 4).map(n => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))
+                                )}
                             </select>
                         </div>
                     </div>
@@ -276,7 +330,14 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
                                             onClick={() => setSelectedLeagueId(league.id)}
                                             className="text-left flex-1"
                                         >
-                                            <h4 className="text-base font-bold text-white truncate">{league.name}</h4>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-base font-bold text-white truncate">{league.name}</h4>
+                                                {league.format === "divisions" && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-bold tracking-wider border border-blue-500/20 shrink-0">
+                                                        POULES
+                                                    </span>
+                                                )}
+                                            </div>
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); copyCode(league.invite_code); }}

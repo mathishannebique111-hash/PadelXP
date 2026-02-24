@@ -9,6 +9,7 @@ interface Standing {
     display_name: string;
     matches_played: number;
     points: number;
+    division?: number;
     is_current_user: boolean;
 }
 
@@ -20,20 +21,32 @@ interface LeagueDetails {
     remaining_days: number;
     is_expired: boolean;
     status: string;
+    format: string;
+    current_phase?: number;
+    phase_ends_at?: string;
 }
 
 export default function LeagueStandings({ leagueId, onBack }: { leagueId: string; onBack: () => void }) {
     const [league, setLeague] = useState<LeagueDetails | null>(null);
     const [standings, setStandings] = useState<Standing[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchStandings = async () => {
+            setLoading(true);
             try {
-                const res = await fetch(`/api/leagues/${leagueId}`, { credentials: "include" });
+                const url = selectedPhase !== null
+                    ? `/api/leagues/${leagueId}/history?phase=${selectedPhase}`
+                    : `/api/leagues/${leagueId}`;
+
+                const res = await fetch(url, { credentials: "include" });
                 const data = await res.json();
+
                 if (res.ok) {
-                    setLeague(data.league);
+                    if (selectedPhase === null) {
+                        setLeague(data.league);
+                    }
                     setStandings(data.standings || []);
                 }
             } catch (e) {
@@ -43,7 +56,15 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
             }
         };
         fetchStandings();
-    }, [leagueId]);
+    }, [leagueId, selectedPhase]);
+
+    const getPhaseRemainingDays = (endsAt?: string) => {
+        if (!endsAt) return null;
+        const now = new Date();
+        const end = new Date(endsAt);
+        const diff = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        return diff;
+    };
 
     if (loading) {
         return (
@@ -86,15 +107,51 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                             ) : league.is_expired ? (
                                 <span className="text-red-400 font-bold">Terminée</span>
                             ) : (
-                                <span>{league.remaining_days}j restants</span>
+                                <span>{league.remaining_days}j restants (total)</span>
                             )}
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* Podium des 3 premiers (si au moins 3 joueurs) */}
-            {standings.length >= 3 && (
+            {/* Infos de phase et sélecteur d'historique (Format Divisions uniquement) */}
+            {league.format === "divisions" && league.current_phase !== undefined && (
+                <div className="flex flex-col gap-3 py-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-sm font-bold text-white">
+                                {selectedPhase === null
+                                    ? (league.current_phase === 0 ? "Phase de Placement" : `Phase ${league.current_phase}`)
+                                    : (selectedPhase === 0 ? "Phase de Placement (Terminée)" : `Phase ${selectedPhase} (Terminée)`)
+                                }
+                            </span>
+                            {selectedPhase === null && league.phase_ends_at && (
+                                <span className="text-xs text-padel-green font-medium">
+                                    {getPhaseRemainingDays(league.phase_ends_at)}j restants pour cette phase
+                                </span>
+                            )}
+                        </div>
+
+                        {league.current_phase > 0 && (
+                            <select
+                                value={selectedPhase === null ? "" : selectedPhase}
+                                onChange={(e) => setSelectedPhase(e.target.value === "" ? null : Number(e.target.value))}
+                                className="bg-white/10 border border-white/20 text-white text-xs rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-padel-green"
+                            >
+                                <option value="">Phase Actuelle</option>
+                                <option value={0}>Historique : Phase 0 (Placement)</option>
+                                {Array.from({ length: league.current_phase }).map((_, i) => {
+                                    if (i > 0) return <option key={i} value={i}>Historique : Phase {i}</option>;
+                                    return null;
+                                })}
+                            </select>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Podium des 3 premiers (Uniquement pour le classement standard ou la Division 1) */}
+            {standings.length >= 3 && (league.format !== "divisions" || !standings[0].division || standings[0].division === 1) && (
                 <div className="flex items-end justify-center gap-2 pt-4 pb-2">
                     {/* 2ème */}
                     <div className="flex flex-col items-center w-24">
@@ -127,74 +184,148 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                 </div>
             )}
 
-            {/* Tableau complet */}
-            <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
-                {/* Header du tableau */}
-                <div className="grid grid-cols-[40px_1fr_80px_60px] px-3 py-2 border-b border-white/10 text-[9px] font-bold text-white/30 uppercase tracking-widest">
-                    <div className="text-center">#</div>
-                    <div>Joueur</div>
-                    <div className="text-center">Matchs</div>
-                    <div className="text-right">Pts</div>
-                </div>
-
-                {/* Lignes */}
-                {standings.map((player) => (
-                    <div
-                        key={player.player_id}
-                        className={`grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center ${player.is_current_user ? "bg-padel-green/10" : ""
-                            }`}
-                    >
-                        {/* Rang */}
-                        <div className="text-center">
-                            {player.rank <= 3 ? (
-                                <span className={`text-sm font-black ${player.rank === 1 ? "text-amber-400" :
-                                    player.rank === 2 ? "text-slate-400" :
-                                        "text-amber-700"
-                                    }`}>{player.rank}</span>
-                            ) : (
-                                <span className="text-xs text-white/40 font-bold">{player.rank}</span>
-                            )}
-                        </div>
-
-                        {/* Nom */}
-                        <div className="flex items-center gap-2">
-                            <span className={`text-sm truncate ${player.is_current_user ? "font-black text-white" : "font-medium text-white/80"}`}>
-                                {player.display_name}
-                            </span>
-                            {player.is_current_user && (
-                                <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>
-                            )}
-                        </div>
-
-                        {/* Jauge de matchs */}
-                        <div className="flex flex-col items-center gap-0.5">
-                            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full transition-all duration-300 ${player.matches_played >= league.max_matches_per_player
-                                        ? "bg-amber-400"
-                                        : "bg-padel-green"
-                                        }`}
-                                    style={{ width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` }}
-                                />
+            {/* Tableaux (Standard ou par Divisions) */}
+            {league.format === "divisions" && standings.some(s => s.division) ? (
+                <div className="space-y-6">
+                    {Object.entries(
+                        standings.reduce((acc, player) => {
+                            const div = player.division || 1;
+                            if (!acc[div]) acc[div] = [];
+                            acc[div].push(player);
+                            return acc;
+                        }, {} as Record<number, Standing[]>)
+                    ).map(([div, players]) => (
+                        <div key={div} className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+                            <div className="bg-white/5 px-3 py-2 flex items-center gap-2 border-b border-white/10">
+                                <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
+                                    Division {div}
+                                </span>
                             </div>
-                            <span className="text-[9px] text-white/30 font-medium">
-                                {player.matches_played}/{league.max_matches_per_player}
-                            </span>
-                        </div>
 
-                        {/* Points */}
-                        <div className="text-right">
-                            <span className="text-sm font-black text-white">{player.points}</span>
-                        </div>
-                    </div>
-                ))}
+                            <div className="grid grid-cols-[40px_1fr_80px_60px] px-3 py-2 border-b border-white/10 text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                                <div className="text-center">#</div>
+                                <div>Joueur</div>
+                                <div className="text-center">Matchs</div>
+                                <div className="text-right">Pts</div>
+                            </div>
 
-                {standings.length === 0 && (
-                    <div className="py-8 text-center text-white/30 text-sm">
-                        Aucun joueur inscrit
+                            {players.map((player, index) => {
+                                const isTop2 = index < 2;
+                                const isBottom2 = index >= players.length - 2 && players.length >= 4;
+                                const rankDisplay = index + 1;
+
+                                return (
+                                    <div
+                                        key={player.player_id}
+                                        className={`relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center ${player.is_current_user ? "bg-padel-green/10" : ""}`}
+                                    >
+                                        {/* Rang */}
+                                        <div className="text-center">
+                                            <span className={`text-sm font-bold ${rankDisplay === 1 ? "text-amber-400" : rankDisplay === 2 ? "text-slate-400" : "text-white/40"}`}>{rankDisplay}</span>
+                                        </div>
+
+                                        {/* Nom */}
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-sm truncate ${player.is_current_user ? "font-black text-white" : "font-medium text-white/80"}`}>
+                                                {player.display_name}
+                                            </span>
+                                            {player.is_current_user && (
+                                                <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>
+                                            )}
+                                        </div>
+
+                                        {/* Jauge de matchs */}
+                                        <div className="flex flex-col items-center gap-0.5">
+                                            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-300 ${player.matches_played >= league.max_matches_per_player ? "bg-amber-400" : "bg-padel-green"}`}
+                                                    style={{ width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-[9px] text-white/30 font-medium">
+                                                {player.matches_played}/{league.max_matches_per_player}
+                                            </span>
+                                        </div>
+
+                                        {/* Points */}
+                                        <div className="text-right">
+                                            <span className="text-sm font-black text-white">{player.points}</span>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+                    {/* Header du tableau */}
+                    <div className="grid grid-cols-[40px_1fr_80px_60px] px-3 py-2 border-b border-white/10 text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                        <div className="text-center">#</div>
+                        <div>Joueur</div>
+                        <div className="text-center">Matchs</div>
+                        <div className="text-right">Pts</div>
                     </div>
-                )}
-            </div>
+
+                    {/* Lignes */}
+                    {standings.map((player) => (
+                        <div
+                            key={player.player_id}
+                            className={`grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center ${player.is_current_user ? "bg-padel-green/10" : ""
+                                }`}
+                        >
+                            {/* Rang */}
+                            <div className="text-center">
+                                {player.rank <= 3 ? (
+                                    <span className={`text-sm font-black ${player.rank === 1 ? "text-amber-400" :
+                                        player.rank === 2 ? "text-slate-400" :
+                                            "text-amber-700"
+                                        }`}>{player.rank}</span>
+                                ) : (
+                                    <span className="text-xs text-white/40 font-bold">{player.rank}</span>
+                                )}
+                            </div>
+
+                            {/* Nom */}
+                            <div className="flex items-center gap-2">
+                                <span className={`text-sm truncate ${player.is_current_user ? "font-black text-white" : "font-medium text-white/80"}`}>
+                                    {player.display_name}
+                                </span>
+                                {player.is_current_user && (
+                                    <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>
+                                )}
+                            </div>
+
+                            {/* Jauge de matchs */}
+                            <div className="flex flex-col items-center gap-0.5">
+                                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-300 ${player.matches_played >= league.max_matches_per_player
+                                            ? "bg-amber-400"
+                                            : "bg-padel-green"
+                                            }`}
+                                        style={{ width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` }}
+                                    />
+                                </div>
+                                <span className="text-[9px] text-white/30 font-medium">
+                                    {player.matches_played}/{league.max_matches_per_player}
+                                </span>
+                            </div>
+
+                            {/* Points */}
+                            <div className="text-right">
+                                <span className="text-sm font-black text-white">{player.points}</span>
+                            </div>
+                        </div>
+                    ))}
+
+                    {standings.length === 0 && (
+                        <div className="py-8 text-center text-white/30 text-sm">
+                            Aucun joueur inscrit
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Légende */}
             <div className="flex items-center justify-center gap-4 text-[10px] text-white/30">

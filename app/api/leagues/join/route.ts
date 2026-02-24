@@ -80,18 +80,54 @@ export async function POST(req: Request) {
         if (count !== null && count + 1 >= league.max_players) {
             const starts_at = new Date();
             const ends_at = new Date(starts_at.getTime() + league.duration_weeks * 7 * 24 * 60 * 60 * 1000);
+            const phase_ends_at = new Date(starts_at.getTime() + 2 * 7 * 24 * 60 * 60 * 1000); // Phase 0 = 2 semaines
+
+            const updatePayload: Record<string, any> = {
+                status: "active",
+                starts_at: starts_at.toISOString(),
+                ends_at: ends_at.toISOString(),
+            };
+
+            // Si format divisions, initialiser la phase de placement
+            if (league.format === "divisions") {
+                updatePayload.current_phase = 0;
+                updatePayload.phase_ends_at = phase_ends_at.toISOString();
+            }
 
             const { error: updateError } = await supabaseAdmin
                 .from("leagues")
-                .update({
-                    status: "active",
-                    starts_at: starts_at.toISOString(),
-                    ends_at: ends_at.toISOString()
-                })
+                .update(updatePayload)
                 .eq("id", league.id);
 
             if (updateError) {
                 console.error("[leagues/join] Update league status error:", updateError);
+            }
+
+            // Si c'est un format "divisions", on crée des poules aléatoires de 4
+            if (league.format === "divisions") {
+                const { data: leaguePlayers } = await supabaseAdmin
+                    .from("league_players")
+                    .select("id, player_id")
+                    .eq("league_id", league.id);
+
+                if (leaguePlayers && leaguePlayers.length > 0) {
+                    // Mélanger aléatoirement les joueurs (Fisher-Yates shuffle)
+                    const shuffled = [...leaguePlayers];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+
+                    // Assigner les poules par groupe de 4 (division = numéro de poule)
+                    for (let i = 0; i < shuffled.length; i++) {
+                        const division = Math.floor(i / 4) + 1;
+
+                        await supabaseAdmin
+                            .from("league_players")
+                            .update({ division })
+                            .eq("id", shuffled[i].id);
+                    }
+                }
             }
         }
 

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.push_tokens (
 ALTER TABLE public.push_tokens ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Users can manage their own tokens" ON public.push_tokens;
 CREATE POLICY "Users can manage their own tokens"
     ON public.push_tokens
     FOR ALL
