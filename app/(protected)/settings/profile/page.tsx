@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import ProfilePhotoUpload from "@/components/settings/ProfilePhotoUpload";
+import PersonalDetailsSettings from "@/components/settings/PersonalDetailsSettings";
 import UsernameSettings from "@/components/settings/UsernameSettings";
 import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
 import LocationSettings from "@/components/settings/LocationSettings";
@@ -24,6 +25,7 @@ export default function EditProfilePage() {
 
                 <div className="space-y-6">
                     <ProfilePhotoUpload />
+                    <PersonalDetailsSettings />
                     <LocationSettings />
                     <UsernameSettings />
                     <WhatsAppSettings />

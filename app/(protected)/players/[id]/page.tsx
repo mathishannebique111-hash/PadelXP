@@ -28,7 +28,7 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
     // Gérer les deux cas : params peut être une Promise (Next.js 15) ou un objet direct
     const resolvedParams = params instanceof Promise ? await params : params;
     const { id } = resolvedParams;
-    
+
     logger.info(
       { playerId: id },
       "[PlayerProfilePage] Page appelée avec ID"
@@ -104,8 +104,8 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
     // Si erreur ou pas de résultat, essayer avec le client admin (bypass RLS)
     if (error || !playerProfile) {
       logger.warn(
-        { 
-          playerId: id, 
+        {
+          playerId: id,
           error: error?.message,
           hasError: !!error,
           hasProfile: !!playerProfile
@@ -121,11 +121,11 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
 
       if (adminError) {
         logger.error(
-          { 
-            error: adminError, 
-            playerId: id, 
-            errorCode: adminError.code, 
-            errorMessage: adminError.message 
+          {
+            error: adminError,
+            playerId: id,
+            errorCode: adminError.code,
+            errorMessage: adminError.message
           },
           "[PlayerProfilePage] Erreur lors de la récupération du profil (admin)"
         );
@@ -221,12 +221,22 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
       );
     }
 
+    // Préparer les tags (maximum 3)
+    let finalTags = compatibility?.tags ? [...compatibility.tags] : [];
+    if (currentUserClubId && playerProfile.club_id && currentUserClubId === playerProfile.club_id) {
+      // Priorité à "Même club que vous"
+      finalTags.unshift("Même club que vous");
+    }
+
+    // S'assurer qu'on n'a pas plus de 3 tags
+    finalTags = finalTags.slice(0, 3);
+
     return (
       <PlayerProfileView
         player={playerProfile}
         currentUserId={user.id}
         compatibilityScore={compatibility?.score || null}
-        compatibilityTags={compatibility?.tags || undefined}
+        compatibilityTags={finalTags}
       />
     );
   } catch (error) {

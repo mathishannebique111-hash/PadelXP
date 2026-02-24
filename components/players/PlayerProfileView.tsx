@@ -637,7 +637,7 @@ export default function PlayerProfileView({
         )}
 
       {/* SECTION "POURQUOI JOUER ENSEMBLE" - Mobile optimized */}
-      {player.niveau_padel && (
+      {compatibilityTags && compatibilityTags.length > 0 && (
         <div className="relative z-10 px-4 pb-24 md:pb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -651,36 +651,12 @@ export default function PlayerProfileView({
               <span>Pourquoi jouer avec {firstName} ?</span>
             </h3>
             <ul className="space-y-2 md:space-y-2.5 text-xs md:text-sm text-gray-300">
-              <li className="flex items-start gap-2">
-                <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
-                <span>
-                  Niveau évalué :{" "}
-                  <strong className="text-white">
-                    {player.niveau_padel.toFixed(2)}/10
-                  </strong>
-                </span>
-              </li>
-              {player.frequency && (
-                <li className="flex items-start gap-2">
+              {compatibilityTags.map((tag, index) => (
+                <li key={index} className="flex items-start gap-2">
                   <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
-                  <span>
-                    Joue <strong className="text-white">{frequenceJeu}</strong>
-                  </span>
+                  <span>{tag}</span>
                 </li>
-              )}
-              {player.best_shot && (
-                <li className="flex items-start gap-2">
-                  <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
-                  <span>
-                    Spécialiste{" "}
-                    <strong className="text-white">{coupSignature}</strong>
-                  </span>
-                </li>
-              )}
-              <li className="flex items-start gap-2">
-                <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
-                <span>Même club que vous</span>
-              </li>
+              ))}
             </ul>
           </motion.div>
         </div>
