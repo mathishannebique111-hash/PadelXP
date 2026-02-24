@@ -232,7 +232,7 @@ export default async function ClubPage({
               challengesContent={<ChallengesContent />}
               tournamentsContent={
                 <TournamentsContent
-                  isBetaUser={user?.email ? ['capucine@gmail.com', 'sarah@gmail.com', 'mattias@gmail.com', 'gaspard@gmail.com', 'hector@gmail.com', 'dorian45617@gmail.com'].includes(user.email) : false}
+                  isBetaUser={user?.email ? ['capucine@gmail.com', 'sarah@gmail.com', 'mattias@gmail.com', 'gaspard@gmail.com', 'hector@gmail.com', 'dorian45617@gmail.com', 'pascal@gmail.com', 'paul@gmail.com', 'ilhan@gmail.com'].includes(user.email) : false}
                 />
               }
             />
