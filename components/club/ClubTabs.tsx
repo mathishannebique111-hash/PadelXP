@@ -98,7 +98,7 @@ export default function ClubTabs(props: ClubTabsProps) {
                         <span className="text-center whitespace-normal leading-tight">Challenges</span>
                     </div>
                     <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-                        <span className="text-center whitespace-normal leading-tight">Tournois</span>
+                        <span className="text-center whitespace-normal leading-tight">Ligues</span>
                     </div>
                 </div>
                 <div className="mt-8 flex items-center justify-center">
