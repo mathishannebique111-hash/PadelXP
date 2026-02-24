@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
         // Vérifier que la ligue est en attente de joueurs
         if (league.status !== "pending") {
-            return NextResponse.json({ error: "Cette ligue est déjà démarrée ou terminée" }, { status: 400 });
+            return NextResponse.json({ error: "Cette ligue est déjà pleine" }, { status: 400 });
         }
 
         // Vérifier si déjà membre
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
             .eq("league_id", league.id);
 
         if (count !== null && count >= league.max_players) {
-            return NextResponse.json({ error: "Cette ligue est complète" }, { status: 400 });
+            return NextResponse.json({ error: "Cette ligue est déjà pleine" }, { status: 400 });
         }
 
         // Rejoindre
