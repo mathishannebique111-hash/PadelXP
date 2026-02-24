@@ -39,6 +39,7 @@ ON league_phase_history(league_id, phase_number);
 -- RLS pour league_phase_history
 ALTER TABLE league_phase_history ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "League members can view phase history" ON league_phase_history;
 CREATE POLICY "League members can view phase history"
     ON league_phase_history
     FOR SELECT
