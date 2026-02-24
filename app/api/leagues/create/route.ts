@@ -38,20 +38,20 @@ export async function POST(req: Request) {
 
         // Validation spécifique au format
         if (format === 'divisions') {
-            if (![8, 12, 16].includes(max_players)) {
+            if (![8, 12, 16].includes(Number(max_players))) {
                 return NextResponse.json({ error: "Le format Poules nécessite 8, 12 ou 16 joueurs" }, { status: 400 });
             }
-            if (!duration_weeks || duration_weeks < 6 || duration_weeks % 2 !== 0) {
+            if (!duration_weeks || Number(duration_weeks) < 6 || Number(duration_weeks) % 2 !== 0) {
                 return NextResponse.json({ error: "Le format Poules nécessite une durée de 6, 8, 10 ou 12 semaines" }, { status: 400 });
             }
         } else {
-            if (![2, 3, 4, 5, 6].includes(duration_weeks)) {
+            if (![2, 3, 4, 5, 6].includes(Number(duration_weeks))) {
                 return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
             }
-            if (![5, 10, 15].includes(max_matches_per_player)) {
+            if (![5, 10, 15].includes(Number(max_matches_per_player))) {
                 return NextResponse.json({ error: "Nombre de matchs invalide" }, { status: 400 });
             }
-            if (!max_players || max_players < 4 || max_players > 15) {
+            if (!max_players || Number(max_players) < 4 || Number(max_players) > 15) {
                 return NextResponse.json({ error: "Nombre de joueurs invalide (4-15)" }, { status: 400 });
             }
         }
