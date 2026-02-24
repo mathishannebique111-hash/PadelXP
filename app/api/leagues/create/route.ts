@@ -89,7 +89,7 @@ export async function POST(req: Request) {
 
         if (leagueError || !league) {
             console.error("[leagues/create] Error:", leagueError);
-            return NextResponse.json({ error: "Erreur lors de la création de la ligue" }, { status: 500 });
+            return NextResponse.json({ error: `Erreur DB: ${leagueError?.message || 'Inconnue'}` }, { status: 500 });
         }
 
         // Inscrire le créateur automatiquement
