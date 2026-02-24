@@ -8,6 +8,11 @@ ALTER TABLE leagues
 ADD COLUMN IF NOT EXISTS format TEXT NOT NULL DEFAULT 'standard' 
 CHECK (format IN ('standard', 'divisions'));
 
+-- Suppression de l'ancienne contrainte stricte sur le nombre de matchs, la durée et les joueurs
+ALTER TABLE leagues DROP CONSTRAINT IF EXISTS leagues_max_matches_per_player_check;
+ALTER TABLE leagues DROP CONSTRAINT IF EXISTS leagues_duration_weeks_check;
+ALTER TABLE leagues DROP CONSTRAINT IF EXISTS leagues_max_players_check;
+
 -- 2. Ajout de la colonne division à la table league_players
 ALTER TABLE league_players 
 ADD COLUMN IF NOT EXISTS division INT NOT NULL DEFAULT 1;
