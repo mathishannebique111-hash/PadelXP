@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Trophy, Clock, Users, User } from "lucide-react";
+import { ArrowLeft, Trophy, Clock, Users, User, Info, X } from "lucide-react";
 
 interface Standing {
     rank: number;
@@ -31,6 +31,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
     const [standings, setStandings] = useState<Standing[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedPhase, setSelectedPhase] = useState<number | null>(null);
+    const [showInfoPopup, setShowInfoPopup] = useState(false);
 
     useEffect(() => {
         const fetchStandings = async () => {
@@ -113,6 +114,15 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                     </div>
                 </div>
             </div>
+
+            {/* Bouton Info Format */}
+            <button
+                onClick={() => setShowInfoPopup(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold text-sm active:scale-[0.98] transition-transform"
+            >
+                <Info size={16} />
+                À lire avant le début de la Ligue
+            </button>
 
             {/* Infos de phase et sélecteur d'historique (Format Divisions uniquement) */}
             {league.format === "divisions" && league.current_phase !== undefined && (
@@ -332,6 +342,129 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                 <span>🏆 Victoire = 3 pts</span>
                 <span>• Défaite = 1 pt</span>
             </div>
+
+            {/* Modal d'informations */}
+            {showInfoPopup && (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-end md:justify-center bg-[#071554]/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-lg bg-[#0a1536] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-4 md:slide-in-from-bottom-0 md:zoom-in-95 duration-300 max-h-[85vh]">
+                        {/* Header */}
+                        <div className="relative p-6 text-center border-b border-white/5 shrink-0 bg-[#07102e]">
+                            <button
+                                onClick={() => setShowInfoPopup(false)}
+                                className="absolute right-4 top-4 p-2 rounded-full bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                            <h3 className="text-xl font-black text-white">Règles de la Ligue</h3>
+                            <p className="text-sm font-medium text-padel-green mt-1">
+                                {league.format === "divisions" ? "Format Poules (Montées/Descentes)" : "Format Championnat"}
+                            </p>
+                        </div>
+
+                        {/* Contenu */}
+                        <div className="p-6 overflow-y-auto space-y-6">
+                            {league.format === "divisions" ? (
+                                <>
+                                    <div className="space-y-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-amber-500/20 text-amber-500 shrink-0">
+                                                <Trophy size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white mb-1">Objectif</h4>
+                                                <p className="text-xs text-white/70 leading-relaxed">
+                                                    Atteignez la Division 1 ! À la fin de chaque phase de 2 semaines, les 2 premiers de chaque poule montent dans la division supérieure, et les 2 derniers descendent.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-blue-500/20 text-blue-500 shrink-0">
+                                                <Users size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white mb-1">Comment jouer ?</h4>
+                                                <p className="text-xs text-white/70 leading-relaxed">
+                                                    Pour qu'un match compte pour la ligue, <strong>tous les joueurs doivent faire partie de la même poule</strong>. Vous pouvez jouer jusqu'à {league.max_matches_per_player} matchs par phase.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                                <Info size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white mb-1">Attribution des Points</h4>
+                                                <p className="text-xs text-white/70 leading-relaxed mb-2">
+                                                    Ce format récompense la diversité ! Tournez avec vos partenaires pour maximiser vos points.
+                                                </p>
+                                                <ul className="text-xs text-white/60 space-y-1 ml-2 border-l-2 border-white/10 pl-2">
+                                                    <li><span className="text-white font-bold">3 pts</span> : Première victoire de la phase avec un partenaire donné.</li>
+                                                    <li><span className="text-white font-bold">2 pts</span> : Victoires suivantes avec le même partenaire.</li>
+                                                    <li><span className="text-white font-bold">1 pt</span> : Défaite (aucun point au-delà du quota de matchs).</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="space-y-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-amber-500/20 text-amber-500 shrink-0">
+                                                <Trophy size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white mb-1">Objectif</h4>
+                                                <p className="text-xs text-white/70 leading-relaxed">
+                                                    Terminez à la 1ère place du classement général à la fin de la période ({league.remaining_days} jours restants). Le joueur avec le plus de points remporte la ligue.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-blue-500/20 text-blue-500 shrink-0">
+                                                <Users size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white mb-1">Comment jouer ?</h4>
+                                                <p className="text-xs text-white/70 leading-relaxed">
+                                                    Organisez vos matchs avec n'importe quel autre membre de la ligue. Pour qu'un match comptabilise des points, <strong>tous les participants</strong> au match doivent être inscrits à la ligue. Vous pouvez jouer un maximum de {league.max_matches_per_player} matchs au total.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                                <Info size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white mb-1">Attribution des Points</h4>
+                                                <ul className="text-xs text-white/70 space-y-1 ml-2 border-l-2 border-white/10 pl-2">
+                                                    <li><span className="text-white font-bold">3 pts</span> : Victoire.</li>
+                                                    <li><span className="text-white font-bold">1 pt</span> : Défaite.</li>
+                                                    <li><span className="text-white/40">0 pt après avoir atteint votre quota de matchs.</span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 border-t border-white/5 bg-[#07102e] shrink-0">
+                            <button
+                                onClick={() => setShowInfoPopup(false)}
+                                className="w-full py-3 rounded-xl bg-padel-green text-[#071554] font-black text-sm active:scale-[0.98] transition-transform"
+                            >
+                                J'ai compris
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

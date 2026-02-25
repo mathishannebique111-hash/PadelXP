@@ -185,7 +185,7 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
             <div className="flex gap-3">
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-bold text-sm shadow-lg active:scale-[0.98] transition-transform"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-padel-green text-[#071554] font-black text-sm active:scale-[0.98] transition-transform"
                 >
                     <Plus size={18} />
                     Créer une ligue
@@ -223,8 +223,8 @@ export default function TournamentsContent({ isBetaUser = false }: { isBetaUser?
                             onChange={(e) => handleFormatChange(e.target.value)}
                             className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
                         >
-                            <option value="standard">🏆 Championnat (Classement global)</option>
-                            <option value="divisions">📊 Poules (Montées/Descentes)</option>
+                            <option value="standard">Championnat (Classement global)</option>
+                            <option value="divisions">Poules (Montées/Descentes)</option>
                         </select>
                     </div>
 
