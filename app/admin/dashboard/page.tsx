@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Building2, Users, MessageSquare } from 'lucide-react';
 import StatsCards from './StatsCards';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboard() {
   return (
     <div className="space-y-8">

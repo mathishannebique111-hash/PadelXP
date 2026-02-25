@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import LogoutButton from '@/components/LogoutButton';
 import { User, Mail } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminSettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
