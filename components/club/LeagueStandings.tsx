@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, Trophy, Clock, Users, User, Info, X } from "lucide-react";
 
 interface Standing {
@@ -344,7 +345,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
             </div>
 
             {/* Modal d'informations */}
-            {showInfoPopup && (
+            {showInfoPopup && typeof document !== 'undefined' && createPortal(
                 <div className="fixed inset-0 z-[110] flex flex-col items-center justify-end md:justify-center bg-[#071554]/80 backdrop-blur-sm p-4 pb-24 md:pb-4 animate-in fade-in duration-200">
                     <div className="w-full max-w-lg bg-[#0a1536] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-4 md:slide-in-from-bottom-0 md:zoom-in-95 duration-300 max-h-[80vh]">
                         {/* Header */}
@@ -467,7 +468,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
