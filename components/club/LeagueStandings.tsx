@@ -198,7 +198,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         <div key={div} className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
                             <div className="bg-white/5 px-3 py-2 flex items-center gap-2 border-b border-white/10">
                                 <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">
-                                    {(selectedPhase !== undefined ? selectedPhase : (league.current_phase || 0)) === 0 ? 'Poule' : 'Division'} {div}
+                                    {(selectedPhase !== null && selectedPhase !== undefined ? selectedPhase : (league.current_phase || 0)) === 0 ? 'Poule' : 'Division'} {div}
                                 </span>
                             </div>
 
