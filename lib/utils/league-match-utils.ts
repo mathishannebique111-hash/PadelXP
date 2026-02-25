@@ -21,7 +21,7 @@ export async function processLeagueMatchStats(
     // 1. Récupérer la ligue
     const { data: league, error: leagueError } = await adminClient
         .from("leagues")
-        .select("id, status, ends_at, max_matches_per_player")
+        .select("id, status, ends_at, max_matches_per_player, format, current_phase")
         .eq("id", leagueId)
         .maybeSingle();
 
@@ -49,7 +49,89 @@ export async function processLeagueMatchStats(
         return;
     }
 
-    // 3. Pour chaque joueur, mettre à jour ses stats de ligue
+    // 3. Préparer les données pour le bonus de diversité (Format Divisions)
+    const isDivisionsFormat = league.format === 'divisions';
+    const currentPhase = league.current_phase || 0;
+
+    // Si c'est le format divisions, on va avoir besoin de l'historique des matchs de cette phase pour les gagnants
+    let previousMatchIdsInPhase: string[] = [];
+    if (isDivisionsFormat) {
+        // On récupère les IDs de tous les matchs validés de cette ligue dans la phase actuelle
+        // Pour cela, on cherche dans properties ou via date, mais le plus simple est de juste regarder les matchs 
+        // récents depuis le début de la phase. Simplification : on récupère les matchs de la ligue
+        // On cherchera côté participants si le binôme gagnant a déjà gagné ensemble
+
+        // On récupère les vainqueurs de ce match (users uniquement)
+        const winners = userParticipants.filter(p => {
+            return (winnerTeamId === fullMatch.team1_id && p.team === 1) ||
+                (winnerTeamId === fullMatch.team2_id && p.team === 2);
+        });
+
+        // Si on a bien 2 gagnants "user", on vérifie s'ils ont déjà gagné ensemble
+        if (winners.length === 2) {
+            const winner1 = winners[0].user_id;
+            const winner2 = winners[1].user_id;
+
+            // On cherche s'il existe déjà un match (autre que celui-ci) où:
+            // - Les 2 joueurs étaient dans la même équipe
+            // - L'équipe a gagné
+            // - Le match fait partie de la ligue
+            // Note: Une implémentation parfaite filtrerait par `phase`, mais la phase est une nouvelle donnée.
+            // Pour l'instant on regarde s'ils ont *déjà* gagné ensemble dans cette ligue tout court.
+            // On pourrait affiner avec une requête SQL sur les dates de la phase.
+
+            // D'abord, on trouve les matchs où le Joueur 1 a joué et gagné
+            const { data: w1Matches } = await adminClient
+                .from("match_participants")
+                .select("match_id, team")
+                .eq("user_id", winner1)
+                .neq("match_id", matchId);
+
+            if (w1Matches && w1Matches.length > 0) {
+                const w1MatchesMap = new Map();
+                w1Matches.forEach(m => w1MatchesMap.set(m.match_id, m.team));
+
+                // Ensuite on trouve les matchs où le Joueur 2 a joué
+                const { data: w2Matches } = await adminClient
+                    .from("match_participants")
+                    .select("match_id, team")
+                    .eq("user_id", winner2)
+                    .in("match_id", Array.from(w1MatchesMap.keys()));
+
+                if (w2Matches && w2Matches.length > 0) {
+                    // On filtre ceux où ils étaient dans la même équipe
+                    const commonMatches = w2Matches.filter(m => m.team === w1MatchesMap.get(m.match_id));
+
+                    if (commonMatches.length > 0) {
+                        // On vérifie si ces matchs faisaient partie de la ligue et s'ils ont gagné
+                        const commonMatchIds = commonMatches.map(m => m.match_id);
+                        const { data: commonLeagueMatches } = await adminClient
+                            .from("matches")
+                            .select("id, winner_team_id, team1_id, team2_id, status")
+                            .in("id", commonMatchIds)
+                            .eq("league_id", leagueId)
+                            .eq("status", "confirmed");
+
+                        if (commonLeagueMatches && commonLeagueMatches.length > 0) {
+                            // Ont-ils gagné ces matchs ?
+                            const haveWonTogether = commonLeagueMatches.some(m => {
+                                const teamObjId = w1MatchesMap.get(m.id) === 1 ? m.team1_id : m.team2_id;
+                                return m.winner_team_id === teamObjId;
+                            });
+
+                            if (haveWonTogether) {
+                                // Ils ont déjà gagné ensemble, pas de bonus
+                                previousMatchIdsInPhase = [commonLeagueMatches[0].id];
+                                logger.info(`[league-match] Winners ${winner1.slice(0, 8)} and ${winner2.slice(0, 8)} have already won together in this league.`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. Pour chaque joueur, mettre à jour ses stats de ligue
     for (const participant of userParticipants) {
         const userId = participant.user_id;
 
@@ -71,10 +153,33 @@ export async function processLeagueMatchStats(
             continue;
         }
 
-        // Calculer les points à ajouter
+        // --- CALCUL DES POINTS ---
         const currentMatchesPlayed = leaguePlayer.matches_played || 0;
         const underQuota = currentMatchesPlayed < league.max_matches_per_player;
-        const pointsToAdd = underQuota ? (isWinner ? 3 : 1) : 0;
+
+        let pointsToAdd = 0;
+        let isDiversityBonus = false;
+
+        if (underQuota) {
+            if (isWinner) {
+                if (isDivisionsFormat) {
+                    // Logique Format Divisions : 2 pts la victoire, +1 pt de bonus de diversité 
+                    // si c'est la première victoire avec ce partenaire
+                    if (previousMatchIdsInPhase.length === 0) {
+                        pointsToAdd = 3;
+                        isDiversityBonus = true;
+                    } else {
+                        pointsToAdd = 2; // Déjà gagné avec ce partenaire
+                    }
+                } else {
+                    // Format Classique : 3 pts la victoire
+                    pointsToAdd = 3;
+                }
+            } else {
+                // Défaite = 1 pt (dans les deux formats)
+                pointsToAdd = 1;
+            }
+        }
 
         // Mettre à jour
         const { error: updateError } = await adminClient
@@ -98,6 +203,8 @@ export async function processLeagueMatchStats(
                 pointsAdded: pointsToAdd,
                 newMatchesPlayed: currentMatchesPlayed + 1,
                 underQuota,
+                isDivisionsFormat,
+                isDiversityBonus
             });
         }
     }

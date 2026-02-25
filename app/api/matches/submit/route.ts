@@ -221,7 +221,7 @@ export async function POST(req: Request) {
       // Vérifier que la ligue existe et est active
       const { data: league, error: leagueError } = await supabaseAdmin
         .from("leagues")
-        .select("id, status, ends_at, max_players")
+        .select("id, status, ends_at, max_players, format")
         .eq("id", leagueId)
         .maybeSingle();
 
@@ -247,7 +247,7 @@ export async function POST(req: Request) {
 
       const { data: leagueMembers, error: membersError } = await supabaseAdmin
         .from("league_players")
-        .select("player_id")
+        .select("player_id, division")
         .eq("league_id", leagueId)
         .in("player_id", userPlayerIds);
 
@@ -265,6 +265,20 @@ export async function POST(req: Request) {
           { error: "Tous les joueurs du match doivent être membres de la ligue sélectionnée" },
           { status: 400 }
         );
+      }
+
+      // Si format Divisions, on force le même groupe
+      if (league.format === 'divisions' && leagueMembers && leagueMembers.length > 0) {
+        const firstDivision = leagueMembers[0].division;
+        const allSameDivision = leagueMembers.every(m => m.division === firstDivision);
+
+        if (!allSameDivision) {
+          logger.error("Players are not in the same division", { leagueId });
+          return NextResponse.json(
+            { error: "Dans le format Divisions, tous les joueurs du match doivent appartenir à la même Poule/Division. Le match amical a donc été bloqué pour protéger l'équité du classement." },
+            { status: 400 }
+          );
+        }
       }
 
       logger.info("League membership validated", { leagueId, memberCount: memberIds.size });
