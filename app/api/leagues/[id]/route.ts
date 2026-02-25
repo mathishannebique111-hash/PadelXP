@@ -78,18 +78,62 @@ export async function GET(
         const playerIds = (players || []).map(p => p.player_id);
         const { data: profiles } = await supabaseAdmin
             .from("profiles")
-            .select("id, first_name, last_name, display_name")
-            .in("id", playerIds);
+            .select("id, first_name, last_name, display_name, global_points")
+            .in("id", playerIds) as { data: { id: string, first_name: string | null, last_name: string | null, display_name: string | null, global_points: number }[] | null };
 
         const profilesMap = new Map(
             (profiles || []).map(p => [p.id, p])
         );
 
+        // Si la ligue est en phase de placement (0), on calcule un classement global provisoire
+        let globalRanks = new Map<string, number>();
+        let isPlacementPhase = league.format === "divisions" && league.current_phase === 0;
+
+        if (isPlacementPhase) {
+            // Créer une copie pour le tri global
+            const globalPlayers = [...(players || [])].map((p, index) => ({
+                ...p,
+                local_rank: index + 1, // Le ORDER BY points de la DB pré-trie par points, mais il faut gérer l'égalité avec global_points
+                global_points: profilesMap.get(p.player_id)?.global_points || 0
+            }));
+
+            // Étape 1: Recalculer les rangs locaux précis dans chaque poule (en cas d'égalité de points de ligue)
+            const divisionsMap = new Map<number, any[]>();
+            for (const p of globalPlayers) {
+                const div = p.division || 1;
+                if (!divisionsMap.has(div)) divisionsMap.set(div, []);
+                divisionsMap.get(div)!.push(p);
+            }
+
+            for (const divPlayers of divisionsMap.values()) {
+                divPlayers.sort((a, b) => {
+                    if (b.points !== a.points) return b.points - a.points;
+                    return b.global_points - a.global_points;
+                });
+                divPlayers.forEach((p, idx) => p.local_rank = idx + 1);
+            }
+
+            const allRanked = Array.from(divisionsMap.values()).flat();
+
+            // Étape 2: Trier tout le monde selon la règle officielle de transition
+            allRanked.sort((a, b) => {
+                if (a.local_rank !== b.local_rank) return a.local_rank - b.local_rank; // 1ers devant les 2èmes
+                if (a.points !== b.points) return b.points - a.points; // Plus de points gagne
+                return b.global_points - a.global_points; // Plus d'XP gagne
+            });
+
+            // Sauvegarder les rangs globaux
+            allRanked.forEach((p, idx) => {
+                globalRanks.set(p.player_id, idx + 1);
+            });
+        }
+
         // Construire le classement
         const standings = (players || []).map((p, index) => {
             const profile = profilesMap.get(p.player_id);
             return {
-                rank: index + 1,
+                rank: index + 1, // Placeholder pour le rang simple (sera re-trié côté client si besoin)
+                global_rank: globalRanks.get(p.player_id) || null,
                 player_id: p.player_id,
                 display_name: profile?.display_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || "Joueur",
                 matches_played: p.matches_played,

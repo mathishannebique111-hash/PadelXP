@@ -11,6 +11,7 @@ interface Standing {
     matches_played: number;
     points: number;
     division?: number;
+    global_rank?: number | null;
     is_current_user: boolean;
 }
 
@@ -267,6 +268,67 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                             })}
                         </div>
                     ))}
+
+                    {/* Classement Global Provisoire (Phase 0 uniquement) */}
+                    {league.format === "divisions" && (selectedPhase !== null && selectedPhase !== undefined ? selectedPhase : (league.current_phase || 0)) === 0 && standings.some(s => s.global_rank) && (
+                        <div className="mt-8">
+                            <h3 className="text-white font-black px-1 mb-3">Classement Global Provisoire</h3>
+                            <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+                                <div className="grid grid-cols-[40px_1fr_80px_60px] px-3 py-2 border-b border-white/10 text-[9px] font-bold text-white/30 uppercase tracking-widest bg-white/5">
+                                    <div className="text-center">Rang</div>
+                                    <div>Joueur</div>
+                                    <div className="text-center">Division</div>
+                                    <div className="text-right">Pts</div>
+                                </div>
+
+                                {standings
+                                    .filter(p => p.global_rank !== null && p.global_rank !== undefined)
+                                    .sort((a, b) => (a.global_rank as number) - (b.global_rank as number))
+                                    .map((player) => {
+                                        const globalRank = player.global_rank as number;
+                                        const projectedDivision = Math.floor((globalRank - 1) / 4) + 1;
+
+                                        return (
+                                            <div
+                                                key={player.player_id}
+                                                className={`relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center ${player.is_current_user ? "bg-padel-green/10" : ""}`}
+                                            >
+                                                {/* Rang Global */}
+                                                <div className="text-center">
+                                                    <span className={`text-sm font-bold ${globalRank === 1 ? "text-amber-400" :
+                                                        globalRank === 2 ? "text-slate-300" :
+                                                            globalRank === 3 ? "text-amber-700" :
+                                                                "text-white/40"}`}>{globalRank}</span>
+                                                </div>
+
+                                                {/* Nom */}
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-sm truncate ${player.is_current_user ? "font-black text-white" : "font-medium text-white/80"}`}>
+                                                        {player.display_name}
+                                                    </span>
+                                                </div>
+
+                                                {/* Division Projetée */}
+                                                <div className="text-center font-black">
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-widest ${projectedDivision === 1 ? "bg-amber-400 text-black" :
+                                                            projectedDivision === 2 ? "bg-slate-300 text-black" :
+                                                                projectedDivision === 3 ? "bg-amber-700 text-white" :
+                                                                    "bg-white/10 text-white"
+                                                        }`}>
+                                                        Div {projectedDivision}
+                                                    </span>
+                                                </div>
+
+                                                {/* Points */}
+                                                <div className="text-right">
+                                                    <span className="text-sm font-black text-white">{player.points}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
@@ -402,7 +464,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                             <div>
                                                 <h4 className="text-sm font-bold text-white mb-1">Attribution des Points</h4>
                                                 <p className="text-xs text-white/70 leading-relaxed mb-2">
-                                                    Ce format récompense la diversité ! Tournez avec vos partenaires pour maximiser vos points.
+                                                    Ce format récompense la diversité ! Tournez avec vos partenaires pour maximiser vos points. S'il y a égalité de points entre deux joueurs, ils sont départagés par leur nombre de points global (Expérience PadelXP).
                                                 </p>
                                                 <ul className="text-xs text-white/60 space-y-1 ml-2 border-l-2 border-white/10 pl-2">
                                                     <li><span className="text-white font-bold">3 pts</span> : Première victoire de la phase avec un partenaire donné.</li>
