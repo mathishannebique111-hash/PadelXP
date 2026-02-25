@@ -56,7 +56,7 @@ export default function AdminAccessPage() {
 
             if (loginError) throw loginError;
 
-            router.push("/admin/messages");
+            router.push("/admin/players");
         } catch (err: any) {
             setError(err.message);
             setLoading(false);
@@ -76,7 +76,7 @@ export default function AdminAccessPage() {
 
             if (error) throw error;
 
-            router.push("/admin/messages");
+            router.push("/admin/players");
         } catch (err: any) {
             setError("Mot de passe incorrect");
             setLoading(false);

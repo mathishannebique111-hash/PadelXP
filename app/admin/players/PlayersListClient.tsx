@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Users, Search } from 'lucide-react';
+import { Users, Search, User } from 'lucide-react';
 import Image from 'next/image';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 
@@ -41,8 +41,15 @@ export default function PlayersListClient({
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch);
   const [selectedClub, setSelectedClub] = useState(initialClub);
+  const [sortBy, setSortBy] = useState<'date' | 'alpha'>('date');
 
   const debouncedSearch = useDebounce(search, 300);
+
+  // Force actualisation des données en provenance du serveur lors du montage 
+  // pour s'assurer que les nouveaux inscrits s'affichent
+  useEffect(() => {
+    router.refresh();
+  }, [router]);
 
   const filteredPlayers = useMemo(() => {
     let filtered = [...initialPlayers];
@@ -59,8 +66,19 @@ export default function PlayersListClient({
       );
     }
 
+    // Sort
+    if (sortBy === 'alpha') {
+      filtered.sort((a, b) => {
+        const nameA = (a.display_name || `${a.first_name || ''} ${a.last_name || ''}`).trim().toLowerCase();
+        const nameB = (b.display_name || `${b.first_name || ''} ${b.last_name || ''}`).trim().toLowerCase();
+        return nameA.localeCompare(nameB, 'fr');
+      });
+    } else {
+      filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+
     return filtered;
-  }, [initialPlayers, debouncedSearch]);
+  }, [initialPlayers, debouncedSearch, sortBy]);
 
   function handleClubChange(clubId: string) {
     setSelectedClub(clubId);
@@ -88,7 +106,7 @@ export default function PlayersListClient({
     <div className="space-y-6">
       {/* Filters */}
       <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Filtrer par club
@@ -104,6 +122,19 @@ export default function PlayersListClient({
                   {club.name}
                 </option>
               ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Trier par
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'date' | 'alpha')}
+              className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all custom-select"
+            >
+              <option value="date" className="bg-slate-900">Date d'inscription</option>
+              <option value="alpha" className="bg-slate-900">Ordre alphabétique</option>
             </select>
           </div>
           <div>
@@ -169,10 +200,8 @@ export default function PlayersListClient({
                             />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-xs">
-                              {player.first_name?.[0] || player.display_name?.[0] || 'J'}
-                            </span>
+                          <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center border border-white/10">
+                            <User className="w-5 h-5 text-slate-400" />
                           </div>
                         )}
                       </td>
