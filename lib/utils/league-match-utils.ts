@@ -185,7 +185,7 @@ export async function processLeagueMatchStats(
         const { error: updateError } = await adminClient
             .from("league_players")
             .update({
-                matches_played: currentMatchesPlayed + 1,
+                matches_played: underQuota ? currentMatchesPlayed + 1 : currentMatchesPlayed,
                 points: (leaguePlayer.points || 0) + pointsToAdd,
             })
             .eq("id", leaguePlayer.id);
