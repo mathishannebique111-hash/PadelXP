@@ -345,8 +345,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
 
             {/* Modal d'informations */}
             {showInfoPopup && (
-                <div className="fixed inset-0 z-50 flex flex-col items-center justify-end md:justify-center bg-[#071554]/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="w-full max-w-lg bg-[#0a1536] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-4 md:slide-in-from-bottom-0 md:zoom-in-95 duration-300 max-h-[85vh]">
+                <div className="fixed inset-0 z-[60] flex flex-col items-center justify-end md:justify-center bg-[#071554]/80 backdrop-blur-sm p-4 pb-24 md:pb-4 animate-in fade-in duration-200">
+                    <div className="w-full max-w-lg bg-[#0a1536] border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-4 md:slide-in-from-bottom-0 md:zoom-in-95 duration-300 max-h-[80vh]">
                         {/* Header */}
                         <div className="relative p-6 text-center border-b border-white/5 shrink-0 bg-[#07102e]">
                             <button
@@ -357,7 +357,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                             </button>
                             <h3 className="text-xl font-black text-white">Règles de la Ligue</h3>
                             <p className="text-sm font-medium text-padel-green mt-1">
-                                {league.format === "divisions" ? "Format Poules (Montées/Descentes)" : "Format Championnat"}
+                                {league.format === "divisions" ? "Format Montées/Descentes" : "Format Championnat"}
                             </p>
                         </div>
 
@@ -367,25 +367,29 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 <>
                                     <div className="space-y-4">
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-amber-500/20 text-amber-500 shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
                                                 <Trophy size={16} />
                                             </div>
                                             <div>
                                                 <h4 className="text-sm font-bold text-white mb-1">Objectif</h4>
-                                                <p className="text-xs text-white/70 leading-relaxed">
-                                                    Atteignez la Division 1 ! À la fin de chaque phase de 2 semaines, les 2 premiers de chaque poule montent dans la division supérieure, et les 2 derniers descendent.
+                                                <p className="text-xs text-white/70 leading-relaxed mb-2">
+                                                    Atteignez la Division 1 ! La compétition se déroule en plusieurs <strong>phases de 2 semaines</strong> chacune.
                                                 </p>
+                                                <ul className="text-xs text-white/70 space-y-2 ml-1">
+                                                    <li>• <strong className="text-white">Phase de Placement (Initial)</strong> : Les joueurs ou équipes sont répartis aléatoirement dans des poules. À l'issue de cette phase, le classement global détermine votre division de départ.</li>
+                                                    <li>• <strong className="text-white">Phases Régulières</strong> : Les <strong>2 premiers</strong> de chaque division montent dans la division supérieure. Les <strong>2 derniers</strong> descendent dans la division inférieure. Les autres se maintiennent.</li>
+                                                </ul>
                                             </div>
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-blue-500/20 text-blue-500 shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
                                                 <Users size={16} />
                                             </div>
                                             <div>
                                                 <h4 className="text-sm font-bold text-white mb-1">Comment jouer ?</h4>
                                                 <p className="text-xs text-white/70 leading-relaxed">
-                                                    Pour qu'un match compte pour la ligue, <strong>tous les joueurs doivent faire partie de la même poule</strong>. Vous pouvez jouer jusqu'à {league.max_matches_per_player} matchs par phase.
+                                                    Pour qu'un match compte pour la ligue, <strong>tous les joueurs doivent faire partie de la même poule ou division</strong>. Vous pouvez jouer jusqu'à {league.max_matches_per_player} matchs par phase.
                                                 </p>
                                             </div>
                                         </div>
