@@ -230,11 +230,8 @@ export default async function ClubPage({
                 />
               }
               challengesContent={<ChallengesContent />}
-              tournamentsContent={
-                <TournamentsContent
-                  isBetaUser={user?.email ? ['capucine@gmail.com', 'sarah@gmail.com', 'mattias@gmail.com', 'gaspard@gmail.com', 'hector@gmail.com', 'dorian45617@gmail.com', 'pascal@gmail.com', 'paul@gmail.com', 'ilhan@gmail.com', 'jerome@gmail.com', 'apple-review@padelxp.eu', 'hubert00113231@gmail.com'].includes(user.email) : false}
-                />
-              }
+              tournamentsContent={<TournamentsContent />}
+
             />
           </Suspense>
         </div>
