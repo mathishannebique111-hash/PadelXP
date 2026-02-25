@@ -377,7 +377,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                                 </p>
                                                 <ul className="text-xs text-white/70 space-y-2 ml-1">
                                                     <li>• <strong className="text-white">Phase de Placement (Initial)</strong> : Les joueurs ou équipes sont répartis aléatoirement dans des poules. À l'issue de cette phase, le classement global détermine votre division de départ.</li>
-                                                    <li>• <strong className="text-white">Phases Régulières</strong> : Les <strong>2 premiers</strong> de chaque division montent dans la division supérieure. Les <strong>2 derniers</strong> descendent dans la division inférieure. Les autres se maintiennent.</li>
+                                                    <li>• <strong className="text-white">Phases Régulières</strong> : Le <strong>1er</strong> de chaque division monte dans la division supérieure. Le <strong>dernier</strong> descend dans la division inférieure. Les autres se maintiennent.</li>
                                                 </ul>
                                             </div>
                                         </div>
