@@ -416,7 +416,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 <>
                                     <div className="space-y-4">
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-amber-500/20 text-amber-500 shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
                                                 <Trophy size={16} />
                                             </div>
                                             <div>
@@ -428,7 +428,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-blue-500/20 text-blue-500 shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
                                                 <Users size={16} />
                                             </div>
                                             <div>
