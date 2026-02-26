@@ -22,6 +22,7 @@ import PadelLoader from "@/components/ui/PadelLoader";
 import PremiumStats from "@/components/club/PremiumStats";
 import JoinClubSection from "@/components/club/JoinClubSection";
 import ClubProfileClient from "@/components/club/ClubProfileClient";
+import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 
 
 function tierForPoints(points: number) {
@@ -278,6 +279,8 @@ export default async function HomePage({
                 }
               />
             </div>
+
+            <ChallengeHighlightBar />
 
             <PlayerProfileTabs
               activeTab={activeTab}

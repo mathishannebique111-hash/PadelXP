@@ -11,6 +11,7 @@ import MobileCrashErrorBoundary from "@/components/MobileCrashErrorBoundary";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
+import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 import { redirect } from "next/navigation";
 
 const supabaseAdmin = createAdminClient(
@@ -95,6 +96,7 @@ export default async function NewMatchPage({
         <div className="mb-1 sm:mb-2">
           <PageTitle title="Matchs" subtitle={clubName ? `Club : ${clubName}` : undefined} />
         </div>
+        <ChallengeHighlightBar />
         <Suspense fallback={
           <div className="w-full">
             <div className="grid grid-cols-3 w-full mb-2 sm:mb-4 border-b border-white/10">

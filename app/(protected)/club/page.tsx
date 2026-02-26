@@ -13,6 +13,7 @@ import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils
 import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
 import JoinClubSection from "@/components/club/JoinClubSection";
+import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 
 export const dynamic = "force-dynamic";
 
@@ -193,14 +194,18 @@ export default async function ClubPage({
     <div className="relative min-h-screen overflow-hidden">
       {/* Background inherited from layout */}
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-4 md:pt-8 pb-4 sm:pb-6 md:pb-8">
-        <PageTitle
-          title="Espace Compétition"
-        />
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-1.5 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
+        <div className="mb-4 sm:mb-6">
+          <PageTitle
+            title="Espace Compétition"
+          />
+        </div>
+
+        <ChallengeHighlightBar />
 
         {/* Removed 'Club non défini' blocker */}
 
-        <div className="mt-6">
+        <div className="mt-4 sm:mt-6">
           <Suspense fallback={
             <div className="w-full">
               <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
