@@ -280,13 +280,14 @@ export async function middleware(req: NextRequest) {
 
 
 
-  // 2) Laisser passer le cron, l'API d'email et les webhooks
+  // 2) Laisser passer le cron, l'API d'email, l'attente Android et les webhooks
   if (
     normalizedPathname.startsWith("/api/cron/trial-check") ||
     normalizedPathname.startsWith("/api/send-trial-reminder") ||
     normalizedPathname.startsWith("/api/webhooks/") ||
     normalizedPathname === "/api/resend-inbound" ||
-    normalizedPathname === "/api/trial/check-extensions"
+    normalizedPathname === "/api/trial/check-extensions" ||
+    normalizedPathname.startsWith("/api/attenteandroid")
   ) {
     return NextResponse.next();
   }
@@ -307,6 +308,7 @@ export async function middleware(req: NextRequest) {
     "/api/admin/create", // Allow create API
     "/api/guest/",       // Allow guest API
     "/api/contact/",     // Allow public contact forms
+    "/api/attenteandroid/", // Allow public Android waitlist
     "/share",            // Public profile sharing card
     "/_next/",
     "/images/",
@@ -346,7 +348,8 @@ export async function middleware(req: NextRequest) {
     "/about",
     "/contact",
     "/players",
-    "/guest/confirmation" // Allow guest confirmation page
+    "/guest/confirmation", // Allow guest confirmation page
+    "/attenteandroid" // Allow Android waitlist page
   ]);
 
   const API_ROUTES_THAT_HANDLE_AUTH = ["/api/matches/", "/api/reviews"];
@@ -354,8 +357,6 @@ export async function middleware(req: NextRequest) {
   const isPublic = PUBLIC_PATHS.has(normalizedPathname) || PUBLIC_PREFIXES.some((p) => normalizedPathname.startsWith(p));
   const isProtected = !isPublic && !isApiRouteThatHandlesAuth;
   const isApiRoute = normalizedPathname.startsWith("/api/");
-
-
 
   // Si la route est publique, laisser passer immédiatement
   if (isPublic) {
