@@ -309,6 +309,7 @@ export async function middleware(req: NextRequest) {
     "/api/guest/",       // Allow guest API
     "/api/contact/",     // Allow public contact forms
     "/api/attenteandroid/", // Allow public Android waitlist
+    "/.well-known/",     // Allow Digital Asset Links and Apple Site Association
     "/share",            // Public profile sharing card
     "/_next/",
     "/images/",

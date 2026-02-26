@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "eu.padelxp.player",
+            "sha256_cert_fingerprints": [
+                "34:D7:C4:98:05:23:CC:A9:12:CB:49:46:9D:36:06:F9:58:81:8A:A5:F0:66:CF:44:D1:09:D7:B3:72:65:A5:71"
+            ]
+        }
+    }
+]
