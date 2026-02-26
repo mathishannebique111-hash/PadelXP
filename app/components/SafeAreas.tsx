@@ -36,6 +36,9 @@ export default function SafeAreas() {
     if (isBlackPage) {
       topColor = '#000000';
       bottomColor = '#000000';
+    } else if (pathname?.startsWith('/attenteandroid')) {
+      topColor = '#071554';
+      bottomColor = '#071554';
     } else if (isPlayerPage) {
       topColor = '#172554';
       bottomColor = '#172554';

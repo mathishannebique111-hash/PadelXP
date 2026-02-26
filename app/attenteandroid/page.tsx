@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 
+export const viewport = {
+    themeColor: '#071554',
+};
+
 export default function AttenteAndroidPage() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
@@ -53,7 +57,7 @@ export default function AttenteAndroidPage() {
         return (
             <div className="relative min-h-screen flex flex-col items-center justify-center text-white px-6 overflow-hidden bg-theme-page">
                 {/* Logo */}
-                <div className="absolute top-8 sm:top-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
+                <div className="absolute top-6 sm:top-10 left-0 right-0 z-20 flex justify-center pointer-events-none">
                     <img
                         src="/images/Logo sans fond.png"
                         alt="PadelXP Logo"
@@ -61,7 +65,7 @@ export default function AttenteAndroidPage() {
                     />
                 </div>
 
-                <div className="relative z-10 w-full max-w-sm mx-auto p-6 text-center animate-in fade-in zoom-in duration-300 mt-12">
+                <div className="relative z-10 w-full max-w-sm mx-auto p-6 text-center animate-in fade-in zoom-in duration-300">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-green-500/30">
                         <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-green-400" />
                     </div>
@@ -82,12 +86,18 @@ export default function AttenteAndroidPage() {
     }
 
     return (
-        <div className="relative min-h-screen flex flex-col items-center justify-center text-white px-6 py-12 overflow-y-auto bg-theme-page">
+        <div className="relative min-h-screen flex flex-col items-center justify-center text-white px-6 pt-16 pb-12 overflow-y-auto bg-theme-page">
+            <style jsx global>{`
+                body, html {
+                    background-color: #071554 !important;
+                }
+            `}</style>
+
             {/* Background gradient (optional, for depth) */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black/80 z-0 pointer-events-none" />
 
             {/* Logo placed above the form */}
-            <div className="absolute top-8 sm:top-12 left-0 right-0 z-20 flex justify-center pointer-events-none">
+            <div className="absolute top-6 sm:top-10 left-0 right-0 z-20 flex justify-center pointer-events-none">
                 <img
                     src="/images/Logo sans fond.png"
                     alt="PadelXP Logo"
@@ -96,7 +106,7 @@ export default function AttenteAndroidPage() {
             </div>
 
             {/* Form Container */}
-            <div className="relative z-50 w-full max-w-sm mx-auto mt-16 sm:mt-20">
+            <div className="relative z-50 w-full max-w-sm mx-auto mt-10 sm:mt-16">
 
                 {/* Informational Text Above Form */}
                 <p className="text-center text-xs sm:text-sm md:text-base text-white/90 font-medium mb-6 sm:mb-8 leading-relaxed max-w-[280px] sm:max-w-xs mx-auto drop-shadow-md">
