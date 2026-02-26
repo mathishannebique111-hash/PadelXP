@@ -36,7 +36,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="padelxp.eu" />
-                <data android:scheme="https" android:host="www.padelxp.eu" />
             </intent-filter>
 
         </activity>
