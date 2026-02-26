@@ -10,11 +10,11 @@ import ProfilePhotoUpload from "./ProfilePhotoUpload";
 type PrecheckResult =
   | boolean
   | {
-      ok?: boolean;
-      message?: string;
-      redirect?: string;
-      club?: { slug: string; code: string };
-    };
+    ok?: boolean;
+    message?: string;
+    redirect?: string;
+    club?: { slug: string; code: string };
+  };
 
 export default function EmailSignupForm({
   extra,
@@ -235,13 +235,13 @@ export default function EmailSignupForm({
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          logger.error('[EmailSignup] Failed to attach club:', response.status, errorData);
+          logger.error('[EmailSignup] Failed to attach club:', { status: response.status, error: errorData });
           const message = errorData?.error || "Impossible d'attacher le club";
           throw new Error(message);
         }
 
         const attachData = await response.json();
-        
+
         // Si un code de parrainage a été traité avec succès, stocker l'info pour la notification
         if (attachData.referralProcessed) {
           // La notification sera affichée lors de la prochaine connexion via ReferralNotifier
@@ -282,7 +282,7 @@ export default function EmailSignupForm({
 
             if (!photoResponse.ok) {
               const errorData = await photoResponse.json().catch(() => ({}));
-              logger.error('[EmailSignup] Failed to upload profile photo:', photoResponse.status, errorData);
+              logger.error('[EmailSignup] Failed to upload profile photo:', { status: photoResponse.status, error: errorData });
               // Ne pas bloquer l'inscription si l'upload de la photo échoue
             } else {
               logger.info('[EmailSignup] Profile photo uploaded successfully');
@@ -294,7 +294,7 @@ export default function EmailSignupForm({
         }
 
         if (afterAuth) {
-          try { await afterAuth(precheckContext); } catch {}
+          try { await afterAuth(precheckContext); } catch { }
         }
         router.replace(customRedirect || redirectTo);
       } catch (attachError) {
@@ -340,6 +340,7 @@ export default function EmailSignupForm({
             className="w-full rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
+            onBlur={() => setFirstName(capitalizeFullName(firstName, lastName).firstName)}
           />
         </div>
         <div>
@@ -353,6 +354,7 @@ export default function EmailSignupForm({
             className="w-full rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+            onBlur={() => setLastName(capitalizeFullName(firstName, lastName).lastName)}
           />
         </div>
       </div>
@@ -400,19 +402,18 @@ export default function EmailSignupForm({
         error={photoError || undefined}
         required={false}
       />
-      
+
       {/* Champ code de parrainage (optionnel) */}
       <div>
         <input
           type="text"
           placeholder="Code de parrainage (optionnel)"
-          className={`w-full rounded-lg bg-white/5 border px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-            referralCodeStatus?.valid
-              ? "border-green-500/50 focus:ring-green-500"
-              : referralCodeStatus?.valid === false
+          className={`w-full rounded-lg bg-white/5 border px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${referralCodeStatus?.valid
+            ? "border-green-500/50 focus:ring-green-500"
+            : referralCodeStatus?.valid === false
               ? "border-red-500/50 focus:ring-red-500"
               : "border-white/10 focus:ring-[#0066FF]"
-          }`}
+            }`}
           value={referralCode}
           onChange={(e) => handleReferralCodeChange(e.target.value.toUpperCase())}
           maxLength={8}
@@ -434,7 +435,7 @@ export default function EmailSignupForm({
           </p>
         )}
       </div>
-      
+
       {extra}
       <button
         disabled={loading}

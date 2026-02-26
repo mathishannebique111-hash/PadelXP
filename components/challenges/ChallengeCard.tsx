@@ -120,6 +120,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
         logger.info(`[ChallengeCard ${challenge.id.substring(0, 8)}] ✅ Reward claimed successfully!`, data);
         setRewardValue(data.rewardValue);
         setShowCongrats(true);
+        window.dispatchEvent(new CustomEvent('challengeRewardClaimed'));
 
         // Masquer le pop-up après 8 secondes (mais peut être fermé manuellement avant)
         const timeout = setTimeout(() => {

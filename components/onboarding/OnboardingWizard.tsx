@@ -27,6 +27,7 @@ import {
 
 import { PushNotificationsService } from "@/lib/notifications/push-notifications";
 import { createClient } from "@/lib/supabase/client";
+import { capitalizeFullName } from "@/lib/utils/name-utils";
 
 type OnboardingAnswers = {
   level: "beginner" | "leisure" | "regular" | "competition" | null;
@@ -345,8 +346,8 @@ export default function OnboardingWizard() {
         },
         body: JSON.stringify({
           answers,
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
+          first_name: capitalizeFullName(firstName, "").firstName.trim(),
+          last_name: capitalizeFullName("", lastName).lastName.trim(),
           postal_code: postalCode.trim() || null,
           city: city.trim() || null,
           skip: false,
@@ -525,6 +526,7 @@ export default function OnboardingWizard() {
                     placeholder="Thomas"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
+                    onBlur={() => setFirstName(capitalizeFullName(firstName, "").firstName)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -535,6 +537,7 @@ export default function OnboardingWizard() {
                     placeholder="Dupont"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    onBlur={() => setLastName(capitalizeFullName("", lastName).lastName)}
                   />
                 </div>
               </div>

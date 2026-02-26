@@ -27,6 +27,28 @@ function ClubTabsContent({
         : 'classement';
 
     const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
+    const [challengesBadgeCount, setChallengesBadgeCount] = useState(0);
+
+    useEffect(() => {
+        const fetchBadge = async () => {
+            try {
+                const res = await fetch('/api/player/challenges', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.challenges) {
+                        const unclaimed = data.challenges.filter(
+                            (c: any) => c.status === 'active' && c.progress.current >= c.progress.target && !c.rewardClaimed
+                        ).length;
+                        setChallengesBadgeCount(unclaimed);
+                    }
+                }
+            } catch (e) { }
+        };
+        fetchBadge();
+
+        window.addEventListener('challengeRewardClaimed', fetchBadge);
+        return () => window.removeEventListener('challengeRewardClaimed', fetchBadge);
+    }, []);
 
     useEffect(() => {
         if (tabFromUrl && ['classement', 'challenges', 'tournaments'].includes(tabFromUrl)) {
@@ -53,12 +75,17 @@ function ClubTabsContent({
                             newUrl.searchParams.set('tab', tab.id);
                             window.history.replaceState(null, '', newUrl.toString());
                         }}
-                        className={`px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center ${currentTab === tab.id
+                        className={`px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center gap-1.5 ${currentTab === tab.id
                             ? 'text-white border-b-2 border-padel-green'
                             : 'text-white/60 hover:text-white/80'
                             }`}
                     >
                         <span className="text-center whitespace-normal leading-tight">{tab.label}</span>
+                        {tab.id === 'challenges' && challengesBadgeCount > 0 && (
+                            <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm">
+                                {challengesBadgeCount > 9 ? '9+' : challengesBadgeCount}
+                            </span>
+                        )}
                         {currentTab === tab.id && (
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
                         )}

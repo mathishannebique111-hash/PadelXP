@@ -15,7 +15,7 @@ interface NavItem {
 
 export default function BottomNavBar() {
     const pathname = usePathname();
-    const [counts, setCounts] = useState({ matches: 0, invitations: 0, notifications: 0 });
+    const [counts, setCounts] = useState({ matches: 0, invitations: 0, notifications: 0, challenges: 0 });
     const [viewedMatchesCount, setViewedMatchesCount] = useState(0);
     const [viewedPartnersCount, setViewedPartnersCount] = useState(0);
     const [activeIndex, setActiveIndex] = useState(0);
@@ -30,29 +30,47 @@ export default function BottomNavBar() {
 
     const fetchCounts = async () => {
         try {
-            const res = await fetch('/api/notifications/count', { credentials: 'include' });
+            const [res, challengesRes] = await Promise.all([
+                fetch('/api/notifications/count', { credentials: 'include' }),
+                fetch('/api/player/challenges', { credentials: 'include' })
+            ]);
+
+            let data = { matches: 0, invitations: 0, notifications: 0, total: 0, challenges: 0 };
+
             if (res.ok) {
-                const data = await res.json();
-                setCounts(data);
-
-                // Auto-adjust viewed counts if they are higher than actual (e.g. validé ailleurs)
-                const storedMatches = parseInt(localStorage.getItem('padelxp_viewed_matches_count') || '0');
-                if (data.matches < storedMatches) {
-                    localStorage.setItem('padelxp_viewed_matches_count', data.matches.toString());
-                    setViewedMatchesCount(data.matches);
-                }
-
-                const totalPartners = (data.invitations || 0) + (data.notifications || 0); // Approx logic matching MatchTabs
-                const storedPartners = parseInt(localStorage.getItem('padelxp_viewed_partners_count') || '0');
-                if (totalPartners < storedPartners) {
-                    localStorage.setItem('padelxp_viewed_partners_count', totalPartners.toString());
-                    setViewedPartnersCount(totalPartners);
-                }
-
-                // Mettre à jour le badge natif de l'application (Icone téléphone)
-                const total = (data.total || 0);
-                await PushNotificationsService.setBadge(total);
+                const countData = await res.json();
+                data = { ...data, ...countData };
             }
+
+            if (challengesRes.ok) {
+                const challengeData = await challengesRes.json();
+                if (challengeData.challenges) {
+                    const unclaimed = challengeData.challenges.filter(
+                        (c: any) => c.status === 'active' && c.progress.current >= c.progress.target && !c.rewardClaimed
+                    ).length;
+                    data.challenges = unclaimed;
+                }
+            }
+
+            setCounts(data);
+
+            // Auto-adjust viewed counts if they are higher than actual (e.g. validé ailleurs)
+            const storedMatches = parseInt(localStorage.getItem('padelxp_viewed_matches_count') || '0');
+            if (data.matches < storedMatches) {
+                localStorage.setItem('padelxp_viewed_matches_count', data.matches.toString());
+                setViewedMatchesCount(data.matches);
+            }
+
+            const totalPartners = (data.invitations || 0) + (data.notifications || 0); // Approx logic matching MatchTabs
+            const storedPartners = parseInt(localStorage.getItem('padelxp_viewed_partners_count') || '0');
+            if (totalPartners < storedPartners) {
+                localStorage.setItem('padelxp_viewed_partners_count', totalPartners.toString());
+                setViewedPartnersCount(totalPartners);
+            }
+
+            // Mettre à jour le badge natif de l'application (Icone téléphone)
+            const total = (data.total || 0) + data.challenges;
+            await PushNotificationsService.setBadge(total);
         } catch (error) {
             console.error('Error fetching notification counts:', error);
         }
@@ -82,6 +100,7 @@ export default function BottomNavBar() {
         window.addEventListener('matchInvitationUpdated', handleUpdate);
         window.addEventListener('teamChallengeCreated', handleUpdate);
         window.addEventListener('teamChallengeUpdated', handleUpdate);
+        window.addEventListener('challengeRewardClaimed', handleUpdate);
         window.addEventListener('badge-sync', loadViewed); // Sync from MatchTabs
 
         return () => {
@@ -171,6 +190,9 @@ export default function BottomNavBar() {
                     if (item.navKey === 'match') {
                         // Badge persistant tant qu'il y a des actions en attente
                         badgeCount = counts.matches;
+                        showBadge = badgeCount > 0;
+                    } else if (item.navKey === 'club') {
+                        badgeCount = counts.challenges;
                         showBadge = badgeCount > 0;
                     } else if (item.navKey === 'home') {
                         // Profil : Pas de badge pour l'instant car les notifications ne sont pas affichées sur cette page
