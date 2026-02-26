@@ -17,6 +17,8 @@ const supabaseAdmin = createServiceClient(
 );
 
 const BUCKET_NAME = "club-challenges";
+const CHALLENGES_BUCKET_NAME = "challenges";
+const GLOBAL_CHALLENGES_KEY = "__global__/challenges.json";
 
 // Liste d'emojis disponibles pour les badges de challenges
 const BADGE_EMOJIS = [
@@ -64,7 +66,7 @@ async function resolveClubId(userId: string) {
     return profile.club_id;
   }
 
-  logger.warn({ userId }, "[claim-reward] resolveClubId: aucun club trouvé pour userId");
+  logger.warn("[claim-reward] resolveClubId: aucun club trouvé pour userId", { userId });
   return null;
 }
 
@@ -72,7 +74,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   const { data, error } = await supabaseAdmin.storage.from(BUCKET_NAME).download(`${clubId}.json`);
   if (error || !data) {
     if (error && !error.message?.toLowerCase().includes("not found")) {
-      logger.warn({ err: error }, "[claim-reward] load error");
+      logger.warn("[claim-reward] load error", { err: error });
     }
     return [];
   }
@@ -83,7 +85,35 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
       return parsed as ChallengeRecord[];
     }
   } catch (err) {
-    logger.warn({ err }, "[claim-reward] invalid JSON");
+    logger.warn("[claim-reward] invalid JSON", { err });
+  }
+  return [];
+}
+
+async function loadGlobalChallenges(): Promise<ChallengeRecord[]> {
+  const { data, error } = await supabaseAdmin.storage.from(CHALLENGES_BUCKET_NAME).download(GLOBAL_CHALLENGES_KEY);
+  if (error || !data) {
+    return [];
+  }
+  try {
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      return parsed.map((record: any) => ({
+        id: record.id,
+        club_id: "global",
+        title: record.title || record.name,
+        start_date: record.start_date,
+        end_date: record.end_date,
+        objective: record.objective,
+        reward_type: record.reward_type || (record.reward ? "points" : "points"),
+        reward_label: typeof record.reward_label === 'string' ? record.reward_label : (typeof record.reward === 'string' ? record.reward : ""),
+        created_at: record.created_at,
+        is_premium: !!record.is_premium
+      })) as ChallengeRecord[];
+    }
+  } catch (err) {
+    logger.warn("[claim-reward] invalid global JSON", { err });
   }
   return [];
 }
@@ -161,14 +191,11 @@ export async function POST(req: Request) {
 
     // 1) Vérifier que le challenge existe et n'est pas expiré
     const clubId = await resolveClubId(user.id);
-    if (!clubId) {
-      return NextResponse.json(
-        { error: "Profil joueur introuvable" },
-        { status: 404 }
-      );
-    }
 
-    const challenges = await loadChallenges(clubId);
+    const clubChallenges = clubId ? await loadChallenges(clubId) : [];
+    const globalChallenges = await loadGlobalChallenges();
+    const challenges = [...clubChallenges, ...globalChallenges];
+
     const challenge = challenges.find(c => c.id === challengeId);
 
     if (!challenge) {
@@ -181,7 +208,7 @@ export async function POST(req: Request) {
     const now = new Date();
     const endDate = new Date(challenge.end_date);
     if (now > endDate) {
-      logger.info({ challengeId, endDate: challenge.end_date }, "[claim-reward] ❌ Challenge expired");
+      logger.info("[claim-reward] ❌ Challenge expired", { challengeId, endDate: challenge.end_date });
       return NextResponse.json(
         { error: "Ce challenge est terminé et ne peut plus être réclamé" },
         { status: 403 }
