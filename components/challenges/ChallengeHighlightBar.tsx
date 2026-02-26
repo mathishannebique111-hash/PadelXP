@@ -150,14 +150,9 @@ export default function ChallengeHighlightBar() {
                             </span>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                            <div className="flex flex-col items-end">
-                                <span className={`text-[11px] font-bold tabular-nums leading-none ${challenge.isPremium ? 'text-amber-400' : 'text-padel-green'}`}>
-                                    {percentage}%
-                                </span>
-                                <span className="text-[9px] text-white/40 font-medium uppercase tracking-wider mt-0.5">
-                                    {challenge.progress.current} / {challenge.progress.target}
-                                </span>
-                            </div>
+                            <span className="text-[10px] sm:text-xs text-white/40 font-bold tabular-nums uppercase tracking-wider">
+                                {challenge.progress.current} / {challenge.progress.target}
+                            </span>
                             <ChevronRight size={16} className="text-white/20 group-hover:text-white/70 transition-colors duration-300" />
                         </div>
                     </div>
