@@ -26,15 +26,22 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStart = today.toISOString();
+
     // Fetch stats using admin client to bypass RLS
-    const [clubsResult, playersResult, matchesResult, messagesResult] = await Promise.all([
+    const [clubsResult, playersResult, matchesResult, matchesTodayResult, messagesResult] = await Promise.all([
       supabaseAdmin.from('clubs').select('*', { count: 'exact', head: true }),
       supabaseAdmin
         .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .not('email', 'is', null)
-        .not('club_id', 'is', null),
+        .select('email')
+        .not('email', 'is', null),
       supabaseAdmin.from('matches').select('*', { count: 'exact', head: true }),
+      supabaseAdmin
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .gte('played_at', todayStart),
       supabaseAdmin
         .from('admin_messages')
         .select('*', { count: 'exact', head: true })
@@ -47,13 +54,17 @@ export async function GET() {
       (clubs || []).map((c) => c.email?.toLowerCase()).filter(Boolean)
     );
 
-    const { count: totalPlayers } = playersResult;
-    const playersWithoutAdmins = totalPlayers || 0; // Already filtered in query
+    const { data: playersList } = playersResult;
+    const playersWithoutAdmins = (playersList || []).filter((p) => {
+      const email = p.email?.toLowerCase();
+      return email && !clubEmails.has(email);
+    }).length;
 
     return NextResponse.json({
       clubs: clubsResult.count || 0,
       players: playersWithoutAdmins,
       matches: matchesResult.count || 0,
+      matchesToday: matchesTodayResult.count || 0,
       unreadMessages: messagesResult.count || 0,
     });
   } catch (error) {
