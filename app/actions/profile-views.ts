@@ -50,7 +50,16 @@ export async function getProfileVisitors() {
         return { success: false, error: "Non authentifié" };
     }
 
-    // 2. Récupérer les visites avec les détails du profil du visiteur
+    // 2. Récupérer le statut premium de l'utilisateur connecté
+    const { data: currentUserProfile } = await supabase
+        .from("profiles")
+        .select("is_premium")
+        .eq("id", user.id)
+        .single();
+
+    const isPremium = currentUserProfile?.is_premium || false;
+
+    // 3. Récupérer les visites avec les détails du profil du visiteur
     const { data, error } = await supabase
         .from("profile_views")
         .select(`
@@ -77,5 +86,5 @@ export async function getProfileVisitors() {
         return { success: false, error };
     }
 
-    return { success: true, visitors: data };
+    return { success: true, visitors: data, isPremium };
 }
