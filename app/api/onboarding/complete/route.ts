@@ -4,6 +4,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
 import { getDepartmentFromPostalCode, getRegionFromDepartment } from "@/lib/utils/geo-leaderboard-utils";
 import { revalidatePath } from "next/cache";
+import { processReferralCode } from "@/lib/utils/referral-utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -107,6 +108,30 @@ export async function POST(req: Request) {
     revalidatePath("/home");
     revalidatePath("/player/onboarding");
     revalidatePath("/(protected)/home", "page");
+
+    // Traiter le code de parrainage si présent dans les métadonnées (venant du signup)
+    const metadataReferralCode = user.user_metadata?.referral_code;
+    if (metadataReferralCode) {
+      try {
+        const referralResult = await processReferralCode(metadataReferralCode, user.id);
+        if (referralResult.success) {
+          logger.info(
+            "[onboarding/complete] Parrainage traité avec succès via métadonnées",
+            { userId: user.id.substring(0, 8) + "…", referralCode: metadataReferralCode.substring(0, 5) + "…" }
+          );
+        } else {
+          logger.warn(
+            "[onboarding/complete] Échec du traitement du parrainage via métadonnées",
+            { userId: user.id.substring(0, 8) + "…", error: referralResult.error }
+          );
+        }
+      } catch (referralError) {
+        logger.error(
+          "[onboarding/complete] Erreur lors du traitement du parrainage",
+          { userId: user.id.substring(0, 8) + "…", error: referralError }
+        );
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error: any) {
