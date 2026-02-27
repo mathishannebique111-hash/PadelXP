@@ -372,6 +372,7 @@ export async function middleware(req: NextRequest) {
 
 
 
+  // 3) AUTH & PERF OPTIMIZATION
   const res = NextResponse.next();
 
   if (rateLimitInfo) {
@@ -379,8 +380,6 @@ export async function middleware(req: NextRequest) {
     res.headers.set("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
     res.headers.set("X-RateLimit-Reset", rateLimitInfo.reset.toString());
   }
-
-
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -400,273 +399,122 @@ export async function middleware(req: NextRequest) {
     }
   );
 
+  // Optimized session check
+  const { data: { session } } = await supabase.auth.getSession();
 
-
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
-
-
-
-  // Vérifier l'inactivité
+  // Inactivity check
   if (session) {
     const now = Date.now();
     const lastActivityCookie = req.cookies.get("last_activity")?.value;
-
     if (lastActivityCookie) {
       const lastActivity = parseInt(lastActivityCookie, 10);
-      if (!isNaN(lastActivity)) {
-        const inactiveMinutes = (now - lastActivity) / (1000 * 60);
-
-        if (inactiveMinutes > 120) {
-          await supabase.auth.signOut();
-          res.cookies.set("last_activity", "", { expires: new Date(0) });
-          if (isProtected && !isApiRoute) {
-            const url = req.nextUrl.clone();
-            url.pathname = "/login";
-            return NextResponse.redirect(url);
-          }
-          if (isProtected && isApiRoute && !isApiRouteThatHandlesAuth) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-          }
-          return res;
-        }
+      if (!isNaN(lastActivity) && (now - lastActivity) / (1000 * 60) > 120) {
+        await supabase.auth.signOut();
+        res.cookies.set("last_activity", "", { expires: new Date(0) });
+        if (isProtected) return isApiRoute ? NextResponse.json({ error: "Unauthorized" }, { status: 401 }) : NextResponse.redirect(new URL("/login", req.url));
       }
     }
-
-    if (isProtected) {
-      res.cookies.set("last_activity", now.toString(), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 120 * 60,
-        path: "/",
-      });
-    }
+    if (isProtected) res.cookies.set("last_activity", now.toString(), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 120 * 60, path: "/" });
   }
 
-
-
-  // Vérifier l'expiration de la session
-  if (session?.expires_at) {
-    const now = Math.floor(Date.now() / 1000);
-    const expiresAt = session.expires_at;
-    const expiresIn = expiresAt - now;
-
-    if (expiresIn < 60) {
-      await supabase.auth.signOut();
-      res.cookies.set("last_activity", "", { expires: new Date(0) });
-      if (isProtected && !isApiRoute) {
-        const url = req.nextUrl.clone();
-        url.pathname = "/login";
-        return NextResponse.redirect(url);
-      }
-      if (isProtected && isApiRoute && !isApiRouteThatHandlesAuth) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      return res;
-    }
+  // Redirect if protected and no session
+  if (!session && isProtected) {
+    return isApiRoute ? NextResponse.json({ error: "Unauthorized" }, { status: 401 }) : NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // DATA FETCHING & CACHING
+  if (session?.user) {
+    const user = session.user;
 
+    // Check for cached performance context (short-lived: 2 minutes)
+    const perfContextCookie = req.cookies.get("perf_context")?.value;
+    let perfContext: any = null;
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-
-
-  if (!user && !session && isProtected) {
-    if (isApiRoute && !isApiRouteThatHandlesAuth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (!isApiRoute) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-  }
-
-
-
-  if (session && !user && userError) {
-    logger.warn("[Middleware] Session exists but getUser() failed (temporary error?):", { errorCode: userError?.code, errorMessage: userError?.message, path: normalizedPathname?.substring(0, 30) + "…" || 'unknown' });
-    if (isProtected) {
-      const now = Date.now();
-      res.cookies.set("last_activity", now.toString(), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 30 * 60,
-        path: "/",
-      });
-    }
-    return res;
-  }
-
-  if (!session && req.cookies.get("last_activity")) {
-    res.cookies.set("last_activity", "", { expires: new Date(0), path: "/" });
-  }
-
-
-
-  // Admin redirection logic
-  if (user) {
-    // COMBINED QUERY: Fetch admin status and club_id in one go to save a DB roundtrip
-    let userIsAdmin = false;
-    let userClubId: string | null = null;
-
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_admin, club_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      userIsAdmin = profile?.is_admin || false;
-      userClubId = profile?.club_id || null;
-
-      // Fallback sur la fonction isAdmin basée sur l'email si pas de profil ou is_admin null
-      if (!userIsAdmin) {
-        userIsAdmin = isAdmin(user.email);
-      }
-    } catch (e) {
-      // En cas d'erreur, utiliser la fonction basée sur l'email
-      userIsAdmin = isAdmin(user.email);
-    }
-
-    // Protect admin routes - rediriger uniquement si vraiment non-admin
-    if (normalizedPathname.startsWith('/admin')) {
-      if (!userIsAdmin) {
-        const url = req.nextUrl.clone();
-        url.pathname = '/home';
-        return NextResponse.redirect(url);
-      }
-      // Si admin et sur route admin, continuer normalement (pas de redirection)
-    }
-
-    // Redirect admin users to admin messages when accessing player entry pages
-    // MAIS seulement si l'admin n'est pas déjà en train de naviguer dans l'admin
-    // (vérifier le referer pour éviter les redirections lors de la navigation admin)
-    const referer = req.headers.get('referer') || '';
-    const isComingFromAdmin = referer.includes('/admin');
-
-    // Rediriger les admins vers /admin/messages au lieu de /home ou autres pages joueur
-    if (
-      userIsAdmin &&
-      !isComingFromAdmin &&
-      (normalizedPathname === "/player/login" ||
-        normalizedPathname === "/player/signup" ||
-        normalizedPathname === "/player/dashboard" ||
-        normalizedPathname === "/player/onboarding" ||
-        normalizedPathname === "/home")
-    ) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/admin/messages";
-      return NextResponse.redirect(url);
-    }
-
-    // Redirect logged-in users away from login/signup pages
-    if (normalizedPathname === "/signup" || normalizedPathname === "/login") {
-      if (userIsAdmin) {
-        const url = req.nextUrl.clone();
-        url.pathname = "/admin/messages";
-        return NextResponse.redirect(url);
-      } else {
-        const url = req.nextUrl.clone();
-        url.pathname = "/home";
-        return NextResponse.redirect(url);
-      }
-    }
-
-    // ========================================
-    // CLUB SUSPENSION CHECK
-    // ========================================
-    // Check if user's club is suspended and enforce access restrictions
-    // Skip for super admins and certain paths
-    if (!userIsAdmin && !normalizedPathname.startsWith('/player/club-suspended')) {
+    if (perfContextCookie) {
       try {
-        // First, check if user is a club admin
+        perfContext = JSON.parse(Buffer.from(perfContextCookie, 'base64').toString());
+        // Verify expiration (max 2 minutes)
+        if (Date.now() - perfContext.timestamp > 120000) perfContext = null;
+      } catch (e) {
+        perfContext = null;
+      }
+    }
+
+    if (!perfContext) {
+      // CONSOLIDATED QUERY
+      // We fetch everything in one go: profile, admin status, and club status
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_admin, club_id, clubs(is_suspended, trial_end_date, trial_current_end_date, subscription_status)")
+          .eq("id", user.id)
+          .maybeSingle();
+
         const { data: clubAdmin } = await supabase
           .from('club_admins')
           .select('club_id')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (clubAdmin?.club_id) {
-          // User is a club admin - check if their club is suspended
-          const { data: club } = await supabase
-            .from('clubs')
-            .select('is_suspended')
-            .eq('id', clubAdmin.club_id)
-            .single();
+        perfContext = {
+          is_admin: profile?.is_admin || isAdmin(user.email),
+          club_id: profile?.club_id || clubAdmin?.club_id || null,
+          is_suspended: (profile as any)?.clubs?.is_suspended || false,
+          trial_end: (profile as any)?.clubs?.trial_current_end_date || (profile as any)?.clubs?.trial_end_date || null,
+          sub_status: (profile as any)?.clubs?.subscription_status || null,
+          is_club_admin: !!clubAdmin,
+          timestamp: Date.now()
+        };
 
-          if (club?.is_suspended) {
-            // Club is suspended - only allow access to /dashboard/facturation
-            if (normalizedPathname.startsWith('/dashboard') && !normalizedPathname.startsWith('/dashboard/facturation')) {
-              const url = req.nextUrl.clone();
-              url.pathname = '/dashboard/facturation';
-              return NextResponse.redirect(url);
-            }
-          }
-        } else {
-          // User is not a club admin - check if they are a player
-          // userClubId has already been fetched above in the combined query
-          const playerClubId = userClubId;
+        // Cache for 2 minutes
+        res.cookies.set("perf_context", Buffer.from(JSON.stringify(perfContext)).toString('base64'), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 120, // 2 minutes
+          path: '/'
+        });
+      } catch (e) {
+        logger.error("[Middleware] Fetch error", e);
+      }
+    }
 
-          if (playerClubId) {
-            // Check if their club is suspended OR if grace period has expired
-            const { data: club } = await supabase
-              .from('clubs')
-              .select('is_suspended, trial_end_date, trial_current_end_date, subscription_status')
-              .eq('id', playerClubId)
-              .single();
+    if (perfContext) {
+      const { is_admin, club_id, is_suspended, trial_end, sub_status } = perfContext;
 
-            if (club?.is_suspended) {
-              // Club is suspended - redirect player to suspension page
-              const url = req.nextUrl.clone();
-              url.pathname = '/player/club-suspended';
-              return NextResponse.redirect(url);
-            }
+      // Admin logic
+      if (normalizedPathname.startsWith('/admin') && !is_admin) {
+        return NextResponse.redirect(new URL("/home", req.url));
+      }
 
-            // Check if grace period has expired (8+ days after trial end, no active subscription)
-            const GRACE_PERIOD_DAYS = 7;
-            const trialEndDate = club?.trial_current_end_date || club?.trial_end_date;
-            const hasActiveSubscription = club?.subscription_status === 'active';
+      // Redirection logic for Entry pages
+      const isEntryPage = ["/signup", "/login", "/player/login", "/player/signup", "/home"].includes(normalizedPathname);
+      if (is_admin && isEntryPage && !req.headers.get('referer')?.includes('/admin')) {
+        return NextResponse.redirect(new URL("/admin/messages", req.url));
+      }
+      if (!is_admin && (normalizedPathname === "/signup" || normalizedPathname === "/login")) {
+        return NextResponse.redirect(new URL("/home", req.url));
+      }
 
-            if (trialEndDate && !hasActiveSubscription) {
-              const now = new Date();
-              const endDate = new Date(trialEndDate);
-              const daysSinceExpiration = Math.floor((now.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+      // Club Suspension check
+      if (!is_admin) {
+        if (is_suspended && !normalizedPathname.startsWith('/player/club-suspended')) {
+          return NextResponse.redirect(new URL("/player/club-suspended", req.url));
+        }
 
-              // If more than 7 days since trial expiration, redirect to club-stopped page
-              if (daysSinceExpiration > GRACE_PERIOD_DAYS) {
-                // Allow access to the club-stopped page and the survey API
-                if (!normalizedPathname.startsWith('/player/club-stopped') &&
-                  !normalizedPathname.startsWith('/api/player/club-stopped-survey')) {
-                  const url = req.nextUrl.clone();
-                  url.pathname = '/player/club-stopped';
-                  return NextResponse.redirect(url);
-                }
-              }
-            }
+        // Grace period check
+        if (trial_end && sub_status !== 'active') {
+          const daysSinceExp = Math.floor((Date.now() - new Date(trial_end).getTime()) / (1000 * 60 * 60 * 24));
+          if (daysSinceExp > 7 && !normalizedPathname.startsWith('/player/club-stopped') && !normalizedPathname.startsWith('/api/player/club-stopped-survey')) {
+            return NextResponse.redirect(new URL("/player/club-stopped", req.url));
           }
         }
-      } catch (e) {
-        // Log error but don't block access in case of DB issues
-        logger.warn("[Middleware] Error checking club suspension status", { error: e instanceof Error ? e.message : String(e) });
       }
     }
   }
 
-
-
   return res;
 }
-
-
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],

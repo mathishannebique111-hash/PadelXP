@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import ReferralNotifier from "@/components/ReferralNotifier";
 import ReferralSection from "@/components/ReferralSection";
@@ -71,21 +72,18 @@ export default async function HomePage({
     : 'profil';
 
   // 1. Démarrer toutes les requêtes indépendantes en parallèle
-  const [sessionResult, userResult] = await Promise.all([
-    supabase.auth.getSession(),
-    supabase.auth.getUser()
+  const [userResult, sessionResult] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession()
   ]);
 
-  const session = sessionResult.data.session;
   const { data: { user }, error: userError } = userResult;
+  const session = sessionResult.data.session;
 
   // Si session mais pas user, log le warning
   const hasSessionButNoUser = session && !user && userError;
   if (hasSessionButNoUser) {
-    logger.warn("[HomePage] Session exists but getUser() failed (temporary error?):", {
-      errorCode: userError?.code,
-      errorMessage: userError?.message,
-    });
+    logger.warn("[HomePage] Session exists but getUser() failed", { errorCode: userError?.code });
   }
 
   // Préparer les données
@@ -96,103 +94,46 @@ export default async function HomePage({
   let pendingPartnershipRequestSender: { first_name: string; last_name: string } | null = null;
 
   if (user) {
-    // 2. Paralléliser récupération Profil + Club (si possible) et Partenariats
-    // On ne peut pas facilement tout joindre si les FK ne sont pas STRICTES,
-    // mais on peut lancer les promesses en //
-
-    // A. Récupération Profil + Club en une seule fois via Admin Client (plus rapide)
-    const profilePromise = (async () => {
-      try {
-        const { data: adminProfile } = await supabaseAdmin
-          .from("profiles")
-          .select("*, clubs(id, name, logo_url)")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (adminProfile) {
-          return {
-            ...adminProfile,
-            club_data: adminProfile.clubs
-          };
-        }
-
-        // Fallback user client if admin fails or returns nothing
-        const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-        return data;
-      } catch (e) {
-        logger.error("[Home] Unexpected error fetching profile", e);
-        return null;
-      }
-    })();
-
-    // B. Récupération Partenariats (Pending Requests)
-    // On cherche les demandes OÙ partner_id = moi ET status = 'pending'
-    const partnershipsPromise = supabase
-      .from('player_partnerships')
-      .select('player_id, status') // on a besoin de l'ID du sender (player_id)
-      .eq('partner_id', user.id)
-      .eq('status', 'pending');
-
-    // Attendre les deux
-    const [fetchedProfile, partnershipsResult] = await Promise.all([profilePromise, partnershipsPromise]);
-    profile = fetchedProfile;
-
-    // Gestion Création Profil si absent
-    if (!profile && user) {
-      const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Joueur";
-      const { data: insertedData } = await supabase
+    // 2. Paralléliser récupération Profil + Club et Partenariats
+    const [profileResult, partnershipsResult] = await Promise.all([
+      supabaseAdmin
         .from("profiles")
-        .insert({ id: user.id, display_name: displayName })
-        .select()
-        .single();
-      if (insertedData) profile = insertedData;
-      else profile = { id: user.id, display_name: displayName };
+        .select("*, clubs(*)")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from('player_partnerships')
+        .select('player_id, status')
+        .eq('partner_id', user.id)
+        .eq('status', 'pending')
+    ]);
+
+    profile = profileResult.data;
+
+    if (!profile) {
+      const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Joueur";
+      const { data: insertedData } = await supabase.from("profiles").insert({ id: user.id, display_name: displayName }).select().single();
+      profile = insertedData || { id: user.id, display_name: displayName };
     }
 
-    // Gestion Admin redirect
     if (profile?.is_admin) redirect("/admin/messages");
     if (profile && !profile.has_completed_onboarding) redirect("/player/onboarding");
 
-    // Traitement des partenariats
-    if (partnershipsResult.data) {
-      pendingPartnershipRequestsCount = partnershipsResult.data.length;
-
-      // S'il y a des demandes, on veut savoir QUI (pour l'afficher dans l'onglet)
-      // On prend le premier
-      const firstRequest = partnershipsResult.data[0];
-      if (firstRequest) {
-        const { data: senderHelper } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', firstRequest.player_id)
-          .single();
-        if (senderHelper) {
-          pendingPartnershipRequestSender = {
-            first_name: senderHelper.first_name || '',
-            last_name: senderHelper.last_name || ''
-          };
-        }
-      }
+    if (profile?.club_id && profile.clubs) {
+      const club = profile.clubs;
+      clubName = club.name;
+      clubLogoUrl = getClubLogoPublicUrl(club.logo_url);
     }
 
-    // 3. Récupération Info Club (déjà jointe ou fetch si besoin)
-    if (profile?.club_id) {
-      const fetchedClub = profile.club_data || null;
-      if (fetchedClub) {
-        clubName = fetchedClub.name;
-        clubLogoUrl = getClubLogoPublicUrl(fetchedClub.logo_url);
-      } else {
-        // Fallback fetch if not joined (rare)
-        const { data: clubData } = await supabaseAdmin
-          .from("clubs")
-          .select("id, name, logo_url")
-          .eq("id", profile.club_id)
-          .maybeSingle();
-
-        if (clubData) {
-          clubName = clubData.name;
-          clubLogoUrl = getClubLogoPublicUrl(clubData.logo_url);
-        }
+    if (partnershipsResult.data && partnershipsResult.data.length > 0) {
+      pendingPartnershipRequestsCount = partnershipsResult.data.length;
+      const firstRequest = partnershipsResult.data[0];
+      const { data: senderHelper } = await supabase.from('profiles').select('first_name, last_name').eq('id', firstRequest.player_id).single();
+      if (senderHelper) {
+        pendingPartnershipRequestSender = {
+          first_name: senderHelper.first_name || '',
+          last_name: senderHelper.last_name || ''
+        };
       }
     }
   }
@@ -292,55 +233,70 @@ export default async function HomePage({
               />
             </div>
 
-            <ChallengeHighlightBar />
+            <Suspense fallback={<div className="h-20" />}>
+              <ChallengeHighlightBar />
+            </Suspense>
 
             <PlayerProfileTabs
               activeTab={activeTab}
               initialPendingRequestsCount={pendingPartnershipRequestsCount}
               profilContent={
-                <PadelTabContent
-                  profile={profile}
-                  initialPendingRequest={pendingPartnershipRequestSender}
-                />
+                <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
+                  <PadelTabContent
+                    profile={profile}
+                    initialPendingRequest={pendingPartnershipRequestSender}
+                  />
+                </Suspense>
               }
               statsContent={
                 <div className="space-y-6">
                   <div className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6">
                     <div className="w-full max-w-md">
-                      <PlayerSummary profileId={profile.id} />
+                      <Suspense fallback={<div className="h-40 bg-white/5 rounded-2xl animate-pulse" />}>
+                        <PlayerSummary profileId={profile.id} />
+                      </Suspense>
                     </div>
-                    {/* ... other stats components ... */}
                   </div>
-                  <PremiumStats />
+                  <Suspense fallback={<div className="h-80 bg-white/5 rounded-3xl animate-pulse" />}>
+                    <PremiumStats />
+                  </Suspense>
                 </div>
               }
-              badgesContent={<BadgesContent />}
+              badgesContent={
+                <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
+                  <BadgesContent />
+                </Suspense>
+              }
               clubContent={
                 profile.club_id && fullClubData ? (
-                  <ClubProfileClient
-                    clubId={fullClubData.id}
-                    name={fullClubData.name}
-                    logoUrl={getClubLogoPublicUrl(fullClubData.logo_url)}
-                    description={fullClubData.description}
-                    addressLine={fullClubData.address_line}
-                    phone={fullClubData.phone}
-                    website={fullClubData.website}
-                    numberOfCourts={fullClubData.number_of_courts}
-                    courtType={fullClubData.court_type}
-                    openingHours={fullClubData.opening_hours}
-                  />
+                  <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
+                    <ClubProfileClient
+                      clubId={fullClubData.id}
+                      name={fullClubData.name}
+                      logoUrl={getClubLogoPublicUrl(fullClubData.logo_url)}
+                      description={fullClubData.description}
+                      addressLine={fullClubData.address_line}
+                      phone={fullClubData.phone}
+                      website={fullClubData.website}
+                      numberOfCourts={fullClubData.number_of_courts}
+                      courtType={fullClubData.court_type}
+                      openingHours={fullClubData.opening_hours}
+                    />
+                  </Suspense>
                 ) : (
-                  <JoinClubSection />
+                  <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
+                    <JoinClubSection />
+                  </Suspense>
                 )
               }
             />
           </>
         )}
 
-        {/* Fallback Loader */}
-        {(!profile || !user) && !hasNoAuth && !hasSessionButNoUser && (
-          <div className="mb-4 sm:mb-6 flex justify-center py-8">
-            <PadelLoader />
+        {/* Fallback Loader for Initial Render */}
+        {(!profile || !user) && !hasNoAuth && (
+          <div className="fixed inset-0 flex items-center justify-center bg-[#172554] z-50">
+            <PadelLoader text="Initialisation..." />
           </div>
         )}
       </div>
