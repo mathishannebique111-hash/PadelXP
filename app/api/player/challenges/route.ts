@@ -577,6 +577,14 @@ export async function GET(request: Request) {
   const now = new Date();
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 1 jour = 24h
 
+  // Récupérer le statut premium de l'utilisateur
+  const { data: profile } = await supabaseAdmin!
+    .from("profiles")
+    .select("is_premium")
+    .eq("id", user.id)
+    .maybeSingle();
+  const isPremiumUser = profile?.is_premium || false;
+
   const challenges: ChallengeResponse[] = allRecords
     .filter((record) => {
       // Filtrer les challenges expirés depuis plus d'1 jour
@@ -608,5 +616,5 @@ export async function GET(request: Request) {
       };
     });
 
-  return NextResponse.json({ challenges });
+  return NextResponse.json({ challenges, isPremiumUser });
 }

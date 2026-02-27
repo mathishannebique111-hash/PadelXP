@@ -40,10 +40,16 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
             const data = await res.json();
 
             const challenges: PlayerChallenge[] = data.challenges || [];
+            const isPremium = data.isPremiumUser || false;
 
             // Filtrer les challenges actifs et non réclamés
             const activeChallenges = challenges.filter(
-                c => c.status === "active" && !c.rewardClaimed
+                c => {
+                    // Si le challenge est premium et que l'user ne l'est pas, on l'ignore pour la mise en avant
+                    if (c.isPremium && !isPremium) return false;
+
+                    return c.status === "active" && !c.rewardClaimed;
+                }
             );
 
             if (activeChallenges.length === 0) {

@@ -171,17 +171,20 @@ export default async function ChallengesContent() {
 
     let challengePoints = 0;
     let challengeBadgesCount = 0;
+    let isPremium = false;
 
     if (user) {
         const { data: userProfile } = await supabase
             .from("profiles")
-            .select("points")
+            .select("points, is_premium")
             .eq("id", user.id)
             .maybeSingle();
 
         challengePoints = typeof userProfile?.points === 'number'
             ? userProfile.points
             : (typeof userProfile?.points === 'string' ? parseInt(userProfile.points, 10) || 0 : 0);
+
+        isPremium = userProfile?.is_premium || false;
 
         const { data: challengeBadges } = await supabaseAdmin
             .from("challenge_badges")
@@ -208,7 +211,7 @@ export default async function ChallengesContent() {
                 </div>
             )}
 
-            <ChallengesList challenges={challenges} isPremiumUser={false} hasClub={hasClub} />
+            <ChallengesList challenges={challenges} isPremiumUser={isPremium} hasClub={hasClub} />
         </div>
     );
 }

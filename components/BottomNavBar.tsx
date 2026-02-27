@@ -45,8 +45,14 @@ export default function BottomNavBar() {
             if (challengesRes.ok) {
                 const challengeData = await challengesRes.json();
                 if (challengeData.challenges) {
+                    const isPremium = challengeData.isPremiumUser || false;
                     const unclaimed = challengeData.challenges.filter(
-                        (c: any) => c.status === 'active' && c.progress.current >= c.progress.target && !c.rewardClaimed
+                        (c: any) => {
+                            // Si le challenge est premium et que l'user ne l'est pas, on ne le compte pas
+                            if (c.isPremium && !isPremium) return false;
+
+                            return c.status === 'active' && c.progress.current >= c.progress.target && !c.rewardClaimed;
+                        }
                     ).length;
                     data.challenges = unclaimed;
                 }
