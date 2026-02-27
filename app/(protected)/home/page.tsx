@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import PlayerSummary from "@/components/PlayerSummary";
-import LogoutButton from "@/components/LogoutButton";
 
 import ReferralNotifier from "@/components/ReferralNotifier";
 import ReferralSection from "@/components/ReferralSection";
@@ -19,10 +17,24 @@ import PadelTabContent from "@/components/PadelTabContent";
 import BadgesContent from "@/components/BadgesContent";
 import HideSplashScreen from "@/components/HideSplashScreen";
 import PadelLoader from "@/components/ui/PadelLoader";
-import PremiumStats from "@/components/club/PremiumStats";
-import JoinClubSection from "@/components/club/JoinClubSection";
-import ClubProfileClient from "@/components/club/ClubProfileClient";
+import nextDynamic from "next/dynamic";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
+
+const PremiumStats = nextDynamic(() => import("@/components/club/PremiumStats"), {
+  loading: () => <div className="p-8 text-slate-500 text-center"><PadelLoader /></div>
+});
+
+const JoinClubSection = nextDynamic(() => import("@/components/club/JoinClubSection"), {
+  loading: () => <PadelLoader />
+});
+
+const ClubProfileClient = nextDynamic(() => import("@/components/club/ClubProfileClient"), {
+  loading: () => <PadelLoader />
+});
+
+const PlayerSummary = nextDynamic(() => import("@/components/PlayerSummary"), {
+  loading: () => <div className="w-full max-w-md p-4 flex justify-center"><PadelLoader /></div>
+});
 
 
 function tierForPoints(points: number) {
@@ -77,7 +89,7 @@ export default async function HomePage({
   }
 
   // Préparer les données
-  let profile: any = null;
+  let profile: any = null; // Legacy 'any' for profile as it has many fields
   let clubName: string | null = null;
   let clubLogoUrl: string | null = null;
   let pendingPartnershipRequestsCount = 0;

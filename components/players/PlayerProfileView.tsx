@@ -13,6 +13,7 @@ import {
   Star,
   MessageCircle,
   Loader2,
+  MapPin,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -35,6 +36,8 @@ interface Player {
   level: string | null; // Niveau de l'onboarding (beginner, leisure, regular, competition)
   created_at: string;
   username?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
 }
 
 interface Props {
@@ -406,6 +409,16 @@ export default function PlayerProfileView({
                 <p className="text-sm md:text-base text-blue-300 font-medium mb-4">
                   {player.username}
                 </p>
+              )}
+
+              {/* Localisation */}
+              {(player.postal_code || player.city) && (
+                <div className="flex items-center gap-1.5 text-xs text-blue-200/60 mb-4">
+                  <MapPin size={12} className="text-padel-green" />
+                  <span>
+                    {player.postal_code || ''}{player.postal_code && player.city ? ' ' : ''}{player.city || ''}
+                  </span>
+                </div>
               )}
 
               {/* Badge niveau - VERSION MOBILE COMPACTE */}

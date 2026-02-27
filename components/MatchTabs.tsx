@@ -13,6 +13,10 @@ interface MatchTabsProps {
   historyContent: React.ReactNode;
   partnersContent?: React.ReactNode;
   boostContent?: React.ReactNode;
+  initialBadgeCounts?: {
+    matchInvitations: number;
+    challenges: number;
+  } | null;
 }
 
 function MatchTabsContent({
@@ -20,15 +24,16 @@ function MatchTabsContent({
   recordContent,
   historyContent,
   partnersContent,
-  boostContent
+  boostContent,
+  initialBadgeCounts = null
 }: MatchTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
   const initialTab = tabFromUrl && ['record', 'history', 'partners', 'boost'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingMatchesCount, setPendingMatchesCount] = useState<number | null>(null);
-  const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(null);
-  const [pendingChallengesCount, setPendingChallengesCount] = useState<number | null>(null);
+  const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(initialBadgeCounts?.matchInvitations ?? null);
+  const [pendingChallengesCount, setPendingChallengesCount] = useState<number | null>(initialBadgeCounts?.challenges ?? null);
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
 
@@ -193,7 +198,7 @@ function MatchTabsContent({
       window.removeEventListener("teamChallengeCreated", handleChallengeEvent);
       window.removeEventListener("teamChallengeUpdated", handleChallengeEvent);
     };
-  }, [supabase]);
+  }, [supabase, initialBadgeCounts]);
 
   const tabs = [
     { id: 'record' as TabType, label: 'Enregistrer' },

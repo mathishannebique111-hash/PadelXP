@@ -120,6 +120,15 @@ export default function PadelTabContent({ profile: initialProfile, initialPendin
       loadProfile();
     };
 
+    // Skip initial fetch if we already have the profile data from props
+    const hasFullProfileData = initialProfile &&
+      initialProfile.niveau_padel !== undefined &&
+      initialProfile.level !== undefined;
+
+    if (!hasFullProfileData) {
+      loadProfile();
+    }
+
     // 1. Listen to local custom events
     window.addEventListener("profileUpdated", handleProfileUpdate);
     window.addEventListener("questionnaireCompleted", handleProfileUpdate);
@@ -176,7 +185,7 @@ export default function PadelTabContent({ profile: initialProfile, initialPendin
         <PlayerPartnerCard hasLevel={false} pendingRequestSender={pendingPartnershipRequest} />
 
         {/* Profil padel détaillé */}
-        <PadelProfileSection userId={profile.id} />
+        <PadelProfileSection userId={profile.id} initialData={profile} />
       </div>
     );
   }
@@ -293,7 +302,7 @@ export default function PadelTabContent({ profile: initialProfile, initialPendin
       <PlayerPartnerCard hasLevel={true} />
 
       {/* Profil padel détaillé */}
-      <PadelProfileSection userId={profile.id} />
+      <PadelProfileSection userId={profile.id} initialData={profile} />
 
       {showWizard && <LevelAssessmentWizard />}
     </div>

@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("level, preferred_side, hand, frequency, best_shot")
+      .select("level, preferred_side, hand, frequency, best_shot, postal_code, city")
       .eq("id", userId)
       .maybeSingle();
 
@@ -36,6 +36,8 @@ export async function GET(req: Request) {
       hand: profile?.hand || null,
       frequency: profile?.frequency || null,
       best_shot: profile?.best_shot || null,
+      postal_code: profile?.postal_code || null,
+      city: profile?.city || null,
     });
   } catch (error: any) {
     return NextResponse.json(

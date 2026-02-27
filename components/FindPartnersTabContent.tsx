@@ -11,19 +11,31 @@ import ChallengesSent from "@/components/profile/ChallengesSent";
 import ChallengesReceived from "@/components/profile/ChallengesReceived";
 import PadelLoader from "@/components/ui/PadelLoader";
 
-export default function FindPartnersTabContent() {
-  const [hasLevel, setHasLevel] = useState<boolean | null>(null);
-  const [hasPartner, setHasPartner] = useState<boolean>(false);
-  const [hasActiveChallenges, setHasActiveChallenges] = useState<boolean>(false);
-  const [userClubId, setUserClubId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+interface FindPartnersTabContentProps {
+  initialData?: {
+    hasPartner: boolean;
+    hasActiveChallenges: boolean;
+    niveauPadel: number | null;
+    clubId: string | null;
+  } | null;
+  userId?: string;
+}
+
+export default function FindPartnersTabContent({ initialData = null, userId = undefined }: FindPartnersTabContentProps) {
+  const [hasLevel, setHasLevel] = useState<boolean | null>(
+    initialData ? (initialData.niveauPadel !== null) : null
+  );
+  const [hasPartner, setHasPartner] = useState<boolean>(initialData?.hasPartner || false);
+  const [hasActiveChallenges, setHasActiveChallenges] = useState<boolean>(initialData?.hasActiveChallenges || false);
+  const [userClubId, setUserClubId] = useState<string | null>(initialData?.clubId || null);
+  const [loading, setLoading] = useState(!initialData);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const supabase = createClient();
 
   const loadProfileData = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+      if (!currentUserId) {
         setLoading(false);
         return;
       }
@@ -40,22 +52,22 @@ export default function FindPartnersTabContent() {
         supabase
           .from("profiles")
           .select("niveau_padel, niveau_categorie, club_id")
-          .eq("id", user.id)
+          .eq("id", currentUserId)
           .maybeSingle(),
 
         // 2. Partenaires (corrigé: filtre status intégré dans le .or pour éviter 400 PostgREST)
         supabase
           .from("player_partnerships")
           .select("status")
-          .or(`and(player_id.eq.${user.id},status.eq.accepted),and(partner_id.eq.${user.id},status.eq.accepted)`)
-          .then(res => res)
+          .or(`and(player_id.eq.${currentUserId},status.eq.accepted),and(partner_id.eq.${currentUserId},status.eq.accepted)`)
+          .then((res: any) => res)
           .catch(() => ({ data: null, error: { message: 'partnerships query failed' } })),
 
         // 3. Défis envoyés
         supabase
           .from("team_challenges")
           .select("id")
-          .or(`challenger_player_1_id.eq.${user.id},challenger_player_2_id.eq.${user.id}`)
+          .or(`challenger_player_1_id.eq.${currentUserId},challenger_player_2_id.eq.${currentUserId}`)
           .in("status", ["pending", "accepted"])
           .gt("expires_at", new Date().toISOString())
           .limit(1),
@@ -64,7 +76,7 @@ export default function FindPartnersTabContent() {
         supabase
           .from("team_challenges")
           .select("id")
-          .or(`defender_player_1_id.eq.${user.id},defender_player_2_id.eq.${user.id}`)
+          .or(`defender_player_1_id.eq.${currentUserId},defender_player_2_id.eq.${currentUserId}`)
           .in("status", ["pending", "accepted"])
           .gt("expires_at", new Date().toISOString())
           .limit(1),
@@ -83,7 +95,7 @@ export default function FindPartnersTabContent() {
         profile?.niveau_categorie;
 
       setHasLevel(hasEvaluatedLevel || false);
-      setUserClubId(profile?.club_id || null);
+      setUserClubId(initialData?.clubId || profile?.club_id || null);
 
       const hasAcceptedPartner = partnerships && partnerships.length > 0;
       setHasPartner(!!hasAcceptedPartner);
@@ -102,7 +114,7 @@ export default function FindPartnersTabContent() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, userId, initialData]);
 
   useEffect(() => {
     loadProfileData();

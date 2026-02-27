@@ -514,15 +514,19 @@ export async function middleware(req: NextRequest) {
 
   // Admin redirection logic
   if (user) {
-    // Vérifier si l'utilisateur est admin via la base de données (plus fiable que juste l'email)
+    // COMBINED QUERY: Fetch admin status and club_id in one go to save a DB roundtrip
     let userIsAdmin = false;
+    let userClubId: string | null = null;
+
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_admin")
+        .select("is_admin, club_id")
         .eq("id", user.id)
         .maybeSingle();
+
       userIsAdmin = profile?.is_admin || false;
+      userClubId = profile?.club_id || null;
 
       // Fallback sur la fonction isAdmin basée sur l'email si pas de profil ou is_admin null
       if (!userIsAdmin) {
@@ -609,18 +613,15 @@ export async function middleware(req: NextRequest) {
           }
         } else {
           // User is not a club admin - check if they are a player
-          const { data: playerProfile } = await supabase
-            .from('profiles')
-            .select('club_id')
-            .eq('id', user.id)
-            .maybeSingle();
+          // userClubId has already been fetched above in the combined query
+          const playerClubId = userClubId;
 
-          if (playerProfile?.club_id) {
+          if (playerClubId) {
             // Check if their club is suspended OR if grace period has expired
             const { data: club } = await supabase
               .from('clubs')
               .select('is_suspended, trial_end_date, trial_current_end_date, subscription_status')
-              .eq('id', playerProfile.club_id)
+              .eq('id', playerClubId)
               .single();
 
             if (club?.is_suspended) {
@@ -668,5 +669,5 @@ export async function middleware(req: NextRequest) {
 
 
 export const config = {
-  matcher: ["/(.*)"],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };

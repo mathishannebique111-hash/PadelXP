@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Check,
   MessageCircle,
+  MapPin,
 } from "lucide-react";
 import PadelLoader from "@/components/ui/PadelLoader";
 import { createBrowserClient } from "@supabase/ssr";
@@ -45,6 +46,8 @@ type OnboardingData = {
   hand: "right" | "left" | null;
   frequency: "monthly" | "weekly" | "2-3weekly" | "3+weekly" | null;
   best_shot: "smash" | "vibora" | "lob" | "defense" | null;
+  postal_code: string | null;
+  city: string | null;
 };
 
 const levelLabels: Record<string, string> = {
@@ -143,12 +146,14 @@ const fieldOptions = {
 
 interface PadelProfileSectionProps {
   userId: string;
+  initialData?: OnboardingData | null;
 }
 
 export default function PadelProfileSection({
   userId,
+  initialData = null,
 }: PadelProfileSectionProps) {
-  const [profileData, setProfileData] = useState<OnboardingData | null>(null);
+  const [profileData, setProfileData] = useState<OnboardingData | null>(initialData);
   const [partnerData, setPartnerData] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingData, setEditingData] = useState<OnboardingData | null>(null);
@@ -161,8 +166,19 @@ export default function PadelProfileSection({
   const [partnerPhone, setPartnerPhone] = useState<string | null>(null);
   const [isLoadingPartnerPhone, setIsLoadingPartnerPhone] = useState(false);
 
+  // Re-sync initially if initialData changes (though it shouldn't often)
   useEffect(() => {
-    loadProfile();
+    if (initialData) {
+      setProfileData(initialData);
+      setEditingData(initialData);
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    // Only load profile if we don't have initialData or if it's explicitly cleared
+    if (!initialData) {
+      loadProfile();
+    }
     loadPartner();
 
     // Écouter les événements profileUpdated pour recharger les données
@@ -425,7 +441,7 @@ export default function PadelProfileSection({
   const isLeftHanded = data.hand === "left";
 
   const renderEditableField = (
-    fieldKey: keyof OnboardingData,
+    fieldKey: Exclude<keyof OnboardingData, "postal_code" | "city">,
     label: string,
     Icon: React.ComponentType<{ className?: string }> | null,
     iconClassName: string = ""
@@ -517,7 +533,7 @@ export default function PadelProfileSection({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-2 space-y-1">
-              {options.map((option) => {
+              {fieldOptions[fieldKey].map((option: any) => {
                 const OptionIcon = (() => {
                   if (fieldKey === "level") return levelIcons[option.value];
                   if (fieldKey === "hand") return handIcons[option.value];
@@ -687,6 +703,23 @@ export default function PadelProfileSection({
         {renderEditableField("preferred_side", "Côté préféré", SideIcon)}
         {renderEditableField("best_shot", "Coup signature", ShotIcon)}
         {renderEditableField("frequency", "Fréquence", FrequencyIcon)}
+
+        {/* Localisation (Affichage seul ici, modifiable dans les paramètres) */}
+        {(data.postal_code || data.city) && (
+          <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
+            <div className="flex items-center gap-4">
+              <MapPin className="w-7 h-7 text-padel-green flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
+                  Localisation
+                </div>
+                <div className="text-base font-bold text-white">
+                  {data.postal_code || ''}{data.postal_code && data.city ? ' ' : ''}{data.city || ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
 

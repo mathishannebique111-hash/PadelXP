@@ -3,7 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Trophy, Star, Shield } from "lucide-react";
+import { Trophy, Star, Shield, MapPin } from "lucide-react";
 
 // Client admin pour bypass RLS (lecture profil public)
 const supabaseAdmin = createAdminClient(
@@ -57,6 +57,8 @@ export default async function PublicProfilePage({ params }: Props) {
                 niveau_padel, 
                 global_points, 
                 club_id,
+                postal_code,
+                city,
                 clubs(name)
             `)
             .eq('username', username)
@@ -128,7 +130,16 @@ export default async function PublicProfilePage({ params }: Props) {
                     </div>
 
                     <h1 className="text-2xl font-bold text-white mb-1">{profile.display_name}</h1>
-                    <p className="text-blue-300 font-medium mb-4">{profile.username}</p>
+                    <p className="text-blue-300 font-medium mb-1">{profile.username}</p>
+
+                    {(profile.postal_code || profile.city) && (
+                        <div className="flex items-center gap-1 text-xs text-white/50 mb-4">
+                            <MapPin size={12} className="text-padel-green" />
+                            <span>
+                                {profile.postal_code || ''}{profile.postal_code && profile.city ? ' ' : ''}{profile.city || ''}
+                            </span>
+                        </div>
+                    )}
 
                     {(profile.clubs as any)?.[0]?.name && (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300 mb-6">
