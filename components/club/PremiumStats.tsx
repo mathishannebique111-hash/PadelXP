@@ -57,6 +57,10 @@ export default function PremiumStats() {
     const [upgrading, setUpgrading] = useState(false);
     const [statsData, setStatsData] = useState<PremiumData | null>(null);
     const [timeRange, setTimeRange] = useState<TimeRange>('1W');
+    const [successTab, setSuccessTab] = useState<'day' | 'hour' | 'month'>('day');
+    const [performanceTab, setPerformanceTab] = useState<'weaker' | 'equal' | 'stronger'>('weaker');
+    const [listTab, setListTab] = useState<'victims' | 'nemesis' | 'partners'>('victims');
+    const [formTab, setFormTab] = useState<'form' | 'reaction'>('form');
     const router = useRouter();
 
     useEffect(() => {
@@ -311,7 +315,7 @@ export default function PremiumStats() {
             </div>
 
             {/* Insights Cards - Premium Grid */}
-            {/* Temporal Glory Section - Grouped */}
+            {/* 2. Temporal Glory Section */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
@@ -320,138 +324,219 @@ export default function PremiumStats() {
                     Mes Succès
                 </h3>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
-                    {/* Jour de Gloire */}
-                    <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg group hover:border-blue-500/30 transition-all">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                            <Calendar className="w-5 h-5 text-blue-400" />
-                        </div>
-                        <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Jour de Gloire</span>
-                        <span className="text-[10px] text-slate-500 mb-3">Taux de victoire max</span>
-                        <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
-                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                            <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.luckyDay?.winrate || 0}% victoires</span>
-                        </div>
-                    </div>
+                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
+                    {[
+                        { id: 'day', label: 'Jour de Gloire' },
+                        { id: 'hour', label: 'Heures de Gloire' },
+                        { id: 'month', label: 'Meilleur Mois' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setSuccessTab(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${successTab === tab.id
+                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
 
-                    {/* Heures de Gloire */}
-                    <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg group hover:border-blue-500/30 transition-all">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                            <Clock className="w-5 h-5 text-blue-400" />
+                <div className="relative z-10 max-w-sm">
+                    {successTab === 'day' && (
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                                <Calendar className="w-6 h-6 text-blue-400" />
+                            </div>
+                            <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Jour de Gloire</span>
+                            <span className="text-[10px] text-slate-500 mb-4">Taux de victoire max</span>
+                            <span className="text-3xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
+                            <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                                <span className="text-xs text-blue-400 font-bold">{statsData?.insights?.luckyDay?.winrate || 0}% victoires</span>
+                            </div>
                         </div>
-                        <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Heures de Gloire</span>
-                        <span className="text-[10px] text-slate-500 mb-3">Taux de victoire max</span>
-                        <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300 px-2 line-clamp-1">{statsData?.insights?.goldenHour?.name || "-"}</span>
-                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                            <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.goldenHour?.winrate || 0}% victoires</span>
-                        </div>
-                    </div>
+                    )}
 
-                    {/* Meilleur Mois */}
-                    <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg group hover:border-blue-500/30 transition-all">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                            <Trophy className="w-5 h-5 text-blue-300" />
+                    {successTab === 'hour' && (
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                                <Clock className="w-6 h-6 text-blue-400" />
+                            </div>
+                            <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Heures de Gloire</span>
+                            <span className="text-[10px] text-slate-500 mb-4">Créneau le plus efficace</span>
+                            <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform duration-300 px-2 break-all">{statsData?.insights?.goldenHour?.name || "-"}</span>
+                            <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                                <span className="text-xs text-blue-400 font-bold">{statsData?.insights?.goldenHour?.winrate || 0}% victoires</span>
+                            </div>
                         </div>
-                        <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Meilleur Mois</span>
-                        <span className="text-[10px] text-slate-500 mb-3">Période optimale</span>
-                        <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
-                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                            <span className="text-[10px] text-blue-300 font-bold">{statsData?.insights?.bestMonth?.winrate || 0}% victoires</span>
+                    )}
+
+                    {successTab === 'month' && (
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                                <Trophy className="w-6 h-6 text-blue-300" />
+                            </div>
+                            <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Meilleur Mois</span>
+                            <span className="text-[10px] text-slate-500 mb-4">Période optimale</span>
+                            <span className="text-3xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
+                            <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                                <span className="text-xs text-blue-300 font-bold">{statsData?.insights?.bestMonth?.winrate || 0}% victoires</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
-            {/* Form and Reaction Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {/* Current Form */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                        <TrendingUp className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Forme (5 derniers)</span>
-                    <span className="text-[10px] text-slate-500 mb-3">% victoires sur les 5 derniers</span>
-                    <span className={`text-4xl font-black group-hover:scale-110 transition-transform duration-300 mb-1 text-white`}>
-                        {statsData?.insights?.currentForm || 0}%
-                    </span>
-                    <div className={`mt-1 h-1 w-16 rounded-full ${(statsData?.insights?.currentForm || 0) >= 60 ? "bg-emerald-500" :
-                        (statsData?.insights?.currentForm || 0) >= 40 ? "bg-blue-500" : "bg-amber-500"
-                        }`}></div>
+            {/* 3. Ma Forme Section */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
+                    <TrendingUp className="w-5 h-5 text-blue-500" />
+                    Ma Forme
+                </h3>
+
+                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
+                    {[
+                        { id: 'form', label: 'Forme' },
+                        { id: 'reaction', label: 'Capacité de Réaction' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setFormTab(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${formTab === tab.id
+                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Reaction Capacity */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden group hover:border-blue-500/30 transition-all sm:col-span-2">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                        <Swords className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Capacité de Réaction</span>
-                    <span className="text-[10px] text-slate-500 mb-3">Victoires après perte du 1er set</span>
-
-                    <div className="flex items-center gap-6 mt-1">
-                        <span className="text-4xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.reaction?.rate || 0}%</span>
-                        <div className="h-8 w-[1px] bg-slate-800"></div>
-                        <div className="flex flex-col items-start text-left">
-                            <span className="text-xs text-slate-300 font-bold">{statsData?.insights?.reaction?.success || 0} remontadas</span>
-                            <span className="text-[10px] text-slate-500">sur {statsData?.insights?.reaction?.opportunities || 0} opportunités</span>
+                <div className="relative z-10 max-w-sm">
+                    {formTab === 'form' ? (
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                                <TrendingUp className="w-6 h-6 text-blue-500" />
+                            </div>
+                            <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Forme (5 derniers matchs)</span>
+                            <span className="text-[10px] text-slate-500 mb-4">% victoires sur les 5 derniers</span>
+                            <span className={`text-5xl font-black group-hover:scale-110 transition-transform duration-300 mb-3 text-white`}>
+                                {statsData?.insights?.currentForm || 0}%
+                            </span>
+                            <div className={`h-2 w-24 rounded-full ${(statsData?.insights?.currentForm || 0) >= 60 ? "bg-emerald-500" :
+                                (statsData?.insights?.currentForm || 0) >= 40 ? "bg-blue-500" : "bg-amber-500"
+                                }`}></div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                                <Swords className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Capacité de Réaction</span>
+                            <span className="text-[10px] text-slate-500 mb-4">Victoires après perte du 1er set</span>
+
+                            <div className="flex flex-col items-center gap-2 mt-1">
+                                <span className="text-5xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.reaction?.rate || 0}%</span>
+                                <div className="flex flex-col items-center text-center mt-2">
+                                    <span className="text-xs text-slate-300 font-bold">{statsData?.insights?.reaction?.success || 0} remontadas</span>
+                                    <span className="text-[10px] text-slate-500 mt-1">sur {statsData?.insights?.reaction?.opportunities || 0} opportunités</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Performance vs Level Section */}
-            {(statsData?.insights?.levelPerformance) && (
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            {/* 1. Performance Section (Level + Lists) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                    <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
-                        <Swords className="w-5 h-5 text-slate-400" />
-                        Performance par adversaire
-                    </h3>
+                <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
+                    <Swords className="w-5 h-5 text-slate-400" />
+                    Performance par adversaire
+                </h3>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
-                        {[
+                {/* Level Tabs */}
+                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
+                    {[
+                        { id: 'weaker', label: 'vs Plus Faible' },
+                        { id: 'equal', label: 'vs Niveau Équivalent' },
+                        { id: 'stronger', label: 'vs Plus Fort' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setPerformanceTab(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${performanceTab === tab.id
+                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative z-10 mb-8">
+                    {(() => {
+                        const items = [
                             { key: 'weaker', color: 'text-emerald-400', barGradient: 'from-emerald-600 to-emerald-400', label: 'vs Plus Faible', icon: <ArrowRight className="w-3 h-3 rotate-45 text-emerald-400" /> },
                             { key: 'equal', color: 'text-blue-400', barGradient: 'from-blue-600 to-blue-400', label: 'vs Niveau Équivalent', icon: <ArrowRight className="w-3 h-3 text-blue-400" /> },
                             { key: 'stronger', color: 'text-amber-400', barGradient: 'from-amber-600 to-amber-400', label: 'vs Plus Fort', icon: <ArrowRight className="w-3 h-3 -rotate-45 text-amber-400" /> }
-                        ].map((item) => {
-                            // @ts-ignore
-                            const stat = statsData?.insights?.levelPerformance?.[item.key] || { wins: 0, total: 0 };
-                            const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
-                            return (
-                                <div key={item.key} className="bg-slate-800/30 rounded-2xl p-4 border border-slate-700/30 backdrop-blur-md">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <div className="flex items-center gap-2">
-                                            {item.icon}
-                                            <span className="text-xs text-slate-300 font-bold uppercase tracking-wide">{item.label}</span>
-                                        </div>
-                                    </div>
+                        ];
+                        const item = items.find(i => i.key === performanceTab)!;
 
-                                    <div className="flex items-end gap-2 mb-3">
-                                        <span className={`text-3xl font-black ${item.color}`}>{winrate}%</span>
-                                        <span className="text-[10px] text-slate-500 font-medium mb-1.5">de réussite</span>
-                                    </div>
+                        // @ts-ignore
+                        const stat = statsData?.insights?.levelPerformance?.[item.key] || { wins: 0, total: 0 };
+                        const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
 
-                                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                                        <div className={`h-full bg-gradient-to-r ${item.barGradient} rounded-full`} style={{ width: `${winrate}%` }}></div>
-                                    </div>
-
-                                    <div className="text-[10px] text-slate-400 mt-2 font-medium flex justify-between">
-                                        <span>{stat.wins} victoires</span>
-                                        <span className="text-slate-600">/</span>
-                                        <span>{stat.total} matchs</span>
-                                    </div>
+                        return (
+                            <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30 backdrop-blur-md max-w-xl">
+                                <div className="flex items-end gap-2 mb-4">
+                                    <span className={`text-4xl font-black ${item.color}`}>{winrate}%</span>
+                                    <span className="text-xs text-slate-500 font-medium mb-1.5 uppercase tracking-wider">de réussite</span>
                                 </div>
-                            );
-                        })}
-                    </div>
+                                <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden mb-4">
+                                    <div className={`h-full bg-gradient-to-r ${item.barGradient} rounded-full transition-all duration-700`} style={{ width: `${winrate}%` }}></div>
+                                </div>
+                                <div className="text-xs text-slate-400 font-medium flex justify-between">
+                                    <span>{stat.wins} victoires</span>
+                                    <span>{stat.total} matchs</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
-            )}
 
-            {/* Lists */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {renderList("Mes Victimes", <Trophy className="w-4 h-4 text-[#CCFF00]" />, statsData?.topVictims || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
-                {renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-[#CCFF00]" />, statsData?.topNemesis || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
-                {renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-[#CCFF00]" />, statsData?.topPartners || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Jouez des matchs pour voir vos partenaires.")}
+                <div className="h-[1px] w-full bg-slate-800/50 mb-8 relative z-10" />
+
+                {/* List Tabs */}
+                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
+                    {[
+                        { id: 'victims', label: 'Mes Victimes' },
+                        { id: 'nemesis', label: 'Mes Bourreaux' },
+                        { id: 'partners', label: 'Partenaires Favoris' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setListTab(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${listTab === tab.id
+                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative z-10">
+                    {listTab === 'victims' && renderList("Mes Victimes", <Trophy className="w-4 h-4 text-[#CCFF00]" />, statsData?.topVictims || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
+                    {listTab === 'nemesis' && renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-[#CCFF00]" />, statsData?.topNemesis || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
+                    {listTab === 'partners' && renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-[#CCFF00]" />, statsData?.topPartners || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Jouez des matchs pour voir vos partenaires favoris.")}
+                </div>
             </div>
         </div>
     );
