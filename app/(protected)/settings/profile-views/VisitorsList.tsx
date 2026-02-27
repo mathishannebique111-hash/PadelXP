@@ -36,7 +36,7 @@ export default function VisitorsList() {
 
     return (
         <div className="space-y-6">
-            <PageTitle title="Qui a vu mon profil" />
+            <PageTitle title="Qui a vu mon profil ?" />
 
             <div className="mt-8 space-y-4">
                 {visitors.length === 0 ? (

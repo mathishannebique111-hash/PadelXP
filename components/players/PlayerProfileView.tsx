@@ -21,6 +21,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import AddPhoneModal from "@/components/AddPhoneModal";
 import { showToast } from "@/components/ui/Toast";
+import { recordProfileView } from "@/app/actions/profile-views";
 
 interface Player {
   id: string;
@@ -245,6 +246,13 @@ export default function PlayerProfileView({
     };
   }, [player.id, playerName, supabase]);
 
+  // Enregistrer la visite du profil
+  useEffect(() => {
+    if (player.id && currentUserId && player.id !== currentUserId) {
+      recordProfileView(player.id);
+    }
+  }, [player.id, currentUserId]);
+
   const createMatchInvitation = useCallback(async () => {
     try {
       const {
@@ -379,11 +387,16 @@ export default function PlayerProfileView({
         >
           {/* Card principale avec effet de profondeur */}
           <div className={`relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl p-5 md:p-8 shadow-2xl border-2 ${player.is_premium ? 'border-amber-500/50 shadow-amber-500/10' : 'border-slate-700/80'}`}>
-            {/* Puce Membre Premium */}
+            {/* Puce Membre Premium - Version Luxe */}
             {player.is_premium && (
-              <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-600 text-black text-[10px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
-                <Crown size={10} fill="currentColor" />
-                MEMBRE PREMIUM
+              <div className="absolute top-4 right-4 z-10">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-amber-500/20 blur-md rounded-full group-hover:bg-amber-500/30 transition-all"></div>
+                  <div className="relative bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-black text-[9px] font-black px-2.5 py-1 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-1.5 border border-amber-300/30 whitespace-nowrap">
+                    <Crown size={10} fill="currentColor" className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]" />
+                    <span className="tracking-[0.05em]">MEMBRE PREMIUM</span>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -586,14 +599,15 @@ export default function PlayerProfileView({
             </div>
           </div>
         </motion.div>
-      </div>
+      </div >
 
       {/* PROFIL PADEL - Version mobile épurée */}
-      {(player.hand ||
-        player.preferred_side ||
-        player.frequency ||
-        player.best_shot ||
-        player.level) && (
+      {
+        (player.hand ||
+          player.preferred_side ||
+          player.frequency ||
+          player.best_shot ||
+          player.level) && (
           <div className="relative z-10 px-4 pb-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -657,33 +671,36 @@ export default function PlayerProfileView({
               </div>
             </motion.div>
           </div>
-        )}
+        )
+      }
 
       {/* SECTION "POURQUOI JOUER ENSEMBLE" - Mobile optimized */}
-      {compatibilityTags && compatibilityTags.length > 0 && (
-        <div className="relative z-10 px-4 pb-24 md:pb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-padel-green/5 backdrop-blur-sm border border-padel-green/20 rounded-2xl p-4 md:p-5"
-          >
-            <h3 className="text-sm md:text-base font-bold text-padel-green mb-3 flex items-center gap-2">
-              <Star size={16} className="md:hidden fill-current" />
-              <Star size={18} className="hidden md:block fill-current" />
-              <span>Pourquoi jouer avec {firstName} ?</span>
-            </h3>
-            <ul className="space-y-2 md:space-y-2.5 text-xs md:text-sm text-gray-300">
-              {compatibilityTags.map((tag, index) => (
-                <li key={index} className="flex items-start gap-2">
-                  <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
-                  <span>{tag}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        </div>
-      )}
+      {
+        compatibilityTags && compatibilityTags.length > 0 && (
+          <div className="relative z-10 px-4 pb-24 md:pb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-padel-green/5 backdrop-blur-sm border border-padel-green/20 rounded-2xl p-4 md:p-5"
+            >
+              <h3 className="text-sm md:text-base font-bold text-padel-green mb-3 flex items-center gap-2">
+                <Star size={16} className="md:hidden fill-current" />
+                <Star size={18} className="hidden md:block fill-current" />
+                <span>Pourquoi jouer avec {firstName} ?</span>
+              </h3>
+              <ul className="space-y-2 md:space-y-2.5 text-xs md:text-sm text-gray-300">
+                {compatibilityTags.map((tag, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
+                    <span>{tag}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </div>
+        )
+      }
 
       {/* Desktop: Max width container */}
       <style jsx global>{`
@@ -704,7 +721,7 @@ export default function PlayerProfileView({
           await createMatchInvitation();
         }}
       />
-    </div>
+    </div >
   );
 }
 
