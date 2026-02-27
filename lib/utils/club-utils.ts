@@ -143,16 +143,12 @@ export type ClubLeaderboardRow = {
   rank: number;
 };
 
-export async function getUserClubInfo(): Promise<ClubInfo> {
+export async function getUserClubInfo(passedUser?: any): Promise<ClubInfo> {
   const supabase = await createClient();
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-  if (userError) {
-    logger.error({ error: userError }, "[club-utils] getUserClubInfo: auth error");
-  }
+  const user = passedUser || (await supabase.auth.getUser()).data.user;
 
   if (!user) {
-    logger.warn({}, "[club-utils] getUserClubInfo: no authenticated user");
+    logger.warn({}, "[club-utils] getUserClubInfo: no authenticated user or fetch failed");
     return { clubId: null, clubSlug: null, userId: null, clubName: null, clubLogoUrl: null };
   }
 

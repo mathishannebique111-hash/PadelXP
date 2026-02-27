@@ -21,21 +21,10 @@ import PadelLoader from "@/components/ui/PadelLoader";
 import nextDynamic from "next/dynamic";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 
-const PremiumStats = nextDynamic(() => import("@/components/club/PremiumStats"), {
-  loading: () => <div className="p-8 text-slate-500 text-center"><PadelLoader /></div>
-});
-
-const JoinClubSection = nextDynamic(() => import("@/components/club/JoinClubSection"), {
-  loading: () => <PadelLoader />
-});
-
-const ClubProfileClient = nextDynamic(() => import("@/components/club/ClubProfileClient"), {
-  loading: () => <PadelLoader />
-});
-
-const PlayerSummary = nextDynamic(() => import("@/components/PlayerSummary"), {
-  loading: () => <div className="w-full max-w-md p-4 flex justify-center"><PadelLoader /></div>
-});
+import PremiumStats from "@/components/club/PremiumStats";
+import JoinClubSection from "@/components/club/JoinClubSection";
+import ClubProfileClient from "@/components/club/ClubProfileClient";
+import PlayerSummary from "@/components/PlayerSummary";
 
 
 function tierForPoints(points: number) {
@@ -233,72 +222,52 @@ export default async function HomePage({
               />
             </div>
 
-            <Suspense fallback={<div className="h-20" />}>
-              <ChallengeHighlightBar />
-            </Suspense>
+            <ChallengeHighlightBar />
 
             <PlayerProfileTabs
               activeTab={activeTab}
               initialPendingRequestsCount={pendingPartnershipRequestsCount}
               profilContent={
-                <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
-                  <PadelTabContent
-                    profile={profile}
-                    initialPendingRequest={pendingPartnershipRequestSender}
-                  />
-                </Suspense>
+                <PadelTabContent
+                  profile={profile}
+                  initialPendingRequest={pendingPartnershipRequestSender}
+                />
               }
               statsContent={
                 <div className="space-y-6">
                   <div className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6">
                     <div className="w-full max-w-md">
-                      <Suspense fallback={<div className="h-40 bg-white/5 rounded-2xl animate-pulse" />}>
-                        <PlayerSummary profileId={profile.id} />
-                      </Suspense>
+                      <PlayerSummary profileId={profile.id} />
                     </div>
                   </div>
-                  <Suspense fallback={<div className="h-80 bg-white/5 rounded-3xl animate-pulse" />}>
-                    <PremiumStats />
-                  </Suspense>
+                  <PremiumStats />
                 </div>
               }
               badgesContent={
-                <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
-                  <BadgesContent />
-                </Suspense>
+                <BadgesContent />
               }
               clubContent={
                 profile.club_id && fullClubData ? (
-                  <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
-                    <ClubProfileClient
-                      clubId={fullClubData.id}
-                      name={fullClubData.name}
-                      logoUrl={getClubLogoPublicUrl(fullClubData.logo_url)}
-                      description={fullClubData.description}
-                      addressLine={fullClubData.address_line}
-                      phone={fullClubData.phone}
-                      website={fullClubData.website}
-                      numberOfCourts={fullClubData.number_of_courts}
-                      courtType={fullClubData.court_type}
-                      openingHours={fullClubData.opening_hours}
-                    />
-                  </Suspense>
+                  <ClubProfileClient
+                    clubId={fullClubData.id}
+                    name={fullClubData.name}
+                    logoUrl={getClubLogoPublicUrl(fullClubData.logo_url)}
+                    description={fullClubData.description}
+                    addressLine={fullClubData.address_line}
+                    phone={fullClubData.phone}
+                    website={fullClubData.website}
+                    numberOfCourts={fullClubData.number_of_courts}
+                    courtType={fullClubData.court_type}
+                    openingHours={fullClubData.opening_hours}
+                  />
                 ) : (
-                  <Suspense fallback={<div className="py-8 flex justify-center"><PadelLoader /></div>}>
-                    <JoinClubSection />
-                  </Suspense>
+                  <JoinClubSection />
                 )
               }
             />
           </>
         )}
 
-        {/* Fallback Loader for Initial Render */}
-        {(!profile || !user) && !hasNoAuth && (
-          <div className="fixed inset-0 flex items-center justify-center bg-[#172554] z-50">
-            <PadelLoader text="Initialisation..." />
-          </div>
-        )}
       </div>
     </div>
   );
