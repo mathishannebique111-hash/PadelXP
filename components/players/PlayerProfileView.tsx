@@ -387,13 +387,13 @@ export default function PlayerProfileView({
         >
           {/* Card principale avec effet de profondeur */}
           <div className={`relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl p-5 md:p-8 shadow-2xl border-2 ${player.is_premium ? 'border-amber-500/50 shadow-amber-500/10' : 'border-slate-700/80'}`}>
-            {/* Puce Membre Premium - Version Luxe */}
+            {/* Puce Membre Premium - Version Luxe - Plus compacte sur mobile */}
             {player.is_premium && (
-              <div className="absolute top-4 right-4 z-10">
+              <div className="absolute top-3 right-2 md:top-4 md:right-4 z-10">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-amber-500/20 blur-md rounded-full group-hover:bg-amber-500/30 transition-all"></div>
-                  <div className="relative bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-black text-[9px] font-black px-2.5 py-1 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-1.5 border border-amber-300/30 whitespace-nowrap">
-                    <Crown size={10} fill="currentColor" className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]" />
+                  <div className="relative bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-black text-[8px] md:text-[9px] font-black px-2 py-0.5 md:px-2.5 md:py-1 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-1 md:gap-1.5 border border-amber-300/30 whitespace-nowrap">
+                    <Crown size={9} fill="currentColor" className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]" />
                     <span className="tracking-[0.05em]">MEMBRE PREMIUM</span>
                   </div>
                 </div>

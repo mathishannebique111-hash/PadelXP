@@ -178,6 +178,8 @@ export default function PadelProfileSection({
     // Only load profile if we don't have initialData or if it's explicitly cleared
     if (!initialData) {
       loadProfile();
+    } else {
+      setIsLoading(false);
     }
     loadPartner();
 
