@@ -13,7 +13,6 @@ import HideSplashScreen from '@/components/HideSplashScreen';
 import GlobalNotificationListener from '@/components/notifications/GlobalNotificationListener';
 import ToastContainer from '@/components/ui/Toast';
 import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNotifier';
-import PadelBallTransition from '@/components/PadelBallTransition';
 
 export default function PlayerAccountLayout({
   children,
@@ -22,8 +21,6 @@ export default function PlayerAccountLayout({
 }) {
   return (
     <>
-      <PadelBallTransition />
-      {/* Configuration spécifique pour les pages joueurs */}
       <PlayerSafeAreaColor />
       <HideSplashScreen />
       <script
