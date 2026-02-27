@@ -110,7 +110,7 @@ export default function PremiumStats() {
                     </div>
                     <h2 className="text-xl font-bold text-white mb-2">Passez au niveau supérieur</h2>
                     <p className="text-sm text-slate-400 mb-6 max-w-sm mx-auto leading-relaxed">
-                        Débloquez l'analyse détaillée de vos performances : évolution, partenaires favoris, némésis et insights exclusifs.
+                        Débloquez l'analyse détaillée de vos performances : évolution, performance par adversaire, quels sont vos meilleurs jours et heures pour performer... et pleins d'autres données !
                     </p>
                     <button
                         onClick={handleUpgrade}
@@ -120,7 +120,7 @@ export default function PremiumStats() {
                         Devenir premium
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
-                    <p className="text-[10px] text-slate-600 mt-4">Offre découverte sans engagement.</p>
+                    <p className="text-[10px] text-slate-600 mt-4">Sans engagement.</p>
                 </div>
             </div>
         );
@@ -216,8 +216,8 @@ export default function PremiumStats() {
         const isNemesis = title === "Mes Bourreaux";
 
         return (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group hover:border-blue-500/20 transition-all">
-                <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent ${isPartners ? 'via-blue-500' : isVictims ? 'via-emerald-500' : 'via-red-500'} to-transparent opacity-20`}></div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group hover:border-[#CCFF00]/20 transition-all">
+                <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#CCFF00] to-transparent opacity-20`}></div>
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
                     <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
                     {title}
@@ -311,57 +311,66 @@ export default function PremiumStats() {
             </div>
 
             {/* Insights Cards - Premium Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Jour de Gloire */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30"></div>
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                        <Calendar className="w-5 h-5 text-blue-400" />
+            {/* Temporal Glory Section - Grouped */}
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+                <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
+                    <Trophy className="w-5 h-5 text-amber-500" />
+                    Mes Succès
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
+                    {/* Jour de Gloire */}
+                    <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg group hover:border-blue-500/30 transition-all">
+                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                            <Calendar className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Jour de Gloire</span>
+                        <span className="text-[10px] text-slate-500 mb-3">Taux de victoire max</span>
+                        <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
+                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                            <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.luckyDay?.winrate || 0}% victoires</span>
+                        </div>
                     </div>
-                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Jour de Gloire</span>
-                    <span className="text-[10px] text-slate-500 mb-3">Jour où vous gagnez le plus</span>
-                    <span className="text-2xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.luckyDay?.name || "-"}</span>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                        <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.luckyDay?.winrate || 0}% victoires</span>
+
+                    {/* Heures de Gloire */}
+                    <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg group hover:border-blue-500/30 transition-all">
+                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                            <Clock className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Heures de Gloire</span>
+                        <span className="text-[10px] text-slate-500 mb-3">Taux de victoire max</span>
+                        <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300 px-2 line-clamp-1">{statsData?.insights?.goldenHour?.name || "-"}</span>
+                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                            <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.goldenHour?.winrate || 0}% victoires</span>
+                        </div>
+                    </div>
+
+                    {/* Meilleur Mois */}
+                    <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg group hover:border-blue-500/30 transition-all">
+                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+                            <Trophy className="w-5 h-5 text-blue-300" />
+                        </div>
+                        <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Meilleur Mois</span>
+                        <span className="text-[10px] text-slate-500 mb-3">Période optimale</span>
+                        <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
+                        <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                            <span className="text-[10px] text-blue-300 font-bold">{statsData?.insights?.bestMonth?.winrate || 0}% victoires</span>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Heures de Gloire */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all block">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-30"></div>
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                        <Clock className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Heures de Gloire</span>
-                    <span className="text-[10px] text-slate-500 mb-3">Heures où vous gagnez le plus</span>
-                    <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300 px-2 line-clamp-1">{statsData?.insights?.goldenHour?.name || "-"}</span>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                        <span className="text-[10px] text-blue-400 font-bold">{statsData?.insights?.goldenHour?.winrate || 0}% victoires</span>
-                    </div>
-                </div>
-
-                {/* Meilleur Mois */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-300 to-transparent opacity-30"></div>
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
-                        <Trophy className="w-5 h-5 text-blue-300" />
-                    </div>
-                    <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Meilleur Mois</span>
-                    <span className="text-[10px] text-slate-500 mb-3">Période la plus faste</span>
-                    <span className="text-xl font-black text-white group-hover:scale-105 transition-transform duration-300">{statsData?.insights?.bestMonth?.name || "-"}</span>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                        <span className="text-[10px] text-blue-300 font-bold">{statsData?.insights?.bestMonth?.winrate || 0}% victoires</span>
-                    </div>
-                </div>
-
+            {/* Form and Reaction Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {/* Current Form */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30"></div>
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden group hover:border-blue-500/30 transition-all">
                     <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
                         <TrendingUp className="w-5 h-5 text-blue-500" />
                     </div>
                     <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Forme (5 derniers)</span>
-                    <span className="text-[10px] text-slate-500 mb-3">% victoires sur les 5 derniers matchs</span>
+                    <span className="text-[10px] text-slate-500 mb-3">% victoires sur les 5 derniers</span>
                     <span className={`text-4xl font-black group-hover:scale-110 transition-transform duration-300 mb-1 text-white`}>
                         {statsData?.insights?.currentForm || 0}%
                     </span>
@@ -371,18 +380,17 @@ export default function PremiumStats() {
                 </div>
 
                 {/* Reaction Capacity */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-blue-500/30 transition-all sm:col-span-2 lg:col-span-2">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-600 to-transparent opacity-30"></div>
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-xl relative overflow-hidden group hover:border-blue-500/30 transition-all sm:col-span-2">
                     <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3">
                         <Swords className="w-5 h-5 text-blue-600" />
                     </div>
                     <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Capacité de Réaction</span>
-                    <span className="text-[10px] text-slate-500 mb-3">% matchs gagnés après perte du 1er set</span>
+                    <span className="text-[10px] text-slate-500 mb-3">Victoires après perte du 1er set</span>
 
                     <div className="flex items-center gap-6 mt-1">
                         <span className="text-4xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.reaction?.rate || 0}%</span>
                         <div className="h-8 w-[1px] bg-slate-800"></div>
-                        <div className="flex flex-col items-start">
+                        <div className="flex flex-col items-start text-left">
                             <span className="text-xs text-slate-300 font-bold">{statsData?.insights?.reaction?.success || 0} remontadas</span>
                             <span className="text-[10px] text-slate-500">sur {statsData?.insights?.reaction?.opportunities || 0} opportunités</span>
                         </div>
@@ -441,9 +449,9 @@ export default function PremiumStats() {
 
             {/* Lists */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {renderList("Mes Victimes", <Trophy className="w-4 h-4 text-amber-400" />, statsData?.topVictims || [], "text-amber-400 border-amber-500/20 bg-amber-500/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
-                {renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-red-400" />, statsData?.topNemesis || [], "text-red-400 border-red-500/20 bg-red-500/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
-                {renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-blue-400" />, statsData?.topPartners || [], "text-blue-400 border-blue-500/20 bg-blue-500/10", "Jouez des matchs pour voir vos partenaires.")}
+                {renderList("Mes Victimes", <Trophy className="w-4 h-4 text-[#CCFF00]" />, statsData?.topVictims || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
+                {renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-[#CCFF00]" />, statsData?.topNemesis || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
+                {renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-[#CCFF00]" />, statsData?.topPartners || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Jouez des matchs pour voir vos partenaires.")}
             </div>
         </div>
     );
