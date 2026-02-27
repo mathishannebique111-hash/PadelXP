@@ -14,7 +14,7 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      logger.error({ error: authError }, '[player/profile] Unauthorized:');
+      logger.error('[player/profile] Unauthorized', { error: authError });
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -25,12 +25,12 @@ export async function GET() {
     let profile = null;
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, display_name')
+      .select('id, first_name, last_name, display_name, niveau_padel')
       .eq('id', user.id)
       .maybeSingle();
 
     if (profileError) {
-      logger.error({ error: profileError, userId: user.id.substring(0, 8) + "…" }, '[player/profile] Error fetching profile with client:');
+      logger.error('[player/profile] Error fetching profile with client', { error: profileError, userId: user.id.substring(0, 8) + "…" });
     } else {
       profile = profileData;
     }
@@ -43,12 +43,12 @@ export async function GET() {
 
       const { data: adminProfile, error: adminError } = await serviceClient
         .from('profiles')
-        .select('id, first_name, last_name, display_name')
+        .select('id, first_name, last_name, display_name, niveau_padel')
         .eq('id', user.id)
         .maybeSingle();
 
       if (adminError) {
-        logger.error({ error: adminError, userId: user.id.substring(0, 8) + "…" }, '[player/profile] Error fetching profile with admin:');
+        logger.error('[player/profile] Error fetching profile with admin', { error: adminError, userId: user.id.substring(0, 8) + "…" });
       } else if (adminProfile) {
         profile = adminProfile;
       }
@@ -71,12 +71,13 @@ export async function GET() {
       first_name: first_name.trim(),
       last_name: last_name.trim(),
       display_name: profile.display_name,
+      niveau_padel: profile.niveau_padel,
       hasFirstName: !!first_name && !!first_name.trim(),
       hasLastName: !!last_name && !!last_name.trim(),
       hasCompleteName: !!(first_name && first_name.trim() && last_name && last_name.trim()),
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined }, '[player/profile] Error:');
+    logger.error('[player/profile] Error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

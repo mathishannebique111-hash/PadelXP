@@ -11,6 +11,8 @@ interface PlayerSlotSquareProps {
     isFixed?: boolean;
     className?: string;
     isWinner?: boolean;
+    niveau_padel?: number | null;
+    showTilde?: boolean;
 }
 
 export default function PlayerSlotSquare({
@@ -20,14 +22,19 @@ export default function PlayerSlotSquare({
     isFixed = false,
     className = "",
     isWinner = false,
+    niveau_padel,
+    showTilde = false,
 }: PlayerSlotSquareProps) {
     const initials = player
         ? `${player.first_name?.[0] || ""}${player.last_name?.[0] || ""}`.toUpperCase()
         : "";
 
+    // Afficher "Invité" uniquement si c'est un guest et que ce n'est pas un joueur anonyme
+    const showGuestLabel = player?.type === 'guest' && player?.display_name !== 'Joueur Anonyme';
+
     return (
         <div className={`relative flex flex-col items-center gap-1 ${className}`}>
-            {player?.type === 'guest' && (
+            {showGuestLabel && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[7px] font-bold text-blue-400 uppercase tracking-widest leading-none z-10">
                     Invité
                 </span>
@@ -78,13 +85,21 @@ export default function PlayerSlotSquare({
                                 </div>
                             )}
                         </div>
-                        <div className="px-1 text-center w-full">
-                            <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-bold truncate leading-none`}>
-                                {player.first_name}
-                            </p>
-                            <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-black truncate uppercase leading-none`}>
-                                {player.last_name}
-                            </p>
+                        <div className="px-1 text-center w-full space-y-0.5">
+                            <div className="leading-none">
+                                <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-bold truncate`}>
+                                    {player.first_name}
+                                </p>
+                                <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-black truncate uppercase`}>
+                                    {player.last_name}
+                                </p>
+                            </div>
+
+                            {/* Affichage du niveau */}
+                            <div className={`text-[7px] sm:text-[9px] font-black italic ${isFixed ? 'text-padel-green' : 'text-blue-600'} leading-none`}>
+                                {showTilde && <span className="mr-0.5">~</span>}
+                                {niveau_padel ? niveau_padel.toFixed(2) : (player.niveau_padel ? player.niveau_padel.toFixed(2) : '')}
+                            </div>
                         </div>
                     </>
                 ) : (

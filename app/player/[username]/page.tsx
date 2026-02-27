@@ -3,7 +3,8 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Trophy, Star, Shield, MapPin } from "lucide-react";
+import { Trophy, Star, Shield, MapPin, Crown } from "lucide-react";
+import { recordProfileView } from "@/app/actions/profile-views";
 
 // Client admin pour bypass RLS (lecture profil public)
 const supabaseAdmin = createAdminClient(
@@ -53,6 +54,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 first_name, 
                 last_name, 
                 username, 
+                is_premium,
                 avatar_url, 
                 niveau_padel, 
                 global_points, 
@@ -71,6 +73,13 @@ export default async function PublicProfilePage({ params }: Props) {
     if (error || !profile) {
         console.error("Error fetching profile:", error);
         return notFound();
+    }
+
+    // Enregistrer la visite (si c'est un autre utilisateur)
+    if (currentUser && profile.id !== currentUser.id) {
+        recordProfileView(profile.id).catch(err =>
+            console.error("[PublicProfilePage] Error recording visit:", err)
+        );
     }
 
     // Si c'est mon propre profil, rediriger vers /home?tab=profil
@@ -101,12 +110,20 @@ export default async function PublicProfilePage({ params }: Props) {
                 </div>
 
                 {/* Carte Profil */}
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center shadow-xl relative overflow-hidden">
+                <div className={`bg-white/5 backdrop-blur-xl border ${profile.is_premium ? 'border-amber-500/50 shadow-amber-500/10' : 'border-white/10'} rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center shadow-xl relative overflow-hidden`}>
                     {/* Effet halo */}
-                    <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none" />
+                    <div className={`absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${profile.is_premium ? 'from-amber-500/20' : 'from-blue-500/10'} to-transparent pointer-events-none`} />
+
+                    {/* Puce Membre Premium */}
+                    {profile.is_premium && (
+                        <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-600 text-black text-[10px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                            <Crown size={10} fill="currentColor" />
+                            MEMBRE PREMIUM
+                        </div>
+                    )}
 
                     <div className="relative mb-4">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 p-1 shadow-lg ring-4 ring-white/5">
+                        <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${profile.is_premium ? 'from-amber-400 to-amber-600' : 'from-blue-400 to-blue-600'} p-1 shadow-lg ring-4 ${profile.is_premium ? 'ring-amber-500/20' : 'ring-white/5'}`}>
                             <div className="w-full h-full rounded-full overflow-hidden bg-slate-800 relative flex items-center justify-center">
                                 {profile.avatar_url ? (
                                     <Image

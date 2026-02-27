@@ -14,6 +14,7 @@ import {
   MessageCircle,
   Loader2,
   MapPin,
+  Crown,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -38,6 +39,7 @@ interface Player {
   username?: string | null;
   postal_code?: string | null;
   city?: string | null;
+  is_premium?: boolean | null;
 }
 
 interface Props {
@@ -376,13 +378,21 @@ export default function PlayerProfileView({
           className="relative"
         >
           {/* Card principale avec effet de profondeur */}
-          <div className="relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl p-5 md:p-8 shadow-2xl border-2 border-slate-700/80">
+          <div className={`relative bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl p-5 md:p-8 shadow-2xl border-2 ${player.is_premium ? 'border-amber-500/50 shadow-amber-500/10' : 'border-slate-700/80'}`}>
+            {/* Puce Membre Premium */}
+            {player.is_premium && (
+              <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-600 text-black text-[10px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
+                <Crown size={10} fill="currentColor" />
+                MEMBRE PREMIUM
+              </div>
+            )}
+
             {/* Avatar + Infos principales - Mobile centered */}
             <div className="flex flex-col items-center text-center">
               {/* Avatar avec anneau de niveau - Taille mobile */}
               <div className="relative mb-4">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full blur-xl opacity-20"></div>
-                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-700 overflow-hidden border-4 border-slate-800 shadow-xl">
+                <div className={`absolute inset-0 bg-gradient-to-br ${player.is_premium ? 'from-amber-500 to-orange-500' : 'from-blue-500 to-indigo-500'} rounded-full blur-xl opacity-20`}></div>
+                <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-700 overflow-hidden border-4 ${player.is_premium ? 'border-amber-500/50' : 'border-slate-800'} shadow-xl`}>
                   {player.avatar_url ? (
                     <Image
                       src={player.avatar_url}
@@ -392,7 +402,7 @@ export default function PlayerProfileView({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white text-2xl md:text-3xl font-black bg-gradient-to-br from-blue-500 to-indigo-600">
+                    <div className={`w-full h-full flex items-center justify-center text-white text-2xl md:text-3xl font-black bg-gradient-to-br ${player.is_premium ? 'from-amber-400 to-amber-600' : 'from-blue-500 to-indigo-600'}`}>
                       {initials}
                     </div>
                   )}

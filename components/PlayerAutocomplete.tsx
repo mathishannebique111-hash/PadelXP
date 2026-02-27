@@ -376,15 +376,25 @@ export default function PlayerAutocomplete({
                       </div>
                       <span className="flex items-center gap-2 text-xs">
                         {player.type === "user" ? (
-                          player.is_external ? (
-                            <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                              <span className="truncate max-w-[100px]">{player.club_name || "Autre club"}</span>
-                            </span>
-                          ) : (
-                            <span className="text-gray-500">Inscrit</span>
-                          )
+                          <div className="flex flex-col items-end gap-1">
+                            {player.is_external ? (
+                              <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                                <span className="truncate max-w-[100px]">{player.club_name || "Autre club"}</span>
+                              </span>
+                            ) : (
+                              <span className="text-gray-500">Inscrit</span>
+                            )}
+                            {player.niveau_padel && (
+                              <span className="text-[10px] font-black italic text-blue-600">Niv. {player.niveau_padel.toFixed(2)}</span>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-gray-400 italic">Invité</span>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="text-gray-400 italic">Invité</span>
+                            {player.niveau_padel && (
+                              <span className="text-[10px] font-black italic text-blue-500">Niv. {player.niveau_padel.toFixed(2)}</span>
+                            )}
+                          </div>
                         )}
                       </span>
                     </div>

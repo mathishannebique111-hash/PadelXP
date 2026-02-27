@@ -51,4 +51,5 @@ export interface PlayerSearchResult {
   club_name?: string | null;
   is_external?: boolean;
   email?: string | null;
+  niveau_padel?: number | null;
 }

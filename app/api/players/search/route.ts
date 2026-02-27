@@ -145,7 +145,7 @@ export async function GET(req: Request) {
     // 1. Rechercher les profils (Users)
     let profilesQuery = supabaseAdmin
       .from("profiles")
-      .select("id, display_name, first_name, last_name, club_id, email, avatar_url, clubs(name)")
+      .select("id, display_name, first_name, last_name, club_id, email, avatar_url, niveau_padel, clubs(name)")
       .not("id", "eq", GUEST_USER_ID);
 
     if (scope === "club" && userClubId) {
@@ -225,7 +225,8 @@ export async function GET(req: Request) {
           avatar_url: profile.avatar_url || null,
           club_name: profile.clubs?.name || null,
           is_external: profile.club_id !== userClubId,
-          email: profile.email || null
+          email: profile.email || null,
+          niveau_padel: profile.niveau_padel || null
         };
       });
 

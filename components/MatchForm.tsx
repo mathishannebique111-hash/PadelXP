@@ -936,6 +936,16 @@ export default function MatchForm({
       // Removed auto-dismiss timeout to let user read the modal
     }
   };
+  const realPlayersLevels = [
+    selfProfile?.niveau_padel,
+    selectedPlayers.partner?.type === 'user' ? selectedPlayers.partner?.niveau_padel : null,
+    selectedPlayers.opp1?.type === 'user' ? selectedPlayers.opp1?.niveau_padel : null,
+    selectedPlayers.opp2?.type === 'user' ? selectedPlayers.opp2?.niveau_padel : null,
+  ].filter((l): l is number => typeof l === 'number' && l !== null);
+
+  const averageLevel = realPlayersLevels.length > 0
+    ? realPlayersLevels.reduce((a, b) => a + b, 0) / realPlayersLevels.length
+    : 5.0;
 
   return (
     <div className="relative h-full flex flex-col">
@@ -1034,51 +1044,49 @@ export default function MatchForm({
         )
       }
 
+      {/* Logic for calculating players level */}
       <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
         {/* Lieu du match (Google Maps Direct) */}
-        <div>
-          <label className="mb-1 ml-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
-          <div className="space-y-1">
-            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <div className="mb-1 ml-1 block text-[8px] font-bold text-white/30 uppercase tracking-widest">Rechercher le club *</div>
-              <GooglePlacesAutocomplete
-                value={unregisteredClubName}
-                onChange={(val) => {
-                  setUnregisteredClubName(val);
-                  setIsUnregisteredClub(true);
-                  setSelectedClubId("");
-                  if (errors.unregisteredClubName) {
-                    setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
-                  }
-                  if (errors.location) {
-                    setErrors(prev => { const n = { ...prev }; delete n.location; return n; });
-                  }
-                }}
-                onSelect={(place) => {
-                  setUnregisteredClubName(place.name);
-                  setUnregisteredClubCity(place.city);
-                  setIsUnregisteredClub(true);
-                  setSelectedClubId("");
-                  if (errors.unregisteredClubName || errors.unregisteredClubCity) {
-                    setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; delete n.unregisteredClubCity; return n; });
-                  }
-                  if (errors.location) {
-                    setErrors(prev => { const n = { ...prev }; delete n.location; return n; });
-                  }
-                }}
-                placeholder="Ex: Urban Padel Nantes..."
-              />
-              {(errors.unregisteredClubName || errors.unregisteredClubCity) && (
-                <p className="mt-1 text-xs text-red-400">
-                  {errors.unregisteredClubName || errors.unregisteredClubCity}
-                </p>
-              )}
-              {unregisteredClubCity && (
-                <p className="mt-1 text-[10px] text-padel-green font-bold uppercase tracking-tight flex items-center gap-1">
-                  <MapPin size={10} /> {unregisteredClubCity}
-                </p>
-              )}
-            </div>
+        <div className="mb-1">
+          <label className="mb-0.5 ml-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
+          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+            <GooglePlacesAutocomplete
+              value={unregisteredClubName}
+              onChange={(val) => {
+                setUnregisteredClubName(val);
+                setIsUnregisteredClub(true);
+                setSelectedClubId("");
+                if (errors.unregisteredClubName) {
+                  setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; return n; });
+                }
+                if (errors.location) {
+                  setErrors(prev => { const n = { ...prev }; delete n.location; return n; });
+                }
+              }}
+              onSelect={(place) => {
+                setUnregisteredClubName(place.name);
+                setUnregisteredClubCity(place.city);
+                setIsUnregisteredClub(true);
+                setSelectedClubId("");
+                if (errors.unregisteredClubName || errors.unregisteredClubCity) {
+                  setErrors(prev => { const n = { ...prev }; delete n.unregisteredClubName; delete n.unregisteredClubCity; return n; });
+                }
+                if (errors.location) {
+                  setErrors(prev => { const n = { ...prev }; delete n.location; return n; });
+                }
+              }}
+              placeholder="Urban Padel Nantes, etc."
+            />
+            {(errors.unregisteredClubName || errors.unregisteredClubCity) && (
+              <p className="mt-1 text-xs text-red-400">
+                {errors.unregisteredClubName || errors.unregisteredClubCity}
+              </p>
+            )}
+            {unregisteredClubCity && (
+              <p className="mt-0.5 text-[10px] text-padel-green font-bold uppercase tracking-tight flex items-center gap-1">
+                <MapPin size={10} /> {unregisteredClubCity}
+              </p>
+            )}
           </div>
         </div>
 
@@ -1107,7 +1115,7 @@ export default function MatchForm({
         )}
 
         {/* Redesigned Player Selection */}
-        <div className="my-2">
+        <div className="my-1">
           <div className="flex flex-col gap-1 max-w-sm mx-auto">
             <div className="flex items-center justify-center gap-2 sm:gap-4 w-full">
               {/* Team 1 */}
@@ -1116,12 +1124,15 @@ export default function MatchForm({
                   <PlayerSlotSquare
                     label=""
                     player={selfProfile}
+                    niveau_padel={selfProfile?.niveau_padel}
                     isFixed
                     className="aspect-square"
                   />
                   <PlayerSlotSquare
                     label=""
                     player={selectedPlayers.partner}
+                    niveau_padel={selectedPlayers.partner?.type === 'user' ? selectedPlayers.partner?.niveau_padel : averageLevel}
+                    showTilde={selectedPlayers.partner?.type === 'guest'}
                     onClick={() => {
                       setActiveSlot('partner');
                       setIsSearchModalOpen(true);
@@ -1146,6 +1157,8 @@ export default function MatchForm({
                   <PlayerSlotSquare
                     label=""
                     player={selectedPlayers.opp1}
+                    niveau_padel={selectedPlayers.opp1?.type === 'user' ? selectedPlayers.opp1?.niveau_padel : averageLevel}
+                    showTilde={selectedPlayers.opp1?.type === 'guest'}
                     onClick={() => {
                       setActiveSlot('opp1');
                       setIsSearchModalOpen(true);
@@ -1155,6 +1168,8 @@ export default function MatchForm({
                   <PlayerSlotSquare
                     label=""
                     player={selectedPlayers.opp2}
+                    niveau_padel={selectedPlayers.opp2?.type === 'user' ? selectedPlayers.opp2?.niveau_padel : averageLevel}
+                    showTilde={selectedPlayers.opp2?.type === 'guest'}
                     onClick={() => {
                       setActiveSlot('opp2');
                       setIsSearchModalOpen(true);
@@ -1166,6 +1181,10 @@ export default function MatchForm({
               </div>
             </div>
           </div>
+          {/* Note explicative très petite */}
+          <p className="mt-1 text-center text-[7px] text-white/30 italic">
+            *Niveau des invités basé sur la moyenne des inscrits.
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -1317,54 +1336,7 @@ export default function MatchForm({
         </div>
 
         {/* Option boost - caché temporairement
-        {!loadingBoostStats && boostStats && (
-          <div className="mb-6 rounded-lg border border-padel-green/50 bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 p-4 shadow-xl relative overflow-hidden">
-            <div className="flex items-start gap-3 relative z-10">
-              <div className="flex-shrink-0 flex items-center justify-center">
-                <Zap className="h-6 w-6 text-padel-green" fill="currentColor" />
-              </div>
-              <div className="flex-1">
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={useBoost}
-                    onChange={(e) => {
-                      setUseBoost(e.target.checked);
-                    }}
-                    disabled={!boostStats || boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) < 1}
-                    title={boostStats && boostStats.creditsAvailable >= 1 ? `Tu as ${boostStats.creditsAvailable} boost${boostStats.creditsAvailable > 1 ? 's' : ''} disponible${boostStats.creditsAvailable > 1 ? 's' : ''}` : 'Tu n\'as pas de boosts disponibles'}
-                    className="h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                  <span className="text-sm font-semibold text-white">
-                    Appliquer un boost (+30% de points si tu gagnes)
-                  </span>
-                </label>
-                {boostStats && Number(boostStats.creditsAvailable) > 0 && (
-                  <p className="mt-2 text-xs text-white/70">
-                    Tu as <strong className="font-semibold text-blue-300">{boostStats.creditsAvailable}</strong> boost{boostStats.creditsAvailable > 1 ? 's' : ''} disponible{boostStats.creditsAvailable > 1 ? 's' : ''}.
-                    {boostStats.usedThisMonth > 0 && (
-                      <> {boostStats.usedThisMonth} boost{boostStats.usedThisMonth > 1 ? 's' : ''} utilisé{boostStats.usedThisMonth > 1 ? 's' : ''} ce mois-ci ({boostStats.remainingThisMonth} restant{boostStats.remainingThisMonth > 1 ? 's' : ''}).</>
-                    )}
-                    {boostStats.usedThisMonth >= 10 && (
-                      <span className="block mt-1 text-yellow-300">
-                        ⚠️ Tu as atteint la limite mensuelle de 10 boosts. Le boost ne sera pas appliqué.
-                      </span>
-                    )}
-                  </p>
-                )}
-                {boostStats && (boostStats.creditsAvailable === undefined || boostStats.creditsAvailable === null || Number(boostStats.creditsAvailable) <= 0) && (
-                  <p className="mt-2 text-xs text-white/70">
-                    Tu n'as plus de boosts disponibles.{" "}
-                    <a href="/boost" className="font-semibold text-white underline hover:text-gray-200">
-                      Achète-en de nouveaux
-                    </a>
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        */}
+        {/* Notification de limite de boosts (cachée pour l'instant) */}
 
         <div className="pt-2 pb-4">
           <button
@@ -1445,17 +1417,18 @@ export default function MatchForm({
                               display_name: 'Joueur Anonyme',
                               type: 'guest',
                               email: null,
+                              niveau_padel: averageLevel
                             };
-                            setSelectedPlayers(prev => ({ ...prev, [activeSlot]: anonymousPlayer }));
+                            setSelectedPlayers(prev => ({ ...prev, [activeSlot as string]: anonymousPlayer }));
                             if (activeSlot === 'partner') setPartnerName('Joueur Anonyme');
                             else if (activeSlot === 'opp1') setOpp1Name('Joueur Anonyme');
                             else if (activeSlot === 'opp2') setOpp2Name('Joueur Anonyme');
                             setIsSearchModalOpen(false);
                           } else {
-                            setScopes(prev => ({ ...prev, [activeSlot]: newScope }));
+                            setScopes(prev => ({ ...prev, [activeSlot as string]: newScope }));
                           }
                         }}
-                        className={`flex-1 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all ${(activeSlot && scopes[activeSlot] === tab.id)
+                        className={`flex-1 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all ${(activeSlot && scopes[activeSlot as keyof typeof scopes] === tab.id)
                           ? 'bg-padel-green text-[#071554] shadow-sm'
                           : 'text-white/60 hover:text-white hover:bg-white/5'
                           }`}
@@ -1468,7 +1441,7 @@ export default function MatchForm({
               </div>
 
               <div className="space-y-6">
-                {activeSlot && scopes[activeSlot] !== 'anonymous' && (
+                {activeSlot && scopes[activeSlot as keyof typeof scopes] !== 'anonymous' && (
                   <div className="relative">
                     <PlayerAutocomplete
                       value={
@@ -1483,33 +1456,33 @@ export default function MatchForm({
                       }}
                       onSelect={(player) => {
                         if (activeSlot) {
-                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: player }));
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot as string]: player }));
                           setIsSearchModalOpen(false);
                         }
                       }}
-                      searchScope={activeSlot ? scopes[activeSlot] as 'club' | 'global' | 'guest' : 'global'}
+                      searchScope={activeSlot ? scopes[activeSlot as keyof typeof scopes] as 'club' | 'global' | 'guest' : 'global'}
                       placeholder="Michel Dupont..."
                       inputClassName="h-[46px] rounded-xl text-lg font-bold"
                     />
                   </div>
                 )}
 
-                {activeSlot && selectedPlayers[activeSlot] && (
+                {activeSlot && selectedPlayers[activeSlot as keyof typeof selectedPlayers] && (
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-padel-green flex items-center justify-center text-[#071554] font-black">
-                        {selectedPlayers[activeSlot]?.first_name?.[0]}{selectedPlayers[activeSlot]?.last_name?.[0]}
+                        {selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.first_name?.[0]}{selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.last_name?.[0]}
                       </div>
                       <div>
-                        <p className="text-white font-bold">{selectedPlayers[activeSlot]?.display_name}</p>
-                        <p className="text-white/40 text-xs uppercase tracking-tighter">{selectedPlayers[activeSlot]?.type === 'guest' ? 'Invité' : 'Inscrit'}</p>
+                        <p className="text-white font-bold">{selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.display_name}</p>
+                        <p className="text-white/40 text-xs uppercase tracking-tighter">{selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.type === 'guest' ? 'Invité' : 'Inscrit'}</p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
                         if (activeSlot) {
-                          setSelectedPlayers(prev => ({ ...prev, [activeSlot]: null }));
+                          setSelectedPlayers(prev => ({ ...prev, [activeSlot as string]: null }));
                           if (activeSlot === 'partner') setPartnerName('');
                           else if (activeSlot === 'opp1') setOpp1Name('');
                           else if (activeSlot === 'opp2') setOpp2Name('');
