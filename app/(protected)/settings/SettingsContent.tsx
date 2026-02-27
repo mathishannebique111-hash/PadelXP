@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { User, MessageCircle, Star, Trash2, ChevronRight, LogOut, Shield, Settings, CalendarCheck, Bell, X } from "lucide-react";
+import { User, MessageCircle, Star, Trash2, ChevronRight, LogOut, Shield, Settings, CalendarCheck, Bell, X, Gift } from "lucide-react";
 import PageTitle from "@/components/PageTitle";
 import LogoutButton from "@/components/LogoutButton";
 import Image from "next/image";
@@ -79,6 +79,12 @@ export default function SettingsContent() {
       label: "Support PadelXP",
       icon: MessageCircle,
       href: "/settings/support",
+    },
+    {
+      label: "Parrainage",
+      icon: Gift,
+      href: "/settings/referral",
+      color: "text-amber-400",
     },
     {
       label: "Avis",

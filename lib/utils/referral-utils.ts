@@ -49,7 +49,7 @@ export async function validateReferralCode(code: string): Promise<{
       .maybeSingle();
 
     if (error) {
-      logger.error({ code: normalizedCode.substring(0, 5) + "…", error }, "[referral-utils] Error validating referral code");
+      logger.error(`[referral-utils] Error validating referral code for ${normalizedCode.substring(0, 5)}…: ${error.message}`);
       return {
         valid: false,
         error: "Erreur lors de la validation du code",
@@ -71,7 +71,7 @@ export async function validateReferralCode(code: string): Promise<{
       referrerName: profile.display_name || "Joueur",
     };
   } catch (error) {
-    logger.error({ code: normalizedCode.substring(0, 5) + "…", error }, "[referral-utils] Exception validating referral code");
+    logger.error(`[referral-utils] Exception validating referral code: ${error instanceof Error ? error.message : String(error)}`);
     return {
       valid: false,
       error: "Erreur lors de la validation du code",
@@ -94,13 +94,13 @@ export async function hasUserUsedReferralCode(userId: string): Promise<boolean> 
       .eq("referred_id", userId);
 
     if (error) {
-      logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Error checking referral usage");
+      logger.error(`[referral-utils] Error checking referral usage for ${userId.substring(0, 8)}…: ${error.message}`);
       return false;
     }
 
     return (count || 0) > 0;
   } catch (error) {
-    logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Exception checking referral usage");
+    logger.error(`[referral-utils] Exception checking referral usage for ${userId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
 }
@@ -126,7 +126,7 @@ export async function isSelfReferral(userId: string, referralCode: string): Prom
 
     return profile.referral_code?.toUpperCase() === referralCode.trim().toUpperCase();
   } catch (error) {
-    logger.error({ userId: userId.substring(0, 8) + "…", code: referralCode.substring(0, 5) + "…", error }, "[referral-utils] Exception checking self referral");
+    logger.error(`[referral-utils] Exception checking self referral for ${userId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
 }
@@ -168,13 +168,13 @@ async function grantPremiumDays(userId: string, days: number = 15): Promise<{ su
       .eq("id", userId);
 
     if (error) {
-      logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Error granting premium");
+      logger.error(`[referral-utils] Error granting premium to ${userId.substring(0, 8)}…: ${error.message}`);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Exception granting premium");
+    logger.error(`[referral-utils] Exception granting premium to ${userId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return { success: false, error: "Erreur inconnue" };
   }
 }
@@ -240,6 +240,14 @@ export async function processReferralCode(
       .eq("id", referrerId)
       .maybeSingle();
 
+    // 4.b Vérifier la limite de 2 parrainages
+    if ((referrerProfile?.referral_count || 0) >= 2) {
+      return {
+        success: false,
+        error: "Ce parrain a déjà atteint sa limite de parrainages (2 maximum)",
+      };
+    }
+
     // 5. Créer la relation de parrainage
     const { data: referral, error: referralError } = await supabaseAdmin
       .from("referrals")
@@ -261,7 +269,7 @@ export async function processReferralCode(
           error: "Vous avez déjà utilisé un code de parrainage",
         };
       }
-      logger.error({ referrerId: referrerId.substring(0, 8) + "…", referredUserId: referredUserId.substring(0, 8) + "…", error: referralError }, "[referral-utils] Error creating referral");
+      logger.error(`[referral-utils] Error creating referral (referrer: ${referrerId.substring(0, 8)}…, referred: ${referredUserId.substring(0, 8)}…): ${referralError.message}`);
       return {
         success: false,
         error: "Erreur lors de l'enregistrement du parrainage",
@@ -276,7 +284,7 @@ export async function processReferralCode(
       .eq("id", referrerId);
 
     if (updateError) {
-      logger.error({ referrerId: referrerId.substring(0, 8) + "…", error: updateError }, "[referral-utils] Error updating referral count");
+      logger.error(`[referral-utils] Error updating referral count for ${referrerId.substring(0, 8)}…: ${updateError.message}`);
     }
 
     // 7. Attribuer 15 jours de premium aux deux joueurs
@@ -295,7 +303,7 @@ export async function processReferralCode(
       .eq("id", referral.id);
 
     if (!referrerPremium.success || !referredPremium.success) {
-      logger.error({ referrerId: referrerId.substring(0, 8) + "…", referredUserId: referredUserId.substring(0, 8) + "…", referrerError: referrerPremium.error, referredError: referredPremium.error }, "[referral-utils] Error awarding premium");
+      logger.error(`[referral-utils] Error awarding premium (referrer: ${referrerId.substring(0, 8)}…, referred: ${referredUserId.substring(0, 8)}…): ${referrerPremium.error || referredPremium.error}`);
     }
 
     return {
@@ -304,7 +312,7 @@ export async function processReferralCode(
       referrerName,
     };
   } catch (error) {
-    logger.error({ referredUserId: referredUserId.substring(0, 8) + "…", error }, "[referral-utils] Exception processing referral code");
+    logger.error(`[referral-utils] Exception processing referral code for ${referredUserId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -381,11 +389,11 @@ export async function getUserReferralInfo(userId: string): Promise<{
     return {
       referralCode: profile.referral_code || null,
       referralCount: profile.referral_count || 0,
-      maxReferrals: Infinity,
+      maxReferrals: 2,
       referrals: referralsList,
     };
   } catch (error) {
-    logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Exception getting user referral info");
+    logger.error(`[referral-utils] Exception getting user referral info for ${userId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return {
       referralCode: null,
       referralCount: 0,
@@ -440,7 +448,7 @@ export async function getPendingReferralNotifications(userId: string): Promise<{
       referralDate: recentReferral.created_at,
     };
   } catch (error) {
-    logger.error({ userId: userId.substring(0, 8) + "…", error }, "[referral-utils] Exception getting pending notifications");
+    logger.error(`[referral-utils] Exception getting pending notifications for ${userId.substring(0, 8)}…: ${error instanceof Error ? error.message : String(error)}`);
     return { hasNewReferral: false };
   }
 }

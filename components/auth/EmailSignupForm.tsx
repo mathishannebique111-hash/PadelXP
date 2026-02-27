@@ -431,7 +431,7 @@ export default function EmailSignupForm({
         )}
         {referralCode.trim().length > 0 && !referralCodeStatus && !referralCodeValidating && (
           <p className="mt-1 text-xs text-white/60">
-            Vous recevrez +1 boost gratuit si le code est valide
+            Vous recevrez 15 jours de Premium offerts si le code est valide
           </p>
         )}
       </div>
