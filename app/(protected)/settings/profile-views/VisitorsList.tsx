@@ -41,7 +41,7 @@ export default function VisitorsList() {
         <div className="space-y-6">
             <PageTitle title="Qui a vu mon profil ?" />
 
-            <div className="mt-8 space-y-4 relative">
+            <div className="mt-4 md:mt-8 relative">
                 {visitors.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm">
                         <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -51,24 +51,24 @@ export default function VisitorsList() {
                         <p className="text-gray-500 text-sm">Partagez votre profil avec d'autres joueurs !</p>
                     </div>
                 ) : (
-                    <div className="relative">
+                    <div className={`relative rounded-3xl overflow-hidden ${!isPremiumUser ? 'min-h-[450px] md:min-h-[400px]' : ''}`}>
                         {/* Overlay si non premium */}
                         {!isPremiumUser && (
-                            <div className="absolute inset-x-0 inset-y-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[6px] rounded-3xl p-6 text-center border border-white/10">
-                                <div className="mb-4 p-4 rounded-full bg-amber-500/20 border border-amber-500/40">
-                                    <Lock size={32} className="text-amber-400" />
+                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[8px] p-6 text-center border border-white/10 rounded-3xl">
+                                <div className="mb-4 p-3 md:p-4 rounded-full bg-amber-500/20 border border-amber-500/40">
+                                    <Lock className="w-6 h-6 md:w-8 md:h-8 text-amber-400" />
                                 </div>
-                                <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Accès Premium</h3>
-                                <p className="text-slate-300 mb-8 max-w-xs text-sm font-medium leading-relaxed">
+                                <h3 className="text-xl md:text-2xl font-black text-white mb-2 uppercase tracking-tight">Accès Premium</h3>
+                                <p className="text-slate-300 mb-6 md:mb-8 max-w-[260px] md:max-w-xs text-xs md:text-sm font-medium leading-relaxed">
                                     Découvrez qui s'intéresse à votre profil et boostez vos chances de trouver des partenaires.
                                 </p>
                                 <button
                                     onClick={() => router.push(`/premium?returnPath=${window.location.pathname}`)}
-                                    className="group relative flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-2xl text-black font-black text-sm shadow-[0_0_25px_rgba(245,158,11,0.3)] hover:scale-105 transition-all"
+                                    className="group relative flex items-center gap-2 md:gap-3 px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-xl md:rounded-2xl text-black font-black text-xs md:text-sm shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 transition-all uppercase tracking-wide"
                                 >
-                                    <Sparkles size={18} className="animate-pulse" />
+                                    <Sparkles size={16} className="animate-pulse" />
                                     <span>DEVENIR PREMIUM</span>
-                                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </div>
                         )}

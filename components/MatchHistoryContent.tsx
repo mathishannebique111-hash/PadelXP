@@ -30,13 +30,14 @@ export default async function MatchHistoryContent() {
     );
   }
 
-  // Récupérer le club_id de l'utilisateur
+  // Récupérer le club_id et le statut premium de l'utilisateur
   const { data: userProfile } = await supabase
     .from("profiles")
-    .select("club_id")
+    .select("club_id, is_premium")
     .eq("id", user.id)
     .maybeSingle();
 
+  const isPremium = userProfile?.is_premium || false;
   let userClubId = userProfile?.club_id || null;
 
   if (!userClubId) {
@@ -97,12 +98,19 @@ export default async function MatchHistoryContent() {
     );
   }
 
-  const { data: allMatches, error: matchesError } = await supabase
+  // Si non-premium, on limite à 5
+  const matchQuery = supabase
     .from("matches")
     .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, score_details, created_at, played_at, decided_by_tiebreak, status, location_club_id, is_registered_club")
     .in("id", matchIds)
     .or("status.eq.confirmed,status.is.null")
     .order("created_at", { ascending: false });
+
+  if (!isPremium) {
+    matchQuery.limit(5);
+  }
+
+  const { data: allMatches, error: matchesError } = await matchQuery;
 
   const transformedMatches = (allMatches || []).map((match: any) => {
     const winner_team = match.winner_team_id === match.team1_id ? 1 : 2;
@@ -118,10 +126,13 @@ export default async function MatchHistoryContent() {
     logger.error("Error fetching matches:", matchesError);
   }
 
+  // On fetch les participants uniquement pour les matchs qu'on va afficher
+  const visibleMatchIds = transformedMatches.map((m: any) => m.id);
+
   const { data: participantsSimple, error: simpleError } = await supabase
     .from("match_participants")
     .select("match_id, user_id, player_type, guest_player_id, team")
-    .in("match_id", matchIds);
+    .in("match_id", visibleMatchIds);
 
   if (simpleError) {
     logger.error("❌ Error fetching participants:", simpleError);
@@ -206,11 +217,14 @@ export default async function MatchHistoryContent() {
     userTeamByMatch[p.match_id] = p.team;
   });
 
+  // Est-ce qu'on a plus de matchs que ce qu'on affiche ?
+  const hasHiddenMatches = !isPremium && matchIds.length > 5;
+
   return (
     <>
       <PendingMatchesSection />
 
-      <div className="space-y-4">
+      <div className="space-y-4 pb-12">
         {finalMatches.length > 0 && (
           <h3 className="text-base font-semibold text-white ml-1 mb-1">
             Matchs validés
@@ -221,7 +235,7 @@ export default async function MatchHistoryContent() {
           const team1 = participants.filter((p: any) => p.team === 1);
           const team2 = participants.filter((p: any) => p.team === 2);
           const userTeam = userTeamByMatch[match.id];
-          const won = match.winner_team === userTeam;
+          const won = (match.winner_team === userTeam);
           const matchDate = new Date(match.played_at || match.created_at);
           const dateStr = matchDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
           const timeStr = matchDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -346,6 +360,26 @@ export default async function MatchHistoryContent() {
             </div>
           );
         })}
+
+        {/* CTA Premium si matchs masqués */}
+        {hasHiddenMatches && (
+          <div className="mt-8 mb-6 p-6 rounded-3xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 backdrop-blur-md text-center shadow-xl">
+            <div className="w-12 h-12 bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
+              <Trophy className="text-amber-400 w-6 h-6" />
+            </div>
+            <h3 className="text-white font-black text-lg mb-2 uppercase tracking-tight">Historique complet</h3>
+            <p className="text-slate-400 text-xs md:text-sm mb-6 max-w-[240px] mx-auto leading-relaxed">
+              Vous avez déjà joué <span className="text-white font-bold">{matchIds.length} matchs</span> !
+              Passez Premium pour voir l&apos;intégralité de vos statistiques.
+            </p>
+            <Link
+              href="/premium"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 rounded-2xl text-black font-black text-sm shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 transition-all"
+            >
+              DÉBLOQUER MON HISTORIQUE
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );
