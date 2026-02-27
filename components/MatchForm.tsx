@@ -366,6 +366,7 @@ export default function MatchForm({
             avatar_url: profileData.avatar_url || null,
             type: 'user',
             email: user.email || null,
+            niveau_padel: profileData.niveau_padel,
           });
         }
       } catch (err) {
