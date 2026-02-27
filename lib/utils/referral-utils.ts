@@ -17,6 +17,36 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
 const PREMIUM_DAYS_PER_REFERRAL = 15;
 
 /**
+ * Génère un code de parrainage unique de 6 caractères
+ */
+export async function generateUniqueReferralCode(): Promise<string> {
+  if (!supabaseAdmin) throw new Error("Service non disponible");
+
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let isUnique = false;
+  let code = '';
+
+  while (!isUnique) {
+    code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const { data } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("referral_code", code)
+      .maybeSingle();
+
+    if (!data) {
+      isUnique = true;
+    }
+  }
+
+  return code;
+}
+
+/**
  * Vérifie si un code de parrainage existe et est valide
  */
 export async function validateReferralCode(code: string): Promise<{
@@ -354,9 +384,25 @@ export async function getUserReferralInfo(userId: string): Promise<{
       return {
         referralCode: null,
         referralCount: 0,
-        maxReferrals: Infinity,
+        maxReferrals: 2,
         referrals: [],
       };
+    }
+
+    let referralCode = profile.referral_code;
+
+    // FIX: Si le code est manquant, on le génère à la volée
+    if (!referralCode) {
+      try {
+        referralCode = await generateUniqueReferralCode();
+        await supabaseAdmin
+          .from("profiles")
+          .update({ referral_code: referralCode })
+          .eq("id", userId);
+        logger.info(`[referral-utils] Generated missing referral code ${referralCode} for user ${userId.substring(0, 8)}…`);
+      } catch (genError) {
+        logger.error(`[referral-utils] Error generating lazy referral code for user ${userId.substring(0, 8)}…: ${genError instanceof Error ? genError.message : String(genError)}`);
+      }
     }
 
     // Récupérer la liste des filleuls
@@ -387,7 +433,7 @@ export async function getUserReferralInfo(userId: string): Promise<{
     }
 
     return {
-      referralCode: profile.referral_code || null,
+      referralCode: referralCode || null,
       referralCount: profile.referral_count || 0,
       maxReferrals: 2,
       referrals: referralsList,
