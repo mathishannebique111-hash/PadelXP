@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { TrendingUp, Crown, Loader2, Trophy, Skull, Heart, Calendar, ArrowRight, Sparkles, Clock, Swords } from "lucide-react";
+import { TrendingUp, Loader2, Trophy, Skull, Heart, Calendar, ArrowRight, Sparkles, Clock, Swords } from "lucide-react";
 import { Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
@@ -14,9 +14,9 @@ import {
     Tooltip,
     Legend,
     Filler,
+    ScriptableContext,
 } from "chart.js";
 import { getPremiumStatsData } from "@/app/actions/premium";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 ChartJS.register(
@@ -30,11 +30,19 @@ ChartJS.register(
     Filler
 );
 
+interface PlayerStat {
+    name: string;
+    winrate: number;
+    count: number;
+    total?: number;
+    avatar_url?: string;
+}
+
 interface PremiumData {
     evolution: { date: string; points: number; level: number }[];
-    topVictims: any[];
-    topNemesis: any[];
-    topPartners: any[];
+    topVictims: PlayerStat[];
+    topNemesis: PlayerStat[];
+    topPartners: PlayerStat[];
     insights: {
         luckyDay: { name: string; winrate: number };
         bestMonth: { name: string; winrate: number };
@@ -54,7 +62,6 @@ type TimeRange = '1W' | '1M' | '1Y' | 'ALL';
 export default function PremiumStats() {
     const [isPremium, setIsPremium] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [upgrading, setUpgrading] = useState(false);
     const [statsData, setStatsData] = useState<PremiumData | null>(null);
     const [timeRange, setTimeRange] = useState<TimeRange>('1W');
     const [successTab, setSuccessTab] = useState<'day' | 'hour' | 'month'>('day');
@@ -82,11 +89,10 @@ export default function PremiumStats() {
                 const premiumStatus = profile?.is_premium || false;
                 setIsPremium(premiumStatus);
 
-                if (premiumStatus) {
-                    const data = await getPremiumStatsData();
-                    if (data) {
-                        setStatsData(data as any);
-                    }
+                // Toujours charger les données (le serveur s'occupe de masquer si pas premium)
+                const data = await getPremiumStatsData();
+                if (data) {
+                    setStatsData(data as PremiumData);
                 }
             }
         } catch (error) {
@@ -102,33 +108,71 @@ export default function PremiumStats() {
 
     if (loading) return <div className="p-8 text-slate-500 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
 
-    if (!isPremium) {
-        return (
-            <div className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-6 sm:p-8 text-center mt-6 shadow-xl">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+    const renderList = (title: string, icon: React.ReactNode, list: PlayerStat[], colorClass: string) => {
+        if (!list || list.length === 0) return null;
 
-                <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-5 shadow-lg">
-                        <Crown className="w-7 h-7 text-yellow-500 fill-yellow-500" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white mb-2">Passez au niveau supérieur</h2>
-                    <p className="text-sm text-slate-400 mb-6 max-w-sm mx-auto leading-relaxed">
-                        Débloquez l'analyse détaillée de vos performances : évolution, performance par adversaire, quels sont vos meilleurs jours et heures pour performer... et pleins d'autres données !
-                    </p>
-                    <button
-                        onClick={handleUpgrade}
-                        className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-2"
-                    >
-                        <Sparkles className="w-4 h-4" />
-                        Devenir premium
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    <p className="text-[10px] text-slate-600 mt-4">Sans engagement.</p>
+        const isPartners = title === "Partenaires Favoris";
+        const isVictims = title === "Mes Victimes";
+        const isNemesis = title === "Mes Bourreaux";
+
+        // Filter list: show up to 5
+        const displayList = list.slice(0, 5);
+
+        return (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group hover:border-[#CCFF00]/20 transition-all">
+                <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#CCFF00] to-transparent opacity-20`}></div>
+                <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+                    <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
+                    {title}
+                </h3>
+                <div className="space-y-3 flex-1 relative">
+                    {displayList.map((item, idx) => {
+                        const isBlurred = !isPremium && idx < 3;
+                        return (
+                            <div key={idx} className={`flex items-center justify-between group p-2 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800 ${isBlurred ? 'blur-lg opacity-30 pointer-events-none' : ''}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-800 group-hover:ring-slate-700 transition-all">
+                                        {item.avatar_url ? <img src={item.avatar_url} alt={item.name} className="w-full h-full object-cover" /> : null}
+                                    </div>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <span className="text-slate-200 text-sm font-semibold truncate">{item.name}</span>
+                                        <span className="text-[10px] text-slate-500">{item.winrate}% de réussite</span>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md bg-slate-950 border border-slate-800 text-slate-400 group-hover:text-white group-hover:border-slate-700 transition-colors`}>
+                                        {isPartners ? `${item.count} matchs` :
+                                            isVictims ? `${item.count} vict. / ${item.total} matchs` :
+                                                `${item.count} déf. / ${item.total} matchs`}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {!isPremium && displayList.length > 0 && (
+                        <div className="absolute inset-0 flex items-start justify-center pt-4 z-20 pointer-events-none">
+                            <div className="bg-[#071554] border-2 border-[#CCFF00] p-6 rounded-2xl shadow-[0_0_30px_rgba(204,255,0,0.2)] flex flex-col items-center text-center w-[90%] sm:w-auto sm:max-w-md pointer-events-auto backdrop-blur-md">
+                                <Sparkles className="w-6 h-6 text-[#CCFF00] mb-3 animate-pulse" />
+                                <p className="text-sm sm:text-base text-white font-black leading-tight mb-4 uppercase tracking-tight">
+                                    {isVictims ? `Ta meilleure victime est ${list[0].name}` :
+                                        isNemesis ? `Ton pire cauchemar est ${list[0].name}` :
+                                            `Ton partenaire favori est ${list[0].name}`}
+                                </p>
+                                <button
+                                    onClick={handleUpgrade}
+                                    className="w-full sm:w-auto bg-[#CCFF00] text-[#071554] px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(204,255,0,0.3)] flex items-center justify-center gap-2"
+                                >
+                                    découvre qui c&apos;est
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         );
-    }
+    };
 
     // Filter Logic
     const fullEvolution = statsData?.evolution || [];
@@ -156,7 +200,7 @@ export default function PremiumStats() {
                 label: "Niveau",
                 data: chartValues,
                 fill: true,
-                backgroundColor: (context: any) => {
+                backgroundColor: (context: ScriptableContext<'line'>) => {
                     const ctx = context.chart.ctx;
                     if (!ctx) return "rgba(59, 130, 246, 0.1)"; // Blue tint
                     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
@@ -190,7 +234,7 @@ export default function PremiumStats() {
                 padding: 12,
                 displayColors: false,
                 callbacks: {
-                    label: function (context: any) {
+                    label: function (context: { parsed: { y: number } }) {
                         return `Niveau : ${context.parsed.y.toFixed(2)}`;
                     }
                 }
@@ -212,48 +256,9 @@ export default function PremiumStats() {
         },
     };
 
-    const renderList = (title: string, icon: any, list: any[], colorClass: string, emptyMessage: string) => {
-        if (!list || list.length === 0) return null;
-
-        const isPartners = title === "Partenaires Favoris";
-        const isVictims = title === "Mes Victimes";
-        const isNemesis = title === "Mes Bourreaux";
-
-        return (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group hover:border-[#CCFF00]/20 transition-all">
-                <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#CCFF00] to-transparent opacity-20`}></div>
-                <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-                    <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
-                    {title}
-                </h3>
-                <div className="space-y-3 flex-1">
-                    {list.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between group p-2 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-800 group-hover:ring-slate-700 transition-all">
-                                    {item.avatar_url ? <img src={item.avatar_url} alt={item.name} className="w-full h-full object-cover" /> : null}
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-slate-200 text-sm font-semibold truncate max-w-[120px]">{item.name}</span>
-                                    <span className="text-[10px] text-slate-500">{item.winrate}% de réussite</span>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <span className={`text-[10px] font-bold px-2 py-1 rounded-md bg-slate-950 border border-slate-800 text-slate-400 group-hover:text-white group-hover:border-slate-700 transition-colors`}>
-                                    {isPartners ? `${item.count} matchs` :
-                                        isVictims ? `${item.count} vict. / ${item.total} matchs` :
-                                            `${item.count} déf. / ${item.total} matchs`}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
     return (
-        <div className="space-y-8 mt-10">
+        <div className="space-y-8 mt-10 relative">
+
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -279,8 +284,8 @@ export default function PremiumStats() {
                 </div>
             </div>
 
-            {/* Evolution Chart - Premium Card */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden">
+            {/* Section 1: Evolution du niveau */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <div className="relative z-10">
@@ -293,30 +298,120 @@ export default function PremiumStats() {
                             <p className="text-xs text-slate-500">Votre progression sur la période</p>
                         </div>
                         {filteredEvolution.length > 0 && (
-                            <div className="text-right bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+                            <div className={`text-right bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50 backdrop-blur-sm ${!isPremium ? 'blur-md' : ''}`}>
                                 <div className="text-2xl font-black text-white">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</div>
                                 <div className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Niveau Actuel</div>
                             </div>
                         )}
                     </div>
 
-                    {filteredEvolution.length > 0 ? (
-                        <div className="h-[250px] w-full">
-                            <Line data={chartData} options={chartOptions} />
-                        </div>
-                    ) : (
-                        <div className="h-[250px] flex flex-col items-center justify-center text-slate-600 gap-3 border border-dashed border-slate-800 rounded-xl bg-slate-800/20">
-                            <TrendingUp className="w-10 h-10 opacity-20" />
-                            <p className="text-sm font-medium">Pas assez de données sur cette période</p>
-                            <button onClick={() => setTimeRange('ALL')} className="text-xs text-blue-400 font-bold hover:text-blue-300 hover:underline">Voir tout l'historique</button>
-                        </div>
-                    )}
+                    <div className={`transition-all duration-700 ${!isPremium ? 'blur-xl select-none pointer-events-none opacity-40 scale-[0.98]' : ''}`}>
+                        {filteredEvolution.length > 0 ? (
+                            <div className="h-[250px] w-full">
+                                <Line data={chartData} options={chartOptions} />
+                            </div>
+                        ) : (
+                            <div className="h-[250px] flex flex-col items-center justify-center text-slate-600 gap-3 border border-dashed border-slate-800 rounded-xl bg-slate-800/20">
+                                <TrendingUp className="w-10 h-10 opacity-20" />
+                                <p className="text-sm font-medium">Pas assez de données sur cette période</p>
+                                <button onClick={() => setTimeRange('ALL')} className="text-xs text-blue-400 font-bold hover:text-blue-300 hover:underline">Voir tout l&apos;historique</button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Insights Cards - Premium Grid */}
-            {/* 2. Temporal Glory Section */}
+            {/* Section 2: Performance par adversaire (REPLACED AS REQUESTED) */}
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
+                    <Swords className="w-5 h-5 text-slate-400" />
+                    Performance par adversaire
+                </h3>
+
+                {/* List Tabs */}
+                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
+                    {[
+                        { id: 'victims', label: 'Mes Victimes' },
+                        { id: 'nemesis', label: 'Mes Bourreaux' },
+                        { id: 'partners', label: 'Partenaires Favoris' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setListTab(tab.id as 'victims' | 'nemesis' | 'partners')}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${listTab === tab.id
+                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="relative z-10 min-h-[300px]">
+                    {listTab === 'victims' && renderList("Mes Victimes", <Trophy className="w-4 h-4 text-[#CCFF00]" />, statsData?.topVictims || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10")}
+                    {listTab === 'nemesis' && renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-[#CCFF00]" />, statsData?.topNemesis || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10")}
+                    {listTab === 'partners' && renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-[#CCFF00]" />, statsData?.topPartners || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10")}
+                </div>
+
+                <div className="h-[1px] w-full bg-slate-800/50 my-8 relative z-10" />
+
+                {/* Level Tabs */}
+                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
+                    {[
+                        { id: 'weaker', label: 'vs Plus Faible' },
+                        { id: 'equal', label: 'vs Niveau Équivalent' },
+                        { id: 'stronger', label: 'vs Plus Fort' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setPerformanceTab(tab.id as 'weaker' | 'equal' | 'stronger')}
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${performanceTab === tab.id
+                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className={`relative z-10 mb-8 transition-all ${!isPremium ? 'blur-xl opacity-40' : ''}`}>
+                    {(() => {
+                        const items = [
+                            { key: 'weaker', color: 'text-emerald-400', barGradient: 'from-emerald-600 to-emerald-400', label: 'vs Plus Faible', icon: <ArrowRight className="w-3 h-3 rotate-45 text-emerald-400" /> },
+                            { key: 'equal', color: 'text-blue-400', barGradient: 'from-blue-600 to-blue-400', label: 'vs Niveau Équivalent', icon: <ArrowRight className="w-3 h-3 text-blue-400" /> },
+                            { key: 'stronger', color: 'text-amber-400', barGradient: 'from-amber-600 to-amber-400', label: 'vs Plus Fort', icon: <ArrowRight className="w-3 h-3 -rotate-45 text-amber-400" /> }
+                        ];
+                        const item = items.find(i => i.key === performanceTab)!;
+
+                        // @ts-expect-error levelPerformance might be undefined
+                        const stat = statsData?.insights?.levelPerformance?.[item.key] || { wins: 0, total: 0 };
+                        const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
+
+                        return (
+                            <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30 backdrop-blur-md max-w-xl">
+                                <div className="flex items-end gap-2 mb-4">
+                                    <span className={`text-4xl font-black ${item.color}`}>{winrate}%</span>
+                                    <span className="text-xs text-slate-500 font-medium mb-1.5 uppercase tracking-wider">de réussite</span>
+                                </div>
+                                <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden mb-4">
+                                    <div className={`h-full bg-gradient-to-r ${item.barGradient} rounded-full transition-all duration-700`} style={{ width: `${winrate}%` }}></div>
+                                </div>
+                                <div className="text-xs text-slate-400 font-medium flex justify-between">
+                                    <span>{stat.wins} victoires</span>
+                                    <span>{stat.total} matchs</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            </div>
+
+            {/* Section 3: Mes Succès */}
+            <div className={`bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-50 grayscale-[0.5]' : ''}`}>
                 <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
                 <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -332,7 +427,7 @@ export default function PremiumStats() {
                     ].map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setSuccessTab(tab.id as any)}
+                            onClick={() => setSuccessTab(tab.id as 'day' | 'hour' | 'month')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${successTab === tab.id
                                 ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
@@ -343,7 +438,7 @@ export default function PremiumStats() {
                     ))}
                 </div>
 
-                <div className="relative z-10 max-w-sm">
+                <div className={`relative z-10 max-w-sm transition-all ${!isPremium ? 'blur-lg' : ''}`}>
                     {successTab === 'day' && (
                         <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
@@ -388,8 +483,8 @@ export default function PremiumStats() {
                 </div>
             </div>
 
-            {/* 3. Ma Forme Section */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            {/* Section 4: Ma Forme */}
+            <div className={`bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-30 blur-sm' : ''}`}>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -404,7 +499,7 @@ export default function PremiumStats() {
                     ].map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setFormTab(tab.id as any)}
+                            onClick={() => setFormTab(tab.id as 'form' | 'reaction')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${formTab === tab.id
                                 ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
@@ -447,95 +542,6 @@ export default function PremiumStats() {
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* 1. Performance Section (Level + Lists) */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-
-                <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
-                    <Swords className="w-5 h-5 text-slate-400" />
-                    Performance par adversaire
-                </h3>
-
-                {/* Level Tabs */}
-                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
-                    {[
-                        { id: 'weaker', label: 'vs Plus Faible' },
-                        { id: 'equal', label: 'vs Niveau Équivalent' },
-                        { id: 'stronger', label: 'vs Plus Fort' }
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setPerformanceTab(tab.id as any)}
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${performanceTab === tab.id
-                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
-                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
-                                }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="relative z-10 mb-8">
-                    {(() => {
-                        const items = [
-                            { key: 'weaker', color: 'text-emerald-400', barGradient: 'from-emerald-600 to-emerald-400', label: 'vs Plus Faible', icon: <ArrowRight className="w-3 h-3 rotate-45 text-emerald-400" /> },
-                            { key: 'equal', color: 'text-blue-400', barGradient: 'from-blue-600 to-blue-400', label: 'vs Niveau Équivalent', icon: <ArrowRight className="w-3 h-3 text-blue-400" /> },
-                            { key: 'stronger', color: 'text-amber-400', barGradient: 'from-amber-600 to-amber-400', label: 'vs Plus Fort', icon: <ArrowRight className="w-3 h-3 -rotate-45 text-amber-400" /> }
-                        ];
-                        const item = items.find(i => i.key === performanceTab)!;
-
-                        // @ts-ignore
-                        const stat = statsData?.insights?.levelPerformance?.[item.key] || { wins: 0, total: 0 };
-                        const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
-
-                        return (
-                            <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30 backdrop-blur-md max-w-xl">
-                                <div className="flex items-end gap-2 mb-4">
-                                    <span className={`text-4xl font-black ${item.color}`}>{winrate}%</span>
-                                    <span className="text-xs text-slate-500 font-medium mb-1.5 uppercase tracking-wider">de réussite</span>
-                                </div>
-                                <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden mb-4">
-                                    <div className={`h-full bg-gradient-to-r ${item.barGradient} rounded-full transition-all duration-700`} style={{ width: `${winrate}%` }}></div>
-                                </div>
-                                <div className="text-xs text-slate-400 font-medium flex justify-between">
-                                    <span>{stat.wins} victoires</span>
-                                    <span>{stat.total} matchs</span>
-                                </div>
-                            </div>
-                        );
-                    })()}
-                </div>
-
-                <div className="h-[1px] w-full bg-slate-800/50 mb-8 relative z-10" />
-
-                {/* List Tabs */}
-                <div className="flex flex-wrap gap-2 mb-6 relative z-10">
-                    {[
-                        { id: 'victims', label: 'Mes Victimes' },
-                        { id: 'nemesis', label: 'Mes Bourreaux' },
-                        { id: 'partners', label: 'Partenaires Favoris' }
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setListTab(tab.id as any)}
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${listTab === tab.id
-                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
-                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
-                                }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="relative z-10">
-                    {listTab === 'victims' && renderList("Mes Victimes", <Trophy className="w-4 h-4 text-[#CCFF00]" />, statsData?.topVictims || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore gagné contre d'autres joueurs.")}
-                    {listTab === 'nemesis' && renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-[#CCFF00]" />, statsData?.topNemesis || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Vous n'avez pas encore perdu contre d'autres joueurs.")}
-                    {listTab === 'partners' && renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-[#CCFF00]" />, statsData?.topPartners || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10", "Jouez des matchs pour voir vos partenaires favoris.")}
                 </div>
             </div>
         </div>

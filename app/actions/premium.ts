@@ -103,11 +103,12 @@ export async function createPremiumCheckoutSession(returnPath: string = "/home")
         });
 
         return { url: session.url };
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to create checkout session";
         logger.error("Error creating checkout session:", error);
         console.error("Stripe Checkout Error Details:", JSON.stringify(error, null, 2));
         // Return structured error instead of throwing to avoid 500 on client
-        return { error: error.message || "Failed to create checkout session" };
+        return { error: errorMessage };
     }
 }
 
@@ -116,6 +117,15 @@ export async function getPremiumStatsData() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return null;
+
+    // Check if user is premium
+    const { data: profileCheck } = await supabaseAdmin
+        .from("profiles")
+        .select("is_premium")
+        .eq("id", user.id)
+        .single();
+
+    const userIsPremium = profileCheck?.is_premium || false;
 
     try {
         // 1. Fetch all confirmed matches for the user
@@ -253,7 +263,6 @@ export async function getPremiumStatsData() {
             if (!myPart) continue;
 
             const myTeam = myPart.team;
-            const opponentTeam = myTeam === 1 ? 2 : 1;
             const winningTeam = match.winner_team_id === match.team1_id ? 1 : 2;
             const isWin = myTeam === winningTeam;
 
@@ -404,6 +413,19 @@ export async function getPremiumStatsData() {
         const topPartners = formatList(partnersMap, 'partner');
         const topVictims = formatList(opponentsMap, 'victim');
         const topNemesis = formatList(opponentsMap, 'nemesis');
+
+        // --- MASKING FOR NON-PREMIUM ---
+        if (!userIsPremium) {
+            const maskName = (name: string, keepFirst: boolean = false) => {
+                if (!name || name === "Inconnu") return name;
+                if (keepFirst) return name.charAt(0) + "****";
+                return "****";
+            };
+
+            topPartners.forEach((p, idx) => p.name = idx < 3 ? maskName(p.name, idx === 0) : p.name);
+            topVictims.forEach((v, idx) => v.name = idx < 3 ? maskName(v.name, idx === 0) : v.name);
+            topNemesis.forEach((n, idx) => n.name = idx < 3 ? maskName(n.name, idx === 0) : n.name);
+        }
 
         // Best Month
         let bestMonth = { name: "-", winrate: 0 };
