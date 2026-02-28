@@ -21,11 +21,18 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { niveau, categorie, breakdown, recommendations } = body as {
+    const { niveau, categorie, breakdown, responses, recommendations } = body as {
       niveau: number;
       categorie: string;
       breakdown: Record<string, number>;
+      responses?: Record<string, number | number[]>;
       recommendations?: string[];
+    };
+
+    // Enrichir le breakdown avec les réponses si disponibles
+    const enrichedBreakdown = {
+      ...breakdown,
+      ...(responses ? { responses } : {})
     };
 
     // Convertir les recommandations en tableau pour la sauvegarde (compatibilité)
@@ -36,7 +43,7 @@ export async function POST(request: Request) {
       .update({
         niveau_padel: niveau,
         niveau_categorie: categorie,
-        niveau_breakdown: breakdown,
+        niveau_breakdown: enrichedBreakdown,
         niveau_recommendations: recommendationsArray.length > 0 ? recommendationsArray : null,
         updated_at: new Date().toISOString(),
       })

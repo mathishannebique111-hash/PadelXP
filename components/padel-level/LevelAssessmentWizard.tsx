@@ -198,6 +198,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
           niveau: result.niveau,
           categorie: result.categorie,
           breakdown: result.breakdown,
+          responses: result.breakdown.responses,
           recommendations: [result.tips.technique, result.tips.tactique, result.tips.mental],
         }),
       });

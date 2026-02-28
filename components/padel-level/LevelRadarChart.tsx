@@ -33,7 +33,7 @@ export default function LevelRadarChart({ breakdown }: Props) {
     const centerX = canvasSize / 2;
     const centerY = canvasSize / 2;
     const maxRadius = isMobile ? 90 : 120;
-    const categories = Object.keys(breakdown);
+    const categories = Object.keys(breakdown).filter(key => key !== 'responses');
     const angleStep = (Math.PI * 2) / categories.length;
 
     canvas.width = canvasSize;
@@ -125,23 +125,25 @@ export default function LevelRadarChart({ breakdown }: Props) {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mt-4">
-        {Object.entries(breakdown).map(([key, value]) => {
-          const info = CATEGORY_INFO[key as keyof typeof CATEGORY_INFO];
-          const CategoryIcon = info.Icon;
-          return (
-            <div key={key} className="flex items-center gap-2">
-              <CategoryIcon size={18} className="text-padel-green flex-shrink-0" />
-              <div>
-                <p className="text-xs md:text-sm text-gray-400">
-                  {info.label}
-                </p>
-                <p className="text-base md:text-lg font-bold text-white">
-                  {value.toFixed(2)}/10
-                </p>
+        {Object.entries(breakdown)
+          .filter(([key]) => key !== 'responses')
+          .map(([key, value]) => {
+            const info = CATEGORY_INFO[key as keyof typeof CATEGORY_INFO];
+            const CategoryIcon = info.Icon;
+            return (
+              <div key={key} className="flex items-center gap-2">
+                <CategoryIcon size={18} className="text-padel-green flex-shrink-0" />
+                <div>
+                  <p className="text-xs md:text-sm text-gray-400">
+                    {info.label}
+                  </p>
+                  <p className="text-base md:text-lg font-bold text-white">
+                    {(value as number).toFixed(2)}/10
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
     </div>
   );

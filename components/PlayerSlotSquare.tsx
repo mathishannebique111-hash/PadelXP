@@ -8,7 +8,9 @@ interface PlayerSlotSquareProps {
     player: PlayerSearchResult | null;
     label: string;
     onClick?: () => void;
+    onRemove?: () => void;
     isFixed?: boolean;
+    isOwner?: boolean;
     className?: string;
     isWinner?: boolean;
     niveau_padel?: number | null;
@@ -19,7 +21,9 @@ export default function PlayerSlotSquare({
     player,
     label,
     onClick,
+    onRemove,
     isFixed = false,
+    isOwner = false,
     className = "",
     isWinner = false,
     niveau_padel,
@@ -55,6 +59,17 @@ export default function PlayerSlotSquare({
             >
                 {player ? (
                     <>
+                        {onRemove && !isOwner && (
+                            <div
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRemove();
+                                }}
+                                className="absolute top-1 right-1 z-20 p-1 bg-red-500 rounded-full text-white shadow-md hover:scale-110 active:scale-95 transition-all"
+                            >
+                                <Plus size={10} className="rotate-45" />
+                            </div>
+                        )}
                         <div className="flex items-center justify-center mb-0.5 overflow-hidden rounded-full w-8 h-8 sm:w-10 sm:h-10 bg-slate-100 border border-gray-200">
                             {player.avatar_url ? (
                                 <Image

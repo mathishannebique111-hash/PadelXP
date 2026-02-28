@@ -378,11 +378,15 @@ export default function PlayerAutocomplete({
                         {player.type === "user" ? (
                           <div className="flex flex-col items-end gap-1">
                             {player.is_external ? (
-                              <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                                <span className="truncate max-w-[100px]">{player.club_name || "Autre club"}</span>
-                              </span>
+                              player.club_name && (
+                                <span className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                                  <span className="truncate max-w-[100px]">{player.club_name}</span>
+                                </span>
+                              )
                             ) : (
-                              <span className="text-gray-500">Inscrit</span>
+                              <span className="flex items-center gap-1.5 bg-[#CCFF00] px-2.5 py-1 rounded-lg border border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)]">
+                                <span className="text-[9px] uppercase font-black tracking-[0.1em] text-[#071554]">Même club</span>
+                              </span>
                             )}
                             {player.niveau_padel && (
                               <span className="text-[10px] font-black italic text-blue-600">Niv. {player.niveau_padel.toFixed(2)}</span>

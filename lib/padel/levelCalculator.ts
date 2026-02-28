@@ -41,6 +41,7 @@ export interface LevelResult {
     experience: number;
     physique: number;
     situations: number;
+    responses?: Record<string, number | number[]>;
   };
   strengths: string[];
   weaknesses: string[];
@@ -115,6 +116,7 @@ export function calculatePadelLevel(
     experience: scoreExperience,
     physique: scorePhysique,
     situations: scoreSituations,
+    responses: responses as unknown as Record<string, number | number[]>,
   };
   const strengths = identifyStrengths(breakdown);
   const weaknesses = identifyWeaknesses(breakdown);
