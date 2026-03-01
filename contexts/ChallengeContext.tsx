@@ -2,24 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { ChallengeResponse } from "@/lib/challenges";
 
-export interface PlayerChallenge {
-    id: string;
-    title: string;
-    startDate: string;
-    endDate: string;
-    objective: string;
-    rewardType: "points" | "badge";
-    rewardLabel: string;
-    status: "active" | "upcoming" | "completed";
-    progress: {
-        current: number;
-        target: number;
-    };
-    rewardClaimed: boolean;
-    scope: 'global' | 'club';
-    isPremium?: boolean;
-}
+export type PlayerChallenge = ChallengeResponse;
 
 interface ChallengeContextType {
     challenge: PlayerChallenge | null;
@@ -29,9 +14,17 @@ interface ChallengeContextType {
 
 const ChallengeContext = createContext<ChallengeContextType | undefined>(undefined);
 
-export function ChallengeProvider({ children }: { children: React.ReactNode }) {
-    const [challenge, setChallenge] = useState<PlayerChallenge | null>(null);
-    const [loading, setLoading] = useState(true);
+export function ChallengeProvider({
+    children,
+    initialChallenge = null,
+    initialIsPremiumUser = false
+}: {
+    children: React.ReactNode,
+    initialChallenge?: PlayerChallenge | null,
+    initialIsPremiumUser?: boolean
+}) {
+    const [challenge, setChallenge] = useState<PlayerChallenge | null>(initialChallenge);
+    const [loading, setLoading] = useState(!initialChallenge);
 
     const fetchChallenges = useCallback(async () => {
         try {
@@ -43,7 +36,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
             const isPremium = data.isPremiumUser || false;
 
             // Filtrer les challenges actifs et non réclamés
-            const activeChallenges = challenges.filter(
+            const activeChallenges = (challenges as PlayerChallenge[]).filter(
                 c => {
                     // Si le challenge est premium et que l'user ne l'est pas, on l'ignore pour la mise en avant
                     if (c.isPremium && !isPremium) return false;

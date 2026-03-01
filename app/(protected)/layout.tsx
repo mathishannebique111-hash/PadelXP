@@ -1,5 +1,3 @@
-// Layout pour toutes les pages du compte joueur
-// Ce fichier assure une typographie cohérente sur toutes les pages
 import { Suspense } from 'react';
 import PlayerSidebar from '@/components/PlayerSidebar';
 import BottomNavBar from '@/components/BottomNavBar';
@@ -13,12 +11,37 @@ import HideSplashScreen from '@/components/HideSplashScreen';
 import GlobalNotificationListener from '@/components/notifications/GlobalNotificationListener';
 import ToastContainer from '@/components/ui/Toast';
 import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNotifier';
+import { createClient } from '@/lib/supabase/server';
+import { getPlayerChallenges } from '@/lib/challenges';
 
-export default function PlayerAccountLayout({
+export default async function PlayerAccountLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let initialChallenge = null;
+  let isPremiumUser = false;
+
+  if (user) {
+    try {
+      const result = await getPlayerChallenges(user.id);
+      isPremiumUser = result.isPremiumUser;
+
+      // Trouver le premier challenge actif à mettre en avant (logique identique au Provider)
+      const activeChallenge = (result.challenges || []).find(c => {
+        if (c.isPremium && !isPremiumUser) return false;
+        return c.status === "active" && !c.rewardClaimed;
+      });
+
+      initialChallenge = activeChallenge || null;
+    } catch (e) {
+      console.error("[PlayerAccountLayout] Failed to pre-fetch challenges", e);
+    }
+  }
+
   return (
     <>
       <PlayerSafeAreaColor />
@@ -29,7 +52,7 @@ export default function PlayerAccountLayout({
         }}
       />
       <PopupQueueProvider>
-        <ChallengeProvider>
+        <ChallengeProvider initialChallenge={initialChallenge} initialIsPremiumUser={isPremiumUser}>
           <div
             className="relative min-h-screen overflow-hidden bg-[#172554]"
             style={{
