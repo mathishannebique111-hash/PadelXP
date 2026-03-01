@@ -16,6 +16,8 @@ interface Player {
   club_id: string;
   created_at: string;
   matchs_joues: number | null;
+  city: string | null;
+  postal_code: string | null;
   clubs: {
     name: string;
   };
@@ -165,6 +167,7 @@ export default function PlayersListClient({
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Nom</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Localisation</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Matchs</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Club</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Notifications</th>
@@ -197,6 +200,11 @@ export default function PlayersListClient({
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{player.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                        {player.city && player.postal_code
+                          ? `${player.city} (${player.postal_code})`
+                          : player.city || player.postal_code || '-'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className="font-bold text-white">
                           {player.matchs_joues || 0}
