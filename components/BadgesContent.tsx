@@ -216,14 +216,6 @@ export default async function BadgesContent() {
     };
   });
 
-  badgesWithStatus = badgesWithStatus.sort((a, b) => {
-    const weight = (bd: typeof a) => {
-      if (bd.icon === "🏆") return 0;
-      if (bd.icon === "💬") return 1;
-      return 2;
-    };
-    return weight(a) - weight(b);
-  });
 
   const obtainedCount = badgesWithStatus.filter((b) => b.obtained).length;
 
@@ -236,20 +228,13 @@ export default async function BadgesContent() {
   const challengeBadgesCount = challengeBadges?.length || 0;
   const totalBadgesCount = obtainedCount + challengeBadgesCount;
 
+  const totalPossibleStandardBadges = ALL_BADGES.length;
+  const totalObtainedStandardBadges = badgesWithStatus.filter((b) => b.obtained).length;
   const premiumCount = badgesWithStatus.filter((b) => b.isPremium && b.obtained).length;
-  // Subtract premium count from obtained count if obtainedCount includes them (it does based on line 240)
-  // Actually line 240 counts ALL obtained badges.
-  // The user wants separate counters.
-  // Let's redefine the counts:
-  // standard: obtained non-premium
-  // premium: obtained premium
-  // challenge: challenge badges
-
-  const standardObtainedCount = badgesWithStatus.filter((b) => b.obtained && !b.isPremium).length;
 
   const counts = {
-    total: totalBadgesCount,
-    obtained: standardObtainedCount,
+    total: totalPossibleStandardBadges,
+    obtained: totalObtainedStandardBadges,
     challenge: challengeBadgesCount,
     premium: premiumCount,
   };

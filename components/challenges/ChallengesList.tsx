@@ -33,7 +33,7 @@ interface ChallengesListProps {
 }
 export default function ChallengesList({ challenges, isPremiumUser = false, hasClub = false, debugInfo }: ChallengesListProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'general' | 'club' | 'premium'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'club'>('general');
   // Local state for optimistic update, similar to PremiumStats
   const [isPremium, setIsPremium] = useState(isPremiumUser);
 
@@ -50,7 +50,6 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
       const params = new URLSearchParams(window.location.search);
       const filter = params.get('filter');
       if (filter === 'club') setActiveTab('club');
-      else if (filter === 'premium') setActiveTab('premium');
       else if (filter === 'general') setActiveTab('general');
     }
   }, []);
@@ -93,9 +92,8 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
   };
 
   const filteredChallenges = challenges.filter(c => {
-    if (activeTab === 'general') return c.scope === 'global' && !c.isPremium;
+    if (activeTab === 'general') return c.scope === 'global' || !!c.isPremium;
     if (activeTab === 'club') return c.scope === 'club' && !c.isPremium;
-    if (activeTab === 'premium') return !!c.isPremium;
     return false;
   });
 
@@ -123,23 +121,13 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
           <MapPin size={14} />
           <span>Mon Club</span>
         </button>
-        <button
-          onClick={() => setActiveTab('premium')}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'premium'
-            ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25 ring-2 ring-amber-400 ring-offset-2 ring-offset-[#172554]'
-            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
-            }`}
-        >
-          <Trophy size={14} className={activeTab === 'premium' ? "text-white" : "text-amber-400"} />
-          <span>Premium</span>
-        </button>
       </div>
 
       {filteredChallenges.length === 0 ? (
         <div className="rounded-2xl border border-white/20 bg-white/10 px-6 py-12 text-center">
           {activeTab === 'general' ? (
-            <p className="text-white/60">Aucun challenge général disponible pour le moment.</p>
-          ) : activeTab === 'club' ? (
+            <p className="text-white/60">Aucun challenge disponible pour le moment.</p>
+          ) : (
             hasClub ? (
               <p className="text-white/60">Aucun challenge club disponible pour le moment.</p>
             ) : (
@@ -161,8 +149,6 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
                 </button>
               </div>
             )
-          ) : (
-            <p className="text-white/60">Aucun challenge Premium disponible pour le moment.</p>
           )}
         </div>
       ) : (

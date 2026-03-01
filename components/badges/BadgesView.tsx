@@ -41,7 +41,7 @@ export default function BadgesView({
     counts,
 }: BadgesViewProps) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"standard" | "challenges" | "premium">("standard");
+    const [activeTab, setActiveTab] = useState<"standard" | "challenges">("standard");
     // Local state for optimistic update
     const [isPremium, setIsPremium] = useState(isPremiumUser);
 
@@ -56,9 +56,9 @@ export default function BadgesView({
         router.refresh();
     };
 
-    // Filter logic
-    const standardBadges = badgesWithStatus.filter((b) => !b.isPremium);
-    const premiumBadges = badgesWithStatus.filter((b) => b.isPremium);
+    // Filter logic: Standard now includes all badges that are not from challenges
+    // Note: In this context, badgesWithStatus contains everything except challengeBadges which are handled separately
+    const allStandardBadges = badgesWithStatus;
 
     // Prepare notifier data
     const badgesForNotifier = badgesWithStatus
@@ -76,13 +76,14 @@ export default function BadgesView({
 
             <div className="relative z-10 mx-auto w-full max-w-6xl px-1 sm:px-4 pt-2 md:pt-6 pb-8">
                 {/* Stats Header */}
-
-                {/* Stats Header */}
                 <div className="mb-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto">
                     <div className="flex items-center justify-between gap-2">
-                        {/* Gauche: Total Badges */}
-                        <div className="text-center w-20 sm:w-24 flex-shrink-0">
-                            <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">{counts.total}</div>
+                        {/* Gauche: Complétion Badges (Hors Challenges) */}
+                        <div className="text-center w-24 sm:w-28 flex-shrink-0">
+                            <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">
+                                {counts.obtained}
+                                <span className="text-lg sm:text-xl text-white/40 ml-1">/ {counts.total}</span>
+                            </div>
                             <div className="text-[10px] sm:text-xs font-semibold text-white/80">Badges</div>
                         </div>
 
@@ -108,47 +109,37 @@ export default function BadgesView({
                 </div>
 
                 {/* Filters */}
-                <div className="flex justify-center gap-2 mb-4 overflow-x-auto p-3 scrollbar-hide">
+                <div className="flex justify-center gap-4 mb-4 overflow-x-auto p-3 scrollbar-hide">
                     <button
                         onClick={() => setActiveTab("standard")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
                             ? "bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/50 ring-offset-2 ring-offset-[#172554]"
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
                             }`}
                     >
-                        <Award size={14} className="sm:w-4 sm:h-4" />
-                        Standards
+                        <Award size={16} className="sm:w-4 sm:h-4" />
+                        Tous les badges
                     </button>
                     <button
                         onClick={() => setActiveTab("challenges")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
                             ? "bg-[#CCFF00] text-[#172554] shadow-lg shadow-[#CCFF00]/25 ring-2 ring-[#CCFF00] ring-offset-2 ring-offset-[#172554]"
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
                             }`}
                     >
-                        <Trophy size={14} className="sm:w-4 sm:h-4" />
+                        <Trophy size={16} className="sm:w-4 sm:h-4" />
                         Challenges
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("premium")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "premium"
-                            ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25 ring-2 ring-amber-400 ring-offset-2 ring-offset-[#172554]"
-                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
-                            }`}
-                    >
-                        <Crown size={14} className="sm:w-4 sm:h-4" />
-                        Premium
                     </button>
                 </div>
 
                 {/* Content Area */}
                 <div className="min-h-[400px]">
-                    {/* Standard Badges Grid */}
+                    {/* Standard Badges Grid (Mixed Premium) */}
                     {activeTab === "standard" && (
                         <div>
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                {standardBadges.map((badge, idx) => (
-                                    <BadgeCard key={`std-${idx}`} badge={badge} />
+                                {allStandardBadges.map((badge, idx) => (
+                                    <BadgeCard key={`std-${idx}`} badge={badge} isPremiumUser={isPremium} />
                                 ))}
                             </div>
                         </div>
@@ -199,23 +190,6 @@ export default function BadgesView({
                             )}
                         </div>
                     )}
-
-                    {/* Premium Badges Grid */}
-                    {activeTab === "premium" && (
-                        <div>
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                {premiumBadges.map((badge, idx) => (
-                                    <BadgeCard
-                                        key={`prem-${idx}`}
-                                        badge={badge}
-                                        isPremiumGrid
-                                        isLocked={!isPremium}
-                                        onUnlock={handlePremiumUnlocked}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </>
@@ -224,18 +198,17 @@ export default function BadgesView({
 
 function BadgeCard({
     badge,
-    isPremiumGrid = false,
-    isLocked = false,
-    onUnlock
+    isPremiumUser
 }: {
     badge: ExtendedBadge;
-    isPremiumGrid?: boolean;
-    isLocked?: boolean;
-    onUnlock?: () => void;
+    isPremiumUser: boolean;
 }) {
     const router = useRouter();
     const isObtained = badge.obtained;
-    const effectivelyLocked = isLocked || (isPremiumGrid && !isObtained);
+    const isPremiumBadge = badge.isPremium;
+
+    // Un badge premium est "verrouillé" s'il est obtenu mais que l'utilisateur n'est pas premium
+    const needsPremiumToActivate = isPremiumBadge && isObtained && !isPremiumUser;
 
     const handleUnlock = () => {
         router.push(`/premium?returnPath=${window.location.pathname}`);
@@ -243,21 +216,23 @@ function BadgeCard({
 
     return (
         <div
-            className={`group relative rounded-xl border px-2 pt-4 pb-2 transition-all flex flex-col h-[172px] items-center text-center overflow-hidden ${effectivelyLocked
-                ? "border-amber-500/30 bg-slate-900/50"
-                : isPremiumGrid
-                    ? "border-yellow-400 bg-gradient-to-br from-yellow-100 via-amber-100 to-yellow-50 shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-yellow-400/50"
-                    : isObtained
-                        ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
-                        : "border-gray-200 bg-gray-50 opacity-75"
+            className={`group relative rounded-xl border px-2 pt-4 pb-2 transition-all flex flex-col h-[172px] items-center text-center overflow-hidden ${isPremiumBadge
+                ? isObtained
+                    ? isPremiumUser
+                        ? "border-yellow-400 bg-gradient-to-br from-yellow-100 via-amber-100 to-yellow-50 shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-yellow-400/50"
+                        : "border-amber-500/70 bg-white/10 shadow-lg backdrop-blur-md ring-1 ring-white/20"
+                    : "border-amber-500 bg-gray-50 shadow-[0_0_0_1.5px_rgba(245,158,11,0.2)]"
+                : isObtained
+                    ? "border-blue-500 bg-white shadow-md hover:scale-105 hover:shadow-xl"
+                    : "border-gray-200 bg-gray-50"
                 }`}
         >
-            {badge.isPremium && (
+            {isPremiumBadge && (
                 <div className="absolute top-2 right-2 z-10">
                     <span
-                        className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${effectivelyLocked
-                            ? "bg-amber-500/20 text-amber-500 border-amber-500/30"
-                            : "bg-amber-100 text-amber-700 border-amber-200"
+                        className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${isPremiumUser && isObtained
+                            ? "bg-amber-500 text-white border-amber-600 shadow-sm"
+                            : "bg-amber-500/20 text-amber-500 border-amber-500/30"
                             }`}
                     >
                         Premium
@@ -265,64 +240,61 @@ function BadgeCard({
                 </div>
             )}
 
-            {effectivelyLocked && isPremiumGrid && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[4px] text-center p-4">
-                    <div className="mb-2 p-2 rounded-full bg-amber-500/20 border border-amber-500/40">
-                        <Lock className="w-5 h-5 text-amber-400" />
-                    </div>
+            <div
+                className={`flex-shrink-0 mb-2 h-[40px] flex items-center justify-center transition-all ${!isObtained ? "opacity-15 grayscale" : ""}`}
+            >
+                <BadgeIconDisplay
+                    icon={badge.icon}
+                    title={badge.title}
+                    className="transition-all"
+                    size={40}
+                />
+            </div>
+
+            <div
+                className={`flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-1 px-1 ${!isObtained ? "opacity-30 grayscale" : ""}`}
+            >
+                <h3
+                    className={`text-sm font-semibold leading-tight mb-1 text-center ${isObtained
+                        ? isPremiumBadge
+                            ? "bg-gradient-to-r from-yellow-500 to-amber-600 bg-clip-text text-transparent"
+                            : "text-gray-900"
+                        : "text-gray-500"
+                        }`}
+                >
+                    {badge.title}
+                </h3>
+                <p className={`text-[10px] leading-tight text-center line-clamp-2 ${isObtained
+                    ? isPremiumBadge ? "text-amber-500 font-medium" : "text-gray-600"
+                    : "text-gray-400"
+                    }`}>
+                    {badge.description}
+                </p>
+            </div>
+
+            <div
+                className="flex-shrink-0 w-full h-[36px] flex items-center justify-center mt-auto"
+            >
+                {needsPremiumToActivate ? (
                     <button
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             handleUnlock();
                         }}
-                        className="group px-3 py-2 rounded-lg bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-[10px] font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-1.5"
+                        className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] font-bold shadow-lg hover:brightness-110 hover:scale-[1.02] transition-all animate-pulse"
                     >
-                        <Sparkles size={12} />
-                        Devenir Premium
-                        <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                        <Lock size={10} />
+                        DÉBLOQUER
                     </button>
-                </div>
-            )}
-
-            <div
-                className={`flex-shrink-0 mb-2 h-[40px] flex items-center justify-center ${effectivelyLocked ? "opacity-30 blur-[2px]" : ""
-                    }`}
-            >
-                <BadgeIconDisplay
-                    icon={badge.icon}
-                    title={badge.title}
-                    className={`transition-all ${isObtained || effectivelyLocked ? "" : "grayscale opacity-50"
-                        }`}
-                    size={40}
-                />
-            </div>
-
-            <div
-                className={`flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[70px] mb-1 px-1 ${effectivelyLocked ? "opacity-30 blur-[1px]" : ""
-                    }`}
-            >
-                <h3
-                    className={`text-sm font-semibold leading-tight mb-1 text-center ${isObtained && !effectivelyLocked ? "text-gray-900" : "text-gray-500"
-                        }`}
-                >
-                    {badge.title}
-                </h3>
-                <p className="text-xs leading-relaxed text-gray-600 text-center line-clamp-2">
-                    {badge.description}
-                </p>
-            </div>
-
-            <div
-                className={`flex-shrink-0 w-full h-[32px] flex items-center justify-center mt-auto ${effectivelyLocked ? "opacity-0" : ""
-                    }`}
-            >
-                {isObtained ? (
-                    <div className="w-full rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 tabular-nums">
-                        ✓ Débloqué
+                ) : isObtained ? (
+                    <div className={`w-full rounded-lg px-3 py-1.5 text-[10px] font-bold tabular-nums ${isPremiumBadge && isPremiumUser ? "bg-amber-100 text-amber-800" : "bg-green-50 text-green-700"}`}>
+                        ✓ DÉBLOQUÉ
                     </div>
                 ) : (
-                    <div className="w-full h-[32px]" />
+                    <div className="text-[10px] font-medium text-gray-400 italic">
+                        Non obtenu
+                    </div>
                 )}
             </div>
         </div>

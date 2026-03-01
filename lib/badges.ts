@@ -21,6 +21,7 @@ export const ALL_BADGES: Badge[] = [
   { icon: "Flame", title: "Série de 3", description: "Gagnez 3 matchs consécutifs" },
   { icon: "Flame", title: "Série de 5", description: "Gagnez 5 matchs consécutifs" },
   { icon: "Timer", title: "Marathonien", description: "Jouez 50 matchs" },
+  { icon: "Crown", title: "Premium", description: "Membre Premium PadelXP", isPremium: true },
   { icon: "Star", title: "Meilleur scoreur", description: "Obtenez 100+ points" },
   { icon: "Flame", title: "Série de 7", description: "Gagnez 7 matchs consécutifs" },
   { icon: "Flame", title: "Série de 10", description: "Gagnez 10 matchs consécutifs" },
@@ -36,8 +37,6 @@ export const ALL_BADGES: Badge[] = [
   { icon: "MessageSquare", title: "Contributeur", description: "Laissez votre premier avis" },
   // Badge parrainage
   { icon: "Users", title: "Ambassadeur", description: "Parrainez 2 joueurs" },
-  // Badge Premium
-  { icon: "Crown", title: "Premium", description: "Membre Premium PadelXP", isPremium: true },
 ];
 
 export function getBadges(stats: PlayerStats): Badge[] {

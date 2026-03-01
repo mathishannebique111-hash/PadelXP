@@ -237,51 +237,24 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
       )}
 
       {/* Carte du challenge */}
-      <div className={`group relative rounded-2xl border-2 p-1 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted && !isLocked
-        ? "border-blue-500 bg-gradient-to-br from-blue-600/10 via-black/40 to-black/20 shadow-blue-500/20"
-        : isFailed && !isLocked
+      <div className={`group relative rounded-2xl border-2 p-1 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
+        ? challenge.isPremium
+          ? "border-amber-500 bg-gradient-to-br from-amber-600/20 via-black/40 to-black/20 shadow-amber-500/20"
+          : "border-blue-500 bg-gradient-to-br from-blue-600/10 via-black/40 to-black/20 shadow-blue-500/20"
+        : isFailed
           ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
           : challenge.isPremium
-            ? isLocked
-              ? "border-amber-500/30 bg-slate-900/80"
-              : "border-amber-500/60 bg-gradient-to-br from-amber-500/10 to-black/40 shadow-amber-500/10"
+            ? "border-amber-500/60 bg-gradient-to-br from-amber-500/10 to-black/40 shadow-amber-500/10"
             : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-xl"
         }`}>
 
-        {/* Overlay si verrouillé */}
-        {isLocked && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[4px] text-center p-6">
-            <div className="mb-3 p-3 rounded-full bg-amber-500/20 border border-amber-500/40">
-              <Lock className="w-8 h-8 text-amber-400" />
+        <div className="p-4">
+          {/* Effet brillant style top joueurs */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+            <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Challenge Premium</h3>
-            <p className="text-sm text-slate-300 mb-6 max-w-xs">
-              Débloquez ce challenge et bien plus encore avec PadelXP Premium.
-            </p>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push(`/premium?returnPath=${window.location.pathname}`);
-              }}
-              className="group px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-bold shadow-lg shadow-amber-900/20 hover:shadow-amber-900/40 hover:scale-[1.02] transition-all flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              Devenir Premium
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
           </div>
-        )}
-
-        <div className={`p-4 ${isLocked ? "opacity-30 blur-[1px] pointer-events-none select-none grayscale-[0.5]" : ""}`}>
-          {/* Effet brillant style top joueurs (seulement si non verrouillé) */}
-          {!isLocked && (
-            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-              <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shine-challenge">
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-transparent challenge-shine-gradient" />
-              </div>
-            </div>
-          )}
 
           {/* En-tête */}
           <div className="mb-5 flex items-start justify-between gap-4">
@@ -351,9 +324,11 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             {/* Barre de progression */}
             <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
               <div
-                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${isCompleted
-                  ? "bg-blue-500 shadow-lg shadow-blue-500/50"
-                  : "bg-blue-500 shadow-lg shadow-blue-500/30"
+                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${challenge.isPremium
+                  ? "bg-amber-500 shadow-lg shadow-amber-500/50"
+                  : isCompleted
+                    ? "bg-blue-500 shadow-lg shadow-blue-500/50"
+                    : "bg-blue-500 shadow-lg shadow-blue-500/30"
                   }`}
                 style={{ width: `${percentage}%` }}
               />
@@ -370,7 +345,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
 
           {/* Période */}
           <div className="mb-4 flex items-center gap-2 text-sm">
-            <Calendar size={16} className="text-white flex-shrink-0" />
+            <Clock size={16} className="text-white flex-shrink-0" />
             <span className="font-medium text-white">Période :</span>
             <span className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</span>
           </div>
@@ -379,23 +354,34 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           {canClaim && !hasClaimed && (
             <div className="mb-2">
               <button
-                onClick={claimReward}
-                disabled={claiming}
-                className="group relative w-full overflow-hidden rounded-xl bg-blue-600 px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+                onClick={() => {
+                  if (challenge.isPremium && !isPremiumUser) {
+                    router.push(`/premium?returnPath=${window.location.pathname}`);
+                  } else {
+                    claimReward();
+                  }
+                }}
+                disabled={claiming && !(challenge.isPremium && !isPremiumUser)}
+                className={`group relative w-full overflow-hidden rounded-xl px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] ${challenge.isPremium && !isPremiumUser
+                  ? "bg-gradient-to-r from-yellow-500 to-amber-600 hover:shadow-amber-600/40"
+                  : "bg-blue-600 hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+                  }`}
               >
                 {/* Effet de brillance animé */}
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
 
                 {/* Contenu du bouton */}
                 <div className="relative z-10 flex items-center justify-center gap-2">
-                  {claiming ? (
+                  {claiming && !(challenge.isPremium && !isPremiumUser) ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
                       <span>Récupération...</span>
                     </>
                   ) : (
                     <>
+                      {challenge.isPremium && !isPremiumUser && <Sparkles size={18} />}
                       <span className="text-base sm:text-lg">Récupérer la récompense</span>
+                      {challenge.isPremium && !isPremiumUser && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
                     </>
                   )}
                 </div>

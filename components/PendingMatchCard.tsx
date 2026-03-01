@@ -35,13 +35,13 @@ interface PendingMatch {
 
 interface PendingMatchCardProps {
     match: PendingMatch;
-    onConfirmed?: () => void;
 }
 
-export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCardProps) {
+export default function PendingMatchCard({ match }: PendingMatchCardProps) {
     const [isConfirming, setIsConfirming] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isCancelling, setIsCancelling] = useState(false);
     const [isHiding, setIsHiding] = useState(false);
 
     const team1 = match.participants.filter(p => p.team === 1);
@@ -73,10 +73,40 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
             } else {
                 setError(data.error || "Erreur lors de la confirmation");
             }
-        } catch (err) {
+        } catch (_err) {
             setError("Erreur de connexion");
         } finally {
             setIsConfirming(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!window.confirm("Es-tu sûr de vouloir annuler ce match ? Cette action est irréversible.")) {
+            return;
+        }
+
+        setIsCancelling(true);
+        setError(null);
+
+        try {
+            const res = await fetch("/api/matches/cancel", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ matchId: match.id }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setIsHiding(true);
+            } else {
+                setError(data.error || "Erreur lors de l'annulation");
+            }
+        } catch (_err) {
+            setError("Erreur de connexion");
+        } finally {
+            setIsCancelling(false);
         }
     };
 
@@ -169,7 +199,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                             <div key={p.user_id} className="flex items-center justify-between">
                                 <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">
                                     {p.display_name}
-                                    {(p as any).club_name && <span className="text-gray-500 font-normal ml-1">({(p as any).club_name})</span>}
+                                    {p.club_name && <span className="text-gray-500 font-normal ml-1">({p.club_name})</span>}
                                 </span>
                                 {(p.has_confirmed || (p.is_current_user && confirmed)) && (
                                     <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
@@ -196,7 +226,7 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                             <div key={p.user_id} className="flex items-center justify-between">
                                 <span className="text-xs font-medium text-gray-900 truncate max-w-[85%]">
                                     {p.display_name}
-                                    {(p as any).club_name && <span className="text-gray-500 font-normal ml-1">({(p as any).club_name})</span>}
+                                    {p.club_name && <span className="text-gray-500 font-normal ml-1">({p.club_name})</span>}
                                 </span>
                                 {(p.has_confirmed || (p.is_current_user && confirmed)) && (
                                     <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
@@ -245,19 +275,41 @@ export default function PendingMatchCard({ match, onConfirmed }: PendingMatchCar
                 <div className="relative h-full flex items-center">
                     {isUserConfirmed ? (
                         <div className="flex items-center gap-1.5">
+                            {!isFullyConfirmed && match.participants.find(p => p.is_current_user)?.user_id === match.creator_id && (
+                                <button
+                                    onClick={handleCancel}
+                                    disabled={isCancelling}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 transition-colors bg-white rounded-md border border-gray-100 shadow-sm"
+                                    title="Annuler le match"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
                             <span className="flex items-center gap-1.5 rounded-md bg-[#22c55e] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-300 hover:scale-105">
                                 Confirmé <Check className="h-3 w-3" strokeWidth={4} />
                             </span>
                         </div>
                     ) : (
-                        <button
-                            onClick={handleConfirm}
-                            disabled={isConfirming}
-                            className={`rounded-md bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-150 hover:bg-blue-700 hover:shadow active:scale-95 disabled:cursor-not-allowed ${isConfirming ? 'scale-95 opacity-70' : ''
-                                }`}
-                        >
-                            {isConfirming ? "Confirmation..." : "Confirmer"}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {match.participants.find(p => p.is_current_user)?.user_id === match.creator_id && (
+                                <button
+                                    onClick={handleCancel}
+                                    disabled={isCancelling}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 transition-colors bg-white rounded-md border border-gray-100 shadow-sm"
+                                    title="Annuler le match"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                            <button
+                                onClick={handleConfirm}
+                                disabled={isConfirming}
+                                className={`rounded-md bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all duration-150 hover:bg-blue-700 hover:shadow active:scale-95 disabled:cursor-not-allowed ${isConfirming ? 'scale-95 opacity-70' : ''
+                                    }`}
+                            >
+                                {isConfirming ? "Confirmation..." : "Confirmer"}
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
