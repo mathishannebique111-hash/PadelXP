@@ -213,7 +213,7 @@ function MatchTabsContent({
     },
     {
       id: 'partners' as TabType,
-      label: 'Trouve tes partenaires',
+      label: 'Partenaires',
       badge: (pendingInvitationsCount !== null && pendingChallengesCount !== null && (pendingInvitationsCount + pendingChallengesCount) > viewedPartnersCount)
         ? ((pendingInvitationsCount + pendingChallengesCount) - viewedPartnersCount)
         : 0
@@ -235,13 +235,13 @@ function MatchTabsContent({
               newUrl.searchParams.set('tab', tab.id);
               window.history.replaceState(null, '', newUrl.toString());
             }}
-            className={`px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center ${currentTab === tab.id
-              ? 'text-white border-b-2 border-padel-green'
+            className={`px-1 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center ${currentTab === tab.id
+              ? 'text-white'
               : 'text-white/60 hover:text-white/80'
               }`}
           >
-            <div className="flex items-center justify-center gap-1.5 h-full">
-              <span className="text-center whitespace-normal leading-tight">{tab.label}</span>
+            <div className="flex items-center justify-center gap-1.5">
+              <span className="text-center">{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white flex-shrink-0">
                   {tab.badge > 9 ? '9+' : tab.badge}
@@ -249,7 +249,7 @@ function MatchTabsContent({
               )}
             </div>
             {currentTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green shadow-[0_0_8px_rgba(204,255,0,0.4)]" />
             )}
           </button>
         ))}
@@ -272,17 +272,19 @@ export default function MatchTabs(props: MatchTabsProps) {
   return (
     <Suspense fallback={
       <div className="w-full">
-        <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
-          <div className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-            <span className="text-center whitespace-normal leading-tight">Enregistrer</span>
+        <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
+          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+            <span>Enregistrer</span>
           </div>
-          <div className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-            <span className="text-center whitespace-normal leading-tight">Mes matchs</span>
+          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+            <span>Mes matchs</span>
           </div>
-          <div className="px-1 sm:px-2 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-            <span className="text-center whitespace-normal leading-tight">Trouve tes partenaires</span>
+          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+            <span>Partenaires</span>
           </div>
-          {/* <div className="px-1 sm:px-3 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60 text-center">Boost</div> */}
+          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+            <span>Oracle</span>
+          </div>
         </div>
         <div className="mt-8 flex items-center justify-center">
           <PadelLoader />

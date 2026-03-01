@@ -92,7 +92,7 @@ function PlayerProfileTabsContent({
   return (
     <div className="w-full">
       {/* Onglets */}
-      <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
+      <div className="flex items-center w-full mb-4 sm:mb-6 border-b border-white/10">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -104,12 +104,12 @@ function PlayerProfileTabsContent({
               newUrl.searchParams.set('tab', tab.id);
               window.history.replaceState(null, '', newUrl.toString());
             }}
-            className={`px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${currentTab === tab.id
-              ? 'text-white border-b-2 border-padel-green'
+            className={`flex-1 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-200 relative ${currentTab === tab.id
+              ? 'text-white'
               : 'text-white/60 hover:text-white/80'
               }`}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center justify-center gap-1.5">
               {tab.label}
               {tab.badge !== undefined && tab.badge > 0 && (
                 <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -118,7 +118,7 @@ function PlayerProfileTabsContent({
               )}
             </span>
             {currentTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green shadow-[0_0_8px_rgba(204,255,0,0.4)]" />
             )}
           </button>
         ))}
@@ -157,11 +157,11 @@ export default function PlayerProfileTabs(props: PlayerProfileTabsProps) {
   return (
     <Suspense fallback={
       <div className="w-full">
-        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 border-b border-white/10">
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Profil</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Stats</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Badges</div>
-          <div className="px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-white/60">Club</div>
+        <div className="flex items-center w-full mb-4 sm:mb-6 border-b border-white/10">
+          <div className="flex-1 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center">Profil</div>
+          <div className="flex-1 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center">Stats</div>
+          <div className="flex-1 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center">Badges</div>
+          <div className="flex-1 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center">Club</div>
         </div>
         <div className="mt-4 sm:mt-6 flex items-center justify-center py-12">
           <PadelLoader />

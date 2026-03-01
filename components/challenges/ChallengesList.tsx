@@ -22,6 +22,7 @@ interface PlayerChallenge {
   };
   rewardClaimed: boolean;
   scope: 'global' | 'club';
+  createdAt: string;
   isPremium?: boolean;
 }
 
@@ -91,11 +92,19 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
     router.refresh();
   };
 
-  const filteredChallenges = challenges.filter(c => {
-    if (activeTab === 'general') return c.scope === 'global' || !!c.isPremium;
-    if (activeTab === 'club') return c.scope === 'club' && !c.isPremium;
-    return false;
-  });
+  const filteredChallenges = challenges
+    .filter(c => {
+      if (activeTab === 'general') return c.scope === 'global' || !!c.isPremium;
+      if (activeTab === 'club') return c.scope === 'club' && !c.isPremium;
+      return false;
+    })
+    .sort((a, b) => {
+      // Les challenges réclamés vont à la fin
+      if (a.rewardClaimed && !b.rewardClaimed) return 1;
+      if (!a.rewardClaimed && b.rewardClaimed) return -1;
+      // Sinon tri par date (le plus récent en haut)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   return (
     <div className="space-y-6">
