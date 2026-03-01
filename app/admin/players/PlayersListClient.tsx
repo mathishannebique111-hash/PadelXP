@@ -15,9 +15,11 @@ interface Player {
   avatar_url: string | null;
   club_id: string;
   created_at: string;
+  matchs_joues: number | null;
   clubs: {
     name: string;
   };
+  push_tokens: Array<{ id: string }>;
 }
 
 interface Club {
@@ -161,17 +163,18 @@ export default function PlayersListClient({
           <table className="w-full">
             <thead className="bg-white/5 border-b border-white/5">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Photo</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Nom</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Matchs</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Club</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Notifications</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Inscription</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center">
+                  <td colSpan={6} className="px-6 py-16 text-center">
                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Users className="w-8 h-8 text-slate-500" />
                     </div>
@@ -189,34 +192,33 @@ export default function PlayersListClient({
                   return (
                     <tr key={player.id} className="hover:bg-white/5 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {player.avatar_url ? (
-                          <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
-                            <Image
-                              src={player.avatar_url}
-                              alt={player.display_name || 'Joueur'}
-                              width={40}
-                              height={40}
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center border border-white/10">
-                            <User className="w-5 h-5 text-slate-400" />
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <p className="font-medium text-white group-hover:text-blue-300 transition-colors">
                           {player.display_name || `${player.first_name} ${player.last_name}`}
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{player.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className="font-bold text-white">
+                          {player.matchs_joues || 0}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                         {player.clubs?.name ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
                             {player.clubs.name}
                           </span>
                         ) : '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {player.push_tokens && player.push_tokens.length > 0 ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+                            Oui
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                            Non
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{registrationDate}</td>
                     </tr>

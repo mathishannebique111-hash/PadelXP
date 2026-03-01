@@ -444,19 +444,15 @@ export default function PlayerProfileView({
                 </div>
               )}
 
-              {/* Badge niveau - VERSION MOBILE COMPACTE */}
-              {player.niveau_padel && player.niveau_categorie ? (
+              {player.niveau_padel ? (
                 <div className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2 md:py-2.5 rounded-2xl bg-white/5 border border-white/20 shadow-lg mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white flex items-center justify-center font-black text-[#071554] text-sm md:text-base shadow-lg border border-white/10">
                       {Math.floor(player.niveau_padel)}
                     </div>
                     <div className="text-left">
-                      <p className="text-[10px] md:text-xs text-blue-200/60 font-medium leading-tight">
-                        Niveau
-                      </p>
                       <p className="text-xs md:text-sm font-bold text-white leading-tight">
-                        {player.niveau_categorie}
+                        Niveau
                       </p>
                     </div>
                   </div>

@@ -32,7 +32,7 @@ export default async function AdminPlayersPage({
   // Build query
   let playersQuery = supabaseAdmin
     .from('profiles')
-    .select('id, display_name, first_name, last_name, email, avatar_url, club_id, created_at, clubs(name)');
+    .select('id, display_name, first_name, last_name, email, avatar_url, club_id, created_at, matchs_joues, clubs(name), push_tokens(id)');
 
   // Filter by club if specified
   if (searchParams?.club && searchParams.club !== 'all') {

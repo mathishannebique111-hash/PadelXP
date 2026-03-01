@@ -39,12 +39,12 @@ export default function LevelResultContent({ result }: Props) {
                             className="text-yellow-500"
                         />
                         <h1 className="text-4xl md:text-5xl font-black text-padel-green">
-                            Niveau {result.niveau}/10
+                            Niveau {result.niveau}
                         </h1>
                     </div>
 
-                    <p className="text-base md:text-xl text-white/90 font-bold uppercase tracking-wider">
-                        {result.categorie}
+                    <p className="text-sm md:text-lg text-white/80 font-semibold italic mt-2 max-w-sm mx-auto">
+                        Ton niveau évoluera au fur et à mesure de tes matchs
                     </p>
 
                     {result.niveau >= 9 && (

@@ -91,7 +91,7 @@ export default function ProfilePadelInfo({ player }: Props) {
     infoCards.push({
       icon: TrendingUp,
       label: "Niveau évalué",
-      value: `${player.niveau_padel.toFixed(2)}/10`,
+      value: `${player.niveau_padel.toFixed(2)}`,
       color: "red",
     });
   }

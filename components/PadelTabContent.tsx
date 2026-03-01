@@ -202,10 +202,7 @@ export default function PadelTabContent({ profile: initialProfile, initialPendin
             <div className="flex-1 md:max-w-xs">
               <p className="text-xs text-gray-400 mb-1">Niveau actuel</p>
               <p className="text-lg font-semibold text-white mb-2">
-                {profile.niveau_padel.toFixed(2)}/10
-              </p>
-              <p className="text-xs text-gray-400 mb-3">
-                {profile.niveau_categorie}
+                {profile.niveau_padel.toFixed(2)}
               </p>
               <div className="flex flex-col gap-2 mt-1">
                 {profile.username && (
@@ -304,7 +301,13 @@ export default function PadelTabContent({ profile: initialProfile, initialPendin
       {/* Profil padel détaillé */}
       <PadelProfileSection userId={profile.id} initialData={profile} />
 
-      {showWizard && <LevelAssessmentWizard />}
+      {showWizard && (
+        <LevelAssessmentWizard
+          forceStart={true}
+          onCancel={() => setShowWizard(false)}
+          onComplete={() => setShowWizard(false)}
+        />
+      )}
     </div>
   );
 }
