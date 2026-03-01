@@ -368,6 +368,16 @@ export default function MatchForm({
             email: user.email || null,
             niveau_padel: profileData.niveau_padel,
           });
+
+          // Pre-fill club location if available and not already set
+          if (profileData.club_name && !unregisteredClubName) {
+            setUnregisteredClubName(profileData.club_name);
+            setUnregisteredClubCity(profileData.club_city || "");
+            setIsUnregisteredClub(true);
+            if (profileData.club_id) {
+              setSelectedClubId(profileData.club_id);
+            }
+          }
         }
       } catch (err) {
         // ignore

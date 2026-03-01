@@ -247,6 +247,7 @@ type MatchHistoryItem = {
   playedAt: string | null;
   isWinner: boolean;
   partnerId?: string | null; // ID du partenaire (autre joueur de la même équipe)
+  locationClubId?: string | null; // NEW: Club ID where match was played
   // NEW: Score data for clean sheet detection
   myScore?: number; // Score de l'équipe du joueur (en sets gagnés)
   opponentScore?: number; // Score de l'équipe adverse (en sets gagnés)
@@ -278,7 +279,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
   // ÉTAPE 2: Récupérer les détails des matchs
   const { data: matches, error: matchError } = await supabaseAdmin
     .from("matches")
-    .select("id, played_at, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at")
+    .select("id, played_at, winner_team_id, team1_id, team2_id, score_team1, score_team2, created_at, location_club_id")
     .in("id", matchIds)
     .eq("status", "confirmed") // On ne prend que les matchs validés
     .order("played_at", { ascending: true });
@@ -340,6 +341,7 @@ async function loadPlayerHistory(userId: string): Promise<MatchHistoryItem[]> {
       playedAt: match.played_at ?? match.created_at ?? null,
       isWinner,
       partnerId,
+      locationClubId: match.location_club_id,
       myScore: myScore ?? undefined,
       opponentScore: opponentScore ?? undefined,
     };
@@ -369,6 +371,20 @@ function computeProgress(record: ChallengeRecord, history: MatchHistoryItem[]): 
       logger.info("[Challenge] Match excluded: no playedAt", { challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…" });
       return false;
     }
+
+    // LOGIQUE DE LIEU (Club Specific)
+    // Si le challenge n'est pas global (dummy "global" or flag), il doit être joué dans le club
+    const isGlobal = (record as any).scope === 'global' || record.club_id === 'global';
+    if (!isGlobal && record.club_id && item.locationClubId !== record.club_id) {
+      logger.info("[Challenge] Match excluded: wrong location", {
+        challengeId: record.id.substring(0, 8) + "…",
+        matchId: item.matchId.substring(0, 8) + "…",
+        matchClub: item.locationClubId?.substring(0, 8) + "…",
+        challengeClub: record.club_id?.substring(0, 8) + "…"
+      });
+      return false;
+    }
+
     const played = new Date(item.playedAt);
     if (Number.isNaN(played.getTime())) {
       logger.info("[Challenge] Match excluded: invalid date", { challengeId: record.id.substring(0, 8) + "…", matchId: item.matchId.substring(0, 8) + "…" });

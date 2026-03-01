@@ -25,7 +25,18 @@ export async function GET() {
     let profile = null;
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, display_name, niveau_padel')
+      .select(`
+        id, 
+        first_name, 
+        last_name, 
+        display_name, 
+        niveau_padel,
+        club_id,
+        clubs (
+          name,
+          city
+        )
+      `)
       .eq('id', user.id)
       .maybeSingle();
 
@@ -43,7 +54,18 @@ export async function GET() {
 
       const { data: adminProfile, error: adminError } = await serviceClient
         .from('profiles')
-        .select('id, first_name, last_name, display_name, niveau_padel')
+        .select(`
+          id, 
+          first_name, 
+          last_name, 
+          display_name, 
+          niveau_padel,
+          club_id,
+          clubs (
+            name,
+            city
+          )
+        `)
         .eq('id', user.id)
         .maybeSingle();
 
@@ -72,6 +94,9 @@ export async function GET() {
       last_name: last_name.trim(),
       display_name: profile.display_name,
       niveau_padel: profile.niveau_padel,
+      club_id: profile.club_id,
+      club_name: profile.clubs?.name || null,
+      club_city: profile.clubs?.city || null,
       hasFirstName: !!first_name && !!first_name.trim(),
       hasLastName: !!last_name && !!last_name.trim(),
       hasCompleteName: !!(first_name && first_name.trim() && last_name && last_name.trim()),
