@@ -230,7 +230,7 @@ function BadgeCard({
             {isPremiumBadge && (
                 <div className="absolute top-2 right-2 z-10">
                     <span
-                        className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${isPremiumUser && isObtained
+                        className={`inline-flex items-center rounded-sm px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider border ${isPremiumUser && isObtained
                             ? "bg-amber-500 text-white border-amber-600 shadow-sm"
                             : "bg-amber-500/20 text-amber-500 border-amber-500/30"
                             }`}

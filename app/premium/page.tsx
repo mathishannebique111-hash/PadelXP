@@ -51,19 +51,19 @@ function PremiumContent() {
 
     const features = [
         {
-            icon: <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />,
+            icon: <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
             title: "Statistiques avancées",
             description: "Analysez votre jeu avec des graphiques détaillés, suivez votre évolution et identifiez vos points forts."
         },
         {
-            icon: <Award className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />,
-            title: "Badges exclusifs",
-            description: "Débloquez des badges uniques réservés aux membres Premium et montrez votre statut sur le terrain."
+            icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
+            title: "Le Système Oracle",
+            description: "Anticipez l'issue de vos matchs avec notre IA prédictive et obtenez des analyses stratégiques uniques."
         },
         {
             icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
-            title: "Challenges exclusifs",
-            description: "Accédez à des défis spéciaux avec des récompenses plus importantes pour booster votre progression."
+            title: "Challenges & Badges exclusifs",
+            description: "Accédez à des défis spéciaux et débloquez des badges uniques pour booster votre progression."
         }
     ];
 
