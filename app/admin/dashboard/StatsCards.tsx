@@ -11,7 +11,11 @@ interface Stats {
   unreadMessages: number;
 }
 
-export default function StatsCards() {
+interface StatsCardsProps {
+  onCardClick?: (label: string) => void;
+}
+
+export default function StatsCards({ onCardClick }: StatsCardsProps) {
   const [stats, setStats] = useState<Stats>({
     clubs: 0,
     players: 0,
@@ -102,10 +106,13 @@ export default function StatsCards() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       {cards.map((card) => {
         const Icon = card.icon;
+        const isClickable = card.label === "Matchs d'aujourd'hui" && onCardClick;
         return (
           <div
             key={card.label}
-            className="group relative bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-6 hover:border-padel-green/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            onClick={() => isClickable && onCardClick(card.label)}
+            className={`group relative bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-6 hover:border-padel-green/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isClickable ? "cursor-pointer active:scale-95" : ""
+              }`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-500 pointer-events-none" />
 
