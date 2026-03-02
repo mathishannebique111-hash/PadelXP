@@ -2,10 +2,14 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { SignJWT, importPKCS8 } from "https://deno.land/x/jose@v4.14.4/index.ts";
 
+// ============ APNs (iOS) ============
 const APNS_KEY_ID = Deno.env.get("APNS_KEY_ID");
 const APNS_TEAM_ID = Deno.env.get("APNS_TEAM_ID");
 const APNS_BUNDLE_ID = "eu.padelxp.player";
 const APNS_PRIVATE_KEY = Deno.env.get("APNS_PRIVATE_KEY");
+
+// ============ FCM (Android) ============
+const FCM_SERVICE_ACCOUNT = Deno.env.get("FCM_SERVICE_ACCOUNT");
 
 serve(async (req) => {
     try {
@@ -15,12 +19,6 @@ serve(async (req) => {
         const title = record.title;
         const body = record.message;
         const data = record.data;
-
-        // Validation des secrets
-        if (!APNS_KEY_ID || !APNS_TEAM_ID || !APNS_PRIVATE_KEY) {
-            console.error("Missing APNs credentials");
-            return new Response(JSON.stringify({ error: "Missing APNs credentials" }), { status: 500 });
-        }
 
         const supabase = createClient(
             Deno.env.get("SUPABASE_URL") ?? "",
@@ -37,14 +35,32 @@ serve(async (req) => {
             return new Response(JSON.stringify({ message: "No tokens found" }), { status: 200 });
         }
 
-        // Générer le token JWT pour APNs
-        const jwt = await generateApnsToken(APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY);
+        // Préparer les tokens JWT/OAuth en parallèle
+        let apnsJwt: string | null = null;
+        let fcmAccessToken: string | null = null;
+
+        const hasIosTokens = tokens.some(t => t.platform === "ios");
+        const hasAndroidTokens = tokens.some(t => t.platform === "android");
+
+        if (hasIosTokens && APNS_KEY_ID && APNS_TEAM_ID && APNS_PRIVATE_KEY) {
+            apnsJwt = await generateApnsToken(APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY);
+        }
+
+        if (hasAndroidTokens && FCM_SERVICE_ACCOUNT) {
+            try {
+                fcmAccessToken = await generateFcmAccessToken(FCM_SERVICE_ACCOUNT);
+            } catch (e) {
+                console.error("[FCM] Failed to generate access token:", e);
+            }
+        }
 
         const results = await Promise.all(tokens.map(async (t) => {
-            if (t.platform === "ios") {
-                return await sendToAPNs(t.token, title, body, data, jwt);
+            if (t.platform === "ios" && apnsJwt) {
+                return await sendToAPNs(t.token, title, body, data, apnsJwt);
+            } else if (t.platform === "android" && fcmAccessToken) {
+                return await sendToFCM(t.token, title, body, data, fcmAccessToken);
             }
-            return { status: "skipped", platform: t.platform };
+            return { status: "skipped", platform: t.platform, reason: "no credentials" };
         }));
 
         return new Response(JSON.stringify({ results }), { status: 200 });
@@ -55,25 +71,19 @@ serve(async (req) => {
     }
 });
 
+// ============================================================
+// APNs (iOS) — Token + envoi
+// ============================================================
+
 async function generateApnsToken(keyId: string, teamId: string, privateKey: string) {
-    // Nettoyage robuste de la clé privée
     let p8 = privateKey;
 
-    // Si la clé ne contient pas les headers, on suppose qu'elle est mal formatée ou partielle
     if (!p8.includes("-----BEGIN PRIVATE KEY-----")) {
-        // Tenter de nettoyer et reconstruire
         const rawKey = p8.replace(/\\n/g, '').replace(/\s/g, '');
         p8 = `-----BEGIN PRIVATE KEY-----\n${rawKey}\n-----END PRIVATE KEY-----`;
     } else {
-        // Remplacer les \n littéraux par de vrais sauts de ligne si nécessaire
         p8 = p8.replace(/\\n/g, '\n');
     }
-
-    // Assurer que les sauts de ligne sont corrects pour pem import
-    // (Certains copier-coller suppriment les sauts de ligne du body)
-    // Cette étape est délicate, le mieux est de faire confiance au replace précédent si la clé est complète.
-
-    console.log(`[Auth] Key length: ${p8.length}`); // Debug log
 
     const privateKeyObj = await importPKCS8(p8, 'ES256');
 
@@ -115,12 +125,10 @@ async function sendToAPNs(deviceToken: string, title: string, body: string, data
         return { ok: true };
     }
 
-    // 1. Tenter l'envoi vers la Production
     console.log(`[APNs] Sending to Production: ${deviceToken}`);
     let result = await send(productionEndpoint);
 
-    // 2. Si échec "BadDeviceToken", tenter le Sandbox (cas du développement)
-    if (!result.ok && result.status === 400 && result.error.includes("BadDeviceToken")) {
+    if (!result.ok && result.status === 400 && result.error?.includes("BadDeviceToken")) {
         console.log(`[APNs] Production failed with BadDeviceToken. Retrying with Sandbox...`);
         result = await send(sandboxEndpoint);
     }
@@ -131,5 +139,109 @@ async function sendToAPNs(deviceToken: string, title: string, body: string, data
     }
 
     console.log(`[APNs Success] Notification sent successfully.`);
-    return { status: "sent", token: deviceToken };
+    return { status: "sent", platform: "ios", token: deviceToken };
+}
+
+// ============================================================
+// FCM (Android) — OAuth2 token + envoi via HTTP v1 API
+// ============================================================
+
+async function generateFcmAccessToken(serviceAccountJson: string): Promise<string> {
+    let sa: any;
+    try {
+        sa = JSON.parse(serviceAccountJson);
+    } catch {
+        throw new Error("FCM_SERVICE_ACCOUNT is not valid JSON");
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+
+    // Nettoyer la clé privée
+    let privateKey = sa.private_key;
+    if (!privateKey) throw new Error("Missing private_key in service account");
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
+    const privateKeyObj = await importPKCS8(privateKey, 'RS256');
+
+    // Créer un JWT signé pour l'API Google OAuth2
+    const jwt = await new SignJWT({
+        iss: sa.client_email,
+        sub: sa.client_email,
+        aud: "https://oauth2.googleapis.com/token",
+        iat: now,
+        exp: now + 3600,
+        scope: "https://www.googleapis.com/auth/firebase.messaging",
+    })
+        .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+        .sign(privateKeyObj);
+
+    // Échanger le JWT contre un access token
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    });
+
+    if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        throw new Error(`OAuth2 token exchange failed: ${tokenResponse.status} ${errorText}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    console.log("[FCM] OAuth2 access token obtained successfully");
+    return tokenData.access_token;
+}
+
+async function sendToFCM(deviceToken: string, title: string, body: string, data: any, accessToken: string) {
+    // Le project_id vient du service account, mais on peut aussi le mettre en dur
+    // puisqu'on connaît le projet Firebase
+    const FCM_PROJECT_ID = "padelxp-862ec";
+    const endpoint = `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`;
+
+    // Convertir toutes les valeurs de data en strings (requis par FCM)
+    const stringData: Record<string, string> = {};
+    if (data && typeof data === 'object') {
+        for (const [key, value] of Object.entries(data)) {
+            stringData[key] = String(value);
+        }
+    }
+
+    const message = {
+        message: {
+            token: deviceToken,
+            notification: {
+                title: title || "PadelXP",
+                body: body || "",
+            },
+            data: stringData,
+            android: {
+                priority: "high" as const,
+                notification: {
+                    sound: "default",
+                    channel_id: "PadelXP",
+                },
+            },
+        },
+    };
+
+    console.log(`[FCM] Sending to: ${deviceToken.substring(0, 20)}...`);
+
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(message),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[FCM Failure] Status: ${response.status}, Error: ${errorText}`);
+        return { status: "failed", platform: "android", error: errorText, token: deviceToken };
+    }
+
+    const result = await response.json();
+    console.log(`[FCM Success] Message ID: ${result.name}`);
+    return { status: "sent", platform: "android", messageId: result.name, token: deviceToken };
 }
