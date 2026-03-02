@@ -146,12 +146,19 @@ async function sendToAPNs(deviceToken: string, title: string, body: string, data
 // FCM (Android) — OAuth2 token + envoi via HTTP v1 API
 // ============================================================
 
-async function generateFcmAccessToken(serviceAccountJson: string): Promise<string> {
+async function generateFcmAccessToken(serviceAccountInput: string): Promise<string> {
     let sa: any;
     try {
-        sa = JSON.parse(serviceAccountJson);
+        // Tenter de parser directement (JSON brut)
+        sa = JSON.parse(serviceAccountInput);
     } catch {
-        throw new Error("FCM_SERVICE_ACCOUNT is not valid JSON");
+        // Si le parse échoue, c'est probablement en base64
+        try {
+            const decoded = atob(serviceAccountInput);
+            sa = JSON.parse(decoded);
+        } catch {
+            throw new Error("FCM_SERVICE_ACCOUNT is neither valid JSON nor valid base64-encoded JSON");
+        }
     }
 
     const now = Math.floor(Date.now() / 1000);
