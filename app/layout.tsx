@@ -9,9 +9,6 @@ import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "PadelXP",
   description: "Leaderboards, rangs, badges et ligues pour complexes de padel",
-  verification: {
-    google: "7gQi_mmrm4SAm1m_JyZvLWGuOxjZxy46xXHKW5d9R0Q",
-  },
   icons: {
     icon: "/images/flavicon.png",
     shortcut: "/images/flavicon.png",
