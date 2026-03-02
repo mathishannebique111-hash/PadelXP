@@ -38,6 +38,14 @@
                 <data android:scheme="https" android:host="padelxp.eu" />
             </intent-filter>
 
+            <!-- App Links: https://www.padelxp.eu -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.padelxp.eu" />
+            </intent-filter>
+
         </activity>
 
         <provider

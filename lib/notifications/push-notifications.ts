@@ -180,17 +180,35 @@ export class PushNotificationsService {
         try {
             await Badge.set({ count });
         } catch (error) {
-            console.error("[PushNotifications] Erreur setBadge:", error);
+            // ShortcutBadger peut crasher sur certains launchers Android (Samsung, Xiaomi, etc.)
+            // On ignore silencieusement l'erreur pour ne pas crasher l'app
+            if (Capacitor.getPlatform() === "android") {
+                console.warn("[PushNotifications] Badge.set() failed on Android (expected on some launchers):", error);
+            } else {
+                console.error("[PushNotifications] Erreur setBadge:", error);
+            }
         }
     }
 
     static async clearBadge() {
         if (Capacitor.getPlatform() === "web") return;
+
+        // 1. Supprimer les notifications délivrées
         try {
             await PushNotifications.removeAllDeliveredNotifications();
+        } catch (error) {
+            console.warn("[PushNotifications] removeAllDeliveredNotifications failed:", error);
+        }
+
+        // 2. Réinitialiser le badge (séparé pour isoler les crashes ShortcutBadger)
+        try {
             await Badge.clear();
         } catch (error) {
-            console.error("[PushNotifications] Erreur nettoyage badge:", error);
+            if (Capacitor.getPlatform() === "android") {
+                console.warn("[PushNotifications] Badge.clear() failed on Android (expected on some launchers):", error);
+            } else {
+                console.error("[PushNotifications] Erreur nettoyage badge:", error);
+            }
         }
     }
 }
