@@ -30,54 +30,77 @@ export async function GET() {
         today.setHours(0, 0, 0, 0);
         const todayStart = today.toISOString();
 
-        // Fetch matches played today with club and participants info
-        const { data: matches, error } = await supabaseAdmin
+        // 1. Fetch matches played today
+        const { data: matches, error: matchesError } = await supabaseAdmin
             .from("matches")
             .select(`
-        id,
-        created_at,
-        played_at,
-        score_team1,
-        score_team2,
-        score_details,
-        team1_id,
-        team2_id,
-        winner_team_id,
-        location_club_id,
-        is_registered_club,
-        match_participants (
-          user_id,
-          player_type,
-          team,
-          profiles (
-            full_name,
-            display_name
-          ),
-          guest_players (
-            first_name,
-            last_name
-          )
-        ),
-        clubs:location_club_id (
-          name
-        ),
-        unregistered_clubs:location_club_id (
-          name
-        )
-      `)
+                id,
+                played_at,
+                score_team1,
+                score_team2,
+                score_details,
+                team1_id,
+                team2_id,
+                winner_team_id,
+                location_club_id,
+                is_registered_club
+            `)
             .gte('played_at', todayStart)
             .order('played_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching today matches:', error);
-            throw error;
+        if (matchesError) {
+            console.error('Error fetching today matches:', matchesError);
+            throw matchesError;
         }
 
-        // Format matches for the frontend
-        const formattedMatches = (matches || []).map(match => {
+        if (!matches || matches.length === 0) {
+            return NextResponse.json([]);
+        }
+
+        const matchIds = matches.map(m => m.id);
+
+        // 2. Fetch participants for these matches separately
+        const { data: participants, error: participantsError } = await supabaseAdmin
+            .from("match_participants")
+            .select(`
+                match_id,
+                user_id,
+                player_type,
+                team,
+                profiles (
+                    full_name,
+                    display_name
+                ),
+                guest_players (
+                    first_name,
+                    last_name
+                )
+            `)
+            .in('match_id', matchIds);
+
+        if (participantsError) {
+            console.error('Error fetching participants:', participantsError);
+        }
+
+        // 3. Fetch clubs and unregistered clubs
+        const clubIds = matches.filter(m => m.is_registered_club && m.location_club_id).map(m => m.location_club_id);
+        const unregClubIds = matches.filter(m => !m.is_registered_club && m.location_club_id).map(m => m.location_club_id);
+
+        const [{ data: clubs }, { data: unregClubs }] = await Promise.all([
+            supabaseAdmin.from('clubs').select('id, name').in('id', clubIds),
+            supabaseAdmin.from('unregistered_clubs').select('id, name').in('id', unregClubIds)
+        ]);
+
+        const clubsMap = new Map((clubs || []).map(c => [c.id, c.name]));
+        const unregClubsMap = new Map((unregClubs || []).map(c => [c.id, c.name]));
+
+        // 4. Format matches for the frontend
+        const formattedMatches = matches.map(match => {
+            const matchParticipants = (participants || []).filter(p => p.match_id === match.id);
+
             const clubName = match.is_registered_club
-                ? (match.clubs as any)?.name
-                : (match.unregistered_clubs as any)?.name;
+                ? clubsMap.get(match.location_club_id!)
+                : unregClubsMap.get(match.location_club_id!);
 
             return {
                 id: match.id,
@@ -87,7 +110,7 @@ export async function GET() {
                 winnerTeamId: match.winner_team_id,
                 team1_id: match.team1_id,
                 team2_id: match.team2_id,
-                participants: match.match_participants.map((p: any) => ({
+                participants: matchParticipants.map((p: any) => ({
                     name: p.player_type === 'user'
                         ? (p.profiles?.display_name || p.profiles?.full_name || 'Joueur inconnu')
                         : (`${p.guest_players?.first_name || ''} ${p.guest_players?.last_name || ''}`.trim() || 'Invité'),
