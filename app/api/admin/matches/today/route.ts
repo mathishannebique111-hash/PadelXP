@@ -82,6 +82,8 @@ export async function GET() {
             console.error('Error fetching participants:', participantsError);
         }
 
+        console.log('Fetched participants sample:', JSON.stringify(participants?.slice(0, 2), null, 2));
+
         // 3. Fetch clubs and unregistered clubs
         const clubIds = matches.filter(m => m.is_registered_club && m.location_club_id).map(m => m.location_club_id);
         const unregClubIds = matches.filter(m => !m.is_registered_club && m.location_club_id).map(m => m.location_club_id);
@@ -110,12 +112,21 @@ export async function GET() {
                 winnerTeamId: match.winner_team_id,
                 team1_id: match.team1_id,
                 team2_id: match.team2_id,
-                participants: matchParticipants.map((p: any) => ({
-                    name: p.player_type === 'user'
-                        ? (p.profiles?.display_name || p.profiles?.full_name || 'Joueur inconnu')
-                        : (`${p.guest_players?.first_name || ''} ${p.guest_players?.last_name || ''}`.trim() || 'Invité'),
-                    team: p.team
-                }))
+                participants: matchParticipants.map((p: any) => {
+                    let name = 'Joueur inconnu';
+                    if (p.player_type === 'user') {
+                        name = p.profiles?.display_name || p.profiles?.full_name || 'Joueur inconnu';
+                    } else if (p.player_type === 'guest') {
+                        const guest = p.guest_players;
+                        name = guest ? `${guest.first_name || ''} ${guest.last_name || ''}`.trim() : 'Invité';
+                        if (!name) name = 'Invité';
+                    }
+
+                    return {
+                        name,
+                        team: p.team
+                    };
+                })
             };
         });
 
