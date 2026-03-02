@@ -400,7 +400,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
 
       {/* Contenu - Questions ou Résultats */}
       <div className="flex-1 overflow-y-auto px-4 py-1 flex items-start justify-center" style={{ minHeight: 0 }}>
-        <div className="w-full max-w-3xl mx-auto pb-32">
+        <div className="w-full max-w-3xl mx-auto pb-60">
           <AnimatePresence mode="wait">
             {!isCompleted ? (
               <motion.div
