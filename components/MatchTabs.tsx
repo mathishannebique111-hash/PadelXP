@@ -235,15 +235,15 @@ function MatchTabsContent({
               newUrl.searchParams.set('tab', tab.id);
               window.history.replaceState(null, '', newUrl.toString());
             }}
-            className={`px-1 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center ${currentTab === tab.id
+            className={`py-3 sm:py-4 text-[11px] sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center ${currentTab === tab.id
               ? 'text-white'
               : 'text-white/60 hover:text-white/80'
               }`}
           >
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="relative flex items-center justify-center">
               <span className="text-center">{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white flex-shrink-0">
+                <span className="absolute -top-1.5 -right-3.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm border border-[#172554]">
                   {tab.badge > 9 ? '9+' : tab.badge}
                 </span>
               )}
@@ -273,16 +273,16 @@ export default function MatchTabs(props: MatchTabsProps) {
     <Suspense fallback={
       <div className="w-full">
         <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
-          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+          <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
             <span>Enregistrer</span>
           </div>
-          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+          <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
             <span>Mes matchs</span>
           </div>
-          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+          <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
             <span>Partenaires</span>
           </div>
-          <div className="py-3 sm:py-4 text-xs sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+          <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
             <span>Oracle</span>
           </div>
         </div>
