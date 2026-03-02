@@ -67,14 +67,7 @@ export async function GET() {
                 user_id,
                 player_type,
                 team,
-                profiles (
-                    full_name,
-                    display_name
-                ),
-                guest_players (
-                    first_name,
-                    last_name
-                )
+                guest_player_id
             `)
             .in('match_id', matchIds);
 
@@ -82,15 +75,30 @@ export async function GET() {
             console.error('Error fetching participants:', participantsError);
         }
 
-        console.log('Fetched participants sample:', JSON.stringify(participants?.slice(0, 2), null, 2));
+        const matchParticipants = participants || [];
+        const participantUserIds = Array.from(new Set(matchParticipants.filter(p => p.player_type === 'user' && p.user_id).map(p => p.user_id)));
+        const participantGuestIds = Array.from(new Set(matchParticipants.filter(p => p.player_type === 'guest' && p.guest_player_id).map(p => p.guest_player_id)));
+
+        // 2.1 Fetch profiles separately
+        const { data: profiles } = participantUserIds.length > 0
+            ? await supabaseAdmin.from('profiles').select('id, full_name, display_name').in('id', participantUserIds)
+            : { data: [] };
+
+        // 2.2 Fetch guests separately
+        const { data: guests } = participantGuestIds.length > 0
+            ? await supabaseAdmin.from('guest_players').select('id, first_name, last_name').in('id', participantGuestIds)
+            : { data: [] };
+
+        const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+        const guestsMap = new Map((guests || []).map(g => [g.id, g]));
 
         // 3. Fetch clubs and unregistered clubs
-        const clubIds = matches.filter(m => m.is_registered_club && m.location_club_id).map(m => m.location_club_id);
-        const unregClubIds = matches.filter(m => !m.is_registered_club && m.location_club_id).map(m => m.location_club_id);
+        const clubIds = Array.from(new Set(matches.filter(m => m.is_registered_club && m.location_club_id).map(m => m.location_club_id)));
+        const unregClubIds = Array.from(new Set(matches.filter(m => !m.is_registered_club && m.location_club_id).map(m => m.location_club_id)));
 
         const [{ data: clubs }, { data: unregClubs }] = await Promise.all([
-            supabaseAdmin.from('clubs').select('id, name').in('id', clubIds),
-            supabaseAdmin.from('unregistered_clubs').select('id, name').in('id', unregClubIds)
+            clubIds.length > 0 ? supabaseAdmin.from('clubs').select('id, name').in('id', clubIds) : Promise.resolve({ data: [] }),
+            unregClubIds.length > 0 ? supabaseAdmin.from('unregistered_clubs').select('id, name').in('id', unregClubIds) : Promise.resolve({ data: [] })
         ]);
 
         const clubsMap = new Map((clubs || []).map(c => [c.id, c.name]));
@@ -98,7 +106,7 @@ export async function GET() {
 
         // 4. Format matches for the frontend
         const formattedMatches = matches.map(match => {
-            const matchParticipants = (participants || []).filter(p => p.match_id === match.id);
+            const currentMatchParticipants = matchParticipants.filter(p => p.match_id === match.id);
 
             const clubName = match.is_registered_club
                 ? clubsMap.get(match.location_club_id!)
@@ -112,12 +120,13 @@ export async function GET() {
                 winnerTeamId: match.winner_team_id,
                 team1_id: match.team1_id,
                 team2_id: match.team2_id,
-                participants: matchParticipants.map((p: any) => {
+                participants: currentMatchParticipants.map((p: any) => {
                     let name = 'Joueur inconnu';
                     if (p.player_type === 'user') {
-                        name = p.profiles?.display_name || p.profiles?.full_name || 'Joueur inconnu';
+                        const profile = profilesMap.get(p.user_id);
+                        name = profile?.display_name || profile?.full_name || 'Joueur inconnu';
                     } else if (p.player_type === 'guest') {
-                        const guest = p.guest_players;
+                        const guest = guestsMap.get(p.guest_player_id);
                         name = guest ? `${guest.first_name || ''} ${guest.last_name || ''}`.trim() : 'Invité';
                         if (!name) name = 'Invité';
                     }

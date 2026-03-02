@@ -37,7 +37,7 @@ export async function GET() {
         .from('profiles')
         .select('email')
         .not('email', 'is', null),
-      supabaseAdmin.from('matches').select('*', { count: 'exact', head: true }),
+      supabaseAdmin.from('matches').select('*', { count: 'exact', head: true }).gte('created_at', '2026-02-26T00:00:00Z'),
       supabaseAdmin
         .from('matches')
         .select('*', { count: 'exact', head: true })
