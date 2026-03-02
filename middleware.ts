@@ -350,7 +350,8 @@ export async function middleware(req: NextRequest) {
     "/contact",
     "/players",
     "/guest/confirmation", // Allow guest confirmation page
-    "/attenteandroid" // Allow Android waitlist page
+    "/attenteandroid", // Allow Android waitlist page
+    "/googleb3f982bb7d1441cb.html" // Google Search Console verification
   ]);
 
   const API_ROUTES_THAT_HANDLE_AUTH = ["/api/matches/", "/api/reviews"];
