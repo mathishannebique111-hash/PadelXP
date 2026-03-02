@@ -176,17 +176,36 @@ function validateHighLevel(
   niveau: number,
   responses: AssessmentResponses
 ): number {
-  // Entier pour la validation
-  const floorNiveau = Math.floor(niveau);
+  let adjustedNiveau = niveau;
 
-  // Validation basée sur le classement FFT et les résultats en tournois
+  // 1. Malus de Cohérence (Reality Check)
+  // Si le niveau est élevé mais les résultats en tournoi (Q17) sont très faibles
+
+  // Cas A : Niveau Avancé (6+) mais pas de Podium P100
+  if (adjustedNiveau >= 6.0 && responses.resultats < 3) {
+    const gap = 3 - responses.resultats;
+    // Malus progressif de 0.1 à 0.5 points
+    adjustedNiveau -= Math.min(0.5, gap * 0.2);
+  }
+
+  // Cas B : Niveau Expert (7.5+) mais pas de Victoire P250 / Tours P500
+  if (adjustedNiveau >= 7.5 && responses.resultats < 7) {
+    const gap = 7 - responses.resultats;
+    // Malus plus fort pour le haut niveau
+    adjustedNiveau -= Math.min(0.8, gap * 0.15);
+  }
+
+  // 2. Validation basée sur le classement FFT (Q18) et les tournois (Q16)
+  const floorNiveau = Math.floor(adjustedNiveau);
+
   if (floorNiveau === 10 && (responses.classementFFT < 9 || responses.tournois < 8)) {
     return 9.9;
   }
   if (floorNiveau === 9 && responses.classementFFT < 7 && responses.tournois < 6) {
     return 8.9;
   }
-  return niveau;
+
+  return Math.round(adjustedNiveau * 100) / 100;
 }
 
 function getCategorieFromLevel(niveau: number): string {
