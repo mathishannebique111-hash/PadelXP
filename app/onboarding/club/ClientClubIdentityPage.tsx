@@ -51,12 +51,14 @@ interface PhonePreviewProps {
   textColor: string;
   mutedColor: string;
   iconColor: string;
+  clubName?: string;
+  clubCity?: string;
 }
 
-const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor, mutedColor, iconColor }: PhonePreviewProps) => {
+const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor, mutedColor, iconColor, clubName, clubCity }: PhonePreviewProps) => {
   return (
     <div
-      className="rounded-[32px] border-[6px] border-[#1e293b] overflow-hidden shadow-2xl w-full max-w-[240px] mx-auto aspect-[9/16] flex flex-col relative transition-colors duration-500 pb-12"
+      className="rounded-[48px] border-[4px] border-[#1c1c1e] overflow-hidden shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5),0_18px_36px_-18px_rgba(0,0,0,0.5)] w-full max-w-[240px] mx-auto aspect-[9/19.5] flex flex-col relative transition-colors duration-500 pb-12 ring-[1px] ring-inset ring-white/10"
       style={{
         background: bg,
         // @ts-ignore
@@ -67,21 +69,42 @@ const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor,
         "--theme-text-muted": mutedColor,
       } as React.CSSProperties}
     >
+      {/* Background Reflection Effect */}
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden rounded-[44px]">
+        <div className="absolute -top-[50%] -left-[50%] w-[200%] h-[200%] bg-gradient-to-br from-white/5 to-transparent rotate-[25deg] pointer-events-none"></div>
+      </div>
+
+      {/* Dynamic Island */}
+      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-[68px] h-[22px] bg-black rounded-full z-[100] flex items-center justify-between px-2 shadow-sm ring-1 ring-white/5">
+        <div className="w-[5px] h-[5px] rounded-full bg-[#0a0a0a] shadow-[inset_0_0_2px_rgba(255,255,255,0.2)]"></div>
+        <div className="w-[5px] h-[5px] rounded-full bg-[#121212] overflow-hidden relative">
+          <div className="absolute inset-0 rounded-full border border-white/5"></div>
+          <div className="absolute top-0.5 right-0.5 w-[1.5px] h-[1.5px] bg-blue-500/60 rounded-full blur-[0.5px]"></div>
+        </div>
+      </div>
+
       {/* Status bar mockup */}
-      <div className="flex items-center justify-between px-4 pt-2 pb-0.5 relative z-20">
-        <div className="text-[7px] font-bold pl-0.5" style={{ color: textColor }}>12:32</div>
-        <div className="flex gap-0.5 items-center">
-          <div className="w-0.5 h-1 rounded-sm" style={{ background: mutedColor }}></div>
-          <div className="w-0.5 h-1.5 rounded-sm" style={{ background: mutedColor }}></div>
-          <div className="w-0.5 h-1.5 rounded-sm" style={{ background: textColor }}></div>
-          <div className="w-2.5 h-1.5 rounded-sm border flex items-center p-[0.3px] ml-0.5" style={{ borderColor: mutedColor }}>
-            <div className="h-full w-[80%]" style={{ background: textColor }}></div>
+      <div className="flex items-center justify-between px-4 pt-3 pb-1 relative z-20">
+        <div className="text-[8px] font-bold pl-1 tracking-tight" style={{ color: textColor }}>14:27</div>
+        <div className="flex gap-0.5 items-center mr-1 mt-0.5">
+          <div className="flex items-end gap-[1px] h-2">
+            <div className="w-[1.5px] h-[3px] rounded-sm" style={{ background: textColor }}></div>
+            <div className="w-[1.5px] h-[4px] rounded-sm" style={{ background: textColor }}></div>
+            <div className="w-[1.5px] h-[6px] rounded-sm" style={{ background: textColor }}></div>
+            <div className="w-[1.5px] h-[8px] rounded-sm" style={{ background: mutedColor }}></div>
+          </div>
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" className="w-2.5 h-2.5 ml-0.5" style={{ color: textColor }}>
+            <path d="M12 21L23.6 6C23 5.4 18.5 2 12 2C5.5 2 1 5.4 0.4 6L12 21Z" />
+          </svg>
+          <div className="w-4 h-2 rounded-[2px] border flex items-center p-[0.3px] ml-0.5 relative" style={{ borderColor: mutedColor }}>
+            <div className="h-full w-[80%] rounded-[1px]" style={{ background: textColor }}></div>
+            <div className="absolute -right-[1.5px] top-1/2 -translate-y-1/2 w-[1.5px] h-1 rounded-r-sm bg-current" style={{ backgroundColor: mutedColor }}></div>
           </div>
         </div>
       </div>
 
       {/* App Header */}
-      <div className="flex items-center justify-between px-3 pb-0.5 relative z-20">
+      <div className="flex items-center justify-between px-3 pt-1 pb-1 relative z-20">
         <div className="w-4"></div> {/* Spacer for centering */}
         <div className="flex-1 flex justify-center">
           <img
@@ -105,9 +128,9 @@ const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor,
         {activeScreen === 0 ? (
           <ProfilePreview />
         ) : activeScreen === 1 ? (
-          <MatchesPreview />
+          <MatchesPreview clubName={clubName} clubCity={clubCity} />
         ) : (
-          <CompetitionPreview />
+          <CompetitionPreview clubName={clubName} />
         )}
       </div>
 
@@ -115,17 +138,23 @@ const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor,
       <div className="absolute bottom-3 left-0 right-0 flex justify-center z-30 px-4">
         <div className="bg-white rounded-[20px] px-3 py-1.5 flex justify-between items-center w-full shadow-[0_4px_12px_rgba(0,0,0,0.3)] border border-slate-100">
           {[
-            { label: "Profil", icon: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></>, idx: 0, badge: null },
-            { label: "Matchs", icon: <><line x1="14" y1="20" x2="21" y2="13"></line><line x1="3" y1="21" x2="10" y2="14"></line><line x1="10" y1="14" x2="21" y2="3"></line><line x1="3" y1="3" x2="14" y2="14"></line></>, idx: 1, badge: 2 },
-            { label: "Compétition", icon: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></>, idx: 2, badge: 4 },
+            { label: "Profil", idx: 0, badge: null },
+            { label: "Matchs", idx: 1, badge: 2 },
+            { label: "Compétition", idx: 2, badge: 4 },
           ].map((item) => {
             const isActive = activeScreen === item.idx;
+            const iconClass = `w-4 h-4 shrink-0 transition-colors ${isActive ? "text-[#172554]" : "text-slate-400"}`;
             return (
               <div key={item.label} className="flex-1 flex flex-col items-center justify-center relative px-2 cursor-pointer">
                 <div className="relative">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-4 h-4 shrink-0 transition-colors ${isActive ? "text-[#172554]" : "text-slate-400"}`}>
-                    {item.icon}
-                  </svg>
+                  {item.idx === 0 && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={iconClass}>
+                      <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10.5z"></path>
+                      <path d="M9 22V14h6v8"></path>
+                    </svg>
+                  )}
+                  {item.idx === 1 && <Swords className={iconClass} strokeWidth={2} />}
+                  {item.idx === 2 && <Trophy className={iconClass} strokeWidth={2} />}
                   {item.badge && (
                     <div className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[7px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full border-[1.5px] border-white">
                       {item.badge}
@@ -163,6 +192,7 @@ export default function ClientClubIdentityPage() {
   const [secondaryColor, setSecondaryColor] = useState("#CCFF00");
   const [backgroundColor, setBackgroundColor] = useState("#172554");
   const [clubNameInput, setClubNameInput] = useState("");
+  const [cityInput, setCityInput] = useState("");
   const primaryColor = "#0066FF"; // Valeur par défaut fixe
 
   // Carousel de prévisualisation
@@ -339,7 +369,7 @@ export default function ClientClubIdentityPage() {
 
             <div className="space-y-1">
               <label className={labelClass}>Ville</label>
-              <input name="city" required placeholder="Ville" className={inputClass} />
+              <input name="city" required placeholder="Ville" className={inputClass} value={cityInput} onChange={(e) => setCityInput(e.target.value)} />
             </div>
             <div className="space-y-1">
               <label className={labelClass}>Téléphone</label>
@@ -493,6 +523,8 @@ export default function ClientClubIdentityPage() {
                       textColor={textColorPreview}
                       mutedColor={mutedColorPreview}
                       iconColor={iconColorPreview}
+                      clubName={clubNameInput || undefined}
+                      clubCity={cityInput || undefined}
                     />
 
                     {/* Dots */}

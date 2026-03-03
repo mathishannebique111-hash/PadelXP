@@ -1,161 +1,534 @@
 import React from "react";
-import { Flame, User, Search, MapPin, Map as MapIcon, Globe, Eye, Trophy, X, Share2 } from "lucide-react";
+import { Flame, User, Search, MapPin, Map as MapIcon, Globe, Eye, Trophy, X, Share2, Medal, Check, Award, Crown, Sparkles, ChevronRight, Clock, FileText, Star, Plus, Key, Copy, Users } from "lucide-react";
 
-// Components
-export const TopPill = ({ title, subtitle }: { title: string, subtitle?: string }) => (
+// Custom Replicas matching Native App Components
+export const ReplicaPageTitle = ({ title, subtitle, icon }: { title: string, subtitle?: string, icon?: React.ReactNode }) => (
     <div className="mb-2">
-        <section className="relative overflow-hidden rounded-lg border inline-block" style={{ background: "rgba(128, 128, 128, 0.05)", borderColor: "var(--theme-text-muted)", backdropFilter: "blur(4px)" }}>
+        <section className="relative overflow-hidden rounded-[8px] border inline-block text-white shadow-sm" style={{ background: "rgba(255, 255, 255, 0.05)", borderColor: "rgba(255, 255, 255, 0.1)", backdropFilter: "blur(4px)" }}>
             <div className="relative z-10 flex items-center">
-                <div className="flex items-center gap-2 px-2 py-1.5">
-                    <span className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: 'var(--theme-text-muted)' }} />
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5">
+                    <span className="w-[2.5px] self-stretch rounded-full flex-shrink-0" style={{ background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2))' }} />
                     <div className="flex items-center gap-1.5">
-                        <h1 className="text-[7px] font-black tracking-tight leading-tight uppercase" style={{ color: 'var(--theme-text)' }}>
-                            {title}
-                        </h1>
+                        {icon && <span className="text-[10px] drop-shadow-sm">{icon}</span>}
+                        <h1 className="text-[10px] font-black tracking-tight text-white leading-tight drop-shadow-sm">{title}</h1>
                     </div>
                 </div>
             </div>
         </section>
-        {subtitle && <p className="mt-1 ml-1 text-[7px] font-bold leading-tight uppercase" style={{ color: 'var(--theme-text-muted)' }}>{subtitle}</p>}
+        {subtitle && <p className="mt-1 ml-1 text-[7px] text-white/60 font-semibold">{subtitle}</p>}
+    </div>
+);
+
+export const ReplicaChallengeBar = ({ title, current, target, isPremium = false }: { title: string, current: number, target: number, isPremium?: boolean }) => {
+    const percentage = Math.min(100, Math.round((current / target) * 100));
+    const accentColor = isPremium ? 'rgb(245, 158, 11)' : 'rgb(var(--theme-secondary-accent))';
+
+    return (
+        <div className="w-full mb-3 animate-fadeIn group">
+            <div className="relative p-2 rounded-xl border border-white/[0.04] bg-white/[0.02] backdrop-blur-sm">
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full bg-white/5 border border-white/10" style={{ color: accentColor }}>
+                                <Trophy size={10} strokeWidth={2.5} />
+                            </div>
+                            <span className="text-[9px] font-medium text-white/90 truncate">
+                                {title}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span className="text-[8px] text-white/40 font-bold tabular-nums uppercase tracking-wider">
+                                {current} / {target}
+                            </span>
+                            <ChevronRight size={10} className="text-white/20" />
+                        </div>
+                    </div>
+                    <div className="h-0.5 w-full rounded-full bg-black/40 overflow-hidden">
+                        <div
+                            className="h-full rounded-full transition-all duration-1000 ease-out relative"
+                            style={{
+                                width: `${percentage}%`,
+                                backgroundColor: accentColor,
+                                boxShadow: `0 0 8px ${accentColor}`
+                            }}
+                        >
+                            <div className="absolute inset-0 bg-white/10" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const ReplicaPendingMatchCard = ({
+    creator,
+    date,
+    location,
+    score,
+    team1,
+    team2,
+    isConfirmed = false,
+    winnerTeam = 1
+}: {
+    creator: string,
+    date: string,
+    location?: string,
+    score: string,
+    team1: { name: string, confirmed: boolean }[],
+    team2: { name: string, confirmed: boolean }[],
+    isConfirmed?: boolean,
+    winnerTeam?: number
+}) => (
+    <div className={`rounded-xl border-2 p-2.5 transition-all duration-500 scale-[0.98] ${isConfirmed ? 'border-green-500 bg-green-50 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-blue-400 bg-blue-50'
+        }`}>
+        <div className="mb-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+                <div className="flex-shrink-0 rounded-full p-1 bg-blue-100">
+                    {isConfirmed ? <Clock className="h-3 w-3 text-blue-600" /> : <FileText className="h-3 w-3 text-blue-600" />}
+                </div>
+                <div>
+                    <div className="text-[8px] font-bold text-gray-900 uppercase">Par {creator}</div>
+                    <div className="text-[7px] text-gray-500 font-semibold">{date}</div>
+                    {location && <div className="text-[6px] text-gray-400 font-semibold">{location}</div>}
+                </div>
+            </div>
+            <div className="rounded-md bg-white px-1 py-0.5 text-[8px] font-black text-gray-900 tabular-nums shadow-sm border border-gray-100 flex-shrink-0 min-w-[30px] text-center">
+                {score}
+            </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+            <div className={`rounded-lg border p-1.5 ${winnerTeam === 1 ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-white'}`}>
+                <div className="mb-1 text-[7px] font-black uppercase tracking-wide text-gray-400 flex items-center gap-1">
+                    Équipe 1 {winnerTeam === 1 && <Trophy className="h-2 w-2 text-amber-500" />}
+                </div>
+                <div className="space-y-1">
+                    {team1.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                            <span className="text-[8px] font-bold text-gray-900 truncate">{p.name}</span>
+                            {p.confirmed && (
+                                <div className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
+                                    <Check className="h-2 w-2 text-white" strokeWidth={4} />
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className={`rounded-lg border p-1.5 ${winnerTeam === 2 ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-white'}`}>
+                <div className="mb-1 text-[7px] font-black uppercase tracking-wide text-gray-400 flex items-center gap-1">
+                    Équipe 2 {winnerTeam === 2 && <Trophy className="h-2 w-2 text-amber-500" />}
+                </div>
+                <div className="space-y-1">
+                    {team2.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                            <span className="text-[8px] font-bold text-gray-900 truncate">{p.name}</span>
+                            {p.confirmed && (
+                                <div className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
+                                    <Check className="h-2 w-2 text-white" strokeWidth={4} />
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+            <div className="text-[7px] font-bold text-gray-400 bg-white/50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-green-600">Éq.1 ✓</span>
+                <span className="text-gray-200">|</span>
+                <span className="text-gray-400">Éq.2 ✗</span>
+            </div>
+            {isConfirmed ? (
+                <div className="flex items-center gap-1 inline-flex items-center rounded-md bg-[#22c55e] px-2 py-1 text-[8px] font-black text-white shadow-sm shadow-green-500/20">
+                    CONFIRMÉ <Check size={8} strokeWidth={4} />
+                </div>
+            ) : (
+                <div className="flex items-center gap-1">
+                    <button type="button" className="p-1 text-gray-400 bg-white rounded-md border border-gray-100"><X size={8} /></button>
+                    <button type="button" className="bg-blue-600 text-white px-2 py-1 rounded-md text-[8px] font-black shadow-sm">CONFIRMER</button>
+                </div>
+            )}
+        </div>
+    </div>
+);
+
+
+export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl }: { name: string, level: string, compatibility: number, avatarUrl?: string }) => (
+    <div className="bg-slate-800/50 rounded-xl p-2 border border-white/10 flex flex-col h-full animate-fadeIn transition-all active:scale-[0.98] min-h-[100px] justify-between">
+        <div className="flex flex-col items-center text-center py-0.5">
+            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white/40 border-2 border-white/20 mb-1 shadow-sm overflow-hidden">
+                {avatarUrl ? (
+                    <img src={avatarUrl} alt={name} className="w-full h-full object-cover shadow-inner" />
+                ) : (
+                    <User size={14} />
+                )}
+            </div>
+            <h4 className="font-black text-white text-[7px] leading-tight mb-0.5 line-clamp-1 w-full px-0.5 italic">
+                {name}
+            </h4>
+            <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-1.5 py-0.5 mb-1 border border-white/10">
+                <span className="text-[6px] text-white/90 font-black">Niveau {level}</span>
+            </div>
+            <div className="w-full max-w-[70px] flex items-center gap-1">
+                <div className="h-0.5 flex-1 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-gradient-to-r from-green-500 to-emerald-500 shadow-[0_0_6px_#22c55e]"
+                        style={{ width: `${compatibility}%` }}
+                    />
+                </div>
+                <span className="text-[6px] font-black text-green-400">{compatibility}%</span>
+            </div>
+        </div>
+        <div className="grid grid-cols-2 gap-1 mt-1">
+            <button type="button" className="py-1 px-0 border border-white/10 text-white rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/10 h-5 transition-colors"><Eye size={9} /></button>
+            <button type="button" className="py-1 px-0 rounded-lg flex items-center justify-center transition-all h-5 bg-[rgb(var(--theme-secondary-accent))] text-[#071554] shadow-md hover:brightness-110"><User size={9} className="fill-current" /></button>
+        </div>
     </div>
 );
 
 export const Tabs = ({ items, activeIdx, onChange }: { items: string[], activeIdx: number, onChange?: (idx: number) => void }) => (
     <div className="flex items-center w-full mb-3 border-b" style={{ borderColor: 'rgb(var(--theme-text) / 0.1)' }}>
         {items.map((item, i) => (
-            <div
+            <button
                 key={item}
+                type="button"
                 onClick={() => onChange?.(i)}
                 className={`flex-1 py-1.5 text-[7px] font-black transition-all duration-200 relative text-center uppercase tracking-tighter cursor-pointer`}
                 style={{ color: i === activeIdx ? "var(--theme-text)" : "var(--theme-text-muted)" }}
             >
                 <span className="flex items-center justify-center gap-1">{item}</span>
                 {i === activeIdx && <div className="absolute bottom-0 left-0 right-0 h-[1.5px]" style={{ background: "rgb(var(--theme-secondary-accent))", boxShadow: "0 0 4px rgb(var(--theme-secondary-accent) / 0.4)" }} />}
-            </div>
+            </button>
         ))}
     </div>
 );
 
 // Screens
-// Screens
 export const ProfilePreview = () => {
     const [activeTab, setActiveTab] = React.useState(0);
     return (
-        <div className="w-full h-full overflow-y-auto pb-2 animate-fadeIn font-sans pt-1">
-            <TopPill title="Bienvenue Lilian !" subtitle="Club : Padel Club • @lilian.richard" />
+        <div className="w-full h-full overflow-y-auto pb-4 animate-fadeIn font-sans pt-2">
+
+            {/* Real PageTitle Replica */}
+            <div className="px-1 mb-2">
+                <ReplicaPageTitle title="Bienvenue Lilian Richard !" />
+            </div>
+
             <Tabs items={["Profil", "Stats", "Badges", "Club"]} activeIdx={activeTab} onChange={setActiveTab} />
 
             {activeTab === 0 && (
-                <div className="animate-fadeIn">
-                    {/* PROFILE CONTENT (Circular Gauge) */}
-                    <div className="flex flex-col items-center mb-4">
-                        <div className="relative w-28 h-28 rounded-full flex items-center justify-center mb-3" style={{ background: "rgba(128, 128, 128, 0.05)" }}>
-                            {/* Gauge SVG */}
-                            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                                <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/10" />
-                                <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-secondary-accent))" strokeWidth="4" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80" />
-                            </svg>
-                            <div className="flex flex-col items-center justify-center z-10 text-center">
-                                <span className="text-[6px] uppercase tracking-[0.2em] font-black" style={{ color: "rgb(var(--theme-secondary-accent))" }}>Niveau</span>
-                                <span className="text-2xl font-black" style={{ color: "var(--theme-text)" }}>6.49</span>
-                            </div>
-                        </div>
-
-                        <div className="w-full max-w-[160px] space-y-2">
-                            <div className="w-full h-8 rounded-lg flex items-center justify-center gap-1.5 font-black text-[9px] uppercase tracking-widest transition-transform active:scale-95" style={{ background: "rgb(var(--theme-secondary-accent))", color: "#071554" }}>
-                                <Share2 size={12} className="stroke-[3px]" />
-                                PARTAGER
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="text-[6px] font-bold" style={{ color: "var(--theme-text-muted)" }}>Vers niveau 7</span>
-                                    <span className="text-[6px] font-black" style={{ color: "rgb(var(--theme-secondary-accent))" }}>49%</span>
+                <div className="animate-fadeIn px-1 space-y-2">
+                    {/* PROFILE CONTENT (Circular Gauge Wrapper) */}
+                    <div className="bg-white/5 rounded-[12px] border border-white/20 p-2 sm:p-2.5">
+                        <div className="flex flex-col items-center">
+                            <div className="relative w-24 h-24 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(185,255,0,0.05)] bg-slate-900/50 backdrop-blur-md">
+                                {/* Gauge SVG */}
+                                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/10" />
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-secondary-accent))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80 drop-shadow-[0_0_6px_rgba(204,255,0,0.4)]" />
+                                </svg>
+                                <div className="flex flex-col items-center justify-center z-10 text-center">
+                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium text-[rgb(var(--theme-secondary-accent))]/80 mb-0.5">Niveau</span>
+                                    <span className="text-2xl font-black text-white leading-none tracking-tighter drop-shadow-md">6.49</span>
                                 </div>
-                                <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: "49%", background: "rgb(var(--theme-secondary-accent))" }} />
+                            </div>
+
+                            <div className="w-full space-y-1.5">
+                                {/* Share button replica */}
+                                <button type="button" className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-black text-[7px] uppercase tracking-wider bg-[rgb(var(--theme-secondary-accent))] text-[#071554] shadow-md shadow-[rgb(var(--theme-secondary-accent))]/20 active:scale-95 transition-all">
+                                    <Share2 size={9} className="stroke-[2.5px]" />
+                                    PARTAGER MON PROFIL
+                                </button>
+
+                                <div className="pt-1.5">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-[5px] font-medium text-white/50 uppercase tracking-wide">Vers niveau 7</span>
+                                        <span className="text-[6px] font-semibold text-[rgb(var(--theme-secondary-accent))]">49%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
+                                        <div className="h-full rounded-full transition-all duration-500 bg-[rgb(var(--theme-secondary-accent))]" style={{ width: "49%" }}></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* PARTNER CARD MOCKUP */}
-                    <div className="rounded-xl border p-2 flex items-center gap-2" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                            <User size={16} className="text-slate-400" />
+                    {/* About details: High Fidelity Replica with rounded-2xl & green icons */}
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
+                            <Flame className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Niveau</div>
+                                <div className="text-[6px] font-black text-white leading-tight">Compétition</div>
+                            </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="text-[7px] font-black uppercase text-white truncate">Mathis Hannebique</div>
-                            <div className="text-[6px] font-bold text-white/50 uppercase">Partenaire habituel</div>
+                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
+                            <User className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Main</div>
+                                <div className="text-[8px] font-black text-white leading-tight">Droitier</div>
+                            </div>
                         </div>
-                        <div className="bg-[var(--theme-secondary-accent)]/10 px-1.5 py-0.5 rounded text-[7px] font-black" style={{ color: 'rgb(var(--theme-secondary-accent))', backgroundColor: 'rgb(var(--theme-secondary-accent) / 0.1)' }}>6.00</div>
+                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
+                            <MapIcon className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Côté Préféré</div>
+                                <div className="text-[8px] font-black text-white leading-tight">Gauche</div>
+                            </div>
+                        </div>
+                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
+                            <Trophy className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Coup Signature</div>
+                                <div className="text-[8px] font-black text-white leading-tight">Smash</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
 
+
             {activeTab === 1 && (
-                <div className="animate-fadeIn space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-xl border p-2" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                            <div className="text-[6px] font-black text-white/40 uppercase mb-1">Victoires</div>
-                            <div className="text-xl font-black text-white">24</div>
-                        </div>
-                        <div className="rounded-xl border p-2" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                            <div className="text-[6px] font-black text-white/40 uppercase mb-1">Défaites</div>
-                            <div className="text-xl font-black text-white">12</div>
+                <div className="animate-fadeIn px-1 space-y-3 pb-4">
+                    {/* Stats Header with Tier */}
+                    <div className="flex items-center justify-between px-1">
+                        <h2 className="text-[8px] font-black tracking-[0.2em] text-white/40 uppercase">Mes Statistiques</h2>
+                        <div className="px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white text-[6px] font-black shadow-sm flex items-center gap-1">
+                            <Crown size={7} /> CHAMPION
                         </div>
                     </div>
-                    {/* Simple Bar Chart Mockup */}
-                    <div className="rounded-xl border p-3 flex flex-col justify-end gap-1 h-32" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                        <div className="flex items-end justify-between h-full px-2">
-                            {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
-                                <div key={i} className="w-2 rounded-t-sm" style={{ height: `${h}%`, background: i === 3 ? "rgb(var(--theme-secondary-accent))" : "var(--theme-text-muted)" }} />
-                            ))}
+
+                    {/* Lilian's Streak Card Component Clone */}
+                    <div className="relative rounded-lg border px-3 py-2 overflow-hidden shadow-sm bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20" style={{ borderColor: "rgb(var(--theme-secondary-accent))" }}>
+                        <div className="relative z-10 flex items-center justify-between gap-3">
+                            <div className="flex-1">
+                                <div className="text-[6px] font-medium text-[rgb(var(--theme-secondary-accent))] uppercase mb-1 tracking-[0.15em]">Série de victoires en cours</div>
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-2xl font-black text-white tabular-nums leading-none">5</span>
+                                    <span className="text-[7px] text-white/80 uppercase tracking-[0.1em]">victoires</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1 relative">
+                                <div className="relative z-10">
+                                    <Flame size={20} className="text-white drop-shadow-[0_0_8px_rgba(204,255,0,0.6)]" strokeWidth={1.5} />
+                                </div>
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none">
+                                    <Flame size={40} className="text-[rgb(var(--theme-secondary-accent))]/20 blur-[1px] transform scale-125" strokeWidth={3} />
+                                </div>
+                                <div className="text-[6px] text-white/80 mt-1">
+                                    Meilleure : <span className="font-semibold tabular-nums text-[rgb(var(--theme-secondary-accent))]">18</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="border-t pt-1 flex justify-between px-1" style={{ borderColor: "rgba(var(--theme-text), 0.1)" }}>
-                            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(d => <span key={d} className="text-[5px] font-black text-white/30">{d}</span>)}
+                    </div>
+
+                    {/* Exact 8-cell Grid Replica */}
+                    <div className="grid grid-cols-2 gap-2 text-[7px] sm:text-xs">
+                        {/* Points */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Points</div>
+                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">695</div>
+                        </div>
+                        {/* Matchs */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Matchs</div>
+                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">64</div>
+                        </div>
+                        {/* Victoires */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Victoires</div>
+                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">55</div>
+                        </div>
+                        {/* Défaites */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Défaites</div>
+                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">9</div>
+                        </div>
+                        {/* Sets gagnés */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Sets gagnés</div>
+                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">110</div>
+                        </div>
+                        {/* Sets perdus */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Sets perdus</div>
+                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">22</div>
+                        </div>
+                        {/* Winrate */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Winrate</div>
+                            <div className="text-xl font-black tabular-nums leading-none flex items-center" style={{ background: "linear-gradient(to right, #10B981, #059669)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                                <span className="inline-block mr-0.5" style={{ WebkitTextFillColor: "initial", color: "#10B981" }}>↗</span>
+                                85%
+                            </div>
+                        </div>
+                        {/* Badges */}
+                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Badges</div>
+                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">15</div>
                         </div>
                     </div>
                 </div>
             )}
 
             {activeTab === 2 && (
-                <div className="animate-fadeIn grid grid-cols-3 gap-2">
-                    {[
-                        { icon: Trophy, title: "Premium", color: "rgb(255, 191, 0)" },
-                        { icon: Flame, title: "Série 5", color: "rgb(255, 69, 0)" },
-                        { icon: User, title: "Ancien", color: "rgb(var(--theme-secondary-accent))" },
-                        { icon: MapIcon, title: "Voyageur", color: "rgba(255,255,255,0.2)" },
-                        { icon: Globe, title: "Social", color: "rgba(255,255,255,0.2)" },
-                    ].map((b, i) => (
-                        <div key={i} className="aspect-square rounded-xl border flex flex-col items-center justify-center p-1" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                            <b.icon size={16} style={{ color: b.color }} />
-                            <span className="text-[5px] font-black uppercase mt-1 text-white/50">{b.title}</span>
+                <div className="animate-fadeIn space-y-3 px-1 pb-6">
+                    {/* Badge Summary Header Clone from BadgesView.tsx */}
+                    <div className="mb-3 rounded-xl border border-white/20 px-3 py-2 sm:px-4 sm:py-3 shadow-sm bg-white/10 backdrop-blur-sm max-w-[200px] mx-auto">
+                        <div className="flex items-center justify-between gap-1">
+                            {/* Left: Progression */}
+                            <div className="text-center w-14 flex-shrink-0">
+                                <div className="text-xl font-bold text-white tabular-nums flex items-baseline justify-center">
+                                    15
+                                    <span className="text-[10px] text-white/40 ml-0.5">/ 33</span>
+                                </div>
+                                <div className="text-[7px] font-semibold text-white/80 uppercase">Badges</div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="w-px h-8 bg-white/30 flex-shrink-0"></div>
+
+                            {/* Right: Breakdown - shifted slightly right */}
+                            <div className="flex-1 flex justify-around items-center gap-1 min-w-0 pl-1">
+                                <div className="text-center">
+                                    <div className="text-[12px] font-bold text-white tabular-nums">15</div>
+                                    <div className="text-[5px] font-medium text-white/80 uppercase tracking-tighter">Standard</div>
+                                </div>
+                                <div className="text-center">
+                                    <div className="text-[12px] font-bold text-white tabular-nums">0</div>
+                                    <div className="text-[5px] font-medium text-white/80 uppercase tracking-tighter">Challenge</div>
+                                </div>
+                                <div className="text-center opacity-50">
+                                    <div className="text-[12px] font-bold text-amber-400 tabular-nums">0</div>
+                                    <div className="text-[5px] font-medium text-amber-400/90 uppercase tracking-tighter">Premium</div>
+                                </div>
+                            </div>
                         </div>
-                    ))}
+                    </div>
+
+                    {/* Filter Buttons - Resized and Renamed */}
+                    <div className="flex justify-center gap-2 mb-3">
+                        <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[5.5px] font-black transition-all whitespace-nowrap bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/50">
+                            <Award size={9} />
+                            GÉNÉRAL
+                        </button>
+                        <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[5.5px] font-black transition-all whitespace-nowrap bg-white/10 text-white/60">
+                            <Trophy size={9} />
+                            CHALLENGES
+                        </button>
+                    </div>
+
+                    {/* Exact Badge Cards Replica - Icon based */}
+                    <div className="grid grid-cols-2 gap-2">
+                        {[
+                            { icon: Award, title: "Pionnier", desc: "Soyez parmi les premiers membres de PadelXP", color: "#FBBF24" },
+                            { icon: Trophy, title: "Champion Club", desc: "Remportez un tournoi interne", color: "#CCFF00" },
+                            { icon: Flame, title: "Série de 5", desc: "Gagnez 5 matchs consécutifs", color: "#F97316" },
+                            { icon: Crown, title: "Maître", desc: "Atteignez le niveau 7.00", color: "#A855F7" },
+                        ].map((b, i) => (
+                            <div key={i} className="group relative rounded-xl border border-blue-500/30 bg-white/95 px-2 pt-3 pb-2 transition-all flex flex-col h-[110px] items-center text-center overflow-hidden shadow-sm">
+                                <div className="flex-shrink-0 mb-1.5 h-[32px] flex items-center justify-center">
+                                    <b.icon size={28} className="text-gray-900" strokeWidth={2.5} />
+                                </div>
+                                <div className="flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[50px] mb-1 px-1">
+                                    <h3 className="text-[8px] font-black leading-tight mb-0.5 text-gray-900 line-clamp-2">
+                                        {b.title}
+                                    </h3>
+                                    <p className="text-[6px] leading-[1.1] text-gray-400 font-bold line-clamp-2">
+                                        {b.desc}
+                                    </p>
+                                </div>
+                                <div className="flex-shrink-0 w-full mt-auto">
+                                    <div className="w-full rounded-md px-1 py-1 text-[7px] font-black tabular-nums bg-green-50 text-green-600 flex items-center justify-center gap-0.5 border border-green-100">
+                                        ✓ DÉBLOQUÉ
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
             {activeTab === 3 && (
-                <div className="animate-fadeIn space-y-3">
-                    <div className="rounded-xl border p-3" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                        <div className="w-10 h-10 rounded-lg bg-white/10 mb-2 flex items-center justify-center">
-                            <img src="/images/Logo sans fond.png" className="w-8 h-8 object-contain opacity-50" />
-                        </div>
-                        <h3 className="text-[10px] font-black text-white uppercase tracking-tight">Padel Club Amiens</h3>
-                        <p className="text-[7px] text-white/50 mb-3 flex items-center gap-1">
-                            <MapPin size={8} /> 2 Rue de la Vallée, 80000 Amiens
-                        </p>
-                        <div className="flex gap-2">
-                            <div className="flex-1 bg-white/5 rounded-lg p-1.5 border border-white/5">
-                                <div className="text-[5px] text-white/30 uppercase font-bold">Terrains</div>
-                                <div className="text-[9px] font-black text-white">6 Courts</div>
+                <div className="animate-fadeIn space-y-2 px-1 pb-4">
+                    {/* Club Header */}
+                    <div className="rounded-xl border border-white/10 p-2.5 bg-gradient-to-br from-[rgba(8,30,78,0.88)] to-[rgba(4,16,46,0.92)]">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <img src="/images/Logo sans fond.png" className="w-6 h-6 object-contain opacity-60" />
                             </div>
-                            <div className="flex-1 bg-white/5 rounded-lg p-1.5 border border-white/5">
-                                <div className="text-[5px] text-white/30 uppercase font-bold">Type</div>
-                                <div className="text-[9px] font-black text-white">Couverts</div>
+                            <div className="min-w-0">
+                                <h3 className="text-[9px] font-black text-white uppercase tracking-tight leading-tight">Padel Club Amiens</h3>
+                                <p className="text-[6px] text-white/50 italic leading-tight">Le meilleur club de padel d'Amiens</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Coordonnées + Infrastructure */}
+                    <div className="rounded-xl border border-blue-400/30 p-2.5 bg-gradient-to-br from-[rgba(8,30,78,0.88)] to-[rgba(4,16,46,0.92)] shadow-lg">
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* Coordonnées */}
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] text-white/90">Coordonnées</h4>
+                                    <span className="text-[5px] font-semibold uppercase text-white/70">Site ↗</span>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <div className="flex flex-col items-center gap-0.5 text-center">
+                                        <MapPin size={8} className="text-white/60" />
+                                        <span className="text-[5px] font-medium text-white/90 leading-tight">2 Rue de la Vallée, 80000 Amiens</span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-0.5 text-center">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2 text-white/60"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                        <span className="text-[5px] font-medium text-white/90">03 22 XX XX XX</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Infrastructure */}
+                            <div>
+                                <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] text-white/90 mb-1.5">Infrastructure</h4>
+                                <div className="space-y-1 mt-2">
+                                    <div className="flex items-center justify-between rounded-md bg-white px-1.5 py-1 text-[#071554]">
+                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold">Terrains</span>
+                                        <span className="font-extrabold text-[6px]">6</span>
+                                    </div>
+                                    <div className="flex items-center justify-between rounded-md bg-white px-1.5 py-1 text-[#071554]">
+                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold">Type</span>
+                                        <span className="font-extrabold text-[6px]">Couverts</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Horaires d'ouverture */}
+                    <div className="rounded-xl border border-blue-400/30 p-2.5 bg-gradient-to-br from-[rgba(8,30,78,0.88)] to-[rgba(4,16,46,0.92)] shadow-lg">
+                        <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] text-white/90 mb-1.5">Horaires d'ouverture</h4>
+                        <div className="space-y-0.5">
+                            {[
+                                { day: 'Lundi', hours: '08:00 \u2013 22:00', open: true },
+                                { day: 'Mardi', hours: '08:00 \u2013 22:00', open: true },
+                                { day: 'Mercredi', hours: '08:00 \u2013 22:00', open: true },
+                                { day: 'Jeudi', hours: '08:00 \u2013 22:00', open: true },
+                                { day: 'Vendredi', hours: '08:00 \u2013 23:00', open: true },
+                                { day: 'Samedi', hours: '09:00 \u2013 23:00', open: true },
+                                { day: 'Dimanche', hours: 'Fermé', open: false },
+                            ].map((h) => (
+                                <div key={h.day} className={`flex items-center justify-between rounded-md border px-1.5 py-0.5 text-[5px] font-semibold ${h.open ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-50' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}`}>
+                                    <span className="uppercase tracking-[0.15em] text-white">{h.day}</span>
+                                    <span className="text-white">{h.hours}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Partir du club */}
+                    <div className="flex justify-center pt-1">
+                        <span className="text-[5px] text-white/30 underline underline-offset-2">Partir de ce club</span>
                     </div>
                 </div>
             )}
@@ -163,134 +536,173 @@ export const ProfilePreview = () => {
     );
 };
 
-export const MatchesPreview = () => {
-    const [activeTab, setActiveTab] = React.useState(0);
+export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, clubCity?: string }) => {
+    const [activeTab, setActiveTab] = React.useState(1);
+    const displayName = clubName || 'Padel Club Amiens';
+    const displayCity = clubCity || 'AMIENS';
     return (
-        <div className="w-full h-full overflow-y-auto w-full pb-4 animate-fadeIn font-sans pt-1">
-            <TopPill title="Matchs" subtitle="Club : Padel Club" />
-            <Tabs items={["Enregistrer", "Historique", "Partenaires"]} activeIdx={activeTab} onChange={setActiveTab} />
+        <div className="w-full h-full overflow-y-auto pb-4 animate-fadeIn font-sans pt-2">
+            <div className="px-1 mb-2">
+                <ReplicaPageTitle title="Matchs" subtitle={`Club : ${displayName}`} icon={<Check size={10} className="stroke-[3px]" />} />
+            </div>
+
+            <div className="px-1 mb-1">
+                <ReplicaChallengeBar title="Partenaires Variés" current={2} target={2} />
+            </div>
+
+            <div className="flex w-full mb-3 border-b border-white/10">
+                {["Enregistrer", "Mes matchs", "Partenaires", "Oracle"].map((tab, i) => (
+                    <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setActiveTab(i)}
+                        className={`flex-1 py-1.5 text-[6px] font-semibold transition-all duration-200 relative flex items-center justify-center ${activeTab === i ? 'text-white' : 'text-white/60 hover:text-white/80'}`}
+                    >
+                        <div className="relative flex items-center justify-center px-1">
+                            <span className="text-center whitespace-normal leading-tight">{tab}</span>
+                            {i === 1 && (
+                                <span className="absolute -top-1 -right-2 flex h-3 min-w-[12px] items-center justify-center rounded-full bg-red-500 text-[5px] font-bold text-white shadow-sm border border-[#172554]">
+                                    2
+                                </span>
+                            )}
+                        </div>
+                        {activeTab === i && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(204,255,0,0.4)]" style={{ background: "rgb(var(--theme-secondary-accent))" }} />
+                        )}
+                    </button>
+                ))}
+            </div>
 
             {activeTab === 0 && (
-                <div className="space-y-3 px-1 animate-fadeIn">
+                <div className="animate-fadeIn px-1 space-y-3">
                     <div className="w-full">
-                        <label className="mb-0.5 ml-1 block text-[7px] font-black uppercase tracking-widest" style={{ color: "var(--theme-text-muted)" }}>Lieu du match</label>
-                        <div className="w-full h-8 rounded-lg border px-2 text-[10px] font-bold flex items-center shadow-inner" style={{ background: "rgba(128,128,128,0.1)", borderColor: "rgba(var(--theme-text), 0.1)", color: "var(--theme-text)" }}>
-                            Padel Club
+                        <label className="mb-0.5 ml-1 block text-[6px] font-black uppercase tracking-widest text-white/50">Lieu du match</label>
+                        <div className="w-full h-7 rounded-lg border border-white/20 px-2 text-[8px] font-bold flex items-center shadow-inner bg-white/5 text-white">
+                            {displayName}
                         </div>
-                        <p className="mt-0.5 text-[7px] font-black ml-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
-                            <MapPin size={8} /> AMIENS
+                        <p className="mt-0.5 text-[6px] font-black ml-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
+                            <MapPin size={6} /> {displayCity.toUpperCase()}
                         </p>
                     </div>
 
                     <div className="py-1">
-                        <div className="flex items-center justify-center gap-2 w-full">
+                        <div className="flex items-center justify-center gap-1.5 w-full">
                             {/* Team 1 */}
                             <div className="flex-1 flex flex-col items-center gap-1">
-                                <div className="grid grid-cols-2 gap-1 w-full">
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-lg border" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent) / 0.1)', borderColor: 'rgb(var(--theme-secondary-accent))' }}>
-                                        <div className="w-6 h-6 rounded-full border bg-white/10 flex items-center justify-center" style={{ borderColor: 'rgba(var(--theme-text), 0.1)' }}>
-                                            <User size={12} style={{ color: "var(--theme-text)" }} />
+                                <div className="grid grid-cols-2 gap-1 w-full relative">
+                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[5px] font-black uppercase tracking-widest text-white/50 bg-[#172554] px-1 z-10 w-max">Équipe 1</div>
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-[rgb(var(--theme-secondary-accent))] bg-[rgb(var(--theme-secondary-accent))]/10 pt-1">
+                                        <div className="w-5 h-5 rounded-full border border-white/20 bg-white/10 flex items-center justify-center text-white">
+                                            <User size={10} />
                                         </div>
-                                        <span className="text-[6px] font-black uppercase mt-0.5" style={{ color: "var(--theme-text)" }}>Lilian</span>
-                                        <div className="absolute top-0.5 left-0.5 px-0.5 rounded text-[6px] font-black" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent) / 0.3)', color: 'rgb(var(--theme-secondary-accent))' }}>6.4</div>
+                                        <span className="text-[5px] font-black uppercase mt-0.5 text-white text-center leading-tight truncate w-full px-0.5">Lilian</span>
+                                        <div className="absolute top-0.5 left-0.5 px-0.5 rounded text-[5px] font-black bg-[rgb(var(--theme-secondary-accent))]/20 text-[rgb(var(--theme-secondary-accent))]">6.49</div>
                                     </div>
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-lg border group" style={{ background: "rgba(128,128,128,0.05)", borderColor: "rgba(var(--theme-text), 0.1)" }}>
-                                        <Search size={10} style={{ color: "var(--theme-text-muted)" }} />
-                                        <span className="text-[5px] font-black uppercase mt-0.5" style={{ color: "var(--theme-text-muted)" }}>AJOUTER</span>
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/5 group border-dashed pt-1">
+                                        <Search size={8} className="text-white/40" />
+                                        <span className="text-[4px] font-black uppercase mt-0.5 text-white/40">AJOUTER</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="text-[6px] font-black uppercase ring-1 px-1 py-0.5 rounded-[4px]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: '#071554', boxShadow: "0 0 0 1px #071554" }}>VS</div>
+                            <div className="text-[5px] font-black uppercase ring-1 px-1 py-0.5 rounded-[4px] shadow-lg mt-2" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: '#071554', boxShadow: "0 0 0 1px #071554" }}>VS</div>
 
                             {/* Team 2 */}
                             <div className="flex-1 flex flex-col items-center gap-1">
-                                <div className="grid grid-cols-2 gap-1 w-full">
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-lg border" style={{ background: "rgba(128,128,128,0.05)", borderColor: "rgba(var(--theme-text), 0.1)" }}>
-                                        <Search size={10} style={{ color: "var(--theme-text-muted)" }} />
+                                <div className="grid grid-cols-2 gap-1 w-full relative">
+                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[5px] font-black uppercase tracking-widest text-white/50 bg-[#172554] px-1 z-10 w-max">Équipe 2</div>
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/5 border-dashed">
+                                        <Search size={8} className="text-white/40" />
                                     </div>
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-lg border" style={{ background: "rgba(128,128,128,0.05)", borderColor: "rgba(var(--theme-text), 0.1)" }}>
-                                        <Search size={10} style={{ color: "var(--theme-text-muted)" }} />
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/5 border-dashed">
+                                        <Search size={8} className="text-white/40" />
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                        <label className="ml-1 block text-[7px] font-black uppercase tracking-widest" style={{ color: "var(--theme-text-muted)" }}>Équipe gagnante</label>
+                    <div className="space-y-1">
+                        <label className="ml-1 block text-[6px] font-black uppercase tracking-widest text-white/50">Équipe gagnante</label>
                         <div className="grid grid-cols-2 gap-1.5">
-                            <button className="rounded-lg border py-1.5 text-[8px] font-black flex items-center justify-center gap-1 uppercase" style={{ background: "rgb(var(--theme-secondary-accent))", borderColor: "rgb(var(--theme-secondary-accent))", color: "#071554" }}>
-                                <Trophy size={10} /> Équipe 1
+                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5 border-white/10 text-white">
+                                <Trophy size={8} /> Équipe 1
                             </button>
-                            <button className="rounded-lg border py-1.5 text-[8px] font-black flex items-center justify-center gap-1 uppercase" style={{ background: "rgba(128,128,128,0.1)", borderColor: "rgba(var(--theme-text), 0.1)", color: "var(--theme-text-muted)" }}>
-                                Équipe 2
+                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5 border-white/10 text-white">
+                                <Trophy size={8} /> Équipe 2
                             </button>
                         </div>
                     </div>
 
-                    <button className="w-full rounded-lg py-2.5 font-black text-[#071554] text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-transform" style={{ background: "rgb(var(--theme-secondary-accent))" }}>
+                    <button type="button" className="w-full rounded-xl py-2 font-black text-[#071554] text-[7px] uppercase tracking-widest shadow-lg mt-2" style={{ background: "rgb(var(--theme-secondary-accent))" }}>
                         ENREGISTRER LE MATCH
                     </button>
                 </div>
             )}
 
             {activeTab === 1 && (
-                <div className="space-y-3 animate-fadeIn">
-                    {[
-                        { won: true, score: "6-2 6-4", date: "Aujourd'hui" },
-                        { won: false, score: "4-6 5-7", date: "Hier" },
-                    ].map((m, i) => (
-                        <div key={i} className="rounded-xl border-2 p-3" style={{ background: m.won ? "rgba(34, 197, 94, 0.05)" : "rgba(239, 68, 68, 0.05)", borderColor: m.won ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)" }}>
-                            <div className="flex justify-between items-center mb-2">
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 rounded-full flex items-center justify-center ${m.won ? "bg-green-500" : "bg-red-500"}`}>
-                                        <Trophy size={8} className="text-white" />
-                                    </div>
-                                    <span className="text-[8px] font-black uppercase" style={{ color: m.won ? "rgb(22, 101, 52)" : "rgb(153, 27, 27)" }}>{m.won ? "Victoire" : "Défaite"}</span>
-                                </div>
-                                <span className="text-[7px] font-bold text-gray-500">{m.date}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <div className="flex -space-x-1">
-                                    <div className="w-4 h-4 rounded-full bg-slate-100 border border-white" />
-                                    <div className="w-4 h-4 rounded-full bg-slate-200 border border-white" />
-                                </div>
-                                <div className="px-2 py-0.5 rounded bg-white border border-gray-100 font-black text-[9px] text-gray-900">{m.score}</div>
-                                <div className="flex -space-x-1">
-                                    <div className="w-4 h-4 rounded-full bg-slate-100 border border-white" />
-                                    <div className="w-4 h-4 rounded-full bg-slate-200 border border-white" />
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                <div className="space-y-3 animate-fadeIn px-1 pb-4">
+                    <div className="flex items-center gap-1.5 mb-1 px-1">
+                        <h3 className="text-[8px] font-black uppercase italic text-white leading-tight">Matchs en attente de confirmation</h3>
+                        <span className="rounded-full bg-[#f59e0b] px-1 py-0.5 text-[6px] font-black text-white shadow-sm">2</span>
+                    </div>
+
+                    <ReplicaPendingMatchCard
+                        creator="Lilian Richard"
+                        date="14 février 2026 • 23:13"
+                        location={displayName}
+                        score="3-0"
+                        team1={[{ name: "Lilian Richard", confirmed: true }, { name: "Sarah Mazette", confirmed: true }]}
+                        team2={[{ name: "Paul Loret", confirmed: false }, { name: "Thomas Dutronc", confirmed: false }]}
+                    />
+
+                    <div className="flex items-center gap-1.5 mb-1 mt-2 px-1">
+                        <h3 className="text-[8px] font-black uppercase italic text-white leading-tight">Matchs validés</h3>
+                    </div>
+
+                    <ReplicaPendingMatchCard
+                        creator="Lilian Richard"
+                        date="22 janvier 2026 • 14:30"
+                        location={displayName}
+                        score="2-0"
+                        team1={[{ name: "Lilian Richard", confirmed: true }, { name: "Joueur", confirmed: true }]}
+                        team2={[{ name: "Paul Loret", confirmed: false }, { name: "Sarah Mazette", confirmed: true }]}
+                        isConfirmed={true}
+                    />
                 </div>
             )}
 
             {activeTab === 2 && (
-                <div className="animate-fadeIn space-y-3">
-                    <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-white/30" size={12} />
-                        <div className="w-full h-8 rounded-lg bg-white/5 border border-white/10 pl-8 pr-3 flex items-center text-[8px] text-white/40">
-                            Rechercher un partenaire...
+                <div className="animate-fadeIn space-y-4 px-1 pb-4">
+                    <h2 className="text-[11px] font-black text-white italic px-1">Trouve ton partenaire</h2>
+
+                    <div className="bg-[#172554] border border-white/10 rounded-2xl p-4 shadow-xl">
+                        <div className="flex items-center justify-between mb-3 px-1">
+                            <h3 className="text-[9px] font-black text-white">Partenaires suggérés</h3>
+                            <div className="flex bg-[#071554] p-0.5 rounded-lg border border-white/5 items-center">
+                                <div className="px-2 py-1 rounded-md text-[7px] font-black bg-blue-600 text-white shadow-sm flex items-center justify-center h-full">Mon Club</div>
+                                <div className="px-2 py-1 rounded-md text-[7px] font-black text-white/40 flex items-center justify-center h-full">Département</div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <ReplicaPartnerCard name="Mathis Leclerc" level="6.00" compatibility={98} />
+                            <ReplicaPartnerCard name="Théo Caron" level="5.00" compatibility={73} />
+                            <ReplicaPartnerCard name="Julien Bernard" level="4.80" compatibility={65} />
+                            <ReplicaPartnerCard name="Sarah Mazette" level="5.20" compatibility={89} />
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        {[
-                            { name: "Mathis H.", level: "6.00" },
-                            { name: "Sarah M.", level: "5.82" },
-                            { name: "Julien B.", level: "6.15" },
-                        ].map((p, i) => (
-                            <div key={i} className="flex items-center justify-between p-2 rounded-xl border" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
-                                        <User size={12} className="text-slate-400" />
-                                    </div>
-                                    <span className="text-[8px] font-black text-white uppercase">{p.name}</span>
-                                </div>
-                                <div className="px-1.5 py-0.5 rounded text-[7px] font-black" style={{ color: 'rgb(var(--theme-secondary-accent))', backgroundColor: 'rgb(var(--theme-secondary-accent) / 0.1)' }}>{p.level}</div>
-                            </div>
-                        ))}
+                </div>
+            )}
+
+            {activeTab === 3 && (
+                <div className="animate-fadeIn px-1 space-y-3">
+                    <div className="rounded-2xl border border-white/10 p-4 bg-[#172554] shadow-xl text-center">
+                        <Sparkles className="w-8 h-8 text-[rgb(var(--theme-secondary-accent))] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(204,255,0,0.4)]" />
+                        <h3 className="text-[11px] font-black text-white uppercase italic mb-1">Oracle AI</h3>
+                        <p className="text-[8px] text-white/60 leading-relaxed italic">
+                            Analyse de vos performances en cours...<br />
+                            Prédictions basées sur vos 24 derniers matchs.
+                        </p>
                     </div>
                 </div>
             )}
@@ -298,167 +710,281 @@ export const MatchesPreview = () => {
     );
 };
 
-export const CompetitionPreview = () => {
+export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
     const [activeTab, setActiveTab] = React.useState(0);
+    const displayName = clubName || 'Padel Club Amiens';
     return (
-        <div className="w-full h-full overflow-y-auto w-full pb-4 animate-fadeIn font-sans pt-1">
-            <TopPill title="Compétition" subtitle="" />
-            <Tabs items={["Classement", "Challenges", "Ligues"]} activeIdx={activeTab} onChange={setActiveTab} />
+        <div className="w-full h-full overflow-y-auto pb-4 animate-fadeIn font-sans pt-2">
+            <div className="px-1 mb-2">
+                <ReplicaPageTitle title="Espace Compétition" subtitle={`Club : ${displayName}`} />
+            </div>
+
+            <div className="flex w-full mb-3 border-b border-white/10">
+                {["Classement", "Challenges", "Ligues"].map((tab, i) => (
+                    <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setActiveTab(i)}
+                        className={`flex-1 py-1.5 text-[6px] font-semibold transition-all duration-200 relative flex items-center justify-center ${activeTab === i ? 'text-white' : 'text-white/60 hover:text-white/80'}`}
+                    >
+                        <div className="relative flex items-center justify-center px-1">
+                            <span className="text-center whitespace-normal leading-tight">{tab}</span>
+                            {i === 1 && (
+                                <span className="absolute -top-1 -right-2 flex h-3 min-w-[12px] items-center justify-center rounded-full bg-red-500 text-[5px] font-bold text-white shadow-sm border border-[#172554]">
+                                    4
+                                </span>
+                            )}
+                        </div>
+                        {activeTab === i && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(204,255,0,0.4)]" style={{ background: "rgb(var(--theme-secondary-accent))" }} />
+                        )}
+                    </button>
+                ))}
+            </div>
 
             {activeTab === 0 && (
-                <div className="space-y-4 animate-fadeIn">
-                    <div className="flex items-center justify-center gap-1 px-1 overflow-x-auto scrollbar-hide">
+                <div className="space-y-4 px-1 pb-4">
+                    {/* Rank filter: Super compact */}
+                    <div className="flex items-center justify-center gap-1 px-1 mb-1">
                         {[
-                            { label: 'Club', icon: Search, active: false },
-                            { label: 'Département', icon: MapPin, active: true },
-                            { label: 'Région', icon: MapIcon, active: false },
-                            { label: 'France', icon: Globe, active: false },
-                        ].map(({ label, icon: Icon, active }) => (
-                            <button key={label} className={`flex items-center gap-1 px-2 py-1 rounded-full text-[7px] font-bold transition-all whitespace-nowrap border ${active
-                                ? 'bg-[var(--theme-secondary-accent)]/10 border-[var(--theme-secondary-accent)]/30 shadow-sm'
-                                : 'bg-white/5 text-white/40 border-white/10'}`}>
-                                <Icon size={10} style={{ color: active ? 'rgb(var(--theme-secondary-accent))' : 'inherit' }} />
-                                <span style={{ color: active ? 'rgb(var(--theme-secondary-accent))' : 'var(--theme-text-muted)' }}>{label}</span>
-                            </button>
-                        ))}
+                            { key: 'club', label: 'Club', icon: Search },
+                            { key: 'department', label: 'Département', icon: MapPin },
+                            { key: 'region', label: 'Région', icon: MapIcon },
+                            { key: 'france', label: 'France', icon: Globe },
+                        ].map((f, i) => {
+                            const active = i === 1;
+                            return (
+                                <button
+                                    key={f.key}
+                                    type="button"
+                                    className={`flex items-center gap-1 px-1 py-1 rounded-full text-[5px] font-black transition-all whitespace-nowrap border ${active
+                                        ? 'bg-[#1e293b] text-[rgb(var(--theme-secondary-accent))] border-[rgb(var(--theme-secondary-accent))]/40 shadow-[0_0_5px_rgba(var(--theme-secondary-accent),0.2)]'
+                                        : 'bg-[#1e293b] text-white/40 border-white/5 hover:bg-white/10'
+                                        }`}
+                                >
+                                    <f.icon size={6} className={active ? "text-[rgb(var(--theme-secondary-accent))]" : ""} />
+                                    <span>{f.label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    <div className="relative pt-6 px-1">
-                        <div className="flex items-end justify-center gap-2">
-                            {/* #2 - Silver (Left) */}
-                            <div className="flex-1 rounded-xl border border-slate-400/80 p-2 shadow-lg relative overflow-hidden h-20 flex flex-col items-center justify-end pb-2 group"
-                                style={{ background: 'linear-gradient(to bottom, #ffffff, #d8d8d8, #b8b8b8)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-                                <div className="absolute top-1 right-1 text-[8px] z-20">🥈</div>
-                                <div className="absolute -top-3 w-8 h-8 rounded-full border border-white/80 bg-slate-100 flex items-center justify-center shadow-md">
+                    {/* Top joueurs du moment podium */}
+                    <div className="space-y-3 px-1">
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="h-[1px] flex-1 bg-white/10" />
+                            <span className="text-[7px] font-black text-white/60 uppercase tracking-widest italic">Top joueurs du moment</span>
+                            <div className="h-[1px] flex-1 bg-white/10" />
+                        </div>
+
+                        <div className="flex items-end justify-center gap-1.5 pt-1">
+                            {/* #2 - Mathis L. (Left) */}
+                            <div className="flex-1 rounded-2xl p-2 h-20 flex flex-col items-center justify-end relative shadow-lg bg-[#cbd5e1]">
+                                <div className="absolute top-1 right-1 flex flex-col items-center">
+                                    <span className="text-[6px] font-black text-slate-500">2</span>
+                                </div>
+                                <div className="w-8 h-8 rounded-full border border-white/80 bg-slate-200 flex items-center justify-center mb-1 shadow-inner overflow-hidden">
                                     <User size={16} className="text-slate-400" />
                                 </div>
-                                <span className="text-[6px] font-black text-gray-900 uppercase text-center leading-tight">Mathis H.</span>
+                                <span className="text-[6px] font-black text-slate-900 uppercase">Mathis L.</span>
                             </div>
 
-                            {/* #1 - Gold (Center) */}
-                            <div className="flex-[1.2] rounded-xl border border-yellow-500/80 p-2 shadow-xl relative overflow-hidden h-24 flex flex-col items-center justify-end pb-3 z-10"
-                                style={{ background: 'linear-gradient(to bottom, #ffffff, #ffe8a1, #ffdd44)', boxShadow: '0 4px 15px rgba(0,0,0,0.12)' }}>
-                                <div className="absolute top-1 right-1 text-[10px] z-20">🥇</div>
-                                <div className="absolute -top-4 w-10 h-10 rounded-full border border-white/80 bg-slate-100 flex items-center justify-center shadow-lg">
-                                    <User size={20} className="text-slate-400" />
+                            {/* #1 - Lilian R. (Center) */}
+                            <div className="flex-[1.1] rounded-2xl p-2.5 h-24 flex flex-col items-center justify-end relative shadow-2xl z-10 bg-[#eab308]">
+                                <div className="absolute top-1 right-1 flex flex-col items-center">
+                                    <span className="text-[7px] font-black text-yellow-700">1</span>
                                 </div>
-                                <span className="text-[8px] font-black text-gray-900 uppercase text-center leading-tight">Lilian R.</span>
+                                <div className="w-12 h-12 rounded-full border border-white bg-yellow-100 flex items-center justify-center mb-1 shadow-xl overflow-hidden">
+                                    <User size={24} className="text-yellow-600" />
+                                </div>
+                                <span className="text-[7px] font-black text-yellow-900 uppercase">Lilian R.</span>
                             </div>
 
-                            {/* #3 - Bronze (Right) */}
-                            <div className="flex-1 rounded-xl border border-orange-600/80 p-2 shadow-lg relative overflow-hidden h-18 flex flex-col items-center justify-end pb-2"
-                                style={{ background: 'linear-gradient(to bottom, #ffffff, #ffd8b3, #ffc085)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-                                <div className="absolute top-1 right-1 text-[8px] z-20">🥉</div>
-                                <div className="absolute -top-3 w-8 h-8 rounded-full border border-white/80 bg-slate-100 flex items-center justify-center shadow-md">
-                                    <User size={16} className="text-slate-400" />
+                            {/* #3 - Sarah M. (Right) */}
+                            <div className="flex-1 rounded-2xl p-2 h-18 flex flex-col items-center justify-end relative shadow-lg bg-[#fdba74]">
+                                <div className="absolute top-1 right-1 flex flex-col items-center">
+                                    <span className="text-[6px] font-black text-orange-600">3</span>
                                 </div>
-                                <span className="text-[6px] font-black text-gray-900 uppercase text-center leading-tight">Sarah M.</span>
+                                <div className="w-8 h-8 rounded-full border border-white/80 bg-orange-100 flex items-center justify-center mb-1 shadow-inner overflow-hidden">
+                                    <User size={16} className="text-orange-400" />
+                                </div>
+                                <span className="text-[6px] font-black text-orange-950 uppercase">Sarah M.</span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border-2 border-white overflow-hidden mx-1.5 shadow-xl bg-white/5 backdrop-blur-sm">
-                        <table className="w-full text-left text-[7px] border-collapse">
-                            <thead className="bg-gray-200 uppercase font-black text-gray-900">
-                                <tr>
-                                    <th className="px-2 py-2 border-r border-gray-100 w-8">Rang</th>
-                                    <th className="px-2 py-2 border-r border-gray-100">Joueur</th>
-                                    <th className="px-2 py-2 border-r border-gray-100 text-center">Niv.</th>
-                                    <th className="px-2 py-2 text-right">Pts</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white font-bold text-gray-900">
-                                <tr>
-                                    <td className="px-2 py-2 border-r border-gray-100 text-center">
-                                        <span className="bg-yellow-100 text-yellow-700 w-4 h-4 rounded-full inline-flex items-center justify-center text-[6px]">1</span>
-                                    </td>
-                                    <td className="px-2 py-2 border-r border-gray-100">
-                                        <div className="flex items-center gap-1">
-                                            <div className="w-4 h-4 rounded-full bg-slate-100 flex-shrink-0" />
-                                            <span>Lilian R.</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-2 py-2 border-r border-gray-100 text-center font-black" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>6.49</td>
-                                    <td className="px-2 py-2 text-right tabular-nums">695</td>
-                                </tr>
-                                <tr className="bg-blue-50">
-                                    <td className="px-2 py-2 border-r border-gray-100 text-center">
-                                        <span className="bg-slate-100 text-slate-700 w-4 h-4 rounded-full inline-flex items-center justify-center text-[6px]">2</span>
-                                    </td>
-                                    <td className="px-2 py-2 border-r border-gray-100">
-                                        <div className="flex items-center gap-1">
-                                            <div className="w-4 h-4 rounded-full bg-slate-100 flex-shrink-0" />
-                                            <span>Mathis H.</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-2 py-2 border-r border-gray-100 text-center font-black" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>6.00</td>
-                                    <td className="px-2 py-2 text-right tabular-nums">419</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-2 py-2 border-r border-gray-100 text-center">
-                                        <span className="bg-orange-100 text-orange-700 w-4 h-4 rounded-full inline-flex items-center justify-center text-[6px]">3</span>
-                                    </td>
-                                    <td className="px-2 py-2 border-r border-gray-100">
-                                        <div className="flex items-center gap-1">
-                                            <div className="w-4 h-4 rounded-full bg-slate-100 flex-shrink-0" />
-                                            <span>Sarah M.</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-2 py-2 border-r border-gray-100 text-center font-black" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>5.82</td>
-                                    <td className="px-2 py-2 text-right tabular-nums">382</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    {/* Classement global table */}
+                    <div className="space-y-3 px-1">
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="h-[1px] flex-1 bg-white/10" />
+                            <span className="text-[7px] font-black text-white/60 uppercase tracking-widest italic">Classement global</span>
+                            <div className="h-[1px] flex-1 bg-white/10" />
+                        </div>
+
+                        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-100">
+                                    <tr className="border-b border-slate-200">
+                                        <th className="px-2 py-2 text-[6px] font-black uppercase text-slate-500 w-10">Rang</th>
+                                        <th className="px-1 py-2 text-[6px] font-black uppercase text-slate-500">Joueur</th>
+                                        <th className="px-1 py-2 text-center text-[6px] font-black uppercase text-slate-500">Niveau</th>
+                                        <th className="px-1 py-2 text-center text-[6px] font-black uppercase text-slate-500">Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 italic">
+                                    {[
+                                        { rank: 1, name: "Lilian R.", level: 6.49, points: 695, isUser: true },
+                                        { rank: 2, name: "Mathis L.", level: 6.00, points: 419 },
+                                        { rank: 3, name: "Sarah M.", level: 5.81, points: 302 },
+                                        { rank: 4, name: "Lucas B.", level: 5.45, points: 215 },
+                                        { rank: 5, name: "Mattias V.", level: 5.26, points: 173 },
+                                    ].map((p, idx) => (
+                                        <tr key={idx} className={`${p.isUser ? "bg-blue-50/80" : "bg-white"} hover:bg-slate-50 transition-colors`}>
+                                            <td className="px-2 py-1.5">
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-black shadow-sm ${p.rank === 1 ? "bg-yellow-100 text-yellow-700 border border-yellow-200" : p.rank === 2 ? "bg-slate-100 text-slate-700 border border-slate-200" : p.rank === 3 ? "bg-orange-100 text-orange-700 border border-orange-200" : "text-slate-400"}`}>
+                                                    #{p.rank}
+                                                </div>
+                                            </td>
+                                            <td className="px-1 py-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200 overflow-hidden">
+                                                        <User size={10} className="text-slate-400" />
+                                                    </div>
+                                                    <span className={`text-[8px] font-black truncate max-w-[45px] ${p.isUser ? "text-blue-700" : "text-slate-900"}`}>
+                                                        {p.name}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-1 py-1.5 text-center">
+                                                <span className="text-[8px] font-black text-blue-600">
+                                                    {p.level.toFixed(2)}
+                                                </span>
+                                            </td>
+                                            <td className="px-1 py-1.5 text-center">
+                                                <span className="text-[8px] font-black text-slate-700 tabular-nums">{p.points}</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
 
             {activeTab === 1 && (
-                <div className="animate-fadeIn space-y-3">
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Trophy size={16} className="text-amber-500" />
-                            <span className="text-[8px] font-black text-white uppercase">Défis actifs</span>
+                <div className="animate-fadeIn space-y-3 px-1 pb-4">
+                    {/* Points & Badges Pill */}
+                    <div className="flex justify-center mb-2">
+                        <div className="px-3 py-1.5 rounded-full border border-white/10 bg-[#1e293b]/50 text-[7px] font-black text-white/90">
+                            <span className="text-[rgb(var(--theme-secondary-accent))]">93</span> points et <span className="text-[rgb(var(--theme-secondary-accent))]">3</span> badges débloqués
                         </div>
-                        <span className="text-[10px] font-black text-amber-500">125 pts</span>
                     </div>
-                    {[
-                        { title: "Série de victoires", progress: 60, desc: "Gagnez 3 matchs de suite" },
-                        { title: "L'infatigable", progress: 30, desc: "Jouez 5 matchs cette semaine" },
-                    ].map((c, i) => (
-                        <div key={i} className="rounded-xl border p-3" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-[8px] font-black text-white uppercase">{c.title}</span>
-                                <span className="text-[8px] font-black" style={{ color: "rgb(var(--theme-secondary-accent))" }}>{c.progress}%</span>
+
+                    {/* Filters */}
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <button type="button" className="flex-1 py-2 rounded-xl border-2 border-[rgb(var(--theme-secondary-accent))] bg-[#1e293b] text-white text-[8px] font-black flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(var(--theme-secondary-accent),0.2)]">
+                            <Globe size={10} /> Général
+                        </button>
+                        <button type="button" className="flex-1 py-2 rounded-xl border border-white/5 bg-[#1e293b] text-white/40 text-[8px] font-black flex items-center justify-center gap-2">
+                            <MapPin size={10} /> Mon Club
+                        </button>
+                    </div>
+
+                    {/* Challenge Card High-Fidelity */}
+                    <div className="rounded-2xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
+                        <div className="p-3">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 className="text-[10px] font-black text-white mb-1">Partenaires Variés</h3>
+                                    <div className="inline-flex px-2 py-0.5 rounded-full bg-slate-800 border border-white/10 text-[6px] font-bold text-white/60">
+                                        Challenge en cours
+                                    </div>
+                                </div>
+                                <div className="bg-[#1e293b] border border-white/10 rounded-lg p-2 flex flex-col items-center">
+                                    <span className="text-[5px] font-black text-white/40 uppercase mb-0.5">RÉCOMPENSE</span>
+                                    <div className="flex items-center gap-1">
+                                        <Star size={8} className="text-yellow-400 fill-current" />
+                                        <span className="text-[8px] font-black text-white">8 pts</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden mb-1">
-                                <div className="h-full rounded-full" style={{ width: `${c.progress}%`, background: "rgb(var(--theme-secondary-accent))" }} />
+
+                            <div className="bg-slate-950/50 rounded-xl p-3 border border-white/5 mb-3">
+                                <div className="flex justify-between items-center mb-2">
+                                    <div>
+                                        <p className="text-[8px] font-black text-white mb-0.5">Objectif</p>
+                                        <p className="text-[6px] text-white/40">Jouer avec 2 partenaires différents</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-black text-white">2/2</span>
+                                        <p className="text-[6px] text-white/40">100%</p>
+                                    </div>
+                                </div>
+                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-blue-600 rounded-full" style={{ width: '100%' }} />
+                                </div>
                             </div>
-                            <p className="text-[6px] text-white/40">{c.desc}</p>
+
+                            <div className="flex items-center gap-1.5 mb-4 px-1">
+                                <Clock size={8} className="text-white/40" />
+                                <span className="text-[6px] text-white/40">Période : <span className="text-white">26 févr. 2026 → 26 mars 2026</span></span>
+                            </div>
+
+                            <button type="button" className="w-full py-2 rounded-xl bg-blue-600 text-white text-[9px] font-black shadow-lg shadow-blue-600/20 transition-all">
+                                Récupérer la récompense
+                            </button>
                         </div>
-                    ))}
+                    </div>
                 </div>
             )}
 
             {activeTab === 2 && (
-                <div className="animate-fadeIn space-y-3">
-                    {[
-                        { title: "Tournoi d'Hiver", date: "15 Mars - 20 Mars", players: "32/64" },
-                        { title: "Ligue Amiénoise", date: "Permanent", players: "128 Joueurs" },
-                    ].map((l, i) => (
-                        <div key={i} className="rounded-xl border p-3" style={{ borderColor: "rgba(var(--theme-text), 0.1)", background: "rgba(128, 128, 128, 0.05)" }}>
-                            <div className="flex justify-between items-start mb-2">
+                <div className="animate-fadeIn space-y-4 px-1 pb-4">
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 mb-2">
+                        <button type="button" className="flex-1 py-1.5 rounded-lg bg-[rgb(var(--theme-secondary-accent))] text-black text-[9px] font-black flex items-center justify-center gap-1 shadow-lg transition-all">
+                            <Plus size={10} className="stroke-[3px]" /> Créer une ligue
+                        </button>
+                        <button type="button" className="flex-1 py-1.5 rounded-lg border border-white/10 bg-[#1e293b] text-white text-[9px] font-black flex items-center justify-center gap-1 transition-all">
+                            <Key size={10} /> Rejoindre
+                        </button>
+                    </div>
+
+                    <div className="space-y-3">
+                        <h3 className="text-[8px] font-black text-white/60 uppercase tracking-widest pl-1">MES LIGUES</h3>
+
+                        <div className="rounded-2xl border border-white/10 bg-[#1e293b] p-3 shadow-xl">
+                            <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 className="text-[9px] font-black text-white uppercase">{l.title}</h3>
-                                    <p className="text-[7px] text-white/50">{l.date}</p>
+                                    <h4 className="text-[10px] font-black text-white mb-1 uppercase italic tracking-tight">Les champions</h4>
+                                    <div className="inline-flex px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[6px] font-black text-white/60">
+                                        <div className="flex items-center gap-1">
+                                            <Copy size={8} /> RTE5EM
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="px-1.5 py-0.5 rounded bg-white/10 text-[6px] font-black text-white">{l.players}</div>
                             </div>
-                            <button className="w-full py-1.5 rounded-lg border text-[7px] font-black uppercase tracking-widest" style={{ borderColor: "rgb(var(--theme-secondary-accent))", color: "rgb(var(--theme-secondary-accent))" }}>
-                                S'INSCRIRE
-                            </button>
+
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1">
+                                        <Users size={8} className="text-white/40" />
+                                        <span className="text-[6px] text-white/60">5/5</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock size={8} className="text-white/40" />
+                                        <span className="text-[6px] text-white/60">7j restants</span>
+                                    </div>
+                                </div>
+                                <span className="text-[6px] text-white/40 tracking-tight">1/5 matchs</span>
+                            </div>
+
+                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-[rgb(var(--theme-secondary-accent))] rounded-full" style={{ width: '20%' }} />
+                            </div>
                         </div>
-                    ))}
+                    </div>
                 </div>
             )}
         </div>
