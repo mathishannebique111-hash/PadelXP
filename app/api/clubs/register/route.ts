@@ -64,6 +64,10 @@ const clubRegisterSchema = z.object({
     }, z.number().int().min(1).max(100))
     .optional(),
   court_type: optionalText(60),
+  subdomain: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Sous-domaine invalide").optional(),
+  primary_color: z.string().trim().regex(/^#([0-9a-f]{3}){1,2}$/i, "Couleur invalide").optional(),
+  secondary_color: z.string().trim().regex(/^#([0-9a-f]{3}){1,2}$/i, "Couleur invalide").optional(),
+  background_color: z.string().trim().regex(/^#([0-9a-f]{3}){1,2}$/i, "Couleur invalide").optional(),
   owner_email: z
     .string()
     .trim()
@@ -118,6 +122,10 @@ export async function POST(req: Request) {
       website,
       number_of_courts,
       court_type,
+      subdomain,
+      primary_color,
+      secondary_color,
+      background_color,
       owner_email,
       logo_payload,
     } = parsedPayload.data;
@@ -253,6 +261,11 @@ export async function POST(req: Request) {
       court_type,
       offer_type: offerType,
     };
+
+    if (subdomain) upsertData.subdomain = subdomain;
+    if (primary_color) upsertData.primary_color = primary_color;
+    if (secondary_color) upsertData.secondary_color = secondary_color;
+    if (background_color) upsertData.background_color = background_color;
 
     // Initialiser trial_start et trial_end_date uniquement si c'est un nouveau club (pas d'existant ou trial_start non défini)
     if (!existingClub || !existingClub.trial_start) {

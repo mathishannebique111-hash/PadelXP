@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 
 interface SplashOverlayProps {
     isApp: boolean;
+    clubLogoUrl?: string | null;
+    clubPrimaryColor?: string | null;
 }
 
-export default function SplashOverlay({ isApp }: SplashOverlayProps) {
+export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor }: SplashOverlayProps) {
     const [visible, setVisible] = useState(true);
     const [fading, setFading] = useState(false);
 
@@ -35,6 +37,9 @@ export default function SplashOverlay({ isApp }: SplashOverlayProps) {
 
     if (!isApp || !visible) return null;
 
+    const bgColor = clubPrimaryColor || '#071554';
+    const logoSrc = clubLogoUrl || '/images/Logo sans fond.png';
+
     return (
         <div
             id="css-splash-overlay"
@@ -44,7 +49,7 @@ export default function SplashOverlay({ isApp }: SplashOverlayProps) {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: '#071554',
+                backgroundColor: bgColor,
                 zIndex: 999999,
                 display: 'flex',
                 alignItems: 'center',
@@ -55,10 +60,11 @@ export default function SplashOverlay({ isApp }: SplashOverlayProps) {
             }}
         >
             <img
-                src="/images/Logo sans fond.png"
-                alt="PadelXP"
+                src={logoSrc}
+                alt="App"
                 style={{ width: '280px', height: 'auto' }}
             />
         </div>
     );
 }
+

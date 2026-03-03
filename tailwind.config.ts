@@ -58,8 +58,9 @@ const config: Config = {
           "border-light": "rgb(var(--theme-border-light) / <alpha-value>)",
           accent: "rgb(var(--theme-accent) / <alpha-value>)",
           "accent-hover": "rgb(var(--theme-accent-hover) / <alpha-value>)",
+          "secondary-accent": "rgb(var(--theme-secondary-accent) / <alpha-value>)",
         },
-        'padel-green': '#CCFF00',
+        'padel-green': "rgb(var(--theme-secondary-accent) / <alpha-value>)",
         'padel-text': '#FFFFFF',
       },
       borderRadius: {

@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { getDepartmentFromPostalCode, getRegionFromDepartment } from "@/lib/utils/geo-leaderboard-utils";
 import { revalidatePath } from "next/cache";
 import { processReferralCode } from "@/lib/utils/referral-utils";
+import { headers } from "next/headers";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -29,11 +30,35 @@ export async function POST(req: Request) {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // ==========================================
+    // WHITE-LABEL: Association automatique au club
+    // ==========================================
+    const headersList = await headers();
+    const subdomain = headersList.get("x-club-subdomain");
+    let clubId = null;
+    let clubSlug = null;
+
+    if (subdomain) {
+      const { data: club } = await serviceClient
+        .from("clubs")
+        .select("id, slug")
+        .eq("subdomain", subdomain)
+        .maybeSingle();
+
+      if (club) {
+        clubId = club.id;
+        clubSlug = club.slug;
+      }
+    }
+
     // Préparer les données à mettre à jour
     const updateData: any = {
       has_completed_onboarding: true,
       email: user.email, // Sync email to profile
     };
+
+    if (clubId) updateData.club_id = clubId;
+    if (clubSlug) updateData.club_slug = clubSlug;
 
     // Si ce n'est pas un skip, ajouter les réponses
     if (!skip && answers) {

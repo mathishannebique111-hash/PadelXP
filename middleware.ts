@@ -100,6 +100,36 @@ export async function middleware(req: NextRequest) {
     ? pathname.slice(0, -1)
     : pathname;
 
+  // ==========================================
+  // WHITE-LABEL: Détection du sous-domaine
+  // ==========================================
+  const hostname = req.headers.get("host") || "";
+  const cleanHost = hostname.split(":")[0];
+  const hostParts = cleanHost.split(".");
+  const clubSubdomain = (hostParts.length > 2 && hostParts[0] !== "www")
+    ? hostParts[0]
+    : null;
+
+  // On stocke le sous-domaine dans les headers de la requête
+  // pour que le layout.tsx puisse le lire via headers()
+  const requestHeaders = new Headers(req.headers);
+  if (clubSubdomain) {
+    requestHeaders.set("x-club-subdomain", clubSubdomain);
+
+    // Rediriger la racine vers /install pour les sous-domaines de clubs
+    // Sauf si le joueur est en mode PWA standalone (déjà installé)
+    if (normalizedPathname === '/' || normalizedPathname === '') {
+      const isStandalone = req.headers.get('sec-fetch-dest') === 'document'
+        && req.headers.get('sec-fetch-mode') === 'navigate';
+      // Ne pas rediriger si le referer contient déjà /install (éviter boucle)
+      const referer = req.headers.get('referer') || '';
+      if (!referer.includes('/install')) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/install';
+        return NextResponse.redirect(url);
+      }
+    }
+  }
 
   // BLOQUER LES URLs CLUB DANS L'APP MOBILE
   const userAgent = req.headers.get('user-agent') || '';
@@ -309,6 +339,7 @@ export async function middleware(req: NextRequest) {
     "/api/guest/",       // Allow guest API
     "/api/contact/",     // Allow public contact forms
     "/api/attenteandroid/", // Allow public Android waitlist
+    "/api/manifest",     // Allow PWA manifest (white-label)
     "/.well-known/",     // Allow Digital Asset Links and Apple Site Association
     "/share",            // Public profile sharing card
     "/_next/",
@@ -331,6 +362,7 @@ export async function middleware(req: NextRequest) {
     "/player/login",
     "/player/signup",
     "/download",  // NOUVEAU : page de téléchargement app
+    "/install",  // Page d'installation branded club
     "/forgot-password",  // Page de réinitialisation de mot de passe
     "/reset-password",  // Page de définition du nouveau mot de passe
     "/terms",
@@ -362,7 +394,7 @@ export async function middleware(req: NextRequest) {
 
   // Si la route est publique, laisser passer immédiatement
   if (isPublic) {
-    const publicResponse = NextResponse.next();
+    const publicResponse = NextResponse.next({ request: { headers: requestHeaders } });
     if (rateLimitInfo) {
       publicResponse.headers.set("X-RateLimit-Limit", rateLimitInfo.limit);
       publicResponse.headers.set("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
@@ -374,7 +406,7 @@ export async function middleware(req: NextRequest) {
 
 
   // 3) AUTH & PERF OPTIMIZATION
-  const res = NextResponse.next();
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
 
   if (rateLimitInfo) {
     res.headers.set("X-RateLimit-Limit", rateLimitInfo.limit);

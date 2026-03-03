@@ -5,18 +5,25 @@ import SafeAreas from './components/SafeAreas';
 import OfflineWrapper from "@/components/OfflineWrapper";
 import SplashOverlay from "@/components/SplashOverlay";
 import { Toaster } from "sonner";
-
-export const metadata: Metadata = {
-  title: "PadelXP",
-  description: "Leaderboards, rangs, badges et ligues pour complexes de padel",
-  icons: {
-    icon: "/images/flavicon.png",
-    shortcut: "/images/flavicon.png",
-    apple: "/images/flavicon.png",
-  },
-};
-
 import { headers } from "next/headers";
+import { extractSubdomain, getClubBranding, hexToRgbTriplet } from "@/lib/club-branding";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+  const branding = await getClubBranding(subdomain);
+
+  return {
+    title: subdomain ? branding.name : "PadelXP",
+    description: subdomain ? `Application officielle de ${branding.name}` : "Leaderboards, rangs, badges et ligues pour complexes de padel",
+    icons: {
+      icon: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
+      shortcut: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
+      apple: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +35,36 @@ export default async function RootLayout({
   const isApp = userAgent.toLowerCase().includes('padelxpcapacitor') ||
     userAgent.toLowerCase().includes('capacitor');
 
+  // ==========================================
+  // WHITE-LABEL: Récupérer le branding du club
+  // ==========================================
+  const host = headersList.get('host') || '';
+  const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+  const branding = await getClubBranding(subdomain);
+
+  // Convertir les couleurs hex en triplets RGB pour les variables CSS
+  const accentRgb = hexToRgbTriplet(branding.primary_color);
+  const accentHoverRgb = hexToRgbTriplet(branding.secondary_color);
+  const bgRgb = hexToRgbTriplet(branding.background_color);
+
+  // CSS dynamique pour le branding du club
+  const brandingCSS = subdomain ? `
+    :root {
+      --theme-accent: ${accentRgb};
+      --theme-accent-hover: ${accentHoverRgb};
+      --theme-secondary-accent: ${accentHoverRgb};
+      --theme-page: ${bgRgb};
+      --theme-player-page: ${bgRgb};
+      --color-primary: ${branding.primary_color};
+    }
+  ` : '';
+
   return (
     <html lang="fr" className={isApp ? 'is-app' : ''} style={{ backgroundColor: '#172554', ...(isApp ? { '--sat': '65px' } : {}) } as any} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="theme-color" content="#172554" />
+        <meta name="theme-color" content={subdomain ? branding.primary_color : '#172554'} />
+        <link rel="manifest" href="/api/manifest" />
 
         <style
           dangerouslySetInnerHTML={{
@@ -52,6 +84,8 @@ export default async function RootLayout({
               html, body {
                 background-color: #172554 !important;
               }
+
+              ${brandingCSS}
             `,
           }}
         />
@@ -70,8 +104,8 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${isApp ? 'is-app' : ''} bg-[#172554] text-white min-h-screen`} style={{ backgroundColor: '#172554' }} data-is-app={isApp ? 'true' : 'false'} suppressHydrationWarning>
-        <SplashOverlay isApp={isApp} />
+      <body className={`${isApp ? 'is-app' : ''} bg-[#172554] text-white min-h-screen`} style={{ backgroundColor: '#172554' }} data-is-app={isApp ? 'true' : 'false'} data-club-subdomain={subdomain || ''} suppressHydrationWarning>
+        <SplashOverlay isApp={isApp} clubLogoUrl={branding.logo_url} clubPrimaryColor={subdomain ? branding.primary_color : null} />
         <SafeAreas />
         <OfflineWrapper />
         {children}
@@ -86,3 +120,4 @@ export default async function RootLayout({
     </html>
   );
 }
+

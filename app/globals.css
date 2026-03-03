@@ -55,11 +55,11 @@
     --theme-border-light: 255 255 255;
     /* blanc pour opacité (border-white/10 = 0.1) */
 
-    /* Accents (bleu de marque) - RGB nues */
-    --theme-accent: 37 99 235;
-    /* #2563EB - blue-600 */
-    --theme-accent-hover: 29 78 216;
-    /* #1D4ED8 - blue-700 */
+    /* Accents (couleurs de marque) - RGB nues */
+    /* Valeurs par défaut : #0066FF (Bleu PadelXP) et #CCFF00 (Vert PadelXP) */
+    --theme-accent: 0 102 255;
+    --theme-accent-hover: 0 82 204;
+    --theme-secondary-accent: 204 255 0;
 
     /* Safe Area Controls (Couleurs en HEX pour le JS) */
     --safe-area-top: #172554;

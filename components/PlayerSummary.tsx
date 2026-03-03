@@ -303,7 +303,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
   // Calcul du winrate (utiliser les stats avec limite quotidienne pour l'affichage)
   const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-  const winrateColor = winrate > 60 ? "#10B981" : winrate >= 40 ? "#0066FF" : "#EF4444";
+  const winrateColor = winrate > 60 ? "#10B981" : winrate >= 40 ? "var(--theme-accent)" : "#EF4444";
 
   // Nombre total de badges standards
   const totalBadges = ALL_BADGES.length;
@@ -312,7 +312,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
   return (
     <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border border-white/80 p-6 sm:p-8 md:p-10 text-white shadow-xl relative overflow-hidden" style={{
-      background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, rgba(0,102,255,0.08), transparent 70%)"
+      background: "linear-gradient(135deg, var(--theme-page) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, var(--theme-accent-rgba, rgba(0,102,255,0.08)), transparent 70%)"
     }}>
       <div>
         {/* Notifier client pour les changements de niveau */}
@@ -369,7 +369,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Points - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'var(--theme-secondary-accent)' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Points</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">
@@ -380,7 +380,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Matchs - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: '#CCFF00' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'var(--theme-secondary-accent)' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Matchs</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{matches}</div>
@@ -434,7 +434,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
                 background: winrate > 60
                   ? "linear-gradient(to right, #10B981, #059669)"
                   : winrate >= 40
-                    ? "linear-gradient(to right, #0066FF, #0052CC)"
+                    ? "linear-gradient(to right, var(--theme-accent), #0052CC)"
                     : "linear-gradient(to right, #EF4444, #DC2626)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",

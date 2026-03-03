@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import EmailSignup from "@/components/auth/EmailSignup";
 import HideSplashScreen from "@/components/HideSplashScreen";
+import { headers } from "next/headers";
+import { extractSubdomain, getClubBranding } from "@/lib/club-branding";
 
 export default async function PlayerSignupPage() {
   const supabase = await createClient();
@@ -25,6 +27,13 @@ export default async function PlayerSignupPage() {
     // Sinon, l'inscription est incomplète - laisser continuer
   }
 
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  const subdomain = headersList.get("x-club-subdomain") || extractSubdomain(host);
+  const branding = await getClubBranding(subdomain);
+
+  const logoUrl = subdomain && branding.logo_url ? branding.logo_url : "/images/Logo sans fond.png";
+
   return (
     <>
       <HideSplashScreen />
@@ -35,9 +44,9 @@ export default async function PlayerSignupPage() {
         {/* Logo en haut */}
         <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20 pointer-events-none">
           <img
-            src="/images/Logo sans fond.png"
-            alt="PadelXP Logo"
-            className="w-28 h-auto object-contain opacity-90 drop-shadow-2xl pointer-events-none"
+            src={logoUrl}
+            alt={subdomain ? branding.name : "PadelXP Logo"}
+            className="w-28 h-28 object-contain opacity-90 drop-shadow-2xl pointer-events-none rounded-2xl"
           />
         </div>
 

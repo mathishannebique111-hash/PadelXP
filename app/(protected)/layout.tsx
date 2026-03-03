@@ -13,6 +13,8 @@ import ToastContainer from '@/components/ui/Toast';
 import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNotifier';
 import { createClient } from '@/lib/supabase/server';
 import { getPlayerChallenges } from '@/lib/challenges';
+import { getUserClubInfo } from '@/lib/utils/club-utils';
+import { getClubLogoPublicUrl } from '@/lib/utils/club-logo-utils';
 
 export default async function PlayerAccountLayout({
   children,
@@ -42,6 +44,10 @@ export default async function PlayerAccountLayout({
     }
   }
 
+  // Récupérer les informations du club pour le branding
+  const { clubLogoUrl } = await getUserClubInfo();
+  const publicLogoUrl = clubLogoUrl ? getClubLogoPublicUrl(clubLogoUrl) : null;
+
   return (
     <>
       <PlayerSafeAreaColor />
@@ -64,7 +70,7 @@ export default async function PlayerAccountLayout({
             <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 160px, rgba(0,0,0,0.8) 70%, #000000 100%)' }} />
 
             {/* Logo PadelXP Header (scroll avec contenus) */}
-            <HeaderLogo />
+            <HeaderLogo logoUrl={publicLogoUrl} />
 
             {/* Logo du club + Settings (Top Right) - Logo à gauche, Settings à droite */}
             <div
@@ -75,7 +81,6 @@ export default async function PlayerAccountLayout({
                 right: '0.75rem'
               }}
             >
-              <PlayerClubLogo />
               <Suspense fallback={null}>
                 <PlayerSidebar />
               </Suspense>
