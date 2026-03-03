@@ -1,21 +1,33 @@
 import React from "react";
 import { Flame, User, Search, MapPin, Map as MapIcon, Globe, Eye, Trophy, X, Share2, Medal, Check, Award, Crown, Sparkles, ChevronRight, Clock, FileText, Star, Plus, Key, Copy, Users } from "lucide-react";
 
+const isLightColor = (color: string) => {
+    const hex = color.replace('#', '');
+    if (hex.length < 6) return false;
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 155;
+};
+
 // Custom Replicas matching Native App Components
 export const ReplicaPageTitle = ({ title, subtitle, icon }: { title: string, subtitle?: string, icon?: React.ReactNode }) => (
     <div className="mb-2">
-        <section className="relative overflow-hidden rounded-[8px] border inline-block text-white shadow-sm" style={{ background: "rgba(255, 255, 255, 0.05)", borderColor: "rgba(255, 255, 255, 0.1)", backdropFilter: "blur(4px)" }}>
+        <section className="relative overflow-hidden rounded-[8px] border inline-block shadow-sm" style={{ background: "rgba(var(--theme-accent), 0.08)", borderColor: "rgba(var(--theme-accent), 0.4)", backdropFilter: "blur(6px)" }}>
             <div className="relative z-10 flex items-center">
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5">
-                    <span className="w-[2.5px] self-stretch rounded-full flex-shrink-0" style={{ background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2))' }} />
+                    <span className="w-[3px] self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
                     <div className="flex items-center gap-1.5">
-                        {icon && <span className="text-[10px] drop-shadow-sm">{icon}</span>}
-                        <h1 className="text-[10px] font-black tracking-tight text-white leading-tight drop-shadow-sm">{title}</h1>
+                        {icon && <span className="text-[10px] drop-shadow-sm transition-colors duration-500" style={{ color: "var(--theme-text)" }}>{icon}</span>}
+                        <h1 className="text-[10px] font-black tracking-tight leading-tight drop-shadow-sm transition-colors duration-500" style={{ color: "var(--theme-text)" }}>{title}</h1>
                     </div>
                 </div>
             </div>
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-[rgba(var(--theme-accent),0.1)] to-transparent pointer-none" />
         </section>
-        {subtitle && <p className="mt-1 ml-1 text-[7px] text-white/60 font-semibold">{subtitle}</p>}
+        {subtitle && <p className="mt-1 ml-1 text-[7px] font-semibold opacity-60 transition-colors duration-500" style={{ color: "var(--theme-text)" }}>{subtitle}</p>}
     </div>
 );
 
@@ -25,22 +37,22 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
 
     return (
         <div className="w-full mb-3 animate-fadeIn group">
-            <div className="relative p-2 rounded-xl border border-white/[0.04] bg-white/[0.02] backdrop-blur-sm">
+            <div className="relative p-2 rounded-xl border bg-white/[0.02] backdrop-blur-sm" style={{ borderColor: accentColor }}>
                 <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
                             <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full bg-white/5 border border-white/10" style={{ color: accentColor }}>
                                 <Trophy size={10} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[9px] font-medium text-white/90 truncate">
+                            <span className="text-[9px] font-medium truncate" style={{ color: "rgba(var(--theme-text-rgb), 0.9)" }}>
                                 {title}
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className="text-[8px] text-white/40 font-bold tabular-nums uppercase tracking-wider">
+                            <span className="text-[8px] font-bold tabular-nums uppercase tracking-wider" style={{ color: "var(--theme-text-muted)" }}>
                                 {current} / {target}
                             </span>
-                            <ChevronRight size={10} className="text-white/20" />
+                            <ChevronRight size={10} style={{ color: "rgba(var(--theme-text-rgb), 0.2)" }} />
                         </div>
                     </div>
                     <div className="h-0.5 w-full rounded-full bg-black/40 overflow-hidden">
@@ -149,7 +161,7 @@ export const ReplicaPendingMatchCard = ({
             ) : (
                 <div className="flex items-center gap-1">
                     <button type="button" className="p-1 text-gray-400 bg-white rounded-md border border-gray-100"><X size={8} /></button>
-                    <button type="button" className="bg-blue-600 text-white px-2 py-1 rounded-md text-[8px] font-black shadow-sm">CONFIRMER</button>
+                    <button type="button" className="text-white px-2 py-1 rounded-md text-[8px] font-black shadow-sm" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))" }}>CONFIRMER</button>
                 </div>
             )}
         </div>
@@ -157,8 +169,8 @@ export const ReplicaPendingMatchCard = ({
 );
 
 
-export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl }: { name: string, level: string, compatibility: number, avatarUrl?: string }) => (
-    <div className="bg-slate-800/50 rounded-xl p-2 border border-white/10 flex flex-col h-full animate-fadeIn transition-all active:scale-[0.98] min-h-[100px] justify-between">
+export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLightPage, accentColor }: { name: string, level: string, compatibility: number, avatarUrl?: string, isLightPage?: boolean, accentColor?: string }) => (
+    <div className={`rounded-xl p-2 border flex flex-col h-full animate-fadeIn transition-all active:scale-[0.98] min-h-[100px] justify-between ${isLightPage ? 'bg-transparent' : 'bg-slate-800/50'}`} style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
         <div className="flex flex-col items-center text-center py-0.5">
             <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white/40 border-2 border-white/20 mb-1 shadow-sm overflow-hidden">
                 {avatarUrl ? (
@@ -167,14 +179,14 @@ export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl }: { 
                     <User size={14} />
                 )}
             </div>
-            <h4 className="font-black text-white text-[7px] leading-tight mb-0.5 line-clamp-1 w-full px-0.5 italic">
+            <h4 className="font-black text-[7px] leading-tight mb-0.5 line-clamp-1 w-full px-0.5 italic" style={{ color: "var(--theme-text)" }}>
                 {name}
             </h4>
             <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-1.5 py-0.5 mb-1 border border-white/10">
-                <span className="text-[6px] text-white/90 font-black">Niveau {level}</span>
+                <span className="text-[6px] font-black" style={{ color: "rgba(var(--theme-text-rgb), 0.9)" }}>Niveau {level}</span>
             </div>
             <div className="w-full max-w-[70px] flex items-center gap-1">
-                <div className="h-0.5 flex-1 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-0.5 flex-1 bg-slate-700/30 rounded-full overflow-hidden">
                     <div
                         className="h-full bg-gradient-to-r from-green-500 to-emerald-500 shadow-[0_0_6px_#22c55e]"
                         style={{ width: `${compatibility}%` }}
@@ -191,13 +203,13 @@ export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl }: { 
 );
 
 export const Tabs = ({ items, activeIdx, onChange }: { items: string[], activeIdx: number, onChange?: (idx: number) => void }) => (
-    <div className="flex items-center w-full mb-3 border-b" style={{ borderColor: 'rgb(var(--theme-text) / 0.1)' }}>
+    <div className="flex items-center w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text-rgb), 0.1)' }}>
         {items.map((item, i) => (
             <button
                 key={item}
                 type="button"
                 onClick={() => onChange?.(i)}
-                className={`flex-1 py-1.5 text-[7px] font-black transition-all duration-200 relative text-center uppercase tracking-tighter cursor-pointer`}
+                className={`flex-1 py-1.5 text-[7px] font-black transition-all duration-200 relative text-center capitalize tracking-tighter cursor-pointer`}
                 style={{ color: i === activeIdx ? "var(--theme-text)" : "var(--theme-text-muted)" }}
             >
                 <span className="flex items-center justify-center gap-1">{item}</span>
@@ -208,7 +220,7 @@ export const Tabs = ({ items, activeIdx, onChange }: { items: string[], activeId
 );
 
 // Screens
-export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { clubName?: string, clubCity?: string, clubData?: { street?: string, postalCode?: string, phone?: string, numberOfCourts?: string, courtType?: string }, logoUrl?: string | null }) => {
+export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentColor, backgroundColor }: { clubName?: string, clubCity?: string, clubData?: { street?: string, postalCode?: string, phone?: string, numberOfCourts?: string, courtType?: string }, logoUrl?: string | null, accentColor?: string, backgroundColor?: string }) => {
     const [activeTab, setActiveTab] = React.useState(0);
     const displayClubName = clubName || 'Padel Club Amiens';
     const displayCity = clubCity || 'Amiens';
@@ -218,6 +230,17 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
     const displayCourts = clubData?.numberOfCourts || '6';
     const displayCourtType = clubData?.courtType || 'Couverts';
     const displayLogoUrl = logoUrl || '/images/Logo sans fond.png';
+
+    const effectiveBg = backgroundColor || '#172554';
+    const isLightPage = isLightColor(effectiveBg);
+    const clubBgColor = isLightPage ? '#FFFFFF' : '#000000';
+    const clubTextContrast = isLightPage ? '#000000' : '#FFFFFF';
+    const clubMutedContrast = isLightPage ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)';
+    const clubBorderContrast = accentColor || '#172554';
+    const isLightAccent = isLightColor(accentColor || '#172554');
+    const statTextColor = isLightAccent ? '#071554' : '#FFFFFF';
+    const statTextMuted = isLightAccent ? 'rgba(7, 21, 84, 0.7)' : 'rgba(255, 255, 255, 0.7)';
+
     return (
         <div className="w-full h-full overflow-y-auto pb-4 animate-fadeIn font-sans pt-2">
 
@@ -231,17 +254,20 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
             {activeTab === 0 && (
                 <div className="animate-fadeIn px-1 space-y-2">
                     {/* PROFILE CONTENT (Circular Gauge Wrapper) */}
-                    <div className="bg-white/5 rounded-[12px] border border-white/20 p-2 sm:p-2.5">
+                    <div
+                        className="bg-white/5 rounded-[12px] border p-2 sm:p-2.5 transition-all duration-500 shadow-sm"
+                        style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', boxShadow: isLightPage ? `0 0 10px ${accentColor}15` : 'none' }}
+                    >
                         <div className="flex flex-col items-center">
-                            <div className="relative w-24 h-24 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(185,255,0,0.05)] bg-slate-900/50 backdrop-blur-md">
+                            <div className="relative w-24 h-24 rounded-full flex items-center justify-center mb-2 shadow-sm transition-colors" style={{ backgroundColor: effectiveBg }}>
                                 {/* Gauge SVG */}
                                 <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/10" />
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-500/30" />
                                     <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-secondary-accent))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80 drop-shadow-[0_0_6px_rgba(204,255,0,0.4)]" />
                                 </svg>
                                 <div className="flex flex-col items-center justify-center z-10 text-center">
-                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium text-[rgb(var(--theme-secondary-accent))]/80 mb-0.5">Niveau</span>
-                                    <span className="text-2xl font-black text-white leading-none tracking-tighter drop-shadow-md">6.49</span>
+                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: "rgb(var(--theme-secondary-accent))" }}>Niveau</span>
+                                    <span className="text-2xl font-black leading-none tracking-tighter drop-shadow-md" style={{ color: "var(--theme-text)" }}>6.49</span>
                                 </div>
                             </div>
 
@@ -254,7 +280,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
 
                                 <div className="pt-1.5">
                                     <div className="flex justify-between items-center mb-1">
-                                        <span className="text-[5px] font-medium text-white/50 uppercase tracking-wide">Vers niveau 7</span>
+                                        <span className="text-[5px] font-medium uppercase tracking-wide" style={{ color: "var(--theme-text-muted)" }}>Vers niveau 7</span>
                                         <span className="text-[6px] font-semibold text-[rgb(var(--theme-secondary-accent))]">49%</span>
                                     </div>
                                     <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
@@ -267,34 +293,24 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
 
                     {/* About details: High Fidelity Replica with rounded-2xl & green icons */}
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
-                            <Flame className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Niveau</div>
-                                <div className="text-[6px] font-black text-white leading-tight">Compétition</div>
+                        {[
+                            { icon: Flame, label: "Niveau", value: "Compétition" },
+                            { icon: User, label: "Main", value: "Droitier" },
+                            { icon: MapIcon, label: "Côté Préféré", value: "Gauche" },
+                            { icon: Trophy, label: "Coup Signature", value: "Smash" }
+                        ].map((item, idx) => (
+                            <div
+                                key={idx}
+                                className="rounded-2xl border bg-white/5 p-3 flex items-center gap-2.5 transition-all duration-500 shadow-sm"
+                                style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.3)', boxShadow: isLightPage ? `0 0 8px ${accentColor}10` : 'none' }}
+                            >
+                                <item.icon className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-[5px] uppercase tracking-widest font-black mb-0.5" style={{ color: "var(--theme-text-muted)" }}>{item.label}</div>
+                                    <div className="text-[6px] font-black leading-tight" style={{ color: "var(--theme-text)" }}>{item.value}</div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
-                            <User className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Main</div>
-                                <div className="text-[8px] font-black text-white leading-tight">Droitier</div>
-                            </div>
-                        </div>
-                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
-                            <MapIcon className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Côté Préféré</div>
-                                <div className="text-[8px] font-black text-white leading-tight">Gauche</div>
-                            </div>
-                        </div>
-                        <div className="rounded-2xl border border-white/30 bg-white/5 p-3 flex items-center gap-2.5">
-                            <Trophy className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <div className="text-[5px] text-white/50 uppercase tracking-widest font-black mb-0.5">Coup Signature</div>
-                                <div className="text-[8px] font-black text-white leading-tight">Smash</div>
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             )}
@@ -304,31 +320,31 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
                 <div className="animate-fadeIn px-1 space-y-3 pb-4">
                     {/* Stats Header with Tier */}
                     <div className="flex items-center justify-between px-1">
-                        <h2 className="text-[8px] font-black tracking-[0.2em] text-white/40 uppercase">Mes Statistiques</h2>
+                        <h2 className="text-[8px] font-black tracking-[0.2em] uppercase" style={{ color: "var(--theme-text-muted)" }}>Mes Statistiques</h2>
                         <div className="px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white text-[6px] font-black shadow-sm flex items-center gap-1">
                             <Crown size={7} /> CHAMPION
                         </div>
                     </div>
 
                     {/* Lilian's Streak Card Component Clone */}
-                    <div className="relative rounded-lg border px-3 py-2 overflow-hidden shadow-sm bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20" style={{ borderColor: "rgb(var(--theme-secondary-accent))" }}>
+                    <div className="relative rounded-lg border px-3 py-2 overflow-hidden shadow-sm" style={{ backgroundColor: accentColor, borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)' }}>
                         <div className="relative z-10 flex items-center justify-between gap-3">
                             <div className="flex-1">
-                                <div className="text-[6px] font-medium text-[rgb(var(--theme-secondary-accent))] uppercase mb-1 tracking-[0.15em]">Série de victoires en cours</div>
+                                <div className="text-[6px] font-medium uppercase mb-1 tracking-[0.15em]" style={{ color: statTextMuted }}>Série de victoires en cours</div>
                                 <div className="flex items-baseline gap-1.5">
-                                    <span className="text-2xl font-black text-white tabular-nums leading-none">5</span>
-                                    <span className="text-[7px] text-white/80 uppercase tracking-[0.1em]">victoires</span>
+                                    <span className="text-2xl font-black tabular-nums leading-none" style={{ color: statTextColor }}>5</span>
+                                    <span className="text-[7px] uppercase tracking-[0.1em]" style={{ color: statTextMuted }}>victoires</span>
                                 </div>
                             </div>
                             <div className="flex flex-col items-end gap-1 relative">
                                 <div className="relative z-10">
-                                    <Flame size={20} className="text-white drop-shadow-[0_0_8px_rgba(204,255,0,0.6)]" strokeWidth={1.5} />
+                                    <Flame size={20} style={{ color: statTextColor }} strokeWidth={1.5} />
                                 </div>
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none">
-                                    <Flame size={40} className="text-[rgb(var(--theme-secondary-accent))]/20 blur-[1px] transform scale-125" strokeWidth={3} />
+                                    <Flame size={40} className="blur-[1px] transform scale-125" style={{ color: statTextColor, opacity: 0.2 }} strokeWidth={3} />
                                 </div>
-                                <div className="text-[6px] text-white/80 mt-1">
-                                    Meilleure : <span className="font-semibold tabular-nums text-[rgb(var(--theme-secondary-accent))]">18</span>
+                                <div className="text-[6px] mt-1" style={{ color: statTextMuted }}>
+                                    Meilleure : <span className="font-semibold tabular-nums" style={{ color: statTextColor }}>18</span>
                                 </div>
                             </div>
                         </div>
@@ -337,47 +353,47 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
                     {/* Exact 8-cell Grid Replica */}
                     <div className="grid grid-cols-2 gap-2 text-[7px] sm:text-xs">
                         {/* Points */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Points</div>
-                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">695</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Points</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>695</div>
                         </div>
                         {/* Matchs */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Matchs</div>
-                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">64</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Matchs</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>64</div>
                         </div>
                         {/* Victoires */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Victoires</div>
-                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">55</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Victoires</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>55</div>
                         </div>
                         {/* Défaites */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Défaites</div>
-                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">9</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Défaites</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>9</div>
                         </div>
                         {/* Sets gagnés */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Sets gagnés</div>
-                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">110</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Sets gagnés</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>110</div>
                         </div>
                         {/* Sets perdus */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Sets perdus</div>
-                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">22</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Sets perdus</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>22</div>
                         </div>
                         {/* Winrate */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Winrate</div>
-                            <div className="text-xl font-black tabular-nums leading-none flex items-center" style={{ background: "linear-gradient(to right, #10B981, #059669)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                                <span className="inline-block mr-0.5" style={{ WebkitTextFillColor: "initial", color: "#10B981" }}>↗</span>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Winrate</div>
+                            <div className="text-xl font-black tabular-nums leading-none flex items-center transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>
+                                <span className="inline-block mr-0.5 transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000', opacity: 0.8 }}>↗</span>
                                 85%
                             </div>
                         </div>
                         {/* Badges */}
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start" style={{ borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Badges</div>
-                            <div className="text-xl font-black text-[#172554] tabular-nums leading-none">15</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Badges</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>15</div>
                         </div>
                     </div>
                 </div>
@@ -386,33 +402,33 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
             {activeTab === 2 && (
                 <div className="animate-fadeIn space-y-3 px-1 pb-6">
                     {/* Badge Summary Header Clone from BadgesView.tsx */}
-                    <div className="mb-3 rounded-xl border border-white/20 px-3 py-2 sm:px-4 sm:py-3 shadow-sm bg-white/10 backdrop-blur-sm max-w-[200px] mx-auto">
+                    <div className="mb-3 rounded-xl border px-3 py-2 sm:px-4 sm:py-3 shadow-sm bg-white/5 max-w-[200px] mx-auto" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)' }}>
                         <div className="flex items-center justify-between gap-1">
                             {/* Left: Progression */}
                             <div className="text-center w-14 flex-shrink-0">
-                                <div className="text-xl font-bold text-white tabular-nums flex items-baseline justify-center">
+                                <div className="text-xl font-bold tabular-nums flex items-baseline justify-center" style={{ color: "var(--theme-text)" }}>
                                     15
-                                    <span className="text-[10px] text-white/40 ml-0.5">/ 33</span>
+                                    <span className="text-[10px] ml-0.5" style={{ color: "var(--theme-text-muted)" }}>/ 33</span>
                                 </div>
-                                <div className="text-[7px] font-semibold text-white/80 uppercase">Badges</div>
+                                <div className="text-[7px] font-semibold uppercase" style={{ color: "rgba(var(--theme-text-rgb), 0.8)" }}>Badges</div>
                             </div>
 
                             {/* Divider */}
-                            <div className="w-px h-8 bg-white/30 flex-shrink-0"></div>
+                            <div className="w-px h-8 bg-black/10 dark:bg-white/30 flex-shrink-0" style={{ backgroundColor: clubBorderContrast }}></div>
 
                             {/* Right: Breakdown - shifted slightly right */}
                             <div className="flex-1 flex justify-around items-center gap-1 min-w-0 pl-1">
                                 <div className="text-center">
-                                    <div className="text-[12px] font-bold text-white tabular-nums">15</div>
-                                    <div className="text-[5px] font-medium text-white/80 uppercase tracking-tighter">Standard</div>
+                                    <div className="text-[12px] font-bold tabular-nums" style={{ color: "var(--theme-text)" }}>15</div>
+                                    <div className="text-[5px] font-medium uppercase tracking-tighter" style={{ color: "var(--theme-text-muted)" }}>Standard</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-[12px] font-bold text-white tabular-nums">0</div>
-                                    <div className="text-[5px] font-medium text-white/80 uppercase tracking-tighter">Challenge</div>
+                                    <div className="text-[12px] font-bold tabular-nums" style={{ color: "var(--theme-text)" }}>0</div>
+                                    <div className="text-[5px] font-medium uppercase tracking-tighter" style={{ color: "var(--theme-text-muted)" }}>Challenge</div>
                                 </div>
                                 <div className="text-center opacity-50">
-                                    <div className="text-[12px] font-bold text-amber-400 tabular-nums">0</div>
-                                    <div className="text-[5px] font-medium text-amber-400/90 uppercase tracking-tighter">Premium</div>
+                                    <div className="text-[12px] font-bold text-amber-500 tabular-nums">0</div>
+                                    <div className="text-[5px] font-medium text-amber-500 uppercase tracking-tighter">Premium</div>
                                 </div>
                             </div>
                         </div>
@@ -420,11 +436,11 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
 
                     {/* Filter Buttons - Resized and Renamed */}
                     <div className="flex justify-center gap-2 mb-3">
-                        <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[5.5px] font-black transition-all whitespace-nowrap bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/50">
+                        <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[5.5px] font-black transition-all whitespace-nowrap border shadow-sm" style={{ backgroundColor: effectiveBg, borderColor: accentColor, borderWidth: '2px', color: accentColor }}>
                             <Award size={9} />
                             GÉNÉRAL
                         </button>
-                        <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[5.5px] font-black transition-all whitespace-nowrap bg-white/10 text-white/60">
+                        <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[5.5px] font-black transition-all whitespace-nowrap border shadow-sm" style={{ backgroundColor: effectiveBg, borderColor: accentColor, borderWidth: '1px', color: accentColor }}>
                             <Trophy size={9} />
                             CHALLENGES
                         </button>
@@ -438,20 +454,20 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
                             { icon: Flame, title: "Série de 5", desc: "Gagnez 5 matchs consécutifs", color: "#F97316" },
                             { icon: Crown, title: "Maître", desc: "Atteignez le niveau 7.00", color: "#A855F7" },
                         ].map((b, i) => (
-                            <div key={i} className="group relative rounded-xl border border-blue-500/30 bg-white/95 px-2 pt-3 pb-2 transition-all flex flex-col h-[110px] items-center text-center overflow-hidden shadow-sm">
+                            <div key={i} className="group relative rounded-xl border bg-white/5 px-2 pt-3 pb-2 transition-all flex flex-col h-[110px] items-center text-center overflow-hidden shadow-sm" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.15)' }}>
                                 <div className="flex-shrink-0 mb-1.5 h-[32px] flex items-center justify-center">
-                                    <b.icon size={28} className="text-gray-900" strokeWidth={2.5} />
+                                    <b.icon size={28} style={{ color: "var(--theme-text)" }} strokeWidth={2.5} />
                                 </div>
                                 <div className="flex-shrink-0 flex flex-col items-center justify-center min-h-0 max-h-[50px] mb-1 px-1">
-                                    <h3 className="text-[8px] font-black leading-tight mb-0.5 text-gray-900 line-clamp-2">
+                                    <h3 className="text-[8px] font-black leading-tight mb-0.5 line-clamp-2" style={{ color: "var(--theme-text)" }}>
                                         {b.title}
                                     </h3>
-                                    <p className="text-[6px] leading-[1.1] text-gray-400 font-bold line-clamp-2">
+                                    <p className="text-[6px] leading-[1.1] font-bold line-clamp-2" style={{ color: "var(--theme-text-muted)" }}>
                                         {b.desc}
                                     </p>
                                 </div>
                                 <div className="flex-shrink-0 w-full mt-auto">
-                                    <div className="w-full rounded-md px-1 py-1 text-[7px] font-black tabular-nums bg-green-50 text-green-600 flex items-center justify-center gap-0.5 border border-green-100">
+                                    <div className="w-full rounded-md px-1 py-1 text-[7px] font-black tabular-nums flex items-center justify-center gap-0.5 border" style={{ color: isLightPage ? '#16a34a' : '#4ade80', backgroundColor: isLightPage ? 'rgba(22, 163, 74, 0.1)' : 'rgba(74, 222, 128, 0.1)', borderColor: isLightPage ? 'rgba(22, 163, 74, 0.2)' : 'rgba(74, 222, 128, 0.2)' }}>
                                         ✓ DÉBLOQUÉ
                                     </div>
                                 </div>
@@ -464,46 +480,46 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
             {activeTab === 3 && (
                 <div className="animate-fadeIn space-y-2 px-1 pb-4">
                     {/* Club Header */}
-                    <div className="rounded-xl border border-white/10 p-2.5 bg-gradient-to-br from-[rgba(8,30,78,0.88)] to-[rgba(4,16,46,0.92)]">
+                    <div className="rounded-xl border p-2.5 shadow-sm transition-colors" style={{ backgroundColor: clubBgColor, borderColor: clubBorderContrast }}>
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img src={displayLogoUrl} className="w-6 h-6 object-contain opacity-60" />
                             </div>
-                            <h3 className="text-[9px] font-black text-white uppercase tracking-tight leading-tight">{displayClubName}</h3>
+                            <h3 className="text-[9px] font-black uppercase tracking-tight leading-tight" style={{ color: clubTextContrast }}>{displayClubName}</h3>
                         </div>
                     </div>
 
                     {/* Coordonnées + Infrastructure */}
-                    <div className="rounded-xl border border-blue-400/30 p-2.5 bg-gradient-to-br from-[rgba(8,30,78,0.88)] to-[rgba(4,16,46,0.92)] shadow-lg">
+                    <div className="rounded-xl border p-2.5 shadow-lg transition-colors" style={{ backgroundColor: clubBgColor, borderColor: clubBorderContrast }}>
                         <div className="grid grid-cols-2 gap-2">
                             {/* Coordonnées */}
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] text-white/90">Coordonnées</h4>
-                                    <span className="text-[5px] font-semibold uppercase text-white/70">Site ↗</span>
+                                    <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em]" style={{ color: clubMutedContrast }}>Coordonnées</h4>
+                                    <span className="text-[5px] font-semibold uppercase opacity-70" style={{ color: clubTextContrast }}>Site ↗</span>
                                 </div>
                                 <div className="space-y-1.5">
                                     <div className="flex flex-col items-center gap-0.5 text-center">
-                                        <MapPin size={8} className="text-white/60" />
-                                        <span className="text-[5px] font-medium text-white/90 leading-tight">{displayStreet}, {displayPostal} {displayCity}</span>
+                                        <MapPin size={8} style={{ color: clubMutedContrast }} />
+                                        <span className="text-[5px] font-medium leading-tight" style={{ color: clubTextContrast }}>{displayStreet}, {displayPostal} {displayCity}</span>
                                     </div>
                                     <div className="flex flex-col items-center gap-0.5 text-center">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2 text-white/60"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                                        <span className="text-[5px] font-medium text-white/90">{displayPhone}</span>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2" style={{ color: clubMutedContrast }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                        <span className="text-[5px] font-medium" style={{ color: clubTextContrast }}>{displayPhone}</span>
                                     </div>
                                 </div>
                             </div>
                             {/* Infrastructure */}
                             <div>
-                                <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] text-white/90 mb-1.5">Infrastructure</h4>
+                                <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] mb-1.5" style={{ color: clubMutedContrast }}>Infrastructure</h4>
                                 <div className="space-y-1 mt-2">
-                                    <div className="flex items-center justify-between rounded-md bg-white px-1.5 py-1 text-[#071554]">
-                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold">Terrains</span>
-                                        <span className="font-extrabold text-[6px]">{displayCourts}</span>
+                                    <div className="flex items-center justify-between rounded-md px-1.5 py-1 transition-colors" style={{ backgroundColor: isLightPage ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)' }}>
+                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold" style={{ color: clubMutedContrast }}>Terrains</span>
+                                        <span className="font-extrabold text-[6px]" style={{ color: clubTextContrast }}>{displayCourts}</span>
                                     </div>
-                                    <div className="flex items-center justify-between rounded-md bg-white px-1.5 py-1 text-[#071554]">
-                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold">Type</span>
-                                        <span className="font-extrabold text-[6px]">{displayCourtType}</span>
+                                    <div className="flex items-center justify-between rounded-md px-1.5 py-1 transition-colors" style={{ backgroundColor: isLightPage ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)' }}>
+                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold" style={{ color: clubMutedContrast }}>Type</span>
+                                        <span className="font-extrabold text-[6px]" style={{ color: clubTextContrast }}>{displayCourtType}</span>
                                     </div>
                                 </div>
                             </div>
@@ -511,8 +527,8 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
                     </div>
 
                     {/* Horaires d'ouverture */}
-                    <div className="rounded-xl border border-blue-400/30 p-2.5 bg-gradient-to-br from-[rgba(8,30,78,0.88)] to-[rgba(4,16,46,0.92)] shadow-lg">
-                        <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] text-white/90 mb-1.5">Horaires d'ouverture</h4>
+                    <div className="rounded-xl border p-2.5 shadow-lg transition-colors" style={{ backgroundColor: clubBgColor, borderColor: clubBorderContrast }}>
+                        <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] mb-1.5" style={{ color: clubMutedContrast }}>Horaires d'ouverture</h4>
                         <div className="space-y-0.5">
                             {[
                                 { day: 'Lundi', hours: '08:00 \u2013 22:00', open: true },
@@ -523,9 +539,9 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
                                 { day: 'Samedi', hours: '09:00 \u2013 23:00', open: true },
                                 { day: 'Dimanche', hours: 'Fermé', open: false },
                             ].map((h) => (
-                                <div key={h.day} className={`flex items-center justify-between rounded-md border px-1.5 py-0.5 text-[5px] font-semibold ${h.open ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-50' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}`}>
-                                    <span className="uppercase tracking-[0.15em] text-white">{h.day}</span>
-                                    <span className="text-white">{h.hours}</span>
+                                <div key={h.day} className={`flex items-center justify-between rounded-md border px-1.5 py-0.5 text-[5px] font-semibold transition-colors ${h.open ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-rose-400/30 bg-rose-500/10'}`}>
+                                    <span className="uppercase tracking-[0.15em]" style={{ color: clubTextContrast }}>{h.day}</span>
+                                    <span style={{ color: clubTextContrast }}>{h.hours}</span>
                                 </div>
                             ))}
                         </div>
@@ -533,7 +549,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
 
                     {/* Partir du club */}
                     <div className="flex justify-center pt-1">
-                        <span className="text-[5px] text-white/30 underline underline-offset-2">Partir de ce club</span>
+                        <span className="text-[5px] underline underline-offset-2" style={{ color: "var(--theme-text-muted)" }}>Partir de ce club</span>
                     </div>
                 </div>
             )}
@@ -541,10 +557,17 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { club
     );
 };
 
-export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, clubCity?: string }) => {
+export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColor }: { clubName?: string, clubCity?: string, accentColor?: string, backgroundColor?: string }) => {
     const [activeTab, setActiveTab] = React.useState(1);
     const displayName = clubName || 'Padel Club Amiens';
     const displayCity = clubCity || 'AMIENS';
+
+    const clubBgColor = accentColor || '#172554';
+    const effectiveBg = backgroundColor || '#172554';
+    const clubTextContrast = isLightColor(clubBgColor) ? '#071554' : '#FFFFFF';
+    const clubMutedContrast = isLightColor(clubBgColor) ? 'rgba(7, 21, 84, 0.6)' : 'rgba(255, 255, 255, 0.6)';
+    const clubBorderContrast = isLightColor(clubBgColor) ? 'rgba(7, 21, 84, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+    const isLightPage = isLightColor(effectiveBg);
     return (
         <div className="w-full h-full overflow-y-auto pb-4 animate-fadeIn font-sans pt-2">
             <div className="px-1 mb-2">
@@ -555,16 +578,17 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
                 <ReplicaChallengeBar title="Partenaires Variés" current={2} target={2} />
             </div>
 
-            <div className="flex w-full mb-3 border-b border-white/10">
+            <div className="flex w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text-rgb), 0.1)' }}>
                 {["Enregistrer", "Mes matchs", "Partenaires", "Oracle"].map((tab, i) => (
                     <button
                         key={tab}
                         type="button"
                         onClick={() => setActiveTab(i)}
-                        className={`flex-1 py-1.5 text-[6px] font-semibold transition-all duration-200 relative flex items-center justify-center ${activeTab === i ? 'text-white' : 'text-white/60 hover:text-white/80'}`}
+                        className={`flex-1 py-1.5 text-[6px] font-black transition-all duration-200 relative flex items-center justify-center`}
+                        style={{ color: activeTab === i ? "var(--theme-text)" : "var(--theme-text-muted)" }}
                     >
                         <div className="relative flex items-center justify-center px-1">
-                            <span className="text-center whitespace-normal leading-tight">{tab}</span>
+                            <span className={`text-center whitespace-normal leading-tight ${tab === 'Partenaires' ? 'ml-2' : ''}`}>{tab}</span>
                             {i === 1 && (
                                 <span className="absolute -top-1 -right-2 flex h-3 min-w-[12px] items-center justify-center rounded-full bg-red-500 text-[5px] font-bold text-white shadow-sm border border-[#172554]">
                                     2
@@ -581,8 +605,8 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
             {activeTab === 0 && (
                 <div className="animate-fadeIn px-1 space-y-3">
                     <div className="w-full">
-                        <label className="mb-0.5 ml-1 block text-[6px] font-black uppercase tracking-widest text-white/50">Lieu du match</label>
-                        <div className="w-full h-7 rounded-lg border border-white/20 px-2 text-[8px] font-bold flex items-center shadow-inner bg-white/5 text-white">
+                        <label className="mb-0.5 ml-1 block text-[6px] font-black uppercase tracking-widest opacity-50" style={{ color: "var(--theme-text)" }}>Lieu du match</label>
+                        <div className="w-full h-7 rounded-lg border px-2 text-[8px] font-bold flex items-center shadow-inner bg-white/5" style={{ color: "var(--theme-text)", borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)' }}>
                             {displayName}
                         </div>
                         <p className="mt-0.5 text-[6px] font-black ml-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
@@ -595,17 +619,17 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
                             {/* Team 1 */}
                             <div className="flex-1 flex flex-col items-center gap-1">
                                 <div className="grid grid-cols-2 gap-1 w-full relative">
-                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[5px] font-black uppercase tracking-widest text-white/50 bg-[#172554] px-1 z-10 w-max">Équipe 1</div>
+                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[5px] font-black uppercase tracking-widest bg-white/5 px-1 z-10 w-max opacity-50" style={{ color: "var(--theme-text)" }}>Équipe 1</div>
                                     <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-[rgb(var(--theme-secondary-accent))] bg-[rgb(var(--theme-secondary-accent))]/10 pt-1">
-                                        <div className="w-5 h-5 rounded-full border border-white/20 bg-white/10 flex items-center justify-center text-white">
+                                        <div className="w-5 h-5 rounded-full border border-white/20 bg-white/10 flex items-center justify-center" style={{ color: "var(--theme-text)" }}>
                                             <User size={10} />
                                         </div>
-                                        <span className="text-[5px] font-black uppercase mt-0.5 text-white text-center leading-tight truncate w-full px-0.5">Lilian</span>
+                                        <span className="text-[5px] font-black uppercase mt-0.5 text-center leading-tight truncate w-full px-0.5" style={{ color: "var(--theme-text)" }}>Lilian</span>
                                         <div className="absolute top-0.5 left-0.5 px-0.5 rounded text-[5px] font-black bg-[rgb(var(--theme-secondary-accent))]/20 text-[rgb(var(--theme-secondary-accent))]">6.49</div>
                                     </div>
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/5 group border-dashed pt-1">
-                                        <Search size={8} className="text-white/40" />
-                                        <span className="text-[4px] font-black uppercase mt-0.5 text-white/40">AJOUTER</span>
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border bg-white/5 group border-dashed pt-1" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.15)' }}>
+                                        <Search size={8} style={{ color: "var(--theme-text-muted)" }} />
+                                        <span className="text-[4px] font-black uppercase mt-0.5" style={{ color: "var(--theme-text-muted)" }}>AJOUTER</span>
                                     </div>
                                 </div>
                             </div>
@@ -615,12 +639,12 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
                             {/* Team 2 */}
                             <div className="flex-1 flex flex-col items-center gap-1">
                                 <div className="grid grid-cols-2 gap-1 w-full relative">
-                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[5px] font-black uppercase tracking-widest text-white/50 bg-[#172554] px-1 z-10 w-max">Équipe 2</div>
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/5 border-dashed">
-                                        <Search size={8} className="text-white/40" />
+                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[5px] font-black uppercase tracking-widest bg-white/5 px-1 z-10 w-max" style={{ color: "var(--theme-text-muted)" }}>Équipe 2</div>
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border bg-white/5 border-dashed" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.15)' }}>
+                                        <Search size={8} style={{ color: "var(--theme-text-muted)" }} />
                                     </div>
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-white/10 bg-white/5 border-dashed">
-                                        <Search size={8} className="text-white/40" />
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border bg-white/5 border-dashed" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.15)' }}>
+                                        <Search size={8} style={{ color: "var(--theme-text-muted)" }} />
                                     </div>
                                 </div>
                             </div>
@@ -628,12 +652,12 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
                     </div>
 
                     <div className="space-y-1">
-                        <label className="ml-1 block text-[6px] font-black uppercase tracking-widest text-white/50">Équipe gagnante</label>
+                        <label className="ml-1 block text-[6px] font-black uppercase tracking-widest" style={{ color: "var(--theme-text-muted)" }}>Équipe gagnante</label>
                         <div className="grid grid-cols-2 gap-1.5">
-                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5 border-white/10 text-white">
+                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text)" }}>
                                 <Trophy size={8} /> Équipe 1
                             </button>
-                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5 border-white/10 text-white">
+                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text)" }}>
                                 <Trophy size={8} /> Équipe 2
                             </button>
                         </div>
@@ -648,7 +672,7 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
             {activeTab === 1 && (
                 <div className="space-y-3 animate-fadeIn px-1 pb-4">
                     <div className="flex items-center gap-1.5 mb-1 px-1">
-                        <h3 className="text-[8px] font-black uppercase italic text-white leading-tight">Matchs en attente de confirmation</h3>
+                        <h3 className="text-[8px] font-black uppercase italic leading-tight" style={{ color: "var(--theme-text)" }}>Matchs en attente de confirmation</h3>
                         <span className="rounded-full bg-[#f59e0b] px-1 py-0.5 text-[6px] font-black text-white shadow-sm">2</span>
                     </div>
 
@@ -662,7 +686,7 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
                     />
 
                     <div className="flex items-center gap-1.5 mb-1 mt-2 px-1">
-                        <h3 className="text-[8px] font-black uppercase italic text-white leading-tight">Matchs validés</h3>
+                        <h3 className="text-[8px] font-black uppercase italic leading-tight" style={{ color: "var(--theme-text)" }}>Matchs validés</h3>
                     </div>
 
                     <ReplicaPendingMatchCard
@@ -679,21 +703,21 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
 
             {activeTab === 2 && (
                 <div className="animate-fadeIn space-y-4 px-1 pb-4">
-                    <h2 className="text-[11px] font-black text-white italic px-1">Trouve ton partenaire</h2>
+                    <h2 className="text-[11px] font-black italic px-3" style={{ color: "var(--theme-text)" }}>Trouve ton partenaire</h2>
 
-                    <div className="bg-[#172554] border border-white/10 rounded-2xl p-4 shadow-xl">
-                        <div className="flex items-center justify-between mb-3 px-1">
-                            <h3 className="text-[9px] font-black text-white">Partenaires suggérés</h3>
-                            <div className="flex bg-[#071554] p-0.5 rounded-lg border border-white/5 items-center">
-                                <div className="px-2 py-1 rounded-md text-[7px] font-black bg-blue-600 text-white shadow-sm flex items-center justify-center h-full">Mon Club</div>
-                                <div className="px-2 py-1 rounded-md text-[7px] font-black text-white/40 flex items-center justify-center h-full">Département</div>
+                    <div className="border rounded-2xl p-4 shadow-xl" style={{ backgroundColor: isLightPage ? 'transparent' : 'rgba(255,255,255,0.05)', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
+                        <div className="flex items-center justify-between mb-3 px-3">
+                            <h3 className="text-[9px] font-black" style={{ color: "var(--theme-text)" }}>Partenaires suggérés</h3>
+                            <div className="flex bg-white/5 p-0.5 rounded-lg border items-center" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.05)' }}>
+                                <div className="px-2 py-1 rounded-md text-[7px] font-black shadow-sm flex items-center justify-center h-full" style={{ backgroundColor: accentColor, color: isLightColor(accentColor || '#172554') ? '#071554' : '#FFFFFF' }}>Mon Club</div>
+                                <div className="px-2 py-1 rounded-md text-[7px] font-black flex items-center justify-center h-full" style={{ color: "var(--theme-text)", opacity: 0.8 }}>Département</div>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <ReplicaPartnerCard name="Mathis Leclerc" level="6.00" compatibility={98} />
-                            <ReplicaPartnerCard name="Théo Caron" level="5.00" compatibility={73} />
-                            <ReplicaPartnerCard name="Julien Bernard" level="4.80" compatibility={65} />
-                            <ReplicaPartnerCard name="Sarah Mazette" level="5.20" compatibility={89} />
+                            <ReplicaPartnerCard name="Mathis Leclerc" level="6.00" compatibility={98} isLightPage={isLightPage} accentColor={accentColor} />
+                            <ReplicaPartnerCard name="Théo Caron" level="5.00" compatibility={73} isLightPage={isLightPage} accentColor={accentColor} />
+                            <ReplicaPartnerCard name="Julien Bernard" level="4.80" compatibility={65} isLightPage={isLightPage} accentColor={accentColor} />
+                            <ReplicaPartnerCard name="Sarah Mazette" level="5.20" compatibility={89} isLightPage={isLightPage} accentColor={accentColor} />
                         </div>
                     </div>
                 </div>
@@ -701,10 +725,10 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
 
             {activeTab === 3 && (
                 <div className="animate-fadeIn px-1 space-y-3">
-                    <div className="rounded-2xl border border-white/10 p-4 bg-[#172554] shadow-xl text-center">
-                        <Sparkles className="w-8 h-8 text-[rgb(var(--theme-secondary-accent))] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(204,255,0,0.4)]" />
-                        <h3 className="text-[11px] font-black text-white uppercase italic mb-1">Oracle AI</h3>
-                        <p className="text-[8px] text-white/60 leading-relaxed italic">
+                    <div className="rounded-2xl border p-4 shadow-xl text-center" style={{ backgroundColor: clubBgColor, borderColor: clubBorderContrast }}>
+                        <Sparkles className="w-8 h-8 mx-auto mb-2 drop-shadow-[0_0_8px_rgba(204,255,0,0.4)]" style={{ color: clubTextContrast }} />
+                        <h3 className="text-[11px] font-black uppercase italic mb-1" style={{ color: clubTextContrast }}>Oracle AI</h3>
+                        <p className="text-[8px] leading-relaxed italic" style={{ color: clubMutedContrast }}>
                             Analyse de vos performances en cours...<br />
                             Prédictions basées sur vos 24 derniers matchs.
                         </p>
@@ -715,22 +739,26 @@ export const MatchesPreview = ({ clubName, clubCity }: { clubName?: string, club
     );
 };
 
-export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
+export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: { clubName?: string, accentColor?: string, backgroundColor?: string }) => {
     const [activeTab, setActiveTab] = React.useState(0);
     const displayName = clubName || 'Padel Club Amiens';
+    const effectiveBg = backgroundColor || '#172554';
+    const isLightPage = isLightColor(effectiveBg);
+    const isLightAccent = isLightColor(accentColor || '#172554');
     return (
         <div className="w-full h-full overflow-y-auto pb-4 animate-fadeIn font-sans pt-2">
             <div className="px-1 mb-2">
                 <ReplicaPageTitle title="Espace Compétition" subtitle={`Club : ${displayName}`} />
             </div>
 
-            <div className="flex w-full mb-3 border-b border-white/10">
+            <div className="flex w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text-rgb), 0.1)' }}>
                 {["Classement", "Challenges", "Ligues"].map((tab, i) => (
                     <button
                         key={tab}
                         type="button"
                         onClick={() => setActiveTab(i)}
-                        className={`flex-1 py-1.5 text-[6px] font-semibold transition-all duration-200 relative flex items-center justify-center ${activeTab === i ? 'text-white' : 'text-white/60 hover:text-white/80'}`}
+                        className={`flex-1 py-1.5 text-[6px] font-black transition-all duration-200 relative flex items-center justify-center`}
+                        style={{ color: activeTab === i ? "var(--theme-text)" : "var(--theme-text-muted)" }}
                     >
                         <div className="relative flex items-center justify-center px-1">
                             <span className="text-center whitespace-normal leading-tight">{tab}</span>
@@ -762,12 +790,14 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                                 <button
                                     key={f.key}
                                     type="button"
-                                    className={`flex items-center gap-1 px-1 py-1 rounded-full text-[5px] font-black transition-all whitespace-nowrap border ${active
-                                        ? 'bg-[#1e293b] text-[rgb(var(--theme-secondary-accent))] border-[rgb(var(--theme-secondary-accent))]/40 shadow-[0_0_5px_rgba(var(--theme-secondary-accent),0.2)]'
-                                        : 'bg-[#1e293b] text-white/40 border-white/5 hover:bg-white/10'
-                                        }`}
+                                    className={`flex items-center gap-1 px-1 py-1 rounded-full text-[5px] font-black transition-all duration-500 whitespace-nowrap border ${active ? 'bg-white/10 shadow-sm' : 'bg-white/5 hover:bg-white/10'}`}
+                                    style={{
+                                        borderColor: accentColor,
+                                        borderWidth: active ? '2px' : '1px',
+                                        color: active ? accentColor : (isLightPage ? 'rgba(0,0,0,0.6)' : 'white')
+                                    }}
                                 >
-                                    <f.icon size={6} className={active ? "text-[rgb(var(--theme-secondary-accent))]" : ""} />
+                                    <f.icon size={6} style={{ color: active ? accentColor : "inherit" }} />
                                     <span>{f.label}</span>
                                 </button>
                             );
@@ -778,7 +808,7 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                     <div className="space-y-3 px-1">
                         <div className="flex items-center justify-center gap-2">
                             <div className="h-[1px] flex-1 bg-white/10" />
-                            <span className="text-[7px] font-black text-white/60 uppercase tracking-widest italic">Top joueurs du moment</span>
+                            <span className="text-[7px] font-black uppercase tracking-widest italic opacity-60" style={{ color: "var(--theme-text)" }}>Top joueurs du moment</span>
                             <div className="h-[1px] flex-1 bg-white/10" />
                         </div>
 
@@ -813,7 +843,7 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                     <div className="space-y-3 px-1">
                         <div className="flex items-center justify-center gap-2">
                             <div className="h-[1px] flex-1 bg-white/10" />
-                            <span className="text-[7px] font-black text-white/60 uppercase tracking-widest italic">Classement global</span>
+                            <span className="text-[7px] font-black uppercase tracking-widest italic opacity-60" style={{ color: "var(--theme-text)" }}>Classement global</span>
                             <div className="h-[1px] flex-1 bg-white/10" />
                         </div>
 
@@ -876,59 +906,59 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                 <div className="animate-fadeIn space-y-3 px-1 pb-4">
                     {/* Points & Badges Pill */}
                     <div className="flex justify-center mb-2">
-                        <div className="px-3 py-1.5 rounded-full border border-white/10 bg-[#1e293b]/50 text-[7px] font-black text-white/90">
-                            <span className="text-[rgb(var(--theme-secondary-accent))]">93</span> points et <span className="text-[rgb(var(--theme-secondary-accent))]">3</span> badges débloqués
+                        <div className="px-3 py-1.5 rounded-full border text-[7px] font-black shadow-sm transition-colors" style={{ backgroundColor: effectiveBg, borderColor: accentColor, color: "var(--theme-text)" }}>
+                            <span style={{ color: accentColor }}>93</span> points et <span style={{ color: accentColor }}>3</span> badges débloqués
                         </div>
                     </div>
 
                     {/* Filters */}
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <button type="button" className="flex-1 py-2 rounded-xl border-2 border-[rgb(var(--theme-secondary-accent))] bg-[#1e293b] text-white text-[8px] font-black flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(var(--theme-secondary-accent),0.2)]">
+                        <button type="button" className="flex-1 py-2 rounded-xl border bg-white/5 text-[8px] font-black flex items-center justify-center gap-2 shadow-sm" style={{ borderColor: accentColor, borderWidth: '2px', color: accentColor }}>
                             <Globe size={10} /> Général
                         </button>
-                        <button type="button" className="flex-1 py-2 rounded-xl border border-white/5 bg-[#1e293b] text-white/40 text-[8px] font-black flex items-center justify-center gap-2">
+                        <button type="button" className="flex-1 py-2 rounded-xl border bg-white/5 text-[8px] font-black flex items-center justify-center gap-2" style={{ borderColor: accentColor, borderWidth: '1px', color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)' }}>
                             <MapPin size={10} /> Mon Club
                         </button>
                     </div>
 
                     {/* Challenge Card High-Fidelity */}
-                    <div className="rounded-2xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
+                    <div className="rounded-2xl border bg-white/5 overflow-hidden shadow-xl" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
                         <div className="p-3">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-white mb-1">Partenaires Variés</h3>
-                                    <div className="inline-flex px-2 py-0.5 rounded-full bg-slate-800 border border-white/10 text-[6px] font-bold text-white/60">
+                                    <h3 className="text-[10px] font-black mb-1" style={{ color: "var(--theme-text)" }}>Partenaires Variés</h3>
+                                    <div className="inline-flex px-2 py-0.5 rounded-full border text-[6px] font-bold" style={{ backgroundColor: accentColor, borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: isLightColor(accentColor || '#172554') ? '#071554' : '#FFFFFF' }}>
                                         Challenge en cours
                                     </div>
                                 </div>
-                                <div className="bg-[#1e293b] border border-white/10 rounded-lg p-2 flex flex-col items-center">
-                                    <span className="text-[5px] font-black text-white/40 uppercase mb-0.5">RÉCOMPENSE</span>
+                                <div className="bg-white/5 border rounded-lg p-2 flex flex-col items-center shadow-sm" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
+                                    <span className="text-[5px] font-black uppercase mb-0.5" style={{ color: "var(--theme-text-muted)" }}>RÉCOMPENSE</span>
                                     <div className="flex items-center gap-1">
                                         <Star size={8} className="text-yellow-400 fill-current" />
-                                        <span className="text-[8px] font-black text-white">8 pts</span>
+                                        <span className="text-[8px] font-black" style={{ color: "var(--theme-text)" }}>8 pts</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-950/50 rounded-xl p-3 border border-white/5 mb-3">
+                            <div className="bg-white/5 rounded-xl p-3 border mb-3" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.05)' }}>
                                 <div className="flex justify-between items-center mb-2">
                                     <div>
-                                        <p className="text-[8px] font-black text-white mb-0.5">Objectif</p>
-                                        <p className="text-[6px] text-white/40">Jouer avec 2 partenaires différents</p>
+                                        <p className="text-[8px] font-black mb-0.5" style={{ color: "var(--theme-text)" }}>Objectif</p>
+                                        <p className="text-[6px]" style={{ color: "var(--theme-text-muted)" }}>Jouer avec 2 partenaires différents</p>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[10px] font-black text-white">2/2</span>
-                                        <p className="text-[6px] text-white/40">100%</p>
+                                        <span className="text-[10px] font-black" style={{ color: "var(--theme-text)" }}>2/2</span>
+                                        <p className="text-[6px]" style={{ color: "var(--theme-text-muted)" }}>100%</p>
                                     </div>
                                 </div>
                                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-600 rounded-full" style={{ width: '100%' }} />
+                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "rgb(var(--theme-secondary-accent))" }} />
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-1.5 mb-4 px-1">
-                                <Clock size={8} className="text-white/40" />
-                                <span className="text-[6px] text-white/40">Période : <span className="text-white">26 févr. 2026 → 26 mars 2026</span></span>
+                                <Clock size={8} style={{ color: "var(--theme-text-muted)" }} />
+                                <span className="text-[6px]" style={{ color: "var(--theme-text-muted)" }}>Période : <span style={{ color: "var(--theme-text)" }}>26 févr. 2026 → 26 mars 2026</span></span>
                             </div>
 
                         </div>
@@ -940,22 +970,22 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                 <div className="animate-fadeIn space-y-4 px-1 pb-4">
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 mb-2">
-                        <button type="button" className="flex-1 py-1.5 rounded-lg bg-[rgb(var(--theme-secondary-accent))] text-black text-[9px] font-black flex items-center justify-center gap-1 shadow-lg transition-all">
+                        <button type="button" className="flex-1 py-1.5 rounded-lg bg-[rgb(var(--theme-secondary-accent))] text-[9px] font-black flex items-center justify-center gap-1 shadow-lg transition-all" style={{ color: isLightAccent ? '#071554' : '#FFFFFF' }}>
                             <Plus size={10} className="stroke-[3px]" /> Créer une ligue
                         </button>
-                        <button type="button" className="flex-1 py-1.5 rounded-lg border border-white/10 bg-[#1e293b] text-white text-[9px] font-black flex items-center justify-center gap-1 transition-all">
+                        <button type="button" className="flex-1 py-1.5 rounded-lg border bg-white/5 text-[9px] font-black flex items-center justify-center gap-1 transition-all shadow-sm" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text)" }}>
                             <Key size={10} /> Rejoindre
                         </button>
                     </div>
 
                     <div className="space-y-3">
-                        <h3 className="text-[8px] font-black text-white/60 uppercase tracking-widest pl-1">MES LIGUES</h3>
+                        <h3 className="text-[8px] font-black uppercase tracking-widest pl-1" style={{ color: "var(--theme-text-muted)" }}>MES LIGUES</h3>
 
-                        <div className="rounded-2xl border border-white/10 bg-[#1e293b] p-3 shadow-xl">
+                        <div className="rounded-2xl border bg-white/5 p-3 shadow-xl" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h4 className="text-[10px] font-black text-white mb-1 uppercase italic tracking-tight">Les champions</h4>
-                                    <div className="inline-flex px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[6px] font-black text-white/60">
+                                    <h4 className="text-[10px] font-black mb-1 uppercase italic tracking-tight" style={{ color: "var(--theme-text)" }}>Les champions</h4>
+                                    <div className="inline-flex px-1.5 py-0.5 rounded bg-white/5 border text-[6px] font-black" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text-muted)" }}>
                                         <div className="flex items-center gap-1">
                                             <Copy size={8} /> RTE5EM
                                         </div>
@@ -966,15 +996,15 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center gap-1">
-                                        <Users size={8} className="text-white/40" />
-                                        <span className="text-[6px] text-white/60">5/5</span>
+                                        <Users size={8} style={{ color: "var(--theme-text-muted)" }} />
+                                        <span className="text-[6px]" style={{ color: "var(--theme-text)" }}>5/5</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Clock size={8} className="text-white/40" />
-                                        <span className="text-[6px] text-white/60">7j restants</span>
+                                        <Clock size={8} style={{ color: "var(--theme-text-muted)" }} />
+                                        <span className="text-[6px]" style={{ color: "var(--theme-text)" }}>7j restants</span>
                                     </div>
                                 </div>
-                                <span className="text-[6px] text-white/40 tracking-tight">1/5 matchs</span>
+                                <span className="text-[6px] tracking-tight" style={{ color: "var(--theme-text-muted)" }}>1/5 matchs</span>
                             </div>
 
                             <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">

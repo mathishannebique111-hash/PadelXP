@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import HideSplashScreen from "@/components/HideSplashScreen";
-import { Plus, ChevronLeft, ChevronRight, User, Trophy, Swords, Star, TrendingUp, Flame } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, User, Trophy, Swords, Star, TrendingUp, Flame, FileText, Sparkles } from "lucide-react";
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   let binary = "";
@@ -32,11 +32,11 @@ const isLightColor = (color: string) => {
 
 const hexToRgbNumbers = (hex: string) => {
   const h = hex.replace('#', '');
-  if (h.length < 6) return "0 0 0";
+  if (h.length < 6) return "0, 0, 0";
   const r = parseInt(h.substring(0, 2), 16);
   const g = parseInt(h.substring(2, 4), 16);
   const b = parseInt(h.substring(4, 6), 16);
-  return `${r} ${g} ${b}`;
+  return `${r}, ${g}, ${b}`;
 };
 
 // ============================================================
@@ -44,7 +44,6 @@ const hexToRgbNumbers = (hex: string) => {
 // ============================================================
 interface PhonePreviewProps {
   bg: string;
-  accent: string;
   secondary: string;
   activeScreen: number;
   logoUrl?: string | null;
@@ -62,17 +61,18 @@ interface PhonePreviewProps {
   };
 }
 
-const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor, mutedColor, iconColor, clubName, clubCity, clubData }: PhonePreviewProps) => {
+const PhonePreview = ({ bg, secondary, activeScreen, logoUrl, textColor, mutedColor, iconColor, clubName, clubCity, clubData }: Omit<PhonePreviewProps, 'accent'>) => {
   return (
     <div
-      className="rounded-[48px] border-[4px] border-[#1c1c1e] overflow-hidden shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5),0_18px_36px_-18px_rgba(0,0,0,0.5)] w-full max-w-[240px] mx-auto aspect-[9/19.5] flex flex-col relative transition-colors duration-500 pb-12 ring-[1px] ring-inset ring-white/10"
+      className="rounded-[48px] border-[4px] border-[#1c1c1e] overflow-hidden shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] w-full max-w-[240px] ml-0 aspect-[9/19.5] flex flex-col relative transition-colors duration-500 pb-12 ring-[1px] ring-inset ring-white/10"
       style={{
         background: bg,
         // @ts-ignore
         "--theme-page": hexToRgbNumbers(bg),
-        "--theme-accent": hexToRgbNumbers(accent),
+        "--theme-accent": hexToRgbNumbers(secondary),
         "--theme-secondary-accent": hexToRgbNumbers(secondary),
         "--theme-text": textColor,
+        "--theme-text-rgb": hexToRgbNumbers(textColor),
         "--theme-text-muted": mutedColor,
       } as React.CSSProperties}
     >
@@ -133,11 +133,11 @@ const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor,
       {/* Main Content Area */}
       <div className="flex-1 px-3 py-1 overflow-hidden flex flex-col relative z-10 w-full">
         {activeScreen === 0 ? (
-          <ProfilePreview clubName={clubName} clubCity={clubCity} clubData={clubData} logoUrl={logoUrl} />
+          <ProfilePreview clubName={clubName} clubCity={clubCity} clubData={clubData} logoUrl={logoUrl} accentColor={secondary} backgroundColor={bg} />
         ) : activeScreen === 1 ? (
-          <MatchesPreview clubName={clubName} clubCity={clubCity} />
+          <MatchesPreview clubName={clubName} clubCity={clubCity} accentColor={secondary} backgroundColor={bg} />
         ) : (
-          <CompetitionPreview clubName={clubName} />
+          <CompetitionPreview clubName={clubName} accentColor={secondary} backgroundColor={bg} />
         )}
       </div>
 
@@ -194,8 +194,7 @@ export default function ClientClubIdentityPage() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
-  // 3 couleurs de personnalisation
-  // 2 couleurs de personnalisation (Primaire supprimée car inutile selon utilisateur)
+  // 2 couleurs de personnalisation (Primaire supprimée)
   const [secondaryColor, setSecondaryColor] = useState("#CCFF00");
   const [backgroundColor, setBackgroundColor] = useState("#172554");
   const [clubNameInput, setClubNameInput] = useState("");
@@ -205,7 +204,18 @@ export default function ClientClubIdentityPage() {
   const [phoneInput, setPhoneInput] = useState("");
   const [numberOfCourtsInput, setNumberOfCourtsInput] = useState("");
   const [courtTypeInput, setCourtTypeInput] = useState("");
-  const primaryColor = "#0066FF"; // Valeur par défaut fixe
+  const [subdomainInput, setSubdomainInput] = useState("");
+
+  // Calcul du Score de Visibilité (9 champs suivis)
+  const visibilityFields = [
+    clubNameInput, cityInput, streetInput, postalCodeInput, phoneInput,
+    numberOfCourtsInput, courtTypeInput, subdomainInput, logoFile
+  ];
+  const filledCount = visibilityFields.filter(f => {
+    if (typeof f === 'string') return f.trim().length > 0;
+    return !!f; // Pour le logo
+  }).length;
+  const visibilityScore = Math.round((filledCount / visibilityFields.length) * 100);
 
   // Carousel de prévisualisation
   const [previewScreen, setPreviewScreen] = useState(0);
@@ -277,7 +287,7 @@ export default function ClientClubIdentityPage() {
           number_of_courts: number_of_courts ? Number(number_of_courts) : null,
           court_type,
           subdomain: subdomain || undefined,
-          primary_color: primaryColor,
+          primary_color: secondaryColor, // On utilise la couleur d'accent pour les deux
           secondary_color: secondaryColor,
           background_color: backgroundColor,
           owner_email: ownerEmail,
@@ -331,270 +341,295 @@ export default function ClientClubIdentityPage() {
       <div className="absolute inset-0 bg-[#172554] z-0" />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0 pointer-events-none" />
 
-      {/* Logo en haut */}
-      <div className="absolute top-6 left-0 right-0 z-20 flex justify-center pointer-events-none">
+      {/* Logo en haut à gauche - Raffiné */}
+      <div className="absolute top-4 left-8 z-20 pointer-events-none">
         <img
           src="/images/Logo sans fond.png"
           alt="PadelXP Logo"
-          className="w-24 h-auto object-contain opacity-90 drop-shadow-2xl"
+          className="w-20 h-auto object-contain opacity-90 drop-shadow-2xl"
         />
       </div>
 
-      <div className="relative z-[50] w-full max-w-2xl rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xl p-6 animate-fadeIn mt-16 max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-xs uppercase tracking-[0.3em] text-white/40">Inscription Club</div>
-          <div className="text-[9px] text-white/30 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-full border border-white/5">Étape 2 / 2</div>
-        </div>
-        <h1 className="text-xl font-extrabold mb-4">Fiche de votre complexe</h1>
-
+      <div className="relative z-[50] w-full max-w-7xl px-4 lg:px-12 animate-fadeIn mt-0 mb-6 ml-auto mr-2 lg:mr-6">
         {errorMessage && (
-          <div className="rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-xs text-red-200 mb-4">
+          <div className="max-w-2xl mx-auto rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-xs text-red-200 mb-6 text-center">
             {errorMessage}
           </div>
         )}
 
-        <form ref={formRef} className="space-y-3">
-          {/* ========================================= */}
-          {/* SECTION 1 : Informations du Club */}
-          {/* ========================================= */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1 col-span-2">
-              <label className={labelClass}>Nom du club / complexe</label>
-              <input
-                name="club_name"
-                required
-                placeholder="Ex: Padel Club Bastia"
-                className={inputClass}
-                value={clubNameInput}
-                onChange={(e) => setClubNameInput(e.target.value)}
-              />
-            </div>
+        <form ref={formRef} className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
-            <div className="space-y-1">
-              <label className={labelClass}>Adresse (Rue)</label>
-              <input name="street" required placeholder="Rue" className={inputClass} value={streetInput} onChange={(e) => setStreetInput(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Code Postal</label>
-              <input name="postal_code" required type="text" placeholder="Code postal" inputMode="numeric" pattern="^[0-9]{5}$" maxLength={5} className={inputClass} value={postalCodeInput} onChange={(e) => setPostalCodeInput(e.target.value)} />
-            </div>
+            {/* ========================================= */}
+            {/* COLONNE GAUCHE : Fiche du Complexe */}
+            {/* ========================================= */}
+            <div className="rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xl p-5 h-full flex flex-col space-y-4">
+              <h1 className="text-lg font-extrabold flex items-center gap-2 mb-1">
+                <FileText size={18} className="text-white/40" />
+                Fiche de votre complexe
+              </h1>
 
-            <div className="space-y-1">
-              <label className={labelClass}>Ville</label>
-              <input name="city" required placeholder="Ville" className={inputClass} value={cityInput} onChange={(e) => setCityInput(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Téléphone</label>
-              <input name="phone" required placeholder="Téléphone" inputMode="tel" className={inputClass} value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
-            </div>
-
-            <div className="space-y-1 col-span-2">
-              <label className={labelClass}>Site Web (optionnel)</label>
-              <input name="website" placeholder="https://..." type="url" className={inputClass} />
-            </div>
-
-            <div className="space-y-1">
-              <label className={labelClass}>Nombre de terrains</label>
-              <input name="number_of_courts" required placeholder="Nb terrains" type="number" min="1" className={inputClass} value={numberOfCourtsInput} onChange={(e) => setNumberOfCourtsInput(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Type de terrains</label>
-              <select name="court_type" required className={`${inputClass} appearance-none`} value={courtTypeInput} onChange={(e) => setCourtTypeInput(e.target.value)}>
-                <option value="" disabled className="bg-[#1e293b]">Type</option>
-                <option value="Couverts" className="bg-[#1e293b]">Couverts</option>
-                <option value="Extérieurs" className="bg-[#1e293b]">Extérieurs</option>
-                <option value="Mixte" className="bg-[#1e293b]">Mixte</option>
-              </select>
-            </div>
-          </div>
-
-          {/* ========================================= */}
-          {/* SECTION 2 : Personnalisation Marque Blanche */}
-          {/* ========================================= */}
-          <div className="pt-3 pb-1 border-t border-white/10">
-            <h2 className="text-sm font-bold text-white mb-1">🎨 Personnalisation de votre Application</h2>
-            <p className="text-[10px] text-white/40 mb-3">Choisissez les couleurs de votre app. L'aperçu en temps réel apparaîtra ci-dessous.</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              {/* Sous-domaine */}
-              <div className="space-y-1 col-span-2 md:col-span-1">
-                <label className={labelClass}>Sous-domaine App</label>
-                <div className="flex items-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1 col-span-2">
+                  <label className={labelClass}>Nom du club / complexe</label>
                   <input
-                    name="subdomain"
+                    name="club_name"
                     required
-                    placeholder="ex: amiens"
-                    pattern="[a-z0-9-]+"
-                    className="w-full rounded-l-lg bg-white/5 border border-white/10 px-2.5 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF]"
+                    placeholder="Ex: Padel Club Bastia"
+                    className={inputClass}
+                    value={clubNameInput}
+                    onChange={(e) => setClubNameInput(e.target.value)}
                   />
-                  <span className="bg-white/10 border border-white/10 border-l-0 text-white/50 rounded-r-lg px-2.5 py-1.5 text-xs whitespace-nowrap">.padelxp.eu</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Adresse (Rue)</label>
+                  <input name="street" required placeholder="Rue" className={inputClass} value={streetInput} onChange={(e) => setStreetInput(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Code Postal</label>
+                  <input name="postal_code" required type="text" placeholder="Code postal" inputMode="numeric" pattern="^[0-9]{5}$" maxLength={5} className={inputClass} value={postalCodeInput} onChange={(e) => setPostalCodeInput(e.target.value)} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Ville</label>
+                  <input name="city" required placeholder="Ville" className={inputClass} value={cityInput} onChange={(e) => setCityInput(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Téléphone</label>
+                  <input name="phone" required placeholder="Téléphone" inputMode="tel" className={inputClass} value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
+                </div>
+
+                <div className="space-y-1 col-span-2">
+                  <label className={labelClass}>Site Web (optionnel)</label>
+                  <input name="website" placeholder="https://..." type="url" className={inputClass} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Nombre de terrains</label>
+                  <input name="number_of_courts" required placeholder="Nb terrains" type="number" min="1" className={inputClass} value={numberOfCourtsInput} onChange={(e) => setNumberOfCourtsInput(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Type de terrains</label>
+                  <select name="court_type" required className={`${inputClass} appearance-none`} value={courtTypeInput} onChange={(e) => setCourtTypeInput(e.target.value)}>
+                    <option value="" disabled className="bg-[#1e293b]">Type</option>
+                    <option value="Couverts" className="bg-[#1e293b]">Couverts</option>
+                    <option value="Extérieurs" className="bg-[#1e293b]">Extérieurs</option>
+                    <option value="Mixte" className="bg-[#1e293b]">Mixte</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Logo */}
-              <div className="space-y-1">
-                <label className={labelClass}>Logo</label>
-                <label className="group flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 cursor-pointer hover:bg-white/10 transition-all border-dashed hover:border-white/30">
-                  {logoPreview ? (
-                    <img src={logoPreview} alt="Logo" className="w-7 h-7 rounded-md object-cover ring-1 ring-white/20" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-md bg-white/5 flex items-center justify-center text-white/40 group-hover:text-white transition-colors">
-                      <Plus size={14} />
-                    </div>
-                  )}
-                  <span className="text-[9px] text-white/40 font-medium">{logoPreview ? "Changer" : "Ajouter un logo"}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) {
-                        setLogoFile(f);
-                        setLogoPreview(URL.createObjectURL(f));
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* 3 Color Pickers */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="space-y-1.5">
-                <label className={labelClass}>Couleur Accent</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="h-8 w-10 rounded cursor-pointer border border-white/20 bg-transparent p-0"
-                  />
-                  <span className="text-[8px] text-white/30 font-mono">{secondaryColor}</span>
+              <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
+                <div className="text-[9px] text-white/20 italic">
+                  Toutes les informations ci-dessus seront visibles par les joueurs.
                 </div>
-                <p className="text-[7px] text-white/30">Chiffres clés, badges</p>
-              </div>
 
-              <div className="space-y-1.5">
-                <label className={labelClass}>Fond d'écran</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={backgroundColor}
-                    onChange={(e) => setBackgroundColor(e.target.value)}
-                    className="h-8 w-10 rounded cursor-pointer border border-white/20 bg-transparent p-0"
-                  />
-                  <span className="text-[8px] text-white/30 font-mono">{backgroundColor}</span>
-                </div>
-                <p className="text-[7px] text-white/30">Fond global de l'app</p>
-              </div>
-            </div>
-
-            {/* ========================================= */}
-            {/* PREVIEW EN TEMPS RÉEL */}
-            {/* ========================================= */}
-            <div className="rounded-xl bg-black/30 border border-white/10 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[9px] text-white/50 uppercase tracking-widest font-semibold">Aperçu en temps réel</span>
-                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 shadow-sm backdrop-blur-sm">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewScreen((p) => (p + 2) % 3)}
-                    className="w-6 h-6 rounded-lg bg-[#0066FF] flex items-center justify-center hover:bg-[#0066FFCC] transition-all shadow-[0_2px_8px_rgba(0,102,255,0.3)] active:scale-90"
-                  >
-                    <ChevronLeft size={14} className="text-white" />
-                  </button>
-                  <div className="flex flex-col items-center min-w-[70px]">
-                    <span className="text-[10px] font-black text-white uppercase italic leading-none tracking-tight">
-                      {["Profil", "Matchs", "Classement"][previewScreen]}
-                    </span>
-                    <span className="text-[6px] text-white/30 font-bold uppercase tracking-widest mt-0.5">Aperçu</span>
+                {/* Section pour équilibrer la hauteur */}
+                <div className="hidden lg:block space-y-3 bg-black/20 rounded-xl p-4 border border-white/5 shadow-inner">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-[#0066FF] font-black uppercase tracking-widest">Score de visibilité</span>
+                    <span className="text-[10px] text-white/60 font-bold">{visibilityScore}%</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewScreen((p) => (p + 1) % 3)}
-                    className="w-6 h-6 rounded-lg bg-[#0066FF] flex items-center justify-center hover:bg-[#0066FFCC] transition-all shadow-[0_2px_8px_rgba(0,102,255,0.3)] active:scale-90"
-                  >
-                    <ChevronRight size={14} className="text-white" />
-                  </button>
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#0066FF] to-cyan-400 transition-all duration-500 ease-out"
+                      style={{ width: `${visibilityScore}%` }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-white/40 leading-relaxed">
+                    Complétez toutes les informations pour maximiser votre référencement auprès des joueurs de la région.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="bg-white/5 rounded-lg p-2 border border-white/5 shadow-sm">
+                      <div className="text-[8px] text-white/30 uppercase mb-1">Status</div>
+                      <div className="text-[10px] font-bold text-green-400 flex items-center gap-1">
+                        <div className="w-1 h-1 rounded-full bg-green-400 animate-ping" />
+                        Prêt
+                      </div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2 border border-white/5 shadow-sm">
+                      <div className="text-[8px] text-white/30 uppercase mb-1">Indexation</div>
+                      <div className="text-[10px] font-bold text-white uppercase tracking-tighter italic">Optimisée</div>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              {/* Calcul du mode clair/sombre pour la prévisualisation */}
-              {(() => {
-                const lightMode = isLightColor(backgroundColor);
-                const textColorPreview = lightMode ? "#0f172a" : "#ffffff";
-                const mutedColorPreview = lightMode ? "rgba(15, 23, 42, 0.4)" : "rgba(255, 255, 255, 0.4)";
-                const iconColorPreview = lightMode ? "#0f172a" : "#ffffff";
+            {/* ========================================= */}
+            {/* COLONNE DROITE : Personnalisation App */}
+            {/* ========================================= */}
+            <div className="rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xl p-5 space-y-4">
+              <h2 className="text-lg font-extrabold flex items-center gap-2 mb-1">
+                <Sparkles size={18} className="text-white/40" />
+                Personnalisation de votre Application
+              </h2>
 
-                return (
-                  <>
-                    <PhonePreview
-                      bg={backgroundColor}
-                      accent={primaryColor}
-                      secondary={secondaryColor}
-                      activeScreen={previewScreen}
-                      logoUrl={logoPreview}
-                      textColor={textColorPreview}
-                      mutedColor={mutedColorPreview}
-                      iconColor={iconColorPreview}
-                      clubName={clubNameInput || undefined}
-                      clubCity={cityInput || undefined}
-                      clubData={{
-                        street: streetInput || undefined,
-                        postalCode: postalCodeInput || undefined,
-                        phone: phoneInput || undefined,
-                        numberOfCourts: numberOfCourtsInput || undefined,
-                        courtType: courtTypeInput || undefined,
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Sous-domaine */}
+                <div className="space-y-0.5 col-span-2 md:col-span-1">
+                  <label className={labelClass}>Sous-domaine App</label>
+                  <div className="flex items-center shadow-inner rounded-l-lg overflow-hidden">
+                    <input
+                      name="subdomain"
+                      required
+                      placeholder="ex: amiens"
+                      pattern="[a-z0-9-]+"
+                      value={subdomainInput}
+                      onChange={(e) => setSubdomainInput(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 px-2.5 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0066FF] border-r-0"
+                    />
+                    <span className="bg-white/10 border border-white/10 border-l-0 text-white/50 rounded-r-lg px-2.5 py-1.5 text-xs whitespace-nowrap">.padelxp.eu</span>
+                  </div>
+                </div>
+
+                {/* Logo */}
+                <div className="space-y-0.5 text-right">
+                  <label className={labelClass}>Identité Visuelle (Logo)</label>
+                  <label className="group flex items-center justify-end gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1 cursor-pointer hover:bg-white/10 transition-all border-dashed hover:border-white/30">
+                    <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{logoPreview ? "Changer" : "Logo"}</span>
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo" className="w-7 h-7 rounded-lg object-cover ring-2 ring-white/10 shadow-lg" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 group-hover:text-white transition-colors">
+                        <Plus size={14} />
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                          setLogoFile(f);
+                          setLogoPreview(URL.createObjectURL(f));
+                        }
                       }}
                     />
+                  </label>
+                </div>
+              </div>
 
-                    {/* Dots */}
-                    <div className="flex justify-center gap-1.5 mt-3 mb-2">
-                      {[0, 1, 2].map((i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setPreviewScreen(i)}
-                          className="w-1.5 h-1.5 rounded-full transition-all"
-                          style={{
-                            background: i === previewScreen ? secondaryColor : mutedColorPreview,
-                            transform: i === previewScreen ? "scale(1.3)" : "scale(1)",
+              {/* Color Pickers */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1 bg-white/5 p-2 rounded-xl border border-white/10 shadow-sm relative overflow-hidden group">
+                  <label className="text-[9px] text-white/70 uppercase tracking-widest font-bold ml-1">Couleur Accent</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      className="h-8 w-12 rounded-lg cursor-pointer border-2 border-white/20 bg-transparent p-0 transition-transform hover:scale-105"
+                    />
+                    <span className="text-[9px] text-white/50 font-mono font-bold tracking-tight">{secondaryColor}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1 bg-white/5 p-2 rounded-xl border border-white/10 shadow-sm relative overflow-hidden group">
+                  <label className="text-[9px] text-white/70 uppercase tracking-widest font-bold ml-1">Fond d'écran</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                      className="h-8 w-12 rounded-lg cursor-pointer border-2 border-white/20 bg-transparent p-0 transition-transform hover:scale-105"
+                    />
+                    <span className="text-[9px] text-white/50 font-mono font-bold tracking-tight">{backgroundColor}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ========================================= */}
+              {/* PREVIEW EN TEMPS RÉEL */}
+              {/* ========================================= */}
+              <div className="rounded-xl bg-black/40 border border-white/10 p-4 shadow-2xl relative overflow-hidden min-h-[620px] flex flex-col">
+                <div className="flex items-center justify-end mb-4 relative z-20">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 shadow-sm backdrop-blur-md">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewScreen((p) => (p + 2) % 3)}
+                      className="w-6 h-6 rounded-lg bg-[#0066FF] flex items-center justify-center hover:bg-[#0066FFCC] transition-all shadow-[0_4px_10px_rgba(0,102,255,0.4)] active:scale-95"
+                    >
+                      <ChevronLeft size={14} className="text-white" />
+                    </button>
+                    <div className="flex flex-col items-center min-w-[70px]">
+                      <span className="text-[9px] font-black text-white uppercase italic leading-none tracking-tighter">
+                        {["Profil", "Matchs", "Classement"][previewScreen]}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewScreen((p) => (p + 1) % 3)}
+                      className="w-6 h-6 rounded-lg bg-[#0066FF] flex items-center justify-center hover:bg-[#0066FFCC] transition-all shadow-[0_4px_10px_rgba(0,102,255,0.4)] active:scale-95"
+                    >
+                      <ChevronRight size={14} className="text-white" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Calcul du mode clair/sombre pour la prévisualisation */}
+                {(() => {
+                  const lightMode = isLightColor(backgroundColor);
+                  const textColorPreview = lightMode ? "#0f172a" : "#ffffff";
+                  const mutedColorPreview = lightMode ? "rgba(15, 23, 42, 0.45)" : "rgba(255, 255, 255, 0.4)";
+                  const iconColorPreview = lightMode ? "#1e293b" : "#ffffff";
+
+                  return (
+                    <div className="relative z-10 pointer-events-none flex-1 -mt-10 overflow-hidden">
+                      <div className="transform scale-100 origin-top-left">
+                        <PhonePreview
+                          bg={backgroundColor}
+                          secondary={secondaryColor}
+                          activeScreen={previewScreen}
+                          logoUrl={logoPreview}
+                          textColor={textColorPreview}
+                          mutedColor={mutedColorPreview}
+                          iconColor={iconColorPreview}
+                          clubName={clubNameInput || undefined}
+                          clubCity={cityInput || undefined}
+                          clubData={{
+                            street: streetInput || undefined,
+                            postalCode: postalCodeInput || undefined,
+                            phone: phoneInput || undefined,
+                            numberOfCourts: numberOfCourtsInput || undefined,
+                            courtType: courtTypeInput || undefined,
                           }}
                         />
-                      ))}
+                      </div>
                     </div>
+                  );
+                })()}
 
-                    {/* Preview Disclaimer */}
-                    <div className="text-center px-4 mt-2">
-                      <p className="text-[8px] text-white/30 font-medium leading-relaxed">
-                        <span className="font-bold text-white/40">Note:</span> Cet aperçu est une représentation visuelle simplifiée. certain détails de design peuvent varier légèrement dans l'application finale.
-                      </p>
-                    </div>
-                  </>
-                );
-              })()}
+                {/* Footer Disclaimer - Fixed at the very bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/80 backdrop-blur-md border-t border-white/10 z-30">
+                  <p className="text-[9px] text-white/60 font-medium text-center leading-tight italic">
+                    * Le rendu de cet aperçu peut varier légèrement par rapport à l'application réelle.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* ========================================= */}
-          {/* BOUTON FINAL */}
+          {/* BOUTON FINAL + CGU */}
           {/* ========================================= */}
-          <div className="pt-3 border-t border-white/5">
+          <div className="flex flex-col items-center pt-4 border-t border-white/10 gap-2">
             <button
               type="button"
               disabled={loading}
               onClick={handleSubmit}
-              className="w-full py-2.5 rounded-xl text-white text-xs font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(0,102,255,0.4)] bg-gradient-to-r from-[#0066FF] to-[#0066FFAA]"
+              className="w-full max-w-lg py-3 rounded-2xl text-white text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,102,255,0.4)] bg-gradient-to-r from-[#0066FF] to-[#0066FF88] relative overflow-hidden group"
             >
-              {loading ? "Création..." : "Finaliser l'inscription"}
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              {loading ? "Création du compte..." : "Valider l'inscription du club"}
             </button>
+            <div className="text-[9px] text-white/30 font-medium uppercase tracking-[0.1em]">
+              En validant, vous acceptez les <span className="text-white/60 underline cursor-pointer">Conditions Générales d'Utilisation</span>.
+            </div>
           </div>
         </form>
-
-        <div className="mt-4 text-center text-[9px] text-white/20">
-          <p>En créant votre club, vous acceptez nos CGV/CGU.</p>
-        </div>
       </div>
     </div>
   );
