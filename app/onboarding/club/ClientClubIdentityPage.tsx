@@ -30,6 +30,15 @@ const isLightColor = (color: string) => {
   return brightness > 155;
 };
 
+const hexToRgbNumbers = (hex: string) => {
+  const h = hex.replace('#', '');
+  if (h.length < 6) return "0 0 0";
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `${r} ${g} ${b}`;
+};
+
 // ============================================================
 // COMPOSANT DE PRÉVISUALISATION LIVE
 // ============================================================
@@ -51,9 +60,9 @@ const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor,
       style={{
         background: bg,
         // @ts-ignore
-        "--theme-page": bg,
-        "--theme-accent": accent,
-        "--theme-secondary-accent": secondary,
+        "--theme-page": hexToRgbNumbers(bg),
+        "--theme-accent": hexToRgbNumbers(accent),
+        "--theme-secondary-accent": hexToRgbNumbers(secondary),
         "--theme-text": textColor,
         "--theme-text-muted": mutedColor,
       } as React.CSSProperties}

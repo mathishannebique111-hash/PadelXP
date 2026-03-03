@@ -14,6 +14,8 @@ import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNot
 import { createClient } from '@/lib/supabase/server';
 import { getPlayerChallenges } from '@/lib/challenges';
 import { getUserClubInfo } from '@/lib/utils/club-utils';
+import { headers } from 'next/headers';
+import { extractSubdomain } from '@/lib/club-branding';
 import { getClubLogoPublicUrl } from '@/lib/utils/club-logo-utils';
 
 export default async function PlayerAccountLayout({
@@ -45,8 +47,13 @@ export default async function PlayerAccountLayout({
   }
 
   // Récupérer les informations du club pour le branding
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+
   const { clubLogoUrl } = await getUserClubInfo();
-  const publicLogoUrl = clubLogoUrl ? getClubLogoPublicUrl(clubLogoUrl) : null;
+  // On n'affiche le logo du club que si on est sur un sous-domaine
+  const publicLogoUrl = (subdomain && clubLogoUrl) ? getClubLogoPublicUrl(clubLogoUrl) : null;
 
   return (
     <>
