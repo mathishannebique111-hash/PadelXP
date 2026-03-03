@@ -53,9 +53,16 @@ interface PhonePreviewProps {
   iconColor: string;
   clubName?: string;
   clubCity?: string;
+  clubData?: {
+    street?: string;
+    postalCode?: string;
+    phone?: string;
+    numberOfCourts?: string;
+    courtType?: string;
+  };
 }
 
-const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor, mutedColor, iconColor, clubName, clubCity }: PhonePreviewProps) => {
+const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor, mutedColor, iconColor, clubName, clubCity, clubData }: PhonePreviewProps) => {
   return (
     <div
       className="rounded-[48px] border-[4px] border-[#1c1c1e] overflow-hidden shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5),0_18px_36px_-18px_rgba(0,0,0,0.5)] w-full max-w-[240px] mx-auto aspect-[9/19.5] flex flex-col relative transition-colors duration-500 pb-12 ring-[1px] ring-inset ring-white/10"
@@ -104,7 +111,7 @@ const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor,
       </div>
 
       {/* App Header */}
-      <div className="flex items-center justify-between px-3 pt-1 pb-1 relative z-20">
+      <div className="flex items-center justify-between px-3 pt-4 pb-1 relative z-20">
         <div className="w-4"></div> {/* Spacer for centering */}
         <div className="flex-1 flex justify-center">
           <img
@@ -126,7 +133,7 @@ const PhonePreview = ({ bg, accent, secondary, activeScreen, logoUrl, textColor,
       {/* Main Content Area */}
       <div className="flex-1 px-3 py-1 overflow-hidden flex flex-col relative z-10 w-full">
         {activeScreen === 0 ? (
-          <ProfilePreview />
+          <ProfilePreview clubName={clubName} clubCity={clubCity} clubData={clubData} logoUrl={logoUrl} />
         ) : activeScreen === 1 ? (
           <MatchesPreview clubName={clubName} clubCity={clubCity} />
         ) : (
@@ -193,6 +200,11 @@ export default function ClientClubIdentityPage() {
   const [backgroundColor, setBackgroundColor] = useState("#172554");
   const [clubNameInput, setClubNameInput] = useState("");
   const [cityInput, setCityInput] = useState("");
+  const [streetInput, setStreetInput] = useState("");
+  const [postalCodeInput, setPostalCodeInput] = useState("");
+  const [phoneInput, setPhoneInput] = useState("");
+  const [numberOfCourtsInput, setNumberOfCourtsInput] = useState("");
+  const [courtTypeInput, setCourtTypeInput] = useState("");
   const primaryColor = "#0066FF"; // Valeur par défaut fixe
 
   // Carousel de prévisualisation
@@ -360,11 +372,11 @@ export default function ClientClubIdentityPage() {
 
             <div className="space-y-1">
               <label className={labelClass}>Adresse (Rue)</label>
-              <input name="street" required placeholder="Rue" className={inputClass} />
+              <input name="street" required placeholder="Rue" className={inputClass} value={streetInput} onChange={(e) => setStreetInput(e.target.value)} />
             </div>
             <div className="space-y-1">
               <label className={labelClass}>Code Postal</label>
-              <input name="postal_code" required type="text" placeholder="Code postal" inputMode="numeric" pattern="^[0-9]{5}$" maxLength={5} className={inputClass} />
+              <input name="postal_code" required type="text" placeholder="Code postal" inputMode="numeric" pattern="^[0-9]{5}$" maxLength={5} className={inputClass} value={postalCodeInput} onChange={(e) => setPostalCodeInput(e.target.value)} />
             </div>
 
             <div className="space-y-1">
@@ -373,7 +385,7 @@ export default function ClientClubIdentityPage() {
             </div>
             <div className="space-y-1">
               <label className={labelClass}>Téléphone</label>
-              <input name="phone" required placeholder="Téléphone" inputMode="tel" className={inputClass} />
+              <input name="phone" required placeholder="Téléphone" inputMode="tel" className={inputClass} value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
             </div>
 
             <div className="space-y-1 col-span-2">
@@ -383,11 +395,11 @@ export default function ClientClubIdentityPage() {
 
             <div className="space-y-1">
               <label className={labelClass}>Nombre de terrains</label>
-              <input name="number_of_courts" required placeholder="Nb terrains" type="number" min="1" className={inputClass} />
+              <input name="number_of_courts" required placeholder="Nb terrains" type="number" min="1" className={inputClass} value={numberOfCourtsInput} onChange={(e) => setNumberOfCourtsInput(e.target.value)} />
             </div>
             <div className="space-y-1">
               <label className={labelClass}>Type de terrains</label>
-              <select name="court_type" required className={`${inputClass} appearance-none`} defaultValue="">
+              <select name="court_type" required className={`${inputClass} appearance-none`} value={courtTypeInput} onChange={(e) => setCourtTypeInput(e.target.value)}>
                 <option value="" disabled className="bg-[#1e293b]">Type</option>
                 <option value="Couverts" className="bg-[#1e293b]">Couverts</option>
                 <option value="Extérieurs" className="bg-[#1e293b]">Extérieurs</option>
@@ -484,23 +496,26 @@ export default function ClientClubIdentityPage() {
             <div className="rounded-xl bg-black/30 border border-white/10 p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[9px] text-white/50 uppercase tracking-widest font-semibold">Aperçu en temps réel</span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 shadow-sm backdrop-blur-sm">
                   <button
                     type="button"
                     onClick={() => setPreviewScreen((p) => (p + 2) % 3)}
-                    className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/15 transition-colors"
+                    className="w-6 h-6 rounded-lg bg-[#0066FF] flex items-center justify-center hover:bg-[#0066FFCC] transition-all shadow-[0_2px_8px_rgba(0,102,255,0.3)] active:scale-90"
                   >
-                    <ChevronLeft size={10} className="text-white/50" />
+                    <ChevronLeft size={14} className="text-white" />
                   </button>
-                  <span className="text-[8px] text-white/40 min-w-[55px] text-center">
-                    {["Profil", "Matchs", "Classement"][previewScreen]}
-                  </span>
+                  <div className="flex flex-col items-center min-w-[70px]">
+                    <span className="text-[10px] font-black text-white uppercase italic leading-none tracking-tight">
+                      {["Profil", "Matchs", "Classement"][previewScreen]}
+                    </span>
+                    <span className="text-[6px] text-white/30 font-bold uppercase tracking-widest mt-0.5">Aperçu</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setPreviewScreen((p) => (p + 1) % 3)}
-                    className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/15 transition-colors"
+                    className="w-6 h-6 rounded-lg bg-[#0066FF] flex items-center justify-center hover:bg-[#0066FFCC] transition-all shadow-[0_2px_8px_rgba(0,102,255,0.3)] active:scale-90"
                   >
-                    <ChevronRight size={10} className="text-white/50" />
+                    <ChevronRight size={14} className="text-white" />
                   </button>
                 </div>
               </div>
@@ -525,10 +540,17 @@ export default function ClientClubIdentityPage() {
                       iconColor={iconColorPreview}
                       clubName={clubNameInput || undefined}
                       clubCity={cityInput || undefined}
+                      clubData={{
+                        street: streetInput || undefined,
+                        postalCode: postalCodeInput || undefined,
+                        phone: phoneInput || undefined,
+                        numberOfCourts: numberOfCourtsInput || undefined,
+                        courtType: courtTypeInput || undefined,
+                      }}
                     />
 
                     {/* Dots */}
-                    <div className="flex justify-center gap-1.5 mt-3">
+                    <div className="flex justify-center gap-1.5 mt-3 mb-2">
                       {[0, 1, 2].map((i) => (
                         <button
                           key={i}
@@ -541,6 +563,13 @@ export default function ClientClubIdentityPage() {
                           }}
                         />
                       ))}
+                    </div>
+
+                    {/* Preview Disclaimer */}
+                    <div className="text-center px-4 mt-2">
+                      <p className="text-[8px] text-white/30 font-medium leading-relaxed">
+                        <span className="font-bold text-white/40">Note:</span> Cet aperçu est une représentation visuelle simplifiée. certain détails de design peuvent varier légèrement dans l'application finale.
+                      </p>
                     </div>
                   </>
                 );

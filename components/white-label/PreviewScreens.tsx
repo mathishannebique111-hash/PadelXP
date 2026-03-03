@@ -208,8 +208,16 @@ export const Tabs = ({ items, activeIdx, onChange }: { items: string[], activeId
 );
 
 // Screens
-export const ProfilePreview = () => {
+export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl }: { clubName?: string, clubCity?: string, clubData?: { street?: string, postalCode?: string, phone?: string, numberOfCourts?: string, courtType?: string }, logoUrl?: string | null }) => {
     const [activeTab, setActiveTab] = React.useState(0);
+    const displayClubName = clubName || 'Padel Club Amiens';
+    const displayCity = clubCity || 'Amiens';
+    const displayStreet = clubData?.street || '2 Rue de la Vallée';
+    const displayPostal = clubData?.postalCode || '80000';
+    const displayPhone = clubData?.phone || '03 22 XX XX XX';
+    const displayCourts = clubData?.numberOfCourts || '6';
+    const displayCourtType = clubData?.courtType || 'Couverts';
+    const displayLogoUrl = logoUrl || '/images/Logo sans fond.png';
     return (
         <div className="w-full h-full overflow-y-auto pb-4 animate-fadeIn font-sans pt-2">
 
@@ -457,14 +465,11 @@ export const ProfilePreview = () => {
                 <div className="animate-fadeIn space-y-2 px-1 pb-4">
                     {/* Club Header */}
                     <div className="rounded-xl border border-white/10 p-2.5 bg-gradient-to-br from-[rgba(8,30,78,0.88)] to-[rgba(4,16,46,0.92)]">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <img src="/images/Logo sans fond.png" className="w-6 h-6 object-contain opacity-60" />
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <img src={displayLogoUrl} className="w-6 h-6 object-contain opacity-60" />
                             </div>
-                            <div className="min-w-0">
-                                <h3 className="text-[9px] font-black text-white uppercase tracking-tight leading-tight">Padel Club Amiens</h3>
-                                <p className="text-[6px] text-white/50 italic leading-tight">Le meilleur club de padel d'Amiens</p>
-                            </div>
+                            <h3 className="text-[9px] font-black text-white uppercase tracking-tight leading-tight">{displayClubName}</h3>
                         </div>
                     </div>
 
@@ -480,11 +485,11 @@ export const ProfilePreview = () => {
                                 <div className="space-y-1.5">
                                     <div className="flex flex-col items-center gap-0.5 text-center">
                                         <MapPin size={8} className="text-white/60" />
-                                        <span className="text-[5px] font-medium text-white/90 leading-tight">2 Rue de la Vallée, 80000 Amiens</span>
+                                        <span className="text-[5px] font-medium text-white/90 leading-tight">{displayStreet}, {displayPostal} {displayCity}</span>
                                     </div>
                                     <div className="flex flex-col items-center gap-0.5 text-center">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2 text-white/60"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                                        <span className="text-[5px] font-medium text-white/90">03 22 XX XX XX</span>
+                                        <span className="text-[5px] font-medium text-white/90">{displayPhone}</span>
                                     </div>
                                 </div>
                             </div>
@@ -494,11 +499,11 @@ export const ProfilePreview = () => {
                                 <div className="space-y-1 mt-2">
                                     <div className="flex items-center justify-between rounded-md bg-white px-1.5 py-1 text-[#071554]">
                                         <span className="uppercase tracking-[0.15em] text-[5px] font-bold">Terrains</span>
-                                        <span className="font-extrabold text-[6px]">6</span>
+                                        <span className="font-extrabold text-[6px]">{displayCourts}</span>
                                     </div>
                                     <div className="flex items-center justify-between rounded-md bg-white px-1.5 py-1 text-[#071554]">
                                         <span className="uppercase tracking-[0.15em] text-[5px] font-bold">Type</span>
-                                        <span className="font-extrabold text-[6px]">Couverts</span>
+                                        <span className="font-extrabold text-[6px]">{displayCourtType}</span>
                                     </div>
                                 </div>
                             </div>
@@ -777,38 +782,29 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                             <div className="h-[1px] flex-1 bg-white/10" />
                         </div>
 
-                        <div className="flex items-end justify-center gap-1.5 pt-1">
-                            {/* #2 - Mathis L. (Left) */}
-                            <div className="flex-1 rounded-2xl p-2 h-20 flex flex-col items-center justify-end relative shadow-lg bg-[#cbd5e1]">
-                                <div className="absolute top-1 right-1 flex flex-col items-center">
-                                    <span className="text-[6px] font-black text-slate-500">2</span>
-                                </div>
-                                <div className="w-8 h-8 rounded-full border border-white/80 bg-slate-200 flex items-center justify-center mb-1 shadow-inner overflow-hidden">
+                        <div className="flex items-center justify-between gap-1 mb-2">
+                            {/* #2 - Mathis L. (Left) - Silver */}
+                            <div className="flex-1 rounded-2xl p-2 h-20 flex flex-col items-center justify-end relative shadow-lg bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 border border-slate-100/50">
+                                <div className="w-8 h-8 rounded-full border border-white/80 bg-slate-100 flex items-center justify-center mb-1 shadow-inner overflow-hidden">
                                     <User size={16} className="text-slate-400" />
                                 </div>
-                                <span className="text-[6px] font-black text-slate-900 uppercase">Mathis L.</span>
+                                <span className="text-[6px] font-black text-slate-800 uppercase italic">Mathis L.</span>
                             </div>
 
-                            {/* #1 - Lilian R. (Center) */}
-                            <div className="flex-[1.1] rounded-2xl p-2.5 h-24 flex flex-col items-center justify-end relative shadow-2xl z-10 bg-[#eab308]">
-                                <div className="absolute top-1 right-1 flex flex-col items-center">
-                                    <span className="text-[7px] font-black text-yellow-700">1</span>
+                            {/* #1 - Lilian R. (Center) - Gold */}
+                            <div className="flex-[1.1] rounded-2xl p-2.5 h-24 flex flex-col items-center justify-end relative shadow-2xl z-10 bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 border border-yellow-200/50">
+                                <div className="w-12 h-12 rounded-full border border-white bg-yellow-50 flex items-center justify-center mb-1 shadow-xl overflow-hidden text-yellow-600">
+                                    <User size={24} />
                                 </div>
-                                <div className="w-12 h-12 rounded-full border border-white bg-yellow-100 flex items-center justify-center mb-1 shadow-xl overflow-hidden">
-                                    <User size={24} className="text-yellow-600" />
-                                </div>
-                                <span className="text-[7px] font-black text-yellow-900 uppercase">Lilian R.</span>
+                                <span className="text-[7px] font-black text-yellow-900 uppercase italic">Lilian R.</span>
                             </div>
 
-                            {/* #3 - Sarah M. (Right) */}
-                            <div className="flex-1 rounded-2xl p-2 h-18 flex flex-col items-center justify-end relative shadow-lg bg-[#fdba74]">
-                                <div className="absolute top-1 right-1 flex flex-col items-center">
-                                    <span className="text-[6px] font-black text-orange-600">3</span>
+                            {/* #3 - Sarah M. (Right) - Bronze */}
+                            <div className="flex-1 rounded-2xl p-2 h-18 flex flex-col items-center justify-end relative shadow-lg bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700 border border-orange-300/50">
+                                <div className="w-8 h-8 rounded-full border border-white/80 bg-orange-50 flex items-center justify-center mb-1 shadow-inner overflow-hidden">
+                                    <User size={16} className="text-orange-600" />
                                 </div>
-                                <div className="w-8 h-8 rounded-full border border-white/80 bg-orange-100 flex items-center justify-center mb-1 shadow-inner overflow-hidden">
-                                    <User size={16} className="text-orange-400" />
-                                </div>
-                                <span className="text-[6px] font-black text-orange-950 uppercase">Sarah M.</span>
+                                <span className="text-[6px] font-black text-orange-950 uppercase italic">Sarah M.</span>
                             </div>
                         </div>
                     </div>
@@ -841,7 +837,11 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                                     ].map((p, idx) => (
                                         <tr key={idx} className={`${p.isUser ? "bg-blue-50/80" : "bg-white"} hover:bg-slate-50 transition-colors`}>
                                             <td className="px-2 py-1.5">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-black shadow-sm ${p.rank === 1 ? "bg-yellow-100 text-yellow-700 border border-yellow-200" : p.rank === 2 ? "bg-slate-100 text-slate-700 border border-slate-200" : p.rank === 3 ? "bg-orange-100 text-orange-700 border border-orange-200" : "text-slate-400"}`}>
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-black shadow-sm ${p.rank === 1 ? "bg-yellow-100 text-yellow-700 border border-yellow-200" :
+                                                    p.rank === 2 ? "bg-slate-100 text-slate-700 border border-slate-200" :
+                                                        p.rank === 3 ? "bg-orange-100 text-orange-700 border border-orange-200" :
+                                                            "text-slate-400"
+                                                    }`}>
                                                     #{p.rank}
                                                 </div>
                                             </td>
@@ -931,9 +931,6 @@ export const CompetitionPreview = ({ clubName }: { clubName?: string }) => {
                                 <span className="text-[6px] text-white/40">Période : <span className="text-white">26 févr. 2026 → 26 mars 2026</span></span>
                             </div>
 
-                            <button type="button" className="w-full py-2 rounded-xl bg-blue-600 text-white text-[9px] font-black shadow-lg shadow-blue-600/20 transition-all">
-                                Récupérer la récompense
-                            </button>
                         </div>
                     </div>
                 </div>
