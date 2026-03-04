@@ -13,6 +13,16 @@ export default function HideSplashScreen() {
                 // 1. Déclencher la disparition de l'overlay React via un événement
                 window.dispatchEvent(new CustomEvent('hide-splash-overlay'));
 
+                // 2. Cacher le splash statique SSR aussi
+                const staticSplash = document.getElementById('px-static-splash');
+                if (staticSplash) {
+                    staticSplash.style.transition = 'opacity 0.3s ease-out';
+                    staticSplash.style.opacity = '0';
+                    setTimeout(() => {
+                        staticSplash.style.display = 'none';
+                    }, 400);
+                }
+
                 // 2. Cacher le splash natif Swift via WebKit message handler
                 if ((window as any).webkit?.messageHandlers?.hideSplash) {
                     (window as any).webkit.messageHandlers.hideSplash.postMessage('hide');

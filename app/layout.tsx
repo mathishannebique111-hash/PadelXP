@@ -41,6 +41,7 @@ export default async function RootLayout({
   const host = headersList.get('host') || '';
   const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
   const branding = await getClubBranding(subdomain);
+  const logoUrl = subdomain && branding.logo_url ? branding.logo_url : "/images/Logo sans fond.png";
 
   // Convertir les couleurs hex en triplets RGB pour les variables CSS
   const accentRgb = hexToRgbTriplet(branding.primary_color);
@@ -130,23 +131,53 @@ export default async function RootLayout({
                 if (isApp && document.documentElement) {
                   document.documentElement.classList.add('is-app');
                   document.documentElement.style.backgroundColor = '${subdomain ? branding.background_color : '#172554'}';
-                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '${subdomain ? branding.background_color : '#172554'}');
                   document.documentElement.style.setProperty('--sab', '20px');
                 }
               })();
             `,
           }}
         />
-        <style>
-          {`
-            html, body {
-              background-color: ${subdomain ? branding.background_color : '#172554'} !important;
-            }
-          `}
-        </style>
       </head>
       <body className={`${isApp ? 'is-app' : ''} text-white min-h-screen`} style={{ backgroundColor: subdomain ? branding.background_color : '#172554' }} data-is-app={isApp ? 'true' : 'false'} data-club-subdomain={subdomain || ''} suppressHydrationWarning>
-        <SplashOverlay isApp={isApp} clubLogoUrl={branding.logo_url} clubPrimaryColor={subdomain ? branding.primary_color : null} clubBackgroundColor={subdomain ? branding.background_color : null} clubName={subdomain ? branding.name : null} />
+        {/* L'overlay React vient en dernier pour gérer la transition */}
+        <SplashOverlay isApp={isApp} clubLogoUrl={logoUrl} clubPrimaryColor={subdomain ? branding.primary_color : null} clubBackgroundColor={subdomain ? branding.background_color : null} clubName={subdomain ? branding.name : null} />
+
+        {/* Splash screen statique (SSR) pour éviter le flash noir au démarrage */}
+        {subdomain && (
+          <div id="px-static-splash" style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: branding.background_color,
+            zIndex: 999998,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '2rem',
+            pointerEvents: 'none'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
+              <img
+                src={logoUrl}
+                alt={branding.name}
+                style={{ width: '140px', height: 'auto' }}
+              />
+              <h1 style={{
+                fontSize: '2rem',
+                fontWeight: '900',
+                color: getContrastColor(branding.background_color),
+                margin: 0,
+                textAlign: 'center',
+                fontFamily: 'Inter, -apple-system, system-ui, sans-serif'
+              }}>
+                {branding.name}
+              </h1>
+            </div>
+          </div>
+        )}
         <SafeAreas />
         <OfflineWrapper />
         {children}
@@ -161,4 +192,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

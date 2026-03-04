@@ -61,15 +61,15 @@ export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor, cl
                 pointerEvents: fading ? 'none' : 'auto',
             }}
         >
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
                 <img
                     src={logoSrc}
                     alt="App"
-                    style={{ width: '180px', height: 'auto' }}
+                    style={{ width: '140px', height: 'auto' }}
                 />
                 {clubName && (
                     <h1 style={{
-                        fontSize: '32px',
+                        fontSize: '2rem',
                         fontWeight: '900',
                         color: (function () {
                             const hex = bgColor.replace('#', '');

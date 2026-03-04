@@ -50,7 +50,7 @@ export default function ClubInstallPage({ clubName, logoUrl, primaryColor, secon
             className="min-h-screen flex flex-col items-center justify-center p-6 text-center relative overflow-hidden"
             style={{ backgroundColor: backgroundColor }}
         >
-            <div className="relative z-10 flex flex-col items-center gap-6">
+            <div className="relative z-10 flex flex-col items-center gap-[2rem]">
                 {/* Logo du club */}
                 <div
                     className="w-40 h-40 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden"
@@ -64,7 +64,7 @@ export default function ClubInstallPage({ clubName, logoUrl, primaryColor, secon
                 </div>
 
                 {/* Nom du club */}
-                <h1 className="text-3xl font-black tracking-tight" style={{ color: isLightBg ? '#000000' : '#ffffff' }}>{clubName}</h1>
+                <h1 className="text-[2rem] font-black tracking-tight" style={{ color: isLightBg ? '#000000' : '#ffffff' }}>{clubName}</h1>
             </div>
         </div>
     );
