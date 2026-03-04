@@ -72,10 +72,13 @@ export default async function PlayerAccountLayout({
               minHeight: '100vh',
               backgroundColor: 'rgb(var(--theme-player-page))',
             }}
+            data-club-subdomain={subdomain || ''}
           >
             {/* Background global pour toutes les pages joueur */}
-            {/* Le dégradé commence un peu plus bas pour laisser le haut (safe area) parfaitement bleu #172554 */}
-            <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 160px, rgba(0,0,0,0.8) 70%, #000000 100%)' }} />
+            {/* Le dégradé est affiché UNIQUEMENT pour PadelXP de base, pas pour les apps club */}
+            {!subdomain && (
+              <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 160px, rgba(0,0,0,0.8) 70%, #000000 100%)' }} />
+            )}
 
             {/* Logo PadelXP Header (scroll avec contenus) */}
             <HeaderLogo logoUrl={publicLogoUrl} />

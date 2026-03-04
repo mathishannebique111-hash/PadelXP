@@ -30,8 +30,22 @@ export default function SafeAreas() {
       pathname.startsWith('/register'));
 
     // Couleur de fond par défaut (Bleu Player)
-    let topColor = '#172554';
-    let bottomColor = '#172554';
+    // Pour les clubs avec sous-domaine, lire la couleur depuis les variables CSS
+    const clubSubdomain = document.body.getAttribute('data-club-subdomain') || '';
+    let brandedBgColor = '#172554'; // fallback
+    if (clubSubdomain) {
+      const computedStyle = getComputedStyle(document.documentElement);
+      const themePageRgb = computedStyle.getPropertyValue('--theme-player-page').trim();
+      if (themePageRgb) {
+        const parts = themePageRgb.split(/\s+/).map(Number);
+        if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+          brandedBgColor = `#${parts.map(n => n.toString(16).padStart(2, '0')).join('')}`;
+        }
+      }
+    }
+
+    let topColor = brandedBgColor;
+    let bottomColor = brandedBgColor;
 
     if (isBlackPage) {
       topColor = '#000000';
@@ -40,8 +54,8 @@ export default function SafeAreas() {
       topColor = '#071554';
       bottomColor = '#071554';
     } else if (isPlayerPage) {
-      topColor = '#172554';
-      bottomColor = '#172554';
+      topColor = brandedBgColor;
+      bottomColor = brandedBgColor;
     }
 
     const forceSafeAreaColor = async () => {

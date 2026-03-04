@@ -179,8 +179,6 @@ body {
 html.player-page,
 body.player-page {
   background-color: rgb(var(--theme-player-page));
-  --safe-area-top: #172554;
-  --safe-area-bottom: #172554;
 }
 
 /* Safe Area INFÉRIEURE uniquement sur le body */
