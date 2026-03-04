@@ -60,7 +60,7 @@ export default function BoostPurchaseButton({
   // Couleurs de fond selon le pack
   const getBackgroundClasses = () => {
     if (isFeatured) {
-      return "border bg-gradient-to-br from-black/20 via-black/40 to-black/20 shadow-[0_0_15px_rgba(var(--theme-secondary-accent-rgb,191,255,0),0.15)] club-light-bg-boost-border";
+      return "border bg-gradient-to-br from-black/20 via-black/40 to-black/20 shadow-[0_0_15px_rgba(var(--theme-secondary-accent,191,255,0),0.15)] club-light-bg-boost-border";
     }
     // Pack 1 et 5 - bleu foncé élégant
     return "bg-gradient-to-br from-[#0F1B3D] via-[#1A2B4D] to-[#0F1B3D] shadow-lg border border-white/20";

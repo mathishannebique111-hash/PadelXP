@@ -119,7 +119,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
           style={activeTab === 'general' ? {
             backgroundColor: 'rgb(var(--theme-page))',
             borderColor: 'rgb(var(--theme-accent))',
-            boxShadow: '0 0 15px rgba(var(--theme-accent-rgb), 0.2)',
+            boxShadow: '0 0 15px rgba(var(--theme-accent), 0.2)',
             '--tw-ring-color': 'rgb(var(--theme-accent))',
             '--tw-ring-offset-color': 'rgb(var(--theme-page))'
           } as any : {}}
@@ -136,7 +136,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
           style={activeTab === 'club' ? {
             backgroundColor: 'rgb(var(--theme-accent))',
             color: 'var(--theme-player-page, #172554)',
-            boxShadow: '0 0 15px rgba(var(--theme-accent-rgb), 0.25)',
+            boxShadow: '0 0 15px rgba(var(--theme-accent), 0.25)',
             border: 'none',
             '--tw-ring-color': 'rgb(var(--theme-accent))',
             '--tw-ring-offset-color': 'rgb(var(--theme-page))'

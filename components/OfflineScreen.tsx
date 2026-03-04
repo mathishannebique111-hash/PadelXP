@@ -101,7 +101,7 @@ export default function OfflineScreen() {
                     onClick={handleRetry}
                     disabled={isRetrying}
                     className="flex items-center gap-2 px-6 py-3 text-white font-semibold rounded-xl transition-all disabled:opacity-50 shadow-lg"
-                    style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent-rgb), 0.3)' }}
+                    style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent), 0.3)' }}
                 >
                     <RefreshCw
                         size={18}

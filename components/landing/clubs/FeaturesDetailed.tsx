@@ -72,7 +72,7 @@ export default function FeaturesDetailed() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold transition-all whitespace-nowrap text-sm md:text-base ${activeTab === tab.id
-                ? "bg-gradient-to-r from-[rgb(var(--theme-accent))] to-[#0052CC] text-white shadow-[0_0_20px_rgba(var(--theme-accent-rgb,0,102,255),0.5)] border-transparent"
+                ? "bg-gradient-to-r from-[rgb(var(--theme-accent))] to-[#0052CC] text-white shadow-[0_0_20px_rgba(var(--theme-accent,0,102,255),0.5)] border-transparent"
                 : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-[rgb(var(--theme-secondary-accent))]/30"
                 }`}
             >
@@ -191,7 +191,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Points</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Points</div>
                 <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>531</div>
               </div>
 
@@ -199,7 +199,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Matchs</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Matchs</div>
                 <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>48</div>
               </div>
 
@@ -207,7 +207,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Victoires</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Victoires</div>
                 <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>41</div>
               </div>
 
@@ -215,7 +215,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Défaites</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Défaites</div>
                 <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>7</div>
               </div>
 
@@ -223,7 +223,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Sets Gagnés</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Sets Gagnés</div>
                 <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>82</div>
               </div>
 
@@ -231,7 +231,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Sets Perdus</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Sets Perdus</div>
                 <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>14</div>
               </div>
 
@@ -239,7 +239,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Winrate</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Winrate</div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
                   <div className="text-2xl md:text-3xl font-bold text-emerald-500 tabular-nums">85%</div>
@@ -250,7 +250,7 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Badges</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Badges</div>
                 <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>10 / 16</div>
               </div>
             </div>
@@ -550,7 +550,7 @@ function MatchEntryFeature() {
                   type="text"
                   value="Thomas R."
                   className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none transition-colors"
-                  style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)' }}
+                  style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent, 191,255,0), 0.5)' }}
                 />
               </div>
               <div>
@@ -559,7 +559,7 @@ function MatchEntryFeature() {
                   type="text"
                   value="Julie M."
                   className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none transition-colors"
-                  style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)' }}
+                  style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent, 191,255,0), 0.5)' }}
                 />
               </div>
             </div>
@@ -571,7 +571,7 @@ function MatchEntryFeature() {
             <div className="flex gap-3">
               <button
                 className="flex-1 rounded-lg border-2 shadow-lg px-3 py-2.5 md:px-4 md:py-3 text-sm font-semibold transition-all flex items-center justify-center gap-1.5"
-                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)' }}
+                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
               >
                 <Trophy size={14} className="md:w-4 md:h-4" /> Équipe 1
               </button>
@@ -777,7 +777,7 @@ function PartnershipsFeature() {
                 <button className="h-7 md:h-8 rounded-lg border border-white/10 text-white flex items-center justify-center hover:bg-white/5 transition-colors">
                   <LucideIcons.Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 </button>
-                <button className="h-7 md:h-8 rounded-lg flex items-center justify-center hover:scale-105 transition-all shadow-lg" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}>
+                <button className="h-7 md:h-8 rounded-lg flex items-center justify-center hover:scale-105 transition-all shadow-lg" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' }}>
                   <UserPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 </button>
               </div>
@@ -854,7 +854,7 @@ function TournamentsFeature() {
       className="flex items-center justify-center"
     >
       <div className="w-full max-w-3xl rounded-2xl border border-white/15 bg-gradient-to-br from-[#020617] via-[#020617] to-[#0f172a] p-8 md:p-10 shadow-[0_30px_80px_rgba(15,23,42,0.9)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--theme-accent-rgb,0,102,255),0.15),transparent)] z-0 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--theme-accent,0,102,255),0.15),transparent)] z-0 pointer-events-none" />
 
         {/* Halos vert et bleu animés */}
         <div className="absolute inset-0 opacity-20 pointer-events-none">

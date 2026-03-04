@@ -78,7 +78,7 @@ export default async function MatchHistoryContent() {
     return (
       <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
         <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md px-4 py-2 text-sm font-semibold text-white transition-all active:scale-95" style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
+        <Link href="/match/new" className="mt-4 inline-block rounded-xl px-6 py-2.5 text-sm font-black uppercase tracking-widest transition-all active:scale-95" style={{ backgroundColor: 'rgb(var(--theme-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-accent), 0.3)' }}>
           Enregistrer un match
         </Link>
       </div>
@@ -91,7 +91,7 @@ export default async function MatchHistoryContent() {
     return (
       <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
         <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md px-4 py-2 text-sm font-semibold text-white transition-all active:scale-95" style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
+        <Link href="/match/new" className="mt-4 inline-block rounded-xl px-6 py-2.5 text-sm font-black uppercase tracking-widest transition-all active:scale-95" style={{ backgroundColor: 'rgb(var(--theme-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-accent), 0.3)' }}>
           Enregistrer un match
         </Link>
       </div>

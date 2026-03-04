@@ -270,7 +270,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                 layout
                 className={`bg-[#071554]/40 border border-white/10 rounded-3xl relative overflow-hidden backdrop-blur-xl transition-colors duration-700 ${simulating ? 'p-12 min-h-[400px] flex items-center justify-center' : 'p-6 sm:p-8 min-h-0'}`}
             >
-                <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.05)' }} />
+                <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.05)' }} />
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10 w-full">
                     <AnimatePresence mode="wait">
@@ -290,9 +290,9 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                                     className="w-24 h-24 rounded-3xl flex items-center justify-center border"
                                     style={{
-                                        backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)',
-                                        borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)',
-                                        boxShadow: "0 0 50px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)"
+                                        backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)',
+                                        borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)',
+                                        boxShadow: "0 0 50px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)"
                                     }}
                                 >
                                     <Sparkles className="w-12 h-12" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
@@ -319,7 +319,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
 
                                     <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
                                         <motion.div
-                                            className="h-full" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)' }}
+                                            className="h-full" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent, 191,255,0), 0.5)' }}
                                             animate={{ width: `${((loadingStep + 1) / LOADING_MESSAGES.length) * 100}%` }}
                                             transition={{ duration: 0.5 }}
                                         />
@@ -338,7 +338,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                             >
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 rounded-xl border" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)' }}>
+                                        <div className="p-2 rounded-xl border" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.2)', borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}>
                                             <Swords className="w-6 h-6" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                         </div>
                                         <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Simulateur Oracle</h1>
@@ -353,7 +353,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                         onClick={handleRunSimulation}
                                         disabled={simulating || !selectedPlayers.partner || !selectedPlayers.opp1 || !selectedPlayers.opp2}
                                         className="h-14 px-8 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 flex items-center justify-center gap-2 uppercase tracking-tight"
-                                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 30px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
+                                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 30px rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' }}
                                     >
                                         <Sparkles className="w-5 h-5" />
                                         Lancer l'Oracle
@@ -502,7 +502,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
 
                             {/* Magic Balance (Proposed just below win percentage frame) */}
                             {result.suggestedBalancedTeams && result.suggestedBalancedTeams.some((id, i) => id !== [selfId, selectedPlayers.partner?.id, selectedPlayers.opp1?.id, selectedPlayers.opp2?.id][i]) && (
-                                <div className="p-6 rounded-3xl flex items-center justify-between group animate-in slide-in-from-top-4 duration-500" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))", color: "var(--theme-player-page)", border: "1px solid rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)", boxShadow: "0 0 30px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)" }}>
+                                <div className="p-6 rounded-3xl flex items-center justify-between group animate-in slide-in-from-top-4 duration-500" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))", color: "var(--theme-player-page)", border: "1px solid rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)", boxShadow: "0 0 30px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)" }}>
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-[#071554]/10 flex items-center justify-center animate-pulse">
                                             <Shuffle className="w-6 h-6 text-[#071554]" />
@@ -524,7 +524,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                             {/* Tactical Plan removed from here, now in Coach IA */}
 
                             {/* Progress Stakes (My stakes) */}
-                            <div className="p-6 rounded-3xl" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))", color: "var(--theme-player-page)", border: "1px solid rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)", boxShadow: "0 0 30px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)" }}>
+                            <div className="p-6 rounded-3xl" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))", color: "var(--theme-player-page)", border: "1px solid rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)", boxShadow: "0 0 30px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)" }}>
                                 <div className="flex items-center gap-3 mb-4">
                                     <TrendingUp className="w-5 h-5 text-[#071554]" />
                                     <h3 className="text-sm font-black text-[#071554] uppercase tracking-wider">Enjeux personnels</h3>
@@ -584,12 +584,12 @@ export default function OracleTab({ selfId }: { selfId: string }) {
 
                                 {/* Tactical Advice Integration */}
                                 {result.tacticalTarget && (
-                                    <div className="mb-8 p-5 rounded-2xl relative overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.05)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)', border: '1px solid' }}>
+                                    <div className="mb-8 p-5 rounded-2xl relative overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.05)', borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.2)', border: '1px solid' }}>
                                         <div className="absolute top-0 right-0 p-4 opacity-10">
                                             <Target className="w-12 h-12" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                         </div>
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}>
+                                            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' }}>
                                                 <Target className="w-4 h-4" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                             </div>
                                             <h4 className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Plan d'Attaque Prioritaire</h4>
@@ -607,7 +607,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                             key={p.id}
                                             onClick={() => setActiveInsightTab(p.id)}
                                             className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all border ${activeInsightTab === p.id
-                                                ? 'text-[#071554] shadow-lg shadow-[rgba(var(--theme-secondary-accent-rgb, 191,255,0),0.2)]'
+                                                ? 'text-[#071554] shadow-lg shadow-[rgba(var(--theme-secondary-accent, 191,255,0),0.2)]'
                                                 : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
                                                 }`}
                                             style={activeInsightTab === p.id ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgb(var(--theme-secondary-accent))' } : {}}
@@ -621,7 +621,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                         {/* Status Pills */}
                                         <div className="flex flex-wrap gap-2">
-                                            <div className="px-3 py-1.5 rounded-full border text-[9px] font-black uppercase flex items-center gap-1.5" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)', color: 'rgb(var(--theme-secondary-accent))' }}>
+                                            <div className="px-3 py-1.5 rounded-full border text-[9px] font-black uppercase flex items-center gap-1.5" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Calendar size={10} /> {currentInsight.luckyDay ? `Jour de gloire : ${currentInsight.luckyDay}` : "Données jour insuffisantes"}
                                             </div>
                                             <div className="px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[9px] font-black uppercase flex items-center gap-1.5">
@@ -637,7 +637,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                             <div className="space-y-3">
                                                 <div className="text-[9px] font-black text-white/30 uppercase tracking-widest px-1">Points Forts</div>
                                                 {currentInsight.strengths.length > 0 ? currentInsight.strengths.map((s, idx) => (
-                                                    <div key={idx} className="flex gap-2 text-[11px] text-white/80 items-start leading-tight p-2 rounded-lg border" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.05)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.1)' }}>
+                                                    <div key={idx} className="flex gap-2 text-[11px] text-white/80 items-start leading-tight p-2 rounded-lg border" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.05)', borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.1)' }}>
                                                         <Sparkles size={10} className="mt-0.5 flex-shrink-0" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                                         {s}
                                                     </div>

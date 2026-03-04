@@ -1108,7 +1108,7 @@ export default function MatchForm({
             <select
               value={selectedLeagueId}
               onChange={(e) => setSelectedLeagueId(e.target.value)}
-              className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-3 text-white text-sm font-medium focus:outline-none focus:ring-2 appearance-none" style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' }}
+              className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-3 text-white text-sm font-medium focus:outline-none focus:ring-2 appearance-none" style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' }}
             >
               <option value="" className="bg-[#0a0f2c]">Aucune ligue</option>
               {activeLeagues.map((league) => (
@@ -1206,7 +1206,7 @@ export default function MatchForm({
                 type="button"
                 onClick={() => setWinner("1")}
                 className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "1"
-                  ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]"
+                  ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
                 style={winner === "1" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : {}}
@@ -1220,7 +1220,7 @@ export default function MatchForm({
                 type="button"
                 onClick={() => setWinner("2")}
                 className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "2"
-                  ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]"
+                  ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
                 style={winner === "2" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : {}}
@@ -1291,7 +1291,7 @@ export default function MatchForm({
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    className="w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none" style={{ borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)' }}
+                    className="w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none" style={{ borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
                     value={tieBreak.team1Score}
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/g, '');
@@ -1301,12 +1301,12 @@ export default function MatchForm({
                     ref={tieBreakTeam1Ref}
                     onBlur={handleInputBlur}
                   />
-                  <span className="font-bold" style={{ color: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.4)' }}>-</span>
+                  <span className="font-bold" style={{ color: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.4)' }}>-</span>
                   <input
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    className="w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none" style={{ borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)' }}
+                    className="w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none" style={{ borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
                     value={tieBreak.team2Score}
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/g, '');
@@ -1332,7 +1332,7 @@ export default function MatchForm({
                 <button
                   type="button"
                   onClick={addSet}
-                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' }}
+                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' }}
                 >
                   + Set
                 </button>
@@ -1341,7 +1341,7 @@ export default function MatchForm({
                 <button
                   type="button"
                   onClick={() => setHasTieBreak(true)}
-                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' }}
+                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' }}
                 >
                   + Tie-Break
                 </button>
@@ -1356,7 +1356,7 @@ export default function MatchForm({
         <div className="pt-2 pb-4">
           <button
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 5px 15px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' }}
+            className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 5px 15px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' }}
           >
             <div className="relative z-10 flex items-center justify-center gap-1.5 text-sm">
               {loading && (

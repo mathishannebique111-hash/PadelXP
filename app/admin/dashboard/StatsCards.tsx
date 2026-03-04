@@ -66,7 +66,7 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
       icon: Building2,
       from: 'from-[rgb(var(--theme-secondary-accent))]',
       to: 'to-[rgb(var(--theme-secondary-accent))]',
-      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent,204,255,0),0.2)]',
     },
     {
       label: 'Joueurs',
@@ -74,7 +74,7 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
       icon: Users,
       from: 'from-[rgb(var(--theme-secondary-accent))]',
       to: 'to-[rgb(var(--theme-secondary-accent))]',
-      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent,204,255,0),0.2)]',
     },
     {
       label: 'Matchs (Total)',
@@ -82,7 +82,7 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
       icon: Trophy,
       from: 'from-[rgb(var(--theme-secondary-accent))]',
       to: 'to-[rgb(var(--theme-secondary-accent))]',
-      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent,204,255,0),0.2)]',
     },
     {
       label: "Matchs d'aujourd'hui",
@@ -90,7 +90,7 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
       icon: Trophy,
       from: 'from-[rgb(var(--theme-secondary-accent))]',
       to: 'to-[rgb(var(--theme-secondary-accent))]',
-      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent,204,255,0),0.2)]',
     },
     {
       label: 'Messages non lus',
@@ -98,7 +98,7 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
       icon: MessageSquare,
       from: 'from-[rgb(var(--theme-secondary-accent))]',
       to: 'to-[rgb(var(--theme-secondary-accent))]',
-      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent,204,255,0),0.2)]',
     },
   ];
 
@@ -113,7 +113,7 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
             onClick={() => isClickable && onCardClick(card.label)}
             className={`group relative bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isClickable ? "cursor-pointer active:scale-95" : ""
               }`}
-            style={{ borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' }}
+            style={{ borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' }}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-500 pointer-events-none" />
 

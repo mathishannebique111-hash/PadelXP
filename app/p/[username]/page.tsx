@@ -91,7 +91,7 @@ export default function ProfileShareRedirectPage() {
                         {/* Spinner */}
                         <div
                             className="w-12 h-12 border-4 rounded-full animate-spin mx-auto"
-                            style={{ borderTopColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.3)' }}
+                            style={{ borderTopColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.3)' }}
                         />
                         <p className="text-gray-400">Ouverture de l'application...</p>
                     </>

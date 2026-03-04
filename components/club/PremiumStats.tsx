@@ -120,7 +120,7 @@ export default function PremiumStats() {
 
         return (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group transition-all" style={{ '--tw-border-opacity': 1 } as any}>
-                <style>{`.group:hover{-webkit-box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2);box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)}`}</style>
+                <style>{`.group:hover{-webkit-box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2);box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)}`}</style>
                 <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[rgb(var(--theme-accent))] to-transparent opacity-20`}></div>
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
                     <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
@@ -153,7 +153,7 @@ export default function PremiumStats() {
 
                     {!isPremium && displayList.length > 0 && (
                         <div className="absolute inset-0 flex items-start justify-center pt-4 z-20 pointer-events-none">
-                            <div className="bg-[#071554] border-2 p-6 rounded-2xl flex flex-col items-center text-center w-[90%] sm:w-auto sm:max-w-md pointer-events-auto backdrop-blur-md" style={{ borderColor: 'rgb(var(--theme-accent))', boxShadow: '0 0 30px rgba(var(--theme-accent-rgb), 0.2)' }}>
+                            <div className="bg-[#071554] border-2 p-6 rounded-2xl flex flex-col items-center text-center w-[90%] sm:w-auto sm:max-w-md pointer-events-auto backdrop-blur-md" style={{ borderColor: 'rgb(var(--theme-accent))', boxShadow: '0 0 30px rgba(var(--theme-accent), 0.2)' }}>
                                 <Sparkles className="w-6 h-6 mb-3 animate-pulse" style={{ color: 'rgb(var(--theme-accent))' }} />
                                 <p className="text-sm sm:text-base text-white font-black leading-tight mb-4 uppercase tracking-tight">
                                     {isVictims ? `Ta meilleure victime est ${list[0].name}` :
@@ -163,7 +163,7 @@ export default function PremiumStats() {
                                 <button
                                     onClick={handleUpgrade}
                                     className="w-full sm:w-auto text-[#071554] px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-                                    style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 0 15px rgba(var(--theme-accent-rgb), 0.3)' }}
+                                    style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 0 15px rgba(var(--theme-accent), 0.3)' }}
                                 >
                                     découvre qui c&apos;est
                                     <ArrowRight className="w-4 h-4" />
@@ -343,7 +343,7 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setListTab(tab.id as 'victims' | 'nemesis' | 'partners')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${listTab === tab.id
-                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
                             style={listTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
@@ -372,7 +372,7 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setPerformanceTab(tab.id as 'weaker' | 'equal' | 'stronger')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${performanceTab === tab.id
-                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
                             style={performanceTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
@@ -433,7 +433,7 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setSuccessTab(tab.id as 'day' | 'hour' | 'month')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${successTab === tab.id
-                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
                             style={successTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
@@ -509,7 +509,7 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setFormTab(tab.id as 'form' | 'reaction')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${formTab === tab.id
-                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
                             style={formTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}

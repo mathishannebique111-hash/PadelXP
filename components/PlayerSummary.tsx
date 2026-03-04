@@ -312,7 +312,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
   return (
     <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border border-white/80 p-6 sm:p-8 md:p-10 text-white shadow-xl relative overflow-hidden" style={{
-      background: "linear-gradient(135deg, var(--theme-page) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, var(--theme-accent-rgba, rgba(0,102,255,0.08)), transparent 70%)"
+      background: "linear-gradient(135deg, var(--theme-page) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, var(--theme-accenta, rgba(0,102,255,0.08)), transparent 70%)"
     }}>
       <div>
         {/* Notifier client pour les changements de niveau */}
@@ -349,11 +349,11 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
               <div className="flex flex-col items-end gap-1.5 relative">
                 {/* Icône flamme principale */}
                 <div className="relative z-10">
-                  <Flame size={32} className="text-white" style={{ filter: "drop-shadow(0 0 8px rgba(var(--theme-secondary-accent-rgb), 0.6))" }} strokeWidth={1.5} />
+                  <Flame size={32} className="text-white" style={{ filter: "drop-shadow(0 0 8px rgba(var(--theme-secondary-accent), 0.6))" }} strokeWidth={1.5} />
                 </div>
                 {/* Effet fantôme derrière */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none">
-                  <Flame size={64} style={{ color: 'rgba(var(--theme-secondary-accent-rgb), 0.2)' }} className="blur-[1px] transform scale-125" strokeWidth={3} />
+                  <Flame size={64} style={{ color: 'rgba(var(--theme-secondary-accent), 0.2)' }} className="blur-[1px] transform scale-125" strokeWidth={3} />
                 </div>
 
                 <div className="text-[9px] sm:text-[10px] text-white/80 mt-1">

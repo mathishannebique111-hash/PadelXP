@@ -26,7 +26,7 @@ export default function LevelResultContent({ result }: Props) {
             <div className="text-center bg-slate-950/40 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
                 <motion.div
                     className="absolute inset-0 bg-gradient-to-r opacity-20"
-                    style={{ backgroundImage: 'linear-gradient(to right, rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1), rgba(0, 102, 255, 0.1))' }}
+                    style={{ backgroundImage: 'linear-gradient(to right, rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1), rgba(0, 102, 255, 0.1))' }}
                     animate={{
                         backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                     }}

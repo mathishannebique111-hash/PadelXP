@@ -249,7 +249,7 @@ function MatchTabsContent({
               )}
             </div>
             {currentTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: "0 0 8px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.4)" }} />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: "0 0 8px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.4)" }} />
             )}
           </button>
         ))}

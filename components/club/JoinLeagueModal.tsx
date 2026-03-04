@@ -55,7 +55,7 @@ export default function JoinLeagueModal({ onClose, onJoined }: JoinLeagueModalPr
                 </button>
 
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' }}>
+                    <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' }}>
                         <KeyRound size={20} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                     </div>
                     <div>
@@ -70,7 +70,7 @@ export default function JoinLeagueModal({ onClose, onJoined }: JoinLeagueModalPr
                     onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
                     placeholder="ABC123"
                     className="w-full h-14 rounded-xl bg-white/10 border border-white/20 px-4 text-center text-white text-2xl font-black tracking-[0.5em] placeholder:text-white/20 placeholder:tracking-[0.3em] focus:outline-none focus:ring-2 transition-all"
-                    style={{ focusRingColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
+                    style={{ focusRingColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                     maxLength={6}
                     autoFocus={false}
                 />

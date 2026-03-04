@@ -68,7 +68,7 @@ export default function ParallaxHalos() {
         ref={haloBottomRef}
         aria-hidden
         className="fixed -bottom-28 -left-28 h-[400px] w-[400px] rounded-full blur-[90px] will-change-transform"
-        style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191, 255, 0), 0.4)' }}
+        style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191, 255, 0), 0.4)' }}
       />
     </>
   );

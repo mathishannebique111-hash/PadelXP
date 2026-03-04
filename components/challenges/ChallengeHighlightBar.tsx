@@ -20,7 +20,7 @@ export default function ChallengeHighlightBar() {
             {/* Subtle glow behind the whole component on hover */}
             <div
                 className="absolute inset-0 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                style={{ backgroundColor: challenge.isPremium ? 'rgba(245, 158, 11, 0.05)' : 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.05)' }}
+                style={{ backgroundColor: challenge.isPremium ? 'rgba(245, 158, 11, 0.05)' : 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.05)' }}
             />
 
             {/* Extremely light and subtle frame */}
@@ -30,7 +30,7 @@ export default function ChallengeHighlightBar() {
                         <div className="flex items-center gap-2.5 min-w-0">
                             <div
                                 className={`flex flex-shrink-0 items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/10 ${challenge.isPremium ? 'text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : ''}`}
-                                style={!challenge.isPremium ? { color: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' } : {}}
+                                style={!challenge.isPremium ? { color: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' } : {}}
                             >
                                 <Trophy size={11} strokeWidth={2.5} />
                             </div>
@@ -51,7 +51,7 @@ export default function ChallengeHighlightBar() {
                             className={`h-full rounded-full transition-all duration-1000 ease-out relative ${challenge.isPremium ? 'bg-gradient-to-r from-amber-500 to-orange-400 shadow-[0_0_12px_rgba(245,158,11,0.8)]' : ''}`}
                             style={{
                                 width: `${percentage}%`,
-                                ...(!challenge.isPremium ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 12px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.6)' } : {})
+                                ...(!challenge.isPremium ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 12px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.6)' } : {})
                             }}
                         >
                             {/* Inner highlight for 3D effect */}

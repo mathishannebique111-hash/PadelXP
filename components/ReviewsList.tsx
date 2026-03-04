@@ -114,7 +114,7 @@ export default function ReviewsList({
                 <div
                   key={review.id}
                   className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-white to-blue-50 p-5 sm:p-6 border-2 shadow-[0_20px_50px_rgba(4,16,46,0.25)] opacity-0 animate-fade-in relative"
-                  style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards', borderColor: 'rgba(var(--theme-accent-rgb, 0, 102, 255), 0.2)' }}
+                  style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards', borderColor: 'rgba(var(--theme-accent, 0, 102, 255), 0.2)' }}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -137,7 +137,7 @@ export default function ReviewsList({
                     </div>
                     <div className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map(n => (
-                        <span key={n} className={`${n <= review.rating ? 'drop-shadow-[0_0_3px_rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)]' : 'text-slate-300'} text-lg sm:text-xl`} style={{ color: n <= review.rating ? 'rgb(var(--theme-secondary-accent))' : undefined }}>★</span>
+                        <span key={n} className={`${n <= review.rating ? 'drop-shadow-[0_0_3px_rgba(var(--theme-secondary-accent, 191,255,0), 0.5)]' : 'text-slate-300'} text-lg sm:text-xl`} style={{ color: n <= review.rating ? 'rgb(var(--theme-secondary-accent))' : undefined }}>★</span>
                       ))}
                     </div>
                   </div>

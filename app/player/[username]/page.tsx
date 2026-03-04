@@ -195,7 +195,7 @@ export default async function PublicProfilePage({ params }: Props) {
                                 style={{
                                     backgroundColor: 'rgb(var(--theme-secondary-accent))',
                                     color: 'var(--theme-player-page, #071554)',
-                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)'
                                 }}
                             >
                                 <Trophy size={18} />
@@ -208,7 +208,7 @@ export default async function PublicProfilePage({ params }: Props) {
                                 style={{
                                     backgroundColor: 'rgb(var(--theme-secondary-accent))',
                                     color: 'var(--theme-player-page, #071554)',
-                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)'
                                 }}
                             >
                                 <Trophy size={18} />

@@ -24,7 +24,7 @@ export default function JoinCommunityButton() {
             className="w-full py-3 px-6 text-black font-extrabold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg text-base uppercase tracking-tight"
             style={{
                 backgroundColor: 'rgb(var(--theme-secondary-accent))',
-                boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)'
             }}
         >
             <Trophy size={20} />

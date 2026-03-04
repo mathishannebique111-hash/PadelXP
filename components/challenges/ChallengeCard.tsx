@@ -239,20 +239,20 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
       {/* Carte du challenge */}
       <div
         className={`group relative rounded-2xl border-2 p-1 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
-            ? challenge.isPremium
-              ? "border-amber-500 bg-gradient-to-br from-amber-600/20 via-black/40 to-black/20"
-              : "bg-gradient-to-br from-black/40 to-black/20 shadow-blue-500/20"
-            : isFailed
-              ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
-              : challenge.isPremium
-                ? "border-amber-500/60 bg-gradient-to-br from-amber-500/10 to-black/40 shadow-amber-500/10"
-                : "bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:shadow-xl"
+          ? challenge.isPremium
+            ? "border-amber-500 bg-gradient-to-br from-amber-600/20 via-black/40 to-black/20"
+            : "bg-gradient-to-br from-black/40 to-black/20 shadow-blue-500/20"
+          : isFailed
+            ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
+            : challenge.isPremium
+              ? "border-amber-500/60 bg-gradient-to-br from-amber-500/10 to-black/40 shadow-amber-500/10"
+              : "bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:shadow-xl"
           }`}
         style={{
           borderColor: (isCompleted && !challenge.isPremium)
             ? 'rgb(var(--theme-accent, 37, 99, 235))'
             : (!isCompleted && !isFailed && !challenge.isPremium)
-              ? 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.4)'
+              ? 'rgba(var(--theme-accent, 255, 255, 255), 0.4)'
               : undefined
         }}
       >
@@ -319,8 +319,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           <div
             className="mb-5 rounded-2xl border p-4 shadow-inner"
             style={{
-              backgroundColor: 'rgba(var(--theme-bg-rgb, 7, 21, 84), 0.8)',
-              borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)'
+              backgroundColor: 'rgba(var(--theme-page, 7, 21, 84), 0.8)',
+              borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)'
             }}
           >
             <div className="mb-3 flex items-start justify-between">
@@ -347,7 +347,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                     : 'rgb(var(--theme-accent, 37, 99, 235))',
                   boxShadow: challenge.isPremium
                     ? '0 0 10px rgba(245, 158, 11, 0.5)'
-                    : '0 0 10px rgba(var(--theme-accent-rgb, 37, 99, 235), 0.5)'
+                    : '0 0 10px rgba(var(--theme-accent, 37, 99, 235), 0.5)'
                 }}
               />
             </div>
@@ -413,8 +413,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             <div
               className={`mb-5 rounded-2xl border px-4 py-3`}
               style={{
-                backgroundColor: isCompleted ? 'rgba(var(--theme-accent-rgb, 37, 99, 235), 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                borderColor: isCompleted ? 'rgba(var(--theme-accent-rgb, 37, 99, 235), 0.4)' : 'rgba(239, 68, 68, 0.4)'
+                backgroundColor: isCompleted ? 'rgba(var(--theme-accent, 37, 99, 235), 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                borderColor: isCompleted ? 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' : 'rgba(239, 68, 68, 0.4)'
               }}
             >
               <div className="flex items-center gap-3">

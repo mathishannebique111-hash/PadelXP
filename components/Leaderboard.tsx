@@ -406,7 +406,7 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                               className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white transition-all hover:scale-110 shadow-sm tabular-nums"
                               style={{
                                 background: "linear-gradient(135deg, rgb(var(--theme-accent)), #0052CC)",
-                                boxShadow: "0 2px 8px rgba(var(--theme-accent-rgb, 0, 102, 255), 0.3)",
+                                boxShadow: "0 2px 8px rgba(var(--theme-accent, 0, 102, 255), 0.3)",
                                 letterSpacing: "0.01em"
                               }}
                             >

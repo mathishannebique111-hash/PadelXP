@@ -168,7 +168,7 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
               setSuccess(false);
             }}
             className="w-full px-6 py-3.5 rounded-xl text-white font-semibold transition-all active:scale-[0.98] hover:scale-105"
-            style={{ background: "linear-gradient(135deg, rgb(var(--theme-accent)), #003D99)", boxShadow: "0 0 25px rgba(var(--theme-accent-rgb, 0, 82, 204), 0.5)" }}
+            style={{ background: "linear-gradient(135deg, rgb(var(--theme-accent)), #003D99)", boxShadow: "0 0 25px rgba(var(--theme-accent, 0, 82, 204), 0.5)" }}
           >
             Laisser un nouvel avis
           </button>
@@ -346,7 +346,7 @@ export default function ReviewForm({ onSubmit, initialReview }: ReviewFormProps)
         type="submit"
         disabled={loading}
         className="w-full px-6 py-3.5 rounded-xl text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] text-base hover:scale-105"
-        style={{ background: "linear-gradient(135deg, rgb(var(--theme-accent)), #003D99)", boxShadow: "0 0 25px rgba(var(--theme-accent-rgb, 0, 82, 204), 0.5)" }}
+        style={{ background: "linear-gradient(135deg, rgb(var(--theme-accent)), #003D99)", boxShadow: "0 0 25px rgba(var(--theme-accent, 0, 82, 204), 0.5)" }}
       >
         {loading ? "Envoi..." : "Envoyer l'avis"}
       </button>

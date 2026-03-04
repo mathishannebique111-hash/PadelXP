@@ -348,7 +348,7 @@ export default function PlayerProfileView({
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background avec overlay - Utiliser celui du layout pour éviter les décalages de couleur */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--theme-accent-rgb,0,102,255),0.15),transparent)] z-0 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--theme-accent,0,102,255),0.15),transparent)] z-0 pointer-events-none" />
 
       {/* Halos vert et bleu animés */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
@@ -516,7 +516,7 @@ export default function PlayerProfileView({
                             ? "bg-orange-500/20 text-orange-300 border-orange-500/20"
                             : ""
                             }`}
-                          style={!isSameSideOrHand ? { color: 'rgb(var(--theme-secondary-accent))', backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' } : {}}
+                          style={!isSameSideOrHand ? { color: 'rgb(var(--theme-secondary-accent))', backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' } : {}}
                         >
                           {tag}
                         </span>
@@ -548,7 +548,7 @@ export default function PlayerProfileView({
                 }}
                 disabled={isInviting || invitationStatus?.sent || invitationStatus?.received || invitationStatus?.isAccepted}
                 className="flex-1 py-3.5 md:py-4 px-4 rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
+                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' }}
                 title={
                   invitationStatus?.isAccepted
                     ? "Une invitation de paire acceptée existe déjà avec ce joueur"
@@ -681,8 +681,8 @@ export default function PlayerProfileView({
               transition={{ delay: 0.2 }}
               className="backdrop-blur-sm rounded-2xl p-4 md:p-5 border"
               style={{
-                backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.05)',
-                borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.05)',
+                borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)'
               }}
             >
               <h3 className="text-sm md:text-base font-bold mb-3 flex items-center gap-2" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>

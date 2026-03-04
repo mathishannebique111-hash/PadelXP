@@ -116,7 +116,7 @@ export default function BadgesView({
                             ? "bg-white/10 text-white border"
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
                             }`}
-                        style={activeTab === "standard" ? { borderColor: 'rgb(var(--theme-accent, 204, 255, 0))', boxShadow: '0 0 15px rgba(var(--theme-accent-rgb, 204, 255, 0), 0.2)' } : {}}
+                        style={activeTab === "standard" ? { borderColor: 'rgb(var(--theme-accent, 204, 255, 0))', boxShadow: '0 0 15px rgba(var(--theme-accent, 204, 255, 0), 0.2)' } : {}}
                     >
                         <Award size={16} className="sm:w-4 sm:h-4" />
                         Tous les badges
@@ -129,7 +129,7 @@ export default function BadgesView({
                             }`}
                         style={activeTab === "challenges" ? {
                             backgroundColor: 'rgb(var(--theme-accent, 204, 255, 0))',
-                            boxShadow: '0 0 25px rgba(var(--theme-accent-rgb, 204, 255, 0), 0.25)',
+                            boxShadow: '0 0 25px rgba(var(--theme-accent, 204, 255, 0), 0.25)',
                             '--tw-ring-color': 'rgb(var(--theme-accent, 204, 255, 0))'
                         } as any : {}}
                     >
@@ -192,7 +192,7 @@ export default function BadgesView({
                                         style={{
                                             backgroundColor: 'rgb(var(--theme-accent))',
                                             color: 'var(--theme-player-page, #172554)',
-                                            boxShadow: '0 10px 15px -3px rgba(var(--theme-accent-rgb), 0.2)'
+                                            boxShadow: '0 10px 15px -3px rgba(var(--theme-accent), 0.2)'
                                         }}
                                     >
                                         Voir les challenges

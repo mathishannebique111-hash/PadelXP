@@ -16,7 +16,7 @@ export default function PageTitle({
   // Style avec fond gris blanc et padding réduit
   const cardStyle: React.CSSProperties = {
     background: "rgba(255, 255, 255, 0.05)",
-    borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)',
+    borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)',
     backdropFilter: "blur(4px)",
     WebkitBackdropFilter: "blur(4px)",
   };
@@ -33,7 +33,7 @@ export default function PageTitle({
             <span
               className="w-1 sm:w-1.5 self-stretch rounded-full flex-shrink-0"
               style={{
-                background: 'linear-gradient(to bottom, rgb(var(--theme-accent, 255, 255, 255)), rgba(var(--theme-accent-rgb, 255, 255, 255), 0.3))'
+                background: 'linear-gradient(to bottom, rgb(var(--theme-accent, 255, 255, 255)), rgba(var(--theme-accent, 255, 255, 255), 0.3))'
               }}
               aria-hidden="true"
             />

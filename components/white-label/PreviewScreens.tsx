@@ -44,7 +44,7 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
                             <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full bg-white/5 border border-white/10" style={{ color: accentColor }}>
                                 <Trophy size={10} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[9px] font-medium truncate" style={{ color: "rgba(var(--theme-text-rgb), 0.9)" }}>
+                            <span className="text-[9px] font-medium truncate" style={{ color: "rgba(var(--theme-text), 0.9)" }}>
                                 {title}
                             </span>
                         </div>
@@ -52,7 +52,7 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
                             <span className="text-[8px] font-bold tabular-nums uppercase tracking-wider" style={{ color: "var(--theme-text-muted)" }}>
                                 {current} / {target}
                             </span>
-                            <ChevronRight size={10} style={{ color: "rgba(var(--theme-text-rgb), 0.2)" }} />
+                            <ChevronRight size={10} style={{ color: "rgba(var(--theme-text), 0.2)" }} />
                         </div>
                     </div>
                     <div className="h-0.5 w-full rounded-full bg-black/40 overflow-hidden">
@@ -183,7 +183,7 @@ export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLi
                 {name}
             </h4>
             <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-1.5 py-0.5 mb-1 border border-white/10">
-                <span className="text-[6px] font-black" style={{ color: "rgba(var(--theme-text-rgb), 0.9)" }}>Niveau {level}</span>
+                <span className="text-[6px] font-black" style={{ color: "rgba(var(--theme-text), 0.9)" }}>Niveau {level}</span>
             </div>
             <div className="w-full max-w-[70px] flex items-center gap-1">
                 <div className="h-0.5 flex-1 bg-slate-700/30 rounded-full overflow-hidden">
@@ -203,7 +203,7 @@ export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLi
 );
 
 export const Tabs = ({ items, activeIdx, onChange }: { items: string[], activeIdx: number, onChange?: (idx: number) => void }) => (
-    <div className="flex items-center w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text-rgb), 0.1)' }}>
+    <div className="flex items-center w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text), 0.1)' }}>
         {items.map((item, i) => (
             <button
                 key={item}
@@ -263,7 +263,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                                 {/* Gauge SVG */}
                                 <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
                                     <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-500/30" />
-                                    <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-accent))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80 drop-shadow-[0_0_6px_rgba(var(--theme-accent-rgb, 0,102,255), 0.4)]" />
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-accent))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80 drop-shadow-[0_0_6px_rgba(var(--theme-accent, 0,102,255), 0.4)]" />
                                 </svg>
                                 <div className="flex flex-col items-center justify-center z-10 text-center">
                                     <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Niveau</span>
@@ -273,7 +273,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
 
                             <div className="w-full space-y-1.5">
                                 {/* Share button replica */}
-                                <button type="button" className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-black text-[7px] uppercase tracking-wider text-white shadow-md active:scale-95 transition-all" style={{ background: 'rgb(var(--theme-accent))', boxShadow: '0 0 10px rgba(var(--theme-accent-rgb), 0.3)' }}>
+                                <button type="button" className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-black text-[7px] uppercase tracking-wider text-white shadow-md active:scale-95 transition-all" style={{ background: 'rgb(var(--theme-accent))', boxShadow: '0 0 10px rgba(var(--theme-accent), 0.3)' }}>
                                     <Share2 size={9} className="stroke-[2.5px]" />
                                     PARTAGER MON PROFIL
                                 </button>
@@ -410,7 +410,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                                     15
                                     <span className="text-[10px] ml-0.5" style={{ color: "var(--theme-text-muted)" }}>/ 33</span>
                                 </div>
-                                <div className="text-[7px] font-semibold uppercase" style={{ color: "rgba(var(--theme-text-rgb), 0.8)" }}>Badges</div>
+                                <div className="text-[7px] font-semibold uppercase" style={{ color: "rgba(var(--theme-text), 0.8)" }}>Badges</div>
                             </div>
 
                             {/* Divider */}
@@ -578,7 +578,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                 <ReplicaChallengeBar title="Partenaires Variés" current={2} target={2} />
             </div>
 
-            <div className="flex w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text-rgb), 0.1)' }}>
+            <div className="flex w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text), 0.1)' }}>
                 {["Enregistrer", "Mes matchs", "Partenaires", "Oracle"].map((tab, i) => (
                     <button
                         key={tab}
@@ -596,7 +596,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                             )}
                         </div>
                         {activeTab === i && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.4)]" style={{ background: "rgb(var(--theme-accent))" }} />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(var(--theme-accent),0.4)]" style={{ background: "rgb(var(--theme-accent))" }} />
                         )}
                     </button>
                 ))}
@@ -751,7 +751,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                 <ReplicaPageTitle title="Espace Compétition" subtitle={`Club : ${displayName}`} />
             </div>
 
-            <div className="flex w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text-rgb), 0.1)' }}>
+            <div className="flex w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text), 0.1)' }}>
                 {["Classement", "Challenges", "Ligues"].map((tab, i) => (
                     <button
                         key={tab}
@@ -769,7 +769,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                             )}
                         </div>
                         {activeTab === i && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.4)]" style={{ background: "rgb(var(--theme-accent))" }} />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(var(--theme-accent),0.4)]" style={{ background: "rgb(var(--theme-accent))" }} />
                         )}
                     </button>
                 ))}

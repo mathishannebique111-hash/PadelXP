@@ -75,7 +75,7 @@ export default function TodayMatchesList() {
                         <div
                             key={match.id}
                             className="group bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-5 transition-all"
-                            style={{ borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' }}
+                            style={{ borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' }}
                         >
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 {/* Infos Match */}
@@ -95,7 +95,7 @@ export default function TodayMatchesList() {
                                         {/* Équipe 1 */}
                                         <div
                                             className={`flex-1 flex flex-col items-center p-3 rounded-lg border ${winnerTeam === 1 ? 'border-transparent' : 'bg-slate-800/30 border-white/5'}`}
-                                            style={winnerTeam === 1 ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.3)' } : {}}
+                                            style={winnerTeam === 1 ? { backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.3)' } : {}}
                                         >
                                             <span className="text-xs text-slate-500 mb-2 uppercase tracking-wider font-bold">Équipe 1</span>
                                             <div className="flex flex-col items-center gap-1 text-center">
@@ -122,7 +122,7 @@ export default function TodayMatchesList() {
                                         {/* Équipe 2 */}
                                         <div
                                             className={`flex-1 flex flex-col items-center p-3 rounded-lg border ${winnerTeam === 2 ? 'border-transparent' : 'bg-slate-800/30 border-white/5'}`}
-                                            style={winnerTeam === 2 ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.3)' } : {}}
+                                            style={winnerTeam === 2 ? { backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.3)' } : {}}
                                         >
                                             <span className="text-xs text-slate-500 mb-2 uppercase tracking-wider font-bold">Équipe 2</span>
                                             <div className="flex flex-col items-center gap-1 text-center">

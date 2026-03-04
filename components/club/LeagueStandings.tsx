@@ -240,7 +240,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                     <div
                                         key={player.player_id}
                                         className="relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center"
-                                        style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' } : {}}
+                                        style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' } : {}}
                                     >
                                         {/* Rang */}
                                         <div className="text-center">
@@ -303,7 +303,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                             <div
                                                 key={player.player_id}
                                                 className="relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center"
-                                                style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' } : {}}
+                                                style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' } : {}}
                                             >
                                                 {/* Rang Global */}
                                                 <div className="text-center">
@@ -357,7 +357,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         <div
                             key={player.player_id}
                             className="grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center"
-                            style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' } : {}}
+                            style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' } : {}}
                         >
                             {/* Rang */}
                             <div className="text-center">
@@ -442,7 +442,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 <>
                                     <div className="space-y-4">
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Trophy size={16} />
                                             </div>
                                             <div>
@@ -458,7 +458,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Users size={16} />
                                             </div>
                                             <div>
@@ -470,7 +470,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Info size={16} />
                                             </div>
                                             <div>
@@ -493,7 +493,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         <div className="flex items-start gap-3">
                                             <div
                                                 className="mt-0.5 p-1.5 rounded-full shrink-0"
-                                                style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}
+                                                style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}
                                             >
                                                 <Trophy size={16} />
                                             </div>
@@ -506,7 +506,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Users size={16} />
                                             </div>
                                             <div>
@@ -518,7 +518,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Info size={16} />
                                             </div>
                                             <div>

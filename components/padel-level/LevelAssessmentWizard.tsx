@@ -496,7 +496,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               onClick={handleSaveResult}
               disabled={isSaving || isSaved}
               className="w-full sm:flex-1 py-4 rounded-xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
-              style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent-rgb), 0.4)' }}
+              style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent), 0.4)' }}
             >
               {isSaved ? (
                 <>

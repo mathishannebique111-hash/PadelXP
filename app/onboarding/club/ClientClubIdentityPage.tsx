@@ -72,7 +72,7 @@ const PhonePreview = ({ bg, secondary, activeScreen, logoUrl, textColor, mutedCo
         "--theme-accent": hexToRgbNumbers(secondary),
         "--theme-secondary-accent": hexToRgbNumbers(secondary),
         "--theme-text": textColor,
-        "--theme-text-rgb": hexToRgbNumbers(textColor),
+        "--theme-text": hexToRgbNumbers(textColor),
         "--theme-text-muted": mutedColor,
       } as React.CSSProperties}
     >

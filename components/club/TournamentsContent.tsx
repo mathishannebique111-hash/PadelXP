@@ -152,7 +152,7 @@ export default function TournamentsContent() {
                 <button
                     onClick={() => setShowJoinModal(true)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border text-white font-bold text-sm active:scale-[0.98] transition-transform"
-                    style={{ borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.2)' }}
+                    style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.2)' }}
                 >
                     <KeyRound size={18} />
                     Rejoindre
@@ -163,7 +163,7 @@ export default function TournamentsContent() {
             {showCreateForm && (
                 <div
                     className="rounded-2xl border bg-white/5 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200"
-                    style={{ borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)' }}
+                    style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)' }}
                 >
                     <h3 className="text-base font-bold text-white">Nouvelle ligue privée</h3>
 
@@ -175,7 +175,7 @@ export default function TournamentsContent() {
                             onChange={(e) => setFormName(e.target.value)}
                             placeholder="Les Champions du Dimanche"
                             className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-4 text-white text-sm font-medium placeholder:text-white/30 focus:outline-none focus:ring-2"
-                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
+                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                             maxLength={40}
                         />
                     </div>
@@ -186,7 +186,7 @@ export default function TournamentsContent() {
                             value={formFormat}
                             onChange={(e) => handleFormatChange(e.target.value)}
                             className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
-                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
+                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                         >
                             <option value="standard">Championnat (Classement global)</option>
                             <option value="divisions">Poules (Montées/Descentes)</option>
@@ -200,7 +200,7 @@ export default function TournamentsContent() {
                                 value={formDuration}
                                 onChange={(e) => setFormDuration(Number(e.target.value))}
                                 className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
-                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
+                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                             >
                                 {formFormat === "divisions" ? (
                                     <>
@@ -227,7 +227,7 @@ export default function TournamentsContent() {
                                 onChange={(e) => setFormMaxMatches(Number(e.target.value))}
                                 disabled={formFormat === "divisions"}
                                 className={`w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 ${formFormat === "divisions" ? "opacity-50 cursor-not-allowed" : ""}`}
-                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
+                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                             >
                                 {formFormat === "divisions" ? (
                                     <option value={3}>3 / phase</option>
@@ -246,7 +246,7 @@ export default function TournamentsContent() {
                                 value={formMaxPlayers}
                                 onChange={(e) => setFormMaxPlayers(Number(e.target.value))}
                                 className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
-                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
+                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                             >
                                 {formFormat === "divisions" ? (
                                     [8, 12, 16].map(n => <option key={n} value={n}>{n}</option>)
@@ -293,7 +293,7 @@ export default function TournamentsContent() {
                                 <div
                                     key={league.id}
                                     className="rounded-xl border bg-white/5 p-4 active:bg-white/10 transition-colors"
-                                    style={{ borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)' }}
+                                    style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)' }}
                                 >
                                     <div className="flex items-center justify-between mb-2">
                                         <button

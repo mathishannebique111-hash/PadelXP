@@ -93,7 +93,7 @@ export default function LevelRadarChart({ breakdown }: Props) {
       else ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.fillStyle = "rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)";
+    ctx.fillStyle = "rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)";
     ctx.fill();
     ctx.strokeStyle = "rgb(var(--theme-secondary-accent, 204, 255, 0))";
     ctx.lineWidth = 2;

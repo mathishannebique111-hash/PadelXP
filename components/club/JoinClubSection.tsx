@@ -76,7 +76,7 @@ export default function JoinClubSection() {
                                         type="text"
                                         placeholder="Saisissez le code du club..."
                                         className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 transition-colors"
-                                        style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
+                                        style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                                         value={invitationCode}
                                         onChange={(e) => setInvitationCode(e.target.value)}
                                     />
@@ -93,7 +93,7 @@ export default function JoinClubSection() {
                                 style={{
                                     backgroundColor: 'rgb(var(--theme-secondary-accent))',
                                     color: 'var(--theme-player-page, #071554)',
-                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)'
                                 }}
                             >
                                 {loading ? (
