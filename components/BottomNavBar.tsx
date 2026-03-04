@@ -170,8 +170,7 @@ export default function BottomNavBar() {
         <div
             className="fixed z-[99999] left-0 right-0 flex justify-center px-6"
             style={{
-                bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)',
-                transition: 'bottom 0.15s ease-out',
+                bottom: 'calc(var(--sab, 0px) + 4px)',
             }}
         >
             <nav id="bottom-nav-bar" className="relative flex items-center bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] px-1 py-1 max-w-xs w-full">

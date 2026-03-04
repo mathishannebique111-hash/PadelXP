@@ -122,7 +122,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                var isApp = navigator.userAgent.toLowerCase().includes('capacitor') || navigator.userAgent.toLowerCase().includes('padelxp');
+                var isApp = navigator.userAgent.toLowerCase().includes('capacitor') || navigator.userAgent.toLowerCase().includes('padelxp') || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
                 if (isApp && document.documentElement) {
                   document.documentElement.classList.add('is-app');
                   document.documentElement.style.backgroundColor = '${subdomain ? branding.background_color : '#172554'}';
