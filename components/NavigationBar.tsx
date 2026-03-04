@@ -11,41 +11,29 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
   const label = "tracking-wide hidden sm:inline"; // Cache le texte sur mobile très petit, visible sur sm+
   const iconClass = "w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain flex-shrink-0";
 
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
   return (
     <div className="mb-4 sm:mb-6 flex items-center justify-between gap-2 sm:gap-4 border-b pb-3 sm:pb-4 overflow-x-auto scrollbar-hide" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-max -mr-4 sm:mr-0">
-        <Link href="/home" className={`${base} ${currentPage === "home" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "home" ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' } : {}) }}>
-          <Image src="/images/Profil.png" alt="Profil" width={16} height={16} className={iconClass} unoptimized />
+        <Link href="/home" className={`${base} ${currentPage === "home" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "home" ? (isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: 'var(--theme-accent-contrast)' } : { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' }) : {}) }}>
+          <div className={iconClass} style={{ backgroundColor: 'currentColor', WebkitMaskImage: 'url("/images/Profil.png")', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url("/images/Profil.png")', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
           <span className={label}>Profil</span>
         </Link>
-        <Link href="/match/new" className={`${base} ${currentPage === "match" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "match" ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' } : {}) }}>
-          <Image
-            src="/images/Enregistrer%20un%20match.png"
-            alt="Enregistrer un match"
-            width={16}
-            height={16}
-            className={iconClass}
-            unoptimized
-          />
+        <Link href="/match/new" className={`${base} ${currentPage === "match" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "match" ? (isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: 'var(--theme-accent-contrast)' } : { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' }) : {}) }}>
+          <div className={iconClass} style={{ backgroundColor: 'currentColor', WebkitMaskImage: 'url("/images/Enregistrer%20un%20match.png")', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url("/images/Enregistrer%20un%20match.png")', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
           <span className={label}>Enregistrer un match</span>
         </Link>
-        <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "challenges" ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' } : {}) }}>
-          <Image src="/images/Objectif%20page%20avis.png?v=9" alt="Challenges" width={16} height={16} className={iconClass} unoptimized />
+        <Link href="/challenges" className={`${base} ${currentPage === "challenges" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "challenges" ? (isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: 'var(--theme-accent-contrast)' } : { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' }) : {}) }}>
+          <div className={iconClass} style={{ backgroundColor: 'currentColor', WebkitMaskImage: 'url("/images/Objectif%20page%20avis.png?v=9")', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url("/images/Objectif%20page%20avis.png?v=9")', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
           <span className={label}>Challenges</span>
         </Link>
-        <Link href="/reviews" className={`${base} ${currentPage === "reviews" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "reviews" ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' } : {}) }}>
-          <Image
-            src="/images/Avis.png?v=9"
-            alt="Avis"
-            width={16}
-            height={16}
-            className={iconClass}
-            unoptimized
-          />
+        <Link href="/reviews" className={`${base} ${currentPage === "reviews" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "reviews" ? (isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: 'var(--theme-accent-contrast)' } : { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' }) : {}) }}>
+          <div className={iconClass} style={{ backgroundColor: 'currentColor', WebkitMaskImage: 'url("/images/Avis.png?v=9")', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url("/images/Avis.png?v=9")', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
           <span className={label}>Avis</span>
         </Link>
-        <Link href="/boost" className={`${base} ${currentPage === "boost" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "boost" ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' } : {}) }}>
-          <Image src="/images/Boost.png" alt="Boost" width={16} height={16} className={iconClass} unoptimized />
+        <Link href="/boost" className={`${base} ${currentPage === "boost" ? active : inactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "boost" ? (isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: 'var(--theme-accent-contrast)' } : { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' }) : {}) }}>
+          <div className={iconClass} style={{ backgroundColor: 'currentColor', WebkitMaskImage: 'url("/images/Boost.png")', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url("/images/Boost.png")', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
           <span className={label}>Boost</span>
         </Link>
       </div>

@@ -1365,7 +1365,7 @@ export default function MatchForm({
             className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             style={{
               backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))',
-              color: 'white',
+              color: 'var(--theme-accent-contrast, white)',
               boxShadow: '0 5px 15px rgba(var(--theme-accent, 37, 99, 235), 0.3)'
             }}
           >

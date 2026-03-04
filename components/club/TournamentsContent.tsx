@@ -145,7 +145,7 @@ export default function TournamentsContent() {
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform"
-                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}
+                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' }}
                 >
                     <Plus size={18} />
                     Créer une ligue
@@ -264,7 +264,7 @@ export default function TournamentsContent() {
                         onClick={handleCreate}
                         disabled={creating || !formName.trim()}
                         className="w-full py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
-                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}
+                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' }}
                     >
                         {creating ? "Création..." : "Créer ma ligue privée"}
                     </button>
@@ -305,7 +305,7 @@ export default function TournamentsContent() {
                                             className="text-left flex-1"
                                         >
                                             <div className="flex items-center gap-2">
-                                                <h4 className={`text-base font-bold truncate ${isClub && league.is_creator ? 'text-[var(--theme-page)]' : 'text-white'}`}>{league.name}</h4>
+                                                <h4 className={`text-base font-bold truncate ${isClub && league.is_creator ? '' : 'text-white'}`} style={isClub && league.is_creator ? { color: 'var(--theme-accent-contrast, var(--theme-page))' } : {}}>{league.name}</h4>
                                                 {league.format === "divisions" && (
                                                     <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-bold tracking-wider border border-blue-500/20 shrink-0">
                                                         POULES
@@ -326,7 +326,7 @@ export default function TournamentsContent() {
                                         onClick={() => setSelectedLeagueId(league.id)}
                                         className="w-full text-left"
                                     >
-                                        <div className={`flex items-center gap-4 text-xs ${(isClub && league.is_creator) ? 'text-[var(--theme-page)]/70' : 'text-white/50'}`}>
+                                        <div className={`flex items-center gap-4 text-xs ${isClub && league.is_creator ? '' : 'text-white/50'}`} style={isClub && league.is_creator ? { color: 'var(--theme-accent-contrast, var(--theme-page))', opacity: 0.7 } : {}}>
                                             <span className="flex items-center gap-1">
                                                 <Users size={12} />
                                                 {league.player_count}/{league.max_players}
@@ -334,15 +334,15 @@ export default function TournamentsContent() {
                                             <span className="flex items-center gap-1">
                                                 <Clock size={12} />
                                                 {league.status === 'pending' ? (
-                                                    <span className={`${(isClub && league.is_creator) ? 'text-[var(--theme-page)] font-black' : 'text-amber-400 font-bold'}`}>En attente</span>
+                                                    <span className={`${isClub && league.is_creator ? 'font-black' : 'text-amber-400 font-bold'}`} style={isClub && league.is_creator ? { color: 'var(--theme-accent-contrast, var(--theme-page))' } : {}}>En attente</span>
                                                 ) : isExpired ? (
-                                                    <span className={`${(isClub && league.is_creator) ? 'text-[var(--theme-page)]' : 'text-red-400'}`}>Terminée</span>
+                                                    <span className={`${isClub && league.is_creator ? '' : 'text-red-400'}`} style={isClub && league.is_creator ? { color: 'var(--theme-accent-contrast, var(--theme-page))' } : {}}>Terminée</span>
                                                 ) : (
                                                     <span>{remainingDays}j restants</span>
                                                 )}
                                             </span>
                                             {league.status !== 'pending' && (
-                                                <span className={`ml-auto ${(isClub && league.is_creator) ? 'text-[var(--theme-page)]/40' : 'text-white/30'}`}>
+                                                <span className={`ml-auto ${isClub && league.is_creator ? '' : 'text-white/30'}`} style={isClub && league.is_creator ? { color: 'var(--theme-accent-contrast, var(--theme-page))', opacity: 0.4 } : {}}>
                                                     {league.my_matches_played}/{league.max_matches_per_player} matchs
                                                 </span>
                                             )}
@@ -350,12 +350,12 @@ export default function TournamentsContent() {
 
                                         {/* Mini jauge de progression */}
                                         {league.status !== 'pending' && (
-                                            <div className={`mt-2 h-1 rounded-full overflow-hidden ${isClub && league.is_creator ? 'bg-[var(--theme-page)]/20' : 'bg-white/10'}`}>
+                                            <div className={`mt-2 h-1 rounded-full border ${isClub && league.is_creator ? '' : 'bg-white/10 border-transparent'}`} style={isClub && league.is_creator ? { borderColor: 'var(--theme-accent-contrast, var(--theme-page))', opacity: 0.5 } : {}}>
                                                 <div
                                                     className="h-full rounded-full transition-all duration-300"
                                                     style={{
                                                         width: `${Math.min(100, (league.my_matches_played / league.max_matches_per_player) * 100)}%`,
-                                                        backgroundColor: isClub && league.is_creator ? 'var(--theme-page)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))'
+                                                        backgroundColor: isClub && league.is_creator ? 'var(--theme-accent-contrast, var(--theme-page))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))'
                                                     }}
                                                 />
                                             </div>

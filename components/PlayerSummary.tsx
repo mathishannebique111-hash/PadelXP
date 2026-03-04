@@ -340,14 +340,14 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
 
             <div className="relative z-10 flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-black mb-1" style={{ color: isClub ? 'var(--theme-page)' : 'rgb(var(--theme-secondary-accent))' }}>
+                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-black mb-1" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgb(var(--theme-secondary-accent))' }}>
                   Série de victoires en cours
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className={`text-2xl sm:text-3xl md:text-4xl font-black tabular-nums ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
+                  <span className={`text-2xl sm:text-3xl md:text-4xl font-black tabular-nums ${!isClub ? 'text-white' : ''}`} style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>
                     {currentWinStreak}
                   </span>
-                  <span className={`text-[10px] sm:text-xs uppercase tracking-[0.1em] ${isClub ? 'text-[var(--theme-page)]/80' : 'text-white/80'}`}>
+                  <span className={`text-[10px] sm:text-xs uppercase tracking-[0.1em] ${!isClub ? 'text-white/80' : ''}`} style={isClub ? { color: 'var(--theme-accent-contrast)', opacity: 0.8 } : {}}>
                     victoire{currentWinStreak >= 2 ? "s" : ""}
                   </span>
                 </div>
@@ -355,15 +355,15 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               <div className="flex flex-col items-end gap-1.5 relative">
                 {/* Icône flamme principale */}
                 <div className="relative z-10">
-                  <Flame size={32} className={`${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`} style={{ filter: isClub ? 'none' : "drop-shadow(0 0 8px rgba(var(--theme-secondary-accent), 0.6))" }} strokeWidth={1.5} />
+                  <Flame size={32} className={`${!isClub ? 'text-white' : ''}`} style={isClub ? { color: 'var(--theme-accent-contrast)' } : { filter: "drop-shadow(0 0 8px rgba(var(--theme-secondary-accent), 0.6))" }} strokeWidth={1.5} />
                 </div>
                 {/* Effet fantôme derrière */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none">
                   <Flame size={64} style={{ color: isClub ? 'rgba(var(--theme-page), 0.15)' : 'rgba(var(--theme-secondary-accent), 0.2)' }} className="blur-[1px] transform scale-125" strokeWidth={3} />
                 </div>
 
-                <div className={`text-[9px] sm:text-[10px] mt-1 ${isClub ? 'text-[var(--theme-page)]/80' : 'text-white/80'}`}>
-                  Meilleure : <span className="font-semibold tabular-nums" style={{ color: isClub ? 'var(--theme-page)' : 'rgb(var(--theme-secondary-accent))' }}>{streak}</span>
+                <div className={`text-[9px] sm:text-[10px] mt-1 ${!isClub ? 'text-white/80' : ''}`} style={isClub ? { color: 'var(--theme-accent-contrast)', opacity: 0.8 } : {}}>
+                  Meilleure : <span className="font-semibold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgb(var(--theme-secondary-accent))' }}>{streak}</span>
                 </div>
               </div>
             </div>

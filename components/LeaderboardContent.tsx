@@ -318,7 +318,7 @@ export default function LeaderboardContent({
                 }`}
               style={scope === key && isClub ? {
                 backgroundColor: 'rgb(var(--theme-accent))',
-                color: 'var(--theme-page, #071554)',
+                color: 'var(--theme-accent-contrast)',
                 borderColor: 'rgb(var(--theme-accent))',
                 boxShadow: '0 0 15px rgba(var(--theme-accent), 0.3)'
               } : {}}
@@ -504,7 +504,7 @@ export default function LeaderboardContent({
                         {player.niveau_padel ? (
                           <div
                             className="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-[var(--theme-accent)]/10 border border-[var(--theme-accent)]/20 text-xs sm:text-sm font-bold min-w-[44px]"
-                            style={{ color: 'rgb(var(--theme-accent))' }}
+                            style={{ color: isClub ? 'black' : 'rgb(var(--theme-accent))' }}
                           >
                             {player.niveau_padel.toFixed(2)}
                           </div>

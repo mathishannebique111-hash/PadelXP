@@ -118,10 +118,11 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("standard")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
-                            ? (isClub ? "border-transparent text-[var(--theme-page)]" : "bg-white/10 text-white border-white/40 border")
+                            ? (isClub ? "border-transparent" : "bg-white/10 text-white border-white/40 border")
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border border-transparent"
                             }`}
                         style={activeTab === "standard" && isClub ? {
+                            color: 'var(--theme-accent-contrast)',
                             backgroundColor: 'rgb(var(--theme-accent))',
                             boxShadow: '0 0 15px rgba(var(--theme-accent), 0.2)'
                         } : {}}
@@ -132,10 +133,11 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("challenges")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
-                            ? (isClub ? "border-transparent text-[var(--theme-page)]" : "text-[#172554] shadow-lg ring-2 ring-offset-2 ring-offset-[#172554] border-transparent")
+                            ? (isClub ? "border-transparent" : "text-[#172554] shadow-lg ring-2 ring-offset-2 ring-offset-[#172554] border-transparent")
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border border-transparent"
                             }`}
                         style={activeTab === "challenges" ? {
+                            color: isClub ? 'var(--theme-accent-contrast)' : undefined,
                             backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))',
                             boxShadow: isClub ? '0 0 25px rgba(var(--theme-accent), 0.25)' : '0 0 25px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.25)',
                             '--tw-ring-color': isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))'

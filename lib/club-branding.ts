@@ -77,6 +77,21 @@ export function hexToRgbTriplet(hex: string): string {
 }
 
 /**
+ * Détermine si le texte superposé à une couleur doit être noir ou blanc.
+ * Retourne "#000000" (noir) pour un fond clair, et "#ffffff" (blanc) pour un fond sombre.
+ */
+export function getContrastColor(hex: string): string {
+    const clean = hex.replace("#", "");
+    if (clean.length < 6) return "#ffffff"; // Par défaut blanc
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    // Formule de luminosité relative (YIQ)
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq > 155 ? "#000000" : "#ffffff";
+}
+
+/**
  * Récupère le branding d'un club depuis Supabase via son sous-domaine.
  * Renvoie le branding par défaut (PadelXP) si le club n'est pas trouvé.
  */

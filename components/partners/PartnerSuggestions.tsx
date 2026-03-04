@@ -468,7 +468,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                     ? 'text-white shadow-lg'
                     : 'text-white/60 hover:text-white/80'
                     }`}
-                  style={filterScope === 'club' ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))' } : {}}
+                  style={filterScope === 'club' ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))', color: 'var(--theme-accent-contrast, white)' } : {}}
                 >
                   Mon Club
                 </button>
@@ -482,7 +482,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                   ? 'text-white shadow-lg'
                   : 'text-white/60 hover:text-white/80'
                   }`}
-                style={filterScope === 'dept' ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))' } : {}}
+                style={filterScope === 'dept' ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))', color: 'var(--theme-accent-contrast, white)' } : {}}
               >
                 Département
               </button>
@@ -513,7 +513,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                 <button
                   onClick={() => fetchSuggestions(departmentFilter, 'dept')}
                   className={`absolute right-1 top-1 bottom-1 hover:brightness-110 text-white px-2.5 rounded-md transition-colors border flex items-center justify-center ${!isClub ? 'border-blue-400/20' : 'border-transparent'}`}
-                  style={{ backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))' }}
+                  style={{ backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))', color: 'var(--theme-accent-contrast, white)' }}
                 >
                   <Search size={16} />
                 </button>

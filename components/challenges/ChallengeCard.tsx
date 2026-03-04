@@ -54,20 +54,20 @@ function statusLabel(status: PlayerChallenge["status"]) {
   }
 }
 
-function statusClasses(status: PlayerChallenge["status"], isClub: boolean) {
+function statusClasses(status: PlayerChallenge["status"], isClub: boolean, isBadgeProgress: boolean = false) {
   switch (status) {
     case "active":
       return isClub
-        ? "bg-[var(--theme-page)]/20 text-[var(--theme-page)] border border-[var(--theme-page)]/40"
+        ? "bg-[var(--theme-page)]/20 border border-[var(--theme-page)]/40 text-[var(--theme-accent-contrast,var(--theme-page))]"
         : "bg-white/30 text-white border border-[rgb(var(--theme-accent,204,255,0))]";
     case "upcoming":
       return isClub
-        ? "bg-[var(--theme-page)]/10 text-[var(--theme-page)] border border-[var(--theme-page)]/20"
+        ? "bg-[var(--theme-page)]/10 border border-[var(--theme-page)]/20 text-[var(--theme-accent-contrast,var(--theme-page))]"
         : "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
     default:
       return isClub
-        ? "bg-[var(--theme-page)]/10 text-[var(--theme-page)]/90 border border-[var(--theme-page)]/20"
+        ? "bg-[var(--theme-page)]/10 border border-[var(--theme-page)]/20 text-[var(--theme-accent-contrast,var(--theme-page))]"
         : "bg-white/20 text-white/80 border border-white/25";
   }
 }
@@ -273,7 +273,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           {/* En-tête */}
           <div className="mb-5 flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className={`mb-2 text-xl font-bold flex items-center gap-2 ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
+              <h3 className={`mb-2 text-xl font-bold flex items-center gap-2 ${isClub ? '' : 'text-white'}`} style={isClub ? { color: 'var(--theme-accent-contrast, var(--theme-page))' } : {}}>
                 {challenge.title}
                 {challenge.isPremium && (
                   <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isClub ? 'bg-white/20 text-white border border-white/30' : 'bg-amber-500/20 text-amber-500 border border-amber-500/30'}`}>
@@ -350,7 +350,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
 
             {/* Barre de progression */}
             <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'shadow-inner' : 'bg-white/20'}`}
-              style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.2)', borderColor: 'transparent' } : { borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+              style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.2)', borderColor: 'var(--theme-accent-contrast)' } : { borderColor: 'rgba(255, 255, 255, 0.1)' }}>
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
@@ -376,9 +376,9 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
 
           {/* Période */}
           <div className="mb-4 flex items-center gap-2 text-sm">
-            <Clock size={16} className={`${isClub ? 'text-[var(--theme-page)]' : 'text-white'} flex-shrink-0`} />
-            <span className={`font-medium ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>Période :</span>
-            <span className={`font-semibold ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>{formatRange(challenge.startDate, challenge.endDate)}</span>
+            <Clock size={16} className={`${isClub ? '' : 'text-white'} flex-shrink-0`} style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}} />
+            <span className={`font-medium ${isClub ? '' : 'text-white'}`} style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>Période :</span>
+            <span className={`font-semibold ${isClub ? '' : 'text-white'}`} style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>{formatRange(challenge.startDate, challenge.endDate)}</span>
           </div>
 
           {/* Bouton récupérer la récompense - En bas du cadre */}

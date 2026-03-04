@@ -6,7 +6,7 @@ import OfflineWrapper from "@/components/OfflineWrapper";
 import SplashOverlay from "@/components/SplashOverlay";
 import { Toaster } from "sonner";
 import { headers } from "next/headers";
-import { extractSubdomain, getClubBranding, hexToRgbTriplet } from "@/lib/club-branding";
+import { extractSubdomain, getClubBranding, hexToRgbTriplet, getContrastColor } from "@/lib/club-branding";
 
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
@@ -62,8 +62,10 @@ export default async function RootLayout({
   const brandingCSS = subdomain ? `
     :root {
       --theme-accent: ${accentRgb};
+      --theme-accent-contrast: ${getContrastColor(branding.primary_color)};
       --theme-accent-hover: ${accentHoverRgb};
       --theme-secondary-accent: ${accentHoverRgb};
+      --theme-secondary-accent-contrast: ${getContrastColor(branding.secondary_color)};
       --theme-page: ${bgRgb};
       --theme-player-page: ${bgRgb};
       --color-primary: ${branding.primary_color};

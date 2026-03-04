@@ -111,9 +111,7 @@ export default async function PlayerAccountLayout({
             <ToastContainer />
           </div>
           {/* Barre de navigation en bas */}
-          <Suspense fallback={null}>
-            <BottomNavBar />
-          </Suspense>
+          <BottomNavBar />
         </ChallengeProvider>
       </PopupQueueProvider>
     </>
