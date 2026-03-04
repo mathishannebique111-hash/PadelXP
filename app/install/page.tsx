@@ -34,6 +34,7 @@ export default async function ClubInstallRoute() {
             logoUrl={branding.logo_url}
             primaryColor={branding.primary_color}
             secondaryColor={branding.secondary_color}
+            backgroundColor={branding.background_color}
         />
     );
 }

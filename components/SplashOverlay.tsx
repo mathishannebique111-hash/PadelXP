@@ -6,9 +6,10 @@ interface SplashOverlayProps {
     isApp: boolean;
     clubLogoUrl?: string | null;
     clubPrimaryColor?: string | null;
+    clubBackgroundColor?: string | null;
 }
 
-export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor }: SplashOverlayProps) {
+export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor, clubBackgroundColor }: SplashOverlayProps) {
     const [visible, setVisible] = useState(true);
     const [fading, setFading] = useState(false);
 
@@ -37,7 +38,7 @@ export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor }: 
 
     if (!isApp || !visible) return null;
 
-    const bgColor = clubPrimaryColor || '#071554';
+    const bgColor = clubBackgroundColor || clubPrimaryColor || '#071554';
     const logoSrc = clubLogoUrl || '/images/Logo sans fond.png';
 
     return (

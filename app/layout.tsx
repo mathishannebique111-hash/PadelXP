@@ -138,7 +138,7 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${isApp ? 'is-app' : ''} text-white min-h-screen`} style={{ backgroundColor: subdomain ? branding.background_color : '#172554' }} data-is-app={isApp ? 'true' : 'false'} data-club-subdomain={subdomain || ''} suppressHydrationWarning>
-        <SplashOverlay isApp={isApp} clubLogoUrl={branding.logo_url} clubPrimaryColor={subdomain ? branding.primary_color : null} />
+        <SplashOverlay isApp={isApp} clubLogoUrl={branding.logo_url} clubPrimaryColor={subdomain ? branding.primary_color : null} clubBackgroundColor={subdomain ? branding.background_color : null} />
         <SafeAreas />
         <OfflineWrapper />
         {children}
