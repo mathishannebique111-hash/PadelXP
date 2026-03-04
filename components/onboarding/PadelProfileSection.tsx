@@ -443,6 +443,8 @@ export default function PadelProfileSection({
   const ShotIcon = data.best_shot ? shotIcons[data.best_shot] : null;
   const isLeftHanded = data.hand === "left";
 
+  const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+
   const renderEditableField = (
     fieldKey: Exclude<keyof OnboardingData, "postal_code" | "city">,
     label: string,
@@ -586,7 +588,13 @@ export default function PadelProfileSection({
   };
 
   return (
-    <div className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm" style={{ borderColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
+    <div
+      className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm"
+      style={{
+        borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))',
+        borderWidth: isClub ? '2px' : '1px'
+      }}
+    >
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">

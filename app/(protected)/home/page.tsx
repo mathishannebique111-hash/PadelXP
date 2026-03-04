@@ -19,6 +19,8 @@ import BadgesContent from "@/components/BadgesContent";
 import HideSplashScreen from "@/components/HideSplashScreen";
 import PadelLoader from "@/components/ui/PadelLoader";
 import nextDynamic from "next/dynamic";
+import { headers } from "next/headers";
+import { extractSubdomain } from "@/lib/club-branding";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 
 import PremiumStats from "@/components/club/PremiumStats";
@@ -59,6 +61,11 @@ export default async function HomePage({
   const activeTab: 'profil' | 'stats' | 'badges' | 'club' = (resolvedSearchParams?.tab === 'stats' || resolvedSearchParams?.tab === 'badges' || resolvedSearchParams?.tab === 'club')
     ? (resolvedSearchParams.tab as 'stats' | 'badges' | 'club')
     : 'profil';
+
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+  const isClub = !!subdomain;
 
   // 1. Démarrer toutes les requêtes indépendantes en parallèle
   const [userResult, sessionResult] = await Promise.all([
@@ -236,7 +243,7 @@ export default async function HomePage({
                 <div className="space-y-6">
                   <div className="flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6">
                     <div className="w-full max-w-md">
-                      <PlayerSummary profileId={profile.id} />
+                      <PlayerSummary profileId={profile.id} isClub={isClub} />
                     </div>
                   </div>
                   <PremiumStats />

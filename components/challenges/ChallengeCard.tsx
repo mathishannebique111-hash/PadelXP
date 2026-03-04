@@ -72,6 +72,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
   const [hasClaimed, setHasClaimed] = useState(false);
   const [autoCloseTimeout, setAutoCloseTimeout] = useState<NodeJS.Timeout | null>(null);
   const router = useRouter();
+  const isClub = typeof document !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
 
   const now = new Date();
   const endDate = new Date(challenge.endDate);
@@ -315,35 +316,35 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           <div
             className="mb-5 rounded-2xl border p-4 shadow-inner"
             style={{
-              backgroundColor: 'var(--theme-page, #071554)',
-              borderColor: 'rgb(var(--theme-accent, 204, 255, 0))'
+              backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'var(--theme-page, #071554)',
+              borderColor: isClub ? 'var(--theme-page)' : 'rgb(var(--theme-accent, 204, 255, 0))'
             }}
           >
             <div className="mb-3 flex items-start justify-between">
               <div>
-                <div className="mb-1 text-sm font-medium text-white">Objectif</div>
-                <div className="text-xs text-white">{challenge.objective}</div>
+                <div className={`mb-1 text-sm font-medium ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>Objectif</div>
+                <div className={`text-xs ${isClub ? 'text-[var(--theme-page)]/80' : 'text-white'}`}>{challenge.objective}</div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-white">
+                <div className={`text-2xl font-bold ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
                   {challenge.progress.current}/{challenge.progress.target}
                 </div>
-                <div className="text-xs font-medium text-white">{Math.round(percentage)}%</div>
+                <div className={`text-xs font-medium ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>{Math.round(percentage)}%</div>
               </div>
             </div>
 
             {/* Barre de progression */}
-            <div className="relative h-3 overflow-hidden rounded-full bg-white/20 border" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
+            <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'bg-[var(--theme-page)]/20 shadow-inner' : 'bg-white/20'}`} style={{ borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
                   width: `${percentage}%`,
-                  backgroundColor: challenge.isPremium
+                  backgroundColor: isClub ? 'var(--theme-page)' : (challenge.isPremium
                     ? '#F59E0B'
-                    : 'rgb(var(--theme-accent, 37, 99, 235))',
-                  boxShadow: challenge.isPremium
+                    : 'rgb(var(--theme-accent, 37, 99, 235))'),
+                  boxShadow: isClub ? 'none' : (challenge.isPremium
                     ? '0 0 10px rgba(245, 158, 11, 0.5)'
-                    : '0 0 10px rgba(var(--theme-accent, 37, 99, 235), 0.5)'
+                    : '0 0 10px rgba(var(--theme-accent, 37, 99, 235), 0.5)')
                 }}
               />
             </div>

@@ -34,6 +34,7 @@ export default function GooglePlacesAutocomplete({
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const autocompleteRef = useRef<any>(null);
+    const isClub = typeof document !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
 
     useEffect(() => {
         // Check if script is already loaded
@@ -141,7 +142,7 @@ export default function GooglePlacesAutocomplete({
                 placeholder={placeholder}
                 disabled={!isLoaded}
                 className="w-full bg-white/5 border-2 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-white/30 focus:outline-none transition-all font-medium disabled:opacity-50"
-                style={{ borderColor: 'rgb(var(--theme-accent, 255, 255, 255))' }}
+                style={{ borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.1)' }}
             />
 
             {value && (

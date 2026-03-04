@@ -24,8 +24,9 @@ const supabaseAdmin = createAdminClient(
   }
 );
 
-export default async function PlayerSummary({ profileId }: { profileId: string }) {
+export default async function PlayerSummary({ profileId, isClub: providedIsClub }: { profileId: string; isClub?: boolean }) {
   const supabase = await createClient();
+  const isClub = providedIsClub;
 
   // 1. Charger tout ce qui est indépendant en parallèle (Admin pour bypass RLS sur données critiques)
   const [playerProfileResult, matchParticipantsResult, reviewsResult] = await Promise.all([
@@ -311,8 +312,9 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
   const badgesObtained = badgesWithStatus.filter((b) => b.obtained).length;
 
   return (
-    <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border border-white/80 p-6 sm:p-8 md:p-10 text-white shadow-xl relative overflow-hidden" style={{
-      background: "linear-gradient(135deg, var(--theme-page) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, var(--theme-accenta, rgba(0,102,255,0.08)), transparent 70%)"
+    <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border p-6 sm:p-8 md:p-10 text-white shadow-xl relative overflow-hidden" style={{
+      background: "linear-gradient(135deg, var(--theme-page) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, var(--theme-accenta, rgba(0,102,255,0.08)), transparent 70%)",
+      borderColor: isClub ? 'rgb(var(--theme-accent))' : 'white'
     }}>
       <div>
         {/* Notifier client pour les changements de niveau */}
@@ -328,20 +330,24 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         {/* Série de victoires en cours - Cadre en longueur, séparé */}
         <div className="mb-3 sm:mb-4">
           <div
-            className="rounded-lg bg-gradient-to-br from-black/20 via-black/40 to-black/20 px-3 sm:px-4 py-2 sm:py-2.5 animate-fadeInUp relative overflow-hidden text-white border"
-            style={{ animationDelay: "0ms", borderColor: 'rgb(var(--theme-secondary-accent))' }}
+            className={`rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 animate-fadeInUp relative overflow-hidden border ${isClub ? '' : 'bg-gradient-to-br from-black/20 via-black/40 to-black/20 text-white'}`}
+            style={{
+              animationDelay: "0ms",
+              borderColor: 'rgb(var(--theme-accent))',
+              backgroundColor: isClub ? 'rgb(var(--theme-accent))' : undefined
+            }}
           >
 
             <div className="relative z-10 flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-medium mb-1" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
+                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-black mb-1" style={{ color: isClub ? 'var(--theme-page)' : 'rgb(var(--theme-secondary-accent))' }}>
                   Série de victoires en cours
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl md:text-4xl font-black tabular-nums text-white">
+                  <span className={`text-2xl sm:text-3xl md:text-4xl font-black tabular-nums ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
                     {currentWinStreak}
                   </span>
-                  <span className="text-[10px] sm:text-xs text-white/80 uppercase tracking-[0.1em]">
+                  <span className={`text-[10px] sm:text-xs uppercase tracking-[0.1em] ${isClub ? 'text-[var(--theme-page)]/80' : 'text-white/80'}`}>
                     victoire{currentWinStreak >= 2 ? "s" : ""}
                   </span>
                 </div>
@@ -349,15 +355,15 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
               <div className="flex flex-col items-end gap-1.5 relative">
                 {/* Icône flamme principale */}
                 <div className="relative z-10">
-                  <Flame size={32} className="text-white" style={{ filter: "drop-shadow(0 0 8px rgba(var(--theme-secondary-accent), 0.6))" }} strokeWidth={1.5} />
+                  <Flame size={32} className={`${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`} style={{ filter: isClub ? 'none' : "drop-shadow(0 0 8px rgba(var(--theme-secondary-accent), 0.6))" }} strokeWidth={1.5} />
                 </div>
                 {/* Effet fantôme derrière */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none">
-                  <Flame size={64} style={{ color: 'rgba(var(--theme-secondary-accent), 0.2)' }} className="blur-[1px] transform scale-125" strokeWidth={3} />
+                  <Flame size={64} style={{ color: isClub ? 'rgba(var(--theme-page), 0.15)' : 'rgba(var(--theme-secondary-accent), 0.2)' }} className="blur-[1px] transform scale-125" strokeWidth={3} />
                 </div>
 
-                <div className="text-[9px] sm:text-[10px] text-white/80 mt-1">
-                  Meilleure : <span className="font-semibold tabular-nums" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{streak}</span>
+                <div className={`text-[9px] sm:text-[10px] mt-1 ${isClub ? 'text-[var(--theme-page)]/80' : 'text-white/80'}`}>
+                  Meilleure : <span className="font-semibold tabular-nums" style={{ color: isClub ? 'var(--theme-page)' : 'rgb(var(--theme-secondary-accent))' }}>{streak}</span>
                 </div>
               </div>
             </div>
@@ -369,7 +375,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Points - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Points</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">
@@ -380,7 +386,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Matchs - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Matchs</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{matches}</div>

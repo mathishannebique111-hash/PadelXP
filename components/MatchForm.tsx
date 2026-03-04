@@ -44,6 +44,7 @@ export default function MatchForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
+  const isClub = typeof document !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
 
   const [partnerName, setPartnerName] = useState("");
   const [opp1Name, setOpp1Name] = useState("");
@@ -1059,7 +1060,7 @@ export default function MatchForm({
       <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
         {/* Lieu du match (Google Maps Direct) */}
         <div className="mb-1">
-          <label className="mb-0.5 ml-1 block text-[8px] font-black uppercase tracking-widest" style={{ color: 'rgb(var(--theme-accent))' }}>Lieu du match</label>
+          <label className="mb-0.5 ml-1 block text-[8px] font-black uppercase tracking-widest" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' }}>Lieu du match</label>
           <div className="animate-in fade-in slide-in-from-top-1 duration-200">
             <GooglePlacesAutocomplete
               value={unregisteredClubName}
@@ -1193,8 +1194,8 @@ export default function MatchForm({
             </div>
           </div>
           {/* Note explicative très petite */}
-          <p className="mt-1 text-center text-[7px] italic font-bold" style={{ color: 'rgb(var(--theme-accent))' }}>
-            *Niveau des invités basé sur la moyenne des inscrits.
+          <p className="mt-1 text-center text-[7px] italic font-bold" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' }}>
+            *Niveau des invités basé sur la moyenne des matchs.
           </p>
         </div>
 
@@ -1242,7 +1243,7 @@ export default function MatchForm({
           <div className="flex flex-col gap-2 items-center">
             {sets.map((set, index) => (
               <div key={set.setNumber} className="relative flex items-center justify-center gap-2 w-full">
-                <span className="text-[9px] font-black uppercase w-8 text-left" style={{ color: 'rgb(var(--theme-accent))' }}>Set {set.setNumber}</span>
+                <span className="text-[9px] font-black uppercase w-8 text-left" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' }}>Set {set.setNumber}</span>
                 <input
                   type="number"
                   inputMode="numeric"
