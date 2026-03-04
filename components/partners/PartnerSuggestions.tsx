@@ -406,7 +406,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
   // Si on a déjà chargé une fois et qu'il n'y a pas de suggestions, afficher le message d'état vide
   if (loading && !hasLoadedOnce) {
     return (
-      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'rgba(var(--theme-page, 15, 23, 42), 0.5)', borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.2)' }}>
+      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.4)' }}>
         <div className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <div className="h-7 w-40 bg-slate-800 rounded-lg animate-pulse" />
@@ -441,14 +441,14 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
 
   return (
     <>
-      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'rgba(var(--theme-page, 15, 23, 42), 0.5)', borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.2)' }}>
+      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.4)' }}>
         <div className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <h3 className="text-base md:text-lg font-bold text-white">
               Partenaires suggérés
             </h3>
 
-            <div className="flex bg-slate-800/50 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
+            <div className="flex p-1 rounded-xl border border-white/10 self-start sm:self-auto" style={{ backgroundColor: 'var(--theme-page, #071554)' }}>
               {userClubId && (
                 <button
                   onClick={() => {
@@ -498,7 +498,8 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                       fetchSuggestions(departmentFilter, 'dept');
                     }
                   }}
-                  className="w-full bg-slate-800/50 border border-white/10 rounded-lg pl-3 pr-10 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
+                  className="w-full border border-white/10 rounded-lg pl-3 pr-10 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 transition-all"
+                  style={{ backgroundColor: 'var(--theme-page, #071554)' }}
                   maxLength={3}
                 />
                 <button
@@ -553,8 +554,8 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                   key={player.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="rounded-xl p-2.5 md:p-4 border flex flex-col h-full"
-                  style={{ backgroundColor: 'rgba(var(--theme-page, 30, 41, 59), 0.5)', borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)' }}
+                  className="rounded-xl p-2.5 md:p-4 border flex flex-col h-full shadow-sm"
+                  style={{ backgroundColor: 'transparent', borderColor: 'rgb(var(--theme-accent, 255, 255, 255))' }}
                 >
                   {/* Header: Avatar + Info Centered */}
                   <div className="flex flex-col items-center text-center mb-2.5 flex-1">

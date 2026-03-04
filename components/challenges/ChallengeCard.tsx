@@ -252,7 +252,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           borderColor: (isCompleted && !challenge.isPremium)
             ? 'rgb(var(--theme-accent, 37, 99, 235))'
             : (!isCompleted && !isFailed && !challenge.isPremium)
-              ? 'rgba(var(--theme-accent, 255, 255, 255), 0.4)'
+              ? 'rgba(var(--theme-accent, 255, 255, 255), 0.6)'
               : undefined
         }}
       >
@@ -319,8 +319,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           <div
             className="mb-5 rounded-2xl border p-4 shadow-inner"
             style={{
-              backgroundColor: 'rgba(var(--theme-page, 7, 21, 84), 0.8)',
-              borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)'
+              backgroundColor: 'var(--theme-page, #071554)',
+              borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.2)'
             }}
           >
             <div className="mb-3 flex items-start justify-between">

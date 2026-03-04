@@ -16,7 +16,7 @@ export default function PageTitle({
   // Style avec fond gris blanc et padding réduit
   const cardStyle: React.CSSProperties = {
     background: "rgba(255, 255, 255, 0.05)",
-    borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)',
+    borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.4)',
     backdropFilter: "blur(4px)",
     WebkitBackdropFilter: "blur(4px)",
   };

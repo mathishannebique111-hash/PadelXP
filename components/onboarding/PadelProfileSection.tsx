@@ -468,7 +468,7 @@ export default function PadelProfileSection({
         <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
           <div className="flex items-center gap-4">
             {Icon && (
-              <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} />
+              <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-accent, 255, 255, 255))' }} />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
@@ -501,7 +501,7 @@ export default function PadelProfileSection({
         >
           <div className="flex items-center gap-4">
             {Icon && (
-              <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} />
+              <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-accent, 255, 255, 255))' }} />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
@@ -585,7 +585,7 @@ export default function PadelProfileSection({
   };
 
   return (
-    <div className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm" style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.8)' }}>
+    <div className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm" style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.6)' }}>
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
@@ -639,7 +639,7 @@ export default function PadelProfileSection({
         {/* Partenaire Habituel */}
         <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group relative">
           <div className="flex items-center gap-4">
-            <Users className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-secondary-accent, 204, 255, 0))" />
+            <Users className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-accent, 255, 255, 255))" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="text-xs text-white/50 uppercase tracking-wider font-medium">
@@ -712,7 +712,7 @@ export default function PadelProfileSection({
         {(data.postal_code || data.city) && (
           <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
             <div className="flex items-center gap-4">
-              <MapPin className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-secondary-accent, 204, 255, 0))" />
+              <MapPin className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-accent, 255, 255, 255))" />
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
                   Localisation
