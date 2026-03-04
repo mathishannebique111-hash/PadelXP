@@ -23,15 +23,15 @@ export default function SafeAreas() {
 
     const isApp = Capacitor.isNativePlatform();
     const platform = Capacitor.getPlatform();
+    const clubSubdomain = document.body.getAttribute('data-club-subdomain') || '';
     const isPlayerPage = document.documentElement.classList.contains('player-page');
     const isBlackPage = pathname && (blackPages.some(page => pathname.startsWith(page)) ||
-      pathname === '/' ||
+      (pathname === '/' && !clubSubdomain) || // La home est noire sur PadelXP, mais pas sur Club
       pathname.startsWith('/login') ||
       pathname.startsWith('/register'));
 
     // Couleur de fond par défaut (Bleu Player)
     // Pour les clubs avec sous-domaine, lire la couleur depuis les variables CSS
-    const clubSubdomain = document.body.getAttribute('data-club-subdomain') || '';
     let brandedBgColor = '#172554'; // fallback
     if (clubSubdomain) {
       const computedStyle = getComputedStyle(document.documentElement);

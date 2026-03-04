@@ -93,7 +93,7 @@ export default async function RootLayout({
     <html lang="fr" className={`${isApp ? 'is-app' : ''} ${subdomain ? 'club-branded' : ''} ${subdomain && isLightBg ? 'club-light-bg' : ''}`} style={{ backgroundColor: subdomain ? branding.background_color : '#172554', ...(isApp ? { '--sat': '65px' } : {}) } as any} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="theme-color" content={subdomain ? branding.primary_color : '#172554'} />
+        <meta name="theme-color" content={subdomain ? branding.background_color : '#172554'} />
         <link rel="manifest" href="/api/manifest" />
 
         <style
@@ -109,10 +109,12 @@ export default async function RootLayout({
               
               html.is-app, body.is-app {
                 --sat: 65px !important;
+                --sab: 20px !important;
               }
               
               html, body {
                 background-color: ${subdomain ? branding.background_color : '#172554'} !important;
+                --sab: ${isApp ? '20px' : '0px'};
               }
 
               ${brandingCSS}
@@ -128,6 +130,7 @@ export default async function RootLayout({
                 if (isApp && document.documentElement) {
                   document.documentElement.classList.add('is-app');
                   document.documentElement.style.backgroundColor = '${subdomain ? branding.background_color : '#172554'}';
+                  document.documentElement.style.setProperty('--sab', '20px');
                 }
               })();
             `,
