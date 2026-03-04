@@ -144,14 +144,15 @@ export default function TournamentsContent() {
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform"
-                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}
+                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}
                 >
                     <Plus size={18} />
                     Créer une ligue
                 </button>
                 <button
                     onClick={() => setShowJoinModal(true)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-sm active:scale-[0.98] transition-transform"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border text-white font-bold text-sm active:scale-[0.98] transition-transform"
+                    style={{ borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.2)' }}
                 >
                     <KeyRound size={18} />
                     Rejoindre
@@ -160,7 +161,10 @@ export default function TournamentsContent() {
 
             {/* Formulaire de création inline */}
             {showCreateForm && (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div
+                    className="rounded-2xl border bg-white/5 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200"
+                    style={{ borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)' }}
+                >
                     <h3 className="text-base font-bold text-white">Nouvelle ligue privée</h3>
 
                     <div>
@@ -259,7 +263,7 @@ export default function TournamentsContent() {
                         onClick={handleCreate}
                         disabled={creating || !formName.trim()}
                         className="w-full py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
-                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}
+                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}
                     >
                         {creating ? "Création..." : "Créer ma ligue privée"}
                     </button>
@@ -270,7 +274,7 @@ export default function TournamentsContent() {
             <div className="space-y-3">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <div className="w-6 h-6 border-2 border-white/20 rounded-full animate-spin" style={{ borderTopColor: 'rgb(var(--theme-secondary-accent))' }} />
+                        <div className="w-6 h-6 border-2 border-white/20 rounded-full animate-spin" style={{ borderTopColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} />
                     </div>
                 ) : leagues.length === 0 ? (
                     <div className="text-center py-12">
@@ -288,7 +292,8 @@ export default function TournamentsContent() {
                             return (
                                 <div
                                     key={league.id}
-                                    className="rounded-xl border border-white/10 bg-white/5 p-4 active:bg-white/10 transition-colors"
+                                    className="rounded-xl border bg-white/5 p-4 active:bg-white/10 transition-colors"
+                                    style={{ borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)' }}
                                 >
                                     <div className="flex items-center justify-between mb-2">
                                         <button
@@ -308,7 +313,7 @@ export default function TournamentsContent() {
                                             onClick={(e) => { e.stopPropagation(); copyCode(league.invite_code); }}
                                             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 border border-white/20 text-xs font-bold text-white/70 hover:text-white transition-colors"
                                         >
-                                            {copiedCode === league.invite_code ? <Check size={14} style={{ color: 'rgb(var(--theme-secondary-accent))' }} /> : <Copy size={14} />}
+                                            {copiedCode === league.invite_code ? <Check size={14} style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} /> : <Copy size={14} />}
                                             <span className="font-mono tracking-wider">{league.invite_code}</span>
                                         </button>
                                     </div>
@@ -344,7 +349,7 @@ export default function TournamentsContent() {
                                             <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full transition-all duration-300"
-                                                    style={{ width: `${Math.min(100, (league.my_matches_played / league.max_matches_per_player) * 100)}%`, backgroundColor: 'rgb(var(--theme-secondary-accent))' }}
+                                                    style={{ width: `${Math.min(100, (league.my_matches_played / league.max_matches_per_player) * 100)}%`, backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }}
                                                 />
                                             </div>
                                         )}

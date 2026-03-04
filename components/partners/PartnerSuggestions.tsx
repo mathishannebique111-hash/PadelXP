@@ -406,7 +406,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
   // Si on a déjà chargé une fois et qu'il n'y a pas de suggestions, afficher le message d'état vide
   if (loading && !hasLoadedOnce) {
     return (
-      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
+      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'rgba(var(--theme-bg-rgb, 15, 23, 42), 0.5)', borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.2)' }}>
         <div className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <div className="h-7 w-40 bg-slate-800 rounded-lg animate-pulse" />
@@ -441,7 +441,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
 
   return (
     <>
-      <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
+      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'rgba(var(--theme-bg-rgb, 15, 23, 42), 0.5)', borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.2)' }}>
         <div className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <h3 className="text-base md:text-lg font-bold text-white">
@@ -553,7 +553,8 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                   key={player.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-slate-800/50 rounded-xl p-2.5 md:p-4 border border-white/10 flex flex-col h-full"
+                  className="rounded-xl p-2.5 md:p-4 border flex flex-col h-full"
+                  style={{ backgroundColor: 'rgba(var(--theme-player-card-rgb, 30, 41, 59), 0.5)', borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)' }}
                 >
                   {/* Header: Avatar + Info Centered */}
                   <div className="flex flex-col items-center text-center mb-2.5 flex-1">
@@ -620,7 +621,8 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                     <button
                       type="button"
                       onClick={() => router.push(`/players/${player.id}?from=partners`)}
-                      className="py-2 px-0 border border-white/10 text-white rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
+                      className="py-2 px-0 border text-white rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
+                      style={{ borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)' }}
                       title="Voir le profil"
                     >
                       <Eye size={16} />
@@ -651,7 +653,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                             ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                             : "active:scale-95"
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      style={(!isAccepted && !hasSentInvitation && !hasReceivedInvitation) ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' } : {}}
+                      style={(!isAccepted && !hasSentInvitation && !hasReceivedInvitation) ? { backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' } : {}}
                     >
                       {isInvitingId === player.id ? (
                         <Loader2 size={16} className="animate-spin" />

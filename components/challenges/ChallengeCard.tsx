@@ -237,16 +237,25 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
       )}
 
       {/* Carte du challenge */}
-      <div className={`group relative rounded-2xl border-2 p-1 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
-        ? challenge.isPremium
-          ? "border-amber-500 bg-gradient-to-br from-amber-600/20 via-black/40 to-black/20 shadow-amber-500/20"
-          : "border-blue-500 bg-gradient-to-br from-blue-600/10 via-black/40 to-black/20 shadow-blue-500/20"
-        : isFailed
-          ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
-          : challenge.isPremium
-            ? "border-amber-500/60 bg-gradient-to-br from-amber-500/10 to-black/40 shadow-amber-500/10"
-            : "border-white/40 bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:border-white/50 hover:shadow-xl"
-        }`}>
+      <div
+        className={`group relative rounded-2xl border-2 p-1 shadow-lg transition-all duration-300 overflow-hidden ${isCompleted
+            ? challenge.isPremium
+              ? "border-amber-500 bg-gradient-to-br from-amber-600/20 via-black/40 to-black/20"
+              : "bg-gradient-to-br from-black/40 to-black/20 shadow-blue-500/20"
+            : isFailed
+              ? "border-red-500/80 bg-gradient-to-br from-red-500/10 to-rose-500/5 shadow-red-500/20"
+              : challenge.isPremium
+                ? "border-amber-500/60 bg-gradient-to-br from-amber-500/10 to-black/40 shadow-amber-500/10"
+                : "bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:shadow-xl"
+          }`}
+        style={{
+          borderColor: (isCompleted && !challenge.isPremium)
+            ? 'rgb(var(--theme-accent, 37, 99, 235))'
+            : (!isCompleted && !isFailed && !challenge.isPremium)
+              ? 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.4)'
+              : undefined
+        }}
+      >
 
         <div className="p-4">
           {/* Effet brillant style top joueurs */}
@@ -307,7 +316,13 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           </div>
 
           {/* Objectif */}
-          <div className="mb-5 rounded-2xl border border-white/10 bg-gradient-to-br from-[#071554]/80 to-[#071554]/40 p-4 shadow-inner">
+          <div
+            className="mb-5 rounded-2xl border p-4 shadow-inner"
+            style={{
+              backgroundColor: 'rgba(var(--theme-bg-rgb, 7, 21, 84), 0.8)',
+              borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)'
+            }}
+          >
             <div className="mb-3 flex items-start justify-between">
               <div>
                 <div className="mb-1 text-sm font-medium text-white">Objectif</div>
@@ -324,13 +339,16 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             {/* Barre de progression */}
             <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
               <div
-                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ${challenge.isPremium
-                  ? "bg-amber-500 shadow-lg shadow-amber-500/50"
-                  : isCompleted
-                    ? "bg-blue-500 shadow-lg shadow-blue-500/50"
-                    : "bg-blue-500 shadow-lg shadow-blue-500/30"
-                  }`}
-                style={{ width: `${percentage}%` }}
+                className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
+                style={{
+                  width: `${percentage}%`,
+                  backgroundColor: challenge.isPremium
+                    ? '#F59E0B'
+                    : 'rgb(var(--theme-accent, 37, 99, 235))',
+                  boxShadow: challenge.isPremium
+                    ? '0 0 10px rgba(245, 158, 11, 0.5)'
+                    : '0 0 10px rgba(var(--theme-accent-rgb, 37, 99, 235), 0.5)'
+                }}
               />
             </div>
 
@@ -364,8 +382,9 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                 disabled={claiming && !(challenge.isPremium && !isPremiumUser)}
                 className={`group relative w-full overflow-hidden rounded-xl px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] ${challenge.isPremium && !isPremiumUser
                   ? "bg-gradient-to-r from-yellow-500 to-amber-600 hover:shadow-amber-600/40"
-                  : "bg-blue-600 hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+                  : "hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
                   }`}
+                style={!(challenge.isPremium && !isPremiumUser) ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' } : {}}
               >
                 {/* Effet de brillance animé */}
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
@@ -391,10 +410,13 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
 
           {/* Message de challenge terminé */}
           {isExpired && (
-            <div className={`mb-5 rounded-2xl border px-4 py-3 ${isCompleted
-              ? "border-blue-500/40 bg-blue-500/10"
-              : "border-red-500/40 bg-red-500/10"
-              }`}>
+            <div
+              className={`mb-5 rounded-2xl border px-4 py-3`}
+              style={{
+                backgroundColor: isCompleted ? 'rgba(var(--theme-accent-rgb, 37, 99, 235), 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                borderColor: isCompleted ? 'rgba(var(--theme-accent-rgb, 37, 99, 235), 0.4)' : 'rgba(239, 68, 68, 0.4)'
+              }}
+            >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{isCompleted ? "✅" : "❌"}</span>
                 <div>

@@ -111,7 +111,7 @@ export default function PlayerSlotSquare({
                             </div>
 
                             {/* Affichage du niveau */}
-                            <div className={`text-[7px] sm:text-[9px] font-black italic ${isFixed ? '' : 'text-blue-600'} leading-none`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}>
+                            <div className={`text-[7px] sm:text-[9px] font-black italic ${isFixed ? '' : 'text-blue-600'} leading-none`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' } : {}}>
                                 {showTilde && <span className="mr-0.5">~</span>}
                                 {niveau_padel ? niveau_padel.toFixed(2) : (player.niveau_padel ? player.niveau_padel.toFixed(2) : '')}
                             </div>

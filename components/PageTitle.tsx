@@ -16,7 +16,7 @@ export default function PageTitle({
   // Style avec fond gris blanc et padding réduit
   const cardStyle: React.CSSProperties = {
     background: "rgba(255, 255, 255, 0.05)",
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: 'rgba(var(--theme-accent-rgb, 255, 255, 255), 0.1)',
     backdropFilter: "blur(4px)",
     WebkitBackdropFilter: "blur(4px)",
   };
@@ -30,12 +30,12 @@ export default function PageTitle({
         <div className="relative z-10 flex items-center">
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5">
             {/* Barre verticale à gauche */}
-            <span 
-              className="w-1 sm:w-1.5 self-stretch rounded-full flex-shrink-0" 
+            <span
+              className="w-1 sm:w-1.5 self-stretch rounded-full flex-shrink-0"
               style={{
-                background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.3))'
+                background: 'linear-gradient(to bottom, rgb(var(--theme-accent, 255, 255, 255)), rgba(var(--theme-accent-rgb, 255, 255, 255), 0.3))'
               }}
-              aria-hidden="true" 
+              aria-hidden="true"
             />
             {/* Titre avec icône optionnelle */}
             <div className="flex items-center gap-2 sm:gap-3">

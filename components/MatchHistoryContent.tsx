@@ -78,7 +78,7 @@ export default async function MatchHistoryContent() {
     return (
       <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
         <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md px-4 py-2 text-sm font-semibold text-white transition-all active:scale-95" style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
           Enregistrer un match
         </Link>
       </div>
@@ -91,7 +91,7 @@ export default async function MatchHistoryContent() {
     return (
       <div className="rounded-2xl bg-white/10 border border-white/20 p-8 text-center backdrop-blur">
         <p className="text-white/80">Aucun match enregistré pour le moment.</p>
-        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+        <Link href="/match/new?tab=record" className="mt-4 inline-block rounded-md px-4 py-2 text-sm font-semibold text-white transition-all active:scale-95" style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
           Enregistrer un match
         </Link>
       </div>
@@ -305,7 +305,7 @@ export default async function MatchHistoryContent() {
                           <span className={`text-[11px] truncate max-w-[85%] ${isCurrentUser ? "font-bold text-[#071554]" : "font-medium text-gray-700"}`}>
                             {displayName}
                           </span>
-                          {isCurrentUser && <span className="text-[8px] px-1 rounded-full font-black text-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }}>MOI</span>}
+                          {isCurrentUser && <span className="text-[8px] px-1 rounded-full font-black text-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }}>MOI</span>}
                         </div>
                       );
                     })}
@@ -339,7 +339,7 @@ export default async function MatchHistoryContent() {
                           <span className={`text-[11px] truncate max-w-[85%] ${isCurrentUser ? "font-bold text-[#071554]" : "font-medium text-gray-700"}`}>
                             {displayName}
                           </span>
-                          {isCurrentUser && <span className="text-[8px] px-1 rounded-full font-black text-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }}>MOI</span>}
+                          {isCurrentUser && <span className="text-[8px] px-1 rounded-full font-black text-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }}>MOI</span>}
                         </div>
                       );
                     })}

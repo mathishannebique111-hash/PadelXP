@@ -303,7 +303,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
 
   // Calcul du winrate (utiliser les stats avec limite quotidienne pour l'affichage)
   const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-  const winrateColor = winrate > 60 ? "#10B981" : winrate >= 40 ? "var(--theme-accent)" : "#EF4444";
+  const winrateColor = winrate > 60 ? "#10B981" : winrate >= 40 ? "rgb(var(--theme-accent))" : "#EF4444";
 
   // Nombre total de badges standards
   const totalBadges = ALL_BADGES.length;
@@ -329,12 +329,12 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
         <div className="mb-3 sm:mb-4">
           <div
             className="rounded-lg bg-gradient-to-br from-black/20 via-black/40 to-black/20 px-3 sm:px-4 py-2 sm:py-2.5 animate-fadeInUp relative overflow-hidden text-white border"
-            style={{ animationDelay: "0ms", borderColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: "0ms", borderColor: 'rgb(var(--theme-secondary-accent))' }}
           >
 
             <div className="relative z-10 flex items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-medium mb-1" style={{ color: 'rgb(var(--theme-accent))' }}>
+                <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] font-medium mb-1" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                   Série de victoires en cours
                 </div>
                 <div className="flex items-baseline gap-1.5">
@@ -349,15 +349,15 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
               <div className="flex flex-col items-end gap-1.5 relative">
                 {/* Icône flamme principale */}
                 <div className="relative z-10">
-                  <Flame size={32} className="text-white" style={{ filter: "drop-shadow(0 0 8px rgba(var(--theme-accent-rgb), 0.6))" }} strokeWidth={1.5} />
+                  <Flame size={32} className="text-white" style={{ filter: "drop-shadow(0 0 8px rgba(var(--theme-secondary-accent-rgb), 0.6))" }} strokeWidth={1.5} />
                 </div>
                 {/* Effet fantôme derrière */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none">
-                  <Flame size={64} style={{ color: 'rgba(var(--theme-accent-rgb), 0.2)' }} className="blur-[1px] transform scale-125" strokeWidth={3} />
+                  <Flame size={64} style={{ color: 'rgba(var(--theme-secondary-accent-rgb), 0.2)' }} className="blur-[1px] transform scale-125" strokeWidth={3} />
                 </div>
 
                 <div className="text-[9px] sm:text-[10px] text-white/80 mt-1">
-                  Meilleure : <span className="font-semibold tabular-nums" style={{ color: 'rgb(var(--theme-accent))' }}>{streak}</span>
+                  Meilleure : <span className="font-semibold tabular-nums" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{streak}</span>
                 </div>
               </div>
             </div>
@@ -369,7 +369,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Points - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Points</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">
@@ -380,7 +380,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Matchs - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Matchs</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{matches}</div>
@@ -389,7 +389,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Victoires - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '100ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '100ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Victoires</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{wins}</div>
@@ -398,7 +398,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Défaites - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '150ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '150ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Défaites</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{losses}</div>
@@ -407,7 +407,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Sets gagnés - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '200ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '200ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Sets gagnés</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{setsWon}</div>
@@ -416,7 +416,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Sets perdus - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '250ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '250ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Sets perdus</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{setsLost}</div>
@@ -425,7 +425,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Winrate - Stat secondaire avec dégradé */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '300ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '300ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Winrate</div>
             <div
@@ -451,7 +451,7 @@ export default async function PlayerSummary({ profileId }: { profileId: string }
           {/* Badges - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '350ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-accent))' }}
+            style={{ animationDelay: '350ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Badges</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{badgesObtained} / {totalBadges}</div>

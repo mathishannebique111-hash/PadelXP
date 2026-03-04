@@ -1094,7 +1094,7 @@ export default function MatchForm({
               </p>
             )}
             {unregisteredClubCity && (
-              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-tight flex items-center gap-1" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
+              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-tight flex items-center gap-1" style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }}>
                 <MapPin size={10} /> {unregisteredClubCity}
               </p>
             )}
@@ -1108,7 +1108,7 @@ export default function MatchForm({
             <select
               value={selectedLeagueId}
               onChange={(e) => setSelectedLeagueId(e.target.value)}
-              className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-3 text-white text-sm font-medium focus:outline-none focus:ring-2 appearance-none" style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)' }}
+              className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-3 text-white text-sm font-medium focus:outline-none focus:ring-2 appearance-none" style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' }}
             >
               <option value="" className="bg-[#0a0f2c]">Aucune ligue</option>
               {activeLeagues.map((league) => (
@@ -1157,7 +1157,7 @@ export default function MatchForm({
 
               {/* VS Badge Centered */}
               <div className="flex-shrink-0 flex flex-col items-center justify-center pb-5">
-                <div className="px-1 py-0.5 rounded text-[8px] font-black uppercase ring-2 ring-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>
+                <div className="px-1 py-0.5 rounded text-[8px] font-black uppercase ring-2 ring-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}>
                   VS
                 </div>
               </div>
@@ -1206,9 +1206,10 @@ export default function MatchForm({
                 type="button"
                 onClick={() => setWinner("1")}
                 className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "1"
-                  ? "border-[rgb(var(--theme-secondary-accent))] bg-[rgb(var(--theme-secondary-accent))] text-[var(--theme-player-page, #071554)] shadow-[0_0_10px_rgba(var(--theme-secondary-accent-rgb,191,255,0),0.2)]"
+                  ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
+                style={winner === "1" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : {}}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1219,9 +1220,10 @@ export default function MatchForm({
                 type="button"
                 onClick={() => setWinner("2")}
                 className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "2"
-                  ? "border-[rgb(var(--theme-secondary-accent))] bg-[rgb(var(--theme-secondary-accent))] text-[var(--theme-player-page, #071554)] shadow-[0_0_10px_rgba(var(--theme-secondary-accent-rgb,191,255,0),0.2)]"
+                  ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]"
                   : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                   }`}
+                style={winner === "2" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : {}}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1233,7 +1235,7 @@ export default function MatchForm({
               <p className="mt-3 text-xs text-red-400 font-bold uppercase tracking-tight">{errors.winner}</p>
             )}
           </div>
-        </div>
+        </div >
 
         <div className="py-1 text-center">
           <label className="mb-1 block text-[9px] font-black text-white/50 uppercase tracking-widest">Scores des sets</label>
@@ -1246,7 +1248,8 @@ export default function MatchForm({
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={1}
-                  className="w-9 h-9 rounded-lg border-2 border-transparent bg-white/10 text-base text-white text-center font-bold focus:border-[rgb(var(--theme-secondary-accent))] focus:outline-none"
+                  className="w-9 h-9 rounded-lg border-2 border-transparent bg-white/10 text-base text-white text-center font-bold focus:outline-none"
+                  style={{ '--tw-ring-color': 'rgb(var(--theme-secondary-accent, 204, 255, 0))', focusBorderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' } as any}
                   value={set.team1Score}
                   onChange={(e) => updateSet(index, "team1Score", e.target.value)}
                   placeholder="-"
@@ -1259,7 +1262,8 @@ export default function MatchForm({
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={1}
-                  className="w-9 h-9 rounded-lg border-2 border-transparent bg-white/10 text-base text-white text-center font-bold focus:border-[rgb(var(--theme-secondary-accent))] focus:outline-none"
+                  className="w-9 h-9 rounded-lg border-2 border-transparent bg-white/10 text-base text-white text-center font-bold focus:outline-none"
+                  style={{ '--tw-ring-color': 'rgb(var(--theme-secondary-accent, 204, 255, 0))', focusBorderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' } as any}
                   value={set.team2Score}
                   onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                   placeholder="-"
@@ -1328,7 +1332,7 @@ export default function MatchForm({
                 <button
                   type="button"
                   onClick={addSet}
-                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
+                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' }}
                 >
                   + Set
                 </button>
@@ -1337,7 +1341,7 @@ export default function MatchForm({
                 <button
                   type="button"
                   onClick={() => setHasTieBreak(true)}
-                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
+                  className="mt-1 text-[7px] font-black uppercase tracking-widest border px-2 py-1 rounded-full transition-all" style={{ color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' }}
                 >
                   + Tie-Break
                 </button>
@@ -1352,7 +1356,7 @@ export default function MatchForm({
         <div className="pt-2 pb-4">
           <button
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 5px 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
+            className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 5px 15px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' }}
           >
             <div className="relative z-10 flex items-center justify-center gap-1.5 text-sm">
               {loading && (
@@ -1362,7 +1366,7 @@ export default function MatchForm({
             </div>
           </button>
         </div>
-      </form>
+      </form >
 
       {/* Search Modal */}
       {
@@ -1481,7 +1485,7 @@ export default function MatchForm({
                 {activeSlot && selectedPlayers[activeSlot as keyof typeof selectedPlayers] && (
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center font-black" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center font-black" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}>
                         {selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.first_name?.[0]}{selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.last_name?.[0]}
                       </div>
                       <div>
@@ -1520,6 +1524,6 @@ export default function MatchForm({
           </div>
         )
       }
-    </div>
+    </div >
   );
 }
