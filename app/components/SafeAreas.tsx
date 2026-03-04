@@ -53,7 +53,7 @@ export default function SafeAreas() {
     } else if (pathname?.startsWith('/attenteandroid')) {
       topColor = '#071554';
       bottomColor = '#071554';
-    } else if (isPlayerPage) {
+    } else if (isPlayerPage || clubSubdomain) {
       topColor = brandedBgColor;
       bottomColor = brandedBgColor;
     }
@@ -86,15 +86,6 @@ export default function SafeAreas() {
         console.error("[SafeAreas] Error updating native colors:", e);
       }
 
-      // Assurer une marge de sécurité minimale pour l'app
-      if (typeof window !== 'undefined' && document.documentElement.classList.contains('is-app')) {
-        if (getComputedStyle(document.documentElement).getPropertyValue('--sat') !== '65px') {
-          document.documentElement.style.setProperty('--sat', '65px', 'important');
-        }
-        if (getComputedStyle(document.documentElement).getPropertyValue('--sab') !== '20px') {
-          document.documentElement.style.setProperty('--sab', '20px', 'important');
-        }
-      }
     };
 
     forceSafeAreaColor();

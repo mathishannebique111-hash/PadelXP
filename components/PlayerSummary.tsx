@@ -323,7 +323,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
         <BadgesUnlockNotifier obtained={computedBadges} />
         {/* Badge niveau en haut et visible */}
         <div className="mb-4 sm:mb-5 flex items-center justify-between gap-2">
-          <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] truncate" style={{ color: isClub ? 'rgb(var(--theme-page))' : 'white' }}>Mes statistiques</h3>
+          <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] truncate" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'white' }}>Mes statistiques</h3>
           <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
         </div>
 
@@ -378,7 +378,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             style={{
               animationDelay: '50ms',
               borderLeftWidth: '4px',
-              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderLeftColor: isClub ? 'rgb(var(--theme-page))' : 'rgb(var(--theme-secondary-accent))',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)',
               backgroundColor: 'white'
             }}
