@@ -591,7 +591,7 @@ export default function PadelProfileSection({
     <div
       className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm"
       style={{
-        borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))',
+        borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(var(--theme-accent, 37, 99, 235), 0.3)',
         borderWidth: isClub ? '2px' : '1px'
       }}
     >

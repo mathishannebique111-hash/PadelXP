@@ -53,15 +53,21 @@ function statusLabel(status: PlayerChallenge["status"]) {
   }
 }
 
-function statusClasses(status: PlayerChallenge["status"]) {
+function statusClasses(status: PlayerChallenge["status"], isClub: boolean) {
   switch (status) {
     case "active":
-      return "bg-white/30 text-white border border-[rgb(var(--theme-accent,204,255,0))]";
+      return isClub
+        ? "bg-white/20 text-white border border-white/40"
+        : "bg-white/30 text-white border border-[rgb(var(--theme-accent,204,255,0))]";
     case "upcoming":
-      return "bg-blue-500/20 text-blue-200 border border-blue-400/40";
+      return isClub
+        ? "bg-white/10 text-white border border-white/20"
+        : "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
     default:
-      return "bg-white/20 text-white/80 border border-white/25";
+      return isClub
+        ? "bg-white/10 text-white/90 border border-white/20"
+        : "bg-white/20 text-white/80 border border-white/25";
   }
 }
 
@@ -250,7 +256,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
               : "bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:shadow-xl"
           }`}
         style={{
-          borderColor: 'rgb(var(--theme-accent, 204, 255, 0))'
+          borderColor: 'rgb(var(--theme-accent, 204, 255, 0))',
+          backgroundColor: isClub ? 'rgb(var(--theme-accent))' : undefined
         }}
       >
 
@@ -265,22 +272,22 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           {/* En-tête */}
           <div className="mb-5 flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className="mb-2 text-xl font-bold text-white flex items-center gap-2">
+              <h3 className={`mb-2 text-xl font-bold flex items-center gap-2 ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
                 {challenge.title}
                 {challenge.isPremium && (
-                  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                  <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isClub ? 'bg-white/20 text-white border border-white/30' : 'bg-amber-500/20 text-amber-500 border border-amber-500/30'}`}>
                     Premium
                   </span>
                 )}
               </h3>
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusClasses(challenge.status)}`}>
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusClasses(challenge.status, isClub)}`}>
                 {statusLabel(challenge.status)}
               </span>
             </div>
 
             {/* Badge récompense */}
-            <div className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-yellow-500/15 to-amber-600/10 px-3 py-2 shadow ring-1 ring-yellow-400/20">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-yellow-200/80">
+            <div className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 shadow ring-1 ${isClub ? 'bg-white/10 ring-white/20' : 'bg-gradient-to-br from-yellow-500/15 to-amber-600/10 ring-yellow-400/20'}`}>
+              <span className={`text-[10px] font-medium uppercase tracking-wide ${isClub ? 'text-white/80' : 'text-yellow-200/80'}`}>
                 Récompense
               </span>
               <div className="flex items-center gap-1.5">
@@ -303,7 +310,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                     />
                   </div>
                 )}
-                <span className="text-sm font-bold text-white">
+                <span className={`text-sm font-bold ${isClub ? 'text-white' : 'text-white'}`}>
                   {challenge.rewardType === "points"
                     ? `${challenge.rewardLabel} pts`
                     : challenge.rewardLabel}
@@ -320,7 +327,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
               borderColor: isClub ? 'var(--theme-page)' : 'rgb(var(--theme-accent, 204, 255, 0))'
             }}
           >
-            <div className="mb-3 flex items-start justify-between">
+            <div className={`mb-3 flex items-start justify-between`}>
               <div>
                 <div className={`mb-1 text-sm font-medium ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>Objectif</div>
                 <div className={`text-xs ${isClub ? 'text-[var(--theme-page)]/80' : 'text-white'}`}>{challenge.objective}</div>
@@ -334,7 +341,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             </div>
 
             {/* Barre de progression */}
-            <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'bg-[var(--theme-page)]/20 shadow-inner' : 'bg-white/20'}`} style={{ borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
+            <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'bg-[var(--theme-page)]/20 shadow-inner' : 'bg-white/20'}`} style={{ borderColor: isClub ? 'var(--theme-page)' : 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
@@ -360,9 +367,9 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
 
           {/* Période */}
           <div className="mb-4 flex items-center gap-2 text-sm">
-            <Clock size={16} className="text-white flex-shrink-0" />
-            <span className="font-medium text-white">Période :</span>
-            <span className="font-semibold text-white">{formatRange(challenge.startDate, challenge.endDate)}</span>
+            <Clock size={16} className={`${isClub ? 'text-[var(--theme-page)]' : 'text-white'} flex-shrink-0`} />
+            <span className={`font-medium ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>Période :</span>
+            <span className={`font-semibold ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>{formatRange(challenge.startDate, challenge.endDate)}</span>
           </div>
 
           {/* Bouton récupérer la récompense - En bas du cadre */}

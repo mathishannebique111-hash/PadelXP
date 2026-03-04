@@ -314,7 +314,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
   return (
     <div className="w-full max-w-2xl rounded-xl sm:rounded-2xl border p-6 sm:p-8 md:p-10 text-white shadow-xl relative overflow-hidden" style={{
       background: "linear-gradient(135deg, var(--theme-page) 0%, rgba(4,16,46,0.92) 100%), radial-gradient(circle at 30% 20%, var(--theme-accenta, rgba(0,102,255,0.08)), transparent 70%)",
-      borderColor: isClub ? 'rgb(var(--theme-accent))' : 'white'
+      borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.1)'
     }}>
       <div>
         {/* Notifier client pour les changements de niveau */}
@@ -375,7 +375,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Points - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Points</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">
@@ -386,7 +386,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Matchs - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))' }}
+            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)' }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Matchs</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{matches}</div>
@@ -395,7 +395,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Victoires - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '100ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{
+              animationDelay: '100ms',
+              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Victoires</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{wins}</div>
@@ -404,7 +409,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Défaites - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '150ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{
+              animationDelay: '150ms',
+              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Défaites</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{losses}</div>
@@ -413,7 +423,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Sets gagnés - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '200ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{
+              animationDelay: '200ms',
+              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Sets gagnés</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{setsWon}</div>
@@ -422,7 +437,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Sets perdus - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '250ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{
+              animationDelay: '250ms',
+              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Sets perdus</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{setsLost}</div>
@@ -431,7 +451,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Winrate - Stat secondaire avec dégradé */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '300ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{
+              animationDelay: '300ms',
+              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Winrate</div>
             <div
@@ -440,7 +465,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
                 background: winrate > 60
                   ? "linear-gradient(to right, #10B981, #059669)"
                   : winrate >= 40
-                    ? "linear-gradient(to right, var(--theme-accent), #0052CC)"
+                    ? `linear-gradient(to right, ${isClub ? 'rgb(var(--theme-accent))' : 'var(--theme-accent)'}, #0052CC)`
                     : "linear-gradient(to right, #EF4444, #DC2626)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -457,7 +482,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Badges - Stat secondaire */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '350ms', borderLeftWidth: '4px', borderLeftColor: 'rgb(var(--theme-secondary-accent))' }}
+            style={{
+              animationDelay: '350ms',
+              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Badges</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{badgesObtained} / {totalBadges}</div>

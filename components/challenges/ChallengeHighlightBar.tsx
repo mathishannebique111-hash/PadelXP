@@ -29,7 +29,7 @@ export default function ChallengeHighlightBar() {
             <div
                 className="relative z-10 p-2 sm:p-2.5 rounded-xl border transition-all duration-300"
                 style={{
-                    borderColor: 'rgb(var(--theme-accent, 204, 255, 0))',
+                    borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 204, 255, 0))',
                     backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.02)',
                     backdropFilter: isClub ? 'none' : 'blur(4px)'
                 }}

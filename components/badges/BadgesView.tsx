@@ -44,6 +44,7 @@ export default function BadgesView({
     const [activeTab, setActiveTab] = useState<"standard" | "challenges">("standard");
     // Local state for optimistic update
     const [isPremium, setIsPremium] = useState(isPremiumUser);
+    const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
 
     useEffect(() => {
         if (isPremiumUser) {
@@ -113,14 +114,14 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("standard")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
-                            ? "bg-white/10 text-white border"
+                            ? (isClub ? "border-transparent" : "bg-white/10 text-white border")
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
                             }`}
                         style={activeTab === "standard" ? {
-                            backgroundColor: 'rgb(var(--theme-accent, 204, 255, 0))',
+                            backgroundColor: 'rgb(var(--theme-accent))',
                             color: 'var(--theme-page, #071554)',
-                            borderColor: 'rgb(var(--theme-accent, 204, 255, 0))',
-                            boxShadow: '0 0 15px rgba(var(--theme-accent, 204, 255, 0), 0.2)'
+                            borderColor: 'rgb(var(--theme-accent))',
+                            boxShadow: '0 0 15px rgba(var(--theme-accent), 0.2)'
                         } : {}}
                     >
                         <Award size={16} className="sm:w-4 sm:h-4" />
@@ -129,15 +130,15 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("challenges")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
-                            ? "text-[#172554] shadow-lg ring-2 ring-offset-2 ring-offset-[#172554]"
+                            ? (isClub ? "border-transparent text-[#172554]" : "text-[#172554] shadow-lg ring-2 ring-offset-2 ring-offset-[#172554]")
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
                             }`}
                         style={activeTab === "challenges" ? {
-                            backgroundColor: 'rgb(var(--theme-accent, 204, 255, 0))',
+                            backgroundColor: 'rgb(var(--theme-accent))',
                             color: 'var(--theme-page, #071554)',
-                            boxShadow: '0 0 25px rgba(var(--theme-accent, 204, 255, 0), 0.25)',
-                            '--tw-ring-color': 'rgb(var(--theme-accent, 204, 255, 0))',
-                            borderColor: 'rgb(var(--theme-accent, 204, 255, 0))'
+                            boxShadow: '0 0 25px rgba(var(--theme-accent), 0.25)',
+                            '--tw-ring-color': 'rgb(var(--theme-accent))',
+                            borderColor: 'rgb(var(--theme-accent))'
                         } as any : {}}
                     >
                         <Trophy size={16} className="sm:w-4 sm:h-4" />

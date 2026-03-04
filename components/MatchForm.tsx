@@ -1239,7 +1239,7 @@ export default function MatchForm({
         </div>
 
         <div className="py-1 text-center">
-          <label className="mb-1 block text-[9px] font-black uppercase tracking-widest" style={{ color: 'rgb(var(--theme-accent))' }}>Scores des sets</label>
+          <label className="mb-1 block text-[9px] font-black uppercase tracking-widest" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' }}>Scores des sets</label>
           <div className="flex flex-col gap-2 items-center">
             {sets.map((set, index) => (
               <div key={set.setNumber} className="relative flex items-center justify-center gap-2 w-full">

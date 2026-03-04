@@ -50,6 +50,7 @@ export default function LeaderboardContent({
   const [profilesFirstNameMap, setProfilesFirstNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialFirstNameMap)));
   const [profilesLastNameMap, setProfilesLastNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialLastNameMap)));
   const [scope, setScope] = useState<'club' | 'department' | 'region' | 'national'>('department');
+  const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
 
   // Cache state: stores data for each scope
   const [cache, setCache] = useState<Record<string, {
@@ -316,10 +317,10 @@ export default function LeaderboardContent({
                 : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/70'
                 }`}
               style={scope === key ? {
-                backgroundColor: 'rgb(var(--theme-secondary-accent))',
+                backgroundColor: 'rgb(var(--theme-accent))',
                 color: 'var(--theme-page, #071554)',
-                borderColor: 'rgb(var(--theme-secondary-accent))',
-                boxShadow: '0 0 15px rgba(var(--theme-secondary-accent), 0.3)'
+                borderColor: 'rgb(var(--theme-accent))',
+                boxShadow: '0 0 15px rgba(var(--theme-accent), 0.3)'
               } : {}}
             >
               <Icon size={14} />

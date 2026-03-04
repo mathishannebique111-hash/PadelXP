@@ -68,6 +68,7 @@ export default function PremiumStats() {
     const [performanceTab, setPerformanceTab] = useState<'weaker' | 'equal' | 'stronger'>('weaker');
     const [listTab, setListTab] = useState<'victims' | 'nemesis' | 'partners'>('victims');
     const [formTab, setFormTab] = useState<'form' | 'reaction'>('form');
+    const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
     const router = useRouter();
 
     useEffect(() => {
@@ -301,9 +302,9 @@ export default function PremiumStats() {
                             <p className="text-xs text-slate-500">Votre progression sur la période</p>
                         </div>
                         {filteredEvolution.length > 0 && (
-                            <div className={`text-right bg-slate-800/50 px-4 py-2 rounded-xl border backdrop-blur-sm ${!isPremium ? 'blur-md' : ''}`} style={{ borderColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
+                            <div className={`text-right bg-slate-800/50 px-4 py-2 rounded-xl border backdrop-blur-sm ${!isPremium ? 'blur-md' : ''}`} style={{ borderColor: isClub ? 'rgb(var(--theme-accent))' : 'white' }}>
                                 <div className="text-2xl font-black text-white">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</div>
-                                <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgb(var(--theme-accent, 37, 99, 235))' }}>Niveau Actuel</div>
+                                <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255,255,255,0.6)' }}>Niveau Actuel</div>
                             </div>
                         )}
                     </div>
