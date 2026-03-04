@@ -124,7 +124,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
             boxShadow: '0 0 15px rgba(var(--theme-accent), 0.2)',
             '--tw-ring-color': 'rgb(var(--theme-accent))',
             '--tw-ring-offset-color': 'rgb(var(--theme-page))'
-          } as any : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.5)' } : { borderColor: 'transparent' })}
+          } as any : (isClub ? { borderColor: 'rgb(var(--theme-accent))' } : { borderColor: 'transparent' })}
         >
           <Globe size={14} />
           <span>Général</span>
@@ -142,7 +142,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
             border: 'none',
             '--tw-ring-color': 'rgb(var(--theme-accent))',
             '--tw-ring-offset-color': 'rgb(var(--theme-page))'
-          } as any : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.5)' } : { borderColor: 'transparent' })}
+          } as any : (isClub ? { borderColor: 'rgb(var(--theme-accent))' } : { borderColor: 'transparent' })}
         >
           <MapPin size={14} />
           <span>Mon Club</span>

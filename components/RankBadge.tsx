@@ -38,11 +38,11 @@ export default function RankBadge({ rank, size = "md", className = "", isClub = 
       textColor: "text-orange-900",
     },
     default: {
-      gradient: isClub ? "bg-white/10" : "bg-gradient-to-r from-[#1A3A6E] via-[#1E4280] to-[#1A3A6E]",
-      style: isClub ? { backgroundColor: 'rgb(var(--theme-accent))' } : {},
-      border: isClub ? "border-[rgb(var(--theme-accent))]/50" : "border-blue-500/50",
-      glow: isClub ? "shadow-[0_0_15px_rgba(var(--theme-accent),0.3)]" : "shadow-[0_0_15px_rgba(26,58,110,0.7)]",
-      shadowColor: isClub ? "0 2px 12px rgba(var(--theme-accent),0.2)" : "0 2px 12px rgba(26,58,110,0.7), 0 0 0 1px rgba(255,255,255,0.15) inset",
+      gradient: "bg-gradient-to-r from-[#1A3A6E] via-[#1E4280] to-[#1A3A6E]",
+      style: {},
+      border: "border-blue-500/50",
+      glow: "shadow-[0_0_15px_rgba(26,58,110,0.7)]",
+      shadowColor: "0 2px 12px rgba(26,58,110,0.7), 0 0 0 1px rgba(255,255,255,0.15) inset",
       textColor: "text-white",
     },
   };
@@ -54,11 +54,12 @@ export default function RankBadge({ rank, size = "md", className = "", isClub = 
       className={`inline-flex items-center justify-center rounded-full font-bold border-2 backdrop-blur-sm relative overflow-hidden transition-all duration-300 hover:scale-105 ${sizeClasses[size]} ${config.gradient} ${config.border} ${config.glow} ${config.textColor} ${className}`}
       style={{
         ...config.style,
-        textShadow: rank <= 3 ? "none" : (isClub ? "0 1px 2px rgba(0,0,0,0.4)" : "0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255,255,255,0.5)"),
+        textShadow: rank <= 3 ? "none" : (isClub ? "none" : "0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255,255,255,0.5)"),
         boxShadow: config.shadowColor,
+        ...(isClub && rank > 3 ? { color: 'var(--theme-text)' } : {})
       }}
     >
-      <div className="absolute inset-[2px] rounded-full border border-white/20" />
+      <div className={`absolute inset-[2px] rounded-full border border-white/30`} />
       <span className="relative z-10 drop-shadow-sm font-extrabold tracking-wide">#{rank}</span>
       {rank > 3 && (
         <div className="absolute top-1 right-4 w-1 h-1 bg-white/60 rounded-full blur-[1px]" />
