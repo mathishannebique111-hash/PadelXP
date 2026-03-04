@@ -1158,7 +1158,12 @@ export default function MatchForm({
 
               {/* VS Badge Centered */}
               <div className="flex-shrink-0 flex flex-col items-center justify-center pb-5">
-                <div className="px-1 py-0.5 rounded text-[8px] font-black uppercase border-2" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)', borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}>
+                <div className="px-1 py-0.5 rounded text-[8px] font-black uppercase border-2"
+                  style={{
+                    backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))',
+                    color: 'var(--theme-player-page, #071554)',
+                    borderColor: isClub ? 'rgb(var(--theme-accent))' : 'transparent'
+                  }}>
                   VS
                 </div>
               </div>
@@ -1208,9 +1213,9 @@ export default function MatchForm({
                 onClick={() => setWinner("1")}
                 className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "1"
                   ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
-                  : "border bg-white/5 text-white hover:bg-white/10"
+                  : `border bg-white/5 text-white hover:bg-white/10 ${!isClub ? 'border-white/10 hover:border-white/30' : ''}`
                   }`}
-                style={winner === "1" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : { borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.2)' }}
+                style={winner === "1" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.2)' } : {})}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1451,9 +1456,9 @@ export default function MatchForm({
                         }}
                         className={`flex-1 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all ${(activeSlot && scopes[activeSlot as keyof typeof scopes] === tab.id)
                           ? 'shadow-sm text-[#071554]'
-                          : 'bg-white/5 border text-white hover:bg-white/10'
+                          : `bg-white/5 border text-white hover:bg-white/10 ${!isClub ? 'border-white/10' : ''}`
                           }`}
-                        style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.2)' }}
+                        style={isClub ? { borderColor: 'rgba(var(--theme-accent), 0.2)' } : {}}
                       >
                         {tab.label}
                       </button>

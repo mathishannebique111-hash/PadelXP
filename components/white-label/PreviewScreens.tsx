@@ -55,17 +55,14 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
                             <ChevronRight size={10} style={{ color: "var(--theme-page)" }} className="opacity-70" />
                         </div>
                     </div>
-                    <div className="h-0.5 w-full rounded-full bg-black/20 overflow-hidden">
+                    <div className="h-1 w-full rounded-full border overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', borderColor: 'var(--theme-page)' }}>
                         <div
                             className="h-full rounded-full transition-all duration-1000 ease-out relative"
                             style={{
                                 width: `${percentage}%`,
-                                backgroundColor: accentColor,
-                                boxShadow: `0 0 8px ${accentColor}`
+                                backgroundColor: 'var(--theme-page)'
                             }}
-                        >
-                            <div className="absolute inset-0 bg-white/10" />
-                        </div>
+                        />
                     </div>
                 </div>
             </div>
@@ -931,28 +928,28 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                         Challenge en cours
                                     </div>
                                 </div>
-                                <div className="bg-[var(--theme-page)]/10 border rounded-lg p-2 flex flex-col items-center shadow-sm" style={{ borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.1)' }}>
-                                    <span className="text-[5px] font-black uppercase mb-0.5" style={{ color: "var(--theme-page)", opacity: 0.6 }}>RÉCOMPENSE</span>
+                                <div className="bg-[var(--theme-page)] border rounded-lg p-2 flex flex-col items-center shadow-sm" style={{ borderColor: 'var(--theme-page)' }}>
+                                    <span className="text-[5px] font-black uppercase mb-0.5" style={{ color: "rgb(var(--theme-accent))", opacity: 0.6 }}>RÉCOMPENSE</span>
                                     <div className="flex items-center gap-1">
-                                        <Star size={8} className="text-[var(--theme-page)] fill-current" />
-                                        <span className="text-[8px] font-black" style={{ color: "var(--theme-page)" }}>8 pts</span>
+                                        <Star size={8} className="text-[rgb(var(--theme-accent))] fill-current" />
+                                        <span className="text-[8px] font-black" style={{ color: "rgb(var(--theme-accent))" }}>8 pts</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-[var(--theme-page)]/10 rounded-xl p-3 border mb-3" style={{ borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.1)' }}>
+                            <div className="bg-[var(--theme-page)] rounded-xl p-3 border mb-3" style={{ borderColor: 'var(--theme-page)' }}>
                                 <div className="flex justify-between items-center mb-2">
                                     <div>
-                                        <p className="text-[8px] font-black mb-0.5" style={{ color: "var(--theme-page)" }}>Objectif</p>
-                                        <p className="text-[6px]" style={{ color: "var(--theme-page)", opacity: 0.8 }}>Jouer avec 2 partenaires différents</p>
+                                        <p className="text-[8px] font-black mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Objectif</p>
+                                        <p className="text-[6px]" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>Jouer avec 2 partenaires différents</p>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[10px] font-black" style={{ color: "var(--theme-page)" }}>2/2</span>
-                                        <p className="text-[6px]" style={{ color: "var(--theme-page)", opacity: 0.8 }}>100%</p>
+                                        <span className="text-[10px] font-black" style={{ color: "rgb(var(--theme-accent))" }}>2/2</span>
+                                        <p className="text-[6px]" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>100%</p>
                                     </div>
                                 </div>
-                                <div className="h-1.5 w-full bg-[var(--theme-page)]/20 rounded-full overflow-hidden">
-                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "var(--theme-page)" }} />
+                                <div className="h-1.5 w-full bg-black/10 border rounded-full overflow-hidden" style={{ borderColor: 'rgba(var(--theme-accent-rgb), 0.2)' }}>
+                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "rgb(var(--theme-accent))" }} />
                                 </div>
                             </div>
 

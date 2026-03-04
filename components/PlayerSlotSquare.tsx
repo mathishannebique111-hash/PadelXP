@@ -36,6 +36,8 @@ export default function PlayerSlotSquare({
     // Afficher "Invité" uniquement si c'est un guest et que ce n'est pas un joueur anonyme
     const showGuestLabel = player?.type === 'guest' && player?.display_name !== 'Joueur Anonyme';
 
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
     return (
         <div className={`relative flex flex-col items-center gap-1 ${className}`}>
             {showGuestLabel && (
@@ -49,14 +51,14 @@ export default function PlayerSlotSquare({
                 disabled={isFixed}
                 className={`relative aspect-square w-full rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 overflow-hidden
           ${isFixed
-                        ? "bg-white/5 border cursor-default"
+                        ? `bg-white/5 border cursor-default ${!isClub ? 'border-white/10' : ''}`
                         : player
                             ? "bg-white border-white shadow-lg shadow-white/10"
                             : "bg-white/5 border-dashed transition-colors shadow-inner club-light-bg-boost-border"
                     }
           ${isWinner ? "ring-2 ring-offset-2 ring-offset-[#071554]" : ""}
         `}
-                style={{ borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}
+                style={(!player && !isFixed) ? { borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' } : undefined}
             >
                 {player ? (
                     <>

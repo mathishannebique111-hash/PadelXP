@@ -375,7 +375,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Points - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)' }}
+            style={{
+              animationDelay: '50ms',
+              borderLeftWidth: '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Points</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">
@@ -386,7 +391,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
           {/* Matchs - Stat principale */}
           <div
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
-            style={{ animationDelay: '50ms', borderLeftWidth: isClub ? '1px' : '4px', borderLeftColor: 'rgb(var(--theme-accent))', borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)' }}
+            style={{
+              animationDelay: '50ms',
+              borderLeftWidth: '4px',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+            }}
           >
             <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#172554]/70 mb-1.5 sm:mb-2 font-medium">Matchs</div>
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#172554] tabular-nums">{matches}</div>
@@ -397,7 +407,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{
               animationDelay: '100ms',
-              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftWidth: '4px',
               borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
@@ -411,7 +421,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{
               animationDelay: '150ms',
-              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftWidth: '4px',
               borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
@@ -425,7 +435,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{
               animationDelay: '200ms',
-              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftWidth: '4px',
               borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
@@ -439,7 +449,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{
               animationDelay: '250ms',
-              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftWidth: '4px',
               borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
@@ -453,7 +463,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{
               animationDelay: '300ms',
-              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftWidth: '4px',
               borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
@@ -484,7 +494,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             className="rounded-lg border border-gray-200 bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md sm:shadow-lg transition-shadow duration-300 hover:shadow-xl animate-fadeInUp"
             style={{
               animationDelay: '350ms',
-              borderLeftWidth: isClub ? '1px' : '4px',
+              borderLeftWidth: '4px',
               borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}

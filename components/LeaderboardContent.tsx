@@ -313,10 +313,10 @@ export default function LeaderboardContent({
               key={key}
               onClick={() => { setScope(key); }}
               className={`flex items-center gap-1 px-3 py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border ${scope === key
-                ? 'shadow-lg'
+                ? (isClub ? 'border-transparent' : 'bg-[var(--theme-secondary-accent)]/20 text-[rgb(var(--theme-secondary-accent))] border-[var(--theme-secondary-accent)]/40 shadow-lg shadow-[rgb(var(--theme-secondary-accent))]/10')
                 : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/70'
                 }`}
-              style={scope === key ? {
+              style={scope === key && isClub ? {
                 backgroundColor: 'rgb(var(--theme-accent))',
                 color: 'var(--theme-page, #071554)',
                 borderColor: 'rgb(var(--theme-accent))',

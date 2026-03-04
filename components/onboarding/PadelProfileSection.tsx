@@ -591,7 +591,7 @@ export default function PadelProfileSection({
     <div
       className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm"
       style={{
-        borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(var(--theme-accent, 37, 99, 235), 0.3)',
+        borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)',
         borderWidth: isClub ? '2px' : '1px'
       }}
     >
@@ -646,7 +646,7 @@ export default function PadelProfileSection({
         {renderEditableField("level", "Niveau", LevelIcon)}
 
         {/* Partenaire Habituel */}
-        <div className="rounded-2xl border bg-white/5 p-5 hover:bg-white/[0.07] group relative" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+        <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group relative">
           <div className="flex items-center gap-4">
             <Users className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-accent, 255, 255, 255))" />
             <div className="flex-1 min-w-0">
@@ -663,7 +663,7 @@ export default function PadelProfileSection({
               {partnerData ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+                    <div className="w-5 h-5 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border border-white/10">
                       {partnerData.avatar_url ? (
                         <img src={partnerData.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -719,7 +719,7 @@ export default function PadelProfileSection({
 
         {/* Localisation (Affichage seul ici, modifiable dans les paramètres) */}
         {(data.postal_code || data.city) && (
-          <div className="rounded-2xl border bg-white/5 p-5 hover:bg-white/[0.07] group" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+          <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
             <div className="flex items-center gap-4">
               <MapPin className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-accent, 255, 255, 255))" />
               <div className="flex-1 min-w-0">

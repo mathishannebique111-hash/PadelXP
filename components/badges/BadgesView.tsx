@@ -77,7 +77,9 @@ export default function BadgesView({
 
             <div className="relative z-10 mx-auto w-full max-w-6xl px-1 sm:px-4 pt-2 md:pt-6 pb-8">
                 {/* Stats Header */}
-                <div className="mb-4 rounded-2xl border bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto" style={{ borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}>
+                <div className={`mb-4 rounded-2xl border bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto ${!isClub ? 'border-white/20' : ''}`}
+                    style={isClub ? { borderColor: 'rgb(var(--theme-accent))' } : {}}
+                >
                     <div className="flex items-center justify-between gap-2">
                         {/* Gauche: Complétion Badges (Hors Challenges) */}
                         <div className="text-center w-24 sm:w-28 flex-shrink-0">
@@ -89,7 +91,9 @@ export default function BadgesView({
                         </div>
 
                         {/* Séparation verticale */}
-                        <div className="w-px h-10 flex-shrink-0" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.4)' }}></div>
+                        <div className={`w-px h-10 flex-shrink-0 ${!isClub ? 'bg-white/30' : ''}`}
+                            style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.4)' } : {}}
+                        ></div>
 
                         {/* Droite: Standards, Challenges, Premium */}
                         <div className="flex-1 flex justify-around items-center gap-2 sm:gap-4 min-w-0">
@@ -114,13 +118,11 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("standard")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
-                            ? (isClub ? "border-transparent" : "bg-white/10 text-white border")
-                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                            ? (isClub ? "border-transparent text-[var(--theme-page)]" : "bg-white/10 text-white border-white/40 border")
+                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border border-transparent"
                             }`}
-                        style={activeTab === "standard" ? {
+                        style={activeTab === "standard" && isClub ? {
                             backgroundColor: 'rgb(var(--theme-accent))',
-                            color: 'var(--theme-page, #071554)',
-                            borderColor: 'rgb(var(--theme-accent))',
                             boxShadow: '0 0 15px rgba(var(--theme-accent), 0.2)'
                         } : {}}
                     >
@@ -130,15 +132,13 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("challenges")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
-                            ? (isClub ? "border-transparent text-[#172554]" : "text-[#172554] shadow-lg ring-2 ring-offset-2 ring-offset-[#172554]")
-                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                            ? (isClub ? "border-transparent text-[var(--theme-page)]" : "text-[#172554] shadow-lg ring-2 ring-offset-2 ring-offset-[#172554] border-transparent")
+                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border border-transparent"
                             }`}
                         style={activeTab === "challenges" ? {
-                            backgroundColor: 'rgb(var(--theme-accent))',
-                            color: 'var(--theme-page, #071554)',
-                            boxShadow: '0 0 25px rgba(var(--theme-accent), 0.25)',
-                            '--tw-ring-color': 'rgb(var(--theme-accent))',
-                            borderColor: 'rgb(var(--theme-accent))'
+                            backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))',
+                            boxShadow: isClub ? '0 0 25px rgba(var(--theme-accent), 0.25)' : '0 0 25px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.25)',
+                            '--tw-ring-color': isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))'
                         } as any : {}}
                     >
                         <Trophy size={16} className="sm:w-4 sm:h-4" />
@@ -188,7 +188,9 @@ export default function BadgesView({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-xl bg-white/5 border" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.4)' }}>
+                                <div className={`flex flex-col items-center justify-center py-20 text-center px-4 rounded-xl bg-white/5 border ${!isClub ? 'border-white/10' : ''}`}
+                                    style={isClub ? { borderColor: 'rgba(var(--theme-accent), 0.4)' } : {}}
+                                >
                                     <Trophy size={48} className="text-white/20 mb-4" />
                                     <h3 className="text-lg font-medium text-white/80">Aucun badge de challenge</h3>
                                     <p className="text-white/50 text-sm mt-2 max-w-md">

@@ -13,10 +13,12 @@ export default function PageTitle({
   icon?: React.ReactNode;
   className?: string;
 }) {
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
   // Style avec fond gris blanc et padding réduit
   const cardStyle: React.CSSProperties = {
     background: "rgba(255, 255, 255, 0.05)",
-    borderColor: 'rgb(var(--theme-accent, 255, 255, 255))',
+    borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)',
     backdropFilter: "blur(4px)",
     WebkitBackdropFilter: "blur(4px)",
   };

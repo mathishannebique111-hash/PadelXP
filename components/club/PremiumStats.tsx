@@ -398,7 +398,7 @@ export default function PremiumStats() {
                         const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
 
                         return (
-                            <div className="bg-slate-800/30 rounded-2xl p-6 border backdrop-blur-md max-w-xl" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+                            <div className="bg-slate-800/30 rounded-2xl p-6 border backdrop-blur-md max-w-xl" style={isClub ? { borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' } : { borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                                 <div className="flex items-end gap-2 mb-4">
                                     <span className={`text-4xl font-black ${item.color}`}>{winrate}%</span>
                                     <span className="text-xs text-slate-500 font-medium mb-1.5 uppercase tracking-wider">de réussite</span>
@@ -417,7 +417,7 @@ export default function PremiumStats() {
             </div>
 
             {/* Section 3: Mes Succès */}
-            <div className={`bg-slate-900 border rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-50 grayscale-[0.5]' : ''}`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+            <div className={`bg-slate-900 border rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-50 grayscale-[0.5]' : ''}`} style={isClub ? { borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' } : { borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                 <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
                 <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -447,7 +447,7 @@ export default function PremiumStats() {
 
                 <div className={`relative z-10 max-w-sm transition-all ${!isPremium ? 'blur-lg' : ''}`}>
                     {successTab === 'day' && (
-                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={isClub ? { '--accent-color': 'rgb(var(--theme-accent))', borderColor: 'rgba(var(--theme-accent), 0.2)' } as any : { '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
                             <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Calendar className="w-6 h-6 text-blue-400" />
@@ -462,7 +462,7 @@ export default function PremiumStats() {
                     )}
 
                     {successTab === 'hour' && (
-                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={isClub ? { '--accent-color': 'rgb(var(--theme-accent))', borderColor: 'rgba(var(--theme-accent), 0.2)' } as any : { '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
                             <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Clock className="w-6 h-6 text-blue-400" />
@@ -477,7 +477,7 @@ export default function PremiumStats() {
                     )}
 
                     {successTab === 'month' && (
-                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={isClub ? { '--accent-color': 'rgb(var(--theme-accent))', borderColor: 'rgba(var(--theme-accent), 0.2)' } as any : { '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
                             <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Trophy className="w-6 h-6 text-blue-300" />
@@ -494,7 +494,7 @@ export default function PremiumStats() {
             </div >
 
             {/* Section 4: Ma Forme */}
-            < div className={`bg-slate-900 border rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-30 blur-sm' : ''}`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+            < div className={`bg-slate-900 border rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-30 blur-sm' : ''}`} style={isClub ? { borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' } : { borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -523,7 +523,7 @@ export default function PremiumStats() {
 
                 <div className="relative z-10 max-w-sm">
                     {formTab === 'form' ? (
-                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={isClub ? { '--accent-color': 'rgb(var(--theme-accent))', borderColor: 'rgba(var(--theme-accent), 0.2)' } as any : { '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
                             <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <TrendingUp className="w-6 h-6 text-blue-500" />
@@ -538,7 +538,7 @@ export default function PremiumStats() {
                                 }`}></div>
                         </div>
                     ) : (
-                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={isClub ? { '--accent-color': 'rgb(var(--theme-accent))', borderColor: 'rgba(var(--theme-accent), 0.2)' } as any : { '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
                             <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Swords className="w-6 h-6 text-blue-600" />
@@ -546,7 +546,7 @@ export default function PremiumStats() {
                             <span className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Capacité de Réaction</span>
                             <span className="text-[10px] text-slate-500 mb-4">Victoires après perte du 1er set</span>
 
-                            <div className="flex flex-col items-center gap-2 mt-1">
+                            <div className="flex flex-col items-center text-center mt-2">
                                 <span className="text-5xl font-black text-white group-hover:scale-110 transition-transform duration-300">{statsData?.insights?.reaction?.rate || 0}%</span>
                                 <div className="flex flex-col items-center text-center mt-2">
                                     <span className="text-xs text-slate-300 font-bold">{statsData?.insights?.reaction?.success || 0} remontadas</span>

@@ -257,7 +257,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
               : "bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:shadow-xl"
           }`}
         style={{
-          borderColor: 'rgb(var(--theme-accent, 204, 255, 0))',
+          borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.15)',
           backgroundColor: isClub ? 'rgb(var(--theme-accent))' : undefined
         }}
       >
@@ -324,8 +324,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           <div
             className="mb-5 rounded-2xl border p-4 shadow-inner"
             style={{
-              backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'var(--theme-page, #071554)',
-              borderColor: isClub ? 'var(--theme-page)' : 'rgb(var(--theme-accent, 204, 255, 0))'
+              backgroundColor: isClub ? 'var(--theme-page)' : 'var(--theme-page, #071554)',
+              borderColor: isClub ? 'var(--theme-page)' : 'rgba(var(--theme-accent, 255, 255, 255), 0.2)'
             }}
           >
             <div className={`mb-3 flex items-start justify-between`}>
@@ -342,7 +342,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             </div>
 
             {/* Barre de progression */}
-            <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'bg-[var(--theme-page)]/20 shadow-inner' : 'bg-white/20'}`} style={{ borderColor: isClub ? 'var(--theme-page)' : 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
+            <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'bg-[var(--theme-page)]/20 shadow-inner' : 'bg-white/20'}`}
+              style={{ borderColor: isClub ? 'var(--theme-page)' : 'rgba(255, 255, 255, 0.1)' }}>
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
