@@ -47,7 +47,18 @@ export default async function RootLayout({
   const accentHoverRgb = hexToRgbTriplet(branding.secondary_color);
   const bgRgb = hexToRgbTriplet(branding.background_color);
 
+  // Déterminer si le fond est clair ou sombre (même logique que preview)
+  const isLightBg = (() => {
+    const hex = branding.background_color.replace('#', '');
+    if (hex.length < 6) return false;
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 155;
+  })();
+
   // CSS dynamique pour le branding du club
+  // On surcharge TOUTES les variables pour que texte, cartes, bordures s'adaptent
   const brandingCSS = subdomain ? `
     :root {
       --theme-accent: ${accentRgb};
@@ -56,11 +67,28 @@ export default async function RootLayout({
       --theme-page: ${bgRgb};
       --theme-player-page: ${bgRgb};
       --color-primary: ${branding.primary_color};
+      ${isLightBg ? `
+      --theme-text: 15 23 42;
+      --theme-text-muted: 100 116 139;
+      --theme-text-secondary: 71 85 105;
+      --theme-card: 255 255 255;
+      --theme-secondary: 241 245 249;
+      --theme-border: 226 232 240;
+      --theme-border-light: 15 23 42;
+      ` : `
+      --theme-text: 255 255 255;
+      --theme-text-muted: 156 163 184;
+      --theme-text-secondary: 107 114 128;
+      --theme-card: 2 6 23;
+      --theme-secondary: 2 6 23;
+      --theme-border: 31 41 55;
+      --theme-border-light: 255 255 255;
+      `}
     }
   ` : '';
 
   return (
-    <html lang="fr" className={isApp ? 'is-app' : ''} style={{ backgroundColor: subdomain ? branding.background_color : '#172554', ...(isApp ? { '--sat': '65px' } : {}) } as any} suppressHydrationWarning>
+    <html lang="fr" className={`${isApp ? 'is-app' : ''} ${subdomain ? 'club-branded' : ''} ${subdomain && isLightBg ? 'club-light-bg' : ''}`} style={{ backgroundColor: subdomain ? branding.background_color : '#172554', ...(isApp ? { '--sat': '65px' } : {}) } as any} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content={subdomain ? branding.primary_color : '#172554'} />

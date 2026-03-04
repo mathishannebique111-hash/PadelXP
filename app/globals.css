@@ -1007,13 +1007,52 @@ body.is-app [data-hamburger-button],
 
 /* 4. Positionnement du Logo du club - RETIRÉ POUR FLEX LAYOUT */
 /* Les règles de positionnement sont maintenant gérées dans layout.tsx */
+/* ============================================ */
+/* WHITE-LABEL: Overrides pour apps club        */
+/* ============================================ */
+
+/* Quand un club a un fond CLAIR, forcer le texte en sombre */
+html.club-light-bg .text-white {
+  color: rgb(var(--theme-text)) !important;
+}
+
+html.club-light-bg .text-white\/40,
+html.club-light-bg .text-white\/50,
+html.club-light-bg .text-white\/60,
+html.club-light-bg .text-white\/70,
+html.club-light-bg .text-white\/80,
+html.club-light-bg .text-white\/90 {
+  color: rgb(var(--theme-text-muted)) !important;
+}
+
+/* Cartes et conteneurs transparents */
+html.club-light-bg .bg-white\/5,
+html.club-light-bg .bg-white\/10,
+html.club-light-bg .bg-white\/15,
+html.club-light-bg .bg-white\/20 {
+  background-color: rgb(var(--theme-card) / 0.8) !important;
+}
+
+/* Bordures */
+html.club-light-bg .border-white\/10,
+html.club-light-bg .border-white\/20,
+html.club-light-bg .border-white\/30 {
+  border-color: rgb(var(--theme-border) / 0.2) !important;
+}
+
+/* body couleur de fond pour les clubs */
+html.club-branded,
+html.club-branded body {
+  color: rgb(var(--theme-text));
+}
+
 /* COMMENCEMENT DU FIX POUR IPAD */
-/* Force un fond bleu uniforme sur iPad pour éviter les différences de teintes en haut de page */
+/* Force un fond uniforme sur iPad - UNIQUEMENT pour PadelXP de base */
 @media screen and (min-width: 768px) {
   @supports (-webkit-touch-callout: none) {
 
-    html,
-    body {
+    html:not(.club-branded),
+    html:not(.club-branded) body {
       background-color: rgb(23, 37, 84) !important;
       /* #172554 --theme-player-page */
     }
