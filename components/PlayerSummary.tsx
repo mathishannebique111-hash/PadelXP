@@ -333,7 +333,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             className={`rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 animate-fadeInUp relative overflow-hidden border ${isClub ? '' : 'bg-gradient-to-br from-black/20 via-black/40 to-black/20 text-white'}`}
             style={{
               animationDelay: "0ms",
-              borderColor: 'rgb(var(--theme-accent))',
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : '#CCFF00',
               backgroundColor: isClub ? 'rgb(var(--theme-accent))' : undefined
             }}
           >

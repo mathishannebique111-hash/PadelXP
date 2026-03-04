@@ -1215,7 +1215,7 @@ export default function MatchForm({
                   ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
                   : `border bg-white/5 text-white hover:bg-white/10 ${!isClub ? 'border-white/10 hover:border-white/30' : ''}`
                   }`}
-                style={winner === "1" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-secondary-accent-contrast, #071554)' } : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.2)' } : {})}
+                style={winner === "1" ? { borderColor: !isClub ? '#FFFFFF' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: !isClub ? 'rgba(255,255,255,0.1)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: !isClub ? '#FFFFFF' : 'var(--theme-secondary-accent-contrast, #071554)' } : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.2)' } : {})}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1229,7 +1229,7 @@ export default function MatchForm({
                   ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
                   : "border bg-white/5 text-white hover:bg-white/10"
                   }`}
-                style={winner === "2" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-secondary-accent-contrast, #071554)' } : { borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.2)' }}
+                style={winner === "2" ? { borderColor: !isClub ? '#FFFFFF' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: !isClub ? 'rgba(255,255,255,0.1)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: !isClub ? '#FFFFFF' : 'var(--theme-secondary-accent-contrast, #071554)' } : { borderColor: isClub ? 'rgba(var(--theme-accent), 0.2)' : 'rgba(255, 255, 255, 0.1)' }}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1364,9 +1364,9 @@ export default function MatchForm({
             disabled={loading}
             className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
             style={{
-              backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))',
-              color: 'var(--theme-accent-contrast, white)',
-              boxShadow: '0 5px 15px rgba(var(--theme-accent, 37, 99, 235), 0.3)'
+              backgroundColor: isClub ? 'rgb(var(--theme-accent, 37, 99, 235))' : '#CCFF00',
+              color: isClub ? 'var(--theme-accent-contrast, white)' : '#071554',
+              boxShadow: isClub ? '0 5px 15px rgba(var(--theme-accent, 37, 99, 235), 0.3)' : '0 5px 15px rgba(204, 255, 0, 0.3)'
             }}
           >
             <div className="relative z-10 flex items-center justify-center gap-1.5 text-sm">

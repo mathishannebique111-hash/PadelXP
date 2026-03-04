@@ -145,7 +145,7 @@ export default function TournamentsContent() {
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform"
-                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' }}
+                    style={{ backgroundColor: isClub ? 'rgb(var(--theme-secondary-accent, 204, 255, 0))' : 'rgba(255,255,255,0.1)', color: isClub ? 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' : '#FFFFFF' }}
                 >
                     <Plus size={18} />
                     Créer une ligue
@@ -264,7 +264,7 @@ export default function TournamentsContent() {
                         onClick={handleCreate}
                         disabled={creating || !formName.trim()}
                         className="w-full py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
-                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' }}
+                        style={{ backgroundColor: isClub ? 'rgb(var(--theme-secondary-accent, 204, 255, 0))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: isClub ? 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' : 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' }}
                     >
                         {creating ? "Création..." : "Créer ma ligue privée"}
                     </button>
