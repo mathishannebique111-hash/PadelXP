@@ -39,6 +39,8 @@ function MatchTabsContent({
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
 
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
   // Persistent read state
   const [viewedMatchesCount, setViewedMatchesCount] = useState(0);
   const [viewedPartnersCount, setViewedPartnersCount] = useState(0);
@@ -224,7 +226,8 @@ function MatchTabsContent({
   return (
     <div className="w-full h-full">
       {/* Onglets */}
-      <div className="grid grid-cols-4 w-full mb-2 sm:mb-4 border-b border-white/10">
+      <div className={`grid grid-cols-4 w-full mb-2 sm:mb-4 border-b ${!isClub ? 'border-white/10' : ''}`}
+        style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -269,10 +272,13 @@ function MatchTabsContent({
 }
 
 export default function MatchTabs(props: MatchTabsProps) {
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
   return (
     <Suspense fallback={
       <div className="w-full">
-        <div className="grid grid-cols-4 w-full mb-4 sm:mb-6 border-b border-white/10">
+        <div className={`grid grid-cols-4 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
+          style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
           <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
             <span>Enregistrer</span>
           </div>

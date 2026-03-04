@@ -467,7 +467,7 @@ export default function PadelProfileSection({
     if (!isEditing) {
       if (!currentValue) return null;
       return (
-        <div className="rounded-2xl border bg-white/5 p-5 hover:bg-white/[0.07] group" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+        <div className="rounded-2xl border bg-white/5 p-5 hover:bg-white/[0.07] group" style={isClub ? { borderColor: 'rgb(var(--theme-accent))' } : { borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
           <div className="flex items-center gap-4">
             {Icon && (
               <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-accent, 255, 255, 255))' }} />

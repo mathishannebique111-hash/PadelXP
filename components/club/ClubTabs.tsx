@@ -62,10 +62,13 @@ function ClubTabsContent({
         { id: 'tournaments' as TabType, label: 'Ligues' },
     ];
 
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
     return (
         <div className="w-full">
             {/* Onglets */}
-            <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
+            <div className={`grid grid-cols-3 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
+                style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -114,10 +117,13 @@ function ClubTabsContent({
 }
 
 export default function ClubTabs(props: ClubTabsProps) {
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
     return (
         <Suspense fallback={
             <div className="w-full">
-                <div className="grid grid-cols-3 w-full mb-4 sm:mb-6 border-b border-white/10">
+                <div className={`grid grid-cols-3 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
+                    style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
                     <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
                         <span className="text-center whitespace-normal leading-tight">Classement</span>
                     </div>

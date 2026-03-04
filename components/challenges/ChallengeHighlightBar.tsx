@@ -69,7 +69,7 @@ export default function ChallengeHighlightBar() {
                         className={`h-1.5 w-full rounded-full overflow-hidden border ${!isClub ? 'h-1 bg-black/40 border-white/[0.02]' : ''}`}
                         style={isClub ? {
                             backgroundColor: 'rgba(var(--theme-page), 0.2)',
-                            borderColor: 'transparent'
+                            borderColor: 'rgb(var(--theme-page))'
                         } : {}}
                     >
                         <div
