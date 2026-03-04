@@ -87,9 +87,13 @@ export default function SafeAreas() {
       }
 
       // Assurer une marge de sécurité minimale pour l'app
-      if (document.documentElement.classList.contains('is-app')) {
-        document.documentElement.style.setProperty('--sat', '65px', 'important');
-        document.documentElement.style.setProperty('--sab', '20px', 'important');
+      if (typeof window !== 'undefined' && document.documentElement.classList.contains('is-app')) {
+        if (getComputedStyle(document.documentElement).getPropertyValue('--sat') !== '65px') {
+          document.documentElement.style.setProperty('--sat', '65px', 'important');
+        }
+        if (getComputedStyle(document.documentElement).getPropertyValue('--sab') !== '20px') {
+          document.documentElement.style.setProperty('--sab', '20px', 'important');
+        }
       }
     };
 
@@ -98,6 +102,14 @@ export default function SafeAreas() {
 
     return () => clearTimeout(timer);
   }, [pathname]);
+
+  // Fixer les CSS variables une seule fois au montage pour éviter les sauts
+  useEffect(() => {
+    if (typeof window !== 'undefined' && document.documentElement.classList.contains('is-app')) {
+      document.documentElement.style.setProperty('--sat', '65px', 'important');
+      document.documentElement.style.setProperty('--sab', '20px', 'important');
+    }
+  }, []);
 
   return null;
 }

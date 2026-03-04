@@ -323,7 +323,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
         <BadgesUnlockNotifier obtained={computedBadges} />
         {/* Badge niveau en haut et visible */}
         <div className="mb-4 sm:mb-5 flex items-center justify-between gap-2">
-          <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] truncate" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'white' }}>Mes statistiques</h3>
+          <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] sm:tracking-[0.3em] truncate" style={{ color: isClub ? 'rgb(var(--theme-page))' : 'white' }}>Mes statistiques</h3>
           <TierBadge tier={tier.label as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
         </div>
 
@@ -379,11 +379,12 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               animationDelay: '50ms',
               borderLeftWidth: '4px',
               borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
-              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
+              borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)',
+              backgroundColor: 'white'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Points</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : '#172554' }}>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Points</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? '#000000' : '#172554' }}>
               {typeof points === 'number' ? points : (typeof points === 'string' ? parseInt(String(points), 10) || 0 : 0)}
             </div>
           </div>
@@ -398,8 +399,8 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Matchs</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : '#172554' }}>{matches}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Matchs</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? '#000000' : '#172554' }}>{matches}</div>
           </div>
 
           {/* Victoires - Stat principale */}
@@ -412,8 +413,8 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Victoires</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : '#172554' }}>{wins}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Victoires</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? '#000000' : '#172554' }}>{wins}</div>
           </div>
 
           {/* Défaites - Stat principale */}
@@ -426,8 +427,8 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Défaites</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : '#172554' }}>{losses}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Défaites</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? '#000000' : '#172554' }}>{losses}</div>
           </div>
 
           {/* Sets gagnés - Stat secondaire */}
@@ -440,8 +441,8 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Sets gagnés</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : '#172554' }}>{setsWon}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Sets gagnés</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? '#000000' : '#172554' }}>{setsWon}</div>
           </div>
 
           {/* Sets perdus - Stat secondaire */}
@@ -454,8 +455,8 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Sets perdus</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : '#172554' }}>{setsLost}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Sets perdus</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? '#000000' : '#172554' }}>{setsLost}</div>
           </div>
 
           {/* Winrate - Stat secondaire avec dégradé */}
@@ -468,7 +469,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Winrate</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Winrate</div>
             <div
               className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums"
               style={{
@@ -499,8 +500,8 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgba(23,37,84,0.7)' }}>Badges</div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? 'var(--theme-accent-contrast)' : '#172554' }}>{badgesObtained} / {totalBadges}</div>
+            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.25em] mb-1.5 sm:mb-2 font-medium" style={{ color: isClub ? '#000000' : 'rgba(23,37,84,0.7)' }}>Badges</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums" style={{ color: isClub ? '#000000' : '#172554' }}>{badgesObtained} / {totalBadges}</div>
           </div>
         </div>
 

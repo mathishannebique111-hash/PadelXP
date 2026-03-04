@@ -19,6 +19,8 @@ export default function BottomNavBar() {
     const [viewedMatchesCount, setViewedMatchesCount] = useState(0);
     const [viewedPartnersCount, setViewedPartnersCount] = useState(0);
     const [activeIndex, setActiveIndex] = useState(0);
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
 
     const navItems: NavItem[] = [
         { href: '/home', label: 'Profil', icon: <Home size={20} />, navKey: 'home' },
@@ -173,7 +175,6 @@ export default function BottomNavBar() {
                 bottom: 'calc(var(--sab, 0px) + 4px)',
                 willChange: 'transform',
                 transform: 'translateZ(0)', // Force GPU layer
-                contain: 'layout style', // Prevent layout reflows from affecting this element
             }}
         >
             <nav id="bottom-nav-bar" className="relative flex items-center bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] px-1 py-1 max-w-xs w-full" style={{ height: '56px' }}>
@@ -222,7 +223,7 @@ export default function BottomNavBar() {
                                 // Ne pas effacer les badges ici, on laisse les pages gérer le "vu" par onglet
                             }}
                         >
-                            <div className="relative flex flex-col items-center" style={{ color: 'rgb(var(--theme-accent))' }}>
+                            <div className="relative flex flex-col items-center" style={{ color: isClub ? '#000000' : 'rgb(var(--theme-accent))' }}>
                                 {item.icon}
                                 {showBadge && (
                                     <span className="absolute -top-1 -right-3 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
