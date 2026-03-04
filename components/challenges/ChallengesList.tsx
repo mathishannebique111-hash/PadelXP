@@ -37,6 +37,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
   const [activeTab, setActiveTab] = useState<'general' | 'club'>('general');
   // Local state for optimistic update, similar to PremiumStats
   const [isPremium, setIsPremium] = useState(isPremiumUser);
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
   // Sync local state with prop only if prop becomes true (to avoid race condition re-locking)
   useEffect(() => {
@@ -114,15 +115,16 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'general'
             ? 'text-white border shadow-lg ring-2 ring-offset-2'
-            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border'
             }`}
           style={activeTab === 'general' ? {
-            backgroundColor: 'rgb(var(--theme-page))',
+            backgroundColor: 'rgb(var(--theme-accent))',
+            color: 'var(--theme-player-page, #071554)',
             borderColor: 'rgb(var(--theme-accent))',
             boxShadow: '0 0 15px rgba(var(--theme-accent), 0.2)',
             '--tw-ring-color': 'rgb(var(--theme-accent))',
             '--tw-ring-offset-color': 'rgb(var(--theme-page))'
-          } as any : {}}
+          } as any : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.4)' } : { borderColor: 'transparent' })}
         >
           <Globe size={14} />
           <span>Général</span>
@@ -131,7 +133,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
           onClick={() => setActiveTab('club')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'club'
             ? 'shadow-lg ring-2 ring-offset-2'
-            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+            : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border'
             }`}
           style={activeTab === 'club' ? {
             backgroundColor: 'rgb(var(--theme-accent))',
@@ -140,7 +142,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
             border: 'none',
             '--tw-ring-color': 'rgb(var(--theme-accent))',
             '--tw-ring-offset-color': 'rgb(var(--theme-page))'
-          } as any : {}}
+          } as any : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.4)' } : { borderColor: 'transparent' })}
         >
           <MapPin size={14} />
           <span>Mon Club</span>

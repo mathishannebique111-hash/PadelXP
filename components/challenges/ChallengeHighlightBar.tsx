@@ -40,16 +40,16 @@ export default function ChallengeHighlightBar() {
                             <div
                                 className={`flex flex-shrink-0 items-center justify-center w-6 h-6 rounded-full border ${challenge.isPremium ? 'text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : ''} ${!isClub ? 'bg-white/5 border-white/10' : ''}`}
                                 style={isClub ? {
-                                    backgroundColor: 'var(--theme-page)',
-                                    color: 'rgb(var(--theme-accent))',
-                                    borderColor: 'var(--theme-page)'
+                                    backgroundColor: 'transparent',
+                                    color: 'rgb(var(--theme-page))',
+                                    borderColor: 'rgba(var(--theme-page), 0.3)'
                                 } : (!challenge.isPremium ? { color: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' } : {})}
                             >
                                 <Trophy size={11} strokeWidth={2.5} />
                             </div>
                             <span
                                 className={`text-xs sm:text-sm truncate transition-colors duration-300 ${!isClub ? 'font-medium text-white/90 group-hover:text-white' : 'font-bold'}`}
-                                style={isClub ? { color: 'var(--theme-page)' } : {}}
+                                style={isClub ? { color: 'rgb(var(--theme-page))' } : {}}
                             >
                                 {challenge.title}
                             </span>
@@ -57,26 +57,26 @@ export default function ChallengeHighlightBar() {
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <span
                                 className={`text-[10px] sm:text-xs font-bold tabular-nums uppercase tracking-wider ${!isClub ? 'text-white/40' : ''}`}
-                                style={isClub ? { color: 'var(--theme-page)' } : {}}
+                                style={isClub ? { color: 'rgb(var(--theme-page))' } : {}}
                             >
                                 {challenge.progress.current} / {challenge.progress.target}
                             </span>
-                            <ChevronRight size={16} className={`${!isClub ? 'text-white/20 group-hover:text-white/70' : 'opacity-70 group-hover:opacity-100'}`} style={isClub ? { color: 'var(--theme-page)' } : {}} />
+                            <ChevronRight size={16} className={`${!isClub ? 'text-white/20 group-hover:text-white/70' : 'opacity-70 group-hover:opacity-100'}`} style={isClub ? { color: 'rgb(var(--theme-page))' } : {}} />
                         </div>
                     </div>
 
                     <div
                         className={`h-1.5 w-full rounded-full overflow-hidden border ${!isClub ? 'h-1 bg-black/40 border-white/[0.02]' : ''}`}
                         style={isClub ? {
-                            backgroundColor: 'rgba(var(--theme-page-rgb), 0.2)',
-                            borderColor: 'var(--theme-page)'
+                            backgroundColor: 'rgba(var(--theme-page), 0.2)',
+                            borderColor: 'transparent'
                         } : {}}
                     >
                         <div
                             className={`h-full rounded-full transition-all duration-1000 ease-out relative ${challenge.isPremium ? 'bg-gradient-to-r from-amber-500 to-orange-400 shadow-[0_0_12px_rgba(245,158,11,0.8)]' : ''}`}
                             style={{
                                 width: `${percentage}%`,
-                                ...(isClub && !challenge.isPremium ? { backgroundColor: 'var(--theme-page)' } : {}),
+                                ...(isClub && !challenge.isPremium ? { backgroundColor: 'rgb(var(--theme-page))' } : {}),
                                 ...(!isClub && !challenge.isPremium ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 12px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.6)' } : {})
                             }}
                         >

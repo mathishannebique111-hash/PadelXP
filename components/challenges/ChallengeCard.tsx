@@ -287,8 +287,10 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             </div>
 
             {/* Badge récompense */}
-            <div className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 shadow ring-1 ${isClub ? 'bg-[var(--theme-page)]/10 ring-[var(--theme-page)]/20' : 'bg-gradient-to-br from-yellow-500/15 to-amber-600/10 ring-yellow-400/20'}`}>
-              <span className={`text-[10px] font-medium uppercase tracking-wide ${isClub ? 'text-[var(--theme-page)]/80' : 'text-yellow-200/80'}`}>
+            <div className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 shadow ring-1 ${!isClub ? 'bg-gradient-to-br from-yellow-500/15 to-amber-600/10 ring-yellow-400/20' : ''}`}
+              style={isClub ? { backgroundColor: 'rgb(var(--theme-page))', borderColor: 'transparent', '--tw-ring-color': 'transparent' } as any : {}}>
+              <span className={`text-[10px] font-medium uppercase tracking-wide ${!isClub ? 'text-yellow-200/80' : ''}`}
+                style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>
                 Récompense
               </span>
               <div className="flex items-center gap-1.5">
@@ -311,7 +313,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                     />
                   </div>
                 )}
-                <span className={`text-sm font-bold ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
+                <span className={`text-sm font-bold ${!isClub ? 'text-white' : ''}`}
+                  style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>
                   {challenge.rewardType === "points"
                     ? `${challenge.rewardLabel} pts`
                     : challenge.rewardLabel}
@@ -324,34 +327,38 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           <div
             className="mb-5 rounded-2xl border p-4 shadow-inner"
             style={{
-              backgroundColor: isClub ? 'var(--theme-page)' : 'var(--theme-page, #071554)',
-              borderColor: isClub ? 'var(--theme-page)' : 'rgba(var(--theme-accent, 255, 255, 255), 0.2)'
+              backgroundColor: isClub ? 'rgb(var(--theme-page))' : 'var(--theme-page, #071554)',
+              borderColor: isClub ? 'transparent' : 'rgba(var(--theme-accent, 255, 255, 255), 0.2)'
             }}
           >
             <div className={`mb-3 flex items-start justify-between`}>
               <div>
-                <div className={`mb-1 text-sm font-medium ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>Objectif</div>
-                <div className={`text-xs ${isClub ? 'text-[var(--theme-page)]/80' : 'text-white'}`}>{challenge.objective}</div>
+                <div className={`mb-1 text-sm font-medium ${!isClub ? 'text-white' : ''}`}
+                  style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>Objectif</div>
+                <div className={`text-xs ${!isClub ? 'text-white' : ''}`}
+                  style={isClub ? { color: 'rgb(var(--theme-accent))', opacity: 0.8 } : {}}>{challenge.objective}</div>
               </div>
               <div className="text-right">
-                <div className={`text-2xl font-bold ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
+                <div className={`text-2xl font-bold ${!isClub ? 'text-white' : ''}`}
+                  style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>
                   {challenge.progress.current}/{challenge.progress.target}
                 </div>
-                <div className={`text-xs font-medium ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>{Math.round(percentage)}%</div>
+                <div className={`text-xs font-medium ${!isClub ? 'text-white' : ''}`}
+                  style={isClub ? { color: 'rgb(var(--theme-accent))', opacity: 0.8 } : {}}>{Math.round(percentage)}%</div>
               </div>
             </div>
 
             {/* Barre de progression */}
-            <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'bg-[var(--theme-page)]/20 shadow-inner' : 'bg-white/20'}`}
-              style={{ borderColor: isClub ? 'var(--theme-page)' : 'rgba(255, 255, 255, 0.1)' }}>
+            <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'shadow-inner' : 'bg-white/20'}`}
+              style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.2)', borderColor: 'transparent' } : { borderColor: 'rgba(255, 255, 255, 0.1)' }}>
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
                   width: `${percentage}%`,
-                  backgroundColor: isClub ? 'var(--theme-page)' : (challenge.isPremium
+                  backgroundColor: isClub ? 'rgb(var(--theme-accent))' : (challenge.isPremium
                     ? '#F59E0B'
                     : 'rgb(var(--theme-accent, 37, 99, 235))'),
-                  boxShadow: isClub ? 'none' : (challenge.isPremium
+                  boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent), 0.5)' : (challenge.isPremium
                     ? '0 0 10px rgba(245, 158, 11, 0.5)'
                     : '0 0 10px rgba(var(--theme-accent, 37, 99, 235), 0.5)')
                 }}

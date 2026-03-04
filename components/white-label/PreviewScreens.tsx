@@ -41,10 +41,10 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
                 <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                            <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full border" style={{ backgroundColor: 'var(--theme-page)', color: accentColor, borderColor: 'var(--theme-page)' }}>
+                            <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full border" style={{ backgroundColor: 'transparent', color: 'rgb(var(--theme-page))', borderColor: 'rgba(var(--theme-page), 0.3)' }}>
                                 <Trophy size={10} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[9px] font-bold truncate" style={{ color: "var(--theme-page)" }}>
+                            <span className="text-[9px] font-bold truncate" style={{ color: "rgb(var(--theme-page))" }}>
                                 {title}
                             </span>
                         </div>
@@ -55,12 +55,12 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
                             <ChevronRight size={10} style={{ color: "var(--theme-page)" }} className="opacity-70" />
                         </div>
                     </div>
-                    <div className="h-1 w-full rounded-full border overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', borderColor: 'var(--theme-page)' }}>
+                    <div className="h-1 w-full rounded-full border overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-page), 0.2)', borderColor: 'transparent' }}>
                         <div
                             className="h-full rounded-full transition-all duration-1000 ease-out relative"
                             style={{
                                 width: `${percentage}%`,
-                                backgroundColor: 'var(--theme-page)'
+                                backgroundColor: 'rgb(var(--theme-page))'
                             }}
                         />
                     </div>
@@ -928,16 +928,16 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                         Challenge en cours
                                     </div>
                                 </div>
-                                <div className="bg-[var(--theme-page)] border rounded-lg p-2 flex flex-col items-center shadow-sm" style={{ borderColor: 'var(--theme-page)' }}>
-                                    <span className="text-[5px] font-black uppercase mb-0.5" style={{ color: "rgb(var(--theme-accent))", opacity: 0.6 }}>RÉCOMPENSE</span>
+                                <div className="rounded-lg p-2 flex flex-col items-center shadow-sm" style={{ backgroundColor: 'rgb(var(--theme-page))', borderColor: 'transparent' }}>
+                                    <span className="text-[5px] font-black uppercase mb-0.5" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>RÉCOMPENSE</span>
                                     <div className="flex items-center gap-1">
-                                        <Star size={8} className="text-[rgb(var(--theme-accent))] fill-current" />
+                                        <Star size={8} className="text-[rgb(var(--theme-accent))] fill-current" style={{ color: "rgb(var(--theme-accent))" }} />
                                         <span className="text-[8px] font-black" style={{ color: "rgb(var(--theme-accent))" }}>8 pts</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-[var(--theme-page)] rounded-xl p-3 border mb-3" style={{ borderColor: 'var(--theme-page)' }}>
+                            <div className="rounded-xl p-3 mb-3 border" style={{ backgroundColor: 'rgb(var(--theme-page))', borderColor: 'transparent' }}>
                                 <div className="flex justify-between items-center mb-2">
                                     <div>
                                         <p className="text-[8px] font-black mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Objectif</p>
@@ -948,7 +948,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                         <p className="text-[6px]" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>100%</p>
                                     </div>
                                 </div>
-                                <div className="h-1.5 w-full bg-black/10 border rounded-full overflow-hidden" style={{ borderColor: 'rgba(var(--theme-accent-rgb), 0.2)' }}>
+                                <div className="h-1.5 w-full border rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-accent), 0.2)', borderColor: 'transparent' }}>
                                     <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "rgb(var(--theme-accent))" }} />
                                 </div>
                             </div>
