@@ -119,18 +119,18 @@ export default function PremiumStats() {
         const displayList = list.slice(0, 5);
 
         return (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group transition-all" style={{ '--tw-border-opacity': 1 } as any}>
-                <style>{`.group:hover{-webkit-box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2);box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)}`}</style>
+            <div className="bg-slate-900 border rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group transition-all" style={{ '--tw-border-opacity': 1, borderColor: 'rgb(var(--theme-accent, 37, 99, 235))' } as any}>
+                <style>{`.group:hover{-webkit-box-shadow:inset 0 0 0 1px rgba(var(--theme-accent, 37, 99, 235), 0.2);box-shadow:inset 0 0 0 1px rgba(var(--theme-accent, 37, 99, 235), 0.2)}`}</style>
                 <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[rgb(var(--theme-accent))] to-transparent opacity-20`}></div>
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-                    <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
+                    <span className={`p-1.5 rounded-md bg-slate-800/50 border ${colorClass}`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' }}>{icon}</span>
                     {title}
                 </h3>
                 <div className="space-y-3 flex-1 relative">
                     {displayList.map((item, idx) => {
                         const isBlurred = !isPremium && idx < 3;
                         return (
-                            <div key={idx} className={`flex items-center justify-between group p-2 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-slate-800 ${isBlurred ? 'blur-lg opacity-30 pointer-events-none' : ''}`}>
+                            <div key={idx} className={`flex items-center justify-between group p-2 rounded-lg hover:bg-white/5 transition-colors border border-transparent`} style={{}}>
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden ring-2 ring-slate-800 group-hover:ring-slate-700 transition-all">
                                         {item.avatar_url ? <img src={item.avatar_url} alt={item.name} className="w-full h-full object-cover" /> : null}
@@ -141,7 +141,7 @@ export default function PremiumStats() {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md bg-slate-950 border border-slate-800 text-slate-400 group-hover:text-white group-hover:border-slate-700 transition-colors`}>
+                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md bg-slate-950 border text-slate-400 group-hover:text-white transition-colors`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.3)' }}>
                                         {isPartners ? `${item.count} matchs` :
                                             isVictims ? `${item.count} vict. / ${item.total} matchs` :
                                                 `${item.count} déf. / ${item.total} matchs`}
@@ -236,7 +236,7 @@ export default function PremiumStats() {
                 padding: 12,
                 displayColors: false,
                 callbacks: {
-                    label: function (context: { parsed: { y: number } }) {
+                    label: function (context: any) {
                         return `Niveau : ${context.parsed.y.toFixed(2)}`;
                     }
                 }
@@ -270,15 +270,16 @@ export default function PremiumStats() {
                     <p className="text-slate-400 text-sm mt-1">Analyse détaillée de vos performances</p>
                 </div>
 
-                <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 shadow-sm">
+                <div className="flex bg-slate-900 p-1 rounded-xl border shadow-sm" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.5)' }}>
                     {['1W', '1M', '1Y', 'ALL'].map((range) => (
                         <button
                             key={range}
                             onClick={() => setTimeRange(range as TimeRange)}
                             className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${timeRange === range
-                                ? "bg-slate-800 text-white shadow-md border border-slate-700"
-                                : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+                                ? "text-white shadow-md border"
+                                : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
                                 }`}
+                            style={timeRange === range ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 37, 99, 235))' } : {}}
                         >
                             {range === '1W' ? '7J' : range === '1M' ? '30J' : range === '1Y' ? '1 AN' : 'TOUT'}
                         </button>
@@ -287,7 +288,7 @@ export default function PremiumStats() {
             </div>
 
             {/* Section 1: Evolution du niveau */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl relative overflow-hidden group">
+            <div className="p-6 rounded-3xl bg-slate-900 border shadow-xl relative overflow-hidden group" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <div className="relative z-10">
@@ -300,9 +301,9 @@ export default function PremiumStats() {
                             <p className="text-xs text-slate-500">Votre progression sur la période</p>
                         </div>
                         {filteredEvolution.length > 0 && (
-                            <div className={`text-right bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50 backdrop-blur-sm ${!isPremium ? 'blur-md' : ''}`}>
+                            <div className={`text-right bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50 backdrop-blur-sm ${!isPremium ? 'blur-md' : ''}`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                                 <div className="text-2xl font-black text-white">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</div>
-                                <div className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Niveau Actuel</div>
+                                <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgb(var(--theme-accent, 37, 99, 235))' }}>Niveau Actuel</div>
                             </div>
                         )}
                     </div>
@@ -313,7 +314,7 @@ export default function PremiumStats() {
                                 <Line data={chartData} options={chartOptions} />
                             </div>
                         ) : (
-                            <div className="h-[250px] flex flex-col items-center justify-center text-slate-600 gap-3 border border-dashed border-slate-800 rounded-xl bg-slate-800/20">
+                            <div className="h-[250px] flex flex-col items-center justify-center text-slate-600 gap-3 border border-dashed rounded-xl bg-slate-800/20" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.3)' }}>
                                 <TrendingUp className="w-10 h-10 opacity-20" />
                                 <p className="text-sm font-medium">Pas assez de données sur cette période</p>
                                 <button onClick={() => setTimeRange('ALL')} className="text-xs text-blue-400 font-bold hover:text-blue-300 hover:underline">Voir tout l&apos;historique</button>
@@ -324,7 +325,7 @@ export default function PremiumStats() {
             </div>
 
             {/* Section 2: Performance par adversaire (REPLACED AS REQUESTED) */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            <div className="bg-slate-900 border rounded-3xl p-6 shadow-xl relative overflow-hidden" style={{ borderColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -344,7 +345,7 @@ export default function PremiumStats() {
                             onClick={() => setListTab(tab.id as 'victims' | 'nemesis' | 'partners')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${listTab === tab.id
                                 ? "shadow-[0_0_10px_rgba(var(--theme-accent),0.2)]"
-                                : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                                : "bg-black/20 text-slate-400 border border-transparent hover:text-white"
                                 }`}
                             style={listTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
                         >
@@ -396,7 +397,7 @@ export default function PremiumStats() {
                         const winrate = stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0;
 
                         return (
-                            <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30 backdrop-blur-md max-w-xl">
+                            <div className="bg-slate-800/30 rounded-2xl p-6 border backdrop-blur-md max-w-xl" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                                 <div className="flex items-end gap-2 mb-4">
                                     <span className={`text-4xl font-black ${item.color}`}>{winrate}%</span>
                                     <span className="text-xs text-slate-500 font-medium mb-1.5 uppercase tracking-wider">de réussite</span>
@@ -415,7 +416,7 @@ export default function PremiumStats() {
             </div>
 
             {/* Section 3: Mes Succès */}
-            <div className={`bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-50 grayscale-[0.5]' : ''}`}>
+            <div className={`bg-slate-900 border rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-50 grayscale-[0.5]' : ''}`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                 <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
                 <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -445,8 +446,8 @@ export default function PremiumStats() {
 
                 <div className={`relative z-10 max-w-sm transition-all ${!isPremium ? 'blur-lg' : ''}`}>
                     {successTab === 'day' && (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
-                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Calendar className="w-6 h-6 text-blue-400" />
                             </div>
@@ -460,8 +461,8 @@ export default function PremiumStats() {
                     )}
 
                     {successTab === 'hour' && (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
-                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Clock className="w-6 h-6 text-blue-400" />
                             </div>
@@ -475,8 +476,8 @@ export default function PremiumStats() {
                     )}
 
                     {successTab === 'month' && (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
-                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Trophy className="w-6 h-6 text-blue-300" />
                             </div>
@@ -489,10 +490,10 @@ export default function PremiumStats() {
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
 
             {/* Section 4: Ma Forme */}
-            <div className={`bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-30 blur-sm' : ''}`}>
+            < div className={`bg-slate-900 border rounded-3xl p-6 shadow-xl relative overflow-hidden transition-all duration-700 ${!isPremium ? 'opacity-30 blur-sm' : ''}`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <h3 className="text-base font-bold text-white mb-6 flex items-center gap-2 relative z-10">
@@ -521,8 +522,8 @@ export default function PremiumStats() {
 
                 <div className="relative z-10 max-w-sm">
                     {formTab === 'form' ? (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
-                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <TrendingUp className="w-6 h-6 text-blue-500" />
                             </div>
@@ -536,8 +537,8 @@ export default function PremiumStats() {
                                 }`}></div>
                         </div>
                     ) : (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
-                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
+                        <div className="bg-slate-800/30 border backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.2)' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color) !important}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Swords className="w-6 h-6 text-blue-600" />
                             </div>

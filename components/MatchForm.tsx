@@ -1060,7 +1060,7 @@ export default function MatchForm({
         {/* Lieu du match (Google Maps Direct) */}
         <div className="mb-1">
           <label className="mb-0.5 ml-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
-          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="animate-in fade-in slide-in-from-top-1 duration-200 rounded-xl border" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
             <GooglePlacesAutocomplete
               value={unregisteredClubName}
               onChange={(val) => {
@@ -1157,7 +1157,7 @@ export default function MatchForm({
 
               {/* VS Badge Centered */}
               <div className="flex-shrink-0 flex flex-col items-center justify-center pb-5">
-                <div className="px-1 py-0.5 rounded text-[8px] font-black uppercase ring-2 ring-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}>
+                <div className="px-1 py-0.5 rounded text-[8px] font-black uppercase border-2" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)', borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}>
                   VS
                 </div>
               </div>
@@ -1207,9 +1207,9 @@ export default function MatchForm({
                 onClick={() => setWinner("1")}
                 className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "1"
                   ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
-                  : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
+                  : "border bg-white/5 text-white hover:bg-white/10"
                   }`}
-                style={winner === "1" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : {}}
+                style={winner === "1" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : { borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.2)' }}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1221,9 +1221,9 @@ export default function MatchForm({
                 onClick={() => setWinner("2")}
                 className={`group relative overflow-hidden rounded-xl border-2 px-3 py-2 text-[10px] font-black transition-all duration-300 ${winner === "2"
                   ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
-                  : "border-white/10 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
+                  : "border bg-white/5 text-white hover:bg-white/10"
                   }`}
-                style={winner === "2" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : {}}
+                style={winner === "2" ? { borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' } : { borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.2)' }}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1235,7 +1235,7 @@ export default function MatchForm({
               <p className="mt-3 text-xs text-red-400 font-bold uppercase tracking-tight">{errors.winner}</p>
             )}
           </div>
-        </div >
+        </div>
 
         <div className="py-1 text-center">
           <label className="mb-1 block text-[9px] font-black text-white/50 uppercase tracking-widest">Scores des sets</label>
@@ -1350,7 +1350,7 @@ export default function MatchForm({
           </div>
         </div>
 
-        {/* Option boost - caché temporairement
+        {/* Option boost - caché temporairement */}
         {/* Notification de limite de boosts (cachée pour l'instant) */}
 
         <div className="pt-2 pb-4">
@@ -1450,8 +1450,9 @@ export default function MatchForm({
                         }}
                         className={`flex-1 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all ${(activeSlot && scopes[activeSlot as keyof typeof scopes] === tab.id)
                           ? 'shadow-sm text-[#071554]'
-                          : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+                          : 'bg-white/5 border text-white hover:bg-white/10'
                           }`}
+                        style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.2)' }}
                       >
                         {tab.label}
                       </button>
@@ -1488,7 +1489,7 @@ export default function MatchForm({
                 )}
 
                 {activeSlot && selectedPlayers[activeSlot as keyof typeof selectedPlayers] && (
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-white/5 border flex items-center justify-between" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.3)' }}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center font-black" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)' }}>
                         {selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.first_name?.[0]}{selectedPlayers[activeSlot as keyof typeof selectedPlayers]?.last_name?.[0]}
@@ -1520,7 +1521,7 @@ export default function MatchForm({
                 <button
                   type="button"
                   onClick={() => setIsSearchModalOpen(false)}
-                  className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-white/5 border text-white font-bold hover:bg-white/10 transition-colors" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.3)' }}
                 >
                   Annuler
                 </button>

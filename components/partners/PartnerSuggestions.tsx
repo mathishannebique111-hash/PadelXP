@@ -406,7 +406,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
   // Si on a déjà chargé une fois et qu'il n'y a pas de suggestions, afficher le message d'état vide
   if (loading && !hasLoadedOnce) {
     return (
-      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.4)' }}>
+      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}>
         <div className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <div className="h-7 w-40 bg-slate-800 rounded-lg animate-pulse" />
@@ -419,16 +419,16 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
 
         <div className="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-slate-800/30 rounded-xl p-2.5 md:p-4 border border-white/5 flex flex-col h-full animate-pulse">
+            <div key={i} className="rounded-xl p-2.5 md:p-4 border flex flex-col h-full animate-pulse" style={{ backgroundColor: 'rgba(var(--theme-page, 7, 21, 84), 0.3)', borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.2)' }}>
               <div className="flex flex-col items-center text-center mb-2.5 flex-1">
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-slate-700/50 mb-2" />
-                <div className="h-4 w-24 bg-slate-700/50 rounded mb-1.5" />
-                <div className="h-3 w-16 bg-slate-700/50 rounded mb-2" />
-                <div className="h-2 w-full max-w-[100px] bg-slate-700/50 rounded-full" />
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full mb-2" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.1)' }} />
+                <div className="h-4 w-24 rounded mb-1.5" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.1)' }} />
+                <div className="h-3 w-16 rounded mb-2" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.1)' }} />
+                <div className="h-2 w-full max-w-[100px] rounded-full" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.1)' }} />
               </div>
               <div className="grid grid-cols-2 gap-1.5 mt-auto">
-                <div className="h-9 bg-slate-700/50 rounded-lg" />
-                <div className="h-9 bg-slate-700/50 rounded-lg" />
+                <div className="h-9 rounded-lg" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.1)' }} />
+                <div className="h-9 rounded-lg" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.1)' }} />
               </div>
             </div>
           ))}
@@ -441,14 +441,14 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
 
   return (
     <>
-      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.4)' }}>
+      <div className="backdrop-blur-sm rounded-2xl p-4 md:p-6 border" style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}>
         <div className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <h3 className="text-base md:text-lg font-bold text-white">
               Partenaires suggérés
             </h3>
 
-            <div className="flex p-1 rounded-xl border border-white/10 self-start sm:self-auto" style={{ backgroundColor: 'var(--theme-page, #071554)' }}>
+            <div className="flex p-1 rounded-xl border self-start sm:self-auto" style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.3)' }}>
               {userClubId && (
                 <button
                   onClick={() => {
@@ -498,8 +498,8 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                       fetchSuggestions(departmentFilter, 'dept');
                     }
                   }}
-                  className="w-full border border-white/10 rounded-lg pl-3 pr-10 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 transition-all"
-                  style={{ backgroundColor: 'var(--theme-page, #071554)' }}
+                  className="w-full border rounded-lg pl-3 pr-10 py-2 text-sm text-white placeholder-white/30 focus:outline-none transition-all"
+                  style={{ backgroundColor: 'var(--theme-page, #071554)', borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.3)' }}
                   maxLength={3}
                 />
                 <button
@@ -555,7 +555,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="rounded-xl p-2.5 md:p-4 border flex flex-col h-full shadow-sm"
-                  style={{ backgroundColor: 'transparent', borderColor: 'rgb(var(--theme-accent, 255, 255, 255))' }}
+                  style={{ backgroundColor: 'transparent', borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}
                 >
                   {/* Header: Avatar + Info Centered */}
                   <div className="flex flex-col items-center text-center mb-2.5 flex-1">
@@ -623,7 +623,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                       type="button"
                       onClick={() => router.push(`/players/${player.id}?from=partners`)}
                       className="py-2 px-0 border text-white rounded-lg text-xs font-medium flex items-center justify-center hover:bg-white/5 active:bg-white/10 transition-colors h-9"
-                      style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)' }}
+                      style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.4)' }}
                       title="Voir le profil"
                     >
                       <Eye size={16} />

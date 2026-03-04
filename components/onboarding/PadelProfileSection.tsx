@@ -407,7 +407,7 @@ export default function PadelProfileSection({
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6 flex items-center justify-center min-h-[200px]">
+      <div className="rounded-2xl border bg-white/5 p-4 sm:p-5 md:p-6 flex items-center justify-center min-h-[200px]" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.3)' }}>
         <PadelLoader />
       </div>
     );
@@ -415,7 +415,7 @@ export default function PadelProfileSection({
 
   if (!profileData || Object.values(profileData).every((v) => v === null)) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
+      <div className="rounded-2xl border bg-white/5 p-4 sm:p-5 md:p-6" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.3)' }}>
         <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6">
           Mon Profil Padel
         </h2>
@@ -465,7 +465,7 @@ export default function PadelProfileSection({
     if (!isEditing) {
       if (!currentValue) return null;
       return (
-        <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
+        <div className="rounded-2xl border bg-white/5 p-5 hover:bg-white/[0.07] group" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
           <div className="flex items-center gap-4">
             {Icon && (
               <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-accent, 255, 255, 255))' }} />
@@ -491,8 +491,9 @@ export default function PadelProfileSection({
         className="relative"
       >
         <div
-          className={`rounded-2xl border border-white/30 bg-white/5 p-5 ${isOpen ? "bg-white/[0.1] border-white/50" : "hover:bg-white/[0.07] cursor-pointer"
+          className={`rounded-2xl border bg-white/5 p-5 ${isOpen ? "bg-white/[0.1] border-white/50" : "hover:bg-white/[0.07] cursor-pointer"
             }`}
+          style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}
           onClick={(e) => {
             if (!isOpen && !(e.target as HTMLElement).closest('button')) {
               setOpenDropdown(fieldKey);
@@ -585,7 +586,7 @@ export default function PadelProfileSection({
   };
 
   return (
-    <div className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm" style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.6)' }}>
+    <div className="rounded-2xl border bg-gradient-to-br from-white/5 to-white/[0.02] p-4 sm:p-8 md:p-10 backdrop-blur-sm" style={{ borderColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
@@ -637,7 +638,7 @@ export default function PadelProfileSection({
         {renderEditableField("level", "Niveau", LevelIcon)}
 
         {/* Partenaire Habituel */}
-        <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group relative">
+        <div className="rounded-2xl border bg-white/5 p-5 hover:bg-white/[0.07] group relative" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
           <div className="flex items-center gap-4">
             <Users className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-accent, 255, 255, 255))" />
             <div className="flex-1 min-w-0">
@@ -654,7 +655,7 @@ export default function PadelProfileSection({
               {partnerData ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border border-white/10">
+                    <div className="w-5 h-5 rounded-full bg-slate-700 overflow-hidden flex-shrink-0 border" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
                       {partnerData.avatar_url ? (
                         <img src={partnerData.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -710,7 +711,7 @@ export default function PadelProfileSection({
 
         {/* Localisation (Affichage seul ici, modifiable dans les paramètres) */}
         {(data.postal_code || data.city) && (
-          <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
+          <div className="rounded-2xl border bg-white/5 p-5 hover:bg-white/[0.07] group" style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
             <div className="flex items-center gap-4">
               <MapPin className="w-7 h-7 flex-shrink-0" color="rgb(var(--theme-accent, 255, 255, 255))" />
               <div className="flex-1 min-w-0">

@@ -56,7 +56,7 @@ function statusLabel(status: PlayerChallenge["status"]) {
 function statusClasses(status: PlayerChallenge["status"]) {
   switch (status) {
     case "active":
-      return "bg-white/30 text-white border border-white";
+      return "bg-white/30 text-white border border-[rgb(var(--theme-accent,204,255,0))]";
     case "upcoming":
       return "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
@@ -249,11 +249,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
               : "bg-gradient-to-br from-white/[0.15] to-white/[0.08] hover:shadow-xl"
           }`}
         style={{
-          borderColor: (isCompleted && !challenge.isPremium)
-            ? 'rgb(var(--theme-accent, 37, 99, 235))'
-            : (!isCompleted && !isFailed && !challenge.isPremium)
-              ? 'rgba(var(--theme-accent, 255, 255, 255), 0.6)'
-              : undefined
+          borderColor: 'rgb(var(--theme-accent, 204, 255, 0))'
         }}
       >
 
@@ -320,7 +316,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             className="mb-5 rounded-2xl border p-4 shadow-inner"
             style={{
               backgroundColor: 'var(--theme-page, #071554)',
-              borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.2)'
+              borderColor: 'rgb(var(--theme-accent, 204, 255, 0))'
             }}
           >
             <div className="mb-3 flex items-start justify-between">

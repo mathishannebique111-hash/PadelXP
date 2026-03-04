@@ -76,7 +76,7 @@ export default function BadgesView({
 
             <div className="relative z-10 mx-auto w-full max-w-6xl px-1 sm:px-4 pt-2 md:pt-6 pb-8">
                 {/* Stats Header */}
-                <div className="mb-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto">
+                <div className="mb-4 rounded-2xl border bg-white/10 px-4 py-2 sm:px-6 sm:py-4 backdrop-blur-sm max-w-sm mx-auto" style={{ borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}>
                     <div className="flex items-center justify-between gap-2">
                         {/* Gauche: Complétion Badges (Hors Challenges) */}
                         <div className="text-center w-24 sm:w-28 flex-shrink-0">
@@ -88,7 +88,7 @@ export default function BadgesView({
                         </div>
 
                         {/* Séparation verticale */}
-                        <div className="w-px h-10 bg-white/30 flex-shrink-0"></div>
+                        <div className="w-px h-10 flex-shrink-0" style={{ backgroundColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.4)' }}></div>
 
                         {/* Droite: Standards, Challenges, Premium */}
                         <div className="flex-1 flex justify-around items-center gap-2 sm:gap-4 min-w-0">
@@ -180,7 +180,7 @@ export default function BadgesView({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-xl bg-white/5 border border-white/10">
+                                <div className="flex flex-col items-center justify-center py-20 text-center px-4 rounded-xl bg-white/5 border" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.4)' }}>
                                     <Trophy size={48} className="text-white/20 mb-4" />
                                     <h3 className="text-lg font-medium text-white/80">Aucun badge de challenge</h3>
                                     <p className="text-white/50 text-sm mt-2 max-w-md">

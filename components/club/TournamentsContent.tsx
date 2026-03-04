@@ -152,7 +152,7 @@ export default function TournamentsContent() {
                 <button
                     onClick={() => setShowJoinModal(true)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border text-white font-bold text-sm active:scale-[0.98] transition-transform"
-                    style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.2)' }}
+                    style={{ borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}
                 >
                     <KeyRound size={18} />
                     Rejoindre
@@ -163,7 +163,7 @@ export default function TournamentsContent() {
             {showCreateForm && (
                 <div
                     className="rounded-2xl border bg-white/5 p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200"
-                    style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)' }}
+                    style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.4)' }}
                 >
                     <h3 className="text-base font-bold text-white">Nouvelle ligue privée</h3>
 
@@ -293,7 +293,7 @@ export default function TournamentsContent() {
                                 <div
                                     key={league.id}
                                     className="rounded-xl border bg-white/5 p-4 active:bg-white/10 transition-colors"
-                                    style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)' }}
+                                    style={{ borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}
                                 >
                                     <div className="flex items-center justify-between mb-2">
                                         <button
