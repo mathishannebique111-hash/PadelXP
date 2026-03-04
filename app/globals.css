@@ -1011,6 +1011,8 @@ body.is-app [data-hamburger-button],
 /* WHITE-LABEL: Overrides pour apps club        */
 /* ============================================ */
 
+/* === TEXTE === */
+
 /* Quand un club a un fond CLAIR, forcer le texte en sombre */
 html.club-light-bg .text-white {
   color: rgb(var(--theme-text)) !important;
@@ -1025,6 +1027,17 @@ html.club-light-bg .text-white\/90 {
   color: rgb(var(--theme-text-muted)) !important;
 }
 
+/* text-[#172554] → couleur primaire du club (accent) */
+html.club-branded .text-\[\#172554\] {
+  color: rgb(var(--theme-accent)) !important;
+}
+
+html.club-branded .text-\[\#172554\]\/70 {
+  color: rgb(var(--theme-accent) / 0.7) !important;
+}
+
+/* === FOND / BACKGROUNDS === */
+
 /* Cartes et conteneurs transparents */
 html.club-light-bg .bg-white\/5,
 html.club-light-bg .bg-white\/10,
@@ -1033,20 +1046,95 @@ html.club-light-bg .bg-white\/20 {
   background-color: rgb(var(--theme-card) / 0.8) !important;
 }
 
-/* Bordures */
+/* bg-[#172554] → fond de page du club */
+html.club-branded .bg-\[\#172554\] {
+  background-color: rgb(var(--theme-player-page)) !important;
+}
+
+html.club-branded .bg-\[\#172554\]\/15 {
+  background-color: rgb(var(--theme-accent) / 0.15) !important;
+}
+
+html.club-branded .bg-\[\#172554\]\/80 {
+  background-color: rgb(var(--theme-player-page) / 0.8) !important;
+}
+
+/* PadelXP vert #CCFF00 → couleur d'accent secondaire du club */
+html.club-branded .bg-\[\#CCFF00\] {
+  background-color: rgb(var(--theme-secondary-accent)) !important;
+}
+
+html.club-branded .text-\[\#CCFF00\] {
+  color: rgb(var(--theme-secondary-accent)) !important;
+}
+
+/* Boutons CCFF00 avec texte 172554 → accent club */
+html.club-branded .bg-\[\#CCFF00\].text-\[\#172554\] {
+  background-color: rgb(var(--theme-secondary-accent)) !important;
+  color: rgb(var(--theme-player-page)) !important;
+}
+
+/* === BORDURES === */
+
 html.club-light-bg .border-white\/10,
 html.club-light-bg .border-white\/20,
 html.club-light-bg .border-white\/30 {
   border-color: rgb(var(--theme-border) / 0.2) !important;
 }
 
-/* body couleur de fond pour les clubs */
+html.club-branded .border-\[\#172554\] {
+  border-color: rgb(var(--theme-accent)) !important;
+}
+
+/* === RING (anneaux de focus/déco) === */
+html.club-branded .ring-offset-\[\#172554\] {
+  --tw-ring-offset-color: rgb(var(--theme-player-page)) !important;
+}
+
+/* === OMBRES === */
+html.club-branded .shadow-\[\#CCFF00\]\/20,
+html.club-branded .shadow-\[\#CCFF00\]\/25 {
+  --tw-shadow-color: rgb(var(--theme-secondary-accent) / 0.2) !important;
+}
+
+/* === BODY ET COULEUR GLOBALE === */
+
 html.club-branded,
 html.club-branded body {
   color: rgb(var(--theme-text));
 }
 
-/* COMMENCEMENT DU FIX POUR IPAD */
+/* === BOTTOM NAV BAR spécifiquement === */
+/* Le BottomNavBar utilise text-[#172554], ça doit devenir l'accent du club */
+html.club-branded #bottom-nav-bar .text-\[\#172554\] {
+  color: rgb(var(--theme-accent)) !important;
+}
+
+/* Fond bleu-950 transparent dans la navbar (bulle active) */
+html.club-branded #bottom-nav-bar .bg-\[\#172554\]\/15 {
+  background-color: rgb(var(--theme-accent) / 0.15) !important;
+}
+
+/* === SLUG-BASED COLORS: bg-blue-950 etc. === */
+html.club-branded .bg-blue-950 {
+  background-color: rgb(var(--theme-player-page)) !important;
+}
+
+/* Badge border #172554 (MatchTabs, CompetitionPreview) */
+html.club-branded .border-\[\#172554\] {
+  border-color: rgb(var(--theme-player-page)) !important;
+}
+
+/* === STAT CARDS (PlayerSummary.tsx) === */
+/* Les stat cards ont un fond blanc avec texte #172554 */
+/* En mode club, le texte doit utiliser l'accent couleur du club */
+html.club-branded .text-\[\#172554\].tabular-nums {
+  color: rgb(var(--theme-accent)) !important;
+}
+
+/* stat labels: text-[#172554]/70 */
+
+/* === FIX IPAD === */
 /* Force un fond uniforme sur iPad - UNIQUEMENT pour PadelXP de base */
 @media screen and (min-width: 768px) {
   @supports (-webkit-touch-callout: none) {
