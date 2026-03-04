@@ -301,7 +301,7 @@ export default function PremiumStats() {
                             <p className="text-xs text-slate-500">Votre progression sur la période</p>
                         </div>
                         {filteredEvolution.length > 0 && (
-                            <div className={`text-right bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50 backdrop-blur-sm ${!isPremium ? 'blur-md' : ''}`} style={{ borderColor: 'rgba(var(--theme-accent, 37, 99, 235), 0.4)' }}>
+                            <div className={`text-right bg-slate-800/50 px-4 py-2 rounded-xl border backdrop-blur-sm ${!isPremium ? 'blur-md' : ''}`} style={{ borderColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}>
                                 <div className="text-2xl font-black text-white">{filteredEvolution[filteredEvolution.length - 1].level.toFixed(2)}</div>
                                 <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgb(var(--theme-accent, 37, 99, 235))' }}>Niveau Actuel</div>
                             </div>

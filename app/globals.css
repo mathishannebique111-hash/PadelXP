@@ -144,6 +144,11 @@ body.is-app .app-content-padding,
   padding-top: calc(var(--sat, 65px) + 5rem);
 }
 
+/* Forcer l'alignement plus haut pour les apps club (pour correspondre à PadelXP) */
+.player-page[data-club-subdomain]:not([data-club-subdomain=""]) .app-content-padding {
+  padding-top: calc(var(--sat, 30px) + 1.5rem) !important;
+}
+
 /* Améliorer le rendu des polices */
 * {
   -webkit-font-smoothing: antialiased;

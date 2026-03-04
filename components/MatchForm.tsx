@@ -1059,8 +1059,8 @@ export default function MatchForm({
       <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
         {/* Lieu du match (Google Maps Direct) */}
         <div className="mb-1">
-          <label className="mb-0.5 ml-1 block text-[8px] font-black text-white/40 uppercase tracking-widest">Lieu du match</label>
-          <div className="animate-in fade-in slide-in-from-top-1 duration-200 rounded-xl border" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
+          <label className="mb-0.5 ml-1 block text-[8px] font-black uppercase tracking-widest" style={{ color: 'rgb(var(--theme-accent))' }}>Lieu du match</label>
+          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
             <GooglePlacesAutocomplete
               value={unregisteredClubName}
               onChange={(val) => {
@@ -1193,7 +1193,7 @@ export default function MatchForm({
             </div>
           </div>
           {/* Note explicative très petite */}
-          <p className="mt-1 text-center text-[7px] text-white/30 italic">
+          <p className="mt-1 text-center text-[7px] italic font-bold" style={{ color: 'rgb(var(--theme-accent))' }}>
             *Niveau des invités basé sur la moyenne des inscrits.
           </p>
         </div>
@@ -1238,11 +1238,11 @@ export default function MatchForm({
         </div>
 
         <div className="py-1 text-center">
-          <label className="mb-1 block text-[9px] font-black text-white/50 uppercase tracking-widest">Scores des sets</label>
+          <label className="mb-1 block text-[9px] font-black uppercase tracking-widest" style={{ color: 'rgb(var(--theme-accent))' }}>Scores des sets</label>
           <div className="flex flex-col gap-2 items-center">
             {sets.map((set, index) => (
               <div key={set.setNumber} className="relative flex items-center justify-center gap-2 w-full">
-                <span className="text-[9px] font-black text-white/30 uppercase w-8 text-left">Set {set.setNumber}</span>
+                <span className="text-[9px] font-black uppercase w-8 text-left" style={{ color: 'rgb(var(--theme-accent))' }}>Set {set.setNumber}</span>
                 <input
                   type="number"
                   inputMode="numeric"

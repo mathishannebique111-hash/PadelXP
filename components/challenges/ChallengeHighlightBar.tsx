@@ -24,13 +24,13 @@ export default function ChallengeHighlightBar() {
             />
 
             {/* Extremely light and subtle frame */}
-            <div className="relative z-10 p-2 sm:p-2.5 rounded-xl border bg-white/[0.02] backdrop-blur-sm transition-all duration-300 group-hover:bg-white/[0.04]" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
+            <div className="relative z-10 p-2 sm:p-2.5 rounded-xl border bg-white/[0.02] backdrop-blur-sm transition-all duration-300 group-hover:bg-white/[0.04]" style={{ borderColor: 'rgb(var(--theme-accent, 204, 255, 0))' }}>
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5 min-w-0">
                             <div
                                 className={`flex flex-shrink-0 items-center justify-center w-6 h-6 rounded-full bg-white/5 border ${challenge.isPremium ? 'text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : ''}`}
-                                style={!challenge.isPremium ? { color: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.4)', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' } : {}}
+                                style={!challenge.isPremium ? { color: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgb(var(--theme-accent, 204, 255, 0))', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.1)' } : {}}
                             >
                                 <Trophy size={11} strokeWidth={2.5} />
                             </div>

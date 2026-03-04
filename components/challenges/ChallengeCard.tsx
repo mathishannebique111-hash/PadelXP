@@ -333,7 +333,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             </div>
 
             {/* Barre de progression */}
-            <div className="relative h-3 overflow-hidden rounded-full bg-white/20">
+            <div className="relative h-3 overflow-hidden rounded-full bg-white/20 border" style={{ borderColor: 'rgba(var(--theme-accent, 204, 255, 0), 0.5)' }}>
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
