@@ -259,12 +259,12 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                             <div className="relative w-24 h-24 rounded-full flex items-center justify-center mb-2 shadow-sm transition-colors" style={{ backgroundColor: isLightPage ? effectiveBg : 'rgba(0,0,0,0.2)' }}>
                                 {/* Gauge SVG */}
                                 <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className={isLightPage ? "" : "text-slate-500/30"} style={isLightPage ? { color: effectiveBg } : {}} />
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke={accentColor || "rgb(var(--theme-accent))"} strokeWidth="2.5" className="opacity-20" />
                                     <circle cx="50" cy="50" r="46" fill="none" stroke={accentColor || "rgb(var(--theme-accent))"} strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80" style={{ filter: `drop-shadow(0 0 6px ${accentColor || "rgba(var(--theme-accent), 0.4)"})` }} />
                                 </svg>
                                 <div className="flex flex-col items-center justify-center z-10 text-center">
-                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: accentColor || "rgb(var(--theme-accent))" }}>Niveau</span>
-                                    <span className="text-2xl font-black leading-none tracking-tighter drop-shadow-md" style={{ color: accentColor || "rgb(var(--theme-accent))" }}>6.49</span>
+                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Niveau</span>
+                                    <span className="text-2xl font-black leading-none tracking-tighter drop-shadow-md" style={{ color: "rgb(var(--theme-accent))" }}>6.49</span>
                                 </div>
                             </div>
 
@@ -651,7 +651,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                     <div className="space-y-1">
                         <label className="ml-1 block text-[6px] font-black uppercase tracking-widest" style={{ color: "var(--theme-text-muted)" }}>Équipe gagnante</label>
                         <div className="grid grid-cols-2 gap-1.5">
-                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text)" }}>
+                            <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98]" style={{ backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: 'var(--theme-accent-contrast)' }}>
                                 <Trophy size={8} /> Équipe 1
                             </button>
                             <button type="button" className="rounded-lg border-2 py-1.5 text-[6px] font-black flex items-center justify-center gap-1 uppercase transition-all scale-[0.98] bg-white/5" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text)" }}>

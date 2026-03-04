@@ -223,7 +223,7 @@ export default function BottomNavBar() {
                                 // Ne pas effacer les badges ici, on laisse les pages gérer le "vu" par onglet
                             }}
                         >
-                            <div className="relative flex flex-col items-center" style={{ color: isClub ? '#000000' : 'rgb(var(--theme-accent))' }}>
+                            <div className="relative flex flex-col items-center" style={{ color: 'rgb(var(--theme-accent))' }}>
                                 {item.icon}
                                 {showBadge && (
                                     <span className="absolute -top-1 -right-3 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">

@@ -71,8 +71,8 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
-                      className={isClub && isLightBg ? "" : "text-white/10"}
-                      style={isClub && isLightBg ? { color: 'rgb(var(--theme-page))' } : {}}
+                      className={isClub && isLightBg ? "" : "opacity-20"}
+                      style={isClub ? { color: 'rgb(var(--theme-accent))' } : (isLightBg ? { color: 'rgb(var(--theme-page))' } : {})}
                     />
                     {/* Jauge active (vert padel / club accent) */}
                     <circle

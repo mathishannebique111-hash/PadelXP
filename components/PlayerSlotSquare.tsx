@@ -56,9 +56,9 @@ export default function PlayerSlotSquare({
                             ? "bg-white border-white shadow-lg shadow-white/10"
                             : "bg-white/5 border-dashed transition-colors shadow-inner club-light-bg-boost-border"
                     }
-          ${isWinner ? "ring-2 ring-offset-2 ring-offset-[#071554]" : ""}
+          ${isWinner ? (isClub ? "ring-2 ring-offset-2 ring-offset-[rgb(var(--theme-page))] ring-[rgb(var(--theme-accent))]" : "ring-2 ring-offset-2 ring-offset-[#071554]") : ""}
         `}
-                style={(!player && !isFixed) ? { borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' } : undefined}
+                style={(!player && !isFixed) ? { borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' } : (player && isWinner && isClub) ? { borderColor: 'rgb(var(--theme-accent))' } : undefined}
             >
                 {player ? (
                     <>

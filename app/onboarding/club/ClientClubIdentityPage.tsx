@@ -72,8 +72,8 @@ const PhonePreview = ({ bg, secondary, activeScreen, logoUrl, textColor, mutedCo
         "--theme-accent": hexToRgbNumbers(secondary),
         "--theme-secondary-accent": hexToRgbNumbers(secondary),
         "--theme-text": textColor,
-        "--theme-text": hexToRgbNumbers(textColor),
         "--theme-text-muted": mutedColor,
+        "--theme-accent-contrast": isLightColor(secondary) ? "#0f172a" : "#ffffff",
       } as React.CSSProperties}
     >
       {/* Background Reflection Effect */}
