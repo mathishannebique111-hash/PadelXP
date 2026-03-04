@@ -46,7 +46,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
     <div className="space-y-6">
       {/* Résumé niveau + progression + recommandations */}
       <div className="mb-2">
-        <div className="bg-white/5 rounded-2xl border border-white/80 p-4 sm:p-5">
+        <div className="bg-white/5 rounded-2xl border p-4 sm:p-5" style={{ borderColor: typeof window !== 'undefined' && document.body.dataset.clubSubdomain ? 'rgb(var(--theme-accent))' : 'rgba(255,255,255,0.8)' }}>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             {/* Niveau - Design Circulaire Élégant */}
             <div className="flex-1 md:max-w-xs flex flex-col items-center md:items-start group">

@@ -173,6 +173,7 @@ export default function BottomNavBar() {
                 bottom: 'calc(var(--sab, 0px) + 4px)',
                 willChange: 'transform',
                 transform: 'translateZ(0)', // Force GPU layer
+                contain: 'layout style', // Prevent layout reflows from affecting this element
             }}
         >
             <nav id="bottom-nav-bar" className="relative flex items-center bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] px-1 py-1 max-w-xs w-full">

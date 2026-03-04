@@ -146,7 +146,7 @@ body.is-app .app-content-padding,
 
 /* Forcer l'alignement plus bas pour les apps club */
 .player-page[data-club-subdomain]:not([data-club-subdomain=""]) .app-content-padding {
-  padding-top: calc(var(--sat, 30px) + 7rem) !important;
+  padding-top: calc(var(--sat, 30px) + 8rem) !important;
 }
 
 /* Améliorer le rendu des polices */
