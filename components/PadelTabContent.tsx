@@ -59,7 +59,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
 
                 {/* Cercle Unique Élégant + Jauge de Progression */}
                 <div className={`relative w-36 h-36 sm:w-40 sm:h-40 rounded-full flex items-center justify-center transition-all duration-300 ${isClub ? '' : 'bg-slate-900/50 backdrop-blur-md shadow-[0_0_20px_rgba(185,255,0,0.05)] hover:shadow-[0_0_25px_rgba(185,255,0,0.1)]'}`}
-                  style={isClub ? { backgroundColor: isLightBg ? 'rgb(var(--theme-page))' : 'rgba(0,0,0,0.2)', backdropBlur: '10px' } : {}}>
+                  style={isClub ? { backgroundColor: isLightBg ? 'rgb(var(--theme-page))' : 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)' } : {}}>
 
                   {/* SVG Jauge Circulaire */}
                   <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
