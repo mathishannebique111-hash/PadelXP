@@ -56,7 +56,6 @@ export default function RankBadge({ rank, size = "md", className = "", isClub = 
         ...config.style,
         textShadow: rank <= 3 ? "none" : (isClub ? "none" : "0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255,255,255,0.5)"),
         boxShadow: config.shadowColor,
-        ...(isClub && rank > 3 ? { color: 'var(--theme-text)' } : {})
       }}
     >
       <div className={`absolute inset-[2px] rounded-full border border-white/30`} />

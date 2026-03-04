@@ -314,14 +314,14 @@ export default function LeaderboardContent({
               onClick={() => { setScope(key); }}
               className={`flex items-center gap-1 px-3 py-2 rounded-full text-[10px] sm:text-xs font-black capitalize tracking-widest transition-all whitespace-nowrap border ${scope === key
                 ? (isClub ? 'border-transparent' : 'bg-[var(--theme-secondary-accent)]/20 text-[rgb(var(--theme-secondary-accent))] border-[var(--theme-secondary-accent)]/40 shadow-lg shadow-[rgb(var(--theme-secondary-accent))]/10')
-                : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white'
+                : (isClub ? 'bg-white/5 text-white/50 border-[rgb(var(--theme-accent))] hover:bg-white/10 hover:text-white' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white')
                 }`}
               style={scope === key && isClub ? {
                 backgroundColor: 'rgb(var(--theme-accent))',
                 color: 'var(--theme-accent-contrast)',
                 borderColor: 'rgb(var(--theme-accent))',
                 boxShadow: '0 0 15px rgba(var(--theme-accent), 0.3)'
-              } : (isClub && scope !== key ? { borderColor: 'rgb(var(--theme-accent))' } : {})}
+              } : {}}
             >
               <Icon size={14} />
               <span>{label}</span>
