@@ -7,6 +7,8 @@ import PageTitle from "@/components/PageTitle";
 import Link from "next/link";
 import Image from "next/image";
 import { logger } from '@/lib/logger';
+import { headers } from "next/headers";
+import { extractSubdomain } from "@/lib/club-branding";
 export const dynamic = "force-dynamic";
 
 // Créer un client admin pour bypass RLS dans les requêtes critiques
@@ -25,6 +27,12 @@ export default async function ReviewsPage() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    const headersList = await headers();
+    const host = headersList.get('host') || '';
+    const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+    const isClub = !!subdomain;
+
     if (!user) {
       return (
         <div className="mx-auto w-full max-w-3xl px-4 py-10">
@@ -147,15 +155,19 @@ export default async function ReviewsPage() {
     const hasUserReview = (userReviewsCount || 0) > 0;
 
     return (
-      <div className="relative min-h-screen overflow-hidden bg-[#172554]">
-        {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+      <div className={`relative min-h-screen overflow-hidden ${isClub ? '' : 'bg-[#172554]'}`}>
+        {!isClub && (
+          <>
+            {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
 
-        {/* Halos vert et bleu animés */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
-        </div>
+            {/* Halos vert et bleu animés */}
+            <div className="absolute inset-0 opacity-20 pointer-events-none">
+              <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
+            </div>
+          </>
+        )}
 
 
         <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-4 md:pt-8 pb-8">

@@ -142,34 +142,41 @@ const PhonePreview = ({ bg, secondary, activeScreen, logoUrl, textColor, mutedCo
       </div>
 
       {/* App Floating Bottom Nav */}
-      <div className="absolute bottom-3 left-0 right-0 flex justify-center z-30 px-4">
-        <div className="bg-white rounded-[20px] px-3 py-1.5 flex justify-between items-center w-full shadow-[0_4px_12px_rgba(0,0,0,0.3)] border border-slate-100">
+      <div className="absolute bottom-6 left-0 right-0 flex justify-center z-30 px-3">
+        <div className="bg-white rounded-[22px] px-2 py-2 flex justify-between items-center w-full shadow-[0_8px_20px_rgba(0,0,0,0.25)] border border-slate-100">
           {[
             { label: "Profil", idx: 0, badge: null },
             { label: "Matchs", idx: 1, badge: 2 },
             { label: "Compétition", idx: 2, badge: 4 },
           ].map((item) => {
             const isActive = activeScreen === item.idx;
-            const iconClass = `w-4 h-4 shrink-0 transition-colors ${isActive ? "" : "text-slate-400"}`;
-            const iconStyle = isActive ? { color: secondary } : {};
+            const iconClass = `w-4 h-4 shrink-0 transition-colors ${isActive ? "text-black" : "text-slate-400"}`;
+            const iconStyle = { color: isActive ? '#000000' : 'rgb(148, 163, 184)' };
+
             return (
-              <div key={item.label} className="flex-1 flex flex-col items-center justify-center relative px-2 cursor-pointer">
+              <div key={item.label} className="flex-1 flex flex-col items-center justify-center relative py-1 cursor-pointer">
+                {isActive && (
+                  <div
+                    className="absolute inset-x-1 inset-y-0.5 rounded-xl -z-10 transition-all duration-300"
+                    style={{ backgroundColor: `rgba(${hexToRgbNumbers(secondary)}, 0.15)` }}
+                  />
+                )}
                 <div className="relative">
                   {item.idx === 0 && (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={iconClass} style={iconStyle}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={iconClass} style={iconStyle}>
                       <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10.5z"></path>
                       <path d="M9 22V14h6v8"></path>
                     </svg>
                   )}
-                  {item.idx === 1 && <Swords className={iconClass} strokeWidth={2} style={iconStyle} />}
-                  {item.idx === 2 && <Trophy className={iconClass} strokeWidth={2} style={iconStyle} />}
+                  {item.idx === 1 && <Swords className={iconClass} strokeWidth={2.5} style={iconStyle} />}
+                  {item.idx === 2 && <Trophy className={iconClass} strokeWidth={2.5} style={iconStyle} />}
                   {item.badge && (
-                    <div className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[7px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full border-[1.5px] border-white">
+                    <div className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[7px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full border-[1.5px] border-white px-0.5">
                       {item.badge}
                     </div>
                   )}
                 </div>
-                <span className={`text-[6px] font-bold mt-0.5 transition-colors ${isActive ? "" : "text-slate-400"}`} style={isActive ? { color: secondary } : {}}>
+                <span className={`text-[6px] font-black mt-0.5 transition-colors ${isActive ? "text-black" : "text-slate-400"}`} style={{ color: isActive ? '#000000' : 'rgb(148, 163, 184)' }}>
                   {item.label}
                 </span>
               </div>

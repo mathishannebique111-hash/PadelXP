@@ -5,6 +5,7 @@ import PageTitle from "@/components/PageTitle";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
+import { extractSubdomain } from "@/lib/club-branding";
 
 interface PlayerChallenge {
   id: string;
@@ -250,16 +251,23 @@ export default async function PlayerChallengesPage() {
     challengeBadgesCount = challengeBadges?.length || 0;
   }
 
+  const subdomain = requestHeaders.get('x-club-subdomain') || (host ? extractSubdomain(host) : null);
+  const isClub = !!subdomain;
+
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+      {!isClub && (
+        <>
+          {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
 
-      {/* Halos vert et bleu animés */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
-      </div>
+          {/* Halos vert et bleu animés */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
+          </div>
+        </>
+      )}
 
 
       <div className="relative z-10 mx-auto w-full max-w-5xl px-6 pt-4 md:pt-10 pb-10 text-white">

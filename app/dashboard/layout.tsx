@@ -237,17 +237,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Dynamic gradient overlay + parallax halos */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#121212] to-[#1E1E1E] opacity-50" />
-        {/* Stronger soft white glow - changed to blue */}
-        <div className="absolute -top-40 -left-40 h-[48rem] w-[48rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.2),transparent_70%)] blur-[80px] animate-pulse animate-drift-slow" />
-        {/* Stronger deep blue glow - changed to lime/yellow */}
-        <div className="absolute -bottom-32 -right-28 h-[44rem] w-[44rem] bg-[radial-gradient(closest-side,rgba(191,255,0,0.3),transparent_70%)] blur-[90px] animate-pulse animate-drift-medium" style={{ animationDelay: "0.8s" }} />
-        {/* Cyan hint to add depth - changed to blue */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[36rem] w-[36rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.18),transparent_70%)] blur-[100px] animate-pulse animate-drift-fast" style={{ animationDelay: "1.6s" }} />
-        {/* Top-right corner accent - changed to lime/yellow */}
-        <div className="absolute -top-16 -right-6 h-[28rem] w-[28rem] bg-[radial-gradient(closest-side,rgba(191,255,0,0.28),transparent_70%)] blur-[80px] animate-pulse animate-drift-medium" style={{ animationDelay: "2.2s" }} />
-        <div className="absolute top-8 right-20 h-[18rem] w-[18rem] bg-[radial-gradient(closest-side,rgba(0,102,255,0.24),transparent_70%)] blur-[70px] animate-pulse animate-drift-fast" style={{ animationDelay: "2.8s" }} />
-        {/* Scroll-parallax halos */}
-        <ParallaxHalos />
       </div>
 
       <main className="p-4 sm:p-6 md:p-8 pt-20 sm:pt-8 md:pl-[18rem] md:pr-8">

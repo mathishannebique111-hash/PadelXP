@@ -5,6 +5,8 @@ import PadelLoader from "@/components/ui/PadelLoader";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 import { redirect } from "next/navigation";
 import nextDynamic from "next/dynamic";
+import { headers } from "next/headers";
+import { extractSubdomain } from "@/lib/club-branding";
 
 const MatchForm = nextDynamic(() => import("@/components/MatchForm"), {
   loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
@@ -199,14 +201,22 @@ export default async function NewMatchPage({
   }
 
 
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+  const isClub = !!subdomain;
 
   return (
     <div className="relative min-h-screen">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
-      </div>
+      {!isClub && (
+        <>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
+          </div>
+        </>
+      )}
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-1 sm:px-4 md:px-6 lg:px-8 pb-0 h-full flex flex-col">
         <div className="mb-1 sm:mb-2">

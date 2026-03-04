@@ -256,15 +256,15 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                         style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', boxShadow: isLightPage ? `0 0 10px ${accentColor}15` : 'none' }}
                     >
                         <div className="flex flex-col items-center">
-                            <div className="relative w-24 h-24 rounded-full flex items-center justify-center mb-2 shadow-sm transition-colors" style={{ backgroundColor: effectiveBg }}>
+                            <div className="relative w-24 h-24 rounded-full flex items-center justify-center mb-2 shadow-sm transition-colors" style={{ backgroundColor: isLightPage ? effectiveBg : 'rgba(0,0,0,0.2)' }}>
                                 {/* Gauge SVG */}
                                 <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-500/30" />
-                                    <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-accent))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80 drop-shadow-[0_0_6px_rgba(var(--theme-accent, 0,102,255), 0.4)]" />
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className={isLightPage ? "" : "text-slate-500/30"} style={isLightPage ? { color: effectiveBg } : {}} />
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke={accentColor || "rgb(var(--theme-accent))"} strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80" style={{ filter: `drop-shadow(0 0 6px ${accentColor || "rgba(var(--theme-accent), 0.4)"})` }} />
                                 </svg>
                                 <div className="flex flex-col items-center justify-center z-10 text-center">
-                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Niveau</span>
-                                    <span className="text-2xl font-black leading-none tracking-tighter drop-shadow-md" style={{ color: "var(--theme-text)" }}>6.49</span>
+                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: accentColor || "rgb(var(--theme-accent))" }}>Niveau</span>
+                                    <span className="text-2xl font-black leading-none tracking-tighter drop-shadow-md" style={{ color: accentColor || "rgb(var(--theme-accent))" }}>6.49</span>
                                 </div>
                             </div>
 
@@ -317,7 +317,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                 <div className="animate-fadeIn px-1 space-y-3 pb-4">
                     {/* Stats Header with Tier */}
                     <div className="flex items-center justify-between px-1">
-                        <h2 className="text-[8px] font-black tracking-[0.2em] uppercase" style={{ color: "var(--theme-text-muted)" }}>Mes Statistiques</h2>
+                        <h2 className="text-[8px] font-black tracking-[0.2em] uppercase" style={{ color: accentColor }}>Mes Statistiques</h2>
                         <div className="px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white text-[6px] font-black shadow-sm flex items-center gap-1">
                             <Crown size={7} /> CHAMPION
                         </div>
@@ -350,47 +350,47 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                     {/* Exact 8-cell Grid Replica */}
                     <div className="grid grid-cols-2 gap-2 text-[7px] sm:text-xs">
                         {/* Points */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Points</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>695</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Points</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>695</div>
                         </div>
                         {/* Matchs */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Matchs</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>64</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Matchs</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>64</div>
                         </div>
                         {/* Victoires */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Victoires</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>55</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Victoires</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>55</div>
                         </div>
                         {/* Défaites */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Défaites</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>9</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Défaites</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>9</div>
                         </div>
                         {/* Sets gagnés */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Sets gagnés</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>110</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Sets gagnés</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>110</div>
                         </div>
                         {/* Sets perdus */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Sets perdus</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>22</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Sets perdus</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>22</div>
                         </div>
                         {/* Winrate */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Winrate</div>
-                            <div className="text-xl font-black tabular-nums leading-none flex items-center transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>
-                                <span className="inline-block mr-0.5 transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000', opacity: 0.8 }}>↗</span>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Winrate</div>
+                            <div className="text-xl font-black tabular-nums leading-none flex items-center transition-colors" style={{ color: '#000000' }}>
+                                <span className="inline-block mr-0.5 transition-colors" style={{ color: '#000000', opacity: 0.8 }}>↗</span>
                                 85%
                             </div>
                         </div>
                         {/* Badges */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: isLightPage ? '#000000' : '#FFFFFF', borderColor: isLightPage ? accentColor : accentColor, borderLeftWidth: '4px', borderLeftColor: accentColor }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: isLightPage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>Badges</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: isLightPage ? '#FFFFFF' : '#000000' }}>15</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Badges</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>15</div>
                         </div>
                     </div>
                 </div>

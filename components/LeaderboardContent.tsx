@@ -314,14 +314,14 @@ export default function LeaderboardContent({
               onClick={() => { setScope(key); }}
               className={`flex items-center gap-1 px-3 py-2 rounded-full text-[10px] sm:text-xs font-black capitalize tracking-widest transition-all whitespace-nowrap border ${scope === key
                 ? (isClub ? 'border-transparent' : 'bg-[var(--theme-secondary-accent)]/20 text-[rgb(var(--theme-secondary-accent))] border-[var(--theme-secondary-accent)]/40 shadow-lg shadow-[rgb(var(--theme-secondary-accent))]/10')
-                : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white/70'
+                : `bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white ${isClub ? 'border-[rgb(var(--theme-accent))]/40' : ''}`
                 }`}
               style={scope === key && isClub ? {
                 backgroundColor: 'rgb(var(--theme-accent))',
                 color: 'var(--theme-accent-contrast)',
                 borderColor: 'rgb(var(--theme-accent))',
                 boxShadow: '0 0 15px rgba(var(--theme-accent), 0.3)'
-              } : {}}
+              } : (isClub && scope !== key ? { borderColor: 'rgba(var(--theme-accent), 0.4)' } : {})}
             >
               <Icon size={14} />
               <span>{label}</span>
@@ -473,7 +473,7 @@ export default function LeaderboardContent({
                   return (
                     <tr key={player.user_id} className={rowClass}>
                       <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-12 sm:w-16">
-                        <RankBadge rank={player.rank} size="sm" className="w-6 h-6 sm:w-8 sm:h-8" />
+                        <RankBadge rank={player.rank} size="sm" className="w-6 h-6 sm:w-8 sm:h-8" isClub={isClub} />
                       </td>
                       <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-[10px] sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0 min-w-[100px] sm:min-w-[180px]">
                         <div className="flex items-center gap-1.5 sm:gap-3">

@@ -5,6 +5,8 @@ import Stripe from "stripe";
 import { creditPlayerBoosts, getPlayerBoostStats } from "@/lib/utils/boost-utils";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
+import { headers } from "next/headers";
+import { extractSubdomain } from "@/lib/club-branding";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,11 @@ export default async function BoostSuccessPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+  const isClub = !!subdomain;
 
   if (!user) {
     redirect("/login");
@@ -137,15 +144,19 @@ export default async function BoostSuccessPage({
   const boostStats = await getPlayerBoostStats(user.id);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#172554]">
-      {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
+    <div className={`relative min-h-screen overflow-hidden ${isClub ? '' : 'bg-[#172554]'}`}>
+      {!isClub && (
+        <>
+          {/* Background avec overlay - Transparent en haut pour fusionner avec le fond du layout */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0" />
 
-      {/* Halos vert et bleu animés */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-      </div>
+          {/* Halos vert et bleu animés */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          </div>
+        </>
+      )}
 
 
       <div className="relative z-10 mx-auto w-full max-w-4xl px-4 py-8">
