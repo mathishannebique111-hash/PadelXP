@@ -140,7 +140,6 @@ export default function GooglePlacesAutocomplete({
                 onChange={(e) => onChange && onChange(e.target.value)}
                 placeholder={placeholder}
                 disabled={!isLoaded}
-                disabled={!isLoaded}
                 className="w-full bg-white/5 border-2 rounded-2xl pl-12 pr-12 py-4 text-white placeholder-white/30 focus:outline-none transition-all font-medium disabled:opacity-50"
                 style={{ borderColor: 'rgba(var(--theme-accent, 255, 255, 255), 0.1)' }}
             />
