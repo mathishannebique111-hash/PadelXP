@@ -7,9 +7,10 @@ interface SplashOverlayProps {
     clubLogoUrl?: string | null;
     clubPrimaryColor?: string | null;
     clubBackgroundColor?: string | null;
+    clubName?: string | null;
 }
 
-export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor, clubBackgroundColor }: SplashOverlayProps) {
+export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor, clubBackgroundColor, clubName }: SplashOverlayProps) {
     const [visible, setVisible] = useState(true);
     const [fading, setFading] = useState(false);
 
@@ -60,11 +61,33 @@ export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor, cl
                 pointerEvents: fading ? 'none' : 'auto',
             }}
         >
-            <img
-                src={logoSrc}
-                alt="App"
-                style={{ width: '280px', height: 'auto' }}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+                <img
+                    src={logoSrc}
+                    alt="App"
+                    style={{ width: '180px', height: 'auto' }}
+                />
+                {clubName && (
+                    <h1 style={{
+                        fontSize: '32px',
+                        fontWeight: '900',
+                        color: (function () {
+                            const hex = bgColor.replace('#', '');
+                            if (hex.length < 6) return '#ffffff';
+                            const r = parseInt(hex.substring(0, 2), 16);
+                            const g = parseInt(hex.substring(2, 4), 16);
+                            const b = parseInt(hex.substring(4, 6), 16);
+                            const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+                            return yiq > 155 ? '#000000' : '#ffffff';
+                        })(),
+                        margin: 0,
+                        textAlign: 'center',
+                        fontFamily: 'Inter, -apple-system, system-ui, sans-serif'
+                    }}>
+                        {clubName}
+                    </h1>
+                )}
+            </div>
         </div>
     );
 }

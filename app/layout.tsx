@@ -130,15 +130,23 @@ export default async function RootLayout({
                 if (isApp && document.documentElement) {
                   document.documentElement.classList.add('is-app');
                   document.documentElement.style.backgroundColor = '${subdomain ? branding.background_color : '#172554'}';
+                  document.querySelector('meta[name="theme-color"]').setAttribute('content', '${subdomain ? branding.background_color : '#172554'}');
                   document.documentElement.style.setProperty('--sab', '20px');
                 }
               })();
             `,
           }}
         />
+        <style>
+          {`
+            html, body {
+              background-color: ${subdomain ? branding.background_color : '#172554'} !important;
+            }
+          `}
+        </style>
       </head>
       <body className={`${isApp ? 'is-app' : ''} text-white min-h-screen`} style={{ backgroundColor: subdomain ? branding.background_color : '#172554' }} data-is-app={isApp ? 'true' : 'false'} data-club-subdomain={subdomain || ''} suppressHydrationWarning>
-        <SplashOverlay isApp={isApp} clubLogoUrl={branding.logo_url} clubPrimaryColor={subdomain ? branding.primary_color : null} clubBackgroundColor={subdomain ? branding.background_color : null} />
+        <SplashOverlay isApp={isApp} clubLogoUrl={branding.logo_url} clubPrimaryColor={subdomain ? branding.primary_color : null} clubBackgroundColor={subdomain ? branding.background_color : null} clubName={subdomain ? branding.name : null} />
         <SafeAreas />
         <OfflineWrapper />
         {children}
