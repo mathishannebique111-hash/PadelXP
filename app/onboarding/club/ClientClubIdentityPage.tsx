@@ -234,11 +234,48 @@ export default function ClientClubIdentityPage() {
     const number_of_courts = String(fd.get('number_of_courts') || '').trim();
     const court_type = String(fd.get('court_type') || '').trim();
     const subdomain = String(fd.get('subdomain') || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
-    const ownerEmail = typeof window !== 'undefined' ? sessionStorage.getItem('onboarding_email') || '' : '';
-    const ownerPassword = typeof window !== 'undefined' ? sessionStorage.getItem('onboarding_password') || '' : '';
+
+    // Nouveaux champs pour la création de compte administrateur
+    const email = String(fd.get('email') || '').trim();
+    const password = String(fd.get('password') || '').trim();
+    const firstName = String(fd.get('first_name') || '').trim();
+    const lastName = String(fd.get('last_name') || '').trim();
+
+    let ownerEmail = typeof window !== 'undefined' ? sessionStorage.getItem('onboarding_email') || '' : '';
+    let ownerPassword = typeof window !== 'undefined' ? sessionStorage.getItem('onboarding_password') || '' : '';
 
     try {
       setErrorMessage(null);
+
+      // 1. Création du compte si les champs sont fournis
+      if (email && password && firstName && lastName) {
+        const signupResponse = await fetch("/api/clubs/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password, firstName, lastName }),
+        });
+
+        if (!signupResponse.ok) {
+          const errorData = await signupResponse.json().catch(() => ({}));
+          throw new Error(errorData?.error || "Impossible de créer le compte administrateur");
+        }
+
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError || !signInData.session) {
+          throw new Error(signInError?.message || "Impossible de se connecter après la création du compte");
+        }
+
+        await supabase.auth.refreshSession();
+
+        ownerEmail = email;
+        ownerPassword = password;
+
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem("onboarding_email", email);
+          sessionStorage.setItem("onboarding_password", password);
+        }
+      }
 
       let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       let accessToken = sessionData.session?.access_token;
@@ -256,7 +293,7 @@ export default function ClientClubIdentityPage() {
       }
 
       if (!accessToken) {
-        throw new Error("Session expirée. Veuillez recommencer l'inscription.");
+        throw new Error("Session expirée. Compte administrateur requis pour créer le club.");
       }
 
       let encodedLogo: { filename: string; mime: string; data: string } | null = null;
@@ -290,7 +327,7 @@ export default function ClientClubIdentityPage() {
           primary_color: secondaryColor, // On utilise la couleur d'accent pour les deux
           secondary_color: secondaryColor,
           background_color: backgroundColor,
-          owner_email: ownerEmail,
+          owner_email: ownerEmail || undefined,
           logo_payload: encodedLogo,
           user_metadata: {
             postal_code: postal,
@@ -301,6 +338,10 @@ export default function ClientClubIdentityPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error("Détails de l'erreur API:", errorData);
+        if (errorData?.details) {
+          throw new Error(`Données invalides : ${JSON.stringify(errorData.details)}`);
+        }
         throw new Error(errorData?.error || "Impossible d'enregistrer le club");
       }
 
@@ -380,6 +421,37 @@ export default function ClientClubIdentityPage() {
                     value={clubNameInput}
                     onChange={(e) => setClubNameInput(e.target.value)}
                   />
+                </div>
+
+                {/* Section Compte Administrateur */}
+                <div className="col-span-2 mt-2 mb-1 border-t border-white/10 pt-3">
+                  <h3 className="text-xs font-bold text-white/70 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
+                    <User size={12} /> Compte Administrateur
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className={labelClass}>Prénom</label>
+                      <input name="first_name" required placeholder="Prénom" className={inputClass} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={labelClass}>Nom</label>
+                      <input name="last_name" required placeholder="Nom" className={inputClass} />
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                      <label className={labelClass}>Email professionnel</label>
+                      <input name="email" required type="email" placeholder="Email" className={inputClass} />
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                      <label className={labelClass}>Mot de passe</label>
+                      <input name="password" required type="password" placeholder="Mot de passe" className={inputClass} minLength={6} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-2 mt-2 mb-1 border-t border-white/10 pt-3">
+                  <h3 className="text-xs font-bold text-white/70 mb-2 uppercase tracking-wider">
+                    Coordonnées du complexe
+                  </h3>
                 </div>
 
                 <div className="space-y-1.5">

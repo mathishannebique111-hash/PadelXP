@@ -119,6 +119,9 @@ export default async function AdminClubsPage() {
                     Statut
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Sous-domaine
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     Type d'abonnement
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -175,14 +178,23 @@ export default async function AdminClubsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${subscriptionInfo.type === 'subscription'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : subscriptionInfo.type === 'trial'
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : subscriptionInfo.type === 'trial'
+                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                              : 'bg-red-500/10 text-red-400 border-red-500/20'
                             }`}
                         >
                           {subscriptionInfo.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                        {club.subdomain ? (
+                          <span className="font-mono text-xs bg-white/5 px-2 py-1 rounded border border-white/10">
+                            {club.subdomain}
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                         {subscriptionInfo.type === 'subscription'

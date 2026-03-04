@@ -67,9 +67,10 @@ export default async function PlayerAccountLayout({
       <PopupQueueProvider>
         <ChallengeProvider initialChallenge={initialChallenge} initialIsPremiumUser={isPremiumUser}>
           <div
-            className="relative min-h-screen overflow-hidden bg-[#172554]"
+            className="relative min-h-screen overflow-hidden"
             style={{
               minHeight: '100vh',
+              backgroundColor: 'rgb(var(--theme-player-page))',
             }}
           >
             {/* Background global pour toutes les pages joueur */}

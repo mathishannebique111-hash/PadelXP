@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, Users, CheckCircle2, Clock, XCircle, Plus, Mail, Calendar, History, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Users, Building2, CheckCircle2, Clock, XCircle, Plus, Mail, Calendar, History, Check, AlertCircle, MapPin, Phone, Globe, Layout, Palette, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -12,6 +12,18 @@ interface Club {
   name: string;
   email: string;
   logo_url: string | null;
+  slug: string;
+  subdomain: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  background_color: string | null;
+  postal_code: string | null;
+  city: string | null;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  number_of_courts: number | null;
+  court_type: string | null;
   trial_end_date: string | null;
   subscription_expires_at: string | null;
   subscription_status: string | null;
@@ -32,7 +44,7 @@ interface Player {
 export default function AdminClubDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const clubId = params.id as string;
+  const clubId = (params as any)?.id as string;
 
   const [club, setClub] = useState<Club | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -50,10 +62,10 @@ export default function AdminClubDetailPage() {
 
       try {
         console.log('Fetching club details for ID:', clubId);
-        
+
         // Fetch club details
         const clubResponse = await fetch(`/api/admin/clubs/${clubId}`);
-        
+
         if (!clubResponse.ok) {
           const errorData = await clubResponse.json().catch(() => ({}));
           console.error('Error fetching club - Response not OK:', {
@@ -85,9 +97,9 @@ export default function AdminClubDetailPage() {
           return;
         }
 
-        console.log('Club data fetched successfully:', { 
-          id: clubData.id, 
-          name: clubData.name, 
+        console.log('Club data fetched successfully:', {
+          id: clubData.id,
+          name: clubData.name,
           email: clubData.email,
           trial_end_date: clubData.trial_end_date,
           subscription_status: clubData.subscription_status,
@@ -97,7 +109,7 @@ export default function AdminClubDetailPage() {
 
         // Fetch players via API route to bypass RLS
         const playersResponse = await fetch(`/api/admin/clubs/${clubId}/players`);
-        
+
         if (!playersResponse.ok) {
           const errorData = await playersResponse.json().catch(() => ({}));
           console.error('Error fetching players:', errorData);
@@ -202,11 +214,11 @@ export default function AdminClubDetailPage() {
         });
         console.log('✅ Action ajoutée à l\'historique:', result.action.action_description);
       }
-      
+
       // Recharger les données sans recharger toute la page (évite les problèmes de session)
       // Utiliser router.refresh() au lieu de window.location.reload() pour préserver la session
       router.refresh();
-      
+
       // Recharger les données du club
       try {
         const clubResponse = await fetch(`/api/admin/clubs/${clubId}`);
@@ -229,7 +241,7 @@ export default function AdminClubDetailPage() {
 
   function getSubscriptionStatus() {
     if (!club) return { type: 'expired', status: 'Expiré', daysRemaining: 0 };
-    
+
     const now = new Date();
     const trialEnd = club.trial_end_date ? new Date(club.trial_end_date) : null;
     const subscriptionExpires = club.subscription_expires_at ? new Date(club.subscription_expires_at) : null;
@@ -250,12 +262,14 @@ export default function AdminClubDetailPage() {
         type: 'trial',
         status: 'Essai',
         daysRemaining,
+        subscriptionType: null,
       };
     } else {
       return {
         type: 'expired',
         status: 'Expiré',
         daysRemaining: 0,
+        subscriptionType: null,
       };
     }
   }
@@ -312,37 +326,184 @@ export default function AdminClubDetailPage() {
         </div>
       </div>
 
-      {/* Club Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Informations du club</h2>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            {club.logo_url ? (
-              <Image
-                src={club.logo_url}
-                alt={club.name}
-                width={80}
-                height={80}
-                className="rounded-lg object-cover"
-              />
-            ) : (
-              <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                <Users className="w-10 h-10 text-gray-400" />
-              </div>
-            )}
-              <div>
-                <p className="font-semibold text-gray-900 text-lg">{club.name}</p>
-                {club.email && (
-                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                    <Mail className="w-4 h-4" />
-                    <span>{club.email}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  <span>Inscrit le {registrationDate}</span>
+      {/* Club Info & Personalization Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Fiche Complexe */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-blue-600" size={20} />
+            Fiche du complexe
+          </h2>
+
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              {club.logo_url ? (
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-100 shadow-sm flex-shrink-0">
+                  <Image
+                    src={club.logo_url}
+                    alt={club.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-20 h-20 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center flex-shrink-0">
+                  <Users className="w-8 h-8 text-gray-300" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 text-xl truncate">{club.name}</p>
+                <p className="text-sm text-gray-500 font-mono mt-0.5">Slug: {club.slug}</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {club.email && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-md text-xs text-gray-600 border border-gray-100">
+                      <Mail className="w-3 h-3" />
+                      <span className="truncate max-w-[150px]">{club.email}</span>
+                    </div>
+                  )}
+                  {club.phone && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-md text-xs text-gray-600 border border-gray-100">
+                      <Phone className="w-3 h-3" />
+                      <span>{club.phone}</span>
+                    </div>
+                  )}
                 </div>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Adresse</p>
+                    <p className="text-sm text-gray-700 mt-0.5">
+                      {club.address || 'Non renseigné'}<br />
+                      {club.postal_code} {club.city}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Globe className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Site Web</p>
+                    {club.website ? (
+                      <a href={club.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-0.5">
+                        {club.website.replace(/^https?:\/\//, '')}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <p className="text-sm text-gray-500 mt-0.5">Non renseigné</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Layout className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Installations</p>
+                    <p className="text-sm text-gray-700 mt-0.5 font-medium">
+                      {club.number_of_courts || '?'} terrains ({club.court_type || 'Type inconnu'})
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Inscription</p>
+                    <p className="text-sm text-gray-700 mt-0.5">Inscrit le {registrationDate}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Personnalisation & App */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <Palette className="w-5 h-5 text-purple-600" size={20} />
+            Personnalisation & Application
+          </h2>
+
+          <div className="space-y-6">
+            {/* Sous-domaine */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/60 shadow-inner">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Sous-domaine actif</p>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-slate-900">
+                    {club.subdomain || 'aucun'}<span className="text-slate-400">.padelxp.eu</span>
+                  </span>
+                  {club.subdomain && (
+                    <a
+                      href={`https://${club.subdomain}.padelxp.eu`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1 font-medium"
+                    >
+                      Voir la page publique
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+                <div className="h-10 w-10 bg-white rounded-lg shadow-sm border border-slate-200 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-slate-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Couleurs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Charte graphique</p>
+
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg shadow-sm border border-gray-200"
+                    style={{ backgroundColor: club.primary_color || '#0066FF' }}
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Couleur Primaire</p>
+                    <p className="text-sm font-mono font-bold text-gray-700">{club.primary_color || '#0066FF'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg shadow-sm border border-gray-200"
+                    style={{ backgroundColor: club.secondary_color || '#CCFF00' }}
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Couleur Accent</p>
+                    <p className="text-sm font-mono font-bold text-gray-700">{club.secondary_color || '#CCFF00'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Interface</p>
+
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-lg shadow-sm border border-gray-200"
+                    style={{ backgroundColor: club.background_color || '#172554' }}
+                  />
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Fond d'écran</p>
+                    <p className="text-sm font-mono font-bold text-gray-700">{club.background_color || '#172554'}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100 italic text-[11px] text-gray-500 leading-relaxed uppercase tracking-tighter font-medium">
+                  Les couleurs sont appliquées dynamiquement sur l'application mobile et la page publique.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -350,97 +511,91 @@ export default function AdminClubDetailPage() {
       {/* Subscription Management */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-6">Gestion de l'abonnement</h2>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Statut actuel</p>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    subscriptionInfo.type === 'subscription'
-                      ? 'bg-green-100 text-green-800'
-                      : subscriptionInfo.type === 'trial'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-red-100 text-red-800'
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Statut actuel</p>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${subscriptionInfo.type === 'subscription'
+                  ? 'bg-green-100 text-green-800'
+                  : subscriptionInfo.type === 'trial'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-red-100 text-red-800'
                   }`}
-                >
-                  {subscriptionInfo.status}
+              >
+                {subscriptionInfo.status}
+              </span>
+              {subscriptionInfo.type === 'subscription' && (
+                <span className="text-sm text-gray-600">
+                  ({formatSubscriptionType(subscriptionInfo.subscriptionType ?? null)})
                 </span>
-                {subscriptionInfo.type === 'subscription' && (
-                  <span className="text-sm text-gray-600">
-                    ({formatSubscriptionType(subscriptionInfo.subscriptionType)})
-                  </span>
-                )}
-              </div>
-              {subscriptionInfo.daysRemaining > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  {subscriptionInfo.daysRemaining} jours restants
-                </p>
               )}
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => setShowConfirmDialog('extend_trial_14d')}
-                disabled={isUpdating || showConfirmDialog !== null}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${
-                  showConfirmDialog === 'extend_trial_14d'
-                    ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <Plus className="w-4 h-4" />
-                Prolonger l'essai gratuit de 14j
-              </button>
-              <button
-                onClick={() => setShowConfirmDialog('add_1_month')}
-                disabled={isUpdating || showConfirmDialog !== null}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${
-                  showConfirmDialog === 'add_1_month'
-                    ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <Plus className="w-4 h-4" />
-                Ajouter 1 mois d'abonnement
-              </button>
-              <button
-                onClick={() => setShowConfirmDialog('add_3_months')}
-                disabled={isUpdating || showConfirmDialog !== null}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${
-                  showConfirmDialog === 'add_3_months'
-                    ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <Plus className="w-4 h-4" />
-                Ajouter 3 mois d'abonnement
-              </button>
-              <button
-                onClick={() => setShowConfirmDialog('add_1_year')}
-                disabled={isUpdating || showConfirmDialog !== null}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${
-                  showConfirmDialog === 'add_1_year'
-                    ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <Plus className="w-4 h-4" />
-                Ajouter 1 an d'abonnement
-              </button>
-              <button
-                onClick={() => setShowConfirmDialog('cancel')}
-                disabled={isUpdating || showConfirmDialog !== null}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm col-span-1 sm:col-span-2 ${
-                  showConfirmDialog === 'cancel'
-                    ? 'bg-yellow-100 border-2 border-yellow-300 text-yellow-900'
-                    : 'bg-red-600 hover:bg-red-700 text-white'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <XCircle className="w-4 h-4" />
-                Résilier l'abonnement
-              </button>
-            </div>
+            {subscriptionInfo.daysRemaining > 0 && (
+              <p className="text-sm text-gray-600 mt-2">
+                {subscriptionInfo.daysRemaining} jours restants
+              </p>
+            )}
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => setShowConfirmDialog('extend_trial_14d')}
+              disabled={isUpdating || showConfirmDialog !== null}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${showConfirmDialog === 'extend_trial_14d'
+                ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
+                : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Plus className="w-4 h-4" />
+              Prolonger l'essai gratuit de 14j
+            </button>
+            <button
+              onClick={() => setShowConfirmDialog('add_1_month')}
+              disabled={isUpdating || showConfirmDialog !== null}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${showConfirmDialog === 'add_1_month'
+                ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
+                : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter 1 mois d'abonnement
+            </button>
+            <button
+              onClick={() => setShowConfirmDialog('add_3_months')}
+              disabled={isUpdating || showConfirmDialog !== null}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${showConfirmDialog === 'add_3_months'
+                ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
+                : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter 3 mois d'abonnement
+            </button>
+            <button
+              onClick={() => setShowConfirmDialog('add_1_year')}
+              disabled={isUpdating || showConfirmDialog !== null}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm border ${showConfirmDialog === 'add_1_year'
+                ? 'bg-yellow-100 border-yellow-300 text-yellow-900'
+                : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter 1 an d'abonnement
+            </button>
+            <button
+              onClick={() => setShowConfirmDialog('cancel')}
+              disabled={isUpdating || showConfirmDialog !== null}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-sm col-span-1 sm:col-span-2 ${showConfirmDialog === 'cancel'
+                ? 'bg-yellow-100 border-2 border-yellow-300 text-yellow-900'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <XCircle className="w-4 h-4" />
+              Résilier l'abonnement
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Confirmation Dialog */}

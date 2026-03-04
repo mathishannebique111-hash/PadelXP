@@ -21,9 +21,11 @@ export default function PlayerClubGate({
   onChange?: (v: { name: string; slug: string; invitationCode: string; code: string }) => void;
   showInvalidState?: boolean;
 }) {
-  const [clubs, setClubs] = useState<Array<{ name: string; slug: string; code_invitation: string }>>([]);
+  const [clubs, setClubs] = useState<Array<{ name: string; slug: string; code_invitation: string; subdomain?: string }>>([]);
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [code, setCode] = useState<string>("");
+  const [isBrandedApp, setIsBrandedApp] = useState(false);
+  const [brandedClub, setBrandedClub] = useState<{ name: string; slug: string; code_invitation: string } | null>(null);
 
   useEffect(() => {
     setClubs([]);
@@ -52,6 +54,17 @@ export default function PlayerClubGate({
         } else if (apiData.clubs && Array.isArray(apiData.clubs)) {
           logger.info(`[PlayerClubGate] API returned ${apiData.clubs.length} clubs`);
           setClubs(apiData.clubs);
+
+          const currentSubdomain = typeof document !== 'undefined' ? document.body.getAttribute('data-club-subdomain') : null;
+          if (currentSubdomain) {
+            const matchedClub = apiData.clubs.find((c: any) => c.subdomain === currentSubdomain);
+            if (matchedClub) {
+              setIsBrandedApp(true);
+              setBrandedClub(matchedClub);
+              setSelectedSlug(matchedClub.slug);
+              setCode(matchedClub.code_invitation);
+            }
+          }
         } else {
           logger.warn("[PlayerClubGate] API returned empty clubs array");
           setClubs([]);
@@ -85,10 +98,22 @@ export default function PlayerClubGate({
               name: club.name || club.club_name || "Club sans nom",
               slug: club.slug || club.club_slug || (club.name ? club.name.toLowerCase().replace(/[^a-z0-9]+/g, '') : ''),
               code_invitation: club.code_invitation || club.invitation_code || club.code || '',
+              subdomain: club.subdomain || null,
             })).filter((club: any) => club.name && club.slug && club.code_invitation);
 
             logger.info("[PlayerClubGate] Loaded clubs via direct query:", normalizedClubs.length);
             setClubs(normalizedClubs);
+
+            const currentSubdomain = typeof document !== 'undefined' ? document.body.getAttribute('data-club-subdomain') : null;
+            if (currentSubdomain) {
+              const matchedClub = normalizedClubs.find((c: any) => c.subdomain === currentSubdomain);
+              if (matchedClub) {
+                setIsBrandedApp(true);
+                setBrandedClub(matchedClub);
+                setSelectedSlug(matchedClub.slug);
+                setCode(matchedClub.code_invitation);
+              }
+            }
             return;
           }
         } catch (directErr) {
@@ -111,6 +136,23 @@ export default function PlayerClubGate({
     onValidChange?.(isValid);
     onChange?.({ name: selectedClub?.name || "", slug: selectedClub?.slug || "", invitationCode: expectedCode, code });
   }, [isValid, onValidChange, onChange, selectedClub, expectedCode, code]);
+
+  if (isBrandedApp && brandedClub) {
+    return (
+      <div className="space-y-2.5">
+        <label className="block text-[10px] text-white/70 mb-0.5">
+          Club
+        </label>
+        <div className="bg-white/10 rounded-lg p-3 border border-white/20 flex items-center justify-between">
+          <span className="text-white font-medium">{brandedClub.name}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/50 uppercase tracking-widest">Connecté</span>
+            <div className="w-2 h-2 rounded-full bg-green-400" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2.5">

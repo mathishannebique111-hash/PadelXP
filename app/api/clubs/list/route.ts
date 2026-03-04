@@ -40,7 +40,7 @@ export async function GET() {
       logger.info("[API /clubs/list] Trying with specific columns...");
       const result = await supabase
         .from("clubs")
-        .select("id, name, slug, code_invitation, status, club_name, club_slug")
+        .select("id, name, slug, code_invitation, status, club_name, club_slug, subdomain")
         .order("name", { ascending: true });
       data = result.data;
       error = result.error;
@@ -78,6 +78,7 @@ export async function GET() {
       const rawLogoUrl = club.logo_url || club.club_logo_url || null;
       const logo_url = getClubLogoPublicUrl(rawLogoUrl);
       const city = club.city || club.club_city || null;
+      const subdomain = club.subdomain || null;
 
       return {
         name,
@@ -85,6 +86,7 @@ export async function GET() {
         code_invitation: code,
         logo_url,
         city,
+        subdomain,
       };
     }).filter((club: any) => club.name && club.slug && club.name !== "Club sans nom");
 

@@ -60,7 +60,7 @@ export default async function RootLayout({
   ` : '';
 
   return (
-    <html lang="fr" className={isApp ? 'is-app' : ''} style={{ backgroundColor: '#172554', ...(isApp ? { '--sat': '65px' } : {}) } as any} suppressHydrationWarning>
+    <html lang="fr" className={isApp ? 'is-app' : ''} style={{ backgroundColor: subdomain ? branding.background_color : '#172554', ...(isApp ? { '--sat': '65px' } : {}) } as any} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content={subdomain ? branding.primary_color : '#172554'} />
@@ -82,7 +82,7 @@ export default async function RootLayout({
               }
               
               html, body {
-                background-color: #172554 !important;
+                background-color: ${subdomain ? branding.background_color : '#172554'} !important;
               }
 
               ${brandingCSS}
@@ -97,14 +97,14 @@ export default async function RootLayout({
                 var isApp = navigator.userAgent.toLowerCase().includes('capacitor') || navigator.userAgent.toLowerCase().includes('padelxp');
                 if (isApp && document.documentElement) {
                   document.documentElement.classList.add('is-app');
-                  document.documentElement.style.backgroundColor = '#172554';
+                  document.documentElement.style.backgroundColor = '${subdomain ? branding.background_color : '#172554'}';
                 }
               })();
             `,
           }}
         />
       </head>
-      <body className={`${isApp ? 'is-app' : ''} bg-[#172554] text-white min-h-screen`} style={{ backgroundColor: '#172554' }} data-is-app={isApp ? 'true' : 'false'} data-club-subdomain={subdomain || ''} suppressHydrationWarning>
+      <body className={`${isApp ? 'is-app' : ''} text-white min-h-screen`} style={{ backgroundColor: subdomain ? branding.background_color : '#172554' }} data-is-app={isApp ? 'true' : 'false'} data-club-subdomain={subdomain || ''} suppressHydrationWarning>
         <SplashOverlay isApp={isApp} clubLogoUrl={branding.logo_url} clubPrimaryColor={subdomain ? branding.primary_color : null} />
         <SafeAreas />
         <OfflineWrapper />

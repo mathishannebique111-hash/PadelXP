@@ -107,6 +107,7 @@ export async function POST(req: Request) {
 
     const parsedPayload = clubRegisterSchema.safeParse(await req.json());
     if (!parsedPayload.success) {
+      logger.error({ errors: parsedPayload.error.flatten().fieldErrors }, "[clubs/register] Validation error");
       return NextResponse.json(
         { error: "Données invalides", details: parsedPayload.error.flatten().fieldErrors },
         { status: 400 }

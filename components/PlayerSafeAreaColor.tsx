@@ -4,7 +4,17 @@ import { useEffect } from "react";
 
 export default function PlayerSafeAreaColor() {
   useEffect(() => {
-    const blueColor = '#172554';
+    // Lire la couleur de fond depuis la variable CSS du thème (supporte le branding club)
+    const computedStyle = getComputedStyle(document.documentElement);
+    const themePageRgb = computedStyle.getPropertyValue('--theme-player-page').trim();
+    // Convertir "23 37 84" en "#172554" par exemple
+    let bgColor = '#172554'; // fallback
+    if (themePageRgb) {
+      const parts = themePageRgb.split(/\s+/).map(Number);
+      if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+        bgColor = `#${parts.map(n => n.toString(16).padStart(2, '0')).join('')}`;
+      }
+    }
 
     // Fonction pour notifier la vue native iOS
     const notifyNativeColor = (color: string) => {
@@ -26,19 +36,19 @@ export default function PlayerSafeAreaColor() {
     };
 
     // Appliquer la couleur
-    document.body.style.backgroundColor = blueColor;
-    document.documentElement.style.backgroundColor = blueColor;
+    document.body.style.backgroundColor = bgColor;
+    document.documentElement.style.backgroundColor = bgColor;
     document.body.setAttribute('data-player-layout', 'true');
     document.documentElement.setAttribute('data-player-layout', 'true');
 
     // Notifier la vue native immédiatement et plusieurs fois
-    notifyNativeColor(blueColor);
+    notifyNativeColor(bgColor);
     const timeouts = [
-      setTimeout(() => notifyNativeColor(blueColor), 50),
-      setTimeout(() => notifyNativeColor(blueColor), 100),
-      setTimeout(() => notifyNativeColor(blueColor), 200),
-      setTimeout(() => notifyNativeColor(blueColor), 500),
-      setTimeout(() => notifyNativeColor(blueColor), 1000),
+      setTimeout(() => notifyNativeColor(bgColor), 50),
+      setTimeout(() => notifyNativeColor(bgColor), 100),
+      setTimeout(() => notifyNativeColor(bgColor), 200),
+      setTimeout(() => notifyNativeColor(bgColor), 500),
+      setTimeout(() => notifyNativeColor(bgColor), 1000),
     ];
 
     // Nettoyer lors du démontage
