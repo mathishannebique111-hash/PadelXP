@@ -145,7 +145,10 @@ body.is-app .app-content-padding,
 }
 
 /* Forcer l'alignement plus bas pour les apps club */
-.player-page[data-club-subdomain]:not([data-club-subdomain=""]) .app-content-padding {
+/* player-page is on <html>, data-club-subdomain is on <body> AND on inner <div> */
+html.player-page body[data-club-subdomain]:not([data-club-subdomain=""]) .app-content-padding,
+html.club-branded .app-content-padding,
+[data-club-subdomain]:not([data-club-subdomain=""]) .app-content-padding {
   padding-top: calc(var(--sat, 30px) + 8rem) !important;
 }
 
