@@ -1356,7 +1356,12 @@ export default function MatchForm({
         <div className="pt-2 pb-4">
           <button
             disabled={loading}
-            className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 5px 15px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' }}
+            className="w-full relative group overflow-hidden rounded-xl px-4 py-3.5 font-black uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+            style={{
+              backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))',
+              color: 'white',
+              boxShadow: '0 5px 15px rgba(var(--theme-accent, 37, 99, 235), 0.3)'
+            }}
           >
             <div className="relative z-10 flex items-center justify-center gap-1.5 text-sm">
               {loading && (
