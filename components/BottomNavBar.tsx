@@ -172,7 +172,7 @@ export default function BottomNavBar() {
         <div
             className="fixed z-[99999] left-0 right-0 flex justify-center px-6"
             style={{
-                bottom: 'calc(var(--sab, 0px) + 4px)',
+                bottom: 'calc(var(--sab, 0px) + 12px)',
                 willChange: 'transform',
                 transform: 'translateZ(0)', // Force GPU layer
             }}

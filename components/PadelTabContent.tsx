@@ -12,6 +12,9 @@ interface PadelTabContentProps {
 
 export default function PadelTabContent({ profile }: PadelTabContentProps) {
   const [showWizard, setShowWizard] = useState(false);
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+  const isLightBg = typeof window !== 'undefined' && document.documentElement.classList.contains('club-light-bg');
+
 
   if (!profile || !profile.niveau_padel) {
     return (
@@ -55,11 +58,12 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                 <div className="absolute inset-0 blur-2xl rounded-full scale-110 pointer-events-none" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.05)' }}></div>
 
                 {/* Cercle Unique Élégant + Jauge de Progression */}
-                <div className="relative w-36 h-36 sm:w-40 sm:h-40 rounded-full bg-slate-900/50 backdrop-blur-md flex items-center justify-center shadow-[0_0_20px_rgba(185,255,0,0.05)] transition-all duration-300 hover:shadow-[0_0_25px_rgba(185,255,0,0.1)]">
+                <div className={`relative w-36 h-36 sm:w-40 sm:h-40 rounded-full flex items-center justify-center transition-all duration-300 ${isClub ? '' : 'bg-slate-900/50 backdrop-blur-md shadow-[0_0_20px_rgba(185,255,0,0.05)] hover:shadow-[0_0_25px_rgba(185,255,0,0.1)]'}`}
+                  style={isClub ? { backgroundColor: isLightBg ? 'rgb(var(--theme-page))' : 'rgba(0,0,0,0.2)', backdropBlur: '10px' } : {}}>
 
                   {/* SVG Jauge Circulaire */}
                   <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    {/* Fond de la jauge (gris transparent) */}
+                    {/* Fond de la jauge (gris transparent ou fond page) */}
                     <circle
                       cx="50"
                       cy="50"
@@ -67,7 +71,8 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
-                      className="text-white/10"
+                      className={isClub && isLightBg ? "" : "text-white/10"}
+                      style={isClub && isLightBg ? { color: 'rgb(var(--theme-page))' } : {}}
                     />
                     {/* Jauge active (vert padel / club accent) */}
                     <circle
@@ -75,22 +80,22 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                       cy="50"
                       r="46"
                       fill="none"
-                      stroke="rgb(var(--theme-secondary-accent))"
+                      stroke={isClub ? "rgb(var(--theme-accent))" : "rgb(var(--theme-secondary-accent))"}
                       strokeWidth="4"
                       strokeLinecap="round"
                       strokeDasharray="289"
                       strokeDashoffset={289 - (289 * (profile.niveau_padel % 1))}
                       className="transition-all duration-1000 ease-out"
-                      style={{ filter: "drop-shadow(0 0 6px rgba(var(--theme-secondary-accent, 191, 255, 0), 0.4))" }}
+                      style={{ filter: isClub ? `drop-shadow(0 0 6px rgba(var(--theme-accent), 0.4))` : "drop-shadow(0 0 6px rgba(var(--theme-secondary-accent, 191, 255, 0), 0.4))" }}
                     />
                   </svg>
 
                   {/* Contenu textuel au centre */}
                   <div className="flex flex-col items-center justify-center z-10">
-                    <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-medium mb-1" style={{ color: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.8)' }}>
+                    <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-medium mb-1" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(var(--theme-secondary-accent, 191,255,0), 0.8)' }}>
                       Niveau
                     </span>
-                    <span className="text-5xl sm:text-6xl font-black text-white tracking-tighter drop-shadow-md">
+                    <span className="text-5xl sm:text-6xl font-black tracking-tighter drop-shadow-md" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'white' }}>
                       {profile.niveau_padel.toFixed(2)}
                     </span>
                   </div>
