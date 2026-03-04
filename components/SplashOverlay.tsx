@@ -56,7 +56,7 @@ export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor, cl
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                paddingBottom: '10vh',
+                paddingBottom: clubName ? '10vh' : '0',
                 transition: 'opacity 0.3s ease-out',
                 opacity: fading ? 0 : 1,
                 pointerEvents: fading ? 'none' : 'auto',
@@ -66,7 +66,7 @@ export default function SplashOverlay({ isApp, clubLogoUrl, clubPrimaryColor, cl
                 <img
                     src={logoSrc}
                     alt="App"
-                    style={{ width: '140px', height: 'auto' }}
+                    style={{ width: clubName ? '140px' : '280px', height: 'auto' }}
                 />
                 {clubName && (
                     <h1 style={{
