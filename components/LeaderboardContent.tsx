@@ -50,7 +50,7 @@ export default function LeaderboardContent({
   const [profilesFirstNameMap, setProfilesFirstNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialFirstNameMap)));
   const [profilesLastNameMap, setProfilesLastNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialLastNameMap)));
   const [scope, setScope] = useState<'club' | 'department' | 'region' | 'national'>('department');
-  const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
   // Cache state: stores data for each scope
   const [cache, setCache] = useState<Record<string, {

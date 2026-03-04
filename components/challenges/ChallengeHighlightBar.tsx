@@ -12,7 +12,7 @@ export default function ChallengeHighlightBar() {
     // Calcul du pourcentage pour la barre de progression
     const percentage = Math.min(100, Math.round((challenge.progress.current / challenge.progress.target) * 100));
 
-    const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
     return (
         <Link

@@ -34,7 +34,7 @@ export default function GooglePlacesAutocomplete({
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const autocompleteRef = useRef<any>(null);
-    const isClub = typeof document !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
     useEffect(() => {
         // Check if script is already loaded

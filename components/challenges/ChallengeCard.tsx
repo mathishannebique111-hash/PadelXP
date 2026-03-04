@@ -33,6 +33,7 @@ interface ChallengeCardProps {
   isPremiumUser?: boolean;
   onRewardClaimed?: () => void;
   onPremiumUnlocked?: () => void;
+  isClub?: boolean;
 }
 
 function formatRange(startISO: string, endISO: string) {
@@ -57,28 +58,28 @@ function statusClasses(status: PlayerChallenge["status"], isClub: boolean) {
   switch (status) {
     case "active":
       return isClub
-        ? "bg-white/20 text-white border border-white/40"
+        ? "bg-[var(--theme-page)]/20 text-[var(--theme-page)] border border-[var(--theme-page)]/40"
         : "bg-white/30 text-white border border-[rgb(var(--theme-accent,204,255,0))]";
     case "upcoming":
       return isClub
-        ? "bg-white/10 text-white border border-white/20"
+        ? "bg-[var(--theme-page)]/10 text-[var(--theme-page)] border border-[var(--theme-page)]/20"
         : "bg-blue-500/20 text-blue-200 border border-blue-400/40";
     case "completed":
     default:
       return isClub
-        ? "bg-white/10 text-white/90 border border-white/20"
+        ? "bg-[var(--theme-page)]/10 text-[var(--theme-page)]/90 border border-[var(--theme-page)]/20"
         : "bg-white/20 text-white/80 border border-white/25";
   }
 }
 
-export default function ChallengeCard({ challenge, isPremiumUser = false, onRewardClaimed, onPremiumUnlocked }: ChallengeCardProps) {
+export default function ChallengeCard({ challenge, isPremiumUser = false, onRewardClaimed, onPremiumUnlocked, isClub: providedIsClub }: ChallengeCardProps) {
   const [claiming, setClaiming] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
   const [rewardValue, setRewardValue] = useState("");
   const [hasClaimed, setHasClaimed] = useState(false);
   const [autoCloseTimeout, setAutoCloseTimeout] = useState<NodeJS.Timeout | null>(null);
   const router = useRouter();
-  const isClub = typeof document !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+  const isClub = providedIsClub ?? (typeof document !== 'undefined' && !!document.body.dataset.clubSubdomain);
 
   const now = new Date();
   const endDate = new Date(challenge.endDate);
@@ -286,8 +287,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             </div>
 
             {/* Badge récompense */}
-            <div className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 shadow ring-1 ${isClub ? 'bg-white/10 ring-white/20' : 'bg-gradient-to-br from-yellow-500/15 to-amber-600/10 ring-yellow-400/20'}`}>
-              <span className={`text-[10px] font-medium uppercase tracking-wide ${isClub ? 'text-white/80' : 'text-yellow-200/80'}`}>
+            <div className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 shadow ring-1 ${isClub ? 'bg-[var(--theme-page)]/10 ring-[var(--theme-page)]/20' : 'bg-gradient-to-br from-yellow-500/15 to-amber-600/10 ring-yellow-400/20'}`}>
+              <span className={`text-[10px] font-medium uppercase tracking-wide ${isClub ? 'text-[var(--theme-page)]/80' : 'text-yellow-200/80'}`}>
                 Récompense
               </span>
               <div className="flex items-center gap-1.5">
@@ -310,7 +311,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                     />
                   </div>
                 )}
-                <span className={`text-sm font-bold ${isClub ? 'text-white' : 'text-white'}`}>
+                <span className={`text-sm font-bold ${isClub ? 'text-[var(--theme-page)]' : 'text-white'}`}>
                   {challenge.rewardType === "points"
                     ? `${challenge.rewardLabel} pts`
                     : challenge.rewardLabel}

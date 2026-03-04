@@ -28,7 +28,7 @@ interface League {
 export default function TournamentsContent() {
     const [leagues, setLeagues] = useState<League[]>([]);
     const [loading, setLoading] = useState(true);
-    const isClub = typeof document !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+    const isClub = typeof document !== 'undefined' && !!document.body.dataset.clubSubdomain;
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null);

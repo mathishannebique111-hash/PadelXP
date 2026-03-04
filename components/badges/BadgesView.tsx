@@ -44,7 +44,7 @@ export default function BadgesView({
     const [activeTab, setActiveTab] = useState<"standard" | "challenges">("standard");
     // Local state for optimistic update
     const [isPremium, setIsPremium] = useState(isPremiumUser);
-    const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
     useEffect(() => {
         if (isPremiumUser) {

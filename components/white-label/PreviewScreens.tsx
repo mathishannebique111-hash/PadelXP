@@ -37,25 +37,25 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
 
     return (
         <div className="w-full mb-3 animate-fadeIn group">
-            <div className="relative p-2 rounded-xl border bg-white/[0.02] backdrop-blur-sm" style={{ borderColor: accentColor }}>
+            <div className="relative p-2 rounded-xl border shadow-sm transition-all duration-300" style={{ borderColor: accentColor, backgroundColor: accentColor }}>
                 <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                            <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full bg-white/5 border border-white/10" style={{ color: accentColor }}>
+                            <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full border" style={{ backgroundColor: 'var(--theme-page)', color: accentColor, borderColor: 'var(--theme-page)' }}>
                                 <Trophy size={10} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[9px] font-medium truncate" style={{ color: "rgba(var(--theme-text), 0.9)" }}>
+                            <span className="text-[9px] font-bold truncate" style={{ color: "var(--theme-page)" }}>
                                 {title}
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className="text-[8px] font-bold tabular-nums uppercase tracking-wider" style={{ color: "var(--theme-text-muted)" }}>
+                            <span className="text-[8px] font-bold tabular-nums uppercase tracking-wider" style={{ color: "var(--theme-page)" }}>
                                 {current} / {target}
                             </span>
-                            <ChevronRight size={10} style={{ color: "rgba(var(--theme-text), 0.2)" }} />
+                            <ChevronRight size={10} style={{ color: "var(--theme-page)" }} className="opacity-70" />
                         </div>
                     </div>
-                    <div className="h-0.5 w-full rounded-full bg-black/40 overflow-hidden">
+                    <div className="h-0.5 w-full rounded-full bg-black/20 overflow-hidden">
                         <div
                             className="h-full rounded-full transition-all duration-1000 ease-out relative"
                             style={{
@@ -921,46 +921,45 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                         </button>
                     </div>
 
-                    {/* Challenge Card High-Fidelity */}
-                    <div className="rounded-2xl border bg-white/5 overflow-hidden shadow-xl" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
+                    {/* Challenge Card High-Fidelity - Filled Accent Style */}
+                    <div className="rounded-2xl border overflow-hidden shadow-xl" style={{ backgroundColor: accentColor, borderColor: accentColor }}>
                         <div className="p-3">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 className="text-[10px] font-black mb-1" style={{ color: "var(--theme-text)" }}>Partenaires Variés</h3>
-                                    <div className="inline-flex px-2 py-0.5 rounded-full border text-[6px] font-bold" style={{ backgroundColor: accentColor, borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: isLightColor(accentColor || '#172554') ? '#071554' : '#FFFFFF' }}>
+                                    <h3 className="text-[10px] font-black mb-1" style={{ color: "var(--theme-page)" }}>Partenaires Variés</h3>
+                                    <div className="inline-flex px-2 py-0.5 rounded-full border text-[6px] font-bold" style={{ backgroundColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.3)', color: "var(--theme-page)" }}>
                                         Challenge en cours
                                     </div>
                                 </div>
-                                <div className="bg-white/5 border rounded-lg p-2 flex flex-col items-center shadow-sm" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
-                                    <span className="text-[5px] font-black uppercase mb-0.5" style={{ color: "var(--theme-text-muted)" }}>RÉCOMPENSE</span>
+                                <div className="bg-[var(--theme-page)]/10 border rounded-lg p-2 flex flex-col items-center shadow-sm" style={{ borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.1)' }}>
+                                    <span className="text-[5px] font-black uppercase mb-0.5" style={{ color: "var(--theme-page)", opacity: 0.6 }}>RÉCOMPENSE</span>
                                     <div className="flex items-center gap-1">
-                                        <Star size={8} className="text-yellow-400 fill-current" />
-                                        <span className="text-[8px] font-black" style={{ color: "var(--theme-text)" }}>8 pts</span>
+                                        <Star size={8} className="text-[var(--theme-page)] fill-current" />
+                                        <span className="text-[8px] font-black" style={{ color: "var(--theme-page)" }}>8 pts</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-white/5 rounded-xl p-3 border mb-3" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.05)' }}>
+                            <div className="bg-[var(--theme-page)]/10 rounded-xl p-3 border mb-3" style={{ borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.1)' }}>
                                 <div className="flex justify-between items-center mb-2">
                                     <div>
-                                        <p className="text-[8px] font-black mb-0.5" style={{ color: "var(--theme-text)" }}>Objectif</p>
-                                        <p className="text-[6px]" style={{ color: "var(--theme-text-muted)" }}>Jouer avec 2 partenaires différents</p>
+                                        <p className="text-[8px] font-black mb-0.5" style={{ color: "var(--theme-page)" }}>Objectif</p>
+                                        <p className="text-[6px]" style={{ color: "var(--theme-page)", opacity: 0.8 }}>Jouer avec 2 partenaires différents</p>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[10px] font-black" style={{ color: "var(--theme-text)" }}>2/2</span>
-                                        <p className="text-[6px]" style={{ color: "var(--theme-text-muted)" }}>100%</p>
+                                        <span className="text-[10px] font-black" style={{ color: "var(--theme-page)" }}>2/2</span>
+                                        <p className="text-[6px]" style={{ color: "var(--theme-page)", opacity: 0.8 }}>100%</p>
                                     </div>
                                 </div>
-                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "rgb(var(--theme-accent))" }} />
+                                <div className="h-1.5 w-full bg-[var(--theme-page)]/20 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "var(--theme-page)" }} />
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 mb-4 px-1">
-                                <Clock size={8} style={{ color: "var(--theme-text-muted)" }} />
-                                <span className="text-[6px]" style={{ color: "var(--theme-text-muted)" }}>Période : <span style={{ color: "var(--theme-text)" }}>26 févr. 2026 → 26 mars 2026</span></span>
+                            <div className="flex items-center gap-1.5 mb-2 px-1">
+                                <Clock size={8} style={{ color: "var(--theme-page)", opacity: 0.6 }} />
+                                <span className="text-[6px]" style={{ color: "var(--theme-page)", opacity: 0.6 }}>Période : <span style={{ color: "var(--theme-page)" }}>26 févr. 2026 → 26 mars 2026</span></span>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -981,11 +980,12 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                     <div className="space-y-3">
                         <h3 className="text-[8px] font-black uppercase tracking-widest pl-1" style={{ color: "var(--theme-text-muted)" }}>MES LIGUES</h3>
 
-                        <div className="rounded-2xl border bg-white/5 p-3 shadow-xl" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
+                        {/* League Card - Filled Accent Style */}
+                        <div className="rounded-2xl border p-3 shadow-xl" style={{ borderColor: accentColor, backgroundColor: accentColor }}>
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h4 className="text-[10px] font-black mb-1 uppercase italic tracking-tight" style={{ color: "var(--theme-text)" }}>Les champions</h4>
-                                    <div className="inline-flex px-1.5 py-0.5 rounded bg-white/5 border text-[6px] font-black" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text-muted)" }}>
+                                    <h4 className="text-[10px] font-black mb-1 uppercase italic tracking-tight" style={{ color: "var(--theme-page)" }}>Les champions</h4>
+                                    <div className="inline-flex px-1.5 py-0.5 rounded bg-[var(--theme-page)]/10 border text-[6px] font-black" style={{ borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', color: "var(--theme-page)" }}>
                                         <div className="flex items-center gap-1">
                                             <Copy size={8} /> RTE5EM
                                         </div>
@@ -996,19 +996,19 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center gap-1">
-                                        <Users size={8} style={{ color: "var(--theme-text-muted)" }} />
-                                        <span className="text-[6px]" style={{ color: "var(--theme-text)" }}>5/5</span>
+                                        <Users size={8} style={{ color: "var(--theme-page)", opacity: 0.6 }} />
+                                        <span className="text-[6px]" style={{ color: "var(--theme-page)" }}>5/5</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Clock size={8} style={{ color: "var(--theme-text-muted)" }} />
-                                        <span className="text-[6px]" style={{ color: "var(--theme-text)" }}>7j restants</span>
+                                        <Clock size={8} style={{ color: "var(--theme-page)", opacity: 0.6 }} />
+                                        <span className="text-[6px]" style={{ color: "var(--theme-page)" }}>7j restants</span>
                                     </div>
                                 </div>
-                                <span className="text-[6px] tracking-tight" style={{ color: "var(--theme-text-muted)" }}>1/5 matchs</span>
+                                <span className="text-[6px] tracking-tight font-black" style={{ color: "var(--theme-page)", opacity: 0.6 }}>1/5 matchs</span>
                             </div>
 
-                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full rounded-full" style={{ backgroundColor: "rgb(var(--theme-accent))", width: '20%' }} />
+                            <div className="h-1 w-full bg-[var(--theme-page)]/20 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full" style={{ backgroundColor: "var(--theme-page)", width: '20%' }} />
                             </div>
                         </div>
                     </div>

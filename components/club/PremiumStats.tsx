@@ -68,7 +68,7 @@ export default function PremiumStats() {
     const [performanceTab, setPerformanceTab] = useState<'weaker' | 'equal' | 'stronger'>('weaker');
     const [listTab, setListTab] = useState<'victims' | 'nemesis' | 'partners'>('victims');
     const [formTab, setFormTab] = useState<'form' | 'reaction'>('form');
-    const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
     const router = useRouter();
 
     useEffect(() => {

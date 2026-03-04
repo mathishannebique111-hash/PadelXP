@@ -443,7 +443,7 @@ export default function PadelProfileSection({
   const ShotIcon = data.best_shot ? shotIcons[data.best_shot] : null;
   const isLeftHanded = data.hand === "left";
 
-  const isClub = typeof window !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
   const renderEditableField = (
     fieldKey: Exclude<keyof OnboardingData, "postal_code" | "city">,

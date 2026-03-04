@@ -44,7 +44,7 @@ export default function MatchForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-  const isClub = typeof document !== 'undefined' && !!document.documentElement.dataset.clubSubdomain;
+  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
   const [partnerName, setPartnerName] = useState("");
   const [opp1Name, setOpp1Name] = useState("");
