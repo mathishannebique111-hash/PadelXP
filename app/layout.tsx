@@ -156,6 +156,7 @@ export default async function RootLayout({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            paddingBottom: '10vh',
             gap: '2rem',
             pointerEvents: 'none'
           }}>

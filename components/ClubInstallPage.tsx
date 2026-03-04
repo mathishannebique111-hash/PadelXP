@@ -47,7 +47,7 @@ export default function ClubInstallPage({ clubName, logoUrl, primaryColor, secon
 
     return (
         <div
-            className="min-h-screen flex flex-col items-center justify-center p-6 text-center relative overflow-hidden"
+            className="min-h-screen flex flex-col items-center justify-center pb-[10vh] p-6 text-center relative overflow-hidden"
             style={{ backgroundColor: backgroundColor }}
         >
             <div className="relative z-10 flex flex-col items-center gap-[2rem]">
