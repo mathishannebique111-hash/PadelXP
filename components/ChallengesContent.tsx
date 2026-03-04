@@ -20,6 +20,7 @@ interface PlayerChallenge {
     };
     rewardClaimed: boolean;
     scope: 'global' | 'club';
+    createdAt: string;
 }
 
 const supabaseAdmin = createAdminClient(
@@ -98,7 +99,11 @@ export default async function ChallengesContent({
     if (response?.status === 200) {
         try {
             const payload = await response.json();
-            challenges = Array.isArray(payload?.challenges) ? payload.challenges : [];
+            const rawChallenges = Array.isArray(payload?.challenges) ? payload.challenges : [];
+            challenges = rawChallenges.map((c: any) => ({
+                ...c,
+                createdAt: c.createdAt || c.startDate || new Date().toISOString()
+            }));
         } catch (e) { }
     }
 
@@ -140,7 +145,8 @@ export default async function ChallengesContent({
                         status,
                         progress: { current: 0, target: Math.max(1, extractTarget(record.objective)) },
                         rewardClaimed: false,
-                        scope: 'club'
+                        scope: 'club',
+                        createdAt: record.created_at || record.start_date || new Date().toISOString()
                     } as PlayerChallenge;
                 });
             }
@@ -153,9 +159,9 @@ export default async function ChallengesContent({
                 <div className="flex justify-center">
                     <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-2 border border-white/20">
                         <span className="text-sm font-semibold text-white">
-                            <span className="text-padel-green tabular-nums">{challengePoints}</span>
+                            <span className="tabular-nums" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{challengePoints}</span>
                             <span className="ml-1">point{challengePoints > 1 ? "s" : ""} et </span>
-                            <span className="text-padel-green tabular-nums">{challengeBadgesCount}</span>
+                            <span className="tabular-nums" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{challengeBadgesCount}</span>
                             <span className="ml-1">badge{challengeBadgesCount > 1 ? "s" : ""} débloqué{challengeBadgesCount > 1 ? "s" : ""}</span>
                         </span>
                     </div>

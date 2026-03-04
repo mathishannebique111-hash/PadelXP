@@ -150,25 +150,26 @@ const PhonePreview = ({ bg, secondary, activeScreen, logoUrl, textColor, mutedCo
             { label: "Compétition", idx: 2, badge: 4 },
           ].map((item) => {
             const isActive = activeScreen === item.idx;
-            const iconClass = `w-4 h-4 shrink-0 transition-colors ${isActive ? "text-[#172554]" : "text-slate-400"}`;
+            const iconClass = `w-4 h-4 shrink-0 transition-colors ${isActive ? "" : "text-slate-400"}`;
+            const iconStyle = isActive ? { color: secondary } : {};
             return (
               <div key={item.label} className="flex-1 flex flex-col items-center justify-center relative px-2 cursor-pointer">
                 <div className="relative">
                   {item.idx === 0 && (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={iconClass}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={iconClass} style={iconStyle}>
                       <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10.5z"></path>
                       <path d="M9 22V14h6v8"></path>
                     </svg>
                   )}
-                  {item.idx === 1 && <Swords className={iconClass} strokeWidth={2} />}
-                  {item.idx === 2 && <Trophy className={iconClass} strokeWidth={2} />}
+                  {item.idx === 1 && <Swords className={iconClass} strokeWidth={2} style={iconStyle} />}
+                  {item.idx === 2 && <Trophy className={iconClass} strokeWidth={2} style={iconStyle} />}
                   {item.badge && (
                     <div className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[7px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full border-[1.5px] border-white">
                       {item.badge}
                     </div>
                   )}
                 </div>
-                <span className={`text-[6px] font-bold mt-0.5 transition-colors ${isActive ? "text-[#172554]" : "text-slate-400"}`}>
+                <span className={`text-[6px] font-bold mt-0.5 transition-colors ${isActive ? "" : "text-slate-400"}`} style={isActive ? { color: secondary } : {}}>
                   {item.label}
                 </span>
               </div>

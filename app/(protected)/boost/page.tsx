@@ -63,8 +63,8 @@ export default async function BoostPage() {
 
       {/* Halos vert et bleu animés */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
       </div>
 
 

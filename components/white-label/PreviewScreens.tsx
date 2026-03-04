@@ -17,7 +17,7 @@ export const ReplicaPageTitle = ({ title, subtitle, icon }: { title: string, sub
         <section className="relative overflow-hidden rounded-[8px] border inline-block shadow-sm" style={{ background: "rgba(var(--theme-accent), 0.08)", borderColor: "rgba(var(--theme-accent), 0.4)", backdropFilter: "blur(6px)" }}>
             <div className="relative z-10 flex items-center">
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5">
-                    <span className="w-[3px] self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
+                    <span className="w-[3px] self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
                     <div className="flex items-center gap-1.5">
                         {icon && <span className="text-[10px] drop-shadow-sm transition-colors duration-500" style={{ color: "var(--theme-text)" }}>{icon}</span>}
                         <h1 className="text-[10px] font-black tracking-tight leading-tight drop-shadow-sm transition-colors duration-500" style={{ color: "var(--theme-text)" }}>{title}</h1>
@@ -33,7 +33,7 @@ export const ReplicaPageTitle = ({ title, subtitle, icon }: { title: string, sub
 
 export const ReplicaChallengeBar = ({ title, current, target, isPremium = false }: { title: string, current: number, target: number, isPremium?: boolean }) => {
     const percentage = Math.min(100, Math.round((current / target) * 100));
-    const accentColor = isPremium ? 'rgb(245, 158, 11)' : 'rgb(var(--theme-secondary-accent))';
+    const accentColor = isPremium ? 'rgb(245, 158, 11)' : 'rgb(var(--theme-accent))';
 
     return (
         <div className="w-full mb-3 animate-fadeIn group">
@@ -92,12 +92,12 @@ export const ReplicaPendingMatchCard = ({
     isConfirmed?: boolean,
     winnerTeam?: number
 }) => (
-    <div className={`rounded-xl border-2 p-2.5 transition-all duration-500 scale-[0.98] ${isConfirmed ? 'border-green-500 bg-green-50 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-blue-400 bg-blue-50'
-        }`}>
+    <div className={`rounded-xl border-2 p-2.5 transition-all duration-500 scale-[0.98] ${isConfirmed ? 'border-green-500 bg-green-50 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-white/5 border-dashed opacity-80'
+        }`} style={{ borderColor: !isConfirmed ? 'rgb(var(--theme-accent))' : undefined }}>
         <div className="mb-2.5 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-                <div className="flex-shrink-0 rounded-full p-1 bg-blue-100">
-                    {isConfirmed ? <Clock className="h-3 w-3 text-blue-600" /> : <FileText className="h-3 w-3 text-blue-600" />}
+                <div className="flex-shrink-0 rounded-full p-1 bg-white/10" style={{ color: 'rgb(var(--theme-accent))' }}>
+                    {isConfirmed ? <Check className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                 </div>
                 <div>
                     <div className="text-[8px] font-bold text-gray-900 uppercase">Par {creator}</div>
@@ -161,7 +161,7 @@ export const ReplicaPendingMatchCard = ({
             ) : (
                 <div className="flex items-center gap-1">
                     <button type="button" className="p-1 text-gray-400 bg-white rounded-md border border-gray-100"><X size={8} /></button>
-                    <button type="button" className="text-white px-2 py-1 rounded-md text-[8px] font-black shadow-sm" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))" }}>CONFIRMER</button>
+                    <button type="button" className="text-white px-2 py-1 rounded-md text-[8px] font-black shadow-sm" style={{ backgroundColor: "rgb(var(--theme-accent))" }}>CONFIRMER</button>
                 </div>
             )}
         </div>
@@ -197,7 +197,7 @@ export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLi
         </div>
         <div className="grid grid-cols-2 gap-1 mt-1">
             <button type="button" className="py-1 px-0 border border-white/10 text-white rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/10 h-5 transition-colors"><Eye size={9} /></button>
-            <button type="button" className="py-1 px-0 rounded-lg flex items-center justify-center transition-all h-5 bg-[rgb(var(--theme-secondary-accent))] text-[#071554] shadow-md hover:brightness-110"><User size={9} className="fill-current" /></button>
+            <button type="button" className="py-1 px-0 rounded-lg flex items-center justify-center transition-all h-5 text-white shadow-md hover:brightness-110" style={{ backgroundColor: "rgb(var(--theme-accent))" }}><User size={9} className="fill-current" /></button>
         </div>
     </div>
 );
@@ -213,7 +213,7 @@ export const Tabs = ({ items, activeIdx, onChange }: { items: string[], activeId
                 style={{ color: i === activeIdx ? "var(--theme-text)" : "var(--theme-text-muted)" }}
             >
                 <span className="flex items-center justify-center gap-1">{item}</span>
-                {i === activeIdx && <div className="absolute bottom-0 left-0 right-0 h-[1.5px]" style={{ background: "rgb(var(--theme-secondary-accent))", boxShadow: "0 0 4px rgb(var(--theme-secondary-accent) / 0.4)" }} />}
+                {i === activeIdx && <div className="absolute bottom-0 left-0 right-0 h-[1.5px]" style={{ background: "rgb(var(--theme-accent))", boxShadow: "0 0 4px rgb(var(--theme-accent) / 0.4)" }} />}
             </button>
         ))}
     </div>
@@ -263,17 +263,17 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                                 {/* Gauge SVG */}
                                 <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
                                     <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-500/30" />
-                                    <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-secondary-accent))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80 drop-shadow-[0_0_6px_rgba(204,255,0,0.4)]" />
+                                    <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(var(--theme-accent))" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="289" strokeDashoffset={289 - (289 * 0.49)} className="opacity-80 drop-shadow-[0_0_6px_rgba(var(--theme-accent-rgb, 0,102,255), 0.4)]" />
                                 </svg>
                                 <div className="flex flex-col items-center justify-center z-10 text-center">
-                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: "rgb(var(--theme-secondary-accent))" }}>Niveau</span>
+                                    <span className="text-[5px] uppercase tracking-[0.3em] font-medium mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Niveau</span>
                                     <span className="text-2xl font-black leading-none tracking-tighter drop-shadow-md" style={{ color: "var(--theme-text)" }}>6.49</span>
                                 </div>
                             </div>
 
                             <div className="w-full space-y-1.5">
                                 {/* Share button replica */}
-                                <button type="button" className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-black text-[7px] uppercase tracking-wider bg-[rgb(var(--theme-secondary-accent))] text-[#071554] shadow-md shadow-[rgb(var(--theme-secondary-accent))]/20 active:scale-95 transition-all">
+                                <button type="button" className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-black text-[7px] uppercase tracking-wider text-white shadow-md active:scale-95 transition-all" style={{ background: 'rgb(var(--theme-accent))', boxShadow: '0 0 10px rgba(var(--theme-accent-rgb), 0.3)' }}>
                                     <Share2 size={9} className="stroke-[2.5px]" />
                                     PARTAGER MON PROFIL
                                 </button>
@@ -281,10 +281,10 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                                 <div className="pt-1.5">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="text-[5px] font-medium uppercase tracking-wide" style={{ color: "var(--theme-text-muted)" }}>Vers niveau 7</span>
-                                        <span className="text-[6px] font-semibold text-[rgb(var(--theme-secondary-accent))]">49%</span>
+                                        <span className="text-[6px] font-semibold" style={{ color: 'rgb(var(--theme-accent))' }}>49%</span>
                                     </div>
                                     <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
-                                        <div className="h-full rounded-full transition-all duration-500 bg-[rgb(var(--theme-secondary-accent))]" style={{ width: "49%" }}></div>
+                                        <div className="h-full rounded-full transition-all duration-500" style={{ backgroundColor: 'rgb(var(--theme-accent))', width: '49%' }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -304,7 +304,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                                 className="rounded-2xl border bg-white/5 p-3 flex items-center gap-2.5 transition-all duration-500 shadow-sm"
                                 style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.3)', boxShadow: isLightPage ? `0 0 8px ${accentColor}10` : 'none' }}
                             >
-                                <item.icon className="w-5 h-5 text-[rgb(var(--theme-secondary-accent))] flex-shrink-0" />
+                                <item.icon className="w-5 h-5 flex-shrink-0" style={{ color: 'rgb(var(--theme-accent))' }} />
                                 <div className="flex-1 min-w-0">
                                     <div className="text-[5px] uppercase tracking-widest font-black mb-0.5" style={{ color: "var(--theme-text-muted)" }}>{item.label}</div>
                                     <div className="text-[6px] font-black leading-tight" style={{ color: "var(--theme-text)" }}>{item.value}</div>
@@ -596,7 +596,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                             )}
                         </div>
                         {activeTab === i && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(204,255,0,0.4)]" style={{ background: "rgb(var(--theme-secondary-accent))" }} />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.4)]" style={{ background: "rgb(var(--theme-accent))" }} />
                         )}
                     </button>
                 ))}
@@ -609,7 +609,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                         <div className="w-full h-7 rounded-lg border px-2 text-[8px] font-bold flex items-center shadow-inner bg-white/5" style={{ color: "var(--theme-text)", borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)' }}>
                             {displayName}
                         </div>
-                        <p className="mt-0.5 text-[6px] font-black ml-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
+                        <p className="mt-0.5 text-[6px] font-black ml-1 flex items-center gap-1 uppercase tracking-wider" style={{ color: 'rgb(var(--theme-accent))' }}>
                             <MapPin size={6} /> {displayCity.toUpperCase()}
                         </p>
                     </div>
@@ -620,12 +620,12 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                             <div className="flex-1 flex flex-col items-center gap-1">
                                 <div className="grid grid-cols-2 gap-1 w-full relative">
                                     <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[5px] font-black uppercase tracking-widest bg-white/5 px-1 z-10 w-max opacity-50" style={{ color: "var(--theme-text)" }}>Équipe 1</div>
-                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border border-[rgb(var(--theme-secondary-accent))] bg-[rgb(var(--theme-secondary-accent))]/10 pt-1">
+                                    <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border pt-1" style={{ borderColor: 'rgb(var(--theme-accent))', backgroundColor: 'rgba(var(--theme-accent), 0.1)' }}>
                                         <div className="w-5 h-5 rounded-full border border-white/20 bg-white/10 flex items-center justify-center" style={{ color: "var(--theme-text)" }}>
                                             <User size={10} />
                                         </div>
                                         <span className="text-[5px] font-black uppercase mt-0.5 text-center leading-tight truncate w-full px-0.5" style={{ color: "var(--theme-text)" }}>Lilian</span>
-                                        <div className="absolute top-0.5 left-0.5 px-0.5 rounded text-[5px] font-black bg-[rgb(var(--theme-secondary-accent))]/20 text-[rgb(var(--theme-secondary-accent))]">6.49</div>
+                                        <div className="absolute top-0.5 left-0.5 px-0.5 rounded text-[5px] font-black" style={{ backgroundColor: 'rgba(var(--theme-accent), 0.2)', color: 'rgb(var(--theme-accent))' }}>6.49</div>
                                     </div>
                                     <div className="aspect-square relative flex flex-col items-center justify-center rounded-[10px] border bg-white/5 group border-dashed pt-1" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.15)' }}>
                                         <Search size={8} style={{ color: "var(--theme-text-muted)" }} />
@@ -634,7 +634,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                                 </div>
                             </div>
 
-                            <div className="text-[5px] font-black uppercase ring-1 px-1 py-0.5 rounded-[4px] shadow-lg mt-2" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: '#071554', boxShadow: "0 0 0 1px #071554" }}>VS</div>
+                            <div className="text-[5px] font-black uppercase ring-1 px-1 py-0.5 rounded-[4px] shadow-lg mt-2 text-white" style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: "0 0 0 1px rgba(var(--theme-accent), 0.5)" }}>VS</div>
 
                             {/* Team 2 */}
                             <div className="flex-1 flex flex-col items-center gap-1">
@@ -663,7 +663,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                         </div>
                     </div>
 
-                    <button type="button" className="w-full rounded-xl py-2 font-black text-[#071554] text-[7px] uppercase tracking-widest shadow-lg mt-2" style={{ background: "rgb(var(--theme-secondary-accent))" }}>
+                    <button type="button" className="w-full rounded-xl py-2 font-black text-white text-[7px] uppercase tracking-widest shadow-lg mt-2" style={{ background: "rgb(var(--theme-accent))" }}>
                         ENREGISTRER LE MATCH
                     </button>
                 </div>
@@ -769,7 +769,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                             )}
                         </div>
                         {activeTab === i && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(204,255,0,0.4)]" style={{ background: "rgb(var(--theme-secondary-accent))" }} />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 shadow-[0_0_8px_rgba(var(--theme-accent-rgb),0.4)]" style={{ background: "rgb(var(--theme-accent))" }} />
                         )}
                     </button>
                 ))}
@@ -865,7 +865,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                         { rank: 4, name: "Lucas B.", level: 5.45, points: 215 },
                                         { rank: 5, name: "Mattias V.", level: 5.26, points: 173 },
                                     ].map((p, idx) => (
-                                        <tr key={idx} className={`${p.isUser ? "bg-blue-50/80" : "bg-white"} hover:bg-slate-50 transition-colors`}>
+                                        <tr key={idx} className={`${p.isUser ? "bg-[rgb(var(--theme-accent))]/5" : "bg-white"} hover:bg-slate-50 transition-colors`}>
                                             <td className="px-2 py-1.5">
                                                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-black shadow-sm ${p.rank === 1 ? "bg-yellow-100 text-yellow-700 border border-yellow-200" :
                                                     p.rank === 2 ? "bg-slate-100 text-slate-700 border border-slate-200" :
@@ -880,13 +880,13 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                                     <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200 overflow-hidden">
                                                         <User size={10} className="text-slate-400" />
                                                     </div>
-                                                    <span className={`text-[8px] font-black truncate max-w-[45px] ${p.isUser ? "text-blue-700" : "text-slate-900"}`}>
+                                                    <span className={`text-[8px] font-black truncate max-w-[45px]`} style={{ color: p.isUser ? "rgb(var(--theme-accent))" : "rgb(15, 23, 42)" }}>
                                                         {p.name}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-1 py-1.5 text-center">
-                                                <span className="text-[8px] font-black text-blue-600">
+                                                <span className="text-[8px] font-black" style={{ color: 'rgb(var(--theme-accent))' }}>
                                                     {p.level.toFixed(2)}
                                                 </span>
                                             </td>
@@ -952,7 +952,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                     </div>
                                 </div>
                                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "rgb(var(--theme-secondary-accent))" }} />
+                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "rgb(var(--theme-accent))" }} />
                                 </div>
                             </div>
 
@@ -970,7 +970,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                 <div className="animate-fadeIn space-y-4 px-1 pb-4">
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 mb-2">
-                        <button type="button" className="flex-1 py-1.5 rounded-lg bg-[rgb(var(--theme-secondary-accent))] text-[9px] font-black flex items-center justify-center gap-1 shadow-lg transition-all" style={{ color: isLightAccent ? '#071554' : '#FFFFFF' }}>
+                        <button type="button" className="flex-1 py-1.5 rounded-lg text-white text-[9px] font-black flex items-center justify-center gap-1 shadow-lg transition-all" style={{ backgroundColor: "rgb(var(--theme-accent))" }}>
                             <Plus size={10} className="stroke-[3px]" /> Créer une ligue
                         </button>
                         <button type="button" className="flex-1 py-1.5 rounded-lg border bg-white/5 text-[9px] font-black flex items-center justify-center gap-1 transition-all shadow-sm" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text)" }}>
@@ -1008,7 +1008,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                             </div>
 
                             <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-[rgb(var(--theme-secondary-accent))] rounded-full" style={{ width: '20%' }} />
+                                <div className="h-full rounded-full" style={{ backgroundColor: "rgb(var(--theme-accent))", width: '20%' }} />
                             </div>
                         </div>
                     </div>

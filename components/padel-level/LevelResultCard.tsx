@@ -86,9 +86,9 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#172554] pb-28">
+    <div className="min-h-screen pb-28" style={{ backgroundColor: 'rgb(var(--theme-page))' }}>
       {/* Header fixe avec logo - Identique au questionnaire */}
-      <div className="sticky top-0 z-50 px-4 pt-6 pb-2 bg-[#172554]/80 backdrop-blur-md" style={{ paddingTop: 'calc(var(--sat, 0px) + 1.5rem)' }}>
+      <div className="sticky top-0 z-50 px-4 pt-6 pb-2 backdrop-blur-md" style={{ paddingTop: 'calc(var(--sat, 0px) + 1.5rem)', backgroundColor: 'rgba(var(--theme-page), 0.8)' }}>
         <div className="flex justify-center mb-4 relative z-[100001]">
           <div className="relative w-32 h-10">
             <Image
@@ -114,14 +114,15 @@ export default function LevelResultCard({ result, onRetake, onSaved }: Props) {
       </motion.div>
 
       {/* Boutons fixés en bas - mobile-first */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-slate-950/80 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-8 sm:pb-10">
+      <div className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-xl border-t border-white/10 px-4 py-4 pb-8 sm:pb-10" style={{ backgroundColor: 'rgba(var(--theme-page), 0.8)' }}>
         <div className="flex flex-col sm:flex-row gap-3 max-w-3xl mx-auto">
           <motion.button
             type="button"
             whileTap={{ scale: 0.95 }}
             onClick={handleSave}
             disabled={isSaving || isSaved}
-            className="w-full sm:flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-900/40"
+            className="w-full sm:flex-1 py-4 rounded-xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+            style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent-rgb), 0.4)' }}
           >
             {isSaved ? (
               <>

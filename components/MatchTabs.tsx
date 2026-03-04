@@ -243,13 +243,13 @@ function MatchTabsContent({
             <div className="relative flex items-center justify-center">
               <span className="text-center">{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="absolute -top-1.5 -right-3.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm border border-[#172554]">
+                <span className="absolute -top-1.5 -right-3.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm border" style={{ borderColor: 'rgb(var(--theme-player-page))' }}>
                   {tab.badge > 9 ? '9+' : tab.badge}
                 </span>
               )}
             </div>
             {currentTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green shadow-[0_0_8px_rgba(204,255,0,0.4)]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: "0 0 8px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.4)" }} />
             )}
           </button>
         ))}

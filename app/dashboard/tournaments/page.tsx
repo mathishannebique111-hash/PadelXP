@@ -106,12 +106,12 @@ export default async function TournamentsPage() {
     userEmail === "amiensac@gmail.com";
 
   logger.info(
+    "[dashboard/tournaments] Dev viewer check",
     {
       userEmailPreview: userEmail ? userEmail.substring(0, 8) + "…" : null,
       devEmailsConfigured: devEmailList,
       isDevViewer,
-    },
-    "[dashboard/tournaments] Dev viewer check"
+    }
   );
 
   if (!isDevViewer) {
@@ -125,19 +125,19 @@ export default async function TournamentsPage() {
         <div className="flex items-center justify-center">
           <div className="w-full max-w-3xl rounded-3xl border border-white/15 bg-gradient-to-br from-[#020617] via-[#020617] to-[#0f172a] p-8 md:p-10 shadow-[0_30px_80px_rgba(15,23,42,0.9)] relative overflow-hidden">
             <div className="pointer-events-none absolute inset-0 opacity-40">
-              <div className="absolute -top-24 -right-32 w-72 h-72 bg-[#0066FF] rounded-full blur-3xl" />
-              <div className="absolute bottom-[-4rem] left-[-2rem] w-64 h-64 bg-[#BFFF00] rounded-full blur-3xl opacity-70" />
+              <div className="absolute -top-24 -right-32 w-72 h-72 rounded-full blur-3xl" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+              <div className="absolute bottom-[-4rem] left-[-2rem] w-64 h-64 rounded-full blur-3xl opacity-70" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
             </div>
 
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
               <div className="flex-1 space-y-4">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 uppercase tracking-[0.25em]">
                   <span className="text-[11px]">TOURNOIS</span>
-                  <span className="text-xs text-[#BFFF00]">Arrive bientôt</span>
+                  <span className="text-xs" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Arrive bientôt</span>
                 </div>
                 <h3 className="text-2xl md:text-3xl font-extrabold text-white">
                   Organisez vos tournois{" "}
-                  <span className="bg-gradient-to-r from-[#BFFF00] to-[#00CC99] bg-clip-text text-transparent">
+                  <span style={{ backgroundImage: 'linear-gradient(to right, rgb(var(--theme-secondary-accent)), #00CC99)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                     en quelques clics
                   </span>
                 </h3>
@@ -147,18 +147,18 @@ export default async function TournamentsPage() {
                 </p>
                 <div className="mt-4 grid gap-3 text-sm text-white/80">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#BFFF00]">•</span>
+                    <span style={{ color: 'rgb(var(--theme-secondary-accent))' }}>•</span>
                     <span>Création automatique des tableaux de matchs</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#BFFF00]">•</span>
+                    <span style={{ color: 'rgb(var(--theme-secondary-accent))' }}>•</span>
                     <span>
                       Les clubs saisissent les scores directement dans les cases des matchs, tout se met à jour en
                       temps réel
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#BFFF00]">•</span>
+                    <span style={{ color: 'rgb(var(--theme-secondary-accent))' }}>•</span>
                     <span>
                       Communication simplifiée avec les joueurs : infos clés du tournoi centralisées au même endroit
                     </span>
@@ -188,8 +188,8 @@ export default async function TournamentsPage() {
 
   if (!clubId) {
     logger.warn(
-      { userId: user.id.substring(0, 8) + "…" },
-      "[dashboard/tournaments] No clubId found for user; showing empty tournaments list"
+      "[dashboard/tournaments] No clubId found for user; showing empty tournaments list",
+      { userId: user.id.substring(0, 8) + "…" }
     );
   }
 
@@ -204,12 +204,12 @@ export default async function TournamentsPage() {
 
     if (error) {
       logger.error(
+        "Error fetching tournaments in dashboard page",
         {
           userId: user.id.substring(0, 8) + "…",
           clubId: clubId.substring(0, 8) + "…",
           error: error.message,
-        },
-        "Error fetching tournaments in dashboard page"
+        }
       );
     }
 
@@ -219,8 +219,8 @@ export default async function TournamentsPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-start justify-between gap-4">
-        <PageTitle 
-          title="Tournois du club" 
+        <PageTitle
+          title="Tournois du club"
           subtitle="Créez et gérez les tournois organisés par votre club."
           className="flex-1"
         />
@@ -269,18 +269,18 @@ export default async function TournamentsPage() {
                         {formatDateRange(tournament.start_date, tournament.end_date)}
                       </TableCell>
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant={statusVariant(tournament.status)}
                           className={
                             tournament.status === "open" || tournament.status === "in_progress"
                               ? "bg-green-500/20 text-green-300 border-green-500/50"
                               : tournament.status === "completed"
-                              ? "bg-blue-500/20 text-blue-300 border-blue-500/50"
-                              : tournament.status === "draft"
-                              ? "bg-gray-500/20 text-gray-300 border-gray-500/50"
-                              : tournament.status === "cancelled"
-                              ? "bg-red-500/20 text-red-300 border-red-500/50"
-                              : "bg-white/10 text-white border-white/20"
+                                ? "bg-blue-500/20 text-blue-300 border-blue-500/50"
+                                : tournament.status === "draft"
+                                  ? "bg-gray-500/20 text-gray-300 border-gray-500/50"
+                                  : tournament.status === "cancelled"
+                                    ? "bg-red-500/20 text-red-300 border-red-500/50"
+                                    : "bg-white/10 text-white border-white/20"
                           }
                         >
                           {renderStatusLabel(tournament.status)}

@@ -143,7 +143,8 @@ export default function TournamentsContent() {
             <div className="flex gap-3">
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-padel-green text-[#071554] font-black text-sm active:scale-[0.98] transition-transform"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform"
+                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}
                 >
                     <Plus size={18} />
                     Créer une ligue
@@ -169,7 +170,8 @@ export default function TournamentsContent() {
                             value={formName}
                             onChange={(e) => setFormName(e.target.value)}
                             placeholder="Les Champions du Dimanche"
-                            className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-4 text-white text-sm font-medium placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-padel-green/50"
+                            className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-4 text-white text-sm font-medium placeholder:text-white/30 focus:outline-none focus:ring-2"
+                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
                             maxLength={40}
                         />
                     </div>
@@ -179,7 +181,8 @@ export default function TournamentsContent() {
                         <select
                             value={formFormat}
                             onChange={(e) => handleFormatChange(e.target.value)}
-                            className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
+                            className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
+                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
                         >
                             <option value="standard">Championnat (Classement global)</option>
                             <option value="divisions">Poules (Montées/Descentes)</option>
@@ -192,7 +195,8 @@ export default function TournamentsContent() {
                             <select
                                 value={formDuration}
                                 onChange={(e) => setFormDuration(Number(e.target.value))}
-                                className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
+                                className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
+                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
                             >
                                 {formFormat === "divisions" ? (
                                     <>
@@ -218,7 +222,8 @@ export default function TournamentsContent() {
                                 value={formFormat === "divisions" ? 3 : formMaxMatches}
                                 onChange={(e) => setFormMaxMatches(Number(e.target.value))}
                                 disabled={formFormat === "divisions"}
-                                className={`w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50 ${formFormat === "divisions" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                className={`w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 ${formFormat === "divisions" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
                             >
                                 {formFormat === "divisions" ? (
                                     <option value={3}>3 / phase</option>
@@ -236,7 +241,8 @@ export default function TournamentsContent() {
                             <select
                                 value={formMaxPlayers}
                                 onChange={(e) => setFormMaxPlayers(Number(e.target.value))}
-                                className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-padel-green/50"
+                                className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
+                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
                             >
                                 {formFormat === "divisions" ? (
                                     [8, 12, 16].map(n => <option key={n} value={n}>{n}</option>)
@@ -252,7 +258,8 @@ export default function TournamentsContent() {
                     <button
                         onClick={handleCreate}
                         disabled={creating || !formName.trim()}
-                        className="w-full py-3 rounded-xl bg-padel-green text-[#071554] font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
+                        className="w-full py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform disabled:opacity-50"
+                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}
                     >
                         {creating ? "Création..." : "Créer ma ligue privée"}
                     </button>
@@ -263,7 +270,7 @@ export default function TournamentsContent() {
             <div className="space-y-3">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <div className="w-6 h-6 border-2 border-white/20 border-t-padel-green rounded-full animate-spin" />
+                        <div className="w-6 h-6 border-2 border-white/20 rounded-full animate-spin" style={{ borderTopColor: 'rgb(var(--theme-secondary-accent))' }} />
                     </div>
                 ) : leagues.length === 0 ? (
                     <div className="text-center py-12">
@@ -301,7 +308,7 @@ export default function TournamentsContent() {
                                             onClick={(e) => { e.stopPropagation(); copyCode(league.invite_code); }}
                                             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 border border-white/20 text-xs font-bold text-white/70 hover:text-white transition-colors"
                                         >
-                                            {copiedCode === league.invite_code ? <Check size={14} className="text-padel-green" /> : <Copy size={14} />}
+                                            {copiedCode === league.invite_code ? <Check size={14} style={{ color: 'rgb(var(--theme-secondary-accent))' }} /> : <Copy size={14} />}
                                             <span className="font-mono tracking-wider">{league.invite_code}</span>
                                         </button>
                                     </div>
@@ -336,8 +343,8 @@ export default function TournamentsContent() {
                                         {league.status !== 'pending' && (
                                             <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full bg-padel-green rounded-full transition-all duration-300"
-                                                    style={{ width: `${Math.min(100, (league.my_matches_played / league.max_matches_per_player) * 100)}%` }}
+                                                    className="h-full rounded-full transition-all duration-300"
+                                                    style={{ width: `${Math.min(100, (league.my_matches_played / league.max_matches_per_player) * 100)}%`, backgroundColor: 'rgb(var(--theme-secondary-accent))' }}
                                                 />
                                             </div>
                                         )}

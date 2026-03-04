@@ -51,17 +51,16 @@ export default function BoostPurchaseButton({
 
   // Icônes selon le pack
   const renderIcon = () => {
-    if (quantity === 1) return <Zap className="w-8 h-8 sm:w-10 sm:h-10 text-padel-green" />;
-    if (quantity === 5) return <Flame className="w-8 h-8 sm:w-10 sm:h-10 text-padel-green" />;
-    if (quantity === 10) return <Rocket className="w-8 h-8 sm:w-10 sm:h-10 text-padel-green" />;
+    if (quantity === 1) return <Zap className="w-8 h-8 sm:w-10 sm:h-10" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />;
+    if (quantity === 5) return <Flame className="w-8 h-8 sm:w-10 sm:h-10" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />;
+    if (quantity === 10) return <Rocket className="w-8 h-8 sm:w-10 sm:h-10" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />;
     return <Zap className="w-8 h-8 sm:w-10 sm:h-10 text-orange-400" />;
   };
 
   // Couleurs de fond selon le pack
   const getBackgroundClasses = () => {
     if (isFeatured) {
-      // Pack 10 - Style "Winning Streak" (Padel Green Gradient)
-      return "border border-padel-green bg-gradient-to-br from-padel-green/10 via-black/40 to-black/20 shadow-[0_0_15px_rgba(191,255,0,0.15)]";
+      return "border bg-gradient-to-br from-black/20 via-black/40 to-black/20 shadow-[0_0_15px_rgba(var(--theme-secondary-accent-rgb,191,255,0),0.15)] club-light-bg-boost-border";
     }
     // Pack 1 et 5 - bleu foncé élégant
     return "bg-gradient-to-br from-[#0F1B3D] via-[#1A2B4D] to-[#0F1B3D] shadow-lg border border-white/20";
@@ -217,8 +216,8 @@ export default function BoostPurchaseButton({
 
             {/* Badge "1 boost GRATUIT" */}
             {offerText && (
-              <div className="mx-auto mb-2 max-w-full px-2 py-0.5 rounded-full bg-padel-green text-[10px] sm:text-xs font-bold text-[#071554] animate-pulse flex-shrink-0 flex items-center gap-1 justify-center whitespace-nowrap overflow-hidden" style={{ animationDuration: '2s' }}>
-                <Gift size={14} className="flex-shrink-0 text-[#071554]" />
+              <div className="mx-auto mb-2 max-w-full px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold animate-pulse flex-shrink-0 flex items-center gap-1 justify-center whitespace-nowrap overflow-hidden" style={{ animationDuration: '2s', backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>
+                <Gift size={14} className="flex-shrink-0" style={{ color: 'var(--theme-player-page, #071554)' }} />
                 <span className="truncate">{offerText}</span>
               </div>
             )}
@@ -247,7 +246,7 @@ export default function BoostPurchaseButton({
 
           {/* Bouton CTA avec dégradé bleu */}
           <div className={`w-full mt-2 ${isFeatured ? 'mt-3' : ''}`}>
-            <div className={`w-full ${isFeatured ? 'py-3.5 px-6' : 'py-3 px-6'} rounded-lg bg-padel-green text-[#071554] font-bold text-sm sm:text-base shadow-lg hover:shadow-xl hover:bg-padel-green/90 transition-all duration-150 active:shadow-md active:scale-[0.98] text-center`}>
+            <div className="w-full py-3 px-6 rounded-lg font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all duration-150 active:shadow-md active:scale-[0.98] text-center" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>
               {loading ? "Chargement..." : "J'en profite"}
             </div>
           </div>

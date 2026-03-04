@@ -67,8 +67,8 @@ export default async function MembersPage() {
 
     allAdminIds = new Set(
       (adminRows || [])
-        .map((admin) => admin.user_id)
-        .filter((id): id is string => typeof id === "string")
+        .map((admin: { user_id: string | null }) => admin.user_id)
+        .filter((id: string | null): id is string => typeof id === "string")
     );
 
     // Vérifier quels admins ont participé à des matchs (donc sont vraiment des joueurs)
@@ -80,7 +80,7 @@ export default async function MembersPage() {
         .eq("player_type", "user");
 
       adminIdsWithMatches = new Set(
-        (adminMatchParticipants || []).map((p) => p.user_id as string).filter(Boolean)
+        (adminMatchParticipants || []).map((p: { user_id: string | null }) => p.user_id as string).filter(Boolean)
       );
     }
   } else {
@@ -91,8 +91,8 @@ export default async function MembersPage() {
 
     allAdminIds = new Set(
       (adminRows || [])
-        .map((admin) => admin.user_id)
-        .filter((id): id is string => typeof id === "string")
+        .map((admin: { user_id: string | null }) => admin.user_id)
+        .filter((id: string | null): id is string => typeof id === "string")
     );
 
     // Vérifier quels admins ont participé à des matchs (donc sont vraiment des joueurs)
@@ -104,7 +104,7 @@ export default async function MembersPage() {
         .eq("player_type", "user");
 
       adminIdsWithMatches = new Set(
-        (adminMatchParticipants || []).map((p) => p.user_id as string).filter(Boolean)
+        (adminMatchParticipants || []).map((p: { user_id: string | null }) => p.user_id as string).filter(Boolean)
       );
     }
   }
@@ -180,7 +180,7 @@ export default async function MembersPage() {
                   <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell text-red-300 tabular-nums">
                     {member.losses}
                   </td>
-                  <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold text-[#BFFF00] tabular-nums">
+                  <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold tabular-nums" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                     {member.points}
                   </td>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
@@ -256,7 +256,7 @@ export default async function MembersPage() {
                       <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center hidden sm:table-cell text-red-300 tabular-nums">
                         {visitor.losses}
                       </td>
-                      <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold text-[#BFFF00] tabular-nums">
+                      <td className="px-1.5 sm:px-2 py-2 sm:py-2.5 md:py-3 text-center font-semibold tabular-nums" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                         {visitor.points}
                       </td>
                       <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-right hidden md:table-cell text-xs">
@@ -325,7 +325,7 @@ export default async function MembersPage() {
                               <div className="flex flex-col min-w-0">
                                 <span className="font-semibold text-white truncate">{name}</span>
                                 <span className="text-[10px] sm:text-xs text-white/50">
-                                  Confirmé le {formatDate(guest.confirmed_at)}
+                                  Confirmé le {formatDate(guest.confirmed_at as string)}
                                 </span>
                               </div>
                             </td>

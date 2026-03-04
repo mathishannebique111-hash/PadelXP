@@ -305,7 +305,7 @@ export default async function MatchHistoryContent() {
                           <span className={`text-[11px] truncate max-w-[85%] ${isCurrentUser ? "font-bold text-[#071554]" : "font-medium text-gray-700"}`}>
                             {displayName}
                           </span>
-                          {isCurrentUser && <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>}
+                          {isCurrentUser && <span className="text-[8px] px-1 rounded-full font-black text-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }}>MOI</span>}
                         </div>
                       );
                     })}
@@ -339,7 +339,7 @@ export default async function MatchHistoryContent() {
                           <span className={`text-[11px] truncate max-w-[85%] ${isCurrentUser ? "font-bold text-[#071554]" : "font-medium text-gray-700"}`}>
                             {displayName}
                           </span>
-                          {isCurrentUser && <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>}
+                          {isCurrentUser && <span className="text-[8px] px-1 rounded-full font-black text-[#071554]" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }}>MOI</span>}
                         </div>
                       );
                     })}

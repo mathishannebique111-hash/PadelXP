@@ -93,9 +93,9 @@ export default function LevelRadarChart({ breakdown }: Props) {
       else ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.fillStyle = "rgba(204, 255, 0, 0.2)";
+    ctx.fillStyle = "rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)";
     ctx.fill();
-    ctx.strokeStyle = "#CCFF00";
+    ctx.strokeStyle = "rgb(var(--theme-secondary-accent, 204, 255, 0))";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -108,7 +108,7 @@ export default function LevelRadarChart({ breakdown }: Props) {
 
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = "#CCFF00";
+      ctx.fillStyle = "rgb(var(--theme-secondary-accent, 204, 255, 0))";
       ctx.fill();
     });
   }, [breakdown, isMobile]);
@@ -132,7 +132,7 @@ export default function LevelRadarChart({ breakdown }: Props) {
             const CategoryIcon = info.Icon;
             return (
               <div key={key} className="flex items-center gap-2">
-                <CategoryIcon size={18} className="text-padel-green flex-shrink-0" />
+                <CategoryIcon size={18} className="flex-shrink-0" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                 <div>
                   <p className="text-xs md:text-sm text-gray-400">
                     {info.label}

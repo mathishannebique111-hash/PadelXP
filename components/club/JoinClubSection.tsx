@@ -49,7 +49,7 @@ export default function JoinClubSection() {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
                 <div className="flex items-center gap-4 mb-8">
                     <div className="w-12 h-12 flex items-center justify-center">
-                        <Trophy className="w-6 h-6 text-padel-green" />
+                        <Trophy className="w-6 h-6" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-white">Rejoindre votre club</h2>
@@ -75,7 +75,8 @@ export default function JoinClubSection() {
                                     <input
                                         type="text"
                                         placeholder="Saisissez le code du club..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-padel-green transition-colors"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 transition-colors"
+                                        style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.5)' } as any}
                                         value={invitationCode}
                                         onChange={(e) => setInvitationCode(e.target.value)}
                                     />
@@ -88,7 +89,12 @@ export default function JoinClubSection() {
                             <button
                                 onClick={handleJoin}
                                 disabled={loading || !invitationCode}
-                                className="w-full mt-4 flex items-center justify-center gap-2 bg-padel-green hover:bg-padel-green/90 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-4 rounded-xl transition-all group"
+                                className="w-full mt-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-4 rounded-xl transition-all group shadow-lg"
+                                style={{
+                                    backgroundColor: 'rgb(var(--theme-secondary-accent))',
+                                    color: 'var(--theme-player-page, #071554)',
+                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                                }}
                             >
                                 {loading ? (
                                     <Loader2 className="w-5 h-5 animate-spin" />

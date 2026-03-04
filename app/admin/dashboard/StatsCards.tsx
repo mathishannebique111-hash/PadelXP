@@ -64,41 +64,41 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
       label: 'Clubs',
       value: stats.clubs,
       icon: Building2,
-      from: 'from-padel-green',
-      to: 'to-padel-green',
-      shadow: 'shadow-padel-green/20',
+      from: 'from-[rgb(var(--theme-secondary-accent))]',
+      to: 'to-[rgb(var(--theme-secondary-accent))]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
     },
     {
       label: 'Joueurs',
       value: stats.players,
       icon: Users,
-      from: 'from-padel-green',
-      to: 'to-padel-green',
-      shadow: 'shadow-padel-green/20',
+      from: 'from-[rgb(var(--theme-secondary-accent))]',
+      to: 'to-[rgb(var(--theme-secondary-accent))]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
     },
     {
       label: 'Matchs (Total)',
       value: stats.matches,
       icon: Trophy,
-      from: 'from-padel-green',
-      to: 'to-padel-green',
-      shadow: 'shadow-padel-green/20',
+      from: 'from-[rgb(var(--theme-secondary-accent))]',
+      to: 'to-[rgb(var(--theme-secondary-accent))]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
     },
     {
       label: "Matchs d'aujourd'hui",
       value: stats.matchesToday,
       icon: Trophy,
-      from: 'from-padel-green',
-      to: 'to-padel-green',
-      shadow: 'shadow-padel-green/20',
+      from: 'from-[rgb(var(--theme-secondary-accent))]',
+      to: 'to-[rgb(var(--theme-secondary-accent))]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
     },
     {
       label: 'Messages non lus',
       value: stats.unreadMessages,
       icon: MessageSquare,
-      from: 'from-padel-green',
-      to: 'to-padel-green',
-      shadow: 'shadow-padel-green/20',
+      from: 'from-[rgb(var(--theme-secondary-accent))]',
+      to: 'to-[rgb(var(--theme-secondary-accent))]',
+      shadow: 'shadow-[rgba(var(--theme-secondary-accent-rgb,204,255,0),0.2)]',
     },
   ];
 
@@ -111,8 +111,9 @@ export default function StatsCards({ onCardClick }: StatsCardsProps) {
           <div
             key={card.label}
             onClick={() => isClickable && onCardClick(card.label)}
-            className={`group relative bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-6 hover:border-padel-green/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isClickable ? "cursor-pointer active:scale-95" : ""
+            className={`group relative bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isClickable ? "cursor-pointer active:scale-95" : ""
               }`}
+            style={{ borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' }}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-500 pointer-events-none" />
 

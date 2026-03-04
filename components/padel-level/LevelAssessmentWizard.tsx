@@ -141,11 +141,11 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
     if (hasStarted) {
       document.body.classList.add('questionnaire-open');
       document.documentElement.classList.add('questionnaire-open');
-      notifyNativeColor('#020617');
+      notifyNativeColor('rgb(var(--theme-page))');
     } else {
       document.body.classList.remove('questionnaire-open');
       document.documentElement.classList.remove('questionnaire-open');
-      notifyNativeColor('#172554');
+      notifyNativeColor('rgb(var(--theme-page))');
     }
 
     return () => {
@@ -321,7 +321,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
           type="button"
           whileTap={{ scale: 0.95 }}
           onClick={() => setHasStarted(true)}
-          className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px]"
+          className="w-full py-3 sm:py-4 rounded-xl text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px]"
+          style={{ backgroundColor: 'rgb(var(--theme-accent))' }}
         >
           {hasProgress ? "Reprendre le questionnaire" : "Commencer l'évaluation"}
           <ChevronRight size={18} />
@@ -335,8 +336,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
       initial={{ height: "auto", opacity: 0 }}
       animate={{ height: ["100vh", "100dvh"], opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed inset-0 z-[100000] flex flex-col bg-slate-950 overflow-hidden touch-none"
-      style={{ height: '100dvh', overscrollBehavior: 'none' }}
+      className="fixed inset-0 z-[100000] flex flex-col overflow-hidden touch-none"
+      style={{ height: '100dvh', overscrollBehavior: 'none', backgroundColor: 'rgb(var(--theme-page))' }}
     >
       <style jsx global>{`
         body.questionnaire-open {
@@ -349,8 +350,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
         }
         body.questionnaire-open #__next, 
         body.questionnaire-open main,
-        body.questionnaire-open .relative.min-h-screen.bg-\[\#172554\] {
-          background-color: #020617 !important;
+        body.questionnaire-open .relative.min-h-screen {
+          background-color: rgb(var(--theme-page)) !important;
           background-image: none !important;
         }
         body.questionnaire-open [data-club-logo-container="true"],
@@ -388,9 +389,9 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
             <div className="mt-2.5 flex items-center justify-center gap-2">
               {(() => {
                 const CategoryIcon = CATEGORY_INFO[question.category].Icon;
-                return <CategoryIcon size={12} className="text-blue-400 flex-shrink-0" />;
+                return <CategoryIcon size={12} className="flex-shrink-0" style={{ color: 'rgb(var(--theme-accent))' }} />;
               })()}
-              <span className="text-[9px] uppercase tracking-[0.2em] font-black text-blue-500/80">
+              <span className="text-[9px] uppercase tracking-[0.2em] font-black" style={{ color: 'rgb(var(--theme-accent))', opacity: 0.8 }}>
                 {CATEGORY_INFO[question.category].label}
               </span>
             </div>
@@ -432,7 +433,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
       </div>
 
       {/* Boutons Footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-3 flex-shrink-0 pb-10 sm:pb-12 bg-slate-950/80 backdrop-blur-md border-t border-white/5">
+      <div className="fixed bottom-0 left-0 right-0 z-20 px-3 sm:px-4 py-3 flex-shrink-0 pb-10 sm:pb-12 backdrop-blur-md border-t border-white/5" style={{ backgroundColor: 'rgba(var(--theme-page), 0.8)' }}>
         {!isCompleted ? (
           <div className="max-w-3xl mx-auto w-full">
             <div className="flex gap-2 sm:gap-3">
@@ -452,7 +453,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
                 whileTap={{ scale: 0.95 }}
                 onClick={handleNext}
                 disabled={!canGoNext}
-                className="flex-1 py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
+                className="flex-1 py-3 rounded-lg sm:rounded-xl text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
+                style={{ backgroundColor: 'rgb(var(--theme-accent))' }}
               >
                 {currentQuestion === PADEL_QUESTIONS.length - 1 ? (
                   <>
@@ -493,7 +495,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               whileTap={{ scale: 0.95 }}
               onClick={handleSaveResult}
               disabled={isSaving || isSaved}
-              className="w-full sm:flex-1 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-900/40"
+              className="w-full sm:flex-1 py-4 rounded-xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+              style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent-rgb), 0.4)' }}
             >
               {isSaved ? (
                 <>

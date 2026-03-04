@@ -181,7 +181,7 @@ export default function GlobalLeaderboardTable({
               const nameParts = player.player_name ? player.player_name.trim().split(' ') : [];
               const finalFirstName = firstName || nameParts[0] || '';
               const finalLastName = lastName || nameParts.slice(1).join(' ');
-              const rowClass = isCurrentUser ? 'bg-blue-100 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
+              const rowClass = isCurrentUser ? 'bg-[rgb(var(--theme-accent))]/10 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
 
               return (
                 <tr key={player.user_id} className={rowClass}>
@@ -220,7 +220,7 @@ export default function GlobalLeaderboardTable({
                     <TierBadge tier={tierLabel as "Bronze" | "Argent" | "Or" | "Diamant" | "Champion"} size="sm" />
                   </td>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">{player.points}</td>
-                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate >= 51 ? '#10B981' : winRate === 50 ? '#0066FF' : '#EF4444' }}>{winRate}%</td>
+                  <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden md:table-cell" style={{ color: winRate >= 51 ? '#10B981' : winRate === 50 ? 'rgb(var(--theme-accent))' : '#EF4444' }}>{winRate}%</td>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell" style={{ color: "#10B981", backgroundColor: "#F0FDF4" }}>{player.wins}</td>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell" style={{ color: "#EF4444", backgroundColor: "#FEF2F2" }}>{player.losses}</td>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-center tabular-nums text-gray-700 border-l border-gray-200 first:border-l-0 font-semibold hidden sm:table-cell">{player.matches}</td>

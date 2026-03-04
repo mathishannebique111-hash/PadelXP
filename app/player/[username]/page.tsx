@@ -103,7 +103,11 @@ export default async function PublicProfilePage({ params }: Props) {
                             Mon Espace
                         </Link>
                     ) : (
-                        <Link href="/login" className="text-sm bg-padel-green text-black font-medium px-3 py-1.5 rounded-full hover:bg-padel-green/90 transition-colors">
+                        <Link
+                            href="/login"
+                            className="text-sm font-medium px-3 py-1.5 rounded-full transition-colors"
+                            style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}
+                        >
                             Connexion
                         </Link>
                     )}
@@ -141,7 +145,7 @@ export default async function PublicProfilePage({ params }: Props) {
                         </div>
                         {profile.club_id && (
                             <div className="absolute -bottom-2 -right-2 bg-slate-900 rounded-full p-1 border border-slate-700 shadow-sm" title={(profile.clubs as any)?.[0]?.name || "Club"}>
-                                <Shield size={16} className="text-padel-green" />
+                                <Shield size={16} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                             </div>
                         )}
                     </div>
@@ -151,7 +155,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
                     {(profile.postal_code || profile.city) && (
                         <div className="flex items-center gap-1 text-xs text-white/50 mb-4">
-                            <MapPin size={12} className="text-padel-green" />
+                            <MapPin size={12} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                             <span>
                                 {profile.postal_code || ''}{profile.postal_code && profile.city ? ' ' : ''}{profile.city || ''}
                             </span>
@@ -160,7 +164,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
                     {(profile.clubs as any)?.[0]?.name && (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-gray-300 mb-6">
-                            <Shield size={12} className="text-padel-green" />
+                            <Shield size={12} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                             <span>{(profile.clubs as any)[0].name}</span>
                         </div>
                     )}
@@ -176,7 +180,7 @@ export default async function PublicProfilePage({ params }: Props) {
                         </div>
                         <div className="bg-white/5 rounded-2xl p-3 border border-white/5 flex flex-col items-center">
                             <div className="text-xs text-gray-400 mb-1">Points</div>
-                            <div className="text-xl font-bold text-padel-green">
+                            <div className="text-xl font-bold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                                 {profile.global_points || 0}
                             </div>
                         </div>
@@ -187,7 +191,12 @@ export default async function PublicProfilePage({ params }: Props) {
                         {currentUser ? (
                             <Link
                                 href={`/match/new?opponentId=${profile.id}`}
-                                className="w-full py-3.5 px-6 bg-padel-green hover:bg-padel-green/90 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-green-900/20"
+                                className="w-full py-3.5 px-6 font-bold rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg"
+                                style={{
+                                    backgroundColor: 'rgb(var(--theme-secondary-accent))',
+                                    color: 'var(--theme-player-page, #071554)',
+                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                                }}
                             >
                                 <Trophy size={18} />
                                 Défier ce joueur
@@ -195,7 +204,12 @@ export default async function PublicProfilePage({ params }: Props) {
                         ) : (
                             <Link
                                 href={`/login?redirect=/match/new?opponentId=${profile.id}`}
-                                className="w-full py-3.5 px-6 bg-padel-green hover:bg-padel-green/90 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-green-900/20"
+                                className="w-full py-3.5 px-6 font-bold rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg"
+                                style={{
+                                    backgroundColor: 'rgb(var(--theme-secondary-accent))',
+                                    color: 'var(--theme-player-page, #071554)',
+                                    boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+                                }}
                             >
                                 <Trophy size={18} />
                                 Se connecter pour jouer

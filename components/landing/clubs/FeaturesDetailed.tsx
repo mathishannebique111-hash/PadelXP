@@ -59,7 +59,7 @@ export default function FeaturesDetailed() {
         >
           <h2 className="text-3xl md:text-6xl font-extrabold text-white mb-4">
             Fonctionnalités{" "}
-            <span className="bg-gradient-to-r from-[#0066FF] to-[#BFFF00] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[rgb(var(--theme-accent))] to-[rgb(var(--theme-secondary-accent))] bg-clip-text text-transparent">
               détaillées
             </span>
           </h2>
@@ -72,8 +72,8 @@ export default function FeaturesDetailed() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold transition-all whitespace-nowrap text-sm md:text-base ${activeTab === tab.id
-                ? "bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-white shadow-[0_0_20px_rgba(0,102,255,0.5)] border-transparent"
-                : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-[#BFFF00]/30"
+                ? "bg-gradient-to-r from-[rgb(var(--theme-accent))] to-[#0052CC] text-white shadow-[0_0_20px_rgba(var(--theme-accent-rgb,0,102,255),0.5)] border-transparent"
+                : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-[rgb(var(--theme-secondary-accent))]/30"
                 }`}
             >
               <div className="flex items-center gap-2">
@@ -161,14 +161,17 @@ function RankingFeature() {
             </div>
 
             {/* Série actuelle - Header Card */}
-            <div className="mb-4 rounded-xl border border-[#CCFF00] bg-gradient-to-r from-gray-900 to-gray-800 p-3 md:p-4 relative overflow-hidden group">
+            <div
+              className="mb-4 rounded-xl border bg-gradient-to-r from-gray-900 to-gray-800 p-3 md:p-4 relative overflow-hidden group"
+              style={{ borderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }}
+            >
               <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-700">
-                <Flame size={120} className="text-[#CCFF00]" />
+                <Flame size={120} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
               </div>
 
               <div className="relative z-10 flex items-center justify-between">
                 <div>
-                  <div className="text-[9px] md:text-[10px] uppercase tracking-[0.15em] text-[#CCFF00] font-bold mb-1">
+                  <div className="text-[9px] md:text-[10px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                     Série de victoires en cours
                   </div>
                   <div className="flex items-baseline gap-2">
@@ -178,7 +181,7 @@ function RankingFeature() {
                 </div>
                 <div className="flex flex-col items-center">
                   <Flame size={24} className="text-white mb-1 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] md:w-8 md:h-8" fill="currentColor" />
-                  <div className="text-[9px] md:text-[10px] text-[#CCFF00] font-bold">Meilleure : 13</div>
+                  <div className="text-[9px] md:text-[10px] font-bold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Meilleure : 13</div>
                 </div>
               </div>
             </div>
@@ -186,57 +189,57 @@ function RankingFeature() {
             <div className="grid grid-cols-2 gap-2 md:gap-4">
               {/* Points */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Points</div>
-                <div className="text-2xl md:text-3xl font-bold text-[#172554] tabular-nums">531</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Points</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>531</div>
               </div>
 
               {/* Matchs */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Matchs</div>
-                <div className="text-2xl md:text-3xl font-bold text-[#172554] tabular-nums">48</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Matchs</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>48</div>
               </div>
 
               {/* Victoires */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Victoires</div>
-                <div className="text-2xl md:text-3xl font-bold text-[#172554] tabular-nums">41</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Victoires</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>41</div>
               </div>
 
               {/* Défaites */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Défaites</div>
-                <div className="text-2xl md:text-3xl font-bold text-[#172554] tabular-nums">7</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Défaites</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>7</div>
               </div>
 
               {/* Sets Gagnés */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Sets Gagnés</div>
-                <div className="text-2xl md:text-3xl font-bold text-[#172554] tabular-nums">82</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Sets Gagnés</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>82</div>
               </div>
 
               {/* Sets Perdus */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Sets Perdus</div>
-                <div className="text-2xl md:text-3xl font-bold text-[#172554] tabular-nums">14</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Sets Perdus</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>14</div>
               </div>
 
               {/* Winrate */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Winrate</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Winrate</div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
                   <div className="text-2xl md:text-3xl font-bold text-emerald-500 tabular-nums">85%</div>
@@ -245,10 +248,10 @@ function RankingFeature() {
 
               {/* Badges */}
               <div
-                className="rounded-lg border-l-2 md:border-l-4 border-l-[#CCFF00] bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg"
+                className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#172554]/70 mb-1 font-medium">Badges</div>
-                <div className="text-2xl md:text-3xl font-bold text-[#172554] tabular-nums">10 / 16</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text-rgb), 0.7)' }}>Badges</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>10 / 16</div>
               </div>
             </div>
           </div>
@@ -302,7 +305,7 @@ function RankingFeature() {
           <div className="flex-1 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Trophy className="text-[#CCFF00] w-5 h-5" />
+                <Trophy className="w-5 h-5" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                 TOP JOUEURS
               </h3>
             </div>
@@ -329,8 +332,8 @@ function RankingFeature() {
                           }`}
                       >
                         <td className="px-4 py-3">
-                          <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${player.rank === 1 ? "bg-[#FBBF24] text-[#071554]" :
-                            player.rank === 2 ? "bg-gray-300 text-[#071554]" :
+                          <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold ${player.rank === 1 ? "bg-[rgb(var(--theme-secondary-accent))] text-[var(--theme-player-page)]" :
+                            player.rank === 2 ? "bg-gray-300 text-[var(--theme-player-page)]" :
                               player.rank === 3 ? "bg-amber-700 text-white" :
                                 "bg-slate-700 text-white"
                             }`}>
@@ -414,7 +417,7 @@ function GamificationFeature() {
 
                 <div className="flex-shrink-0 w-full mt-auto">
                   {badge.obtained ? (
-                    <div className="w-full rounded-lg bg-[#172554] px-1.5 md:px-2 py-0.5 md:py-1 text-[8px] md:text-[9px] font-semibold text-white tabular-nums">
+                    <div className="w-full rounded-lg px-1.5 md:px-2 py-0.5 md:py-1 text-[8px] md:text-[9px] font-semibold text-white tabular-nums" style={{ backgroundColor: 'var(--theme-text, #172554)' }}>
                       ✓ Débloqué
                     </div>
                   ) : (
@@ -457,7 +460,7 @@ function GamificationFeature() {
                     </div>
                     <div className="w-full bg-white/10 rounded-full h-1.5">
                       <div
-                        className={`h-1.5 rounded-full ${player.completed ? "bg-green-400" : "bg-[#0066FF]"}`}
+                        className={`h-1.5 rounded-full ${player.completed ? "bg-green-400" : "bg-blue-600"}`}
                         style={{ width: `${Math.min((player.progress / player.target) * 100, 100)}%` }}
                       />
                     </div>
@@ -494,7 +497,7 @@ function MatchEntryFeature() {
       {/* Formulaire d'enregistrement - Design Web Réel */}
       <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20 h-full">
         <h3 className="text-base md:text-lg font-bold text-white mb-4 md:mb-6 uppercase tracking-widest flex items-center gap-2">
-          <Zap className="text-[#CCFF00] w-4 h-4 md:w-5 md:h-5" />
+          <Zap className="w-4 h-4 md:w-5 md:h-5" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
           ENREGISTRER UN MATCH
         </h3>
 
@@ -526,7 +529,8 @@ function MatchEntryFeature() {
                   <input
                     type="text"
                     value="Sophie D."
-                    className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none focus:border-padel-green"
+                    className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none focus:ring-1"
+                    style={{ '--tw-ring-color': 'rgb(var(--theme-secondary-accent, 204, 255, 0))' } as any}
                   />
                   <div className="absolute top-1/2 right-3 -translate-y-1/2">
                     <div className="w-2 h-2 rounded-full bg-green-500" />
@@ -545,7 +549,8 @@ function MatchEntryFeature() {
                 <input
                   type="text"
                   value="Thomas R."
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none focus:border-padel-green"
+                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none transition-colors"
+                  style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)' }}
                 />
               </div>
               <div>
@@ -553,7 +558,8 @@ function MatchEntryFeature() {
                 <input
                   type="text"
                   value="Julie M."
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none focus:border-padel-green"
+                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white focus:outline-none transition-colors"
+                  style={{ borderColor: 'focus:rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)' }}
                 />
               </div>
             </div>
@@ -564,7 +570,8 @@ function MatchEntryFeature() {
             <label className="mb-2 md:mb-3 block text-xs md:text-sm font-medium text-white">Équipe gagnante</label>
             <div className="flex gap-3">
               <button
-                className="flex-1 rounded-lg border-2 border-padel-green bg-padel-green text-[#071554] shadow-lg shadow-padel-green/50 px-3 py-2.5 md:px-4 md:py-3 text-sm font-semibold transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 rounded-lg border-2 shadow-lg px-3 py-2.5 md:px-4 md:py-3 text-sm font-semibold transition-all flex items-center justify-center gap-1.5"
+                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)' }}
               >
                 <Trophy size={14} className="md:w-4 md:h-4" /> Équipe 1
               </button>
@@ -588,7 +595,7 @@ function MatchEntryFeature() {
                       6
                     </div>
                     <span className="text-white">-</span>
-                    <div className="w-14 md:w-16 rounded-md border border-white/10 bg-white px-2 py-1.5 md:px-3 md:py-2 text-sm text-[#071554] text-center font-mono font-bold">
+                    <div className="w-14 md:w-16 rounded-md border border-white/10 bg-white px-2 py-1.5 md:px-3 md:py-2 text-sm text-center font-mono font-bold" style={{ color: 'var(--theme-text, #071554)' }}>
                       {set === 1 ? 3 : 4}
                     </div>
                   </div>
@@ -600,7 +607,7 @@ function MatchEntryFeature() {
             </div>
           </div>
 
-          <button className="w-full rounded-md bg-padel-green px-4 py-3 font-semibold text-blue-950 transition-all hover:bg-padel-green/90 hover:shadow-lg lg:mt-4">
+          <button className="w-full rounded-md px-4 py-3 font-semibold transition-all hover:shadow-lg lg:mt-4" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>
             Enregistrer
           </button>
         </div>
@@ -609,7 +616,7 @@ function MatchEntryFeature() {
       {/* Historique des matchs - Style Mobile App */}
       <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl p-4 md:p-6 border border-white/10 h-full overflow-hidden flex flex-col">
         <h3 className="text-base md:text-lg font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
-          <LucideIcons.History className="text-[#CCFF00] w-4 h-4 md:w-5 md:h-5" />
+          <LucideIcons.History className="w-4 h-4 md:w-5 md:h-5" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
           HISTORIQUE
         </h3>
 
@@ -691,8 +698,8 @@ function MatchEntryFeature() {
                       <div key={idx} className="flex items-center gap-2 py-0.5 md:py-1">
                         {p === "Marc L." ? (
                           <>
-                            <span className="text-xs md:text-sm font-semibold text-[#071554] tracking-tight">{p}</span>
-                            <span className="rounded-full bg-padel-green px-1.5 py-0.5 text-[10px] md:text-xs font-bold text-[#071554] shadow-sm">VOUS</span>
+                            <span className="text-xs md:text-sm font-semibold tracking-tight" style={{ color: 'var(--theme-text, #071554)' }}>{p}</span>
+                            <span className="rounded-full px-1.5 py-0.5 text-[10px] md:text-xs font-bold shadow-sm" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>VOUS</span>
                           </>
                         ) : (
                           <span className="text-xs md:text-sm font-normal text-gray-900 tracking-tight">{p}</span>
@@ -733,7 +740,7 @@ function PartnershipsFeature() {
       {/* Suggestions de partenaires - Design Réel */}
       <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-4 md:p-6 border border-white/20">
         <h3 className="text-base md:text-lg font-bold text-white mb-4 md:mb-6 flex items-center gap-2">
-          <Users className="text-[#CCFF00] w-4 h-4 md:w-5 md:h-5" />
+          <Users className="w-4 h-4 md:w-5 md:h-5" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
           SUGGESTIONS DE PARTENAIRES
         </h3>
         <div className="grid grid-cols-2 gap-2 md:gap-3">
@@ -770,7 +777,7 @@ function PartnershipsFeature() {
                 <button className="h-7 md:h-8 rounded-lg border border-white/10 text-white flex items-center justify-center hover:bg-white/5 transition-colors">
                   <LucideIcons.Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 </button>
-                <button className="h-7 md:h-8 rounded-lg bg-padel-green text-[#071554] flex items-center justify-center hover:scale-105 transition-all shadow-lg shadow-padel-green/20">
+                <button className="h-7 md:h-8 rounded-lg flex items-center justify-center hover:scale-105 transition-all shadow-lg" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}>
                   <UserPlus className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 </button>
               </div>
@@ -847,10 +854,12 @@ function TournamentsFeature() {
       className="flex items-center justify-center"
     >
       <div className="w-full max-w-3xl rounded-2xl border border-white/15 bg-gradient-to-br from-[#020617] via-[#020617] to-[#0f172a] p-8 md:p-10 shadow-[0_30px_80px_rgba(15,23,42,0.9)] relative overflow-hidden">
-        {/* Glow / background elements */}
-        <div className="pointer-events-none absolute inset-0 opacity-40">
-          <div className="absolute -top-24 -right-32 w-72 h-72 bg-[#0066FF] rounded-full blur-3xl" />
-          <div className="absolute bottom-[-4rem] left-[-2rem] w-64 h-64 bg-[#BFFF00] rounded-full blur-3xl opacity-70" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--theme-accent-rgb,0,102,255),0.15),transparent)] z-0 pointer-events-none" />
+
+        {/* Halos vert et bleu animés */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">

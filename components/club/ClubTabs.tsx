@@ -76,7 +76,7 @@ function ClubTabsContent({
                             window.history.replaceState(null, '', newUrl.toString());
                         }}
                         className={`px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold transition-all duration-200 relative flex items-center justify-center gap-1.5 ${currentTab === tab.id
-                            ? 'text-white border-b-2 border-padel-green'
+                            ? 'text-white border-b-2'
                             : 'text-white/60 hover:text-white/80'
                             }`}
                     >
@@ -87,7 +87,7 @@ function ClubTabsContent({
                             </span>
                         )}
                         {currentTab === tab.id && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
                         )}
                     </button>
                 ))}

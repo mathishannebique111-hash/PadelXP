@@ -132,7 +132,7 @@ export default function MatchConfirmForm() {
       {/* Halos vert et bleu animés */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', animationDelay: "1s" }} />
       </div>
 
 
@@ -149,7 +149,7 @@ export default function MatchConfirmForm() {
 
           {loadingMatch ? (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
-              <div className="w-8 h-8 border-4 border-padel-green border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'rgb(var(--theme-secondary-accent))', borderTopColor: 'transparent' }} />
               <p className="text-sm text-gray-500">Chargement des détails du match...</p>
             </div>
           ) : matchData ? (
@@ -163,7 +163,7 @@ export default function MatchConfirmForm() {
                   <div className="flex flex-col items-end">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Lieu</span>
                     <span className="text-sm font-semibold text-[#071554] flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4 text-padel-green" />
+                      <MapPin className="h-4 w-4" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                       {matchData.locationName}
                     </span>
                   </div>
@@ -174,7 +174,7 @@ export default function MatchConfirmForm() {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Équipe 1</span>
                     {matchData.participants.filter(p => p.team === 1).map((p, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-padel-green" />
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
                         <span className="text-sm font-medium text-gray-700">{p.name}</span>
                       </div>
                     ))}
@@ -216,11 +216,16 @@ export default function MatchConfirmForm() {
             <button
               onClick={handleConfirm}
               disabled={loading || confirmed || loadingMatch}
-              className="flex-[2] rounded-xl bg-padel-green px-6 py-4 font-bold text-[#071554] shadow-lg shadow-padel-green/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 disabled:grayscale"
+              className="flex-[2] rounded-xl px-6 py-4 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 disabled:grayscale"
+              style={{
+                backgroundColor: 'rgb(var(--theme-secondary-accent))',
+                color: 'var(--theme-player-page, #071554)',
+                boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+              }}
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-[#071554] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--theme-player-page, #071554)', borderTopColor: 'transparent' }} />
                   <span>Confirmation...</span>
                 </div>
               ) : confirmed ? "Match Confirmé ✓" : "Confirmer le match"}

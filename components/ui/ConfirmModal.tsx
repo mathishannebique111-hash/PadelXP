@@ -56,9 +56,10 @@ export function ConfirmModal({
                         onClick={onConfirm}
                         disabled={isLoading}
                         className={`w-full sm:w-auto font-semibold ${variant === "default"
-                                ? "bg-padel-green text-black hover:bg-padel-green/90"
-                                : ""
+                            ? ""
+                            : ""
                             }`}
+                        style={variant === "default" ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' } : {}}
                     >
                         {isLoading ? (
                             <div className="flex items-center gap-2">

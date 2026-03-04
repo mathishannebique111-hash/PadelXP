@@ -61,12 +61,14 @@ export default function ParallaxHalos() {
       <div
         ref={haloTopRef}
         aria-hidden
-        className="fixed -top-24 -right-24 h-[460px] w-[460px] rounded-full bg-[#0066FF]/40 blur-[90px] will-change-transform"
+        className="fixed -top-24 -right-24 h-[460px] w-[460px] rounded-full blur-[90px] opacity-20 will-change-transform"
+        style={{ backgroundColor: 'var(--theme-accent, #0066FF)' }}
       />
       <div
         ref={haloBottomRef}
         aria-hidden
-        className="fixed -bottom-28 -left-28 h-[400px] w-[400px] rounded-full bg-[#BFFF00]/40 blur-[90px] will-change-transform"
+        className="fixed -bottom-28 -left-28 h-[400px] w-[400px] rounded-full blur-[90px] will-change-transform"
+        style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191, 255, 0), 0.4)' }}
       />
     </>
   );

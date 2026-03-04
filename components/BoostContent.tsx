@@ -106,7 +106,7 @@ export default async function BoostContent() {
                 <ul className="space-y-3">
                     <li className="flex items-start gap-3">
                         <div>
-                            <strong className="text-sm font-semibold text-padel-green">Active un boost lors de l'enregistrement d'un match</strong>
+                            <strong className="text-sm font-semibold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Active un boost lors de l'enregistrement d'un match</strong>
                             <p className="mt-1 text-xs text-white font-normal">
                                 Tu peux cocher l'option "Appliquer un boost" avant d'enregistrer ton match.
                             </p>
@@ -114,7 +114,7 @@ export default async function BoostContent() {
                     </li>
                     <li className="flex items-start gap-3">
                         <div>
-                            <strong className="text-sm font-semibold text-padel-green">Gagne +30% de points si tu gagnes</strong>
+                            <strong className="text-sm font-semibold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Gagne +30% de points si tu gagnes</strong>
                             <p className="mt-1 text-xs text-white font-normal">
                                 Si tu gagnes le match, tu reçois 13 points au lieu de 10 (+30%).
                             </p>
@@ -122,7 +122,7 @@ export default async function BoostContent() {
                     </li>
                     <li className="flex items-start gap-3">
                         <div>
-                            <strong className="text-sm font-semibold text-padel-green">Limite de 10 boosts par mois</strong>
+                            <strong className="text-sm font-semibold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Limite de 10 boosts par mois</strong>
                             <p className="mt-1 text-xs text-white font-normal">
                                 Pour garder le classement fair-play, tu peux utiliser maximum 10 boosts par mois.
                             </p>

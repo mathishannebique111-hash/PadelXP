@@ -109,13 +109,13 @@ export default function ContactPage() {
         if (msgs && isMounted) {
           // Dédupliquer les messages par ID et trier par date
           const uniqueMessages = msgs
-            .reduce((acc, msg) => {
-              if (!acc.find((m) => m.id === msg.id)) {
+            .reduce((acc: Message[], msg: Message) => {
+              if (!acc.find((m: Message) => m.id === msg.id)) {
                 acc.push(msg);
               }
               return acc;
             }, [] as Message[])
-            .sort((a, b) =>
+            .sort((a: Message, b: Message) =>
               new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
             );
           setMessages(uniqueMessages);
@@ -139,7 +139,7 @@ export default function ContactPage() {
                 table: "messages",
                 filter: `conversation_id=eq.${conv.id}`,
               },
-              (payload) => {
+              (payload: any) => {
                 if (isMounted) {
                   const newMessage = payload.new as Message;
                   setMessages((current) => {
@@ -173,7 +173,7 @@ export default function ContactPage() {
     init();
 
     // Écouter les changements d'authentification pour mettre à jour userId
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       if (session?.user && isMounted) {
         userIdRef.current = session.user.id;
         setUserId(session.user.id);
@@ -263,8 +263,8 @@ export default function ContactPage() {
 
       {/* Halos vert et bleu animés */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
       </div>
       {/* Header avec PageTitle */}
       <div className="relative z-10 px-4 pt-4 md:pt-8 pb-4 flex-shrink-0">

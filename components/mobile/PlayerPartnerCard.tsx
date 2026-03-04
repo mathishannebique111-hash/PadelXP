@@ -554,23 +554,19 @@ export function PlayerPartnerCard({ hasLevel = true, pendingRequestSender = null
   // Utiliser filteredPendingRequests au lieu de pendingRequests si partner existe
   const displayRequests = partner ? filteredPendingRequests : pendingRequests;
 
-  // Ne pas afficher le cadre si le joueur a déjà un partenaire habituel
-  if (partner) {
-    return null;
-  }
-
   return (
     <div className="space-y-3">
       <div className="bg-slate-900 rounded-2xl p-4 border border-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Users size={18} className="text-padel-green" />
+            <Users size={18} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
             <span className="text-sm font-semibold text-white">Mon partenaire habituel</span>
           </div>
           {hasLevel && !partner && (
             <button
               onClick={() => setShowAddPartner(!showAddPartner)}
-              className="text-padel-green hover:brightness-110 text-sm font-medium"
+              className="hover:brightness-110 text-sm font-medium"
+              style={{ color: 'rgb(var(--theme-secondary-accent))' }}
             >
               {showAddPartner ? 'Annuler' : 'Ajouter'}
             </button>

@@ -72,7 +72,10 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
     if (loading) {
         return (
             <div className="flex items-center justify-center py-16">
-                <div className="w-6 h-6 border-2 border-white/20 border-t-padel-green rounded-full animate-spin" />
+                <div
+                    className="w-6 h-6 border-2 border-white/20 rounded-full animate-spin"
+                    style={{ borderTopColor: 'rgb(var(--theme-secondary-accent))' }}
+                />
             </div>
         );
     }
@@ -81,7 +84,13 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
         return (
             <div className="text-center py-12">
                 <p className="text-white/40">Ligue introuvable</p>
-                <button onClick={onBack} className="mt-4 text-padel-green font-bold text-sm underline">Retour</button>
+                <button
+                    onClick={onBack}
+                    className="mt-4 font-bold text-sm underline transition-colors"
+                    style={{ color: 'rgb(var(--theme-secondary-accent))' }}
+                >
+                    Retour
+                </button>
             </div>
         );
     }
@@ -138,7 +147,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 }
                             </span>
                             {selectedPhase === null && league.phase_ends_at && (
-                                <span className="text-xs text-padel-green font-medium">
+                                <span className="text-xs font-medium" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                                     {getPhaseRemainingDays(league.phase_ends_at)}j restants pour cette phase
                                 </span>
                             )}
@@ -148,7 +157,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                             <select
                                 value={selectedPhase === null ? "" : selectedPhase}
                                 onChange={(e) => setSelectedPhase(e.target.value === "" ? null : Number(e.target.value))}
-                                className="bg-white/10 border border-white/20 text-white text-xs rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-padel-green"
+                                className="bg-white/10 border border-white/20 text-white text-xs rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:ring-1 transition-all"
+                                style={{ focusRingColor: 'rgb(var(--theme-secondary-accent))' } as any}
                             >
                                 <option value="">Phase Actuelle</option>
                                 <option value={0}>Historique : Phase 0 (Placement)</option>
@@ -172,7 +182,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         </div>
                         <div className="text-[10px] font-bold text-slate-400">2ème</div>
                         <div className="text-xs font-bold text-white truncate w-full text-center">{standings[1].display_name}</div>
-                        <div className="text-[10px] font-bold text-padel-green">{standings[1].points} pts</div>
+                        <div className="text-[10px] font-bold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{standings[1].points} pts</div>
                     </div>
                     {/* 1er */}
                     <div className="flex flex-col items-center w-28 -mt-4">
@@ -182,7 +192,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         </div>
                         <div className="text-[10px] font-black text-amber-400">1er</div>
                         <div className="text-sm font-black text-white truncate w-full text-center">{standings[0].display_name}</div>
-                        <div className="text-xs font-bold text-padel-green">{standings[0].points} pts</div>
+                        <div className="text-xs font-bold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{standings[0].points} pts</div>
                     </div>
                     {/* 3ème */}
                     <div className="flex flex-col items-center w-24">
@@ -191,7 +201,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         </div>
                         <div className="text-[10px] font-bold text-amber-700">3ème</div>
                         <div className="text-xs font-bold text-white truncate w-full text-center">{standings[2].display_name}</div>
-                        <div className="text-[10px] font-bold text-padel-green">{standings[2].points} pts</div>
+                        <div className="text-[10px] font-bold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{standings[2].points} pts</div>
                     </div>
                 </div>
             )}
@@ -229,7 +239,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 return (
                                     <div
                                         key={player.player_id}
-                                        className={`relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center ${player.is_current_user ? "bg-padel-green/10" : ""}`}
+                                        className="relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center"
+                                        style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' } : {}}
                                     >
                                         {/* Rang */}
                                         <div className="text-center">
@@ -242,7 +253,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                                 {player.display_name}
                                             </span>
                                             {player.is_current_user && (
-                                                <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>
+                                                <span className="text-[8px] px-1 rounded-full font-black" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>MOI</span>
                                             )}
                                         </div>
 
@@ -250,8 +261,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         <div className="flex flex-col items-center gap-0.5">
                                             <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                                                 <div
-                                                    className={`h-full rounded-full transition-all duration-300 ${player.matches_played >= league.max_matches_per_player ? "bg-amber-400" : "bg-padel-green"}`}
-                                                    style={{ width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` }}
+                                                    className={`h-full rounded-full transition-all duration-300 ${player.matches_played >= league.max_matches_per_player ? "bg-amber-400" : ""}`}
+                                                    style={player.matches_played < league.max_matches_per_player ? { backgroundColor: 'rgb(var(--theme-secondary-accent))' } : {}}
                                                 />
                                             </div>
                                             <span className="text-[9px] text-white/30 font-medium">
@@ -291,7 +302,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         return (
                                             <div
                                                 key={player.player_id}
-                                                className={`relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center ${player.is_current_user ? "bg-padel-green/10" : ""}`}
+                                                className="relative grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center"
+                                                style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' } : {}}
                                             >
                                                 {/* Rang Global */}
                                                 <div className="text-center">
@@ -311,9 +323,9 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                                 {/* Division Projetée */}
                                                 <div className="text-center font-black">
                                                     <span className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-widest ${projectedDivision === 1 ? "bg-amber-400 text-black" :
-                                                            projectedDivision === 2 ? "bg-slate-300 text-black" :
-                                                                projectedDivision === 3 ? "bg-amber-700 text-white" :
-                                                                    "bg-white/10 text-white"
+                                                        projectedDivision === 2 ? "bg-slate-300 text-black" :
+                                                            projectedDivision === 3 ? "bg-amber-700 text-white" :
+                                                                "bg-white/10 text-white"
                                                         }`}>
                                                         Div {projectedDivision}
                                                     </span>
@@ -344,8 +356,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                     {standings.map((player) => (
                         <div
                             key={player.player_id}
-                            className={`grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center ${player.is_current_user ? "bg-padel-green/10" : ""
-                                }`}
+                            className="grid grid-cols-[40px_1fr_80px_60px] px-3 py-2.5 border-b border-white/5 items-center"
+                            style={player.is_current_user ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' } : {}}
                         >
                             {/* Rang */}
                             <div className="text-center">
@@ -365,7 +377,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                     {player.display_name}
                                 </span>
                                 {player.is_current_user && (
-                                    <span className="text-[8px] bg-padel-green px-1 rounded-full font-black text-[#071554]">MOI</span>
+                                    <span className="text-[8px] px-1 rounded-full font-black" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}>MOI</span>
                                 )}
                             </div>
 
@@ -375,9 +387,9 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                     <div
                                         className={`h-full rounded-full transition-all duration-300 ${player.matches_played >= league.max_matches_per_player
                                             ? "bg-amber-400"
-                                            : "bg-padel-green"
+                                            : ""
                                             }`}
-                                        style={{ width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` }}
+                                        style={player.matches_played < league.max_matches_per_player ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` } : { width: `${Math.min(100, (player.matches_played / league.max_matches_per_player) * 100)}%` }}
                                     />
                                 </div>
                                 <span className="text-[9px] text-white/30 font-medium">
@@ -419,7 +431,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 <X size={20} />
                             </button>
                             <h3 className="text-xl font-black text-white">Règles de la Ligue</h3>
-                            <p className="text-sm font-medium text-padel-green mt-1">
+                            <p className="text-sm font-medium mt-1" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                                 {league.format === "divisions" ? "Format Montées/Descentes" : "Format Championnat"}
                             </p>
                         </div>
@@ -430,7 +442,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 <>
                                     <div className="space-y-4">
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Trophy size={16} />
                                             </div>
                                             <div>
@@ -446,7 +458,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Users size={16} />
                                             </div>
                                             <div>
@@ -458,7 +470,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Info size={16} />
                                             </div>
                                             <div>
@@ -479,7 +491,10 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                 <>
                                     <div className="space-y-4">
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                            <div
+                                                className="mt-0.5 p-1.5 rounded-full shrink-0"
+                                                style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}
+                                            >
                                                 <Trophy size={16} />
                                             </div>
                                             <div>
@@ -491,7 +506,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Users size={16} />
                                             </div>
                                             <div>
@@ -503,7 +518,7 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 p-1.5 rounded-full bg-padel-green/20 text-padel-green shrink-0">
+                                            <div className="mt-0.5 p-1.5 rounded-full shrink-0" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Info size={16} />
                                             </div>
                                             <div>
@@ -524,7 +539,8 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                         <div className="p-4 border-t border-white/5 bg-[#07102e] shrink-0">
                             <button
                                 onClick={() => setShowInfoPopup(false)}
-                                className="w-full py-3 rounded-xl bg-padel-green text-[#071554] font-black text-sm active:scale-[0.98] transition-transform"
+                                className="w-full py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform"
+                                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}
                             >
                                 J'ai compris
                             </button>

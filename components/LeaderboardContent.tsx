@@ -423,7 +423,8 @@ export default function LeaderboardContent({
             onClick={() => {
               router.push('/home?tab=club');
             }}
-            className="inline-flex items-center gap-2 text-padel-green font-semibold text-sm hover:underline mt-2"
+            className="inline-flex items-center gap-2 font-semibold text-sm hover:underline mt-2"
+            style={{ color: 'rgb(var(--theme-secondary-accent))' }}
           >
             Rejoindre un club <ArrowRight className="w-4 h-4" />
           </button>

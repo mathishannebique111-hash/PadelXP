@@ -384,8 +384,8 @@ export default function PlayerAutocomplete({
                                 </span>
                               )
                             ) : (
-                              <span className="flex items-center gap-1.5 bg-[#CCFF00] px-2.5 py-1 rounded-lg border border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)]">
-                                <span className="text-[9px] uppercase font-black tracking-[0.1em] text-[#071554]">Même club</span>
+                              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border shadow-sm" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 204,255,0), 0.3)' }}>
+                                <span className="text-[9px] uppercase font-black tracking-[0.1em]" style={{ color: 'var(--theme-player-page, #071554)' }}>Même club</span>
                               </span>
                             )}
                             {player.niveau_padel && (

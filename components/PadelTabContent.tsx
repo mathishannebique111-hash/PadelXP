@@ -16,8 +16,8 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
   if (!profile || !profile.niveau_padel) {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-white/5 rounded-2xl border border-white/10 text-center">
-        <div className="w-16 h-16 bg-padel-green/10 rounded-full flex items-center justify-center mb-4">
-          <Lightbulb className="text-padel-green" size={32} />
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.1)' }}>
+          <Lightbulb size={32} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
         </div>
         <h3 className="text-xl font-bold text-white mb-2">Configure ton profil Padel</h3>
         <p className="text-gray-400 mb-6 max-w-xs">
@@ -25,7 +25,8 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
         </p>
         <button
           onClick={() => setShowWizard(true)}
-          className="px-6 py-3 bg-padel-green text-[#071554] font-black rounded-xl hover:bg-padel-green/90 transition-all shadow-lg shadow-padel-green/20"
+          className="px-6 py-3 font-black rounded-xl transition-all shadow-lg"
+          style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
         >
           DÉMARRER L'ÉVALUATION
         </button>
@@ -51,7 +52,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
             <div className="flex-1 md:max-w-xs flex flex-col items-center md:items-start group">
               <div className="relative mb-6">
                 {/* Lueur subtile en arrière-plan */}
-                <div className="absolute inset-0 bg-padel-green/5 blur-2xl rounded-full scale-110 pointer-events-none"></div>
+                <div className="absolute inset-0 blur-2xl rounded-full scale-110 pointer-events-none" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.05)' }}></div>
 
                 {/* Cercle Unique Élégant + Jauge de Progression */}
                 <div className="relative w-36 h-36 sm:w-40 sm:h-40 rounded-full bg-slate-900/50 backdrop-blur-md flex items-center justify-center shadow-[0_0_20px_rgba(185,255,0,0.05)] transition-all duration-300 hover:shadow-[0_0_25px_rgba(185,255,0,0.1)]">
@@ -68,24 +69,25 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                       strokeWidth="2"
                       className="text-white/10"
                     />
-                    {/* Jauge active (vert padel) */}
+                    {/* Jauge active (vert padel / club accent) */}
                     <circle
                       cx="50"
                       cy="50"
                       r="46"
                       fill="none"
-                      stroke="#BFFF00"
+                      stroke="rgb(var(--theme-secondary-accent))"
                       strokeWidth="4"
                       strokeLinecap="round"
                       strokeDasharray="289"
                       strokeDashoffset={289 - (289 * (profile.niveau_padel % 1))}
-                      className="transition-all duration-1000 ease-out drop-shadow-[0_0_6px_rgba(191,255,0,0.4)]"
+                      className="transition-all duration-1000 ease-out"
+                      style={{ filter: "drop-shadow(0 0 6px rgba(var(--theme-secondary-accent-rgb, 191, 255, 0), 0.4))" }}
                     />
                   </svg>
 
                   {/* Contenu textuel au centre */}
                   <div className="flex flex-col items-center justify-center z-10">
-                    <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-medium text-padel-green/80 mb-1">
+                    <span className="text-[10px] sm:text-xs uppercase tracking-[0.3em] font-medium mb-1" style={{ color: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.8)' }}>
                       Niveau
                     </span>
                     <span className="text-5xl sm:text-6xl font-black text-white tracking-tighter drop-shadow-md">
@@ -115,7 +117,8 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                         });
                       }
                     }}
-                    className="w-full px-4 py-3 text-[13px] rounded-xl bg-padel-green text-[#071554] font-black hover:bg-padel-green/90 flex items-center justify-center gap-2 transition-all shadow-lg shadow-padel-green/20 active:scale-95"
+                    className="w-full px-4 py-3 text-[13px] rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
                   >
                     <Share2 size={14} className="stroke-[3px]" />
                     PARTAGER MON PROFIL
@@ -132,15 +135,16 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                     <span className="text-[11px] sm:text-xs text-gray-400">
                       Vers niveau {Math.floor(profile.niveau_padel) + 1}
                     </span>
-                    <span className="text-xs sm:text-sm text-padel-green font-semibold">
+                    <span className="text-xs sm:text-sm font-semibold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                       {Math.round((profile.niveau_padel % 1) * 100)}%
                     </span>
                   </div>
                   <div className="h-2.5 bg-slate-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-padel-green transition-all duration-500"
+                      className="h-full transition-all duration-500"
                       style={{
-                        width: `${Math.round((profile.niveau_padel % 1) * 100)}%`,
+                        backgroundColor: 'rgb(var(--theme-secondary-accent))',
+                        width: `${Math.round((profile.niveau_padel % 1) * 100)}%`
                       }}
                     />
                   </div>
@@ -164,7 +168,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                           >
                             <ArrowRight
                               size={12}
-                              className="text-padel-green flex-shrink-0 mt-0.5"
+                              className="flex-shrink-0 mt-0.5" style={{ color: 'rgb(var(--theme-secondary-accent))' }}
                             />
                             <span>{rec}</span>
                           </li>

@@ -27,6 +27,7 @@ import {
   Check,
   MessageCircle,
   MapPin,
+  LucideIcon,
 } from "lucide-react";
 import PadelLoader from "@/components/ui/PadelLoader";
 import { createBrowserClient } from "@supabase/ssr";
@@ -82,32 +83,32 @@ const shotLabels: Record<string, string> = {
   defense: "Bajada",
 };
 
-const levelIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const levelIcons: Record<string, LucideIcon> = {
   beginner: Sprout,
   leisure: Users,
   regular: Flame,
   competition: Trophy,
 };
 
-const sideIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const sideIcons: Record<string, LucideIcon> = {
   left: ArrowLeft,
   right: ArrowRight,
   indifferent: ArrowLeftRight,
 };
 
-const handIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const handIcons: Record<string, LucideIcon> = {
   right: Hand,
   left: Hand,
 };
 
-const frequencyIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const frequencyIcons: Record<string, LucideIcon> = {
   monthly: Calendar,
   weekly: CalendarDays,
   "2-3weekly": CalendarRange,
   "3+weekly": CalendarClock,
 };
 
-const shotIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const shotIcons: Record<string, LucideIcon> = {
   smash: Zap,
   vibora: TrendingUp,
   lob: ArrowBigUp,
@@ -467,7 +468,7 @@ export default function PadelProfileSection({
         <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
           <div className="flex items-center gap-4">
             {Icon && (
-              <Icon className={`w-7 h-7 text-padel-green flex-shrink-0 ${iconClassName}`} />
+              <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
@@ -500,7 +501,7 @@ export default function PadelProfileSection({
         >
           <div className="flex items-center gap-4">
             {Icon && (
-              <Icon className={`w-7 h-7 text-padel-green flex-shrink-0 ${iconClassName}`} />
+              <Icon className={`w-7 h-7 flex-shrink-0 ${iconClassName}`} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
@@ -562,8 +563,9 @@ export default function PadelProfileSection({
                   >
                     {OptionIcon && (
                       <OptionIcon
-                        className={`w-5 h-5 text-padel-green flex-shrink-0 ${isOptionLeftHanded ? "rotate-180" : ""
+                        className={`w-5 h-5 flex-shrink-0 ${isOptionLeftHanded ? "rotate-180" : ""
                           }`}
+                        style={{ color: 'rgb(var(--theme-secondary-accent))' }}
                       />
                     )}
                     <span className="text-sm font-medium text-white flex-1">
@@ -637,7 +639,7 @@ export default function PadelProfileSection({
         {/* Partenaire Habituel */}
         <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group relative">
           <div className="flex items-center gap-4">
-            <Users className="w-7 h-7 text-padel-green flex-shrink-0" />
+            <Users className="w-7 h-7 flex-shrink-0" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="text-xs text-white/50 uppercase tracking-wider font-medium">
@@ -710,7 +712,7 @@ export default function PadelProfileSection({
         {(data.postal_code || data.city) && (
           <div className="rounded-2xl border border-white/30 bg-white/5 p-5 hover:bg-white/[0.07] group">
             <div className="flex items-center gap-4">
-              <MapPin className="w-7 h-7 text-padel-green flex-shrink-0" />
+              <MapPin className="w-7 h-7 flex-shrink-0" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-white/50 uppercase tracking-wider font-medium mb-1.5">
                   Localisation

@@ -61,7 +61,7 @@ export default function TodayMatchesList() {
     return (
         <div className="mt-8 space-y-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <span className="w-1 h-6 bg-padel-green rounded-full"></span>
+                <span className="w-1 h-6 rounded-full" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }}></span>
                 Matchs d'aujourd'hui
             </h2>
 
@@ -74,7 +74,8 @@ export default function TodayMatchesList() {
                     return (
                         <div
                             key={match.id}
-                            className="group bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-5 hover:border-padel-green/30 transition-all"
+                            className="group bg-slate-900/60 backdrop-blur-md rounded-xl border border-white/5 p-5 transition-all"
+                            style={{ borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)' }}
                         >
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 {/* Infos Match */}
@@ -92,11 +93,18 @@ export default function TodayMatchesList() {
 
                                     <div className="flex items-center gap-4 sm:gap-8">
                                         {/* Équipe 1 */}
-                                        <div className={`flex-1 flex flex-col items-center p-3 rounded-lg border ${winnerTeam === 1 ? 'bg-padel-green/10 border-padel-green/30' : 'bg-slate-800/30 border-white/5'}`}>
+                                        <div
+                                            className={`flex-1 flex flex-col items-center p-3 rounded-lg border ${winnerTeam === 1 ? 'border-transparent' : 'bg-slate-800/30 border-white/5'}`}
+                                            style={winnerTeam === 1 ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.3)' } : {}}
+                                        >
                                             <span className="text-xs text-slate-500 mb-2 uppercase tracking-wider font-bold">Équipe 1</span>
                                             <div className="flex flex-col items-center gap-1 text-center">
                                                 {team1.map((p, idx) => (
-                                                    <span key={idx} className={`text-sm font-semibold ${winnerTeam === 1 ? 'text-padel-green' : 'text-white'}`}>
+                                                    <span
+                                                        key={idx}
+                                                        className={`text-sm font-semibold ${winnerTeam === 1 ? '' : 'text-white'}`}
+                                                        style={winnerTeam === 1 ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}
+                                                    >
                                                         {p.name}
                                                     </span>
                                                 ))}
@@ -112,11 +120,18 @@ export default function TodayMatchesList() {
                                         </div>
 
                                         {/* Équipe 2 */}
-                                        <div className={`flex-1 flex flex-col items-center p-3 rounded-lg border ${winnerTeam === 2 ? 'bg-padel-green/10 border-padel-green/30' : 'bg-slate-800/30 border-white/5'}`}>
+                                        <div
+                                            className={`flex-1 flex flex-col items-center p-3 rounded-lg border ${winnerTeam === 2 ? 'border-transparent' : 'bg-slate-800/30 border-white/5'}`}
+                                            style={winnerTeam === 2 ? { backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.3)' } : {}}
+                                        >
                                             <span className="text-xs text-slate-500 mb-2 uppercase tracking-wider font-bold">Équipe 2</span>
                                             <div className="flex flex-col items-center gap-1 text-center">
                                                 {team2.map((p, idx) => (
-                                                    <span key={idx} className={`text-sm font-semibold ${winnerTeam === 2 ? 'text-padel-green' : 'text-white'}`}>
+                                                    <span
+                                                        key={idx}
+                                                        className={`text-sm font-semibold ${winnerTeam === 2 ? '' : 'text-white'}`}
+                                                        style={winnerTeam === 2 ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}
+                                                    >
                                                         {p.name}
                                                     </span>
                                                 ))}
@@ -128,7 +143,10 @@ export default function TodayMatchesList() {
                                 {/* Badge Vainqueur */}
                                 <div className="flex flex-col items-center md:items-end md:pl-6 md:border-l md:border-white/5">
                                     <span className="text-[10px] text-slate-500 uppercase font-black mb-1">Gagnant</span>
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-padel-green rounded-full text-slate-900 font-bold text-xs">
+                                    <div
+                                        className="flex items-center gap-2 px-3 py-1 rounded-full font-bold text-xs"
+                                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #0f172a)' }}
+                                    >
                                         <Trophy className="w-3 h-3" />
                                         Équipe {winnerTeam}
                                     </div>

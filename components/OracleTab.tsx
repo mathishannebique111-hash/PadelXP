@@ -270,7 +270,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                 layout
                 className={`bg-[#071554]/40 border border-white/10 rounded-3xl relative overflow-hidden backdrop-blur-xl transition-colors duration-700 ${simulating ? 'p-12 min-h-[400px] flex items-center justify-center' : 'p-6 sm:p-8 min-h-0'}`}
             >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-padel-green/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.05)' }} />
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10 w-full">
                     <AnimatePresence mode="wait">
@@ -288,9 +288,14 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                         rotate: [0, 5, -5, 0]
                                     }}
                                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                    className="w-24 h-24 rounded-3xl bg-padel-green/10 border border-padel-green/20 flex items-center justify-center shadow-[0_0_50px_rgba(204,255,0,0.1)]"
+                                    className="w-24 h-24 rounded-3xl flex items-center justify-center border"
+                                    style={{
+                                        backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)',
+                                        borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)',
+                                        boxShadow: "0 0 50px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)"
+                                    }}
                                 >
-                                    <Sparkles className="w-12 h-12 text-padel-green" />
+                                    <Sparkles className="w-12 h-12" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                 </motion.div>
 
                                 <div className="space-y-6 w-full max-w-xs relative z-10">
@@ -314,8 +319,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
 
                                     <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
                                         <motion.div
-                                            className="h-full bg-padel-green shadow-[0_0_15px_rgba(204,255,0,0.5)]"
-                                            initial={{ width: "0%" }}
+                                            className="h-full" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)' }}
                                             animate={{ width: `${((loadingStep + 1) / LOADING_MESSAGES.length) * 100}%` }}
                                             transition={{ duration: 0.5 }}
                                         />
@@ -334,8 +338,8 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                             >
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-padel-green/20 rounded-xl border border-padel-green/30">
-                                            <Swords className="w-6 h-6 text-padel-green" />
+                                        <div className="p-2 rounded-xl border" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)' }}>
+                                            <Swords className="w-6 h-6" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                         </div>
                                         <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Simulateur Oracle</h1>
                                     </div>
@@ -348,7 +352,8 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                     <button
                                         onClick={handleRunSimulation}
                                         disabled={simulating || !selectedPlayers.partner || !selectedPlayers.opp1 || !selectedPlayers.opp2}
-                                        className="h-14 px-8 rounded-2xl bg-padel-green text-[#071554] font-black text-lg shadow-[0_0_30px_rgba(204,255,0,0.2)] hover:shadow-[0_0_40px_rgba(204,255,0,0.4)] hover:scale-105 active:scale-95 transition-all disabled:opacity-30 disabled:hover:scale-100 flex items-center justify-center gap-2 uppercase tracking-tight"
+                                        className="h-14 px-8 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 flex items-center justify-center gap-2 uppercase tracking-tight"
+                                        style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 30px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
                                     >
                                         <Sparkles className="w-5 h-5" />
                                         Lancer l'Oracle
@@ -473,7 +478,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                     <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4 text-center">Pourcentage de victoire pour chaque équipe</div>
                                     <div className="flex justify-between items-end mb-4">
                                         <div className="text-left">
-                                            <div className="text-5xl font-black text-padel-green tracking-tighter">{result.team1.winProbability}%</div>
+                                            <div className="text-5xl font-black tracking-tighter" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>{result.team1.winProbability}%</div>
                                             <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1">Équipe 1</div>
                                         </div>
                                         <div className="text-right">
@@ -484,8 +489,8 @@ export default function OracleTab({ selfId }: { selfId: string }) {
 
                                     <div className="w-full h-4 bg-white/5 rounded-full overflow-hidden flex border border-white/5 p-0.5">
                                         <div
-                                            className="h-full bg-gradient-to-r from-padel-green/80 to-padel-green rounded-l-full transition-all duration-1000 ease-out"
-                                            style={{ width: `${result.team1.winProbability}%` }}
+                                            className="h-full rounded-l-full transition-all duration-1000 ease-out"
+                                            style={{ width: `${result.team1.winProbability}%`, backgroundColor: 'rgb(var(--theme-secondary-accent))' }}
                                         />
                                         <div
                                             className="h-full bg-gradient-to-l from-red-600 to-red-400 rounded-r-full transition-all duration-1000 ease-out"
@@ -497,7 +502,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
 
                             {/* Magic Balance (Proposed just below win percentage frame) */}
                             {result.suggestedBalancedTeams && result.suggestedBalancedTeams.some((id, i) => id !== [selfId, selectedPlayers.partner?.id, selectedPlayers.opp1?.id, selectedPlayers.opp2?.id][i]) && (
-                                <div className="bg-[#CCFF00] p-6 rounded-3xl shadow-[0_0_30px_rgba(204,255,0,0.1)] border border-[#CCFF00]/20 flex items-center justify-between group animate-in slide-in-from-top-4 duration-500">
+                                <div className="p-6 rounded-3xl flex items-center justify-between group animate-in slide-in-from-top-4 duration-500" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))", color: "var(--theme-player-page)", border: "1px solid rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)", boxShadow: "0 0 30px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)" }}>
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-[#071554]/10 flex items-center justify-center animate-pulse">
                                             <Shuffle className="w-6 h-6 text-[#071554]" />
@@ -519,7 +524,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                             {/* Tactical Plan removed from here, now in Coach IA */}
 
                             {/* Progress Stakes (My stakes) */}
-                            <div className="bg-[#CCFF00] p-6 rounded-3xl shadow-[0_0_30px_rgba(204,255,0,0.1)] border border-[#CCFF00]/20">
+                            <div className="p-6 rounded-3xl" style={{ backgroundColor: "rgb(var(--theme-secondary-accent))", color: "var(--theme-player-page)", border: "1px solid rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)", boxShadow: "0 0 30px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1)" }}>
                                 <div className="flex items-center gap-3 mb-4">
                                     <TrendingUp className="w-5 h-5 text-[#071554]" />
                                     <h3 className="text-sm font-black text-[#071554] uppercase tracking-wider">Enjeux personnels</h3>
@@ -542,12 +547,12 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                     {/* Si victoire */}
                                     <div className="bg-[#071554] rounded-2xl p-4 shadow-xl flex flex-col justify-between">
                                         <div>
-                                            <div className="text-[9px] font-bold text-padel-green uppercase tracking-widest mb-1">Si victoire</div>
+                                            <div className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Si victoire</div>
                                             <div className="text-xl font-black text-white">+{result.playerStakes[selfId].ifWin.delta.toFixed(2)}</div>
                                         </div>
                                         <div className="mt-4 flex items-center gap-2 bg-white/10 p-2 rounded-lg border border-white/10">
                                             <span className="text-[10px] font-bold text-white/40">{result.playerStakes[selfId].currentLevel}</span>
-                                            <ArrowRight size={10} className="text-padel-green" />
+                                            <ArrowRight size={10} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                             <span className="text-[10px] font-black text-white">{result.playerStakes[selfId].ifWin.newLevel.toFixed(2)}</span>
                                         </div>
                                     </div>
@@ -573,21 +578,21 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                             {/* Tactical Advice & Insights */}
                             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <Sparkles className="w-5 h-5 text-padel-green" />
+                                    <Sparkles className="w-5 h-5" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                     <h3 className="text-sm font-black text-white uppercase tracking-wider">Analyse du Coach IA</h3>
                                 </div>
 
                                 {/* Tactical Advice Integration */}
                                 {result.tacticalTarget && (
-                                    <div className="mb-8 p-5 rounded-2xl bg-padel-green/5 border border-padel-green/20 relative overflow-hidden">
+                                    <div className="mb-8 p-5 rounded-2xl relative overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.05)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)', border: '1px solid' }}>
                                         <div className="absolute top-0 right-0 p-4 opacity-10">
-                                            <Target className="w-12 h-12 text-padel-green" />
+                                            <Target className="w-12 h-12" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                         </div>
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="p-1.5 bg-padel-green/20 rounded-lg">
-                                                <Target className="w-4 h-4 text-padel-green" />
+                                            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}>
+                                                <Target className="w-4 h-4" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                             </div>
-                                            <h4 className="text-[11px] font-black text-padel-green uppercase tracking-widest">Plan d'Attaque Prioritaire</h4>
+                                            <h4 className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>Plan d'Attaque Prioritaire</h4>
                                         </div>
                                         <p className="text-sm text-white/90 leading-relaxed font-black uppercase tracking-tight italic">
                                             "{result.tacticalTarget.team1Target?.reason}"
@@ -602,9 +607,10 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                             key={p.id}
                                             onClick={() => setActiveInsightTab(p.id)}
                                             className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all border ${activeInsightTab === p.id
-                                                ? 'bg-padel-green text-[#071554] border-padel-green shadow-lg shadow-padel-green/20'
+                                                ? 'text-[#071554] shadow-lg shadow-[rgba(var(--theme-secondary-accent-rgb, 191,255,0),0.2)]'
                                                 : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
                                                 }`}
+                                            style={activeInsightTab === p.id ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', borderColor: 'rgb(var(--theme-secondary-accent))' } : {}}
                                         >
                                             {idx === 0 ? "Moi" : p.first_name || p.display_name.split(' ')[0]}
                                         </button>
@@ -615,7 +621,7 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                         {/* Status Pills */}
                                         <div className="flex flex-wrap gap-2">
-                                            <div className="px-3 py-1.5 rounded-full bg-padel-green/10 border border-padel-green/30 text-padel-green text-[9px] font-black uppercase flex items-center gap-1.5">
+                                            <div className="px-3 py-1.5 rounded-full border text-[9px] font-black uppercase flex items-center gap-1.5" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)', color: 'rgb(var(--theme-secondary-accent))' }}>
                                                 <Calendar size={10} /> {currentInsight.luckyDay ? `Jour de gloire : ${currentInsight.luckyDay}` : "Données jour insuffisantes"}
                                             </div>
                                             <div className="px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[9px] font-black uppercase flex items-center gap-1.5">
@@ -631,8 +637,8 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                             <div className="space-y-3">
                                                 <div className="text-[9px] font-black text-white/30 uppercase tracking-widest px-1">Points Forts</div>
                                                 {currentInsight.strengths.length > 0 ? currentInsight.strengths.map((s, idx) => (
-                                                    <div key={idx} className="flex gap-2 text-[11px] text-white/80 items-start leading-tight bg-padel-green/5 p-2 rounded-lg border border-padel-green/10">
-                                                        <Sparkles size={10} className="text-padel-green mt-0.5 flex-shrink-0" />
+                                                    <div key={idx} className="flex gap-2 text-[11px] text-white/80 items-start leading-tight p-2 rounded-lg border" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.05)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.1)' }}>
+                                                        <Sparkles size={10} className="mt-0.5 flex-shrink-0" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                                                         {s}
                                                     </div>
                                                 )) : <div className="text-[10px] text-white/30 italic px-1">Aucune force majeure détectée</div>}

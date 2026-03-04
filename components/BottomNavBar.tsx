@@ -171,13 +171,16 @@ export default function BottomNavBar() {
             className="fixed z-[99999] left-0 right-0 flex justify-center px-6"
             style={{
                 bottom: 'calc(var(--sab, 0px) + 4px)',
+                willChange: 'transform',
+                transform: 'translateZ(0)', // Force GPU layer
             }}
         >
             <nav id="bottom-nav-bar" className="relative flex items-center bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] px-1 py-1 max-w-xs w-full">
                 {activeIndex !== -1 && (
                     <div
-                        className="absolute bg-[#172554]/15 rounded-full transition-all duration-300 ease-out"
+                        className="absolute rounded-full transition-all duration-300 ease-out"
                         style={{
+                            backgroundColor: 'rgba(var(--theme-accent), 0.15)',
                             height: 'calc(100% - 6px)',
                             width: `${bubbleWidthPercentage}%`,
                             left: getBubblePosition(),
@@ -218,7 +221,7 @@ export default function BottomNavBar() {
                                 // Ne pas effacer les badges ici, on laisse les pages gérer le "vu" par onglet
                             }}
                         >
-                            <div className="relative flex flex-col items-center text-[#172554]">
+                            <div className="relative flex flex-col items-center" style={{ color: 'rgb(var(--theme-accent))' }}>
                                 {item.icon}
                                 {showBadge && (
                                     <span className="absolute -top-1 -right-3 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">

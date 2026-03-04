@@ -22,10 +22,10 @@ interface ReviewsListProps {
   onReviewSubmitted?: () => void;
 }
 
-export default function ReviewsList({ 
-  initialReviews = [], 
+export default function ReviewsList({
+  initialReviews = [],
   initialAverageRating = 0,
-  onReviewSubmitted 
+  onReviewSubmitted
 }: ReviewsListProps) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [averageRating, setAverageRating] = useState(initialAverageRating);
@@ -50,25 +50,25 @@ export default function ReviewsList({
       try {
         // Attendre un peu plus pour s'assurer que la DB est à jour
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         const response = await fetch("/api/reviews", {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache'
           }
         });
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        logger.info("📊 Fetched reviews:", data.reviews?.length || 0, "Average:", data.averageRating);
-        logger.info("📊 First review:", data.reviews?.[0]);
-        
+        logger.info(`📊 Fetched reviews: ${data.reviews?.length || 0} Average: ${data.averageRating}`);
+        logger.info(`📊 First review: ${JSON.stringify(data.reviews?.[0])}`);
+
         if (data.reviews && Array.isArray(data.reviews)) {
           // Trier par date décroissante pour s'assurer que le nouvel avis est en premier
-          const sortedReviews = [...data.reviews].sort((a, b) => 
+          const sortedReviews = [...data.reviews].sort((a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
           logger.info("✅ Setting reviews:", sortedReviews.length);
@@ -87,7 +87,7 @@ export default function ReviewsList({
 
     // Écouter l'événement personnalisé
     window.addEventListener("reviewSubmitted", handleReviewSubmitted as EventListener);
-    
+
     // Cleanup
     return () => {
       window.removeEventListener("reviewSubmitted", handleReviewSubmitted as EventListener);
@@ -113,12 +113,12 @@ export default function ReviewsList({
               {sortedReviews.map((review: Review, idx: number) => (
                 <div
                   key={review.id}
-                  className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-white to-blue-50 p-5 sm:p-6 border-2 border-blue-200 shadow-[0_20px_50px_rgba(4,16,46,0.25)] opacity-0 animate-fade-in relative"
-                  style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards' }}
+                  className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-white to-blue-50 p-5 sm:p-6 border-2 shadow-[0_20px_50px_rgba(4,16,46,0.25)] opacity-0 animate-fade-in relative"
+                  style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards', borderColor: 'rgba(var(--theme-accent-rgb, 0, 102, 255), 0.2)' }}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-[#0066FF] via-[#0052CC] to-[#003D99] text-white flex items-center justify-center font-bold text-sm sm:text-base shadow-lg ring-2 ring-blue-200/50">
+                      <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full text-white flex items-center justify-center font-bold text-sm sm:text-base shadow-lg ring-2 ring-[rgb(var(--theme-accent))]/20" style={{ background: 'linear-gradient(to bottom right, rgb(var(--theme-accent)), rgb(var(--theme-secondary-accent)))' }}>
                         {(() => {
                           const name = review.profiles?.display_name || 'Joueur';
                           const words = name.trim().split(' ');
@@ -136,8 +136,8 @@ export default function ReviewsList({
                       </div>
                     </div>
                     <div className="flex gap-0.5">
-                      {[1,2,3,4,5].map(n => (
-                        <span key={n} className={`${n <= review.rating ? 'text-[#FFD700] drop-shadow-[0_0_3px_rgba(255,215,0,0.5)]' : 'text-slate-300'} text-lg sm:text-xl`}>★</span>
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <span key={n} className={`${n <= review.rating ? 'drop-shadow-[0_0_3px_rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.5)]' : 'text-slate-300'} text-lg sm:text-xl`} style={{ color: n <= review.rating ? 'rgb(var(--theme-secondary-accent))' : undefined }}>★</span>
                       ))}
                     </div>
                   </div>
@@ -155,11 +155,11 @@ export default function ReviewsList({
           <div className="rounded-xl sm:rounded-2xl bg-white p-8 sm:p-10 text-center border border-white/10 shadow-[0_20px_50px_rgba(4,16,46,0.25)]">
             <div className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-5">Soyez le premier à partager votre passion !</div>
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-xs sm:text-sm font-semibold text-amber-700 shadow-sm">
-              <Image 
-                src="/images/Badge.png" 
-                alt="Badges" 
-                width={16} 
-                height={16} 
+              <Image
+                src="/images/Badge.png"
+                alt="Badges"
+                width={16}
+                height={16}
                 className="flex-shrink-0"
                 unoptimized
               />

@@ -180,7 +180,7 @@ export default async function ShareProfilePage({ params }: Props) {
                         </div>
                         {profile.club_id && (
                             <div className="absolute -bottom-0.5 right-1 bg-[#0F172A] rounded-full p-1.5 border border-white/10 shadow-lg" title={(profile.clubs as any)?.[0]?.name || "Club"}>
-                                <Shield size={14} className="text-padel-green" />
+                                <Shield size={14} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                             </div>
                         )}
                     </div>
@@ -207,7 +207,7 @@ export default async function ShareProfilePage({ params }: Props) {
                             <div className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/40 mb-0.5">Niveau</div>
                             <div className="text-2xl font-black text-white flex items-center justify-center gap-1.5">
                                 {profile.niveau_padel ? profile.niveau_padel.toFixed(2) : '3.00'}
-                                <Star size={16} className="text-padel-green fill-padel-green animate-pulse" />
+                                <Star size={16} className="animate-pulse" style={{ color: 'rgb(var(--theme-secondary-accent))', fill: 'rgb(var(--theme-secondary-accent))' }} />
                             </div>
                         </div>
                     </div>
@@ -215,7 +215,7 @@ export default async function ShareProfilePage({ params }: Props) {
                     {/* Characteristics Grid */}
                     <div className="grid grid-cols-2 gap-1.5 w-full mb-1.5">
                         <div className="bg-white/5 rounded-xl p-1.5 border border-white/5 flex flex-col items-center">
-                            <ArrowLeftRight size={12} className="text-padel-green mb-0.5" />
+                            <ArrowLeftRight size={12} className="mb-0.5" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                             <div className="text-[8px] uppercase font-bold text-white/30">Position</div>
                             <div className="text-[10px] font-bold text-white/80">{(translate.side as any)[profile.preferred_side] || '-'}</div>
                         </div>
@@ -230,7 +230,7 @@ export default async function ShareProfilePage({ params }: Props) {
                             <div className="text-[10px] font-bold text-white/80">{(translate.shot as any)[profile.best_shot] || '-'}</div>
                         </div>
                         <div className="bg-white/5 rounded-xl p-1.5 border border-white/5 flex flex-col items-center">
-                            <Calendar size={12} className="text-padel-green mb-0.5" />
+                            <Calendar size={12} className="mb-0.5" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
                             <div className="text-[8px] uppercase font-bold text-white/30">Fréquence</div>
                             <div className="text-[10px] font-bold text-white/80">{(translate.freq as any)[profile.frequency] || '-'}</div>
                         </div>

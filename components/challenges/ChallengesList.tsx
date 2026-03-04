@@ -113,9 +113,16 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
         <button
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'general'
-            ? 'bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/50 ring-offset-2 ring-offset-[#172554]'
+            ? 'text-white border shadow-lg ring-2 ring-offset-2'
             : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
             }`}
+          style={activeTab === 'general' ? {
+            backgroundColor: 'rgb(var(--theme-page))',
+            borderColor: 'rgb(var(--theme-accent))',
+            boxShadow: '0 0 15px rgba(var(--theme-accent-rgb), 0.2)',
+            '--tw-ring-color': 'rgb(var(--theme-accent))',
+            '--tw-ring-offset-color': 'rgb(var(--theme-page))'
+          } as any : {}}
         >
           <Globe size={14} />
           <span>Général</span>
@@ -123,9 +130,17 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
         <button
           onClick={() => setActiveTab('club')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'club'
-            ? 'bg-[#CCFF00] text-[#172554] shadow-lg shadow-[#CCFF00]/25 ring-2 ring-[#CCFF00] ring-offset-2 ring-offset-[#172554]'
+            ? 'shadow-lg ring-2 ring-offset-2'
             : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
             }`}
+          style={activeTab === 'club' ? {
+            backgroundColor: 'rgb(var(--theme-accent))',
+            color: 'var(--theme-player-page, #172554)',
+            boxShadow: '0 0 15px rgba(var(--theme-accent-rgb), 0.25)',
+            border: 'none',
+            '--tw-ring-color': 'rgb(var(--theme-accent))',
+            '--tw-ring-offset-color': 'rgb(var(--theme-page))'
+          } as any : {}}
         >
           <MapPin size={14} />
           <span>Mon Club</span>
@@ -152,7 +167,8 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
                   onClick={() => {
                     router.push('/home?tab=club');
                   }}
-                  className="inline-flex items-center gap-2 text-padel-green font-semibold text-sm hover:underline mt-2"
+                  className="inline-flex items-center gap-2 font-semibold text-sm hover:underline mt-2"
+                  style={{ color: 'rgb(var(--theme-accent))' }}
                 >
                   Rejoindre un club <ArrowRight className="w-4 h-4" />
                 </button>

@@ -127,6 +127,11 @@ export default async function ReviewsPage() {
       }
     }
 
+    const finalReviews = enrichedReviews as unknown as any[]; // Cast to bypass strict Review type if needed, but ReviewList expects Review[]
+    // Actually, Review type from @/lib/utils/review-utils has profiles: { display_name: string } | null
+    // Our enrichedReviews has profiles: { display_name: string } | null
+    // So it should match. Let's ensure the type is correct.
+
     // Calculer la note moyenne + taux de satisfaction (>=4)
     const averageRating = enrichedReviews && enrichedReviews.length > 0
       ? enrichedReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / enrichedReviews.length
@@ -148,8 +153,8 @@ export default async function ReviewsPage() {
 
         {/* Halos vert et bleu animés */}
         <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
         </div>
 
 
@@ -188,7 +193,7 @@ export default async function ReviewsPage() {
 
           {/* Liste des avis */}
           <ReviewsList
-            initialReviews={enrichedReviews || []}
+            initialReviews={finalReviews as any[]}
             initialAverageRating={averageRating}
           />
         </div>

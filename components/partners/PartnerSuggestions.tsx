@@ -457,9 +457,10 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                     fetchSuggestions("", 'club');
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterScope === 'club'
-                    ? 'bg-blue-600 text-white shadow-lg'
+                    ? 'text-white shadow-lg'
                     : 'text-white/60 hover:text-white/80'
                     }`}
+                  style={filterScope === 'club' ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' } : {}}
                 >
                   Mon Club
                 </button>
@@ -470,9 +471,10 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                   if (departmentFilter) fetchSuggestions(departmentFilter, 'dept');
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterScope === 'dept'
-                  ? 'bg-blue-600 text-white shadow-lg'
+                  ? 'text-white shadow-lg'
                   : 'text-white/60 hover:text-white/80'
                   }`}
+                style={filterScope === 'dept' ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' } : {}}
               >
                 Département
               </button>
@@ -501,7 +503,8 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                 />
                 <button
                   onClick={() => fetchSuggestions(departmentFilter, 'dept')}
-                  className="absolute right-1 top-1 bottom-1 bg-blue-600 hover:bg-blue-500 text-white px-2.5 rounded-md transition-colors border border-blue-400/20 flex items-center justify-center"
+                  className="absolute right-1 top-1 bottom-1 hover:brightness-110 text-white px-2.5 rounded-md transition-colors border border-blue-400/20 flex items-center justify-center"
+                  style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' }}
                 >
                   <Search size={16} />
                 </button>
@@ -646,8 +649,9 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                           ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                           : hasReceivedInvitation
                             ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                            : "bg-padel-green text-[#071554] shadow-lg shadow-padel-green/20 active:scale-95"
+                            : "active:scale-95"
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      style={(!isAccepted && !hasSentInvitation && !hasReceivedInvitation) ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 10px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)' } : {}}
                     >
                       {isInvitingId === player.id ? (
                         <Loader2 size={16} className="animate-spin" />

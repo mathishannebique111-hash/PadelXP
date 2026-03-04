@@ -89,6 +89,7 @@ export default function SafeAreas() {
       // Assurer une marge de sécurité minimale pour l'app
       if (document.documentElement.classList.contains('is-app')) {
         document.documentElement.style.setProperty('--sat', '65px', 'important');
+        document.documentElement.style.setProperty('--sab', '20px', 'important');
       }
     };
 

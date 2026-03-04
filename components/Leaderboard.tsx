@@ -7,15 +7,16 @@ import RankBadge from "@/components/RankBadge";
 import { getBadges, type PlayerStats } from "@/lib/badges";
 import TierBadge from "./TierBadge";
 import Top3RankingNotifier from '@/components/Top3RankingNotifier'
- 
+import Image from 'next/image'
+
 
 type Props = {
   initialData: LeaderboardEntry[];
   currentUserId: string;
 };
 
-const BLUE = "#0066FF";
-const GREEN = "#BFFF00";
+const BLUE = "rgb(var(--theme-accent, 0 102 255))";
+const GREEN = "rgb(var(--theme-secondary-accent, 191 255 0))";
 
 function tierForPoints(points: number) {
   if (points >= 500) return { label: "Champion", className: "bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white", nextAt: Infinity };
@@ -119,7 +120,7 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
             .from("match_participants")
             .select("match_id, team, matches!inner(winner_team_id, team1_id, team2_id, created_at)")
             .order("matches.created_at", { ascending: true });
-          
+
           if (isGuest) {
             // Pour les guests, extraire l'ID réel et chercher par guest_player_id
             const guestId = r.user_id.replace("guest_", "");
@@ -128,13 +129,13 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
             // Pour les users, chercher par user_id
             query = query.eq("user_id", r.user_id).eq("player_type", "user");
           }
-          
+
           const { data } = await query;
-          
+
           if (!data || data.length === 0) {
             return;
           }
-          
+
           let cs = 0;
           let best = 0;
           data.forEach((p: any) => {
@@ -180,7 +181,7 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
   return (
     <div className="space-y-8">
       {/* Notificateur invisible */}
-      <Top3RankingNotifier 
+      <Top3RankingNotifier
         userRank={currentUserRank}
         totalPlayers={rows.length}
       />
@@ -190,9 +191,9 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* 2ème place */}
             {top3[1] && (
-              <div 
-                className="group relative overflow-hidden rounded-2xl p-8 transition-all hover:scale-[1.02] bg-white" 
-                style={{ 
+              <div
+                className="group relative overflow-hidden rounded-2xl p-8 transition-all hover:scale-[1.02] bg-white"
+                style={{
                   border: "3px solid #C0C0C0",
                   boxShadow: "0 0 20px rgba(192,192,192,0.3)",
                 }}
@@ -226,9 +227,9 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
 
             {/* 1ère place - Mise en avant avec bordure dorée */}
             {top3[0] && (
-              <div 
-                className="group relative overflow-hidden rounded-2xl p-8 transition-all hover:scale-[1.02] lg:scale-105 bg-white" 
-                style={{ 
+              <div
+                className="group relative overflow-hidden rounded-2xl p-8 transition-all hover:scale-[1.02] lg:scale-105 bg-white"
+                style={{
                   border: "3px solid #FFD700",
                   boxShadow: "0 0 25px rgba(255,215,0,0.5)",
                 }}
@@ -262,9 +263,9 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
 
             {/* 3ème place */}
             {top3[2] && (
-              <div 
-                className="group relative overflow-hidden rounded-2xl p-8 transition-all hover:scale-[1.02] bg-white" 
-                style={{ 
+              <div
+                className="group relative overflow-hidden rounded-2xl p-8 transition-all hover:scale-[1.02] bg-white"
+                style={{
                   border: "3px solid #B87333",
                   boxShadow: "0 0 20px rgba(184,115,51,0.3)",
                 }}
@@ -373,17 +374,16 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                   const winrate = r.matches ? Math.round((r.wins / r.matches) * 100) : 0;
                   // Couleurs plus visibles pour le winrate
                   const rateClass = winrate > 60 ? "font-semibold" : winrate >= 40 ? "font-medium" : "font-medium";
-                  const rateColor = winrate > 60 ? "#10B981" : winrate >= 40 ? "#0066FF" : "#EF4444"; // Vert foncé, bleu, rouge foncé
+                  const rateColor = winrate > 60 ? "#10B981" : (winrate >= 40 ? "rgb(var(--theme-accent))" : "#EF4444"); // Vert foncé, thème, rouge foncé
                   const isCurrentUser = r.user_id === currentUserId;
-                  
+
                   return (
                     <tr
                       key={r.user_id}
-                      className={`transition-all duration-200 ${
-                        isCurrentUser 
-                          ? "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100" 
-                          : "bg-white hover:bg-gray-50"
-                      } ${idx % 2 === 0 ? "" : "bg-opacity-50"}`}
+                      className={`transition-all duration-200 ${isCurrentUser
+                        ? "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100"
+                        : "bg-white hover:bg-gray-50"
+                        } ${idx % 2 === 0 ? "" : "bg-opacity-50"}`}
                       style={{
                         borderBottom: idx < rest.length - 1 ? "1px solid rgba(0,0,0,0.08)" : "none",
                       }}
@@ -402,11 +402,11 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                             </span>
                           )}
                           {isCurrentUser && (
-                            <span 
-                              className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white transition-all hover:scale-110 shadow-sm tabular-nums" 
-                              style={{ 
-                                background: "linear-gradient(135deg, #0066FF, #0052CC)",
-                                boxShadow: "0 2px 8px rgba(0,102,255,0.3)",
+                            <span
+                              className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white transition-all hover:scale-110 shadow-sm tabular-nums"
+                              style={{
+                                background: "linear-gradient(135deg, rgb(var(--theme-accent)), #0052CC)",
+                                boxShadow: "0 2px 8px rgba(var(--theme-accent-rgb, 0, 102, 255), 0.3)",
                                 letterSpacing: "0.01em"
                               }}
                             >

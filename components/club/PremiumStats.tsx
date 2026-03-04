@@ -119,8 +119,9 @@ export default function PremiumStats() {
         const displayList = list.slice(0, 5);
 
         return (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group hover:border-[#CCFF00]/20 transition-all">
-                <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#CCFF00] to-transparent opacity-20`}></div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col h-full relative overflow-hidden group transition-all" style={{ '--tw-border-opacity': 1 } as any}>
+                <style>{`.group:hover{-webkit-box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2);box-shadow:inset 0 0 0 1px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)}`}</style>
+                <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[rgb(var(--theme-accent))] to-transparent opacity-20`}></div>
                 <h3 className="text-sm font-bold mb-4 flex items-center gap-2 text-slate-100 uppercase tracking-wide">
                     <span className={`p-1.5 rounded-md bg-slate-800/50 border border-slate-700/50 ${colorClass}`}>{icon}</span>
                     {title}
@@ -152,8 +153,8 @@ export default function PremiumStats() {
 
                     {!isPremium && displayList.length > 0 && (
                         <div className="absolute inset-0 flex items-start justify-center pt-4 z-20 pointer-events-none">
-                            <div className="bg-[#071554] border-2 border-[#CCFF00] p-6 rounded-2xl shadow-[0_0_30px_rgba(204,255,0,0.2)] flex flex-col items-center text-center w-[90%] sm:w-auto sm:max-w-md pointer-events-auto backdrop-blur-md">
-                                <Sparkles className="w-6 h-6 text-[#CCFF00] mb-3 animate-pulse" />
+                            <div className="bg-[#071554] border-2 p-6 rounded-2xl flex flex-col items-center text-center w-[90%] sm:w-auto sm:max-w-md pointer-events-auto backdrop-blur-md" style={{ borderColor: 'rgb(var(--theme-accent))', boxShadow: '0 0 30px rgba(var(--theme-accent-rgb), 0.2)' }}>
+                                <Sparkles className="w-6 h-6 mb-3 animate-pulse" style={{ color: 'rgb(var(--theme-accent))' }} />
                                 <p className="text-sm sm:text-base text-white font-black leading-tight mb-4 uppercase tracking-tight">
                                     {isVictims ? `Ta meilleure victime est ${list[0].name}` :
                                         isNemesis ? `Ton pire cauchemar est ${list[0].name}` :
@@ -161,7 +162,8 @@ export default function PremiumStats() {
                                 </p>
                                 <button
                                     onClick={handleUpgrade}
-                                    className="w-full sm:w-auto bg-[#CCFF00] text-[#071554] px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(204,255,0,0.3)] flex items-center justify-center gap-2"
+                                    className="w-full sm:w-auto text-[#071554] px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                    style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 0 15px rgba(var(--theme-accent-rgb), 0.3)' }}
                                 >
                                     découvre qui c&apos;est
                                     <ArrowRight className="w-4 h-4" />
@@ -341,9 +343,10 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setListTab(tab.id as 'victims' | 'nemesis' | 'partners')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${listTab === tab.id
-                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
+                            style={listTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
                         >
                             {tab.label}
                         </button>
@@ -351,9 +354,9 @@ export default function PremiumStats() {
                 </div>
 
                 <div className="relative z-10 min-h-[300px]">
-                    {listTab === 'victims' && renderList("Mes Victimes", <Trophy className="w-4 h-4 text-[#CCFF00]" />, statsData?.topVictims || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10")}
-                    {listTab === 'nemesis' && renderList("Mes Bourreaux", <Skull className="w-4 h-4 text-[#CCFF00]" />, statsData?.topNemesis || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10")}
-                    {listTab === 'partners' && renderList("Partenaires Favoris", <Heart className="w-4 h-4 text-[#CCFF00]" />, statsData?.topPartners || [], "text-[#CCFF00] border-[#CCFF00]/20 bg-[#CCFF00]/10")}
+                    {listTab === 'victims' && renderList("Mes Victimes", <Trophy className="w-4 h-4" style={{ color: 'rgb(var(--theme-accent))' }} />, statsData?.topVictims || [], "border-[rgb(var(--theme-accent))]/20 bg-[rgb(var(--theme-accent))]/10")}
+                    {listTab === 'nemesis' && renderList("Mes Bourreaux", <Skull className="w-4 h-4" style={{ color: 'rgb(var(--theme-accent))' }} />, statsData?.topNemesis || [], "border-[rgb(var(--theme-accent))]/20 bg-[rgb(var(--theme-accent))]/10")}
+                    {listTab === 'partners' && renderList("Partenaires Favoris", <Heart className="w-4 h-4" style={{ color: 'rgb(var(--theme-accent))' }} />, statsData?.topPartners || [], "border-[rgb(var(--theme-accent))]/20 bg-[rgb(var(--theme-accent))]/10")}
                 </div>
 
                 <div className="h-[1px] w-full bg-slate-800/50 my-8 relative z-10" />
@@ -369,9 +372,10 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setPerformanceTab(tab.id as 'weaker' | 'equal' | 'stronger')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${performanceTab === tab.id
-                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
+                            style={performanceTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
                         >
                             {tab.label}
                         </button>
@@ -429,9 +433,10 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setSuccessTab(tab.id as 'day' | 'hour' | 'month')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${successTab === tab.id
-                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
+                            style={successTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
                         >
                             {tab.label}
                         </button>
@@ -440,7 +445,8 @@ export default function PremiumStats() {
 
                 <div className={`relative z-10 max-w-sm transition-all ${!isPremium ? 'blur-lg' : ''}`}>
                     {successTab === 'day' && (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Calendar className="w-6 h-6 text-blue-400" />
                             </div>
@@ -454,7 +460,8 @@ export default function PremiumStats() {
                     )}
 
                     {successTab === 'hour' && (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Clock className="w-6 h-6 text-blue-400" />
                             </div>
@@ -468,7 +475,8 @@ export default function PremiumStats() {
                     )}
 
                     {successTab === 'month' && (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Trophy className="w-6 h-6 text-blue-300" />
                             </div>
@@ -501,9 +509,10 @@ export default function PremiumStats() {
                             key={tab.id}
                             onClick={() => setFormTab(tab.id as 'form' | 'reaction')}
                             className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${formTab === tab.id
-                                ? "bg-[#CCFF00] text-[#172554] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]"
+                                ? "shadow-[0_0_10px_rgba(var(--theme-accent-rgb),0.2)]"
                                 : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                                 }`}
+                            style={formTab === tab.id ? { backgroundColor: 'rgb(var(--theme-accent))', color: '#172554', borderColor: 'rgb(var(--theme-accent))' } : {}}
                         >
                             {tab.label}
                         </button>
@@ -512,7 +521,8 @@ export default function PremiumStats() {
 
                 <div className="relative z-10 max-w-sm">
                     {formTab === 'form' ? (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <TrendingUp className="w-6 h-6 text-blue-500" />
                             </div>
@@ -526,7 +536,8 @@ export default function PremiumStats() {
                                 }`}></div>
                         </div>
                     ) : (
-                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group hover:border-[#CCFF00]/30 transition-all">
+                        <div className="bg-slate-800/30 border border-slate-700/30 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg group transition-all" style={{ '--accent-color': 'rgb(var(--theme-accent))' } as any}>
+                            <style>{`.group:hover{border-color: var(--accent-color)}`}</style>
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                                 <Swords className="w-6 h-6 text-blue-600" />
                             </div>

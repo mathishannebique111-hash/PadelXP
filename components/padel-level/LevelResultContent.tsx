@@ -25,7 +25,8 @@ export default function LevelResultContent({ result }: Props) {
             {/* En-tête résultat - Plus compact */}
             <div className="text-center bg-slate-950/40 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
                 <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-padel-green/5 to-blue-500/5"
+                    className="absolute inset-0 bg-gradient-to-r opacity-20"
+                    style={{ backgroundImage: 'linear-gradient(to right, rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.1), rgba(0, 102, 255, 0.1))' }}
                     animate={{
                         backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                     }}
@@ -38,7 +39,7 @@ export default function LevelResultContent({ result }: Props) {
                             size={32}
                             className="text-yellow-500"
                         />
-                        <h1 className="text-4xl md:text-5xl font-black text-padel-green">
+                        <h1 className="text-4xl md:text-5xl font-black" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                             Niveau {result.niveau}
                         </h1>
                     </div>
@@ -160,13 +161,14 @@ export default function LevelResultContent({ result }: Props) {
                         <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">
                             Vers niveau {result.niveau + 1}
                         </span>
-                        <span className="text-sm text-padel-green font-black">
+                        <span className="text-sm font-black" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                             {Math.round(result.nextLevelProgress)}%
                         </span>
                     </div>
                     <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                         <motion.div
-                            className="h-full bg-gradient-to-r from-blue-500 to-padel-green"
+                            className="h-full bg-gradient-to-r from-blue-500"
+                            style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }}
                             initial={{ width: 0 }}
                             animate={{ width: `${result.nextLevelProgress}%` }}
                             transition={{ duration: 1, delay: 0.5 }}

@@ -12,8 +12,8 @@ export default function MatchTabBlockingOverlay({ type, onEvaluate }: MatchTabBl
 
     return (
         <div className="absolute inset-0 z-50 rounded-3xl flex flex-col items-center justify-start p-6 pt-20 text-center backdrop-blur-md bg-[#071554]/40 border border-white/10" style={{ minHeight: '400px' }}>
-            <div className="bg-padel-green/20 p-4 rounded-full mb-6">
-                <Trophy className="w-10 h-10 text-padel-green" />
+            <div className="p-4 rounded-full mb-6" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}>
+                <Trophy className="w-10 h-10" style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
             </div>
             <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">Évaluation requise</h2>
             <p className="text-white/80 max-w-md mb-8 text-base font-medium leading-relaxed">
@@ -21,7 +21,8 @@ export default function MatchTabBlockingOverlay({ type, onEvaluate }: MatchTabBl
             </p>
             <button
                 onClick={onEvaluate}
-                className="px-8 py-4 rounded-2xl bg-padel-green text-[#071554] font-black text-lg shadow-[0_0_30px_rgba(204,255,0,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center min-w-[200px] uppercase tracking-wider"
+                className="px-8 py-4 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center min-w-[200px] uppercase tracking-wider"
+                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 30px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.3)' }}
             >
                 Évaluer mon niveau
             </button>

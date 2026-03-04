@@ -71,15 +71,15 @@ export default function OfflineScreen() {
     if (!isOffline) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-[#172554] flex flex-col items-center justify-center p-6">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6" style={{ backgroundColor: 'rgb(var(--theme-page, 23 37 84))' }}>
             {/* Fond avec dégradé */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-black z-0" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(0,102,255,0.2),transparent)] z-0" />
+            <div className="absolute inset-0 z-0" style={{ backgroundImage: 'radial-gradient(circle at 50% 30%, rgba(var(--theme-accent, 0, 102, 255), 0.2), transparent)' }} />
 
             <div className="relative z-10 flex flex-col items-center text-center max-w-sm">
                 {/* Icône animée */}
                 <div className="relative mb-8">
-                    <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl animate-pulse" />
+                    <div className="absolute inset-0 rounded-full blur-2xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent, 59, 130, 246), 0.2)' }} />
                     <div className="relative w-24 h-24 rounded-full bg-slate-800/80 border-2 border-slate-700 flex items-center justify-center">
                         <WifiOff size={40} className="text-slate-400" />
                     </div>
@@ -100,7 +100,8 @@ export default function OfflineScreen() {
                 <button
                     onClick={handleRetry}
                     disabled={isRetrying}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-blue-900/30"
+                    className="flex items-center gap-2 px-6 py-3 text-white font-semibold rounded-xl transition-all disabled:opacity-50 shadow-lg"
+                    style={{ backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent-rgb), 0.3)' }}
                 >
                     <RefreshCw
                         size={18}

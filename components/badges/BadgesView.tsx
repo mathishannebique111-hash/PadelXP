@@ -113,9 +113,10 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("standard")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "standard"
-                            ? "bg-[#172554] text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/20 ring-2 ring-blue-400/50 ring-offset-2 ring-offset-[#172554]"
+                            ? "bg-white/10 text-white border"
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
                             }`}
+                        style={activeTab === "standard" ? { borderColor: 'rgb(var(--theme-accent))', boxShadow: '0 0 15px rgba(var(--theme-accent-rgb), 0.2)' } : {}}
                     >
                         <Award size={16} className="sm:w-4 sm:h-4" />
                         Tous les badges
@@ -123,9 +124,14 @@ export default function BadgesView({
                     <button
                         onClick={() => setActiveTab("challenges")}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${activeTab === "challenges"
-                            ? "bg-[#CCFF00] text-[#172554] shadow-lg shadow-[#CCFF00]/25 ring-2 ring-[#CCFF00] ring-offset-2 ring-offset-[#172554]"
+                            ? "text-[#172554] shadow-lg ring-2 ring-offset-2 ring-offset-[#172554]"
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
                             }`}
+                        style={activeTab === "challenges" ? {
+                            backgroundColor: 'rgb(var(--theme-accent))',
+                            boxShadow: '0 0 25px rgba(var(--theme-accent-rgb), 0.25)',
+                            '--tw-ring-color': 'rgb(var(--theme-accent))'
+                        } as any : {}}
                     >
                         <Trophy size={16} className="sm:w-4 sm:h-4" />
                         Challenges
@@ -182,7 +188,12 @@ export default function BadgesView({
                                     </p>
                                     <Link
                                         href="/club?tab=challenges"
-                                        className="mt-6 px-6 py-2 bg-[#CCFF00] text-[#172554] rounded-full font-medium text-sm hover:brightness-110 transition-all shadow-lg shadow-[#CCFF00]/20"
+                                        className="mt-6 px-6 py-2 rounded-full font-medium text-sm hover:brightness-110 transition-all shadow-lg"
+                                        style={{
+                                            backgroundColor: 'rgb(var(--theme-accent))',
+                                            color: 'var(--theme-player-page, #172554)',
+                                            boxShadow: '0 10px 15px -3px rgba(var(--theme-accent-rgb), 0.2)'
+                                        }}
                                     >
                                         Voir les challenges
                                     </Link>

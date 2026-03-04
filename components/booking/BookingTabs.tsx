@@ -60,7 +60,7 @@ function BookingTabsContent({
                             </span>
                         )}
                         {currentTab === tab.id && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-padel-green" />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
                         )}
                     </button>
                 ))}

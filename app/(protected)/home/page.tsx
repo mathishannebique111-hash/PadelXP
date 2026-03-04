@@ -184,10 +184,10 @@ export default async function HomePage({
   return (
     <div className="relative min-h-screen overflow-hidden">
       <HideSplashScreen />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
+      <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(var(--theme-accent-rgb, 0, 102, 255), 0.15), transparent)' }} />
       <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-1.5 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 md:pb-8">
@@ -230,7 +230,6 @@ export default async function HomePage({
               profilContent={
                 <PadelTabContent
                   profile={profile}
-                  initialPendingRequest={pendingPartnershipRequestSender}
                 />
               }
               statsContent={

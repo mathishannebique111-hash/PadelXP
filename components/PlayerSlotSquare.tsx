@@ -52,9 +52,9 @@ export default function PlayerSlotSquare({
                         ? "bg-white/5 border-white/10 cursor-default"
                         : player
                             ? "bg-white border-white shadow-lg shadow-white/10"
-                            : "bg-white/5 border-dashed border-white/30 hover:border-padel-green hover:bg-white/10"
+                            : "bg-white/5 border-dashed border-white/30 hover:bg-white/10 club-light-bg-boost-border"
                     }
-          ${isWinner ? "ring-2 ring-padel-green ring-offset-2 ring-offset-[#071554]" : ""}
+          ${isWinner ? "ring-2 ring-offset-2 ring-offset-[#071554]" : ""}
         `}
             >
                 {player ? (
@@ -111,7 +111,7 @@ export default function PlayerSlotSquare({
                             </div>
 
                             {/* Affichage du niveau */}
-                            <div className={`text-[7px] sm:text-[9px] font-black italic ${isFixed ? 'text-padel-green' : 'text-blue-600'} leading-none`}>
+                            <div className={`text-[7px] sm:text-[9px] font-black italic ${isFixed ? '' : 'text-blue-600'} leading-none`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}>
                                 {showTilde && <span className="mr-0.5">~</span>}
                                 {niveau_padel ? niveau_padel.toFixed(2) : (player.niveau_padel ? player.niveau_padel.toFixed(2) : '')}
                             </div>

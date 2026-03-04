@@ -21,7 +21,11 @@ export default function JoinCommunityButton() {
     return (
         <a
             href={storeUrl}
-            className="w-full py-3 px-6 bg-padel-green hover:bg-padel-green/90 text-black font-extrabold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-padel-green/20 text-base uppercase tracking-tight"
+            className="w-full py-3 px-6 text-black font-extrabold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg text-base uppercase tracking-tight"
+            style={{
+                backgroundColor: 'rgb(var(--theme-secondary-accent))',
+                boxShadow: '0 10px 15px -3px rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+            }}
         >
             <Trophy size={20} />
             Rejoindre la communauté PadelXP

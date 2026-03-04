@@ -348,12 +348,12 @@ export default function PlayerProfileView({
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background avec overlay - Utiliser celui du layout pour éviter les décalages de couleur */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(var(--theme-accent-rgb,0,102,255),0.15),transparent)] z-0 pointer-events-none" />
 
       {/* Halos vert et bleu animés */}
       <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgb(var(--theme-accent))' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s", backgroundColor: 'rgb(var(--theme-secondary-accent))' }} />
       </div>
 
       {/* HEADER FIXE - Mobile optimized */}
@@ -436,8 +436,8 @@ export default function PlayerProfileView({
 
               {/* Localisation */}
               {(player.postal_code || player.city) && (
-                <div className="flex items-center gap-1.5 text-xs text-blue-200/60 mb-4">
-                  <MapPin size={12} className="text-padel-green" />
+                <div className="flex items-center gap-1.5 text-xs text-blue-200/60 mb-4" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
+                  <MapPin size={12} />
                   <span>
                     {player.postal_code || ''}{player.postal_code && player.city ? ' ' : ''}{player.city || ''}
                   </span>
@@ -512,10 +512,11 @@ export default function PlayerProfileView({
                       return (
                         <span
                           key={i}
-                          className={`text-[11px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-medium border border-padel-green/20 ${isSameSideOrHand
-                            ? "bg-orange-500/20 text-orange-300"
-                            : "bg-padel-green/10 text-padel-green"
+                          className={`text-[11px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-medium border ${isSameSideOrHand
+                            ? "bg-orange-500/20 text-orange-300 border-orange-500/20"
+                            : ""
                             }`}
+                          style={!isSameSideOrHand ? { color: 'rgb(var(--theme-secondary-accent))', backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.1)', borderColor: 'rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' } : {}}
                         >
                           {tag}
                         </span>
@@ -546,7 +547,8 @@ export default function PlayerProfileView({
                   handleProposeMatch();
                 }}
                 disabled={isInviting || invitationStatus?.sent || invitationStatus?.received || invitationStatus?.isAccepted}
-                className="flex-1 py-3.5 md:py-4 px-4 bg-padel-green text-[#071554] rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg shadow-padel-green/20 active:scale-[0.98] transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3.5 md:py-4 px-4 rounded-xl font-bold text-sm md:text-base flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent-rgb, 191,255,0), 0.2)' }}
                 title={
                   invitationStatus?.isAccepted
                     ? "Une invitation de paire acceptée existe déjà avec ce joueur"
@@ -595,8 +597,7 @@ export default function PlayerProfileView({
             </div>
           </div>
         </motion.div>
-      </div >
-
+      </div>
       {/* PROFIL PADEL - Version mobile épurée */}
       {
         (player.hand ||
@@ -678,9 +679,13 @@ export default function PlayerProfileView({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-padel-green/5 backdrop-blur-sm border border-padel-green/20 rounded-2xl p-4 md:p-5"
+              className="backdrop-blur-sm rounded-2xl p-4 md:p-5 border"
+              style={{
+                backgroundColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.05)',
+                borderColor: 'rgba(var(--theme-secondary-accent-rgb, 204, 255, 0), 0.2)'
+              }}
             >
-              <h3 className="text-sm md:text-base font-bold text-padel-green mb-3 flex items-center gap-2">
+              <h3 className="text-sm md:text-base font-bold mb-3 flex items-center gap-2" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                 <Star size={16} className="md:hidden fill-current" />
                 <Star size={18} className="hidden md:block fill-current" />
                 <span>Pourquoi jouer avec {firstName} ?</span>
@@ -688,7 +693,7 @@ export default function PlayerProfileView({
               <ul className="space-y-2 md:space-y-2.5 text-xs md:text-sm text-gray-300">
                 {compatibilityTags.map((tag, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <span className="text-padel-green flex-shrink-0 mt-0.5">→</span>
+                    <span className="flex-shrink-0 mt-0.5" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>→</span>
                     <span>{tag}</span>
                   </li>
                 ))}
@@ -738,9 +743,9 @@ function InfoCard({
       className={`${full ? "col-span-2" : ""
         } border border-white/20 bg-white/5 rounded-xl p-3 md:p-3.5`}
     >
-      <div className="flex items-center gap-2 md:gap-3">
-        <Icon size={16} className="text-padel-green flex-shrink-0 md:hidden" />
-        <Icon size={18} className="text-padel-green flex-shrink-0 hidden md:block" />
+      <div className="flex items-center gap-2 md:gap-3" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
+        <Icon size={16} className="flex-shrink-0 md:hidden" />
+        <Icon size={18} className="flex-shrink-0 hidden md:block" />
         <div className="min-w-0 flex-1">
           <p className="text-[10px] md:text-xs text-gray-400 mb-0.5 leading-tight">
             {label}
