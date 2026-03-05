@@ -13,13 +13,13 @@ export default function NavigationBar({ currentPage }: { currentPage?: NavKey })
 
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
-  const clubInactive = "bg-white/10 text-black hover:bg-white/20 border-white/10 hover:border-white/20";
+  const clubInactive = "bg-white/10 text-white/90 hover:bg-white/20 border-white/10 hover:border-white/20";
   const finalInactive = isClub ? clubInactive : inactive;
 
   return (
     <div className="mb-4 sm:mb-6 flex items-center justify-between gap-2 sm:gap-4 border-b pb-3 sm:pb-4 overflow-x-auto scrollbar-hide" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-max -mr-4 sm:mr-0">
-        <Link href="/home" className={`${base} ${currentPage === "home" ? active : finalInactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "home" ? (isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: '#000000' } : { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' }) : (isClub ? { color: '#000000' } : {})) }}>
+        <Link href="/home" className={`${base} ${currentPage === "home" ? active : finalInactive}`} style={{ letterSpacing: "0.01em", ...(currentPage === "home" ? (isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'rgb(var(--theme-accent))', color: 'var(--theme-accent-contrast, #000000)' } : { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', borderColor: 'rgb(var(--theme-accent, 59, 130, 246))' }) : (isClub ? { color: 'rgba(255,255,255,0.7)' } : {})) }}>
           <div className={iconClass} style={{ backgroundColor: 'currentColor', WebkitMaskImage: 'url("/images/Profil.png")', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url("/images/Profil.png")', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
           <span className={label}>Profil</span>
         </Link>
