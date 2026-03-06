@@ -49,6 +49,7 @@ export default function ClubPublicPreview({
             numberOfCourts={numberOfCourts ?? null}
             courtType={courtType ?? null}
             openingHours={openingHours ?? null}
+            hideLeaveButton={true}
           />
         </div>
       </div>

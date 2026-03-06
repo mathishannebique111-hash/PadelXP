@@ -73,7 +73,7 @@ async function ensureBucket() {
   } catch (error: any) {
     const message = String(error?.message || "");
     if (!message.toLowerCase().includes("exists")) {
-      logger.warn({ message }, "[api/clubs/challenges] ensureBucket warning");
+      logger.warn(`[api/clubs/challenges] ensureBucket warning: ${message}`);
     }
   }
 }
@@ -86,7 +86,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
   const { data, error } = await storage.download(path);
   if (error || !data) {
     if (error && error.message && !error.message.toLowerCase().includes("not found")) {
-      logger.warn({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] loadChallenges error");
+      logger.warn(`[api/clubs/challenges] loadChallenges error for club ${clubId.substring(0, 8)}: ${error.message}`);
     }
     return [];
   }
@@ -97,7 +97,7 @@ async function loadChallenges(clubId: string): Promise<ChallengeRecord[]> {
       return parsed as ChallengeRecord[];
     }
   } catch (err) {
-    logger.warn({ clubId: clubId.substring(0, 8) + "…", error: err }, "[api/clubs/challenges] invalid JSON");
+    logger.warn(`[api/clubs/challenges] invalid JSON for club ${clubId.substring(0, 8)}: ${err}`);
   }
   return [];
 }
@@ -158,7 +158,7 @@ async function resolveClubId(userId: string) {
     }
   }
 
-  logger.warn({ userId: userId.substring(0, 8) + "…" }, "[api/clubs/challenges] resolveClubId: aucun club trouvé pour userId");
+  logger.warn(`[api/clubs/challenges] resolveClubId: aucun club trouvé pour userId ${userId.substring(0, 8)}`);
   return null;
 }
 
@@ -185,18 +185,18 @@ export async function GET(request: Request) {
   if (clubId) {
     const records = await loadChallenges(clubId);
 
-    // Calculer la date d'il y a 1 jour
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    // Calculer la date d'il y a 72 heures (3 jours)
+    const seventyTwoHoursAgo = new Date();
+    seventyTwoHoursAgo.setHours(seventyTwoHoursAgo.getHours() - 72);
 
-    // Filtrer pour supprimer les challenges terminés depuis plus d'un jour
+    // Filtrer pour supprimer les challenges terminés depuis plus de 72h
     filteredRecords = records.filter((record) => {
       const endDate = new Date(record.end_date);
       const status = computeStatus(record);
 
-      // Garder les challenges actifs, à venir, et terminés depuis moins d'un jour
+      // Garder les challenges actifs, à venir, et terminés depuis moins de 72h
       if (status === "completed") {
-        return endDate >= oneDayAgo;
+        return endDate >= seventyTwoHoursAgo;
       }
       return true;
     });
@@ -205,9 +205,9 @@ export async function GET(request: Request) {
     if (filteredRecords.length < records.length) {
       try {
         await saveChallenges(clubId, filteredRecords);
-        logger.info({ clubId: clubId.substring(0, 8) + "…", removedCount: records.length - filteredRecords.length }, `[api/clubs/challenges] Supprimé challenge(s) terminé(s) depuis plus d'un jour`);
+        logger.info(`[api/clubs/challenges] Supprimé ${records.length - filteredRecords.length} challenge(s) terminé(s) depuis plus de 72h pour le club ${clubId.substring(0, 8)}`);
       } catch (error) {
-        logger.error({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] Erreur lors de la sauvegarde après nettoyage");
+        logger.error(`[api/clubs/challenges] Erreur lors de la sauvegarde après nettoyage pour le club ${clubId.substring(0, 8)}: ${error}`);
       }
     }
   }
@@ -268,8 +268,8 @@ export async function GET(request: Request) {
       isGlobal: false,
     }));
 
-  // Merge: global challenges first, then club-specific
-  const challenges = [...globalChallenges, ...clubChallenges];
+  // Return only club-specific challenges (omit global ones as requested for the club account)
+  const challenges = clubChallenges;
 
   return NextResponse.json({ challenges });
 }
@@ -333,7 +333,7 @@ export async function POST(request: Request) {
   try {
     await saveChallenges(clubId, updated);
   } catch (error) {
-    logger.error({ clubId: clubId.substring(0, 8) + "…", error }, "[api/clubs/challenges] save error");
+    logger.error(`[api/clubs/challenges] save error for club ${clubId.substring(0, 8)}: ${error}`);
     return NextResponse.json({ error: "Impossible d'enregistrer le challenge" }, { status: 500 });
   }
 

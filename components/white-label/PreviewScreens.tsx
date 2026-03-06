@@ -174,7 +174,8 @@ export const ReplicaPendingMatchCard = ({
                 </div>
             )}
         </div>
-    );
+    </div>
+);
 };
 
 

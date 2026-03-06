@@ -26,6 +26,7 @@ interface ClubProfileClientProps {
   numberOfCourts?: number | null;
   courtType?: string | null;
   openingHours?: OpeningHours | null;
+  hideLeaveButton?: boolean;
 }
 
 export default function ClubProfileClient({
@@ -39,6 +40,7 @@ export default function ClubProfileClient({
   numberOfCourts,
   courtType,
   openingHours,
+  hideLeaveButton = false,
 }: ClubProfileClientProps) {
   const [accent, setAccent] = useState<AccentPalette | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -89,14 +91,16 @@ export default function ClubProfileClient({
         accent={accent}
       />
 
-      <div className="pt-8 pb-4 flex justify-center">
-        <button
-          onClick={() => setIsConfirmOpen(true)}
-          className="text-xs text-white/30 hover:text-red-400 underline underline-offset-4 transition-colors"
-        >
-          Partir de ce club
-        </button>
-      </div>
+      {!hideLeaveButton && (
+        <div className="pt-8 pb-4 flex justify-center">
+          <button
+            onClick={() => setIsConfirmOpen(true)}
+            className="text-xs text-white/30 hover:text-red-400 underline underline-offset-4 transition-colors"
+          >
+            Partir de ce club
+          </button>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={isConfirmOpen}

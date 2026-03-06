@@ -78,13 +78,6 @@ function buildHours(openingHours: OpeningHours | null | undefined) {
   });
 }
 
-const buildDarkCardStyle = (accent: AccentPalette) => ({
-  backgroundColor: "rgb(var(--theme-page))",
-  borderColor: "rgb(var(--theme-accent))",
-  borderWidth: "1.5px",
-  boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
-});
-
 export default function ClubDetailsClient({
   addressLine,
   phone,
@@ -95,19 +88,37 @@ export default function ClubDetailsClient({
   accent,
 }: ClubDetailsClientProps) {
   const hours = useMemo(() => buildHours(openingHours ?? null), [openingHours]);
-  const cardStyle = useMemo(() => buildDarkCardStyle(accent), [accent]);
+
+  const cardStyle = useMemo(() => {
+    if (!accent) {
+      return {
+        backgroundColor: "rgb(var(--theme-page))",
+        borderColor: "rgb(var(--theme-accent))",
+        borderWidth: "1.5px",
+        boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
+      };
+    }
+    return {
+      backgroundColor: accent.soft,
+      borderColor: accent.base,
+      borderWidth: "1.5px",
+      boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
+    };
+  }, [accent]);
+
   const isClub = typeof document !== 'undefined' &&
     !!document.body.dataset.clubSubdomain &&
     document.body.dataset.clubSubdomain !== 'app';
 
   const contrastColor = useMemo(() => {
+    if (accent) return getContrastColor(accent.soft);
     if (typeof document === 'undefined') return 'white';
     const bg = getComputedStyle(document.body).getPropertyValue('--theme-page').trim();
     if (!bg) return 'white';
     const rgb = bg.split(' ').map(Number);
     const hex = "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
     return getContrastColor(hex);
-  }, [isClub]);
+  }, [isClub, accent]);
 
   const infrastructure = useMemo(() => {
     const items: Array<{ label: string; value: string } | null> = [];

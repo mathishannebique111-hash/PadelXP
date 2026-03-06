@@ -217,16 +217,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="relative min-h-screen bg-[#121212] flex flex-col text-white">
+    <div className="relative min-h-[100vh] bg-[#121212] flex flex-col text-white overflow-x-hidden">
       <style dangerouslySetInnerHTML={{
         __html: `
         html, body { 
           background-color: #121212 !important; 
           background: #121212 !important;
-          height: auto !important;
+          height: 100% !important;
           min-height: 100vh !important;
           margin: 0;
           padding: 0;
+        }
+        #__next, [data-nextjs-scroll-focus-boundary] {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
         }
       ` }} />
       {/* Menu hamburger et volet latéral (visible sur tous les écrans) */}
@@ -239,7 +244,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="absolute inset-0 bg-gradient-to-b from-[#121212] to-[#1E1E1E] opacity-50" />
       </div>
 
-      <main className="p-4 sm:p-6 md:p-8 pt-20 sm:pt-8 md:pl-[18rem] md:pr-8">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 pt-20 sm:pt-8 md:pl-[18rem] md:pr-8 relative z-10">
         {/* Logo + nom avec simple soulignement à la largeur du contenu */}
         <div className="mb-6 sm:mb-8 md:mb-12 flex justify-center" style={{ paddingTop: '0px', marginTop: '4px' }}>
           <div className="inline-flex flex-col items-center">
@@ -264,7 +269,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           daysInGrace={daysInGrace}
           hasActiveSubscription={hasActiveSubscription}
         >
-          {children}
+          <div className="min-h-full">
+            {children}
+          </div>
         </TrialGuard>
       </main>
     </div>
