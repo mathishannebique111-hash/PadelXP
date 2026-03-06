@@ -31,9 +31,14 @@ export const ReplicaPageTitle = ({ title, subtitle, icon }: { title: string, sub
     </div>
 );
 
-export const ReplicaChallengeBar = ({ title, current, target, isPremium = false }: { title: string, current: number, target: number, isPremium?: boolean }) => {
+export const ReplicaChallengeBar = ({ title, current, target, isPremium = false, accentColor: manualAccent }: { title: string, current: number, target: number, isPremium?: boolean, accentColor?: string }) => {
     const percentage = Math.min(100, Math.round((current / target) * 100));
-    const accentColor = isPremium ? 'rgb(245, 158, 11)' : 'rgb(var(--theme-accent))';
+    const accentColor = isPremium ? 'rgb(245, 158, 11)' : (manualAccent || 'rgb(var(--theme-accent))');
+    
+    // Determine contrast color for content inside the bar
+    // If we have manualAccent (hex), we use it. Otherwise we fallback to the accent-contrast variable.
+    const contrastColor = manualAccent ? (isLightColor(manualAccent) ? '#071554' : '#FFFFFF') : 'var(--theme-accent-contrast)';
+    const barMutedColor = manualAccent ? (isLightColor(manualAccent) ? 'rgba(7, 21, 84, 0.4)' : 'rgba(255, 255, 255, 0.4)') : 'rgba(var(--theme-accent-contrast-rgb, 255, 255, 255), 0.4)';
 
     return (
         <div className="w-full mb-3 animate-fadeIn group">
@@ -41,26 +46,26 @@ export const ReplicaChallengeBar = ({ title, current, target, isPremium = false 
                 <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                            <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full border" style={{ backgroundColor: 'transparent', color: 'rgb(var(--theme-page))', borderColor: 'rgba(var(--theme-page), 0.3)' }}>
+                            <div className="flex flex-shrink-0 items-center justify-center w-5 h-5 rounded-full border transition-colors" style={{ backgroundColor: 'transparent', color: contrastColor, borderColor: barMutedColor }}>
                                 <Trophy size={10} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[9px] font-bold truncate" style={{ color: "rgb(var(--theme-page))" }}>
+                            <span className="text-[9px] font-bold truncate transition-colors" style={{ color: contrastColor }}>
                                 {title}
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className="text-[8px] font-bold tabular-nums uppercase tracking-wider" style={{ color: "var(--theme-page)" }}>
+                            <span className="text-[8px] font-bold tabular-nums uppercase tracking-wider transition-colors" style={{ color: contrastColor }}>
                                 {current} / {target}
                             </span>
-                            <ChevronRight size={10} style={{ color: "var(--theme-page)" }} className="opacity-70" />
+                            <ChevronRight size={10} style={{ color: contrastColor }} className="opacity-70" />
                         </div>
                     </div>
-                    <div className="h-1 w-full rounded-full border overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-page), 0.2)', borderColor: 'transparent' }}>
+                    <div className="h-1 w-full rounded-full border overflow-hidden transition-colors" style={{ backgroundColor: barMutedColor, borderColor: 'transparent' }}>
                         <div
                             className="h-full rounded-full transition-all duration-1000 ease-out relative"
                             style={{
                                 width: `${percentage}%`,
-                                backgroundColor: 'rgb(var(--theme-page))'
+                                backgroundColor: contrastColor
                             }}
                         />
                     </div>
@@ -586,7 +591,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
             </div>
 
             <div className="px-1 mb-1">
-                <ReplicaChallengeBar title="Partenaires Variés" current={2} target={2} />
+                <ReplicaChallengeBar title="Partenaires Variés" current={2} target={2} accentColor={accentColor} />
             </div>
 
             <div className="flex w-full mb-3 border-b" style={{ borderColor: 'rgba(var(--theme-text), 0.1)' }}>
@@ -938,8 +943,8 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                         <div className="p-3">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 className="text-[10px] font-black mb-1" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>Partenaires Variés</h3>
-                                    <div className="inline-flex px-2 py-0.5 rounded-full border text-[6px] font-bold" style={{ backgroundColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.3)', color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>
+                                    <h3 className="text-[10px] font-black mb-1" style={{ color: isLightAccent ? '#071554' : '#FFFFFF' }}>Partenaires Variés</h3>
+                                    <div className="inline-flex px-2 py-0.5 rounded-full border text-[6px] font-bold" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', borderColor: 'rgba(255, 255, 255, 0.2)', color: isLightAccent ? '#071554' : '#FFFFFF' }}>
                                         Challenge en cours
                                     </div>
                                 </div>
@@ -969,8 +974,8 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                 </div>
 
                             <div className="flex items-center gap-1.5 mb-2 px-1">
-                                <Clock size={8} style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)', opacity: 0.6 }} />
-                                <span className="text-[6px]" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)', opacity: 0.6 }}>Période : <span style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>26 févr. 2026 → 26 mars 2026</span></span>
+                                <Clock size={8} style={{ color: isLightAccent ? '#071554' : '#FFFFFF', opacity: 0.6 }} />
+                                <span className="text-[6px]" style={{ color: isLightAccent ? '#071554' : '#FFFFFF', opacity: 0.6 }}>Période : <span style={{ color: isLightAccent ? '#071554' : '#FFFFFF' }}>26 févr. 2026 → 26 mars 2026</span></span>
                             </div>
                         </div>
                     </div>

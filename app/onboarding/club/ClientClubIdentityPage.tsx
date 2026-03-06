@@ -63,9 +63,9 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
 
       const imageData = ctx.getImageData(0, 0, size, size).data;
 
-      // 1. Détection de la couleur de fond via les coins (échantillonnage de précision)
+      // 1. Détection de la couleur de fond via les coins et les bords (échantillonnage plus large)
       const getPixelHex = (x: number, y: number) => {
-        const i = (y * size + x) * 4;
+        const i = (Math.floor(y) * size + Math.floor(x)) * 4;
         const r = imageData[i];
         const g = imageData[i + 1];
         const b = imageData[i + 2];
@@ -74,39 +74,36 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
       };
 
-      const cornerPixels = [
-        getPixelHex(0, 0), getPixelHex(size - 1, 0),
-        getPixelHex(0, size - 1), getPixelHex(size - 1, size - 1),
-        getPixelHex(Math.floor(size / 2), 0),
-        getPixelHex(0, Math.floor(size / 2)),
-        getPixelHex(size - 1, Math.floor(size / 2)),
-        getPixelHex(Math.floor(size / 2), size - 1)
-      ].filter(Boolean) as string[];
-
-      // Groupement des couleurs similaires dans les coins pour ignorer les micro-variations (anti-aliasing)
       const getDist = (c1: string, c2: string) => {
         const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
         const r2 = parseInt(c2.slice(1, 3), 16), g2 = parseInt(c2.slice(3, 5), 16), b2 = parseInt(c2.slice(5, 7), 16);
         return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
       };
 
-      const cornerGroups: { hex: string; count: number }[] = [];
-      cornerPixels.forEach(hex => {
-        const group = cornerGroups.find(g => getDist(g.hex, hex) < 5);
+      const edges = [];
+      for(let i=0; i<size; i += size/10) {
+        edges.push(getPixelHex(i, 0));
+        edges.push(getPixelHex(i, size-1));
+        edges.push(getPixelHex(0, i));
+        edges.push(getPixelHex(size-1, i));
+      }
+      const edgePixels = edges.filter(Boolean) as string[];
+
+      const edgeGroups: { hex: string; count: number }[] = [];
+      edgePixels.forEach(hex => {
+        const group = edgeGroups.find(g => getDist(g.hex, hex) < 10);
         if (group) group.count++;
-        else cornerGroups.push({ hex, count: 1 });
+        else edgeGroups.push({ hex, count: 1 });
       });
 
-      const sortedGroups = cornerGroups.sort((a, b) => b.count - a.count);
-
-      // La couleur de fond est celle des coins si elle est majoritaire
+      const sortedEdgeGroups = edgeGroups.sort((a, b) => b.count - a.count);
       let detectedBg: string | null = null;
-      if (sortedGroups.length > 0 && sortedGroups[0].count >= 2) {
-        detectedBg = sortedGroups[0].hex;
+      if (sortedEdgeGroups.length > 0 && sortedEdgeGroups[0].count > edgePixels.length * 0.3) {
+        detectedBg = sortedEdgeGroups[0].hex;
       }
 
-      // 2. Analyse de fréquence globale sans quantification (pour l'exactitude)
-      const colorCounts: Record<string, number> = {};
+      // 2. Analyse de fréquence globale et saturation
+      const colorCounts: Record<string, { count: number; sat: number }> = {};
       for (let i = 0; i < imageData.length; i += 4) {
         const a = imageData[i + 3];
         if (a < 128) continue;
@@ -115,35 +112,47 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         const g = imageData[i + 1];
         const b = imageData[i + 2];
         const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+        
+        if (!colorCounts[hex]) {
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            const sat = max === 0 ? 0 : (max - min) / max;
+            colorCounts[hex] = { count: 1, sat };
+        } else {
+            colorCounts[hex].count++;
+        }
       }
 
-      const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-      if (sortedColors.length === 0) {
+      const allColors = Object.entries(colorCounts).map(([hex, data]) => ({ hex, ...data }));
+      const sortedByCount = [...allColors].sort((a, b) => b.count - a.count);
+      
+      if (sortedByCount.length === 0) {
         resolve(null);
         return;
       }
 
       // Couleur principale : Priorité au fond détecté, sinon la plus fréquente
-      const primary = detectedBg || sortedColors[0][0];
+      const primary = detectedBg || sortedByCount[0].hex;
 
-      // Couleur secondaire : La plus fréquente qui n'est pas la principale (avec distance)
+      // Couleur secondaire (Accent) : On cherche une couleur avec une bonne saturation 
+      // et qui est suffisamment différente de la principale.
       let secondary = primary;
+      const vibrantColors = allColors
+        .filter(c => getDist(primary, c.hex) > 80)
+        .sort((a, b) => (b.sat * Math.log10(b.count + 1)) - (a.sat * Math.log10(a.count + 1)));
 
-      for (let i = 0; i < Math.min(sortedColors.length, 100); i++) {
-        const color = sortedColors[i][0];
-        if (getDist(primary, color) > 60) {
-          secondary = color;
-          break;
+      if (vibrantColors.length > 0) {
+        secondary = vibrantColors[0].hex;
+      } else if (sortedByCount.length > 1) {
+        // Fallback sur la 2ème plus fréquente si rien de "vibrant" n'est trouvé
+        for(let i=1; i<Math.min(sortedByCount.length, 10); i++) {
+            if (getDist(primary, sortedByCount[i].hex) > 40) {
+                secondary = sortedByCount[i].hex;
+                break;
+            }
         }
       }
 
-      // Fallback si aucune couleur n'est assez différente
-      if (secondary === primary && sortedColors.length > 1) {
-        secondary = sortedColors[1][0];
-      }
-
-      console.log("[Extraction Ultra-Précise]", { primary, secondary, cornerMatch: !!detectedBg });
+      console.log("[Extraction Multi-Points]", { primary, secondary, detectedBg });
       resolve({ primary, secondary });
     };
     img.onerror = () => resolve(null);
@@ -185,7 +194,8 @@ const PhonePreview = ({ bg, secondary, activeScreen, logoUrl, textColor, mutedCo
         "--theme-secondary-accent": hexToRgbNumbers(secondary),
         "--theme-text": textColor,
         "--theme-text-muted": mutedColor,
-        "--theme-accent-contrast": isLightColor(secondary) ? "#0f172a" : "#ffffff",
+        "--theme-accent-contrast": isLightColor(secondary) ? "#071554" : "#ffffff",
+        "--theme-accent-contrast-rgb": isLightColor(secondary) ? "7, 21, 84" : "255, 255, 255",
       } as React.CSSProperties}
     >
       {/* Background Reflection Effect */}
@@ -701,7 +711,11 @@ export default function ClientClubIdentityPage() {
                           setLogoPreview(url);
                           // Extraire les couleurs
                           extractColorsFromImage(url).then(colors => {
-                            if (colors) setExtractedColors(colors);
+                            if (colors) {
+                                setExtractedColors(colors);
+                                setSecondaryColor(colors.secondary);
+                                setBackgroundColor(colors.primary);
+                            }
                           });
                         }
                       }}
