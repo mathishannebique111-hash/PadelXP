@@ -54,7 +54,7 @@ export default function RankBadge({ rank, size = "md", className = "", isClub = 
       className={`inline-flex items-center justify-center rounded-full font-bold border-2 backdrop-blur-sm relative overflow-hidden transition-all duration-300 hover:scale-105 ${sizeClasses[size]} ${config.gradient} ${config.border} ${config.glow} ${config.textColor} ${className}`}
       style={{
         ...config.style,
-        color: rank > 3 && isClub ? 'white' : undefined,
+        color: rank > 3 && isClub ? 'white !important' : undefined,
         textShadow: rank <= 3 ? "none" : (isClub ? "none" : "0 2px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255,255,255,0.5)"),
         boxShadow: config.shadowColor,
       }}

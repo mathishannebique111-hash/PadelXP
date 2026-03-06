@@ -39,6 +39,78 @@ const hexToRgbNumbers = (hex: string) => {
   return `${r}, ${g}, ${b}`;
 };
 
+// Helper pour extraire les couleurs dominantes d'une image
+const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; secondary: string } | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+
+      // Redimensionner pour simplifier l'analyse
+      const size = 50;
+      canvas.width = size;
+      canvas.height = size;
+      ctx.drawImage(img, 0, 0, size, size);
+
+      const imageData = ctx.getImageData(0, 0, size, size).data;
+      const colorCounts: Record<string, number> = {};
+
+      for (let i = 0; i < imageData.length; i += 4) {
+        const r = imageData[i];
+        const g = imageData[i + 1];
+        const b = imageData[i + 2];
+        const a = imageData[i + 3];
+
+        // Ignorer les pixels trop transparents ou trop proches du blanc/noir pur si nécessaire
+        if (a < 128) continue;
+
+        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+      }
+
+      const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+
+      if (sortedColors.length === 0) {
+        resolve(null);
+        return;
+      }
+
+      const primary = sortedColors[0][0];
+      let secondary = sortedColors[1]?.[0] || primary;
+
+      // Essayer de trouver une couleur secondaire distincte de la primaire
+      if (sortedColors.length > 2) {
+        for (let i = 1; i < Math.min(sortedColors.length, 10); i++) {
+          const color = sortedColors[i][0];
+          // Calcul simple de distance de couleur
+          const r1 = parseInt(primary.slice(1, 3), 16);
+          const g1 = parseInt(primary.slice(3, 5), 16);
+          const b1 = parseInt(primary.slice(5, 7), 16);
+          const r2 = parseInt(color.slice(1, 3), 16);
+          const g2 = parseInt(color.slice(3, 5), 16);
+          const b2 = parseInt(color.slice(5, 7), 16);
+          const dist = Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+
+          if (dist > 60) { // Seuil de différence
+            secondary = color;
+            break;
+          }
+        }
+      }
+
+      resolve({ primary, secondary });
+    };
+    img.onerror = () => resolve(null);
+    img.src = imageUrl;
+  });
+};
+
 // ============================================================
 // COMPOSANT DE PRÉVISUALISATION LIVE
 // ============================================================
@@ -213,6 +285,7 @@ export default function ClientClubIdentityPage() {
   const [numberOfCourtsInput, setNumberOfCourtsInput] = useState("");
   const [courtTypeInput, setCourtTypeInput] = useState("");
   const [subdomainInput, setSubdomainInput] = useState("");
+  const [extractedColors, setExtractedColors] = useState<{ primary: string; secondary: string } | null>(null);
 
   // Calcul du Score de Visibilité (9 champs suivis)
   const visibilityFields = [
@@ -584,7 +657,12 @@ export default function ClientClubIdentityPage() {
                         const f = e.target.files?.[0];
                         if (f) {
                           setLogoFile(f);
-                          setLogoPreview(URL.createObjectURL(f));
+                          const url = URL.createObjectURL(f);
+                          setLogoPreview(url);
+                          // Extraire les couleurs
+                          extractColorsFromImage(url).then(colors => {
+                            if (colors) setExtractedColors(colors);
+                          });
                         }
                       }}
                     />
