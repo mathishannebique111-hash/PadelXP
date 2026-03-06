@@ -78,7 +78,8 @@ export const ReplicaPendingMatchCard = ({
     team1,
     team2,
     isConfirmed = false,
-    winnerTeam = 1
+    winnerTeam = 1,
+    accentColor
 }: {
     creator: string,
     date: string,
