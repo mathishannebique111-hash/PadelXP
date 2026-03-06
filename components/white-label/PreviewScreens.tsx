@@ -89,12 +89,14 @@ export const ReplicaPendingMatchCard = ({
     isConfirmed?: boolean,
     winnerTeam?: number,
     accentColor?: string
-}) => (
-    <div className={`rounded-xl border-2 p-2.5 transition-all duration-500 scale-[0.98] ${isConfirmed ? 'bg-green-500/10 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-dashed opacity-80'
-        }`} style={{
-            borderColor: !isConfirmed ? 'rgb(var(--theme-accent))' : undefined,
-            backgroundColor: !isConfirmed ? 'rgba(var(--theme-accent), 0.05)' : undefined
-        }}>
+}) => {
+    const isLightAccent = isLightColor(accentColor || '#172554');
+    return (
+        <div className={`rounded-xl border-2 p-2.5 transition-all duration-500 scale-[0.98] ${isConfirmed ? 'bg-green-500/10 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-dashed opacity-80'
+            }`} style={{
+                borderColor: !isConfirmed ? 'rgb(var(--theme-accent))' : undefined,
+                backgroundColor: !isConfirmed ? 'rgba(var(--theme-accent), 0.05)' : undefined
+            }}>
         <div className="mb-2.5 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
                 <div className="flex-shrink-0 rounded-full p-1 bg-white/10" style={{ color: 'rgb(var(--theme-accent))' }}>
@@ -168,12 +170,12 @@ export const ReplicaPendingMatchCard = ({
             ) : (
                 <div className="flex items-center gap-1">
                     <button type="button" className="p-1 rounded-md border" style={{ backgroundColor: "rgba(var(--theme-text), 0.05)", borderColor: "rgba(var(--theme-text), 0.1)", color: "var(--theme-text-muted)" }}><X size={8} /></button>
-                    <button type="button" className="text-white px-2 py-1 rounded-md text-[8px] font-black shadow-sm" style={{ backgroundColor: "rgb(var(--theme-accent))" }}>CONFIRMER</button>
+                    <button type="button" className="px-2 py-1 rounded-md text-[8px] font-black shadow-sm" style={{ backgroundColor: "rgb(var(--theme-accent))", color: isLightColor(accentColor || '#172554') ? '#071554' : '#FFFFFF' }}>CONFIRMER</button>
                 </div>
             )}
         </div>
-    </div>
-);
+    );
+};
 
 
 export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLightPage, accentColor }: { name: string, level: string, compatibility: number, avatarUrl?: string, isLightPage?: boolean, accentColor?: string }) => (
@@ -204,7 +206,7 @@ export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLi
         </div>
         <div className="grid grid-cols-2 gap-1 mt-1">
             <button type="button" className="py-1 px-0 border border-white/10 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/10 h-5 transition-colors" style={{ borderColor: "rgba(var(--theme-text), 0.1)", color: "var(--theme-text)" }}><Eye size={9} /></button>
-            <button type="button" className="py-1 px-0 rounded-lg flex items-center justify-center transition-all h-5 text-white shadow-md hover:brightness-110" style={{ backgroundColor: "rgb(var(--theme-accent))" }}><User size={9} className="fill-current" /></button>
+            <button type="button" className="py-1 px-0 rounded-lg flex items-center justify-center transition-all h-5 shadow-md hover:brightness-110" style={{ backgroundColor: "rgb(var(--theme-accent))", color: isLightColor(accentColor || '#172554') ? '#071554' : '#FFFFFF' }}><User size={9} className="fill-current" /></button>
         </div>
     </div>
 );
@@ -280,7 +282,7 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
 
                             <div className="w-full space-y-1.5">
                                 {/* Share button replica */}
-                                <button type="button" className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-black text-[7px] uppercase tracking-wider text-white shadow-md active:scale-95 transition-all" style={{ background: 'rgb(var(--theme-accent))', boxShadow: '0 0 10px rgba(var(--theme-accent), 0.3)' }}>
+                                <button type="button" className="w-full py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-black text-[7px] uppercase tracking-wider shadow-md active:scale-95 transition-all" style={{ background: 'rgb(var(--theme-accent))', color: effectiveBg, boxShadow: '0 0 10px rgba(var(--theme-accent), 0.3)' }}>
                                     <Share2 size={9} className="stroke-[2.5px]" />
                                     PARTAGER MON PROFIL
                                 </button>
@@ -487,46 +489,46 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
             {activeTab === 3 && (
                 <div className="animate-fadeIn space-y-2 px-1 pb-4">
                     {/* Club Header */}
-                    <div className="rounded-xl border p-2.5 shadow-sm transition-colors" style={{ backgroundColor: clubBgColor, borderColor: clubBorderContrast }}>
+                    <div className="rounded-xl border p-2.5 shadow-sm transition-colors" style={{ backgroundColor: effectiveBg, borderColor: clubBorderContrast }}>
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <img src={displayLogoUrl} className="w-6 h-6 object-contain opacity-60" />
                             </div>
-                            <h3 className="text-[9px] font-black uppercase tracking-tight leading-tight" style={{ color: clubTextContrast }}>{displayClubName}</h3>
+                            <h3 className="text-[9px] font-black uppercase tracking-tight leading-tight" style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>{displayClubName}</h3>
                         </div>
                     </div>
 
                     {/* Coordonnées + Infrastructure */}
-                    <div className="rounded-xl border p-2.5 shadow-lg transition-colors" style={{ backgroundColor: clubBgColor, borderColor: clubBorderContrast }}>
+                    <div className="rounded-xl border p-2.5 shadow-lg transition-colors" style={{ backgroundColor: effectiveBg, borderColor: clubBorderContrast }}>
                         <div className="grid grid-cols-2 gap-2">
                             {/* Coordonnées */}
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em]" style={{ color: clubMutedContrast }}>Coordonnées</h4>
-                                    <span className="text-[5px] font-semibold uppercase opacity-70" style={{ color: clubTextContrast }}>Site ↗</span>
+                                    <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em]" style={{ color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }}>Coordonnées</h4>
+                                    <span className="text-[5px] font-semibold uppercase opacity-70" style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>Site ↗</span>
                                 </div>
                                 <div className="space-y-1.5">
                                     <div className="flex flex-col items-center gap-0.5 text-center">
-                                        <MapPin size={8} style={{ color: clubMutedContrast }} />
-                                        <span className="text-[5px] font-medium leading-tight" style={{ color: clubTextContrast }}>{displayStreet}, {displayPostal} {displayCity}</span>
+                                        <MapPin size={8} style={{ color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }} />
+                                        <span className="text-[5px] font-medium leading-tight" style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>{displayStreet}, {displayPostal} {displayCity}</span>
                                     </div>
                                     <div className="flex flex-col items-center gap-0.5 text-center">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2" style={{ color: clubMutedContrast }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                                        <span className="text-[5px] font-medium" style={{ color: clubTextContrast }}>{displayPhone}</span>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2" style={{ color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                        <span className="text-[5px] font-medium" style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>{displayPhone}</span>
                                     </div>
                                 </div>
                             </div>
                             {/* Infrastructure */}
                             <div>
-                                <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] mb-1.5" style={{ color: clubMutedContrast }}>Infrastructure</h4>
+                                <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] mb-1.5" style={{ color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }}>Infrastructure</h4>
                                 <div className="space-y-1 mt-2">
                                     <div className="flex items-center justify-between rounded-md px-1.5 py-1 transition-colors" style={{ backgroundColor: isLightPage ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)' }}>
-                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold" style={{ color: clubMutedContrast }}>Terrains</span>
-                                        <span className="font-extrabold text-[6px]" style={{ color: clubTextContrast }}>{displayCourts}</span>
+                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold" style={{ color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }}>Terrains</span>
+                                        <span className="font-extrabold text-[6px]" style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>{displayCourts}</span>
                                     </div>
                                     <div className="flex items-center justify-between rounded-md px-1.5 py-1 transition-colors" style={{ backgroundColor: isLightPage ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)' }}>
-                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold" style={{ color: clubMutedContrast }}>Type</span>
-                                        <span className="font-extrabold text-[6px]" style={{ color: clubTextContrast }}>{displayCourtType}</span>
+                                        <span className="uppercase tracking-[0.15em] text-[5px] font-bold" style={{ color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }}>Type</span>
+                                        <span className="font-extrabold text-[6px]" style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>{displayCourtType}</span>
                                     </div>
                                 </div>
                             </div>
@@ -534,8 +536,8 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                     </div>
 
                     {/* Horaires d'ouverture */}
-                    <div className="rounded-xl border p-2.5 shadow-lg transition-colors" style={{ backgroundColor: clubBgColor, borderColor: clubBorderContrast }}>
-                        <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] mb-1.5" style={{ color: clubMutedContrast }}>Horaires d'ouverture</h4>
+                    <div className="rounded-xl border p-2.5 shadow-lg transition-colors" style={{ backgroundColor: effectiveBg, borderColor: clubBorderContrast }}>
+                        <h4 className="text-[5px] font-semibold uppercase tracking-[0.2em] mb-1.5" style={{ color: isLightPage ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }}>Horaires d'ouverture</h4>
                         <div className="space-y-0.5">
                             {[
                                 { day: 'Lundi', hours: '08:00 \u2013 22:00', open: true },
@@ -547,8 +549,8 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                                 { day: 'Dimanche', hours: 'Fermé', open: false },
                             ].map((h) => (
                                 <div key={h.day} className={`flex items-center justify-between rounded-md border px-1.5 py-0.5 text-[5px] font-semibold transition-colors ${h.open ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-rose-400/30 bg-rose-500/10'}`}>
-                                    <span className="uppercase tracking-[0.15em]" style={{ color: clubTextContrast }}>{h.day}</span>
-                                    <span style={{ color: clubTextContrast }}>{h.hours}</span>
+                                    <span className="uppercase tracking-[0.15em]" style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>{h.day}</span>
+                                    <span style={{ color: isLightPage ? '#000000' : '#FFFFFF' }}>{h.hours}</span>
                                 </div>
                             ))}
                         </div>
@@ -670,7 +672,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                         </div>
                     </div>
 
-                    <button type="button" className="w-full rounded-xl py-2 font-black text-white text-[7px] uppercase tracking-widest shadow-lg mt-2" style={{ background: "rgb(var(--theme-accent))" }}>
+                    <button type="button" className="w-full rounded-xl py-2 font-black text-[7px] uppercase tracking-widest shadow-lg mt-2" style={{ background: "rgb(var(--theme-accent))", color: isLightColor(accentColor || '#172554') ? '#071554' : '#FFFFFF' }}>
                         ENREGISTRER LE MATCH
                     </button>
                 </div>
@@ -934,8 +936,8 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                         <div className="p-3">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 className="text-[10px] font-black mb-1" style={{ color: "var(--theme-page)" }}>Partenaires Variés</h3>
-                                    <div className="inline-flex px-2 py-0.5 rounded-full border text-[6px] font-bold" style={{ backgroundColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.3)', color: "var(--theme-page)" }}>
+                                    <h3 className="text-[10px] font-black mb-1" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>Partenaires Variés</h3>
+                                    <div className="inline-flex px-2 py-0.5 rounded-full border text-[6px] font-bold" style={{ backgroundColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.3)', color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>
                                         Challenge en cours
                                     </div>
                                 </div>
@@ -948,25 +950,25 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                 </div>
                             </div>
 
-                            <div className="rounded-xl p-3 mb-3 border" style={{ backgroundColor: 'rgb(var(--theme-page))', borderColor: 'transparent' }}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <div>
-                                        <p className="text-[8px] font-black mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Objectif</p>
-                                        <p className="text-[6px]" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>Jouer avec 2 partenaires différents</p>
+                                <div className="rounded-xl p-3 mb-3 border" style={{ backgroundColor: 'rgb(var(--theme-page))', borderColor: 'transparent' }}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div>
+                                            <p className="text-[8px] font-black mb-0.5" style={{ color: "rgb(var(--theme-accent))" }}>Objectif</p>
+                                            <p className="text-[6px]" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>Jouer avec 2 partenaires différents</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-black" style={{ color: "rgb(var(--theme-accent))" }}>2 / 2</span>
+                                            <p className="text-[6px]" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>100%</p>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-[10px] font-black" style={{ color: "rgb(var(--theme-accent))" }}>2/2</span>
-                                        <p className="text-[6px]" style={{ color: "rgb(var(--theme-accent))", opacity: 0.8 }}>100%</p>
+                                    <div className="h-1.5 w-full border rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-accent), 0.2)', borderColor: 'transparent' }}>
+                                        <div className="h-full rounded-full" style={{ width: `100%`, backgroundColor: "rgb(var(--theme-accent))" }} />
                                     </div>
                                 </div>
-                                <div className="h-1.5 w-full border rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(var(--theme-accent), 0.2)', borderColor: 'transparent' }}>
-                                    <div className="h-full rounded-full" style={{ width: '100%', backgroundColor: "rgb(var(--theme-accent))" }} />
-                                </div>
-                            </div>
 
                             <div className="flex items-center gap-1.5 mb-2 px-1">
-                                <Clock size={8} style={{ color: "var(--theme-page)", opacity: 0.6 }} />
-                                <span className="text-[6px]" style={{ color: "var(--theme-page)", opacity: 0.6 }}>Période : <span style={{ color: "var(--theme-page)" }}>26 févr. 2026 → 26 mars 2026</span></span>
+                                <Clock size={8} style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)', opacity: 0.6 }} />
+                                <span className="text-[6px]" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)', opacity: 0.6 }}>Période : <span style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>26 févr. 2026 → 26 mars 2026</span></span>
                             </div>
                         </div>
                     </div>
@@ -977,7 +979,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                 <div className="animate-fadeIn space-y-4 px-1 pb-4">
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 mb-2">
-                        <button type="button" className="flex-1 py-1.5 rounded-lg text-white text-[9px] font-black flex items-center justify-center gap-1 shadow-lg transition-all" style={{ backgroundColor: "rgb(var(--theme-accent))" }}>
+                        <button type="button" className="flex-1 py-1.5 rounded-lg text-white text-[9px] font-black flex items-center justify-center gap-1 shadow-lg transition-all" style={{ backgroundColor: "rgb(var(--theme-accent))", color: isLightAccent ? '#071554' : '#FFFFFF' }}>
                             <Plus size={10} className="stroke-[3px]" /> Créer une ligue
                         </button>
                         <button type="button" className="flex-1 py-1.5 rounded-lg border bg-white/5 text-[9px] font-black flex items-center justify-center gap-1 transition-all shadow-sm" style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)', color: "var(--theme-text)" }}>
@@ -992,8 +994,8 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                         <div className="rounded-2xl border p-3 shadow-xl" style={{ borderColor: accentColor, backgroundColor: accentColor }}>
                             <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h4 className="text-[10px] font-black mb-1 uppercase italic tracking-tight" style={{ color: "var(--theme-page)" }}>Les champions</h4>
-                                    <div className="inline-flex px-1.5 py-0.5 rounded bg-[var(--theme-page)]/10 border text-[6px] font-black" style={{ borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.2)', color: "var(--theme-page)" }}>
+                                    <h4 className="text-[10px] font-black mb-1 uppercase italic tracking-tight" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>Les champions</h4>
+                                    <div className="inline-flex px-1.5 py-0.5 rounded border text-[6px] font-black shadow-sm" style={{ backgroundColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.15)', borderColor: 'rgba(var(--theme-page-rgb, 7, 21, 84), 0.3)', color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>
                                         <div className="flex items-center gap-1">
                                             <Copy size={8} /> RTE5EM
                                         </div>
@@ -1004,19 +1006,19 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center gap-1">
-                                        <Users size={8} style={{ color: "var(--theme-page)", opacity: 0.6 }} />
-                                        <span className="text-[6px]" style={{ color: "var(--theme-page)" }}>5/5</span>
+                                        <Users size={8} style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)', opacity: 0.6 }} />
+                                        <span className="text-[6px]" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>5/5</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Clock size={8} style={{ color: "var(--theme-page)", opacity: 0.6 }} />
-                                        <span className="text-[6px]" style={{ color: "var(--theme-page)" }}>7j restants</span>
+                                        <Clock size={8} style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)', opacity: 0.6 }} />
+                                        <span className="text-[6px]" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)' }}>7j restants</span>
                                     </div>
                                 </div>
-                                <span className="text-[6px] tracking-tight font-black" style={{ color: "var(--theme-page)", opacity: 0.6 }}>1/5 matchs</span>
+                                <span className="text-[6px] tracking-tight font-black" style={{ color: isLightAccent ? '#071554' : 'var(--theme-page)', opacity: 0.6 }}>1/5 matchs</span>
                             </div>
 
-                            <div className="h-1 w-full bg-[var(--theme-page)]/20 rounded-full overflow-hidden">
-                                <div className="h-full rounded-full" style={{ backgroundColor: "var(--theme-page)", width: '20%' }} />
+                            <div className="h-1 w-full bg-black/10 rounded-full overflow-hidden" style={{ backgroundColor: isLightAccent ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)' }}>
+                                <div className="h-full rounded-full" style={{ backgroundColor: isLightAccent ? '#071554' : 'var(--theme-page)', width: '20%' }} />
                             </div>
                         </div>
                     </div>
