@@ -80,79 +80,111 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
       };
 
-      const edges = [];
-      for(let i=0; i<size; i += size/10) {
-        edges.push(getPixelHex(i, 0));
-        edges.push(getPixelHex(i, size-1));
-        edges.push(getPixelHex(0, i));
-        edges.push(getPixelHex(size-1, i));
-      }
-      const edgePixels = edges.filter(Boolean) as string[];
+      // 1. Analyse exhaustive de toutes les couleurs non-transparentes
+      const colorMap = new Map<string, number>();
+      let totalVisiblePixels = 0;
 
-      const edgeGroups: { hex: string; count: number }[] = [];
-      edgePixels.forEach(hex => {
-        const group = edgeGroups.find(g => getDist(g.hex, hex) < 10);
-        if (group) group.count++;
-        else edgeGroups.push({ hex, count: 1 });
-      });
-
-      const sortedEdgeGroups = edgeGroups.sort((a, b) => b.count - a.count);
-      let detectedBg: string | null = null;
-      if (sortedEdgeGroups.length > 0 && sortedEdgeGroups[0].count > edgePixels.length * 0.3) {
-        detectedBg = sortedEdgeGroups[0].hex;
-      }
-
-      // 2. Analyse de fréquence globale et saturation
-      const colorCounts: Record<string, { count: number; sat: number }> = {};
       for (let i = 0; i < imageData.length; i += 4) {
-        const a = imageData[i + 3];
-        if (a < 128) continue;
-
+        if (imageData[i + 3] < 128) continue; // Ignorer transparence
+        
         const r = imageData[i];
         const g = imageData[i + 1];
         const b = imageData[i + 2];
-        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
         
-        if (!colorCounts[hex]) {
-            const max = Math.max(r, g, b), min = Math.min(r, g, b);
-            const sat = max === 0 ? 0 : (max - min) / max;
-            colorCounts[hex] = { count: 1, sat };
-        } else {
-            colorCounts[hex].count++;
-        }
+        // Bucketization légère pour grouper les couleurs quasi-identiques (réduction de bruit)
+        const br = Math.round(r / 4) * 4;
+        const bg = Math.round(g / 4) * 4;
+        const bb = Math.round(b / 4) * 4;
+        const hex = "#" + ((1 << 24) + (br << 16) + (bg << 8) + bb).toString(16).slice(1).toUpperCase();
+        
+        colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
+        totalVisiblePixels++;
       }
 
-      const allColors = Object.entries(colorCounts).map(([hex, data]) => ({ hex, ...data }));
-      const sortedByCount = [...allColors].sort((a, b) => b.count - a.count);
-      
-      if (sortedByCount.length === 0) {
+      if (totalVisiblePixels === 0) {
         resolve(null);
         return;
       }
 
-      // Couleur principale : Priorité au fond détecté, sinon la plus fréquente
-      const primary = detectedBg || sortedByCount[0].hex;
-
-      // Couleur secondaire (Accent) : On cherche une couleur avec une bonne saturation 
-      // et qui est suffisamment différente de la principale.
-      let secondary = primary;
-      const vibrantColors = allColors
-        .filter(c => getDist(primary, c.hex) > 80)
-        .sort((a, b) => (b.sat * Math.log10(b.count + 1)) - (a.sat * Math.log10(a.count + 1)));
-
-      if (vibrantColors.length > 0) {
-        secondary = vibrantColors[0].hex;
-      } else if (sortedByCount.length > 1) {
-        // Fallback sur la 2ème plus fréquente si rien de "vibrant" n'est trouvé
-        for(let i=1; i<Math.min(sortedByCount.length, 10); i++) {
-            if (getDist(primary, sortedByCount[i].hex) > 40) {
-                secondary = sortedByCount[i].hex;
-                break;
-            }
-        }
+      // 2. Identifier la couleur de fond du logo (aux bords)
+      const edgeColors = new Map<string, number>();
+      for (let x = 0; x < size; x += 5) {
+        [0, size - 1].forEach(y => {
+          const i = (y * size + x) * 4;
+          if (imageData[i + 3] >= 128) {
+            const hex = "#" + ((1 << 24) + (imageData[i] << 16) + (imageData[i+1] << 8) + imageData[i+2]).toString(16).slice(1).toUpperCase();
+            edgeColors.set(hex, (edgeColors.get(hex) || 0) + 1);
+          }
+        });
+      }
+      for (let y = 0; y < size; y += 5) {
+        [0, size - 1].forEach(x => {
+          const i = (y * size + x) * 4;
+          if (imageData[i + 3] >= 128) {
+            const hex = "#" + ((1 << 24) + (imageData[i] << 16) + (imageData[i+1] << 8) + imageData[i+2]).toString(16).slice(1).toUpperCase();
+            edgeColors.set(hex, (edgeColors.get(hex) || 0) + 1);
+          }
+        });
       }
 
-      console.log("[Extraction Multi-Points]", { primary, secondary, detectedBg });
+      let logoBgColor: string | null = null;
+      let maxEdgeCount = 0;
+      edgeColors.forEach((count, hex) => {
+        if (count > maxEdgeCount) {
+          maxEdgeCount = count;
+          logoBgColor = hex;
+        }
+      });
+
+      // 3. Trier les couleurs par importance (fréquence + saturation)
+      const colors = Array.from(colorMap.entries()).map(([hex, count]) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        const sat = max === 0 ? 0 : (max - min) / max;
+        // Score pondéré : fréquence mais favorise grandement les couleurs saturées
+        const score = count * (1 + sat * 5); 
+        return { hex, count, sat, score, r, g, b };
+      });
+
+      const sortedByScore = [...colors].sort((a, b) => b.score - a.score);
+      const sortedByCount = [...colors].sort((a, b) => b.count - a.count);
+
+      // Algorithme de sélection des couleurs exactes
+      let primary: string;
+      let secondary: string;
+
+      // Si le logo est sur un fond coloré opaque (détecté aux bords)
+      if (logoBgColor && (maxEdgeCount > 10)) {
+        primary = logoBgColor;
+        // L'accent est la couleur la plus "importante" qui n'est pas le fond
+        const otherColors = sortedByScore.filter(c => getDist(c.hex, primary) > 50);
+        secondary = otherColors.length > 0 ? otherColors[0].hex : primary;
+      } else {
+        // Logo transparent ou fond non détecté clairement
+        // On prend la couleur la plus fréquente pour le fond si elle est sombre ou neutre, 
+        // ou la plus fréquente tout court
+        primary = sortedByCount[0].hex;
+        
+        // Pour l'accent (secondary), on cherche la couleur la plus vibrante
+        const vibrant = sortedByScore.filter(c => getDist(c.hex, primary) > 60);
+        secondary = vibrant.length > 0 ? vibrant[0].hex : primary;
+      }
+
+      // Ajustement final : Si secondary est trop proche du noir/blanc pur alors qu'il y a d'autres couleurs
+      const isNeutral = (hex: string) => {
+          const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          return (max - min) < 20;
+      };
+
+      if (isNeutral(secondary)) {
+          const colorful = sortedByScore.find(c => !isNeutral(c.hex) && getDist(c.hex, primary) > 40);
+          if (colorful) secondary = colorful.hex;
+      }
+
+      console.log("[Extraction Haute Précision]", { primary, secondary, logoBgColor });
       resolve({ primary, secondary });
     };
     img.onerror = () => resolve(null);
@@ -782,6 +814,18 @@ export default function ClientClubIdentityPage() {
                     </div>
                     <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur principale (fond d'écran) EXACTE du logo</span>
                   </label>
+                  
+                  {/* Visual feedback of extracted colors */}
+                  <div className="mt-1 flex items-center gap-3 pl-1">
+                    <div className="flex items-center gap-1.5 grayscale-[0.5] hover:grayscale-0 transition-all">
+                        <div className="w-3 h-3 rounded-full border border-white/20 shadow-sm" style={{ backgroundColor: extractedColors.primary }} />
+                        <span className="text-[8px] font-mono text-white/40 uppercase tracking-tighter">Fond : {extractedColors.primary}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 grayscale-[0.5] hover:grayscale-0 transition-all">
+                        <div className="w-3 h-3 rounded-full border border-white/20 shadow-sm" style={{ backgroundColor: extractedColors.secondary }} />
+                        <span className="text-[8px] font-mono text-white/40 uppercase tracking-tighter">Accent : {extractedColors.secondary}</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
