@@ -390,7 +390,7 @@ export default function Leaderboard({ initialData, currentUserId }: Props) {
                     >
                       <td className="px-4 py-4 text-center border-r border-gray-100">
                         <div className="flex items-center justify-center">
-                          <RankBadge rank={r.rank} size="sm" />
+                          <RankBadge rank={r.rank} size="sm" isClub={typeof document !== 'undefined' && !!document.body.dataset.clubSubdomain && document.body.dataset.clubSubdomain !== 'app'} />
                         </div>
                       </td>
                       <td className="px-4 py-4 text-center border-r border-gray-100">

@@ -78,20 +78,12 @@ function buildHours(openingHours: OpeningHours | null | undefined) {
   });
 }
 
-function buildDarkCardStyle(accent: AccentPalette | null | undefined) {
-  const isClub = typeof document !== 'undefined' && !!document.body.dataset.clubSubdomain;
-  if (isClub && accent) {
-    return {
-      backgroundColor: 'rgb(var(--theme-page))',
-      borderColor: accent.base,
-      borderWidth: '1.5px',
-    };
-  }
-  return {
-    background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
-    borderColor: "rgba(72,128,210,0.55)",
-  };
-}
+const buildDarkCardStyle = (accent: AccentPalette) => ({
+  backgroundColor: "rgb(var(--theme-page))",
+  borderColor: "rgb(var(--theme-accent))",
+  borderWidth: "1.5px",
+  boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
+});
 
 export default function ClubDetailsClient({
   addressLine,

@@ -133,7 +133,7 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
     () => {
       return {
         backgroundColor: 'rgb(var(--theme-page))',
-        borderColor: palette.base,
+        borderColor: 'rgb(var(--theme-accent))',
         borderWidth: '1.5px',
       };
     },

@@ -52,8 +52,8 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return;
       }
 
-      // Redimensionner pour simplifier l'analyse
-      const size = 50;
+      // Résolution plus élevée pour plus de précision (100x100 au lieu de 50x50)
+      const size = 100;
       canvas.width = size;
       canvas.height = size;
       ctx.drawImage(img, 0, 0, size, size);
@@ -67,10 +67,21 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         const b = imageData[i + 2];
         const a = imageData[i + 3];
 
-        // Ignorer les pixels trop transparents ou trop proches du blanc/noir pur si nécessaire
+        // Ignorer les pixels transparents
         if (a < 128) continue;
 
-        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        // Ignorer les pixels presque blancs ou presque noirs qui sont souvent du fond ou des ombres
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        if (brightness > 250 || brightness < 15) continue;
+
+        // Regrouper les couleurs proches pour éviter d'avoir plusieurs fois la même teinte
+        // On réduit la précision pour le comptage (quantization simple)
+        const q = 5;
+        const qr = Math.round(r / q) * q;
+        const qg = Math.round(g / q) * q;
+        const qb = Math.round(b / q) * q;
+
+        const hex = "#" + ((1 << 24) + (qr << 16) + (qg << 8) + qb).toString(16).slice(1).toUpperCase();
         colorCounts[hex] = (colorCounts[hex] || 0) + 1;
       }
 
@@ -81,14 +92,16 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return;
       }
 
+      // Couleur n°1 (La plus présente)
       const primary = sortedColors[0][0];
-      let secondary = sortedColors[1]?.[0] || primary;
 
-      // Essayer de trouver une couleur secondaire distincte de la primaire
-      if (sortedColors.length > 2) {
-        for (let i = 1; i < Math.min(sortedColors.length, 10); i++) {
+      // Chercher la couleur n°2 qui est suffisamment différente de la n°1
+      let secondary = primary;
+      if (sortedColors.length > 1) {
+        for (let i = 1; i < Math.min(sortedColors.length, 20); i++) {
           const color = sortedColors[i][0];
-          // Calcul simple de distance de couleur
+
+          // Calcul de distance de couleur
           const r1 = parseInt(primary.slice(1, 3), 16);
           const g1 = parseInt(primary.slice(3, 5), 16);
           const b1 = parseInt(primary.slice(5, 7), 16);
@@ -97,13 +110,20 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
           const b2 = parseInt(color.slice(5, 7), 16);
           const dist = Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
 
-          if (dist > 60) { // Seuil de différence
+          // On veut une couleur vraiment différente (seuil monté à 80)
+          if (dist > 80) {
             secondary = color;
             break;
           }
         }
       }
 
+      // Si on n'a pas trouvé de couleur secondaire assez différente, on prend la 2ème plus dominante par défaut
+      if (secondary === primary && sortedColors.length > 1) {
+        secondary = sortedColors[1][0];
+      }
+
+      console.log("[Extraction] Couleurs extraites :", { primary, secondary });
       resolve({ primary, secondary });
     };
     img.onerror = () => resolve(null);
@@ -713,7 +733,7 @@ export default function ClientClubIdentityPage() {
                       />
                       <svg className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur secondaire du logo</span>
+                    <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur secondaire (accent) EXACTE du logo</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <div className="relative flex items-center">
@@ -726,7 +746,7 @@ export default function ClientClubIdentityPage() {
                       />
                       <svg className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur principale du logo</span>
+                    <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur principale (fond d'écran) EXACTE du logo</span>
                   </label>
                 </div>
               )}
