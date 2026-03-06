@@ -57,22 +57,20 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
       canvas.width = size;
       canvas.height = size;
 
-      // DÉSACTIVER LE LISSAGE pour garder les couleurs de pixels brutes
+      // Conserver l'aspect ratio pour éviter les distorsions de couleurs lors du redimensionnement
+      const scale = Math.min(size / img.width, size / img.height);
+      const iw = img.width * scale;
+      const ih = img.height * scale;
+      const ix = (size - iw) / 2;
+      const iy = (size - ih) / 2;
+
+      // DÉSACTIVER LE LISSAGE pour garder les couleurs de pixels brutes (très important pour l'exactitude)
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(img, 0, 0, size, size);
+      ctx.fillStyle = "rgba(0,0,0,0)"; // Fond transparent pour le canvas d'analyse
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, ix, iy, iw, ih);
 
       const imageData = ctx.getImageData(0, 0, size, size).data;
-
-      // 1. Détection de la couleur de fond via les coins et les bords (échantillonnage plus large)
-      const getPixelHex = (x: number, y: number) => {
-        const i = (Math.floor(y) * size + Math.floor(x)) * 4;
-        const r = imageData[i];
-        const g = imageData[i + 1];
-        const b = imageData[i + 2];
-        const a = imageData[i + 3];
-        if (a < 128) return null;
-        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-      };
 
       const getDist = (c1: string, c2: string) => {
         const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
@@ -80,55 +78,77 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
       };
 
-      // 1. Analyse exhaustive de toutes les couleurs non-transparentes
-      const colorMap = new Map<string, number>();
-      let totalVisiblePixels = 0;
-
+      // 1. Analyse exhaustive : comptes EXACTS et comptes par BUCKETS
+      const exactColorMap = new Map<string, number>();
+      const bucketMap = new Map<string, number>();
+      
       for (let i = 0; i < imageData.length; i += 4) {
-        if (imageData[i + 3] < 128) continue; // Ignorer transparence
+        if (imageData[i + 3] < 150) continue; // Ignorer transparence et pixels semi-transparents (bruit)
         
         const r = imageData[i];
         const g = imageData[i + 1];
         const b = imageData[i + 2];
         
-        // Bucketization plus large (8px) pour grouper plus agressivement et trouver les vraies masses colorées
-        const br = Math.round(r / 8) * 8;
-        const bg = Math.round(g / 8) * 8;
-        const bb = Math.round(b / 8) * 8;
-        const hex = "#" + ((1 << 24) + (br << 16) + (bg << 8) + bb).toString(16).slice(1).toUpperCase();
-        
-        colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
-        totalVisiblePixels++;
+        const exactHex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        exactColorMap.set(exactHex, (exactColorMap.get(exactHex) || 0) + 1);
+
+        // Buckets de 8px pour grouper les nuances sans trop dériver
+        const br = Math.floor(r / 8);
+        const bg = Math.floor(g / 8);
+        const bb = Math.floor(b / 8);
+        const bucketKey = `${br},${bg},${bb}`;
+        bucketMap.set(bucketKey, (bucketMap.get(bucketKey) || 0) + 1);
       }
 
-      if (totalVisiblePixels === 0) {
+      if (exactColorMap.size === 0) {
         resolve(null);
         return;
       }
 
-      // 2. Trier strictement par fréquence
-      const sortedColors = Array.from(colorMap.entries())
-        .map(([hex, count]) => ({ hex, count }))
-        .sort((a, b) => b.count - a.count);
+      // 2. Trier les buckets par fréquence
+      const sortedBuckets = Array.from(bucketMap.entries())
+        .sort((a, b) => b[1] - a[1]);
 
-      // Algorithme STRICT : 1ère = Fond, 2ème = Accent (si assez différente)
-      const primary = sortedColors[0].hex;
+      // 3. Trouver la couleur EXACTE la plus fréquente dans un bucket
+      const getBestExactFromBucket = (bucketKey: string) => {
+        const [br, bg, bb] = bucketKey.split(',').map(Number);
+        let bestHex = "";
+        let maxCount = -1;
+
+        exactColorMap.forEach((count, hex) => {
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          // On vérifie si la couleur appartient au bucket
+          if (Math.floor(r / 8) === br && Math.floor(g / 8) === bg && Math.floor(b / 8) === bb) {
+            if (count > maxCount) {
+              maxCount = count;
+              bestHex = hex;
+            }
+          }
+        });
+        return bestHex;
+      };
+
+      // Sélection de Primary (le bucket le plus fréquent)
+      const primary = getBestExactFromBucket(sortedBuckets[0][0]);
+      
+      // Sélection de Secondary (2ème bucket le plus fréquent qui est visuellement distinct)
       let secondary = primary;
-
-      for (let i = 1; i < Math.min(sortedColors.length, 10); i++) {
-        // On prend la 2ème plus présente qui est "visuellement distincte"
-        if (getDist(primary, sortedColors[i].hex) > 30) {
-          secondary = sortedColors[i].hex;
+      for (let i = 1; i < Math.min(sortedBuckets.length, 20); i++) {
+        const candidate = getBestExactFromBucket(sortedBuckets[i][0]);
+        if (getDist(primary, candidate) > 50) { // Distance un peu plus élevée pour assurer le contraste
+          secondary = candidate;
           break;
         }
       }
 
-      // Fallback si tout est trop proche de la même couleur
-      if (secondary === primary && sortedColors.length > 1) {
-          secondary = sortedColors[1].hex;
+      // Fallback si on n'a rien trouvé d'autre
+      if (secondary === primary && sortedBuckets.length > 1) {
+          secondary = getBestExactFromBucket(sortedBuckets[1][0]);
       }
 
-      console.log("[Extraction Strict Fréquence]", { primary, secondary });
+      console.log("[Extraction Ultra Précise V2]", { primary, secondary });
       resolve({ primary, secondary });
     };
     img.onerror = () => resolve(null);
