@@ -183,10 +183,12 @@ export default function GlobalLeaderboardTable({
               const finalLastName = lastName || nameParts.slice(1).join(' ');
               const rowClass = isCurrentUser ? 'bg-[rgb(var(--theme-accent))]/10 border-b border-gray-300' : (idx === 0 ? 'bg-gray-50' : '');
 
+              const isClub = typeof document !== 'undefined' && !!document.body.dataset.clubSubdomain && document.body.dataset.clubSubdomain !== 'app';
+
               return (
                 <tr key={player.user_id} className={rowClass}>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-900 text-center border-l border-gray-200 first:border-l-0 w-14 sm:w-auto">
-                    <RankBadge rank={player.rank} size="md" />
+                    <RankBadge rank={player.rank} size="md" isClub={isClub} />
                   </td>
                   <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0 min-w-[120px] sm:min-w-[150px]">
                     <div className="flex items-center gap-2 sm:gap-3 justify-start sm:justify-center">
