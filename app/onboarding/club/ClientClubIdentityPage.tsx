@@ -91,10 +91,10 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         const g = imageData[i + 1];
         const b = imageData[i + 2];
         
-        // Bucketization légère pour grouper les couleurs quasi-identiques (réduction de bruit)
-        const br = Math.round(r / 4) * 4;
-        const bg = Math.round(g / 4) * 4;
-        const bb = Math.round(b / 4) * 4;
+        // Bucketization plus large (8px) pour grouper plus agressivement et trouver les vraies masses colorées
+        const br = Math.round(r / 8) * 8;
+        const bg = Math.round(g / 8) * 8;
+        const bb = Math.round(b / 8) * 8;
         const hex = "#" + ((1 << 24) + (br << 16) + (bg << 8) + bb).toString(16).slice(1).toUpperCase();
         
         colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
@@ -106,85 +106,29 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return;
       }
 
-      // 2. Identifier la couleur de fond du logo (aux bords)
-      const edgeColors = new Map<string, number>();
-      for (let x = 0; x < size; x += 5) {
-        [0, size - 1].forEach(y => {
-          const i = (y * size + x) * 4;
-          if (imageData[i + 3] >= 128) {
-            const hex = "#" + ((1 << 24) + (imageData[i] << 16) + (imageData[i+1] << 8) + imageData[i+2]).toString(16).slice(1).toUpperCase();
-            edgeColors.set(hex, (edgeColors.get(hex) || 0) + 1);
-          }
-        });
-      }
-      for (let y = 0; y < size; y += 5) {
-        [0, size - 1].forEach(x => {
-          const i = (y * size + x) * 4;
-          if (imageData[i + 3] >= 128) {
-            const hex = "#" + ((1 << 24) + (imageData[i] << 16) + (imageData[i+1] << 8) + imageData[i+2]).toString(16).slice(1).toUpperCase();
-            edgeColors.set(hex, (edgeColors.get(hex) || 0) + 1);
-          }
-        });
-      }
+      // 2. Trier strictement par fréquence
+      const sortedColors = Array.from(colorMap.entries())
+        .map(([hex, count]) => ({ hex, count }))
+        .sort((a, b) => b.count - a.count);
 
-      let logoBgColor: string | null = null;
-      let maxEdgeCount = 0;
-      edgeColors.forEach((count, hex) => {
-        if (count > maxEdgeCount) {
-          maxEdgeCount = count;
-          logoBgColor = hex;
+      // Algorithme STRICT : 1ère = Fond, 2ème = Accent (si assez différente)
+      const primary = sortedColors[0].hex;
+      let secondary = primary;
+
+      for (let i = 1; i < Math.min(sortedColors.length, 10); i++) {
+        // On prend la 2ème plus présente qui est "visuellement distincte"
+        if (getDist(primary, sortedColors[i].hex) > 30) {
+          secondary = sortedColors[i].hex;
+          break;
         }
-      });
-
-      // 3. Trier les couleurs par importance (fréquence + saturation)
-      const colors = Array.from(colorMap.entries()).map(([hex, count]) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        const sat = max === 0 ? 0 : (max - min) / max;
-        // Score pondéré : fréquence mais favorise grandement les couleurs saturées
-        const score = count * (1 + sat * 5); 
-        return { hex, count, sat, score, r, g, b };
-      });
-
-      const sortedByScore = [...colors].sort((a, b) => b.score - a.score);
-      const sortedByCount = [...colors].sort((a, b) => b.count - a.count);
-
-      // Algorithme de sélection des couleurs exactes
-      let primary: string;
-      let secondary: string;
-
-      // Si le logo est sur un fond coloré opaque (détecté aux bords)
-      if (logoBgColor && (maxEdgeCount > 10)) {
-        primary = logoBgColor;
-        // L'accent est la couleur la plus "importante" qui n'est pas le fond
-        const otherColors = sortedByScore.filter(c => getDist(c.hex, primary) > 50);
-        secondary = otherColors.length > 0 ? otherColors[0].hex : primary;
-      } else {
-        // Logo transparent ou fond non détecté clairement
-        // On prend la couleur la plus fréquente pour le fond si elle est sombre ou neutre, 
-        // ou la plus fréquente tout court
-        primary = sortedByCount[0].hex;
-        
-        // Pour l'accent (secondary), on cherche la couleur la plus vibrante
-        const vibrant = sortedByScore.filter(c => getDist(c.hex, primary) > 60);
-        secondary = vibrant.length > 0 ? vibrant[0].hex : primary;
       }
 
-      // Ajustement final : Si secondary est trop proche du noir/blanc pur alors qu'il y a d'autres couleurs
-      const isNeutral = (hex: string) => {
-          const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-          const max = Math.max(r, g, b), min = Math.min(r, g, b);
-          return (max - min) < 20;
-      };
-
-      if (isNeutral(secondary)) {
-          const colorful = sortedByScore.find(c => !isNeutral(c.hex) && getDist(c.hex, primary) > 40);
-          if (colorful) secondary = colorful.hex;
+      // Fallback si tout est trop proche de la même couleur
+      if (secondary === primary && sortedColors.length > 1) {
+          secondary = sortedColors[1].hex;
       }
 
-      console.log("[Extraction Haute Précision]", { primary, secondary, logoBgColor });
+      console.log("[Extraction Strict Fréquence]", { primary, secondary });
       resolve({ primary, secondary });
     };
     img.onerror = () => resolve(null);
@@ -368,6 +312,8 @@ export default function ClientClubIdentityPage() {
   const [courtTypeInput, setCourtTypeInput] = useState("");
   const [subdomainInput, setSubdomainInput] = useState("");
   const [extractedColors, setExtractedColors] = useState<{ primary: string; secondary: string } | null>(null);
+  const [syncBgColor, setSyncBgColor] = useState(false);
+  const [syncSecondaryColor, setSyncSecondaryColor] = useState(false);
 
   // Calcul du Score de Visibilité (9 champs suivis)
   const visibilityFields = [
@@ -745,8 +691,11 @@ export default function ClientClubIdentityPage() {
                           extractColorsFromImage(url).then(colors => {
                             if (colors) {
                                 setExtractedColors(colors);
-                                setSecondaryColor(colors.secondary);
+                                // Automatiquement cocher et appliquer
+                                setSyncBgColor(true);
+                                setSyncSecondaryColor(true);
                                 setBackgroundColor(colors.primary);
+                                setSecondaryColor(colors.secondary);
                             }
                           });
                         }
@@ -792,22 +741,27 @@ export default function ClientClubIdentityPage() {
                     <div className="relative flex items-center">
                       <input
                         type="checkbox"
+                        checked={syncSecondaryColor}
                         className="peer h-4 w-4 appearance-none rounded border border-white/20 bg-white/5 checked:bg-[#0066FF] checked:border-transparent transition-all cursor-pointer"
                         onChange={(e) => {
-                          if (e.target.checked) setSecondaryColor(extractedColors.secondary);
+                          setSyncSecondaryColor(e.target.checked);
+                          if (e.target.checked && extractedColors) setSecondaryColor(extractedColors.secondary);
                         }}
                       />
                       <svg className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur secondaire (accent) EXACTE du logo</span>
                   </label>
+
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <div className="relative flex items-center">
                       <input
                         type="checkbox"
+                        checked={syncBgColor}
                         className="peer h-4 w-4 appearance-none rounded border border-white/20 bg-white/5 checked:bg-[#0066FF] checked:border-transparent transition-all cursor-pointer"
                         onChange={(e) => {
-                          if (e.target.checked) setBackgroundColor(extractedColors.primary);
+                          setSyncBgColor(e.target.checked);
+                          if (e.target.checked && extractedColors) setBackgroundColor(extractedColors.primary);
                         }}
                       />
                       <svg className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
