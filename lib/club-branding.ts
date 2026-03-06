@@ -59,7 +59,7 @@ export function extractSubdomain(hostname: string | null): string | null {
 
     // padelxp.eu (2 parties) ou www.padelxp.eu -> pas de club
     if (parts.length <= 2) return null;
-    if (parts[0] === "www") return null;
+    if (parts[0] === "www" || parts[0] === "app") return null;
 
     return parts[0];
 }

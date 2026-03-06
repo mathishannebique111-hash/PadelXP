@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { logger } from '@/lib/logger';
+import { getContrastColor } from "@/lib/club-branding";
 
 export type AccentPalette = {
   base: string;
@@ -124,13 +124,27 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
     boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
   }), []);
 
+  const isClub = typeof document !== 'undefined' &&
+    !!document.body.dataset.clubSubdomain &&
+    document.body.dataset.clubSubdomain !== 'app';
+
   const aboutCardStyle = useMemo(
-    () => ({
-      background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
-      borderColor: "rgba(72,128,210,0.55)",
-    }),
-    []
+    () => {
+      if (isClub) {
+        return {
+          backgroundColor: palette.base,
+          borderColor: 'transparent',
+        };
+      }
+      return {
+        background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
+        borderColor: "rgba(72,128,210,0.55)",
+      };
+    },
+    [palette.base, isClub]
   );
+
+  const contrastColor = useMemo(() => getContrastColor(palette.base), [palette.base]);
 
   const shimmerColor = useMemo(() => `${mix(palette.base, 0.65)}99`, [palette]);
   const shimmerVars = useMemo(
@@ -173,7 +187,7 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
                 <span className="text-2xl">🏟️</span>
               )}
             </div>
-            <h1 className="text-xl font-extrabold md:text-2xl tracking-tight text-white/95 leading-tight md:leading-none flex items-center">
+            <h1 className="text-xl font-extrabold md:text-2xl tracking-tight text-white/95 leading-tight md:leading-none flex items-center" style={isClub ? { color: contrastColor } : {}}>
               {name}
             </h1>
           </div>
@@ -185,8 +199,8 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
           className="mt-4 rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
           style={aboutCardStyle}
         >
-          <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/85">À propos</h2>
-          <p className="mt-3 text-sm leading-7 text-white/90">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/85" style={isClub ? { color: contrastColor, opacity: 0.8 } : {}}>À propos</h2>
+          <p className="mt-3 text-sm leading-7 text-white/90" style={isClub ? { color: contrastColor } : {}}>
             {description}
           </p>
         </section>
