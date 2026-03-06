@@ -36,6 +36,20 @@ export default function ClubLeaguesPage() {
     const [formFormat, setFormFormat] = useState("standard");
     const [creating, setCreating] = useState(false);
 
+    const handleFormatChange = (newFormat: string) => {
+        setFormFormat(newFormat);
+        if (newFormat === "divisions") {
+            if (![8, 12, 16].includes(formMaxPlayers)) {
+                setFormMaxPlayers(8);
+            }
+            // Enforce minimum 6 weeks duration for divisions
+            if (formDuration < 6) {
+                setFormDuration(6);
+            }
+            setFormMaxMatches(3);
+        }
+    };
+
     useEffect(() => {
         const fetchClubInfo = async () => {
             try {
@@ -146,8 +160,8 @@ export default function ClubLeaguesPage() {
                                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Format</label>
                                 <select
                                     value={formFormat}
-                                    onChange={(e) => setFormFormat(e.target.value)}
-                                    className="w-full h-12 rounded-xl bg-white/10 border border-white/10 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                    onChange={(e) => handleFormatChange(e.target.value)}
+                                    className="w-full h-12 rounded-xl bg-white/10 border border-white/10 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
                                 >
                                     <option value="standard">Championnat (Classement global)</option>
                                     <option value="divisions">Poules (Montées/Descentes)</option>
@@ -161,17 +175,26 @@ export default function ClubLeaguesPage() {
                                         onChange={(e) => setFormDuration(Number(e.target.value))}
                                         className="w-full h-12 rounded-xl bg-white/10 border border-white/10 px-2 text-white text-sm"
                                     >
-                                        {[2, 3, 4, 5, 6].map(v => <option key={v} value={v}>{v} sem.</option>)}
+                                        {formFormat === "divisions" ? (
+                                            [6, 8, 10, 12].map(v => <option key={v} value={v}>{v} sem.</option>)
+                                        ) : (
+                                            [2, 3, 4, 5, 6].map(v => <option key={v} value={v}>{v} sem.</option>)
+                                        )}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Matchs</label>
                                     <select
-                                        value={formMaxMatches}
+                                        value={formFormat === "divisions" ? 3 : formMaxMatches}
                                         onChange={(e) => setFormMaxMatches(Number(e.target.value))}
-                                        className="w-full h-12 rounded-xl bg-white/10 border border-white/10 px-2 text-white text-sm"
+                                        disabled={formFormat === "divisions"}
+                                        className={`w-full h-12 rounded-xl bg-white/10 border border-white/10 px-2 text-white text-sm ${formFormat === "divisions" ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
-                                        {[5, 10, 15].map(v => <option key={v} value={v}>{v}</option>)}
+                                        {formFormat === "divisions" ? (
+                                            <option value={3}>3 / ph.</option>
+                                        ) : (
+                                            [5, 10, 15].map(v => <option key={v} value={v}>{v}</option>)
+                                        )}
                                     </select>
                                 </div>
                                 <div>
@@ -181,7 +204,11 @@ export default function ClubLeaguesPage() {
                                         onChange={(e) => setFormMaxPlayers(Number(e.target.value))}
                                         className="w-full h-12 rounded-xl bg-white/10 border border-white/10 px-2 text-white text-sm"
                                     >
-                                        {Array.from({ length: 12 }, (_, i) => i + 4).map(v => <option key={v} value={v}>{v}</option>)}
+                                        {formFormat === "divisions" ? (
+                                            [8, 12, 16].map(v => <option key={v} value={v}>{v}</option>)
+                                        ) : (
+                                            Array.from({ length: 12 }, (_, i) => i + 4).map(v => <option key={v} value={v}>{v}</option>)
+                                        )}
                                     </select>
                                 </div>
                             </div>
