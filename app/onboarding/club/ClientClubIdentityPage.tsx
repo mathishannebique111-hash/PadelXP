@@ -52,10 +52,13 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return;
       }
 
-      // Résolution plus élevée pour plus de précision (100x100)
-      const size = 100;
+      // Résolution plus élevée pour plus de précision (300x300) pour éviter les mélanges de pixels sur les bords
+      const size = 300;
       canvas.width = size;
       canvas.height = size;
+
+      // DÉSACTIVER LE LISSAGE pour garder les couleurs de pixels brutes
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, 0, 0, size, size);
 
       const imageData = ctx.getImageData(0, 0, size, size).data;
@@ -71,21 +74,35 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
       };
 
-      const corners = [
+      const cornerPixels = [
         getPixelHex(0, 0), getPixelHex(size - 1, 0),
         getPixelHex(0, size - 1), getPixelHex(size - 1, size - 1),
-        // Ajouter quelques points centraux sur les bords pour plus de robustesse
-        getPixelHex(Math.floor(size / 2), 0), getPixelHex(0, Math.floor(size / 2))
+        getPixelHex(Math.floor(size / 2), 0),
+        getPixelHex(0, Math.floor(size / 2)),
+        getPixelHex(size - 1, Math.floor(size / 2)),
+        getPixelHex(Math.floor(size / 2), size - 1)
       ].filter(Boolean) as string[];
 
-      const cornerCounts: Record<string, number> = {};
-      corners.forEach(c => cornerCounts[c] = (cornerCounts[c] || 0) + 1);
-      const sortedCorners = Object.entries(cornerCounts).sort((a, b) => b[1] - a[1]);
+      // Groupement des couleurs similaires dans les coins pour ignorer les micro-variations (anti-aliasing)
+      const getDist = (c1: string, c2: string) => {
+        const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
+        const r2 = parseInt(c2.slice(1, 3), 16), g2 = parseInt(c2.slice(3, 5), 16), b2 = parseInt(c2.slice(5, 7), 16);
+        return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+      };
+
+      const cornerGroups: { hex: string; count: number }[] = [];
+      cornerPixels.forEach(hex => {
+        const group = cornerGroups.find(g => getDist(g.hex, hex) < 5);
+        if (group) group.count++;
+        else cornerGroups.push({ hex, count: 1 });
+      });
+
+      const sortedGroups = cornerGroups.sort((a, b) => b.count - a.count);
 
       // La couleur de fond est celle des coins si elle est majoritaire
       let detectedBg: string | null = null;
-      if (sortedCorners.length > 0 && sortedCorners[0][1] >= 2) {
-        detectedBg = sortedCorners[0][0];
+      if (sortedGroups.length > 0 && sortedGroups[0].count >= 2) {
+        detectedBg = sortedGroups[0].hex;
       }
 
       // 2. Analyse de fréquence globale sans quantification (pour l'exactitude)
@@ -112,13 +129,8 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
 
       // Couleur secondaire : La plus fréquente qui n'est pas la principale (avec distance)
       let secondary = primary;
-      const getDist = (c1: string, c2: string) => {
-        const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
-        const r2 = parseInt(c2.slice(1, 3), 16), g2 = parseInt(c2.slice(3, 5), 16), b2 = parseInt(c2.slice(5, 7), 16);
-        return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
-      };
 
-      for (let i = 0; i < Math.min(sortedColors.length, 50); i++) {
+      for (let i = 0; i < Math.min(sortedColors.length, 100); i++) {
         const color = sortedColors[i][0];
         if (getDist(primary, color) > 60) {
           secondary = color;
@@ -131,7 +143,7 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         secondary = sortedColors[1][0];
       }
 
-      console.log("[Extraction Précise]", { primary, secondary, cornerMatch: !!detectedBg });
+      console.log("[Extraction Ultra-Précise]", { primary, secondary, cornerMatch: !!detectedBg });
       resolve({ primary, secondary });
     };
     img.onerror = () => resolve(null);

@@ -87,35 +87,42 @@ export const ReplicaPendingMatchCard = ({
     team1: { name: string, confirmed: boolean }[],
     team2: { name: string, confirmed: boolean }[],
     isConfirmed?: boolean,
-    winnerTeam?: number
+    winnerTeam?: number,
+    accentColor?: string
 }) => (
-    <div className={`rounded-xl border-2 p-2.5 transition-all duration-500 scale-[0.98] ${isConfirmed ? 'border-green-500 bg-green-50 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'bg-white/5 border-dashed opacity-80'
-        }`} style={{ borderColor: !isConfirmed ? 'rgb(var(--theme-accent))' : undefined }}>
+    <div className={`rounded-xl border-2 p-2.5 transition-all duration-500 scale-[0.98] ${isConfirmed ? 'bg-green-500/10 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-dashed opacity-80'
+        }`} style={{
+            borderColor: !isConfirmed ? 'rgb(var(--theme-accent))' : undefined,
+            backgroundColor: !isConfirmed ? 'rgba(var(--theme-accent), 0.05)' : undefined
+        }}>
         <div className="mb-2.5 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
                 <div className="flex-shrink-0 rounded-full p-1 bg-white/10" style={{ color: 'rgb(var(--theme-accent))' }}>
                     {isConfirmed ? <Check className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                 </div>
                 <div>
-                    <div className="text-[8px] font-bold text-gray-900 uppercase">Par {creator}</div>
-                    <div className="text-[7px] text-gray-500 font-semibold">{date}</div>
-                    {location && <div className="text-[6px] text-gray-400 font-semibold">{location}</div>}
+                    <div className="text-[8px] font-bold uppercase" style={{ color: "var(--theme-text)" }}>Par {creator}</div>
+                    <div className="text-[7px] font-semibold" style={{ color: "var(--theme-text-muted)" }}>{date}</div>
+                    {location && <div className="text-[6px] font-semibold" style={{ color: "var(--theme-text-muted)", opacity: 0.8 }}>{location}</div>}
                 </div>
             </div>
-            <div className="rounded-md bg-white px-1 py-0.5 text-[8px] font-black text-gray-900 tabular-nums shadow-sm border border-gray-100 flex-shrink-0 min-w-[30px] text-center">
+            <div className="rounded-md px-1 py-0.5 text-[8px] font-black tabular-nums shadow-sm border flex-shrink-0 min-w-[30px] text-center" style={{ backgroundColor: "rgb(var(--theme-page))", color: "var(--theme-text)", borderColor: "rgba(var(--theme-text), 0.1)" }}>
                 {score}
             </div>
         </div>
 
         <div className="grid grid-cols-2 gap-1.5 mb-2.5">
-            <div className={`rounded-lg border p-1.5 ${winnerTeam === 1 ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-white'}`}>
-                <div className="mb-1 text-[7px] font-black uppercase tracking-wide text-gray-400 flex items-center gap-1">
+            <div className={`rounded-lg border p-1.5 transition-colors`} style={{
+                borderColor: winnerTeam === 1 ? 'rgba(34, 197, 94, 0.4)' : 'rgba(var(--theme-text), 0.1)',
+                backgroundColor: winnerTeam === 1 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(var(--theme-page), 0.5)'
+            }}>
+                <div className="mb-1 text-[7px] font-black uppercase tracking-wide flex items-center gap-1" style={{ color: "var(--theme-text-muted)" }}>
                     Équipe 1 {winnerTeam === 1 && <Trophy className="h-2 w-2 text-amber-500" />}
                 </div>
                 <div className="space-y-1">
                     {team1.map((p, i) => (
                         <div key={i} className="flex items-center justify-between">
-                            <span className="text-[8px] font-bold text-gray-900 truncate">{p.name}</span>
+                            <span className="text-[8px] font-bold truncate" style={{ color: "var(--theme-text)" }}>{p.name}</span>
                             {p.confirmed && (
                                 <div className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
                                     <Check className="h-2 w-2 text-white" strokeWidth={4} />
@@ -126,14 +133,17 @@ export const ReplicaPendingMatchCard = ({
                 </div>
             </div>
 
-            <div className={`rounded-lg border p-1.5 ${winnerTeam === 2 ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-white'}`}>
-                <div className="mb-1 text-[7px] font-black uppercase tracking-wide text-gray-400 flex items-center gap-1">
+            <div className={`rounded-lg border p-1.5 transition-colors`} style={{
+                borderColor: winnerTeam === 2 ? 'rgba(34, 197, 94, 0.4)' : 'rgba(var(--theme-text), 0.1)',
+                backgroundColor: winnerTeam === 2 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(var(--theme-page), 0.5)'
+            }}>
+                <div className="mb-1 text-[7px] font-black uppercase tracking-wide flex items-center gap-1" style={{ color: "var(--theme-text-muted)" }}>
                     Équipe 2 {winnerTeam === 2 && <Trophy className="h-2 w-2 text-amber-500" />}
                 </div>
                 <div className="space-y-1">
                     {team2.map((p, i) => (
                         <div key={i} className="flex items-center justify-between">
-                            <span className="text-[8px] font-bold text-gray-900 truncate">{p.name}</span>
+                            <span className="text-[8px] font-bold truncate" style={{ color: "var(--theme-text)" }}>{p.name}</span>
                             {p.confirmed && (
                                 <div className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#22c55e]">
                                     <Check className="h-2 w-2 text-white" strokeWidth={4} />
@@ -146,10 +156,10 @@ export const ReplicaPendingMatchCard = ({
         </div>
 
         <div className="flex items-center justify-between">
-            <div className="text-[7px] font-bold text-gray-400 bg-white/50 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                <span className="text-green-600">Éq.1 ✓</span>
-                <span className="text-gray-200">|</span>
-                <span className="text-gray-400">Éq.2 ✗</span>
+            <div className="text-[7px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 bg-white/10" style={{ color: "var(--theme-text-muted)" }}>
+                <span className="text-green-500">Éq.1 ✓</span>
+                <span className="opacity-30">|</span>
+                <span style={{ color: "var(--theme-text-muted)" }}>Éq.2 ✗</span>
             </div>
             {isConfirmed ? (
                 <div className="flex items-center gap-1 inline-flex items-center rounded-md bg-[#22c55e] px-2 py-1 text-[8px] font-black text-white shadow-sm shadow-green-500/20">
@@ -157,7 +167,7 @@ export const ReplicaPendingMatchCard = ({
                 </div>
             ) : (
                 <div className="flex items-center gap-1">
-                    <button type="button" className="p-1 text-gray-400 bg-white rounded-md border border-gray-100"><X size={8} /></button>
+                    <button type="button" className="p-1 rounded-md border" style={{ backgroundColor: "rgba(var(--theme-text), 0.05)", borderColor: "rgba(var(--theme-text), 0.1)", color: "var(--theme-text-muted)" }}><X size={8} /></button>
                     <button type="button" className="text-white px-2 py-1 rounded-md text-[8px] font-black shadow-sm" style={{ backgroundColor: "rgb(var(--theme-accent))" }}>CONFIRMER</button>
                 </div>
             )}
@@ -167,20 +177,20 @@ export const ReplicaPendingMatchCard = ({
 
 
 export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLightPage, accentColor }: { name: string, level: string, compatibility: number, avatarUrl?: string, isLightPage?: boolean, accentColor?: string }) => (
-    <div className={`rounded-xl p-2 border flex flex-col h-full animate-fadeIn transition-all active:scale-[0.98] min-h-[100px] justify-between ${isLightPage ? 'bg-transparent' : 'bg-slate-800/50'}`} style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
+    <div className={`rounded-xl p-2 border flex flex-col h-full animate-fadeIn transition-all active:scale-[0.98] min-h-[100px] justify-between ${isLightPage ? 'bg-transparent' : 'bg-slate-800/30'}`} style={{ borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.1)' }}>
         <div className="flex flex-col items-center text-center py-0.5">
-            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white/40 border-2 border-white/20 mb-1 shadow-sm overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center text-white/40 border-2 border-white/10 mb-1 shadow-sm overflow-hidden" style={{ borderColor: isLightPage ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)' }}>
                 {avatarUrl ? (
                     <img src={avatarUrl} alt={name} className="w-full h-full object-cover shadow-inner" />
                 ) : (
-                    <User size={14} />
+                    <User size={14} style={{ color: "var(--theme-text-muted)" }} />
                 )}
             </div>
             <h4 className="font-black text-[7px] leading-tight mb-0.5 line-clamp-1 w-full px-0.5 italic" style={{ color: "var(--theme-text)" }}>
                 {name}
             </h4>
-            <div className="inline-flex items-center justify-center bg-white/10 rounded-full px-1.5 py-0.5 mb-1 border border-white/10">
-                <span className="text-[6px] font-black" style={{ color: "rgba(var(--theme-text), 0.9)" }}>Niveau {level}</span>
+            <div className="inline-flex items-center justify-center bg-black/10 dark:bg-white/10 rounded-full px-1.5 py-0.5 mb-1 border border-white/5">
+                <span className="text-[6px] font-black" style={{ color: "var(--theme-text-muted)" }}>Niveau {level}</span>
             </div>
             <div className="w-full max-w-[70px] flex items-center gap-1">
                 <div className="h-0.5 flex-1 bg-slate-700/30 rounded-full overflow-hidden">
@@ -193,7 +203,7 @@ export const ReplicaPartnerCard = ({ name, level, compatibility, avatarUrl, isLi
             </div>
         </div>
         <div className="grid grid-cols-2 gap-1 mt-1">
-            <button type="button" className="py-1 px-0 border border-white/10 text-white rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/10 h-5 transition-colors"><Eye size={9} /></button>
+            <button type="button" className="py-1 px-0 border border-white/10 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/10 h-5 transition-colors" style={{ borderColor: "rgba(var(--theme-text), 0.1)", color: "var(--theme-text)" }}><Eye size={9} /></button>
             <button type="button" className="py-1 px-0 rounded-lg flex items-center justify-center transition-all h-5 text-white shadow-md hover:brightness-110" style={{ backgroundColor: "rgb(var(--theme-accent))" }}><User size={9} className="fill-current" /></button>
         </div>
     </div>
@@ -350,47 +360,47 @@ export const ProfilePreview = ({ clubName, clubCity, clubData, logoUrl, accentCo
                     {/* Exact 8-cell Grid Replica */}
                     <div className="grid grid-cols-2 gap-2 text-[7px] sm:text-xs">
                         {/* Points */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Points</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>695</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Points</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: "var(--theme-text)" }}>695</div>
                         </div>
                         {/* Matchs */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Matchs</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>64</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Matchs</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: "var(--theme-text)" }}>64</div>
                         </div>
                         {/* Victoires */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Victoires</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>55</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Victoires</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: "var(--theme-text)" }}>55</div>
                         </div>
                         {/* Défaites */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Défaites</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>9</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Défaites</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: "var(--theme-text)" }}>9</div>
                         </div>
                         {/* Sets gagnés */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Sets gagnés</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>110</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Sets gagnés</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: "var(--theme-text)" }}>110</div>
                         </div>
                         {/* Sets perdus */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Sets perdus</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>22</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Sets perdus</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: "var(--theme-text)" }}>22</div>
                         </div>
                         {/* Winrate */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Winrate</div>
-                            <div className="text-xl font-black tabular-nums leading-none flex items-center transition-colors" style={{ color: '#000000' }}>
-                                <span className="inline-block mr-0.5 transition-colors" style={{ color: '#000000', opacity: 0.8 }}>↗</span>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Winrate</div>
+                            <div className="text-xl font-black tabular-nums leading-none flex items-center transition-colors" style={{ color: "var(--theme-text)" }}>
+                                <span className="inline-block mr-0.5 transition-colors opacity-80">↗</span>
                                 85%
                             </div>
                         </div>
                         {/* Badges */}
-                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: '#FFFFFF', borderColor: isLightPage ? accentColor : 'rgba(255,255,255,0.2)', borderLeftWidth: '4px', borderLeftColor: effectiveBg }}>
-                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: 'rgba(0,0,0,0.6)' }}>Badges</div>
-                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: '#000000' }}>15</div>
+                        <div className="rounded-md border px-2.5 py-2 shadow-sm relative overflow-hidden flex flex-col items-start transition-colors" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)", borderLeftWidth: '4px', borderLeftColor: accentColor }}>
+                            <div className="text-[5px] uppercase tracking-[0.2em] mb-1 font-medium transition-colors" style={{ color: "var(--theme-text-muted)" }}>Badges</div>
+                            <div className="text-xl font-black tabular-nums leading-none transition-colors" style={{ color: "var(--theme-text)" }}>15</div>
                         </div>
                     </div>
                 </div>
@@ -680,6 +690,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                         score="3-0"
                         team1={[{ name: "Lilian Richard", confirmed: true }, { name: "Sarah Mazette", confirmed: true }]}
                         team2={[{ name: "Paul Loret", confirmed: false }, { name: "Thomas Dutronc", confirmed: false }]}
+                        accentColor={accentColor}
                     />
 
                     <div className="flex items-center gap-1.5 mb-1 mt-2 px-1">
@@ -694,6 +705,7 @@ export const MatchesPreview = ({ clubName, clubCity, accentColor, backgroundColo
                         team1={[{ name: "Lilian Richard", confirmed: true }, { name: "Joueur", confirmed: true }]}
                         team2={[{ name: "Paul Loret", confirmed: false }, { name: "Sarah Mazette", confirmed: true }]}
                         isConfirmed={true}
+                        accentColor={accentColor}
                     />
                 </div>
             )}
@@ -844,17 +856,17 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                             <div className="h-[1px] flex-1 bg-white/10" />
                         </div>
 
-                        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl">
+                        <div className="overflow-hidden rounded-2xl border shadow-2xl" style={{ backgroundColor: "rgb(var(--theme-page))", borderColor: "rgba(var(--theme-text), 0.1)" }}>
                             <table className="w-full text-left">
-                                <thead className="bg-slate-100">
-                                    <tr className="border-b border-slate-200">
-                                        <th className="px-2 py-2 text-[6px] font-black uppercase text-slate-500 w-10">Rang</th>
-                                        <th className="px-1 py-2 text-[6px] font-black uppercase text-slate-500">Joueur</th>
-                                        <th className="px-1 py-2 text-center text-[6px] font-black uppercase text-slate-500">Niveau</th>
-                                        <th className="px-1 py-2 text-center text-[6px] font-black uppercase text-slate-500">Points</th>
+                                <thead style={{ backgroundColor: "rgba(var(--theme-text), 0.05)" }}>
+                                    <tr>
+                                        <th className="px-2 py-2 text-[6px] font-black uppercase w-10" style={{ color: "var(--theme-text-muted)" }}>Rang</th>
+                                        <th className="px-1 py-2 text-[6px] font-black uppercase" style={{ color: "var(--theme-text-muted)" }}>Joueur</th>
+                                        <th className="px-1 py-2 text-center text-[6px] font-black uppercase" style={{ color: "var(--theme-text-muted)" }}>Niveau</th>
+                                        <th className="px-1 py-2 text-center text-[6px] font-black uppercase" style={{ color: "var(--theme-text-muted)" }}>Points</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 italic">
+                                <tbody className="italic">
                                     {[
                                         { rank: 1, name: "Lilian R.", level: 6.49, points: 695, isUser: true },
                                         { rank: 2, name: "Mathis L.", level: 6.00, points: 419 },
@@ -862,22 +874,21 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                         { rank: 4, name: "Lucas B.", level: 5.45, points: 215 },
                                         { rank: 5, name: "Mattias V.", level: 5.26, points: 173 },
                                     ].map((p, idx) => (
-                                        <tr key={idx} className={`${p.isUser ? "bg-[rgb(var(--theme-accent))]/5" : "bg-white"} hover:bg-slate-50 transition-colors`}>
-                                            <td className="px-2 py-1.5">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-black shadow-sm ${p.rank === 1 ? "bg-yellow-100 text-yellow-700 border border-yellow-200" :
-                                                    p.rank === 2 ? "bg-slate-100 text-slate-700 border border-slate-200" :
-                                                        p.rank === 3 ? "bg-orange-100 text-orange-700 border border-orange-200" :
-                                                            "text-slate-400"
-                                                    }`}>
+                                        <tr key={idx} className={`transition-colors`} style={{ backgroundColor: p.isUser ? "rgba(var(--theme-accent), 0.1)" : "rgb(var(--theme-page))", borderBottom: "1px solid rgba(var(--theme-text), 0.05)" }}>
+                                            <td className="px-2 py-1.5 text-[8px] font-black" style={{ color: "var(--theme-text)" }}>
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center`} style={{
+                                                    backgroundColor: p.rank === 1 ? "rgba(245, 158, 11, 0.2)" : p.rank === 2 ? "rgba(148, 163, 184, 0.2)" : p.rank === 3 ? "rgba(217, 119, 6, 0.2)" : "transparent",
+                                                    color: p.rank === 1 ? "#F59E0B" : p.rank === 2 ? "#94A3B8" : p.rank === 3 ? "#D97706" : "var(--theme-text-muted)",
+                                                }}>
                                                     #{p.rank}
                                                 </div>
                                             </td>
                                             <td className="px-1 py-1.5">
                                                 <div className="flex items-center gap-1.5">
-                                                    <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-200 overflow-hidden">
-                                                        <User size={10} className="text-slate-400" />
+                                                    <div className="w-5 h-5 rounded-full bg-slate-700/50 flex items-center justify-center flex-shrink-0 border border-white/5 overflow-hidden">
+                                                        <User size={10} style={{ color: "var(--theme-text-muted)" }} />
                                                     </div>
-                                                    <span className={`text-[8px] font-black truncate max-w-[45px]`} style={{ color: p.isUser ? "rgb(var(--theme-accent))" : "rgb(15, 23, 42)" }}>
+                                                    <span className={`text-[8px] font-black truncate max-w-[45px]`} style={{ color: p.isUser ? "rgb(var(--theme-accent))" : "var(--theme-text)" }}>
                                                         {p.name}
                                                     </span>
                                                 </div>
@@ -888,7 +899,7 @@ export const CompetitionPreview = ({ clubName, accentColor, backgroundColor }: {
                                                 </span>
                                             </td>
                                             <td className="px-1 py-1.5 text-center">
-                                                <span className="text-[8px] font-black text-slate-700 tabular-nums">{p.points}</span>
+                                                <span className="text-[8px] font-black tabular-nums" style={{ color: "var(--theme-text)" }}>{p.points}</span>
                                             </td>
                                         </tr>
                                     ))}
