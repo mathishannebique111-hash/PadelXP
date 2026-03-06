@@ -273,7 +273,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           {/* En-tête */}
           <div className="mb-5 flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className={`mb-2 text-xl font-bold flex items-center gap-2 ${isClub ? '' : 'text-white'}`} style={isClub ? { color: 'var(--theme-accent-contrast, var(--theme-page))' } : {}}>
+              <h3 className={`mb-2 text-xl font-bold flex items-center gap-2 ${isClub ? '' : 'text-white'}`} style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>
                 {challenge.title}
                 {challenge.isPremium && (
                   <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${isClub ? 'bg-white/20 text-white border border-white/30' : 'bg-amber-500/20 text-amber-500 border border-amber-500/30'}`}>
@@ -314,7 +314,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                   </div>
                 )}
                 <span className={`text-sm font-bold ${!isClub ? 'text-white' : ''}`}
-                  style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>
+                  style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>
                   {challenge.rewardType === "points"
                     ? `${challenge.rewardLabel} pts`
                     : challenge.rewardLabel}
@@ -327,24 +327,24 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
           <div
             className="mb-5 rounded-2xl border p-4 shadow-inner"
             style={{
-              backgroundColor: isClub ? 'rgb(var(--theme-page))' : 'var(--theme-page, #071554)',
-              borderColor: isClub ? 'transparent' : 'rgba(var(--theme-accent, 255, 255, 255), 0.2)'
+              backgroundColor: isClub ? 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.15)' : 'var(--theme-page, #071554)',
+              borderColor: isClub ? 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.2)' : 'rgba(var(--theme-accent, 255, 255, 255), 0.2)'
             }}
           >
             <div className={`mb-3 flex items-start justify-between`}>
               <div>
                 <div className={`mb-1 text-sm font-medium ${!isClub ? 'text-white' : ''}`}
-                  style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>Objectif</div>
+                  style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>Objectif</div>
                 <div className={`text-xs ${!isClub ? 'text-white' : ''}`}
-                  style={isClub ? { color: 'rgb(var(--theme-accent))', opacity: 0.8 } : {}}>{challenge.objective}</div>
+                  style={isClub ? { color: 'var(--theme-accent-contrast)', opacity: 0.8 } : {}}>{challenge.objective}</div>
               </div>
               <div className="text-right">
                 <div className={`text-2xl font-bold ${!isClub ? 'text-white' : ''}`}
-                  style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>
+                  style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>
                   {challenge.progress.current}/{challenge.progress.target}
                 </div>
                 <div className={`text-xs font-medium ${!isClub ? 'text-white' : ''}`}
-                  style={isClub ? { color: 'rgb(var(--theme-accent))', opacity: 0.8 } : {}}>{Math.round(percentage)}%</div>
+                  style={isClub ? { color: 'var(--theme-accent-contrast)', opacity: 0.8 } : {}}>{Math.round(percentage)}%</div>
               </div>
             </div>
 
@@ -355,10 +355,10 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
                   width: `${percentage}%`,
-                  backgroundColor: isClub ? 'rgb(var(--theme-accent))' : (challenge.isPremium
+                  backgroundColor: isClub ? 'var(--theme-accent-contrast)' : (challenge.isPremium
                     ? '#F59E0B'
                     : 'rgb(var(--theme-accent, 37, 99, 235))'),
-                  boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent), 0.5)' : (challenge.isPremium
+                  boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.3)' : (challenge.isPremium
                     ? '0 0 10px rgba(245, 158, 11, 0.5)'
                     : '0 0 10px rgba(var(--theme-accent, 37, 99, 235), 0.5)')
                 }}
