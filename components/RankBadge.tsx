@@ -60,7 +60,7 @@ export default function RankBadge({ rank, size = "md", className = "", isClub = 
       }}
     >
       <div className={`absolute inset-[2px] rounded-full border border-white/30`} />
-      <span className="relative z-10 drop-shadow-sm font-extrabold tracking-wide">#{rank}</span>
+      <span className="relative z-10 drop-shadow-sm font-extrabold tracking-wide" style={{ color: 'inherit' }}>#{rank}</span>
       {rank > 3 && (
         <div className="absolute top-1 right-4 w-1 h-1 bg-white/60 rounded-full blur-[1px]" />
       )}

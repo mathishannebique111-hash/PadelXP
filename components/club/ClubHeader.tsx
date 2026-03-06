@@ -136,14 +136,19 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
         borderColor: palette.base,
         borderWidth: '1.5px',
       };
-      return {
-        background: "linear-gradient(135deg, rgba(8,30,78,0.88) 0%, rgba(4,16,46,0.92) 100%)",
-        borderColor: "rgba(72,128,210,0.55)",
-      };
     },
     [palette.base, isClub]
   );
 
+  const contrastColor = useMemo(() => {
+    if (typeof document === 'undefined') return 'white';
+    const bg = getComputedStyle(document.body).getPropertyValue('--theme-page').trim();
+    if (!bg) return 'white';
+    // On convertit le triplet RGB en hex pour getContrastColor
+    const rgb = bg.split(' ').map(Number);
+    const hex = "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+    return getContrastColor(hex);
+  }, [isClub]);
 
   const shimmerColor = useMemo(() => `${mix(palette.base, 0.65)}99`, [palette]);
   const shimmerVars = useMemo(
@@ -154,8 +159,8 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
   return (
     <>
       <section
-        className="relative overflow-hidden rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
-        style={aboutCardStyle}
+        className="relative overflow-hidden rounded-2xl border p-5 shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+        style={{ ...aboutCardStyle, color: isClub ? contrastColor : 'white' }}
       >
         <div className="relative z-10 flex flex-col gap-3 md:flex-row md:items-center">
           <div className="flex items-center gap-4">
@@ -186,7 +191,7 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
                 <span className="text-2xl">🏟️</span>
               )}
             </div>
-            <h1 className="text-xl font-extrabold md:text-2xl tracking-tight text-white/95 leading-tight md:leading-none flex items-center">
+            <h1 className="text-xl font-extrabold md:text-2xl tracking-tight leading-tight md:leading-none flex items-center" style={{ color: isClub ? contrastColor : 'rgba(255,255,255,0.95)' }}>
               {name}
             </h1>
           </div>
@@ -195,11 +200,11 @@ export default function ClubHeader({ name, logoUrl, description, fallbackAccent,
 
       {description ? (
         <section
-          className="mt-4 rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
-          style={aboutCardStyle}
+          className="mt-4 rounded-2xl border p-5 shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+          style={{ ...aboutCardStyle, color: isClub ? contrastColor : 'white' }}
         >
-          <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/85">À propos</h2>
-          <p className="mt-3 text-sm leading-7 text-white/90">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.3em]" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.85)' }}>À propos</h2>
+          <p className="mt-3 text-sm leading-7" style={{ color: isClub ? contrastColor : 'rgba(255,255,255,0.9)' }}>
             {description}
           </p>
         </section>

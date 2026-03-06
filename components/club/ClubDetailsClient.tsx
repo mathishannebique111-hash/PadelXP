@@ -108,6 +108,15 @@ export default function ClubDetailsClient({
     !!document.body.dataset.clubSubdomain &&
     document.body.dataset.clubSubdomain !== 'app';
 
+  const contrastColor = useMemo(() => {
+    if (typeof document === 'undefined') return 'white';
+    const bg = getComputedStyle(document.body).getPropertyValue('--theme-page').trim();
+    if (!bg) return 'white';
+    const rgb = bg.split(' ').map(Number);
+    const hex = "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+    return getContrastColor(hex);
+  }, [isClub]);
+
   const infrastructure = useMemo(() => {
     const items: Array<{ label: string; value: string } | null> = [];
     if (typeof numberOfCourts === "number" && Number.isFinite(numberOfCourts)) {
@@ -123,21 +132,21 @@ export default function ClubDetailsClient({
     <div className="mt-6 grid gap-5 lg:grid-cols-2">
       {/* Coordonnées + Infrastructure - Combined Frame */}
       <section
-        className="rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
-        style={cardStyle}
+        className="rounded-2xl border p-5 shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+        style={{ ...cardStyle, color: isClub ? contrastColor : 'white' }}
       >
         <div className="grid grid-cols-2 gap-4">
           {/* Coordonnées Column */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90">Coordonnées</h2>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.9)' }}>Coordonnées</h2>
               {website ? (
                 <a
                   href={website.startsWith("http") ? website : `https://${website}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[10px] font-semibold uppercase tracking-wide text-white/70 hover:text-white"
-                  style={isClub ? { color: 'var(--theme-accent)', opacity: 0.8 } : {}}
+                  className="text-[10px] font-semibold uppercase tracking-wide hover:opacity-100"
+                  style={isClub ? { color: 'var(--theme-accent)', opacity: 0.8 } : { color: 'rgba(255,255,255,0.7)' }}
                 >
                   Site ↗
                 </a>
@@ -154,14 +163,14 @@ export default function ClubDetailsClient({
                     height={18}
                     className="flex-shrink-0"
                     style={{
-                      filter: 'contrast(1.2) brightness(1.1)'
+                      filter: isClub && contrastColor === '#000000' ? 'invert(1) contrast(1.2)' : 'contrast(1.2) brightness(1.1)'
                     }}
                     unoptimized
                   />
-                  <span className="font-medium leading-4 text-xs text-white/90">{addressLine}</span>
+                  <span className="font-medium leading-4 text-xs" style={{ color: isClub ? contrastColor : 'rgba(255,255,255,0.9)' }}>{addressLine}</span>
                 </div>
               ) : (
-                <div className="rounded-lg border border-white/20 bg-white/10 px-2 py-1.5 text-center text-[10px] text-white/60">
+                <div className="rounded-lg border px-2 py-1.5 text-center text-[10px]" style={{ backgroundColor: isClub ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', borderColor: isClub ? 'rgba(var(--theme-accent), 0.2)' : 'rgba(255,255,255,0.2)', color: isClub ? contrastColor : 'rgba(255,255,255,0.6)' }}>
                   Adresse non renseignée
                 </div>
               )}
@@ -174,14 +183,14 @@ export default function ClubDetailsClient({
                     height={18}
                     className="flex-shrink-0"
                     style={{
-                      filter: 'none'
+                      filter: isClub && contrastColor === '#000000' ? 'invert(1)' : 'none'
                     }}
                     unoptimized
                   />
-                  <span className="font-medium tracking-wide text-xs text-white/90">{phone}</span>
+                  <span className="font-medium tracking-wide text-xs" style={{ color: isClub ? contrastColor : 'rgba(255,255,255,0.9)' }}>{phone}</span>
                 </div>
               ) : (
-                <div className="rounded-lg border border-white/20 bg-white/10 px-2 py-1.5 text-center text-[10px] text-white/60">
+                <div className="rounded-lg border px-2 py-1.5 text-center text-[10px]" style={{ backgroundColor: isClub ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', borderColor: isClub ? 'rgba(var(--theme-accent), 0.2)' : 'rgba(255,255,255,0.2)', color: isClub ? contrastColor : 'rgba(255,255,255,0.6)' }}>
                   Téléphone non renseigné
                 </div>
               )}
@@ -190,7 +199,7 @@ export default function ClubDetailsClient({
 
           {/* Infrastructure Column */}
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90 mb-4">Infrastructure</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.9)' }}>Infrastructure</h2>
             <div className="grid gap-2 text-sm mt-5">
               {infrastructure.length === 0 ? (
                 <div className="rounded-lg border border-white/18 bg-white/10 px-2 py-1.5 text-center text-[10px] text-white/60">
@@ -199,7 +208,7 @@ export default function ClubDetailsClient({
               ) : (
                 infrastructure.map((item) => (
                   <div key={item.label} className="flex items-center justify-between rounded-lg border px-2 py-1.5"
-                    style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.1)', color: 'white', borderColor: 'rgba(var(--theme-accent), 0.2)' } : { backgroundColor: 'white', color: '#071554', borderColor: 'transparent' }}>
+                    style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.1)', color: contrastColor, borderColor: 'var(--theme-accent)' } : { backgroundColor: 'white', color: '#071554', borderColor: 'transparent' }}>
                     <span className="uppercase tracking-[0.2em] text-[10px] font-bold">{item.label}</span>
                     <span className="font-extrabold text-xs">{item.value}</span>
                   </div>
@@ -212,19 +221,19 @@ export default function ClubDetailsClient({
 
       {/* Horaires d'ouverture */}
       <section
-        className="rounded-2xl border p-5 text-white shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
-        style={cardStyle}
+        className="rounded-2xl border p-5 shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
+        style={{ ...cardStyle, color: isClub ? contrastColor : 'white' }}
       >
-        <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">Horaires d'ouverture</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.3em]" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.9)' }}>Horaires d'ouverture</h2>
         <div className="mt-4 space-y-2 text-sm">
           {hours.map((item) => (
             <div
               key={item.key}
               className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-semibold tracking-wide ${item.isClosed ? "border-rose-400/45 bg-rose-500/15 text-rose-100" : "border-emerald-400/45 bg-emerald-500/15 text-emerald-50"}`}
-              style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.05)', borderColor: 'rgba(var(--theme-accent), 0.2)' } : {}}
+              style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.05)', borderColor: 'var(--theme-accent)' } : {}}
             >
-              <span className="uppercase tracking-[0.25em] text-white">{item.label}</span>
-              <span className="text-white">{item.value}</span>
+              <span className="uppercase tracking-[0.25em]" style={{ color: isClub ? contrastColor : 'white' }}>{item.label}</span>
+              <span style={{ color: isClub ? contrastColor : 'white' }}>{item.value}</span>
             </div>
           ))}
         </div>

@@ -699,6 +699,38 @@ export default function ClientClubIdentityPage() {
                 </div>
               </div>
 
+              {/* Copy Logo Colors Checkboxes */}
+              {logoPreview && extractedColors && (
+                <div className="flex flex-col gap-2 pt-1 pb-2">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        className="peer h-4 w-4 appearance-none rounded border border-white/20 bg-white/5 checked:bg-[#0066FF] checked:border-transparent transition-all cursor-pointer"
+                        onChange={(e) => {
+                          if (e.target.checked) setSecondaryColor(extractedColors.secondary);
+                        }}
+                      />
+                      <svg className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur secondaire du logo</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        className="peer h-4 w-4 appearance-none rounded border border-white/20 bg-white/5 checked:bg-[#0066FF] checked:border-transparent transition-all cursor-pointer"
+                        onChange={(e) => {
+                          if (e.target.checked) setBackgroundColor(extractedColors.primary);
+                        }}
+                      />
+                      <svg className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span className="text-[10px] text-white/70 group-hover:text-white transition-colors">Copier la couleur principale du logo</span>
+                  </label>
+                </div>
+              )}
+
               {/* ========================================= */}
               {/* PREVIEW EN TEMPS RÉEL */}
               {/* ========================================= */}
