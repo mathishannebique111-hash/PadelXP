@@ -105,11 +105,9 @@ export default function SettingsContent() {
     },
   ];
 
-  const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
-
   return (
-    <div className="relative min-h-screen pb-20">
-      {!isClub && <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none" />}
+    <div className="relative min-h-screen pb-20 bg-theme-bg">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.15),transparent)] z-0 pointer-events-none hide-in-club" />
 
       <div className="relative z-10 mx-auto w-full max-w-2xl px-4 py-6">
         <PageTitle title="Paramètres" />

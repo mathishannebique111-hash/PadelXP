@@ -19,15 +19,18 @@ interface League {
     created_by: string;
     player_count: number;
     is_creator: boolean;
-    my_matches_played: number;
-    my_points: number;
+    my_matches_played?: number;
+    my_points?: number;
     format: string;
 }
 
 
-export default function TournamentsContent() {
+export default function TournamentsContent({ clubId }: { clubId?: string | null }) {
     const [leagues, setLeagues] = useState<League[]>([]);
+    const [clubLeagues, setClubLeagues] = useState<League[]>([]);
     const [loading, setLoading] = useState(true);
+    const [clubLoading, setClubLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<"my" | "club">("my");
     const isClub = typeof document !== 'undefined' && !!document.body.dataset.clubSubdomain;
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
@@ -71,9 +74,24 @@ export default function TournamentsContent() {
         }
     };
 
+    const fetchClubLeagues = async () => {
+        if (!clubId) return;
+        setClubLoading(true);
+        try {
+            const res = await fetch(`/api/leagues/club-leagues?club_id=${clubId}`);
+            const data = await res.json();
+            setClubLeagues(data.leagues || []);
+        } catch (e) {
+            console.error("Erreur chargement ligues club:", e);
+        } finally {
+            setClubLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchLeagues();
-    }, []);
+        if (clubId) fetchClubLeagues();
+    }, [clubId]);
 
     const handleCreate = async () => {
         if (!formName.trim()) {
@@ -271,22 +289,52 @@ export default function TournamentsContent() {
                 </div>
             )}
 
+            {/* Filtres */}
+            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                <button
+                    onClick={() => setActiveTab("my")}
+                    className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === "my"
+                        ? (isClub ? "bg-theme-secondary-accent text-theme-player-page shadow-lg" : "bg-white/10 text-white")
+                        : "text-white/40 hover:text-white/60"
+                        }`}
+                    style={activeTab === "my" && isClub ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page)' } : {}}
+                >
+                    Mes ligues
+                </button>
+                <button
+                    onClick={() => setActiveTab("club")}
+                    className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === "club"
+                        ? (isClub ? "bg-theme-secondary-accent text-theme-player-page shadow-lg" : "bg-white/10 text-white")
+                        : "text-white/40 hover:text-white/60"
+                        }`}
+                    style={activeTab === "club" && isClub ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page)' } : {}}
+                >
+                    Ligues Club
+                </button>
+            </div>
+
             {/* Liste des ligues */}
             <div className="space-y-3">
-                {loading ? (
+                {((activeTab === "my" && loading) || (activeTab === "club" && clubLoading)) ? (
                     <div className="flex items-center justify-center py-12">
                         <div className="w-6 h-6 border-2 border-white/20 rounded-full animate-spin" style={{ borderTopColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} />
                     </div>
-                ) : leagues.length === 0 ? (
+                ) : (activeTab === "my" ? leagues : clubLeagues).length === 0 ? (
                     <div className="text-center py-12">
                         <Trophy className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                        <p className="text-white/40 text-sm font-medium">Aucune ligue pour le moment</p>
-                        <p className="text-white/20 text-xs mt-1">Créez votre première ligue ou rejoignez-en une !</p>
+                        <p className="text-white/40 text-sm font-medium">
+                            {activeTab === "my" ? "Aucune ligue pour le moment" : "Aucune ligue Club publiée"}
+                        </p>
+                        <p className="text-white/20 text-xs mt-1">
+                            {activeTab === "my" ? "Créez votre première ligue ou rejoignez-en une !" : "Revenez plus tard pour voir les compétitions du club."}
+                        </p>
                     </div>
                 ) : (
                     <>
-                        <h3 className="text-sm font-bold text-white/60 uppercase tracking-widest ml-1">Mes ligues</h3>
-                        {leagues.map((league) => {
+                        <h3 className="text-sm font-bold text-white/60 uppercase tracking-widest ml-1">
+                            {activeTab === "my" ? "Mes ligues" : "Ligues du Club"}
+                        </h3>
+                        {(activeTab === "my" ? leagues : clubLeagues).map((league) => {
                             const remainingDays = getRemainingDays(league.ends_at);
                             const isExpired = remainingDays === 0;
 
@@ -342,15 +390,20 @@ export default function TournamentsContent() {
                                                     <span>{remainingDays}j restants</span>
                                                 )}
                                             </span>
-                                            {league.status !== 'pending' && (
+                                            {league.status !== 'pending' && league.my_matches_played !== undefined && (
                                                 <span className={`ml-auto opacity-60`}>
                                                     {league.my_matches_played}/{league.max_matches_per_player} matchs
+                                                </span>
+                                            )}
+                                            {league.my_matches_played === undefined && (
+                                                <span className="ml-auto font-black text-[10px] uppercase tracking-widest text-[#00E5FF]">
+                                                    Détails
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Mini jauge de progression */}
-                                        {league.status !== 'pending' && (
+                                        {league.status !== 'pending' && league.my_matches_played !== undefined && (
                                             <div className={`mt-2 h-1 rounded-full border ${isClub ? '' : 'bg-white/10 border-transparent'}`} style={isClub ? { backgroundColor: 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.2)', borderColor: 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.1)' } : {}}>
                                                 <div
                                                     className="h-full rounded-full transition-all duration-300"

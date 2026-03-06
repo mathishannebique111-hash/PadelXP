@@ -70,6 +70,15 @@
     --sab: env(safe-area-inset-bottom, 0px);
   }
 
+  /* WHITE-LABEL: Utilitaires pour masquer les éléments PadelXP en mode Club */
+  html.club-branded .hide-in-club {
+    display: none !important;
+  }
+
+  html.club-branded .bg-theme-bg {
+    background-color: rgb(var(--theme-page)) !important;
+  }
+
   /* Force le minimum pour l'App sur iPhone (encoche) */
   html.is-app {
     --sat: 50px;

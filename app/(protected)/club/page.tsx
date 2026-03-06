@@ -84,7 +84,7 @@ export default async function ClubPage({
               </Suspense>
             }
             challengesContent={<ChallengesContent userId={user.id} clubId={clubId} />}
-            tournamentsContent={<TournamentsContent />}
+            tournamentsContent={<TournamentsContent clubId={clubId} />}
           />
         </div>
       </div>

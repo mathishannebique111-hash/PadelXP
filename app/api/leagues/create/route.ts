@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, duration_weeks, max_matches_per_player, max_players, format = 'standard' } = body;
+        const { name, duration_weeks, max_matches_per_player, max_players, format = 'standard', club_id } = body;
 
         // Validation
         if (!name || !name.trim()) {
@@ -76,6 +76,7 @@ export async function POST(req: Request) {
             .insert({
                 name: name.trim(),
                 created_by: user.id,
+                club_id: club_id || null,
                 invite_code,
                 max_matches_per_player: format === 'divisions' ? 3 : max_matches_per_player,
                 max_players,
