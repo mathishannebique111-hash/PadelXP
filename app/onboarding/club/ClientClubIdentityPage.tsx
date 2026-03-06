@@ -52,78 +52,86 @@ const extractColorsFromImage = (imageUrl: string): Promise<{ primary: string; se
         return;
       }
 
-      // Résolution plus élevée pour plus de précision (100x100 au lieu de 50x50)
+      // Résolution plus élevée pour plus de précision (100x100)
       const size = 100;
       canvas.width = size;
       canvas.height = size;
       ctx.drawImage(img, 0, 0, size, size);
 
       const imageData = ctx.getImageData(0, 0, size, size).data;
-      const colorCounts: Record<string, number> = {};
 
-      for (let i = 0; i < imageData.length; i += 4) {
+      // 1. Détection de la couleur de fond via les coins (échantillonnage de précision)
+      const getPixelHex = (x: number, y: number) => {
+        const i = (y * size + x) * 4;
         const r = imageData[i];
         const g = imageData[i + 1];
         const b = imageData[i + 2];
         const a = imageData[i + 3];
+        if (a < 128) return null;
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+      };
 
-        // Ignorer les pixels transparents
+      const corners = [
+        getPixelHex(0, 0), getPixelHex(size - 1, 0),
+        getPixelHex(0, size - 1), getPixelHex(size - 1, size - 1),
+        // Ajouter quelques points centraux sur les bords pour plus de robustesse
+        getPixelHex(Math.floor(size / 2), 0), getPixelHex(0, Math.floor(size / 2))
+      ].filter(Boolean) as string[];
+
+      const cornerCounts: Record<string, number> = {};
+      corners.forEach(c => cornerCounts[c] = (cornerCounts[c] || 0) + 1);
+      const sortedCorners = Object.entries(cornerCounts).sort((a, b) => b[1] - a[1]);
+
+      // La couleur de fond est celle des coins si elle est majoritaire
+      let detectedBg: string | null = null;
+      if (sortedCorners.length > 0 && sortedCorners[0][1] >= 2) {
+        detectedBg = sortedCorners[0][0];
+      }
+
+      // 2. Analyse de fréquence globale sans quantification (pour l'exactitude)
+      const colorCounts: Record<string, number> = {};
+      for (let i = 0; i < imageData.length; i += 4) {
+        const a = imageData[i + 3];
         if (a < 128) continue;
 
-        // Ignorer les pixels presque blancs ou presque noirs qui sont souvent du fond ou des ombres
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        if (brightness > 250 || brightness < 15) continue;
-
-        // Regrouper les couleurs proches pour éviter d'avoir plusieurs fois la même teinte
-        // On réduit la précision pour le comptage (quantization simple)
-        const q = 5;
-        const qr = Math.round(r / q) * q;
-        const qg = Math.round(g / q) * q;
-        const qb = Math.round(b / q) * q;
-
-        const hex = "#" + ((1 << 24) + (qr << 16) + (qg << 8) + qb).toString(16).slice(1).toUpperCase();
+        const r = imageData[i];
+        const g = imageData[i + 1];
+        const b = imageData[i + 2];
+        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
         colorCounts[hex] = (colorCounts[hex] || 0) + 1;
       }
 
       const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-
       if (sortedColors.length === 0) {
         resolve(null);
         return;
       }
 
-      // Couleur n°1 (La plus présente)
-      const primary = sortedColors[0][0];
+      // Couleur principale : Priorité au fond détecté, sinon la plus fréquente
+      const primary = detectedBg || sortedColors[0][0];
 
-      // Chercher la couleur n°2 qui est suffisamment différente de la n°1
+      // Couleur secondaire : La plus fréquente qui n'est pas la principale (avec distance)
       let secondary = primary;
-      if (sortedColors.length > 1) {
-        for (let i = 1; i < Math.min(sortedColors.length, 20); i++) {
-          const color = sortedColors[i][0];
+      const getDist = (c1: string, c2: string) => {
+        const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
+        const r2 = parseInt(c2.slice(1, 3), 16), g2 = parseInt(c2.slice(3, 5), 16), b2 = parseInt(c2.slice(5, 7), 16);
+        return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+      };
 
-          // Calcul de distance de couleur
-          const r1 = parseInt(primary.slice(1, 3), 16);
-          const g1 = parseInt(primary.slice(3, 5), 16);
-          const b1 = parseInt(primary.slice(5, 7), 16);
-          const r2 = parseInt(color.slice(1, 3), 16);
-          const g2 = parseInt(color.slice(3, 5), 16);
-          const b2 = parseInt(color.slice(5, 7), 16);
-          const dist = Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
-
-          // On veut une couleur vraiment différente (seuil monté à 80)
-          if (dist > 80) {
-            secondary = color;
-            break;
-          }
+      for (let i = 0; i < Math.min(sortedColors.length, 50); i++) {
+        const color = sortedColors[i][0];
+        if (getDist(primary, color) > 60) {
+          secondary = color;
+          break;
         }
       }
 
-      // Si on n'a pas trouvé de couleur secondaire assez différente, on prend la 2ème plus dominante par défaut
+      // Fallback si aucune couleur n'est assez différente
       if (secondary === primary && sortedColors.length > 1) {
         secondary = sortedColors[1][0];
       }
 
-      console.log("[Extraction] Couleurs extraites :", { primary, secondary });
+      console.log("[Extraction Précise]", { primary, secondary, cornerMatch: !!detectedBg });
       resolve({ primary, secondary });
     };
     img.onerror = () => resolve(null);
