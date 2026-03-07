@@ -10,13 +10,12 @@ CREATE POLICY "Anyone can view public leagues"
     ON leagues FOR SELECT
     USING (is_public = true);
 
--- Update RLS for club leagues: club members can see public leagues of their club
+-- Update RLS for club leagues: club members can see ALL leagues of their club
 DROP POLICY IF EXISTS "Club members can view public club leagues" ON leagues;
-CREATE POLICY "Club members can view public club leagues"
+CREATE POLICY "Club members can view club leagues"
     ON leagues FOR SELECT
     USING (
         club_id IS NOT NULL 
-        AND is_public = true
         AND club_id IN (
             SELECT club_id::uuid FROM profiles WHERE id = auth.uid()
         )

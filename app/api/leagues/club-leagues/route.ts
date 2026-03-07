@@ -12,8 +12,11 @@ export async function GET(req: Request) {
         const club_id = searchParams.get("club_id");
 
         if (!club_id) {
+            console.log("[api/leagues/club-leagues] No club_id provided");
             return NextResponse.json({ leagues: [] });
         }
+
+        console.log(`[api/leagues/club-leagues] Fetching for club: ${club_id}`);
 
         // Récupérer les ligues liées à ce club
         const { data: leagues, error } = await supabaseAdmin
@@ -21,6 +24,8 @@ export async function GET(req: Request) {
             .select("*")
             .eq("club_id", club_id)
             .order("created_at", { ascending: false });
+        
+        console.log(`[api/leagues/club-leagues] Found ${leagues?.length || 0} leagues`);
 
         if (error) {
             console.error("[leagues/club-leagues] Error:", error);
