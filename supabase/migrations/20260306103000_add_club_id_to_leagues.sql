@@ -10,12 +10,12 @@ CREATE POLICY "Club admins can manage their club's leagues"
     ON leagues FOR ALL
     USING (
         club_id IN (
-            SELECT club_id FROM club_admins WHERE user_id = auth.uid()
+            SELECT club_id::uuid FROM club_admins WHERE user_id = auth.uid()
         )
     )
     WITH CHECK (
         club_id IN (
-            SELECT club_id FROM club_admins WHERE user_id = auth.uid()
+            SELECT club_id::uuid FROM club_admins WHERE user_id = auth.uid()
         )
     );
 
@@ -25,7 +25,7 @@ CREATE POLICY "Players can view leagues from their current club"
     USING (
         club_id IS NOT NULL 
         AND club_id IN (
-            SELECT club_id FROM profiles WHERE id = auth.uid()
+            SELECT club_id::uuid FROM profiles WHERE id = auth.uid()
         )
     );
 
