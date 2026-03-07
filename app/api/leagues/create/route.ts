@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name, duration_weeks, max_matches_per_player, max_players, format = 'standard', club_id } = body;
+        const { name, duration_weeks, max_matches_per_player, max_players, format = 'standard', club_id, is_public = false } = body;
 
         // Validation
         if (!name || !name.trim()) {
@@ -82,6 +82,7 @@ export async function POST(req: Request) {
                 max_players,
                 duration_weeks,
                 format,
+                is_public,
                 current_phase: 0,
                 status: "pending",
             })

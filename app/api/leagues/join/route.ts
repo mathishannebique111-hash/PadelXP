@@ -17,23 +17,41 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { invite_code } = body;
+        const { invite_code, league_id } = body;
 
-        if (!invite_code || typeof invite_code !== "string") {
-            return NextResponse.json({ error: "Code d'invitation requis" }, { status: 400 });
+        if (!invite_code && !league_id) {
+            return NextResponse.json({ error: "Code d'invitation ou ID de ligue requis" }, { status: 400 });
         }
 
-        const code = invite_code.trim().toUpperCase();
+        let league;
+        let leagueError;
 
-        // Trouver la ligue
-        const { data: league, error: leagueError } = await supabaseAdmin
-            .from("leagues")
-            .select("*")
-            .eq("invite_code", code)
-            .maybeSingle();
+        if (invite_code) {
+            const code = invite_code.trim().toUpperCase();
+            const result = await supabaseAdmin
+                .from("leagues")
+                .select("*")
+                .eq("invite_code", code)
+                .maybeSingle();
+            league = result.data;
+            leagueError = result.error;
+        } else {
+            const result = await supabaseAdmin
+                .from("leagues")
+                .select("*")
+                .eq("id", league_id)
+                .maybeSingle();
+            league = result.data;
+            leagueError = result.error;
+
+            // Protection : Seules les ligues publiques peuvent être rejointes via ID direct sans code
+            if (league && !league.is_public) {
+                return NextResponse.json({ error: "Cette ligue est privée, le code est requis" }, { status: 403 });
+            }
+        }
 
         if (leagueError || !league) {
-            return NextResponse.json({ error: "Code d'invitation invalide" }, { status: 404 });
+            return NextResponse.json({ error: "Ligue introuvable" }, { status: 404 });
         }
 
         // Vérifier que la ligue est en attente de joueurs

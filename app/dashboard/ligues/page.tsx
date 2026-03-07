@@ -34,6 +34,7 @@ export default function ClubLeaguesPage() {
     const [formMaxMatches, setFormMaxMatches] = useState(10);
     const [formMaxPlayers, setFormMaxPlayers] = useState(8);
     const [formFormat, setFormFormat] = useState("standard");
+    const [formIsPublic, setFormIsPublic] = useState(true);
     const [creating, setCreating] = useState(false);
 
     const handleFormatChange = (newFormat: string) => {
@@ -96,6 +97,7 @@ export default function ClubLeaguesPage() {
                     max_matches_per_player: formMaxMatches,
                     max_players: formMaxPlayers,
                     format: formFormat,
+                    is_public: formIsPublic,
                     club_id: clubId
                 }),
             });
@@ -126,8 +128,8 @@ export default function ClubLeaguesPage() {
         <div className="space-y-6 p-6">
             <div className="flex items-start justify-between gap-4">
                 <PageTitle
-                    title="Ligues du club"
-                    subtitle="Créez des ligues privées pour vos membres."
+                    title="Ligues créées"
+                    subtitle="Gérez les ligues de votre club et suivez les participants."
                 />
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
@@ -212,6 +214,19 @@ export default function ClubLeaguesPage() {
                                     </select>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 py-2">
+                            <input
+                                type="checkbox"
+                                id="isPublic"
+                                checked={formIsPublic}
+                                onChange={(e) => setFormIsPublic(e.target.checked)}
+                                className="w-5 h-5 rounded-lg bg-white/10 border-white/20 text-blue-600 focus:ring-blue-500/50 transition-all cursor-pointer"
+                            />
+                            <label htmlFor="isPublic" className="text-sm font-bold text-white cursor-pointer select-none">
+                                Ligue publique (visible par tous les membres du club)
+                            </label>
                         </div>
 
                         <div className="pt-2">

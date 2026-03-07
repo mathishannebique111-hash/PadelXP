@@ -22,6 +22,7 @@ interface League {
     my_matches_played?: number;
     my_points?: number;
     format: string;
+    is_public: boolean;
 }
 
 
@@ -136,6 +137,26 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
         setCopiedCode(code);
         toast.success("Code copié !");
         setTimeout(() => setCopiedCode(null), 2000);
+    };
+
+    const handleJoinPublic = async (leagueId: string) => {
+        try {
+            const res = await fetch("/api/leagues/join", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ league_id: leagueId }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                toast.error(data.error || "Erreur");
+                return;
+            }
+            toast.success(`Vous avez rejoint la ligue !`);
+            fetchLeagues();
+        } catch (e) {
+            toast.error("Erreur lors de la connexion");
+        }
     };
 
     const getRemainingDays = (endsAt: string | null) => {
@@ -361,14 +382,26 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                                                 )}
                                             </div>
                                         </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); copyCode(league.invite_code); }}
-                                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold transition-colors ${isClub ? '' : 'bg-white/10 border-white/20 text-white/70 hover:text-white'}`}
-                                            style={isClub ? { backgroundColor: 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.15)', borderColor: 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.2)', color: 'var(--theme-accent-contrast)' } : {}}
-                                        >
-                                            {copiedCode === league.invite_code ? <Check size={14} style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} /> : <Copy size={14} />}
-                                            <span className="font-mono tracking-wider">{league.invite_code}</span>
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            {activeTab === "club" && league.is_public && league.my_matches_played === undefined && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleJoinPublic(league.id); }}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all active:scale-95"
+                                                    style={{ backgroundColor: isClub ? 'rgb(var(--theme-secondary-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-page, #071554)' }}
+                                                >
+                                                    <Plus size={14} className="stroke-[3px]" />
+                                                    REJOINDRE
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); copyCode(league.invite_code); }}
+                                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold transition-colors ${isClub ? '' : 'bg-white/10 border-white/20 text-white/70 hover:text-white'}`}
+                                                style={isClub ? { backgroundColor: 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.15)', borderColor: 'rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.2)', color: 'var(--theme-accent-contrast)' } : {}}
+                                            >
+                                                {copiedCode === league.invite_code ? <Check size={14} style={{ color: isClub ? 'var(--theme-accent-contrast)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} /> : <Copy size={14} />}
+                                                <span className="font-mono tracking-wider">{league.invite_code}</span>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <button
