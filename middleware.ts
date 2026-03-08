@@ -289,7 +289,8 @@ export async function middleware(req: NextRequest) {
       !pathnameForRateLimit.startsWith("/api/webhooks/") &&
       pathnameForRateLimit !== "/api/resend-inbound" &&
       pathnameForRateLimit !== "/api/matches/submit" &&
-      !pathnameForRateLimit.startsWith("/api/players/find-or-create")
+      !pathnameForRateLimit.startsWith("/api/players/find-or-create") &&
+      !pathnameForRateLimit.startsWith("/api/clubs/register")
     ) {
       if (generalRatelimit) {
         const { success, remaining, reset } = await generalRatelimit.limit(ip);

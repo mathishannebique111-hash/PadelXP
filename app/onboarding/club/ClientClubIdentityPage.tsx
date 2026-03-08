@@ -506,17 +506,7 @@ export default function ClientClubIdentityPage() {
       }
 
       // COPIE DU LIEN DANS LE PRESSE-PAPIER
-      let paymentLink = PAYMENT_LINKS[planType][billingCycle];
-      
-      // On ajoute des paramètres au lien pour le rendre unique et pré-remplir l'email
-      const params = new URLSearchParams();
-      if (data?.club?.id) params.set("client_reference_id", data.club.id);
-      if (email) params.set("prefilled_email", email);
-      
-      if (params.toString()) {
-        paymentLink += "#" + params.toString();
-      }
-
+      const paymentLink = PAYMENT_LINKS[planType][billingCycle];
       await navigator.clipboard.writeText(paymentLink);
       
       showToast("Lien de paiement copié avec succès !", "success");
