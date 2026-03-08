@@ -9,6 +9,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-10-29.clover',
 });
 
+// IDs des tarifs pour l'option Réservations
+const PRICE_RESERVATIONS_MONTHLY = 'price_1T8nLO3RWATPTiiqZmw2Y9Ba';
+const PRICE_RESERVATIONS_ANNUAL = 'price_1T8nLk3RWATPTiiqWoSpO9a8';
+
 const supabaseAdmin = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -157,11 +161,22 @@ export async function POST(req: NextRequest) {
 
         // Mettre à jour la base de données avec les informations de l'abonnement Stripe
         if (supabaseAdmin && subscription.id) {
-          // Déterminer le plan cycle depuis les items
+          // Déterminer le plan cycle et l'option réservations depuis les items
           let planCycle: string | null = null;
-          if (subscription.items.data.length > 0) {
-            const price = subscription.items.data[0].price;
-            if (price.recurring) {
+          let hasReservationsOption = false;
+
+          for (const item of subscription.items.data) {
+            const price = item.price;
+            const priceId = price.id;
+
+            // Détecter l'option réservations
+            if (priceId === PRICE_RESERVATIONS_MONTHLY || priceId === PRICE_RESERVATIONS_ANNUAL) {
+              hasReservationsOption = true;
+              continue; // Ne pas utiliser ce prix pour le cycle principal
+            }
+
+            // Détecter le cycle principal (si pas encore trouvé)
+            if (!planCycle && price.recurring) {
               if (price.recurring.interval === 'month' && price.recurring.interval_count === 1) {
                 planCycle = 'monthly';
               } else if (price.recurring.interval === 'month' && price.recurring.interval_count === 3) {
@@ -180,8 +195,16 @@ export async function POST(req: NextRequest) {
           if (subscription.status === 'trialing' && subscription.trial_end) {
             const trialEnd = new Date(subscription.trial_end * 1000);
             currentPeriodStart = trialEnd;
-            const interval = subscription.items.data[0]?.price?.recurring?.interval;
-            const intervalCount = subscription.items.data[0]?.price?.recurring?.interval_count || 1;
+            
+            // Trouver l'item principal pour la durée du cycle
+            const mainItem = subscription.items.data.find(item => 
+              item.price.id !== PRICE_RESERVATIONS_MONTHLY && 
+              item.price.id !== PRICE_RESERVATIONS_ANNUAL
+            ) || subscription.items.data[0];
+
+            const interval = mainItem?.price?.recurring?.interval;
+            const intervalCount = mainItem?.price?.recurring?.interval_count || 1;
+            
             currentPeriodEnd = new Date(trialEnd);
             if (interval === 'month') {
               currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + intervalCount);
@@ -190,9 +213,9 @@ export async function POST(req: NextRequest) {
             }
             nextRenewal = new Date(currentPeriodEnd);
           } else {
-            currentPeriodStart = new Date(subscription.current_period_start * 1000);
-            currentPeriodEnd = new Date(subscription.current_period_end * 1000);
-            nextRenewal = new Date(subscription.current_period_end * 1000);
+            currentPeriodStart = new Date((subscription as any).current_period_start * 1000);
+            currentPeriodEnd = new Date((subscription as any).current_period_end * 1000);
+            nextRenewal = new Date((subscription as any).current_period_end * 1000);
           }
 
           // Mettre à jour l'abonnement
@@ -201,6 +224,7 @@ export async function POST(req: NextRequest) {
             cancel_at_period_end: subscription.cancel_at_period_end || false,
             stripe_subscription_id: subscription.id,
             plan_cycle: planCycle,
+            has_reservations_option: hasReservationsOption,
             current_period_start: currentPeriodStart?.toISOString() || null,
             current_period_end: currentPeriodEnd?.toISOString() || null,
             next_renewal_at: nextRenewal?.toISOString() || null,
@@ -214,10 +238,20 @@ export async function POST(req: NextRequest) {
               : subscription.customer.id;
           }
 
-          await supabaseAdmin
+          const { data: subData } = await supabaseAdmin
             .from('subscriptions')
             .update(updateData)
-            .eq('stripe_subscription_id', subscription.id);
+            .eq('stripe_subscription_id', subscription.id)
+            .select('club_id')
+            .single();
+
+          if (subData?.club_id) {
+            await supabaseAdmin
+              .from('clubs')
+              .update({ has_reservations_option: hasReservationsOption })
+              .eq('id', subData.club_id);
+            logger.info('[webhook] Club table updated with reservations option:', subData.club_id);
+          }
 
           logger.info('[webhook] Subscription updated in database:', subscription.id);
         }
@@ -230,13 +264,23 @@ export async function POST(req: NextRequest) {
 
         // Mettre à jour le statut dans la base de données
         if (supabaseAdmin) {
-          await supabaseAdmin
+          const { data: subData } = await supabaseAdmin
             .from('subscriptions')
             .update({
               status: 'canceled',
               cancel_at_period_end: false,
+              has_reservations_option: false,
             })
-            .eq('stripe_subscription_id', subscription.id);
+            .eq('stripe_subscription_id', subscription.id)
+            .select('club_id')
+            .single();
+
+          if (subData?.club_id) {
+            await supabaseAdmin
+              .from('clubs')
+              .update({ has_reservations_option: false })
+              .eq('id', subData.club_id);
+          }
         }
         break;
       }
@@ -255,11 +299,11 @@ export async function POST(req: NextRequest) {
         logger.info('[webhook] invoice.payment_failed:', invoice.id);
 
         // Notifier le client ou mettre à jour le statut
-        if (supabaseAdmin && invoice.subscription) {
+        if (supabaseAdmin && (invoice as any).subscription) {
           await supabaseAdmin
             .from('subscriptions')
             .update({ status: 'past_due' })
-            .eq('stripe_subscription_id', invoice.subscription as string);
+            .eq('stripe_subscription_id', (invoice as any).subscription as string);
         }
         break;
       }

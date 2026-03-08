@@ -4,6 +4,7 @@ import { getClubSubscription, Subscription, getCycleDays } from "@/lib/utils/sub
 import BillingInfoSection from "@/components/billing/BillingInfoSection";
 import StripeCheckoutButton from "@/components/billing/StripeCheckoutButton";
 import NewSubscriptionCheckoutButton from "@/components/billing/NewSubscriptionCheckoutButton";
+import PlanSelection from "@/components/billing/PlanSelection";
 import SyncOnReturn from "@/components/billing/SyncOnReturn";
 import SubscriptionStatusAutoRefresh from "@/components/billing/SubscriptionStatusAutoRefresh";
 import ParallaxHalos from "@/components/ParallaxHalos";
@@ -670,65 +671,14 @@ export default async function BillingPage() {
           </div>
 
           <div className="flex justify-center">
-            <div className="w-full max-w-md">
-              {/* Mensuel */}
-              {/*
-            Plan actuel n'apparaît que si l'abonnement est réellement actif (ou paiement en attente).
-          */}
-              <div
-                className={`group relative flex flex-col rounded-lg sm:rounded-xl md:rounded-2xl border-2 p-5 sm:p-6 md:p-7 transition-all duration-300 hover:scale-105 ${currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled
-                  ? "border-white/70 bg-gradient-to-br from-white/20 via-slate-100/10 to-white/20 shadow-[0_10px_35px_rgba(255,255,255,0.25)]"
-                  : "border-blue-400/60 bg-gradient-to-br from-blue-500/15 via-indigo-600/10 to-blue-500/15 shadow-[0_12px_40px_rgba(59,130,246,0.3)]"
-                  }`}
-              >
-                {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled && (
-                  <div className="absolute -top-2 sm:-top-3 right-2 sm:right-4">
-                    <span className="rounded-full border-2 border-white/80 bg-gradient-to-r from-white to-slate-200 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-slate-800 shadow-lg">
-                      <Check className="w-3 h-3 inline mr-1" /> Plan actuel
-                    </span>
-                  </div>
-                )}
-                <div className="mb-3 sm:mb-4">
-                  <h3 className="text-lg sm:text-xl font-extrabold text-white">Mensuel</h3>
-                </div>
-                <div className="mb-4 sm:mb-5">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl sm:text-4xl font-extrabold text-white">{MONTHLY_PRICE}€</span>
-                    <span className="text-xs sm:text-sm font-normal text-white/70">/mois</span>
-                  </div>
-                </div>
-                <div className="mb-5 sm:mb-6 space-y-2 sm:space-y-2.5">
-                  <div className="flex items-center">
-                    <div className="text-[10px] sm:text-xs text-white/60">Cycle :</div>
-                    <div className="text-[10px] sm:text-xs text-white/80 ml-1">Facturation mensuelle</div>
-                  </div>
-                </div>
-                {isTrialActive && !hasChosenPlan ? (
-                  <NewSubscriptionCheckoutButton
-                    plan="monthly"
-                    disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
-                    className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
-                      ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
-                      }`}
-                  >
-                    {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                  </NewSubscriptionCheckoutButton>
-                ) : (
-                  <StripeCheckoutButton
-                    priceId={PRICE_MONTHLY}
-                    mode="subscription"
-                    disabled={((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY}
-                    className={`w-full rounded-lg sm:rounded-xl px-4 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-all duration-300 mt-auto ${((currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled)) || !PRICE_MONTHLY
-                      ? "bg-white/10 border-2 border-white/20 text-white/50 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.5)] hover:scale-105 active:scale-100"
-                      }`}
-                  >
-                    {currentPlan === "monthly" && hasChosenPlan && !isSubscriptionCanceled ? "Plan actuel" : "Sélectionner ce plan"}
-                  </StripeCheckoutButton>
-                )}
-              </div>
-            </div>
+            <PlanSelection 
+              isTrialActive={isTrialActive}
+              hasChosenPlan={hasChosenPlan}
+              currentPlan={currentPlan}
+              isSubscriptionCanceled={isSubscriptionCanceled}
+              monthlyPrice={MONTHLY_PRICE}
+              priceMonthly={PRICE_MONTHLY}
+            />
           </div>
         </section>
 

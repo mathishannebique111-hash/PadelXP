@@ -6,8 +6,12 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-10-29.clover',
 });
+
+// IDs des tarifs pour l'option Réservations
+const PRICE_RESERVATIONS_MONTHLY = 'price_1T8nLO3RWATPTiiqZmw2Y9Ba';
+const PRICE_RESERVATIONS_ANNUAL = 'price_1T8nLk3RWATPTiiqWoSpO9a8';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Vérifier l'authentification
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -57,7 +61,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (fetchError) {
-      logger.error({ error: fetchError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[sync-subscription] Error fetching subscription:');
+      logger.error('[sync-subscription] Error fetching subscription', { error: fetchError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" });
       return NextResponse.json(
         { error: 'Failed to fetch subscription' },
         { status: 500 }
@@ -77,35 +81,50 @@ export async function POST(req: NextRequest) {
         const stripeSubscription = await stripe.subscriptions.retrieve(existingSubscription.stripe_subscription_id);
         const customerId = typeof stripeSubscription.customer === 'string' ? stripeSubscription.customer : stripeSubscription.customer.id;
         
-        // Déterminer le cycle du plan
-        let planCycle: 'monthly' | 'quarterly' | 'annual' | null = existingSubscription.plan_cycle as any;
-        if (stripeSubscription.items.data.length > 0) {
-          const price = stripeSubscription.items.data[0].price;
-          const interval = price.recurring?.interval;
-          const intervalCount = price.recurring?.interval_count || 1;
-          
-          if (interval === 'month') {
-            planCycle = intervalCount === 1 ? 'monthly' : intervalCount === 3 ? 'quarterly' : 'monthly';
-          } else if (interval === 'year') {
-            planCycle = 'annual';
+        // Déterminer le cycle du plan et l'option réservations depuis les items
+        let planCycle: 'monthly' | 'quarterly' | 'annual' | null = null;
+        let hasReservationsOption = false;
+
+        for (const item of stripeSubscription.items.data) {
+          const price = item.price;
+          const priceId = price.id;
+
+          // Détecter l'option réservations
+          if (priceId === PRICE_RESERVATIONS_MONTHLY || priceId === PRICE_RESERVATIONS_ANNUAL) {
+            hasReservationsOption = true;
+            continue;
+          }
+
+          // Détecter le cycle principal (si pas encore trouvé)
+          if (!planCycle && price.recurring) {
+            const interval = price.recurring.interval;
+            const intervalCount = price.recurring.interval_count || 1;
+            
+            if (interval === 'month') {
+              planCycle = intervalCount === 1 ? 'monthly' : intervalCount === 3 ? 'quarterly' : 'monthly';
+            } else if (interval === 'year') {
+              planCycle = 'annual';
+            }
           }
         }
 
         // Dates importantes
-        // Si l'abonnement est en période d'essai Stripe, utiliser trial_end comme début de période
         let currentPeriodStart: Date;
         let currentPeriodEnd: Date;
         let nextRenewal: Date;
 
         if (stripeSubscription.status === 'trialing' && stripeSubscription.trial_end) {
-          // L'abonnement est en période d'essai Stripe
-          // Le premier paiement sera après trial_end
           const trialEnd = new Date(stripeSubscription.trial_end * 1000);
           currentPeriodStart = trialEnd;
           
-          // Calculer current_period_end selon le cycle du plan
-          const interval = stripeSubscription.items.data[0]?.price?.recurring?.interval;
-          const intervalCount = stripeSubscription.items.data[0]?.price?.recurring?.interval_count || 1;
+          // Trouver l'item principal pour la durée du cycle
+          const mainItem = stripeSubscription.items.data.find(item => 
+            item.price.id !== PRICE_RESERVATIONS_MONTHLY && 
+            item.price.id !== PRICE_RESERVATIONS_ANNUAL
+          ) || stripeSubscription.items.data[0];
+
+          const interval = mainItem?.price?.recurring?.interval;
+          const intervalCount = mainItem?.price?.recurring?.interval_count || 1;
           
           currentPeriodEnd = new Date(trialEnd);
           if (interval === 'month') {
@@ -116,21 +135,20 @@ export async function POST(req: NextRequest) {
           
           nextRenewal = new Date(currentPeriodEnd);
         } else {
-          // Abonnement actif normal
-          currentPeriodStart = new Date(stripeSubscription.current_period_start * 1000);
-          currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
-          nextRenewal = new Date(stripeSubscription.current_period_end * 1000);
+          currentPeriodStart = new Date((stripeSubscription as any).current_period_start * 1000);
+          currentPeriodEnd = new Date((stripeSubscription as any).current_period_end * 1000);
+          nextRenewal = new Date((stripeSubscription as any).current_period_end * 1000);
         }
 
         // Mettre à jour l'abonnement
-        // Important : inclure cancel_at_period_end pour détecter les annulations
         const { error: updateError } = await supabaseAdmin
           .from('subscriptions')
           .update({
-            status: stripeSubscription.status === 'active' ? 'active' : existingSubscription.status,
+            status: stripeSubscription.status === 'active' ? 'active' : stripeSubscription.status as any,
             cancel_at_period_end: stripeSubscription.cancel_at_period_end || false,
             stripe_customer_id: customerId,
             plan_cycle: planCycle,
+            has_reservations_option: hasReservationsOption,
             current_period_start: currentPeriodStart.toISOString(),
             current_period_end: currentPeriodEnd.toISOString(),
             next_renewal_at: nextRenewal.toISOString(),
@@ -139,8 +157,15 @@ export async function POST(req: NextRequest) {
           })
           .eq('id', existingSubscription.id);
 
+        if (!updateError) {
+          await supabaseAdmin
+            .from('clubs')
+            .update({ has_reservations_option: hasReservationsOption })
+            .eq('id', clubId);
+        }
+
         if (updateError) {
-          logger.error({ error: updateError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: existingSubscription.stripe_subscription_id?.substring(0, 8) + "…" }, '[sync-subscription] Update error:');
+          logger.error('[sync-subscription] Update error', { error: updateError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: existingSubscription.stripe_subscription_id?.substring(0, 8) + "…" });
           return NextResponse.json(
             { error: 'Failed to update subscription' },
             { status: 500 }
@@ -152,7 +177,7 @@ export async function POST(req: NextRequest) {
           message: 'Subscription synced successfully',
         });
       } catch (error) {
-        logger.error({ error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: existingSubscription.stripe_subscription_id?.substring(0, 8) + "…" }, '[sync-subscription] Error retrieving Stripe subscription:');
+        logger.error('[sync-subscription] Error retrieving Stripe subscription', { error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: existingSubscription.stripe_subscription_id?.substring(0, 8) + "…" });
         return NextResponse.json(
           { error: 'Failed to retrieve Stripe subscription' },
           { status: 500 }
@@ -161,24 +186,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Si pas de stripe_subscription_id, chercher les abonnements Stripe récents pour ce club
-    // On cherche par email ou par metadata club_id, ou dans les sessions checkout récentes
     const clubEmail = user.email;
-    
-    // D'abord, chercher dans les sessions checkout récentes (dernières 24h)
-    // qui pourraient contenir un abonnement pour ce club
     const oneDayAgo = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
     
     let foundSubscription: Stripe.Subscription | null = null;
     let foundCustomerId: string | null = null;
 
     try {
-      // Chercher les sessions checkout récentes
       const sessions = await stripe.checkout.sessions.list({
         limit: 100,
         created: { gte: oneDayAgo },
       });
 
-      // Parcourir les sessions pour trouver celles qui ont un abonnement
       for (const session of sessions.data) {
         if (session.payment_status === 'paid' && session.status === 'complete') {
           if (session.subscription) {
@@ -188,36 +207,29 @@ export async function POST(req: NextRequest) {
             
             try {
               const sub = await stripe.subscriptions.retrieve(subscriptionId);
-              
-              // Vérifier si l'abonnement semble correspondre (statut actif, créé récemment)
               if (sub.status === 'active' || sub.status === 'trialing') {
-                // Si on trouve un abonnement actif récent, on l'utilise
                 foundSubscription = sub;
                 foundCustomerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-                logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscriptionId.substring(0, 8) + "…" }, '[sync-subscription] Found subscription in recent checkout session:');
+                logger.info('[sync-subscription] Found subscription in recent checkout session', { userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: subscriptionId.substring(0, 8) + "…" });
                 break;
               }
             } catch (err) {
-              // Continuer si on ne peut pas récupérer l'abonnement
               continue;
             }
           }
         }
       }
     } catch (error) {
-      logger.error({ error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" }, '[sync-subscription] Error searching checkout sessions:');
+      logger.error('[sync-subscription] Error searching checkout sessions', { error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…" });
     }
 
-    // Si on n'a pas trouvé dans les sessions checkout, chercher par email
     if (!foundSubscription && clubEmail) {
       try {
-        // Chercher le customer Stripe par email
         const customers = await stripe.customers.list({
           email: clubEmail,
           limit: 10,
         });
 
-        // Pour chaque customer, chercher les abonnements actifs
         for (const customer of customers.data) {
           const subscriptions = await stripe.subscriptions.list({
             customer: customer.id,
@@ -225,7 +237,6 @@ export async function POST(req: NextRequest) {
             limit: 5,
           });
 
-          // Prendre le plus récent abonnement actif
           const activeSubs = subscriptions.data.filter(sub => 
             sub.status === 'active' || sub.status === 'trialing'
           ).sort((a, b) => b.created - a.created);
@@ -233,16 +244,15 @@ export async function POST(req: NextRequest) {
           if (activeSubs.length > 0) {
             foundSubscription = activeSubs[0];
             foundCustomerId = customer.id;
-            logger.info({ userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: foundSubscription.id.substring(0, 8) + "…", email: clubEmail?.substring(0, 8) + "…" }, '[sync-subscription] Found subscription by email:');
+            logger.info('[sync-subscription] Found subscription by email', { userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: foundSubscription.id.substring(0, 8) + "…", email: clubEmail?.substring(0, 8) + "…" });
             break;
           }
         }
       } catch (error) {
-        logger.error({ error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: clubEmail?.substring(0, 8) + "…" }, '[sync-subscription] Error searching by email:');
+        logger.error('[sync-subscription] Error searching by email', { error: error instanceof Error ? error.message : String(error), userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", email: clubEmail?.substring(0, 8) + "…" });
       }
     }
 
-    // Si toujours rien, retourner une erreur avec des instructions
     if (!foundSubscription) {
       return NextResponse.json(
         { 
@@ -253,39 +263,48 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const customer = foundCustomerId ? { id: foundCustomerId } : null;
-    
     const latestSubscription = foundSubscription;
     
-    // Déterminer le cycle du plan
+    // Déterminer le cycle du plan et l'option réservations depuis les items
     let planCycle: 'monthly' | 'quarterly' | 'annual' | null = null;
-    if (latestSubscription.items.data.length > 0) {
-      const price = latestSubscription.items.data[0].price;
-      const interval = price.recurring?.interval;
-      const intervalCount = price.recurring?.interval_count || 1;
-      
-      if (interval === 'month') {
-        planCycle = intervalCount === 1 ? 'monthly' : intervalCount === 3 ? 'quarterly' : 'monthly';
-      } else if (interval === 'year') {
-        planCycle = 'annual';
+    let hasReservationsOption = false;
+
+    for (const item of latestSubscription.items.data) {
+      const price = item.price;
+      const priceId = price.id;
+
+      if (priceId === PRICE_RESERVATIONS_MONTHLY || priceId === PRICE_RESERVATIONS_ANNUAL) {
+        hasReservationsOption = true;
+        continue;
+      }
+
+      if (!planCycle && price.recurring) {
+        const interval = price.recurring.interval;
+        const intervalCount = price.recurring.interval_count || 1;
+        
+        if (interval === 'month') {
+          planCycle = intervalCount === 1 ? 'monthly' : intervalCount === 3 ? 'quarterly' : 'monthly';
+        } else if (interval === 'year') {
+          planCycle = 'annual';
+        }
       }
     }
 
-    // Dates importantes
-    // Si l'abonnement est en période d'essai Stripe, utiliser trial_end comme début de période
     let currentPeriodStart: Date;
     let currentPeriodEnd: Date;
     let nextRenewal: Date;
 
     if (latestSubscription.status === 'trialing' && latestSubscription.trial_end) {
-      // L'abonnement est en période d'essai Stripe
-      // Le premier paiement sera après trial_end
       const trialEnd = new Date(latestSubscription.trial_end * 1000);
       currentPeriodStart = trialEnd;
       
-      // Calculer current_period_end selon le cycle du plan
-      const interval = latestSubscription.items.data[0]?.price?.recurring?.interval;
-      const intervalCount = latestSubscription.items.data[0]?.price?.recurring?.interval_count || 1;
+      const mainItem = latestSubscription.items.data.find(item => 
+        item.price.id !== PRICE_RESERVATIONS_MONTHLY && 
+        item.price.id !== PRICE_RESERVATIONS_ANNUAL
+      ) || latestSubscription.items.data[0];
+
+      const interval = mainItem?.price?.recurring?.interval;
+      const intervalCount = mainItem?.price?.recurring?.interval_count || 1;
       
       currentPeriodEnd = new Date(trialEnd);
       if (interval === 'month') {
@@ -296,22 +315,20 @@ export async function POST(req: NextRequest) {
       
       nextRenewal = new Date(currentPeriodEnd);
     } else {
-      // Abonnement actif normal
-      currentPeriodStart = new Date(latestSubscription.current_period_start * 1000);
-      currentPeriodEnd = new Date(latestSubscription.current_period_end * 1000);
-      nextRenewal = new Date(latestSubscription.current_period_end * 1000);
+      currentPeriodStart = new Date((latestSubscription as any).current_period_start * 1000);
+      currentPeriodEnd = new Date((latestSubscription as any).current_period_end * 1000);
+      nextRenewal = new Date((latestSubscription as any).current_period_end * 1000);
     }
 
-    // Mettre à jour l'abonnement
-    // Important : inclure cancel_at_period_end pour détecter les annulations
     const { error: updateError } = await supabaseAdmin
       .from('subscriptions')
       .update({
-        status: latestSubscription.status === 'active' ? 'active' : existingSubscription.status,
+        status: latestSubscription.status === 'active' ? 'active' : latestSubscription.status as any,
         cancel_at_period_end: latestSubscription.cancel_at_period_end || false,
         stripe_subscription_id: latestSubscription.id,
         stripe_customer_id: foundCustomerId,
         plan_cycle: planCycle,
+        has_reservations_option: hasReservationsOption,
         current_period_start: currentPeriodStart.toISOString(),
         current_period_end: currentPeriodEnd.toISOString(),
         next_renewal_at: nextRenewal.toISOString(),
@@ -320,8 +337,15 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', existingSubscription.id);
 
+    if (!updateError) {
+      await supabaseAdmin
+        .from('clubs')
+        .update({ has_reservations_option: hasReservationsOption })
+        .eq('id', clubId);
+    }
+
     if (updateError) {
-      logger.error({ error: updateError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: latestSubscription.id.substring(0, 8) + "…" }, '[sync-subscription] Update error:');
+      logger.error('[sync-subscription] Update error', { error: updateError, userId: user.id.substring(0, 8) + "…", clubId: clubId.substring(0, 8) + "…", subscriptionId: latestSubscription.id.substring(0, 8) + "…" });
       return NextResponse.json(
         { error: 'Failed to update subscription' },
         { status: 500 }
@@ -334,7 +358,7 @@ export async function POST(req: NextRequest) {
       subscriptionId: latestSubscription.id,
     });
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, '[sync-subscription] Error:');
+    logger.error('[sync-subscription] Error', { error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined });
     return NextResponse.json(
       { error: 'Failed to sync subscription' },
       { status: 500 }
@@ -342,3 +366,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function GET() {
+  return NextResponse.json({
+    message: 'Subscription sync endpoint',
+    status: 'active'
+  });
+}

@@ -339,6 +339,7 @@ export default function ClientClubIdentityPage() {
   // Choix de l'abonnement
   const [planType, setPlanType] = useState<"less_than_150" | "between_150_500" | "more_than_500">("less_than_150");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const [withReservations, setWithReservations] = useState(false);
 
   const PAYMENT_LINKS = {
     less_than_150: {
@@ -479,6 +480,7 @@ export default function ClientClubIdentityPage() {
           primary_color: secondaryColor, // On utilise la couleur d'accent pour les deux
           secondary_color: secondaryColor,
           background_color: backgroundColor,
+          has_reservations_option: withReservations,
           owner_email: ownerEmail || undefined,
           logo_payload: encodedLogo,
           user_metadata: {
@@ -907,15 +909,15 @@ export default function ClientClubIdentityPage() {
           {/* ========================================= */}
           <div className="flex flex-col lg:flex-row gap-4 w-full max-w-lg mb-4">
             <div className="flex-1 space-y-1">
-              <label className={labelClass}>Taille du club (Joueurs)</label>
+              <label className={labelClass}>Taille du club (Terrains)</label>
               <select
                 className={inputClass}
                 value={planType}
                 onChange={(e) => setPlanType(e.target.value as any)}
               >
-                <option value="less_than_150">Moins de 150 joueurs (89€/mois)</option>
-                <option value="between_150_500">150 à 500 joueurs (139€/mois)</option>
-                <option value="more_than_500">Plus de 500 joueurs (229€/mois)</option>
+                <option value="less_than_150">Entre 1 et 3 terrains (89€/mois)</option>
+                <option value="between_150_500">Entre 4 et 6 terrains (139€/mois)</option>
+                <option value="more_than_500">7 terrains ou plus (229€/mois)</option>
               </select>
             </div>
             <div className="flex-1 space-y-1">
@@ -928,6 +930,18 @@ export default function ClientClubIdentityPage() {
                 <option value="monthly">Mensuel</option>
                 <option value="annual">Annuel (-10%)</option>
               </select>
+            </div>
+            <div className="flex-1 space-y-1">
+              <label className={labelClass}>Options supplémentaires</label>
+              <div 
+                onClick={() => setWithReservations(!withReservations)}
+                className={`${inputClass} flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors py-[7px]`}
+              >
+                <span className="text-white/70">Option Réservations (+39€/m)</span>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${withReservations ? 'bg-[#0066FF] border-transparent' : 'border-white/20'}`}>
+                  {withReservations && <Plus size={12} className="text-white rotate-45" />}
+                </div>
+              </div>
             </div>
           </div>
 

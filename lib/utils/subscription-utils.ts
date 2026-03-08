@@ -44,6 +44,7 @@ export interface Subscription {
   vat_number: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  has_reservations_option: boolean;
   metadata: any;
   created_at: string;
   updated_at: string;

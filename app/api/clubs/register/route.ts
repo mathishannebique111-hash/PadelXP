@@ -81,6 +81,7 @@ const clubRegisterSchema = z.object({
       data: z.string().min(1, "Le fichier logo est requis"),
     })
     .nullish(),
+  has_reservations_option: z.boolean().optional(),
 });
 
 async function ensureLogoBucket() {
@@ -129,6 +130,7 @@ export async function POST(req: Request) {
       background_color,
       owner_email,
       logo_payload,
+      has_reservations_option,
     } = parsedPayload.data;
 
     const address = street || null;
@@ -306,6 +308,7 @@ export async function POST(req: Request) {
       court_type,
       offer_type: offerType,
       subscription_status: 'active', // Le compte est actif par défaut car les credentials ne sont donnés qu'après paiement
+      has_reservations_option: !!has_reservations_option,
     };
 
     if (subdomain) upsertData.subdomain = subdomain;

@@ -22,7 +22,7 @@ import {
   Calendar
 } from 'lucide-react';
 
-export default function MobileMenu() {
+export default function MobileMenu({ hasReservationsOption = false }: { hasReservationsOption?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { hasUnread } = useUnreadClubMessages();
@@ -54,10 +54,12 @@ export default function MobileMenu() {
     { href: '/dashboard/tournaments', label: 'Tournois', icon: Medal },
     { href: '/dashboard/ligues', label: 'Ligues', icon: Trophy },
     { href: '/dashboard/roles', label: 'Rôles et accès', icon: UserCog },
-    { href: '/dashboard/reservations', label: 'Réservations & Tarifs', icon: Calendar },
+    { href: '/dashboard/reservations', label: 'Réservations & Tarifs', icon: Calendar, needsOption: true },
     { href: '/dashboard/import-export', label: 'Import / Export', icon: Download },
     { href: '/dashboard/aide', label: 'Aide & Support', icon: HelpCircle },
   ];
+
+  const filteredMenuItems = menuItems.filter(item => !item.needsOption || hasReservationsOption);
 
   return (
     <>
@@ -104,7 +106,7 @@ export default function MobileMenu() {
         onClick={(e) => e.stopPropagation()}
       >
         <nav className="p-4 pt-20 md:pt-6 space-y-4 text-sm flex-1 h-full overflow-y-auto">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = pathname === item.href;
             const isAideSupport = item.href === '/dashboard/aide';
             const IconComponent = item.icon;

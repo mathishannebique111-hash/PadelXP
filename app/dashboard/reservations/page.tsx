@@ -1,21 +1,28 @@
 import { getUserClubId } from "@/lib/utils/club-utils";
 import ReservationsView from "./ReservationsView";
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { isTrialActive } from "@/lib/subscription";
 
 export default async function ClubReservationsPage() {
     const clubId = await getUserClubId();
 
     if (!clubId) {
-        // This shouldn't happen if user is in dashboard, layout should have caught it
-        // But for safety:
-        return (
-            <div className="flex items-center justify-center p-12">
-                <div className="text-center space-y-4">
-                    <h2 className="text-xl font-bold text-white">Accès restreint</h2>
-                    <p className="text-white/60">Impossible de trouver votre identifiant de club.</p>
-                </div>
-            </div>
-        );
+        redirect("/dashboard");
+    }
+
+    const supabase = await createClient();
+    const { data: club } = await supabase
+        .from("clubs")
+        .select("has_reservations_option, trial_current_end_date, trial_end_date")
+        .eq("id", clubId)
+        .single();
+
+    const trialActive = isTrialActive(club?.trial_current_end_date || club?.trial_end_date);
+    const hasOption = !!club?.has_reservations_option;
+
+    if (!hasOption && !trialActive) {
+        redirect("/dashboard/facturation?error=reservations_option_required");
     }
 
     return <ReservationsView clubId={clubId} />;

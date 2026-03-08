@@ -10,6 +10,7 @@ interface StripeCheckoutButtonProps {
   className?: string;
   children: React.ReactNode;
   onError?: (error: string) => void;
+  withReservations?: boolean;
 }
 
 export default function StripeCheckoutButton({
@@ -19,6 +20,7 @@ export default function StripeCheckoutButton({
   className = '',
   children,
   onError,
+  withReservations = false,
 }: StripeCheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
 
@@ -39,6 +41,7 @@ export default function StripeCheckoutButton({
         body: JSON.stringify({
           priceId,
           mode,
+          withReservations,
         }),
       });
 

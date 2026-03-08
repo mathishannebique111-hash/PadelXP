@@ -10,6 +10,7 @@ interface NewSubscriptionCheckoutButtonProps {
   className?: string;
   children: React.ReactNode;
   onError?: (error: string) => void;
+  withReservations?: boolean;
 }
 
 export default function NewSubscriptionCheckoutButton({
@@ -18,6 +19,7 @@ export default function NewSubscriptionCheckoutButton({
   className = '',
   children,
   onError,
+  withReservations = false,
 }: NewSubscriptionCheckoutButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ export default function NewSubscriptionCheckoutButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, withReservations }),
       });
 
       const data = await response.json();

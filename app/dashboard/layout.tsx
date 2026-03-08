@@ -68,6 +68,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let clubTrialEndDate: string | null = null;
   let clubTrialCurrentEndDate: string | null = null;
   let clubSubscriptionStatus: string | null = null;
+  let hasReservationsOption = false;
 
   // Vérifier d'abord si l'utilisateur est un admin de club
   if (supabaseAdmin) {
@@ -104,7 +105,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (supabaseAdmin && clubId) {
     const { data: clubRow, error: clubRowError } = await supabaseAdmin
       .from("clubs")
-      .select("name, logo_url, slug, trial_end_date, trial_current_end_date, subscription_status")
+      .select("name, logo_url, slug, trial_end_date, trial_current_end_date, subscription_status, has_reservations_option")
       .eq("id", clubId)
       .maybeSingle();
 
@@ -117,9 +118,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       clubLogo = clubLogo ?? (clubRow.logo_url as string | null);
       clubSlug = clubSlug ?? (clubRow.slug as string | null);
       // Stocker les infos de trial
-      clubTrialEndDate = clubRow.trial_end_date as string | null;
-      clubTrialCurrentEndDate = clubRow.trial_current_end_date as string | null;
       clubSubscriptionStatus = clubRow.subscription_status as string | null;
+      hasReservationsOption = !!clubRow.has_reservations_option;
     }
   }
 
@@ -236,7 +236,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ` }} />
       {/* Menu hamburger et volet latéral (visible sur tous les écrans) */}
       <Suspense fallback={null}>
-        <MobileMenu />
+        <MobileMenu hasReservationsOption={hasReservationsOption ?? false} />
       </Suspense>
 
       {/* Dynamic gradient overlay + parallax halos */}

@@ -11,6 +11,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-10-29.clover',
 });
 
+// IDs des tarifs pour l'option Réservations
+const PRICE_RESERVATIONS_MONTHLY = 'price_1T8nLO3RWATPTiiqZmw2Y9Ba';
+const PRICE_RESERVATIONS_ANNUAL = 'price_1T8nLk3RWATPTiiqWoSpO9a8';
+
 export const dynamic = 'force-dynamic';
 
 /**
@@ -19,6 +23,7 @@ export const dynamic = 'force-dynamic';
 const stripeCheckoutSchema = z.object({
   priceId: z.string().min(1, 'priceId requis').regex(/^price_[a-zA-Z0-9]+$/, 'priceId invalide'),
   mode: z.enum(['subscription', 'payment']).optional(),
+  withReservations: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -55,7 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     priceId = parsedBody.data.priceId;
-    const { mode } = parsedBody.data;
+    const { mode, withReservations } = parsedBody.data;
 
     // Déterminer le mode (par défaut 'subscription')
     const checkoutMode: 'subscription' | 'payment' = mode || 'subscription';
@@ -63,6 +68,7 @@ export async function POST(req: NextRequest) {
     // Récupérer l'utilisateur et son club pour vérifier la période d'essai
     let trialEndTimestamp: number | null = null;
     let forceNoTrial = false;
+    let isAnnual = false;
     
     if (checkoutMode === 'subscription') {
       try {
@@ -75,6 +81,12 @@ export async function POST(req: NextRequest) {
           if (clubId) {
             const subscription = await getClubSubscription(clubId);
             const now = new Date();
+
+            // Vérifier si le plan principal est annuel (pour choisir le bon tarif de réservation)
+            // On se base sur le cycle de facturation de Stripe ou sur le PriceID envoyé
+            if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL) {
+              isAnnual = true;
+            }
 
             // 1) Si le club a une période d'essai PadelXP qui n'est pas encore terminée
             if (!trialEndTimestamp && subscription?.trial_end_at) {
@@ -120,17 +132,28 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    logger.info({ priceId: priceId.substring(0, 10) + "…", mode: checkoutMode, hasTrialEnd: !!trialEndTimestamp }, '[checkout] Creating session');
+    logger.info({ priceId: priceId.substring(0, 10) + "…", mode: checkoutMode, hasTrialEnd: !!trialEndTimestamp, withReservations }, '[checkout] Creating session');
+
+    // Préparer les items de la session
+    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ];
+
+    // Ajouter l'option réservations si demandée
+    if (withReservations && checkoutMode === 'subscription') {
+      line_items.push({
+        price: isAnnual ? PRICE_RESERVATIONS_ANNUAL : PRICE_RESERVATIONS_MONTHLY,
+        quantity: 1,
+      });
+    }
 
     // Préparer les paramètres de la session
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: checkoutMode,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/facturation/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/facturation/cancel`,
     };
