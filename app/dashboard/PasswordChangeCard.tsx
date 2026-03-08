@@ -32,24 +32,22 @@ export default function PasswordChangeCard() {
     setErrorMessage("");
 
     try {
-      // 1. Re-authentifier pour vérifier l'ancien mot de passe
-      const { error: reauthError } = await supabase.auth.reauthenticate({
-        password: oldPassword,
+      const response = await fetch("/api/auth/update-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          oldPassword,
+          newPassword,
+        }),
       });
 
-      if (reauthError) {
-        if (reauthError.message.includes("invalid claim") || reauthError.message.includes("Invalid login credentials")) {
-          throw new Error("L'ancien mot de passe est incorrect.");
-        }
-        throw reauthError;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Une erreur est survenue lors de la mise à jour.");
       }
-
-      // 2. Mettre à jour avec le nouveau mot de passe
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (updateError) throw updateError;
 
       setStatus("success");
       setOldPassword("");
