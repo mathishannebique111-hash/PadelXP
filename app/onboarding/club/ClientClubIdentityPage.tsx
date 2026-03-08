@@ -341,6 +341,39 @@ export default function ClientClubIdentityPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [withReservations, setWithReservations] = useState(false);
 
+  const PAYMENT_LINKS = {
+    less_than_150: {
+      monthly: {
+        without: "https://buy.stripe.com/8x27sE5J4fBVh1n1UN5J602",
+        with: "https://buy.stripe.com/7sY8wIdbwcpJ12pgPH5J608"
+      },
+      annual: {
+        without: "https://buy.stripe.com/7sY4gs7Rc3TddPbgPH5J603",
+        with: "https://buy.stripe.com/14AcMYefA89tcL77f75J609"
+      }
+    },
+    between_150_500: {
+      monthly: {
+        without: "https://buy.stripe.com/aFa7sEc7s75pbH30QJ5J604",
+        with: "https://buy.stripe.com/14A00c4F0cpJ26tbvn5J60a"
+      },
+      annual: {
+        without: "https://buy.stripe.com/aFadR2c7sdtNh1narj5J605",
+        with: "https://buy.stripe.com/cNifZagnI89t8uR2YR5J60b"
+      }
+    },
+    more_than_500: {
+      monthly: {
+        without: "https://buy.stripe.com/3cIfZab3o0H16mJeHz5J606",
+        with: "https://buy.stripe.com/5kQaEQ8VgexR7qN2YR5J60c"
+      },
+      annual: {
+        without: "https://buy.stripe.com/fZu00c2wSblF9yVgPH5J607",
+        with: "https://buy.stripe.com/9B64gs4F0dtN7qN2YR5J60d"
+      }
+    }
+  };
+
 
   // Calcul du Score de Visibilité (9 champs suivis)
   const visibilityFields = [
@@ -496,36 +529,23 @@ export default function ClientClubIdentityPage() {
         sessionStorage.removeItem('onboarding_password');
       }
 
-      // RÉCUPÉRATION D'UNE SESSION DE CHECKOUT STRIPE DYNAMIQUE
-      const checkoutResponse = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          planId: planType,
-          billingCycle: billingCycle,
-          withReservations: withReservations,
-          success_url: `${window.location.origin}/dashboard?checkout=success`,
-          cancel_url: `${window.location.origin}/dashboard/facturation`,
-        }),
-      });
-
-      if (!checkoutResponse.ok) {
-        throw new Error("Impossible de créer la session de paiement Stripe");
+      // REDIRECTION VERS LE LIEN DE PAIEMENT STRIPE CORRESPONDANT
+      const reservationKey = withReservations ? "with" : "without";
+      let stripeUrl = PAYMENT_LINKS[planType][billingCycle][reservationKey];
+      
+      // Ajouter les paramètres pour identifier le club et pré-remplir l'email
+      const params = new URLSearchParams();
+      if (data?.club?.id) params.set("client_reference_id", data.club.id);
+      if (ownerEmail) params.set("prefilled_email", ownerEmail);
+      
+      if (params.toString()) {
+        stripeUrl += (stripeUrl.includes('?') ? '&' : '?') + params.toString();
       }
-
-      const { url: stripeUrl } = await checkoutResponse.json();
       
       showToast("Compte créé, redirection vers le paiement...", "success");
 
       // Redirection immédiate vers Stripe
-      if (stripeUrl) {
-        window.location.href = stripeUrl;
-      } else {
-        router.push("/dashboard");
-      }
+      window.location.href = stripeUrl;
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Erreur lors de l'enregistrement");
     } finally {
