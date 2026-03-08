@@ -4,6 +4,7 @@ import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { redirect } from "next/navigation";
 import InvitationCodeCard from "./InvitationCodeCard";
 import PageTitle from "./PageTitle";
+import PasswordChangeCard from "./PasswordChangeCard";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import TrialExtensionProgress from "@/components/trial/TrialExtensionProgress";
 import { logger } from '@/lib/logger';
@@ -391,6 +392,11 @@ export default async function DashboardHome() {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Modifier le mot de passe */}
+      <section>
+        <PasswordChangeCard />
       </section>
 
       {/* Statut Essai / Abonnement */}
