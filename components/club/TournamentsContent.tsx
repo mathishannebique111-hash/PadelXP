@@ -315,20 +315,30 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                 <button
                     onClick={() => setActiveTab("my")}
                     className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === "my"
-                        ? (isClub ? "shadow-lg" : "bg-white/10 text-white")
-                        : "text-white/40 hover:text-white/60"
+                        ? (isClub ? "shadow-md" : "bg-white/10 text-white text-opacity-100")
+                        : (isClub ? "" : "text-white/40 hover:text-white/60")
                         }`}
-                    style={activeTab === "my" && isClub ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-page)' } : {}}
+                    style={isClub ? {
+                        backgroundColor: activeTab === "my" ? 'rgb(var(--theme-secondary-accent))' : 'transparent',
+                        color: activeTab === "my" 
+                            ? 'var(--theme-secondary-accent-contrast, #000000)' 
+                            : 'rgba(var(--theme-text), 0.4)'
+                    } : {}}
                 >
                     Mes ligues
                 </button>
                 <button
                     onClick={() => setActiveTab("club")}
                     className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === "club"
-                        ? (isClub ? "shadow-lg" : "bg-white/10 text-white")
-                        : "text-white/40 hover:text-white/60"
+                        ? (isClub ? "shadow-md" : "bg-white/10 text-white text-opacity-100")
+                        : (isClub ? "" : "text-white/40 hover:text-white/60")
                         }`}
-                    style={activeTab === "club" && isClub ? { backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-page)' } : {}}
+                    style={isClub ? {
+                        backgroundColor: activeTab === "club" ? 'rgb(var(--theme-secondary-accent))' : 'transparent',
+                        color: activeTab === "club" 
+                            ? 'var(--theme-secondary-accent-contrast, #000000)' 
+                            : 'rgba(var(--theme-text), 0.4)'
+                    } : {}}
                 >
                     Ligues Club
                 </button>
@@ -352,7 +362,8 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                     </div>
                 ) : (
                     <>
-                        <h3 className="text-sm font-bold text-white/60 uppercase tracking-widest ml-1">
+                        <h3 className={`text-sm font-bold uppercase tracking-widest ml-1 ${isClub ? '' : 'text-white/60'}`}
+                            style={isClub ? { color: 'rgba(var(--theme-text), 0.6)' } : {}}>
                             {activeTab === "my" ? "Mes ligues" : "Ligues du Club"}
                         </h3>
                         {(activeTab === "my" ? leagues : clubLeagues).map((league) => {
