@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
 
-type TabType = 'record' | 'history' | 'partners' | 'boost' | 'oracle';
+type TabType = 'record' | 'history' | 'partners' | 'boost' | 'rejoindre';
 
 interface MatchTabsProps {
   activeTab?: TabType;
@@ -13,7 +13,7 @@ interface MatchTabsProps {
   historyContent: React.ReactNode;
   partnersContent?: React.ReactNode;
   boostContent?: React.ReactNode;
-  oracleContent?: React.ReactNode;
+  rejoindreContent?: React.ReactNode;
   initialBadgeCounts?: {
     matchInvitations: number;
     challenges: number;
@@ -26,12 +26,12 @@ function MatchTabsContent({
   historyContent,
   partnersContent,
   boostContent,
-  oracleContent,
+  rejoindreContent,
   initialBadgeCounts = null
 }: MatchTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
-  const initialTab = tabFromUrl && ['record', 'history', 'partners', 'boost', 'oracle'].includes(tabFromUrl) ? tabFromUrl : activeTab;
+  const initialTab = tabFromUrl && ['record', 'history', 'partners', 'boost', 'rejoindre'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingMatchesCount, setPendingMatchesCount] = useState<number | null>(null);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(initialBadgeCounts?.matchInvitations ?? null);
@@ -87,7 +87,7 @@ function MatchTabsContent({
   }, [currentTab, pendingMatchesCount, pendingInvitationsCount, pendingChallengesCount]);
 
   useEffect(() => {
-    if (tabFromUrl && ['record', 'history', 'partners', 'boost', 'oracle'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['record', 'history', 'partners', 'boost', 'rejoindre'].includes(tabFromUrl)) {
       setCurrentTab(tabFromUrl);
     }
   }, [tabFromUrl]);
@@ -220,7 +220,7 @@ function MatchTabsContent({
         ? ((pendingInvitationsCount + pendingChallengesCount) - viewedPartnersCount)
         : 0
     },
-    { id: 'oracle' as TabType, label: 'Oracle' },
+    ...(isClub ? [{ id: 'rejoindre' as TabType, label: 'Rejoindre' }] : []),
   ];
 
   return (
@@ -265,7 +265,7 @@ function MatchTabsContent({
         {currentTab === 'history' && historyContent}
         {currentTab === 'partners' && partnersContent}
         {currentTab === 'boost' && boostContent}
-        {currentTab === 'oracle' && oracleContent}
+        {currentTab === 'rejoindre' && rejoindreContent}
       </div>
     </div>
   );
@@ -288,9 +288,15 @@ export default function MatchTabs(props: MatchTabsProps) {
           <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
             <span>Partenaires</span>
           </div>
-          <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-            <span>Oracle</span>
-          </div>
+          {isClub ? (
+            <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+              <span>Rejoindre</span>
+            </div>
+          ) : (
+            <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+              <span>Oracle</span>
+            </div>
+          )}
         </div>
         <div className="mt-8 flex items-center justify-center">
           <PadelLoader />

@@ -5,24 +5,26 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import PadelLoader from "@/components/ui/PadelLoader";
 
-type TabType = 'classement' | 'challenges' | 'tournaments';
+type TabType = 'classement' | 'challenges' | 'tournaments' | 'oracle';
 
 interface ClubTabsProps {
     leaderboardContent: React.ReactNode;
     challengesContent?: React.ReactNode;
     tournamentsContent?: React.ReactNode;
+    oracleContent?: React.ReactNode;
 }
 
 function ClubTabsContent({
     leaderboardContent,
     challengesContent,
     tournamentsContent,
+    oracleContent,
 }: ClubTabsProps) {
     const searchParams = useSearchParams();
     const tabFromUrl = searchParams?.get('tab') as TabType | null;
 
     // Determine the effective initial tab
-    const initialTab = tabFromUrl && ['classement', 'challenges', 'tournaments'].includes(tabFromUrl)
+    const initialTab = tabFromUrl && ['classement', 'challenges', 'tournaments', 'oracle'].includes(tabFromUrl)
         ? tabFromUrl
         : 'classement';
 
@@ -51,7 +53,7 @@ function ClubTabsContent({
     }, []);
 
     useEffect(() => {
-        if (tabFromUrl && ['classement', 'challenges', 'tournaments'].includes(tabFromUrl)) {
+        if (tabFromUrl && ['classement', 'challenges', 'tournaments', 'oracle'].includes(tabFromUrl)) {
             setCurrentTab(tabFromUrl);
         }
     }, [tabFromUrl]);
@@ -60,6 +62,7 @@ function ClubTabsContent({
         { id: 'classement' as TabType, label: 'Classement' },
         { id: 'challenges' as TabType, label: 'Challenges' },
         { id: 'tournaments' as TabType, label: 'Ligues' },
+        { id: 'oracle' as TabType, label: 'Oracle' },
     ];
 
     const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
@@ -67,7 +70,7 @@ function ClubTabsContent({
     return (
         <div className="w-full">
             {/* Onglets */}
-            <div className={`grid grid-cols-3 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
+            <div className={`grid grid-cols-4 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
                 style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
                 {tabs.map((tab) => (
                     <button
@@ -111,6 +114,11 @@ function ClubTabsContent({
                         {tournamentsContent}
                     </div>
                 )}
+                {oracleContent && (
+                    <div style={{ display: currentTab === 'oracle' ? 'block' : 'none' }}>
+                        {oracleContent}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -122,7 +130,7 @@ export default function ClubTabs(props: ClubTabsProps) {
     return (
         <Suspense fallback={
             <div className="w-full">
-                <div className={`grid grid-cols-3 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
+                <div className={`grid grid-cols-4 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
                     style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
                     <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
                         <span className="text-center whitespace-normal leading-tight">Classement</span>
@@ -132,6 +140,9 @@ export default function ClubTabs(props: ClubTabsProps) {
                     </div>
                     <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
                         <span className="text-center whitespace-normal leading-tight">Ligues</span>
+                    </div>
+                    <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                        <span className="text-center whitespace-normal leading-tight">Oracle</span>
                     </div>
                 </div>
                 <div className="mt-8 flex items-center justify-center">

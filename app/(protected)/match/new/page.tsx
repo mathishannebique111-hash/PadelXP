@@ -20,13 +20,14 @@ const FindPartnersTabContent = nextDynamic(() => import("@/components/FindPartne
   loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
 });
 
+const MatchJoiningContent = nextDynamic(() => import("@/components/matches/MatchJoiningContent"), {
+  loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
+});
+
 const BoostContent = nextDynamic(() => import("@/components/BoostContent"), {
   loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
 });
 
-const OracleTab = nextDynamic(() => import("@/components/OracleTab"), {
-  loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
-});
 import PageTitle from "@/components/PageTitle";
 import MatchTabs from "@/components/MatchTabs";
 import MatchHistoryWrapper from "@/components/MatchHistoryWrapper";
@@ -54,7 +55,7 @@ export default async function NewMatchPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = resolvedSearchParams?.tab === 'history' ? 'history' : resolvedSearchParams?.tab === 'partners' ? 'partners' : resolvedSearchParams?.tab === 'boost' ? 'boost' : resolvedSearchParams?.tab === 'oracle' ? 'oracle' : 'record';
+  const activeTab = resolvedSearchParams?.tab === 'history' ? 'history' : resolvedSearchParams?.tab === 'partners' ? 'partners' : resolvedSearchParams?.tab === 'boost' ? 'boost' : resolvedSearchParams?.tab === 'rejoindre' ? 'rejoindre' : 'record';
 
   if (!user) {
     return (
@@ -268,9 +269,9 @@ export default async function NewMatchPage({
                     <BoostContent />
                   </MobileCrashErrorBoundary>
                 }
-                oracleContent={
-                  <MobileCrashErrorBoundary componentName="Oracle">
-                    <OracleTab selfId={user.id} />
+                rejoindreContent={
+                  <MobileCrashErrorBoundary componentName="Rejoindre">
+                    <MatchJoiningContent clubId={clubId || ""} />
                   </MobileCrashErrorBoundary>
                 }
               />
