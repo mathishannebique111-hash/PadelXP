@@ -109,15 +109,24 @@ export async function getClubBranding(
         const { data, error } = await supabase
             .from("clubs")
             .select(
-                "id, name, slug, subdomain, logo_url, banner_url, primary_color, secondary_color, background_color, enabled_features, external_booking_url"
+                "id, name, slug, subdomain, logo_url, banner_url, primary_color, secondary_color, background_color, enabled_features, external_booking_url, is_suspended, subscription_status"
             )
             .eq("subdomain", subdomain)
-            .single();
+            .maybeSingle();
 
         if (error || !data) {
             console.warn(
                 `[ClubBranding] Club not found for subdomain: ${subdomain}`
             );
+            return DEFAULT_BRANDING;
+        }
+
+        // Vérifier si le club est arrêté (suspendu ou abonnement expiré/annulé)
+        const isStopped = data.is_suspended || 
+                         ['canceled', 'trial_expired'].includes(data.subscription_status || '');
+        
+        if (isStopped) {
+            console.warn(`[ClubBranding] Club is stopped for subdomain: ${subdomain}`);
             return DEFAULT_BRANDING;
         }
 

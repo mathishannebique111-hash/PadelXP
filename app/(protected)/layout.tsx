@@ -13,10 +13,10 @@ import ToastContainer from '@/components/ui/Toast';
 import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNotifier';
 import { createClient } from '@/lib/supabase/server';
 import { getPlayerChallenges } from '@/lib/challenges';
-import { getUserClubInfo } from '@/lib/utils/club-utils';
-import { headers } from 'next/headers';
-import { extractSubdomain } from '@/lib/club-branding';
+import { extractSubdomain, getClubBranding } from '@/lib/club-branding';
+import { syncUserClubProfile, getUserClubInfo } from '@/lib/utils/club-utils';
 import { getClubLogoPublicUrl } from '@/lib/utils/club-logo-utils';
+import { headers } from 'next/headers';
 
 export default async function PlayerAccountLayout({
   children,
@@ -51,9 +51,31 @@ export default async function PlayerAccountLayout({
   const host = headersList.get('host') || '';
   const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
 
-  const { clubLogoUrl } = await getUserClubInfo();
-  // On n'affiche le logo du club que si on est sur un sous-domaine
-  const publicLogoUrl = (subdomain && clubLogoUrl) ? getClubLogoPublicUrl(clubLogoUrl) : null;
+  let publicLogoUrl = null;
+
+  if (subdomain) {
+    const clubBranding = await getClubBranding(subdomain);
+    if (clubBranding && clubBranding.id) {
+      // Le logo du club du sous-domaine est prioritaire
+      publicLogoUrl = getClubLogoPublicUrl(clubBranding.logo_url);
+      
+      // Si l'utilisateur est connecté, on synchronise son profil avec le club du domaine actuel
+      if (user) {
+        await syncUserClubProfile(user.id, clubBranding.id, clubBranding.slug);
+      }
+    }
+  } else {
+    // Si pas de sous-domaine (PadelXP principal), on utilise les infos du profil si elles existent
+    const { clubLogoUrl, clubId } = await getUserClubInfo(user);
+    publicLogoUrl = clubLogoUrl ? getClubLogoPublicUrl(clubLogoUrl) : null;
+    
+    // Si l'utilisateur est sur l'app principale mais que getUserClubInfo 
+    // a détecté que son club n'existe plus (ou s'il n'en a plus), 
+    // on s'assure que son profil est bien synchronisé en mode "sans club"
+    if (user && !clubId) {
+      await syncUserClubProfile(user.id, null, null);
+    }
+  }
 
   return (
     <>
