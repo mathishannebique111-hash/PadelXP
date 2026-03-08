@@ -542,10 +542,14 @@ export default function ClientClubIdentityPage() {
         stripeUrl += (stripeUrl.includes('?') ? '&' : '?') + params.toString();
       }
       
-      showToast("Compte créé, redirection vers le paiement...", "success");
+      await navigator.clipboard.writeText(stripeUrl);
+      
+      showToast("Compte créé et lien de paiement copié dans le presse-papier !", "success");
 
-      // Redirection immédiate vers Stripe
-      window.location.href = stripeUrl;
+      // Redirection vers le dashboard après un court délai
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1500);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Erreur lors de l'enregistrement");
     } finally {
@@ -978,7 +982,7 @@ export default function ClientClubIdentityPage() {
               className="w-full max-w-lg py-3 rounded-2xl text-white text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,102,255,0.4)] bg-gradient-to-r from-[#0066FF] to-[#0066FF88] relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              {loading ? "Création du compte..." : "Confirmer l'inscription et payer"}
+              {loading ? "Création du compte..." : "Confirmer l'inscription et copier le lien"}
             </button>
             <div className="text-[9px] text-white/30 font-medium uppercase tracking-[0.1em]">
               En validant, vous acceptez les <span className="text-white/60 underline cursor-pointer">Conditions Générales d'Utilisation</span>.
