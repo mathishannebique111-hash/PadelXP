@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
 
-type TabType = 'record' | 'history' | 'partners' | 'boost' | 'rejoindre';
+type TabType = 'record' | 'history' | 'partners' | 'boost' | 'rejoindre' | 'oracle';
 
 interface MatchTabsProps {
   activeTab?: TabType;
@@ -14,6 +14,7 @@ interface MatchTabsProps {
   partnersContent?: React.ReactNode;
   boostContent?: React.ReactNode;
   rejoindreContent?: React.ReactNode;
+  oracleContent?: React.ReactNode;
   initialBadgeCounts?: {
     matchInvitations: number;
     challenges: number;
@@ -27,11 +28,12 @@ function MatchTabsContent({
   partnersContent,
   boostContent,
   rejoindreContent,
+  oracleContent,
   initialBadgeCounts = null
 }: MatchTabsProps) {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams?.get('tab') as TabType | null;
-  const initialTab = tabFromUrl && ['record', 'history', 'partners', 'boost', 'rejoindre'].includes(tabFromUrl) ? tabFromUrl : activeTab;
+  const initialTab = tabFromUrl && ['record', 'history', 'partners', 'boost', 'rejoindre', 'oracle'].includes(tabFromUrl) ? tabFromUrl : activeTab;
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingMatchesCount, setPendingMatchesCount] = useState<number | null>(null);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState<number | null>(initialBadgeCounts?.matchInvitations ?? null);
@@ -87,7 +89,7 @@ function MatchTabsContent({
   }, [currentTab, pendingMatchesCount, pendingInvitationsCount, pendingChallengesCount]);
 
   useEffect(() => {
-    if (tabFromUrl && ['record', 'history', 'partners', 'boost', 'rejoindre'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['record', 'history', 'partners', 'boost', 'rejoindre', 'oracle'].includes(tabFromUrl)) {
       setCurrentTab(tabFromUrl);
     }
   }, [tabFromUrl]);
@@ -220,7 +222,10 @@ function MatchTabsContent({
         ? ((pendingInvitationsCount + pendingChallengesCount) - viewedPartnersCount)
         : 0
     },
-    ...(isClub ? [{ id: 'rejoindre' as TabType, label: 'Rejoindre' }] : []),
+    ...(isClub 
+      ? [{ id: 'rejoindre' as TabType, label: 'Rejoindre' }] 
+      : [{ id: 'oracle' as TabType, label: 'Oracle' }]
+    ),
   ];
 
   return (
@@ -266,6 +271,7 @@ function MatchTabsContent({
         {currentTab === 'partners' && partnersContent}
         {currentTab === 'boost' && boostContent}
         {currentTab === 'rejoindre' && rejoindreContent}
+        {currentTab === 'oracle' && oracleContent}
       </div>
     </div>
   );

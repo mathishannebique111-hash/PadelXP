@@ -58,14 +58,14 @@ function ClubTabsContent({
         }
     }, [tabFromUrl]);
 
+    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+
     const tabs = [
         { id: 'classement' as TabType, label: 'Classement' },
         { id: 'challenges' as TabType, label: 'Challenges' },
         { id: 'tournaments' as TabType, label: 'Ligues' },
-        { id: 'oracle' as TabType, label: 'Oracle' },
+        ...(isClub ? [{ id: 'oracle' as TabType, label: 'Oracle' }] : []),
     ];
-
-    const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
     return (
         <div className="w-full">
@@ -130,7 +130,7 @@ export default function ClubTabs(props: ClubTabsProps) {
     return (
         <Suspense fallback={
             <div className="w-full">
-                <div className={`grid grid-cols-4 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
+                <div className={`grid ${isClub ? 'grid-cols-4' : 'grid-cols-3'} w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
                     style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
                     <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
                         <span className="text-center whitespace-normal leading-tight">Classement</span>
@@ -141,9 +141,11 @@ export default function ClubTabs(props: ClubTabsProps) {
                     <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
                         <span className="text-center whitespace-normal leading-tight">Ligues</span>
                     </div>
-                    <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-                        <span className="text-center whitespace-normal leading-tight">Oracle</span>
-                    </div>
+                    {isClub && (
+                        <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+                            <span className="text-center whitespace-normal leading-tight">Oracle</span>
+                        </div>
+                    )}
                 </div>
                 <div className="mt-8 flex items-center justify-center">
                     <PadelLoader />
