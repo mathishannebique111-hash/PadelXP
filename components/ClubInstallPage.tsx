@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { Share, SquarePlus, MoreVertical, Download, Monitor, Smartphone } from 'lucide-react';
 
