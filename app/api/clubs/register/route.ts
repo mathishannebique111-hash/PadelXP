@@ -220,16 +220,39 @@ export async function POST(req: Request) {
       }
     }
 
-    const { data: existingCode } = await supabaseAdmin
+    const { data: existingCodeClub } = await supabaseAdmin
       .from("clubs")
       .select("id")
       .eq("code_invitation", inviteCode)
       .maybeSingle();
 
-    if (existingCode) {
-      return NextResponse.json({
-        error: "Un club utilise déjà ce code d’invitation. Modifiez légèrement le nom (ex. ajoutez votre ville).",
-      }, { status: 409 });
+    if (existingCodeClub) {
+      // Si le code existe, on vérifie s'il appartient déjà à l'utilisateur ou s'il n'a pas d'admin
+      const { data: admins } = await supabaseAdmin
+        .from("club_admins")
+        .select("user_id")
+        .eq("club_id", existingCodeClub.id);
+
+      const isOrphaned = !admins || admins.length === 0;
+      const isMine = admins?.some(a => a.user_id === userId);
+
+      if (!isOrphaned && !isMine) {
+        return NextResponse.json({
+          error: "Un club utilise déjà ce code d’invitation. Modifiez légèrement le nom (ex. ajoutez votre ville).",
+        }, { status: 409 });
+      }
+      
+      // Si c'est le mien ou orphelin, on utilisera son slug pour l'upsert
+      // On va essayer de récupérer son slug pour être sûr
+      const { data: fullClub } = await supabaseAdmin
+        .from("clubs")
+        .select("slug")
+        .eq("id", existingCodeClub.id)
+        .single();
+      
+      if (fullClub?.slug) {
+        slugCandidate = fullClub.slug;
+      }
     }
 
     // Vérifier si le club existe déjà

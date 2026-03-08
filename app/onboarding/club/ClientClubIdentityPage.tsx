@@ -407,7 +407,10 @@ export default function ClientClubIdentityPage() {
 
         if (!signupResponse.ok) {
           const errorData = await signupResponse.json().catch(() => ({}));
-          throw new Error(errorData?.error || "Impossible de créer le compte administrateur");
+          // Si l'erreur est que le compte existe déjà, on tente directement de se connecter
+          if (signupResponse.status !== 409) {
+            throw new Error(errorData?.error || "Impossible de créer le compte administrateur");
+          }
         }
 
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
