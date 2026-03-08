@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import ClubHeader from "@/components/club/ClubHeader";
 import { logger } from '@/lib/logger';
 
+import MatchFinderList from "@/components/matches/MatchFinderList";
+import MatchFinderCreate from "@/components/matches/MatchFinderCreate";
+
 type Match = {
   id: string;
   played_at: string;
@@ -24,7 +27,10 @@ export default function ClubResultatsPage() {
   const slug = params?.slug || "";
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [clubData, setClubData] = useState<{ name: string; logo_url: string | null; description: string | null } | null>(null);
+  const [clubData, setClubData] = useState<{ id: string; name: string; logo_url: string | null; description: string | null } | null>(null);
+  const [activeTab, setActiveTab] = useState<"history" | "join">("history");
+  const [activeJoinSubTab, setActiveJoinSubTab] = useState<"list" | "create">("list");
+  const [accentColor, setAccentColor] = useState<string>("#0C3C94");
 
   useEffect(() => {
     (async () => {
@@ -33,7 +39,6 @@ export default function ClubResultatsPage() {
         const supabase = createClient();
         
         // Récupérer le club_id et les données du club
-        let clubId: string | null = null;
         const { data: club } = await supabase
           .from("clubs")
           .select("id, name, logo_url")
@@ -41,8 +46,6 @@ export default function ClubResultatsPage() {
           .maybeSingle();
         
         if (club) {
-          clubId = club.id;
-          
           // Récupérer la description depuis club_public_extras si disponible
           const { data: extras } = await supabase
             .from("club_public_extras")
@@ -51,58 +54,55 @@ export default function ClubResultatsPage() {
             .maybeSingle();
           
           setClubData({
+            id: club.id,
             name: (club.name as string) || slug.toUpperCase(),
             logo_url: club.logo_url as string | null,
             description: extras?.description as string | null || null,
           });
-        } else {
-          setClubData({
-            name: slug.toUpperCase(),
-            logo_url: null,
-            description: null,
-          });
-        }
 
-        // Récupérer tous les matchs avec leurs participants
-        const { data: allMatches, error: e1 } = await supabase
-          .from("matches")
-          .select(`
-            id,
-            played_at,
-            score_team1,
-            score_team2,
-            winner_team_id,
-            match_participants (
-              user_id,
-              team,
-              profiles (
-                full_name,
-                club_slug,
-                club_id
+          // Récupérer tous les matchs avec leurs participants
+          const { data: allMatches, error: e1 } = await supabase
+            .from("matches")
+            .select(`
+              id,
+              played_at,
+              score_team1,
+              score_team2,
+              winner_team_id,
+              match_participants (
+                user_id,
+                team,
+                profiles (
+                  full_name,
+                  club_slug,
+                  club_id
+                )
               )
-            )
-          `)
-          .order("played_at", { ascending: false })
-          .limit(100);
+            `)
+            .order("played_at", { ascending: false })
+            .limit(100);
 
-        if (e1 || !allMatches) {
-          setMatches([]);
-          return;
-        }
+          if (e1 || !allMatches) {
+            setMatches([]);
+            return;
+          }
 
-        // Filtrer strictement : ne garder que les matchs où TOUS les participants appartiennent au club
-        const filtered = allMatches.filter((match: any) => {
-          if (!match.match_participants || match.match_participants.length === 0) return false;
-          
-          // Vérifier que tous les participants ont le même club_slug ou club_id
-          return match.match_participants.every((p: any) => {
-            const profile = p.profiles;
-            if (!profile) return false;
-            return profile.club_slug === slug || (clubId && profile.club_id === clubId);
+          // Filtrer strictement : ne garder que les matchs où TOUS les participants appartiennent au club
+          const filtered = allMatches.filter((match: any) => {
+            if (!match.match_participants || match.match_participants.length === 0) return false;
+            
+            // Vérifier que tous les participants ont le même club_slug ou club_id
+            return match.match_participants.every((p: any) => {
+              const profile = p.profiles;
+              if (!profile) return false;
+              return profile.club_slug === slug || (club.id && profile.club_id === club.id);
+            });
           });
-        });
 
-        setMatches(filtered as Match[]);
+          setMatches(filtered as Match[]);
+        } else {
+          setClubData(null);
+        }
       } catch (e) {
         logger.error("Error loading matches:", e);
         setMatches([]);
@@ -115,58 +115,112 @@ export default function ClubResultatsPage() {
   return (
     <div className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-6xl mx-auto">
-        {clubData ? (
+        {clubData && (
           <ClubHeader 
             name={clubData.name}
             logoUrl={clubData.logo_url}
             description={clubData.description}
+            onAccentChange={(p) => setAccentColor(p.base)}
           />
-        ) : (
-        <h1 className="text-2xl md:text-3xl font-extrabold mb-2">Résultats — {slug.toUpperCase()}</h1>
         )}
-        <p className="text-white/60 mb-6 text-sm mt-4">Historique des matchs joués par les membres de ce club uniquement.</p>
 
-        <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
-          {loading ? (
-            <div className="px-4 py-6 text-center text-white/60">Chargement…</div>
-          ) : matches.length === 0 ? (
-            <div className="px-4 py-6 text-center text-white/60">Aucun match enregistré pour ce club pour le moment.</div>
-          ) : (
-            <div className="divide-y divide-white/10">
-              {matches.map((match) => {
-                const team1 = match.participants.filter((p) => p.team === 1);
-                const team2 = match.participants.filter((p) => p.team === 2);
-                const team1Names = team1.map((p) => p.profiles?.full_name || "Joueur").join(" / ");
-                const team2Names = team2.map((p) => p.profiles?.full_name || "Joueur").join(" / ");
-                const date = new Date(match.played_at).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                });
-                const score = `${match.score_team1 ?? 0} - ${match.score_team2 ?? 0}`;
-                
-                return (
-                  <div key={match.id} className="px-4 py-4 hover:bg-white/5 transition-colors">
-                    <div className="flex items-center justify-between flex-wrap gap-4">
-                      <div className="flex-1 min-w-[200px]">
-                        <div className="text-sm text-white/60 mb-1">{date}</div>
-                        <div className="font-medium">{team1Names}</div>
-                        <div className="text-white/60 text-sm">vs</div>
-                        <div className="font-medium">{team2Names}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold mb-1">{score}</div>
-                        <div className="text-xs text-white/60">
-                          {match.winner_team_id ? "Match terminé" : "En cours"}
+        <div className="flex items-center gap-4 mt-8 mb-6 border-b border-white/10">
+          <button 
+            onClick={() => setActiveTab("history")}
+            className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'history' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+          >
+            Historique
+            {activeTab === 'history' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" style={{ backgroundColor: accentColor }}></div>
+            )}
+          </button>
+          <button 
+            onClick={() => setActiveTab("join")}
+            className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'join' ? 'text-white' : 'text-white/40 hover:text-white/60'}`}
+          >
+            Rejoindre
+            {activeTab === 'join' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" style={{ backgroundColor: accentColor }}></div>
+            )}
+          </button>
+        </div>
+
+        {activeTab === "history" ? (
+          <>
+            <p className="text-white/60 mb-6 text-sm">Historique des matchs joués par les membres de ce club uniquement.</p>
+
+            <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+              {loading ? (
+                <div className="px-4 py-6 text-center text-white/60">Chargement…</div>
+              ) : matches.length === 0 ? (
+                <div className="px-4 py-6 text-center text-white/60">Aucun match enregistré pour ce club pour le moment.</div>
+              ) : (
+                <div className="divide-y divide-white/10">
+                  {matches.map((match) => {
+                    const team1 = match.participants.filter((p) => p.team === 1);
+                    const team2 = match.participants.filter((p) => p.team === 2);
+                    const team1Names = team1.map((p) => p.profiles?.full_name || "Joueur").join(" / ");
+                    const team2Names = team2.map((p) => p.profiles?.full_name || "Joueur").join(" / ");
+                    const date = new Date(match.played_at).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    });
+                    const score = `${match.score_team1 ?? 0} - ${match.score_team2 ?? 0}`;
+                    
+                    return (
+                      <div key={match.id} className="px-4 py-4 hover:bg-white/5 transition-colors">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                          <div className="flex-1 min-w-[200px]">
+                            <div className="text-sm text-white/60 mb-1">{date}</div>
+                            <div className="font-medium">{team1Names}</div>
+                            <div className="text-white/60 text-sm">vs</div>
+                            <div className="font-medium">{team2Names}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold mb-1">{score}</div>
+                            <div className="text-xs text-white/60">
+                              {match.winner_team_id ? "Match terminé" : "En cours"}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div>
+            <div className="flex gap-2 mb-6">
+              <button 
+                onClick={() => setActiveJoinSubTab("list")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeJoinSubTab === 'list' ? 'bg-white text-black' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                style={activeJoinSubTab === 'list' ? { backgroundColor: accentColor, color: 'white' } : {}}
+              >
+                Matchs disponibles
+              </button>
+              <button 
+                onClick={() => setActiveJoinSubTab("create")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeJoinSubTab === 'create' ? 'bg-white text-black' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                style={activeJoinSubTab === 'create' ? { backgroundColor: accentColor, color: 'white' } : {}}
+              >
+                Créer une annonce
+              </button>
+            </div>
+
+            {activeJoinSubTab === "list" ? (
+              <MatchFinderList clubId={clubData?.id || ""} accentColor={accentColor} />
+            ) : (
+              <MatchFinderCreate 
+                clubId={clubData?.id || ""} 
+                accentColor={accentColor} 
+                onSuccess={() => setActiveJoinSubTab("list")}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
