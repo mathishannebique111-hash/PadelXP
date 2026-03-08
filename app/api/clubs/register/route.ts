@@ -94,7 +94,7 @@ async function ensureLogoBucket() {
   } catch (error: any) {
     const message = String(error?.message || "");
     if (!message.toLowerCase().includes("already exists")) {
-      logger.warn({ message }, "[clubs/register] createBucket warning");
+      logger.warn("[clubs/register] createBucket warning", { message });
     }
   }
 }
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
 
     const parsedPayload = clubRegisterSchema.safeParse(await req.json());
     if (!parsedPayload.success) {
-      logger.error({ errors: parsedPayload.error.flatten().fieldErrors }, "[clubs/register] Validation error");
+      logger.error("[clubs/register] Validation error", { errors: parsedPayload.error.flatten().fieldErrors });
       return NextResponse.json(
         { error: "Données invalides", details: parsedPayload.error.flatten().fieldErrors },
         { status: 400 }
@@ -150,7 +150,7 @@ export async function POST(req: Request) {
       const token = authHeader.slice(7);
       const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.getUser(token);
       if (tokenError) {
-        logger.error({ error: tokenError }, "[clubs/register] Failed to use bearer token");
+        logger.error("[clubs/register] Failed to use bearer token", { error: tokenError });
       }
       userId = tokenData?.user?.id || null;
     }
@@ -158,7 +158,7 @@ export async function POST(req: Request) {
     if (!userId && ownerEmail) {
       const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
       if (listError) {
-        logger.error({ ownerEmail: ownerEmail.substring(0, 5) + "…", error: listError }, "[clubs/register] listUsers error");
+        logger.error("[clubs/register] listUsers error", { ownerEmail: ownerEmail.substring(0, 5) + "…", error: listError });
       } else {
         const owner = users?.users?.find((u) => u.email?.toLowerCase() === ownerEmail);
         userId = owner?.id || null;
@@ -210,13 +210,13 @@ export async function POST(req: Request) {
             upsert: true,
           });
         if (uploadError) {
-          logger.error({ slug: slugCandidate, error: uploadError }, "[clubs/register] Logo upload error");
+          logger.error("[clubs/register] Logo upload error", { slug: slugCandidate, error: uploadError });
         } else {
           const { data: publicUrlData } = supabaseAdmin.storage.from("club-logos").getPublicUrl(filePath);
           logoUrl = publicUrlData?.publicUrl || null;
         }
       } catch (logoError) {
-        logger.error({ slug: slugCandidate, error: logoError }, "[clubs/register] Unexpected logo upload error");
+        logger.error("[clubs/register] Unexpected logo upload error", { slug: slugCandidate, error: logoError });
       }
     }
 
@@ -261,6 +261,7 @@ export async function POST(req: Request) {
       number_of_courts: numberOfCourts,
       court_type,
       offer_type: offerType,
+      subscription_status: 'active', // Le compte est actif par défaut car les credentials ne sont donnés qu'après paiement
     };
 
     if (subdomain) upsertData.subdomain = subdomain;
@@ -322,7 +323,7 @@ export async function POST(req: Request) {
     });
 
     if (metadataError) {
-      logger.error({ userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: metadataError }, "[clubs/register] Failed to update user metadata");
+      logger.error("[clubs/register] Failed to update user metadata", { userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: metadataError });
       return NextResponse.json({ error: "Club créé mais synchronisation du compte impossible. Contactez le support." }, { status: 500 });
     }
 
@@ -350,13 +351,13 @@ export async function POST(req: Request) {
         });
 
       if (adminError) {
-        logger.error({ userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: adminError }, "[clubs/register] Error creating club_admin");
+        logger.error("[clubs/register] Error creating club_admin", { userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: adminError });
         // Ne pas bloquer si l'admin existe déjà ou si c'est une erreur de contrainte unique
         if (!adminError.message?.includes('duplicate') && !adminError.code?.includes('23505')) {
-          logger.warn({ userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: adminError }, "[clubs/register] Club created but admin entry failed (non-blocking)");
+          logger.warn("[clubs/register] Club created but admin entry failed (non-blocking)", { userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…", error: adminError });
         }
       } else {
-        logger.info({ userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…" }, "[clubs/register] ✅ Club admin created successfully");
+        logger.info("[clubs/register] ✅ Club admin created successfully", { userId: userId.substring(0, 8) + "…", clubId: club.id.substring(0, 8) + "…" });
       }
     }
 
@@ -366,19 +367,19 @@ export async function POST(req: Request) {
       const trialResult = await initiateTrial(club.id);
 
       if (!trialResult.success) {
-        logger.warn({ clubId: club.id.substring(0, 8) + "…", error: trialResult.error }, "[clubs/register] Could not initialize trial (non-blocking)");
+        logger.warn("[clubs/register] Could not initialize trial (non-blocking)", { clubId: club.id.substring(0, 8) + "…", error: trialResult.error });
         // Ne pas bloquer la création du compte si l'initialisation de l'essai échoue
         // L'essai pourra être initialisé plus tard
       } else {
-        logger.info({ clubId: club.id.substring(0, 8) + "…" }, "[clubs/register] ✅ Trial initialized (14 days)");
+        logger.info("[clubs/register] ✅ Trial initialized (14 days)", { clubId: club.id.substring(0, 8) + "…" });
       }
     } catch (subErr) {
-      logger.warn({ clubId: club.id.substring(0, 8) + "…", error: subErr }, "[clubs/register] Trial initialization error (non-blocking)");
+      logger.warn("[clubs/register] Trial initialization error (non-blocking)", { clubId: club.id.substring(0, 8) + "…", error: subErr });
     }
 
     return NextResponse.json({ ok: true, club: { ...club, logo_url: logoUrl || null } });
   } catch (error: any) {
-    logger.error({ error: error?.message || String(error) }, "[clubs/register] Unexpected error");
+    logger.error("[clubs/register] Unexpected error", { error: error?.message || String(error) });
     return NextResponse.json({ error: error?.message || "Erreur serveur" }, { status: 500 });
   }
 }

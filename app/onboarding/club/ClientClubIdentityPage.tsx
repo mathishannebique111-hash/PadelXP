@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import HideSplashScreen from "@/components/HideSplashScreen";
-import { Plus, ChevronLeft, ChevronRight, User, Trophy, Swords, Star, TrendingUp, Flame, FileText, Sparkles } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, User, Trophy, Swords, Star, TrendingUp, Flame, FileText, Sparkles, ClipboardCheck } from "lucide-react";
+import { showToast } from "@/components/ui/Toast";
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   let binary = "";
@@ -335,6 +336,25 @@ export default function ClientClubIdentityPage() {
   const [syncBgColor, setSyncBgColor] = useState(false);
   const [syncSecondaryColor, setSyncSecondaryColor] = useState(false);
 
+  // Choix de l'abonnement
+  const [planType, setPlanType] = useState<"less_than_150" | "between_150_500" | "more_than_500">("less_than_150");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+
+  const PAYMENT_LINKS = {
+    less_than_150: {
+      monthly: "https://buy.stripe.com/8x27sE5J4fBVh1n1UN5J602",
+      annual: "https://buy.stripe.com/7sY4gs7Rc3TddPbgPH5J603"
+    },
+    between_150_500: {
+      monthly: "https://buy.stripe.com/aFa7sEc7s75pbH30QJ5J604",
+      annual: "https://buy.stripe.com/aFadR2c7sdtNh1narj5J605"
+    },
+    more_than_500: {
+      monthly: "https://buy.stripe.com/3cIfZab3o0H16mJeHz5J606",
+      annual: "https://buy.stripe.com/fZu00c2wSblF9yVgPH5J607"
+    }
+  };
+
   // Calcul du Score de Visibilité (9 champs suivis)
   const visibilityFields = [
     clubNameInput, cityInput, streetInput, postalCodeInput, phoneInput,
@@ -485,15 +505,25 @@ export default function ClientClubIdentityPage() {
         sessionStorage.removeItem('onboarding_password');
       }
 
-      // REDIRECTION AUTOMATIQUE VERS LE SOUS-DOMAINE SI DISPONIBLE
-      if (subdomain) {
-        const currentHost = window.location.host;
-        const currentProtocol = window.location.protocol;
-        const baseHost = currentHost.replace(/^(www\.|[a-z0-9-]+\.)?/, '');
-        window.location.href = `${currentProtocol}//${subdomain}.${baseHost}/dashboard`;
-      } else {
-        router.push('/dashboard');
+      // COPIE DU LIEN DANS LE PRESSE-PAPIER
+      let paymentLink = PAYMENT_LINKS[planType][billingCycle];
+      
+      // On ajoute des paramètres au lien pour le rendre unique et pré-remplir l'email
+      const params = new URLSearchParams();
+      if (data?.club?.id) params.set("client_reference_id", data.club.id);
+      if (email) params.set("prefilled_email", email);
+      
+      if (params.toString()) {
+        paymentLink += "#" + params.toString();
       }
+
+      await navigator.clipboard.writeText(paymentLink);
+      
+      showToast("Lien de paiement copié avec succès !", "success");
+
+      // On ne redirige plus vers le dashboard car le compte est verrouillé
+      setErrorMessage(null);
+      alert("Inscription réussie ! Le lien de paiement Stripe a été copié dans votre presse-papier. Vous pouvez maintenant l'envoyer au club.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Erreur lors de l'enregistrement");
     } finally {
@@ -877,6 +907,35 @@ export default function ClientClubIdentityPage() {
           {/* ========================================= */}
           {/* BOUTON FINAL + CGU */}
           {/* ========================================= */}
+          {/* ========================================= */}
+          {/* CHOIX DE L'ABONNEMENT */}
+          {/* ========================================= */}
+          <div className="flex flex-col lg:flex-row gap-4 w-full max-w-lg mb-4">
+            <div className="flex-1 space-y-1">
+              <label className={labelClass}>Taille du club (Joueurs)</label>
+              <select
+                className={inputClass}
+                value={planType}
+                onChange={(e) => setPlanType(e.target.value as any)}
+              >
+                <option value="less_than_150">Moins de 150 joueurs (89€/mois)</option>
+                <option value="between_150_500">150 à 500 joueurs (139€/mois)</option>
+                <option value="more_than_500">Plus de 500 joueurs (229€/mois)</option>
+              </select>
+            </div>
+            <div className="flex-1 space-y-1">
+              <label className={labelClass}>Cycle de facturation</label>
+              <select
+                className={inputClass}
+                value={billingCycle}
+                onChange={(e) => setBillingCycle(e.target.value as any)}
+              >
+                <option value="monthly">Mensuel</option>
+                <option value="annual">Annuel (-10%)</option>
+              </select>
+            </div>
+          </div>
+
           <div className="flex flex-col items-center pt-4 border-t border-white/10 gap-2">
             <button
               type="button"
@@ -885,7 +944,7 @@ export default function ClientClubIdentityPage() {
               className="w-full max-w-lg py-3 rounded-2xl text-white text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,102,255,0.4)] bg-gradient-to-r from-[#0066FF] to-[#0066FF88] relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              {loading ? "Création du compte..." : "Valider l'inscription du club"}
+              {loading ? "Création du compte..." : "Confirmer l'inscription et copier le lien"}
             </button>
             <div className="text-[9px] text-white/30 font-medium uppercase tracking-[0.1em]">
               En validant, vous acceptez les <span className="text-white/60 underline cursor-pointer">Conditions Générales d'Utilisation</span>.
