@@ -46,7 +46,9 @@ export default function ClubLeaguesPage() {
     const handleFormatChange = (newFormat: string) => {
         setFormFormat(newFormat);
         if (newFormat === "divisions") {
-            if (![8, 12, 16].includes(formMaxPlayers)) {
+            // Allow multiples of 4 up to 48
+            const allowedPlayers = Array.from({ length: 11 }, (_, i) => (i + 2) * 4); // [8, 12, 16, 20, ..., 48]
+            if (!allowedPlayers.includes(formMaxPlayers)) {
                 setFormMaxPlayers(8);
             }
             // Enforce minimum 6 weeks duration for divisions
@@ -245,7 +247,7 @@ export default function ClubLeaguesPage() {
                                         className="w-full h-12 rounded-xl bg-white/10 border border-white/10 px-2 text-white text-sm"
                                     >
                                         {formFormat === "divisions" ? (
-                                            [8, 12, 16].map(v => <option key={v} value={v}>{v}</option>)
+                                            Array.from({ length: 11 }, (_, i) => (i + 2) * 4).map(v => <option key={v} value={v}>{v}</option>)
                                         ) : (
                                             Array.from({ length: 47 }, (_, i) => i + 4).map(v => <option key={v} value={v}>{v}</option>)
                                         )}
