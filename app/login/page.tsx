@@ -4,6 +4,8 @@ import EmailLogin from "@/components/auth/EmailLogin";
 import Link from "next/link";
 import LoginSuccessMessage from "@/components/auth/LoginSuccessMessage";
 import HideSplashScreen from "@/components/HideSplashScreen";
+import { headers } from "next/headers";
+import { extractSubdomain, getClubBranding } from "@/lib/club-branding";
 
 export default async function LoginPage({
   searchParams,
@@ -45,6 +47,14 @@ export default async function LoginPage({
     }
   }
 
+  const headersList = await headers();
+  const host = headersList.get("host") || "";
+  const subdomain = headersList.get("x-club-subdomain") || extractSubdomain(host);
+  const branding = await getClubBranding(subdomain);
+
+  const logoUrl = subdomain && branding.logo_url ? branding.logo_url : "/images/Logo sans fond.png";
+  const clubName = subdomain ? branding.name : "PadelXP";
+
   const showPasswordResetSuccess = resolvedSearchParams?.["password-reset"] === "success";
 
   return (
@@ -57,15 +67,15 @@ export default async function LoginPage({
         {/* Logo en haut de la page */}
         <div className="absolute top-8 left-0 right-0 z-20 flex justify-center is-app:top-20">
           <img
-            src="/images/Logo sans fond.png"
-            alt="PadelXP Logo"
-            className="w-28 h-auto object-contain opacity-90 drop-shadow-2xl"
+            src={logoUrl}
+            alt={`${clubName} Logo`}
+            className="w-28 h-28 object-contain opacity-90 drop-shadow-2xl rounded-2xl"
           />
         </div>
 
         <div className="relative z-10 w-full max-w-md rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md p-6 shadow-xl">
-          <h1 className="text-xl font-extrabold mb-2">Connexion</h1>
-          <p className="text-white/70 mb-5 text-xs opacity-70">Bon retour sur PadelXP !</p>
+          <h1 className="text-xl font-extrabold mb-2 text-white">Connexion</h1>
+          <p className="text-white/70 mb-5 text-xs opacity-70 italic">Bon retour chez {clubName} !</p>
           {showPasswordResetSuccess && <LoginSuccessMessage />}
           <EmailLogin />
         </div>

@@ -33,7 +33,8 @@ export default async function PlayerOnboardingPage() {
   return (
     <>
       <HideSplashScreen />
-      <div className="min-h-screen bg-gradient-to-b from-blue-950 via-black to-black">
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-950 via-black to-black -z-10" />
+      <div className="min-h-screen relative">
         <OnboardingWizard />
       </div>
     </>

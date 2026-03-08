@@ -298,8 +298,12 @@ export default function EmailLoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl px-4 py-3 font-semibold text-white transition-all hover:scale-105 disabled:opacity-60"
-        style={{ background: "linear-gradient(135deg,#0066FF,#003D99)", boxShadow: "0 0 20px rgba(0,102,255,0.5)" }}
+        className="w-full rounded-xl px-4 py-3 font-semibold transition-all hover:scale-105 disabled:opacity-60"
+        style={{ 
+          backgroundColor: "var(--theme-accent, #0066FF)", 
+          color: "var(--theme-accent-contrast, white)",
+          boxShadow: "0 0 20px rgba(var(--theme-accent-rgb, 0, 102, 255), 0.3)" 
+        }}
       >
         {loading ? "Connexion…" : "Se connecter"}
       </button>

@@ -17,9 +17,10 @@ import GracePeriodTimer from "@/components/billing/GracePeriodTimer";
 import { logger } from '@/lib/logger';
 import { AlertTriangle, Clock, CreditCard, ClipboardList, Info, Check } from 'lucide-react';
 import StripeConnectCard from '@/components/club/StripeConnectCard';
+import StripePortalButton from "@/components/billing/StripePortalButton";
 
 type SubscriptionStatus = "none" | "trial_active" | "trial_expired" | "active" | "cancelled" | "payment_pending" | "payment_failed";
-type PlanType = "monthly" | "annual" | null;
+type PlanType = "monthly" | "annual" | "quarterly" | null;
 
 // Forcer le rechargement dynamique pour éviter le cache
 export const dynamic = 'force-dynamic';
@@ -66,7 +67,7 @@ export default async function BillingPage() {
     .select("trial_start, trial_start_date, trial_end_date, trial_current_end_date, trial_base_end_date, trial_status, name, selected_plan, plan_selected_at, subscription_status, subscription_started_at, stripe_subscription_id, auto_extension_unlocked, total_players_count, total_matches_count, total_challenges_count, offer_type")
     .eq("id", clubId)
     .maybeSingle()
-    .then(result => {
+    .then((result: any) => {
       // Forcer le rechargement en désactivant le cache
       if (result.data) {
         // Log pour déboguer
@@ -744,6 +745,13 @@ export default async function BillingPage() {
               paymentMethod={paymentMethod}
               hasInvoicePreference={true}
             />
+            
+            <div className="pt-2">
+              <StripePortalButton className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-bold text-white bg-blue-600 border-2 border-blue-400/50 shadow-[0_6px_20px_rgba(59,130,246,0.3)] hover:shadow-[0_8px_28px_rgba(59,130,246,0.45)] hover:bg-blue-500 hover:scale-[1.02] active:scale-100 transition-all duration-300" />
+              <p className="text-[11px] text-white/40 mt-3 ml-1 italic">
+                * Vous serez redirigé vers l'espace sécurisé de Stripe pour gérer vos moyens de paiement et vos factures.
+              </p>
+            </div>
           </div>
         </section>
 
