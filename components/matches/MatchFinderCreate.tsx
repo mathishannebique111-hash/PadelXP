@@ -69,7 +69,8 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               required
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+              style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
             />
           </div>
           <div>
@@ -79,7 +80,8 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               required
               value={formData.time}
               onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+              style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
             />
           </div>
         </div>
@@ -119,7 +121,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
             value={formData.neededPlayers}
             onChange={(e) => setFormData({ ...formData, neededPlayers: parseInt(e.target.value) })}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-            style={{ borderColor: `${accentColor}40` }}
+            style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
           >
             <option value={1} className="bg-slate-900">1 joueur</option>
             <option value={2} className="bg-slate-900">2 joueurs</option>
@@ -136,7 +138,8 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Ex: J'ai déjà réservé le terrain n°2..."
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white h-24 resize-none"
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white h-24 resize-none focus:outline-none focus:ring-1"
+            style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
           />
         </div>
 
@@ -146,7 +149,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
           type="submit"
           disabled={loading}
           className="w-full py-3 rounded-lg font-bold text-sm transition-all shadow-lg shadow-black/20"
-          style={{ backgroundColor: accentColor, opacity: loading ? 0.6 : 1 }}
+          style={{ backgroundColor: accentColor, color: 'rgb(var(--theme-bg))', opacity: loading ? 0.6 : 1 }}
         >
           {loading ? "Création..." : "Publier l'annonce"}
         </button>

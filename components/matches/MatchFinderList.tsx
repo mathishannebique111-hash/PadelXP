@@ -19,8 +19,12 @@ export default function MatchFinderList({ clubId, accentColor }: MatchFinderList
     setLoading(true);
     try {
       const response = await fetch(`/api/matches/finder?club_id=${clubId}`);
-      if (!response.ok) throw new Error("Erreur lors de la récupération des matchs");
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de la récupération des matchs");
+      }
+      
       setMatches(data);
     } catch (err: any) {
       logger.error("Error fetching match finder list", { err });
