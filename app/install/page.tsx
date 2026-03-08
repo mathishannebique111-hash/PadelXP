@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { extractSubdomain, getClubBranding } from "@/lib/club-branding";
 import ClubInstallPage from "@/components/ClubInstallPage";
+import HideSplashScreen from "@/components/HideSplashScreen";
 
 /**
  * Page d'installation pour les sous-domaines de clubs.
@@ -29,12 +30,15 @@ export default async function ClubInstallRoute() {
     }
 
     return (
-        <ClubInstallPage
-            clubName={branding.name}
-            logoUrl={branding.logo_url}
-            primaryColor={branding.primary_color}
-            secondaryColor={branding.secondary_color}
-            backgroundColor={branding.background_color}
-        />
+        <>
+            <HideSplashScreen />
+            <ClubInstallPage
+                clubName={branding.name}
+                logoUrl={branding.logo_url}
+                primaryColor={branding.primary_color}
+                secondaryColor={branding.secondary_color}
+                backgroundColor={branding.background_color}
+            />
+        </>
     );
 }
