@@ -100,6 +100,14 @@ export async function middleware(req: NextRequest) {
     ? pathname.slice(0, -1)
     : pathname;
 
+  // 0) Exclure immédiatement l'onboarding et le signup de TOUT rate limiting middleware
+  if (
+    normalizedPathname.startsWith("/api/clubs/signup") ||
+    normalizedPathname.startsWith("/api/clubs/register")
+  ) {
+    return NextResponse.next();
+  }
+
   // ==========================================
   // WHITE-LABEL: Détection du sous-domaine
   // ==========================================

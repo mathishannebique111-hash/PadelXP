@@ -191,6 +191,7 @@ export async function POST(req: Request) {
     }
 
     let inviteCode = buildInvitationCode(name, postalDigits);
+    // Cas particulier pour le club spécifié par le client
     if (name.toLowerCase().includes("tennis club amiens metropole")) {
       inviteCode = "TCAM80000";
     }
@@ -220,13 +221,18 @@ export async function POST(req: Request) {
       }
     }
 
-    const { data: existingCodeClub } = await supabaseAdmin
-      .from("clubs")
-      .select("id")
-      .eq("code_invitation", inviteCode)
-      .maybeSingle();
+    // Vérifier les collisions de code d'invitation
+    let suffixInvite = 1;
+    const baseInviteCode = inviteCode;
+    while (true) {
+      const { data: existingCodeClub } = await supabaseAdmin
+        .from("clubs")
+        .select("id")
+        .eq("code_invitation", inviteCode)
+        .maybeSingle();
 
-    if (existingCodeClub) {
+      if (!existingCodeClub) break;
+
       // Si le code existe, on vérifie s'il appartient déjà à l'utilisateur ou s'il n'a pas d'admin
       const { data: admins } = await supabaseAdmin
         .from("club_admins")
@@ -236,22 +242,37 @@ export async function POST(req: Request) {
       const isOrphaned = !admins || admins.length === 0;
       const isMine = admins?.some(a => a.user_id === userId);
 
-      if (!isOrphaned && !isMine) {
-        return NextResponse.json({
-          error: "Un club utilise déjà ce code d’invitation. Modifiez légèrement le nom (ex. ajoutez votre ville).",
-        }, { status: 409 });
+      if (isOrphaned || isMine) {
+        // C'est bon, on va réutiliser ce club
+        const { data: fullClub } = await supabaseAdmin
+          .from("clubs")
+          .select("slug")
+          .eq("id", existingCodeClub.id)
+          .single();
+        
+        if (fullClub?.slug) {
+          slugCandidate = fullClub.slug;
+        }
+        break;
+      } else {
+        // Collision avec le club de quelqu'un d'autre -> on ajoute un suffixe et on boucle pour vérifier à nouveau
+        inviteCode = `${baseInviteCode}${suffixInvite}`;
+        suffixInvite++;
       }
-      
-      // Si c'est le mien ou orphelin, on utilisera son slug pour l'upsert
-      // On va essayer de récupérer son slug pour être sûr
-      const { data: fullClub } = await supabaseAdmin
+    }
+
+    // Vérifier si le sous-domaine est déjà pris par un AUTRE club
+    if (subdomain) {
+      const { data: existingSubdomain } = await supabaseAdmin
         .from("clubs")
         .select("slug")
-        .eq("id", existingCodeClub.id)
-        .single();
+        .eq("subdomain", subdomain)
+        .maybeSingle();
       
-      if (fullClub?.slug) {
-        slugCandidate = fullClub.slug;
+      if (existingSubdomain && existingSubdomain.slug !== slugCandidate) {
+        return NextResponse.json({
+          error: "Ce sous-domaine est déjà utilisé par un autre club. Veuillez en choisir un autre.",
+        }, { status: 409 });
       }
     }
 
