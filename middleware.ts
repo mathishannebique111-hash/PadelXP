@@ -290,7 +290,8 @@ export async function middleware(req: NextRequest) {
       pathnameForRateLimit !== "/api/resend-inbound" &&
       pathnameForRateLimit !== "/api/matches/submit" &&
       !pathnameForRateLimit.startsWith("/api/players/find-or-create") &&
-      !pathnameForRateLimit.startsWith("/api/clubs/register")
+      !pathnameForRateLimit.startsWith("/api/clubs/register") &&
+      !pathnameForRateLimit.startsWith("/api/clubs/signup")
     ) {
       if (generalRatelimit) {
         const { success, remaining, reset } = await generalRatelimit.limit(ip);

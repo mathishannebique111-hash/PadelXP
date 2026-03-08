@@ -28,33 +28,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔒 Rate limiting par IP (3 inscriptions / heure)
-    const ip = getClientIP(req);
-    const rl = await checkRateLimit(signupRateLimit, `signup:${ip}`);
-
-    if (!rl.success) {
-      return NextResponse.json(
-        {
-          error:
-            "Trop de tentatives d'inscription depuis votre adresse IP. Merci de réessayer plus tard.",
-        },
-        {
-          status: 429,
-          headers: {
-            ...(rl.limit !== undefined
-              ? { "X-RateLimit-Limit": String(rl.limit) }
-              : {}),
-            ...(rl.remaining !== undefined
-              ? { "X-RateLimit-Remaining": String(rl.remaining) }
-              : {}),
-            ...(rl.reset !== undefined
-              ? { "X-RateLimit-Reset": String(rl.reset) }
-              : {}),
-          },
-        }
-      );
-    }
-
     const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -85,9 +58,9 @@ export async function POST(req: Request) {
 
       if (!promoError && promoData && promoData.active) {
         offerType = promoData.offer_type as 'standard' | 'founder';
-        logger.info({ email: email.substring(0, 5) + "…", promoCode, offerType }, "[clubs/signup] Valid promo code applied");
+        logger.info("[clubs/signup] Valid promo code applied", { email: email.substring(0, 5) + "…", promoCode, offerType });
       } else {
-        logger.warn({ email: email.substring(0, 5) + "…", promoCode }, "[clubs/signup] Invalid or inactive promo code");
+        logger.warn("[clubs/signup] Invalid or inactive promo code", { email: email.substring(0, 5) + "…", promoCode });
       }
     }
 
@@ -113,7 +86,7 @@ export async function POST(req: Request) {
           { status: 409 }
         );
       }
-      logger.error({ email: email.substring(0, 5) + "…", error }, "[clubs/signup] createUser error");
+      logger.error("[clubs/signup] createUser error", { email: email.substring(0, 5) + "…", error });
       return NextResponse.json(
         { error: error.message || "Impossible de créer le compte" },
         { status: 500 }
@@ -129,7 +102,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    logger.error({ error: err }, "[clubs/signup] unexpected error");
+    logger.error("[clubs/signup] unexpected error", { error: err });
     return NextResponse.json(
       { error: err?.message || "Erreur serveur" },
       { status: 500 }
