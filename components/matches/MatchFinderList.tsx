@@ -39,7 +39,7 @@ export default function MatchFinderList({ clubId, accentColor }: MatchFinderList
   if (matches.length === 0) return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-10 text-center">
       <div className="text-4xl mb-4">🎾</div>
-      <p className="text-white/60">Aucun match disponible pour le moment.</p>
+      <p className="text-white font-medium">Aucun match disponible pour le moment.</p>
       <p className="text-sm text-white/40 mt-2">Soyez le premier à créer une annonce !</p>
     </div>
   );

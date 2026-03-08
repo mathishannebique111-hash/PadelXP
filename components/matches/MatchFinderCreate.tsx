@@ -91,10 +91,10 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               type="range"
               min="1"
               max="10"
-              step="0.5"
+              step="0.05"
               value={formData.minLevel}
               onChange={(e) => setFormData({ ...formData, minLevel: parseFloat(e.target.value) })}
-              className="w-full accent-white"
+              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
               style={{ accentColor }}
             />
           </div>
@@ -104,10 +104,10 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               type="range"
               min="1"
               max="10"
-              step="0.5"
+              step="0.05"
               value={formData.maxLevel}
               onChange={(e) => setFormData({ ...formData, maxLevel: parseFloat(e.target.value) })}
-              className="w-full accent-white"
+              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
               style={{ accentColor }}
             />
           </div>
@@ -118,11 +118,12 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
           <select
             value={formData.neededPlayers}
             onChange={(e) => setFormData({ ...formData, neededPlayers: parseInt(e.target.value) })}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white"
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+            style={{ borderColor: `${accentColor}40` }}
           >
-            <option value={1}>1 joueur (pour un match à 2 ou si 3 sont déjà là)</option>
-            <option value={2}>2 joueurs</option>
-            <option value={3}>3 joueurs (je suis seul)</option>
+            <option value={1} className="bg-slate-900">1 joueur</option>
+            <option value={2} className="bg-slate-900">2 joueurs</option>
+            <option value={3} className="bg-slate-900">3 joueurs (je suis seul)</option>
           </select>
           <p className="text-[10px] text-white/40 mt-1 italic">
             Les places non recherchées seront considérées comme déjà occupées par vos partenaires.
