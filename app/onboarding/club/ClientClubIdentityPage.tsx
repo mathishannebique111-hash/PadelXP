@@ -341,20 +341,6 @@ export default function ClientClubIdentityPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [withReservations, setWithReservations] = useState(false);
 
-  const PAYMENT_LINKS = {
-    less_than_150: {
-      monthly: "https://buy.stripe.com/8x27sE5J4fBVh1n1UN5J602",
-      annual: "https://buy.stripe.com/7sY4gs7Rc3TddPbgPH5J603"
-    },
-    between_150_500: {
-      monthly: "https://buy.stripe.com/aFa7sEc7s75pbH30QJ5J604",
-      annual: "https://buy.stripe.com/aFadR2c7sdtNh1narj5J605"
-    },
-    more_than_500: {
-      monthly: "https://buy.stripe.com/3cIfZab3o0H16mJeHz5J606",
-      annual: "https://buy.stripe.com/fZu00c2wSblF9yVgPH5J607"
-    }
-  };
 
   // Calcul du Score de Visibilité (9 champs suivis)
   const visibilityFields = [
@@ -510,17 +496,36 @@ export default function ClientClubIdentityPage() {
         sessionStorage.removeItem('onboarding_password');
       }
 
-      // COPIE DU LIEN DANS LE PRESSE-PAPIER
-      const paymentLink = PAYMENT_LINKS[planType][billingCycle];
-      await navigator.clipboard.writeText(paymentLink);
-      
-      showToast("Lien de paiement copié, redirection vers le tableau de bord...", "success");
+      // RÉCUPÉRATION D'UNE SESSION DE CHECKOUT STRIPE DYNAMIQUE
+      const checkoutResponse = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          planId: planType,
+          billingCycle: billingCycle,
+          withReservations: withReservations,
+          success_url: `${window.location.origin}/dashboard?checkout=success`,
+          cancel_url: `${window.location.origin}/dashboard/facturation`,
+        }),
+      });
 
-      // Redirection immédiate vers le dashboard
-      // On attend un tout petit peu pour que l'utilisateur voit le succès
-      setTimeout(() => {
+      if (!checkoutResponse.ok) {
+        throw new Error("Impossible de créer la session de paiement Stripe");
+      }
+
+      const { url: stripeUrl } = await checkoutResponse.json();
+      
+      showToast("Compte créé, redirection vers le paiement...", "success");
+
+      // Redirection immédiate vers Stripe
+      if (stripeUrl) {
+        window.location.href = stripeUrl;
+      } else {
         router.push("/dashboard");
-      }, 800);
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Erreur lors de l'enregistrement");
     } finally {
@@ -953,7 +958,7 @@ export default function ClientClubIdentityPage() {
               className="w-full max-w-lg py-3 rounded-2xl text-white text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,102,255,0.4)] bg-gradient-to-r from-[#0066FF] to-[#0066FF88] relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              {loading ? "Création du compte..." : "Confirmer l'inscription et copier le lien"}
+              {loading ? "Création du compte..." : "Confirmer l'inscription et payer"}
             </button>
             <div className="text-[9px] text-white/30 font-medium uppercase tracking-[0.1em]">
               En validant, vous acceptez les <span className="text-white/60 underline cursor-pointer">Conditions Générales d'Utilisation</span>.
