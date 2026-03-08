@@ -247,7 +247,7 @@ export default function ClubLeaguesPage() {
                                         {formFormat === "divisions" ? (
                                             [8, 12, 16].map(v => <option key={v} value={v}>{v}</option>)
                                         ) : (
-                                            Array.from({ length: 12 }, (_, i) => i + 4).map(v => <option key={v} value={v}>{v}</option>)
+                                            Array.from({ length: 47 }, (_, i) => i + 4).map(v => <option key={v} value={v}>{v}</option>)
                                         )}
                                     </select>
                                 </div>
