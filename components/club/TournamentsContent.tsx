@@ -446,13 +446,8 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                                                 )}
                                             </span>
                                             {league.status !== 'pending' && league.my_matches_played !== undefined && (
-                                                <span className={`ml-auto opacity-60`}>
+                                                <span className={`ml-auto opacity-60 text-[10px]`}>
                                                     {league.my_matches_played}/{league.max_matches_per_player} matchs
-                                                </span>
-                                            )}
-                                            {league.my_matches_played === undefined && (
-                                                <span className="ml-auto font-black text-[10px] uppercase tracking-widest text-[#00E5FF]">
-                                                    Détails
                                                 </span>
                                             )}
                                         </div>

@@ -540,7 +540,10 @@ export default function LeagueStandings({ leagueId, onBack }: { leagueId: string
                             <button
                                 onClick={() => setShowInfoPopup(false)}
                                 className="w-full py-3 rounded-xl font-black text-sm active:scale-[0.98] transition-transform"
-                                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)' }}
+                                style={{ 
+                                    backgroundColor: 'rgb(var(--theme-secondary-accent))', 
+                                    color: 'var(--theme-secondary-accent-contrast, var(--theme-player-page, #071554))' 
+                                }}
                             >
                                 J'ai compris
                             </button>

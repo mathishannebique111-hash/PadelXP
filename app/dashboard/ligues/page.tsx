@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import PageTitle from "../PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface League {
     id: string;
@@ -36,6 +37,11 @@ export default function ClubLeaguesPage() {
     const [formFormat, setFormFormat] = useState("standard");
     const [formIsPublic, setFormIsPublic] = useState(true);
     const [creating, setCreating] = useState(false);
+    
+    // Delete modal states
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [leagueToDelete, setLeagueToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleFormatChange = (newFormat: string) => {
         setFormFormat(newFormat);
@@ -81,20 +87,25 @@ export default function ClubLeaguesPage() {
         }
     };
 
-    const handleDelete = async (lId: string) => {
-        if (!confirm("Voulez-vous vraiment supprimer cette ligue ? Cette action est irréversible et supprimera tous les classements et matchs associés.")) {
-            return;
-        }
+    const handleDelete = (lId: string) => {
+        setLeagueToDelete(lId);
+        setDeleteModalOpen(true);
+    };
 
+    const confirmDelete = async () => {
+        if (!leagueToDelete) return;
+
+        setIsDeleting(true);
         try {
             const res = await fetch("/api/leagues/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ leagueId: lId }),
+                body: JSON.stringify({ leagueId: leagueToDelete }),
             });
 
             if (res.ok) {
                 toast.success("Ligue supprimée");
+                setDeleteModalOpen(false);
                 if (clubId) fetchLeagues(clubId);
             } else {
                 const data = await res.json();
@@ -102,6 +113,9 @@ export default function ClubLeaguesPage() {
             }
         } catch (e) {
             toast.error("Erreur réseau");
+        } finally {
+            setIsDeleting(false);
+            setLeagueToDelete(null);
         }
     };
 
@@ -344,6 +358,17 @@ export default function ClubLeaguesPage() {
                     ))
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                title="Supprimer la ligue"
+                description="Voulez-vous vraiment supprimer cette ligue ? Cette action est irréversible et supprimera tous les classements et matchs associés."
+                confirmText="Supprimer"
+                variant="destructive"
+                onConfirm={confirmDelete}
+                isLoading={isDeleting}
+            />
         </div>
     );
 }
