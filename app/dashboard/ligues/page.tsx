@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Users, Clock, Copy, Check, Trophy, KeyRound, Loader2 } from "lucide-react";
+import { Plus, Users, Clock, Copy, Check, Trophy, KeyRound, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import PageTitle from "../PageTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +78,30 @@ export default function ClubLeaguesPage() {
             console.error("Erreur chargement ligues:", e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (lId: string) => {
+        if (!confirm("Voulez-vous vraiment supprimer cette ligue ? Cette action est irréversible et supprimera tous les classements et matchs associés.")) {
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/leagues/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ leagueId: lId }),
+            });
+
+            if (res.ok) {
+                toast.success("Ligue supprimée");
+                if (clubId) fetchLeagues(clubId);
+            } else {
+                const data = await res.json();
+                toast.error(data.error || "Erreur lors de la suppression");
+            }
+        } catch (e) {
+            toast.error("Erreur réseau");
         }
     };
 
@@ -256,13 +280,20 @@ export default function ClubLeaguesPage() {
                 ) : (
                     leagues.map((league) => (
                         <Card key={league.id} className="border-white/10 bg-white/5 hover:bg-white/10 transition-all group relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-3">
+                            <div className="absolute top-0 right-0 p-3 flex gap-2">
                                 <button
                                     onClick={() => copyCode(league.invite_code)}
                                     className="p-2 rounded-lg bg-white/5 hover:bg-white/20 text-white/60 hover:text-white transition-all border border-white/5"
                                     title="Copier le code d'invitation"
                                 >
                                     {copiedCode === league.invite_code ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(league.id)}
+                                    className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all border border-red-500/10 hover:border-red-500/20"
+                                    title="Supprimer la ligue"
+                                >
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
 

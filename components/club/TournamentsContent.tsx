@@ -23,6 +23,7 @@ interface League {
     my_points?: number;
     format: string;
     is_public: boolean;
+    club_id: string | null;
 }
 
 
@@ -166,6 +167,9 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
         const diff = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
         return diff;
     };
+
+    const clubLeaguesIds = new Set(clubLeagues.map(l => l.id));
+    const filteredLeagues = leagues.filter(l => !clubLeaguesIds.has(l.id));
 
     // Si on a sélectionné une ligue, afficher le classement
     if (selectedLeagueId) {
@@ -350,7 +354,7 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                     <div className="flex items-center justify-center py-12">
                         <div className="w-6 h-6 border-2 border-white/20 rounded-full animate-spin" style={{ borderTopColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' }} />
                     </div>
-                ) : (activeTab === "my" ? leagues : clubLeagues).length === 0 ? (
+                ) : (activeTab === "my" ? filteredLeagues : clubLeagues).length === 0 ? (
                     <div className="text-center py-12">
                         <Trophy className="w-12 h-12 text-white/20 mx-auto mb-3" />
                         <p className="text-white/40 text-sm font-medium">
@@ -366,9 +370,10 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                             style={isClub ? { color: 'rgba(var(--theme-text), 0.6)' } : {}}>
                             {activeTab === "my" ? "Mes ligues" : "Ligues du Club"}
                         </h3>
-                        {(activeTab === "my" ? leagues : clubLeagues).map((league) => {
+                        {(activeTab === "my" ? filteredLeagues : clubLeagues).map((league) => {
                             const remainingDays = getRemainingDays(league.ends_at);
                             const isExpired = remainingDays === 0;
+                            const alreadyJoined = leagues.some(l => l.id === league.id);
 
                             return (
                                 <div
@@ -394,15 +399,21 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                                             </div>
                                         </button>
                                         <div className="flex items-center gap-2">
-                                            {activeTab === "club" && league.is_public && league.my_matches_played === undefined && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleJoinPublic(league.id); }}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all active:scale-95"
-                                                    style={{ backgroundColor: isClub ? 'rgb(var(--theme-secondary-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-page, #071554)' }}
-                                                >
-                                                    <Plus size={14} className="stroke-[3px]" />
-                                                    REJOINDRE
-                                                </button>
+                                            {activeTab === "club" && (
+                                                alreadyJoined ? (
+                                                    <span className="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest border border-green-500/30 text-green-400 bg-green-500/5">
+                                                        DÉJÀ REJOINT
+                                                    </span>
+                                                ) : league.is_public && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleJoinPublic(league.id); }}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all active:scale-95 shadow-lg shadow-blue-900/10"
+                                                        style={{ backgroundColor: isClub ? 'rgb(var(--theme-secondary-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: 'var(--theme-page, #071554)' }}
+                                                    >
+                                                        <Plus size={14} className="stroke-[3px]" />
+                                                        REJOINDRE
+                                                    </button>
+                                                )
                                             )}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); copyCode(league.invite_code); }}
