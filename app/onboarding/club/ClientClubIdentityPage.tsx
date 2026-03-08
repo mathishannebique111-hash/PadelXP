@@ -512,11 +512,13 @@ export default function ClientClubIdentityPage() {
       const paymentLink = PAYMENT_LINKS[planType][billingCycle];
       await navigator.clipboard.writeText(paymentLink);
       
-      showToast("Lien de paiement copié avec succès !", "success");
+      showToast("Lien de paiement copié, redirection vers le tableau de bord...", "success");
 
-      // On ne redirige plus vers le dashboard car le compte est verrouillé
-      setErrorMessage(null);
-      alert("Inscription réussie ! Le lien de paiement Stripe a été copié dans votre presse-papier. Vous pouvez maintenant l'envoyer au club.");
+      // Redirection immédiate vers le dashboard
+      // On attend un tout petit peu pour que l'utilisateur voit le succès
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 800);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Erreur lors de l'enregistrement");
     } finally {
