@@ -28,8 +28,12 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
         </p>
         <button
           onClick={() => setShowWizard(true)}
-          className="px-6 py-3 font-black rounded-xl transition-all shadow-lg"
-          style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' }}
+          className="px-6 py-3 font-black rounded-xl transition-all shadow-lg active:scale-95"
+          style={{ 
+            backgroundColor: 'rgb(var(--theme-secondary-accent))', 
+            color: isClub ? 'rgb(var(--theme-page))' : 'var(--theme-player-page, #071554)', 
+            boxShadow: '0 0 15px rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' 
+          }}
         >
           DÉMARRER L'ÉVALUATION
         </button>

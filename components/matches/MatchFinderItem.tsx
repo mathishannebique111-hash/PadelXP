@@ -130,7 +130,7 @@ export default function MatchFinderItem({ match, accentColor, onJoinSuccess }: M
             style={{ 
                 backgroundColor: remainingNeeded > 0 ? accentColor : 'transparent',
                 border: remainingNeeded === 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                color: remainingNeeded > 0 ? 'rgb(var(--theme-bg))' : 'rgba(255,255,255,0.4)',
+                color: remainingNeeded > 0 ? 'rgb(var(--theme-page))' : 'rgba(255,255,255,0.4)',
                 opacity: loading ? 0.6 : 1
             }}
           >

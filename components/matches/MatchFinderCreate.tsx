@@ -149,7 +149,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
           type="submit"
           disabled={loading}
           className="w-full py-3 rounded-lg font-bold text-sm transition-all shadow-lg shadow-black/20"
-          style={{ backgroundColor: accentColor, color: 'rgb(var(--theme-bg))', opacity: loading ? 0.6 : 1 }}
+          style={{ backgroundColor: accentColor, color: 'rgb(var(--theme-page))', opacity: loading ? 0.6 : 1 }}
         >
           {loading ? "Création..." : "Publier l'annonce"}
         </button>

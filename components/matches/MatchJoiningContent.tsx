@@ -26,14 +26,14 @@ export default function MatchJoiningContent({ clubId, accentColor = "#0C3C94" }:
         <button 
           onClick={() => setActiveJoinSubTab("list")}
           className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${activeJoinSubTab === 'list' ? 'shadow-lg shadow-black/20' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-          style={activeJoinSubTab === 'list' ? { backgroundColor: accentColor, color: 'rgb(var(--theme-bg))' } : {}}
+          style={activeJoinSubTab === 'list' ? { backgroundColor: accentColor, color: 'rgb(var(--theme-page))' } : {}}
         >
           Matchs disponibles
         </button>
         <button 
           onClick={() => setActiveJoinSubTab("create")}
           className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${activeJoinSubTab === 'create' ? 'shadow-lg shadow-black/20' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-          style={activeJoinSubTab === 'create' ? { backgroundColor: accentColor, color: 'rgb(var(--theme-bg))' } : {}}
+          style={activeJoinSubTab === 'create' ? { backgroundColor: accentColor, color: 'rgb(var(--theme-page))' } : {}}
         >
           Créer une annonce
         </button>
