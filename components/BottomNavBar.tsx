@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Swords, Users, LayoutGrid, Trophy } from 'lucide-react';
 import { PushNotificationsService } from '@/lib/notifications/push-notifications';
+import { extractSubdomain, getClubBranding } from '@/lib/club-branding';
 
 interface NavItem {
     href: string;
@@ -22,13 +23,18 @@ export default function BottomNavBar() {
     const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
 
+    const [branding, setBranding] = useState<any>(null);
+
     const navItems: NavItem[] = [
         { href: '/home', label: 'Profil', icon: <Home size={20} />, navKey: 'home' },
         { href: '/match/new', label: 'Matchs', icon: <Swords size={20} />, navKey: 'match' },
         { href: '/club', label: 'Compétition', icon: <Trophy size={20} />, navKey: 'club' },
-        // TEMPORAIRE: Activé pour tester le flux de paiement Stripe Connect
-        // { href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' },
     ];
+
+    // Ajouter "Réserver" seulement si l'option est activée pour le club
+    if (isClub && branding?.enabled_features?.reservations) {
+        navItems.push({ href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' });
+    }
 
     const fetchCounts = async () => {
         try {
@@ -85,6 +91,15 @@ export default function BottomNavBar() {
     };
 
     useEffect(() => {
+        const loadBranding = async () => {
+            if (isClub) {
+                const subdomain = extractSubdomain(window.location.host);
+                const data = await getClubBranding(subdomain);
+                setBranding(data);
+            }
+        };
+        loadBranding();
+
         const loadViewed = () => {
             setViewedMatchesCount(parseInt(localStorage.getItem('padelxp_viewed_matches_count') || '0'));
             setViewedPartnersCount(parseInt(localStorage.getItem('padelxp_viewed_partners_count') || '0'));

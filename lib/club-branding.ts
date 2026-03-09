@@ -18,6 +18,7 @@ export interface ClubBranding {
         leagues: boolean;
     };
     external_booking_url: string | null;
+    has_reservations_option: boolean;
 }
 
 const DEFAULT_BRANDING: ClubBranding = {
@@ -38,6 +39,7 @@ const DEFAULT_BRANDING: ClubBranding = {
         leagues: true,
     },
     external_booking_url: null,
+    has_reservations_option: false,
 };
 
 /**
@@ -109,7 +111,7 @@ export async function getClubBranding(
         const { data, error } = await supabase
             .from("clubs")
             .select(
-                "id, name, slug, subdomain, logo_url, banner_url, primary_color, secondary_color, background_color, enabled_features, external_booking_url, is_suspended, subscription_status"
+                "id, name, slug, subdomain, logo_url, banner_url, primary_color, secondary_color, background_color, enabled_features, external_booking_url, is_suspended, subscription_status, has_reservations_option"
             )
             .eq("subdomain", subdomain)
             .maybeSingle();
@@ -139,7 +141,9 @@ export async function getClubBranding(
             enabled_features: {
                 ...DEFAULT_BRANDING.enabled_features,
                 ...(data.enabled_features || {}),
+                reservations: !!data.has_reservations_option,
             },
+            has_reservations_option: !!data.has_reservations_option,
         };
     } catch (err) {
         console.error("[ClubBranding] Error fetching club branding:", err);
