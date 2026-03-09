@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { logger } from "@/lib/logger";
+import { createClient } from "@/lib/supabase/client";
 
 interface MatchFinderItemProps {
   match: any;
@@ -13,6 +14,16 @@ export default function MatchFinderItem({ match, accentColor, onJoinSuccess }: M
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setCurrentUserId(user.id);
+    };
+    fetchUser();
+  }, []);
 
   // Un match a toujours 4 places selon l'utilisateur.
   // match.needed_players est le nombre de places "ouvertes" au club.
@@ -31,7 +42,7 @@ export default function MatchFinderItem({ match, accentColor, onJoinSuccess }: M
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/matches/join", {
+      const response = await fetch("/api/matches/finder/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ matchFinderId: match.id }),
@@ -65,15 +76,15 @@ export default function MatchFinderItem({ match, accentColor, onJoinSuccess }: M
             <div className="font-bold text-lg">Recherche {neededSlots} joueur{neededSlots > 1 ? 's' : ''}</div>
           </div>
           <div 
-            className="px-2 py-1 rounded text-[10px] font-bold uppercase"
-            style={{ backgroundColor: `${accentColor}33`, color: accentColor }}
+            className="px-2 py-1 rounded text-[10px] font-bold uppercase border"
+            style={{ borderColor: accentColor, color: accentColor }}
           >
             Niv. {match.min_level} - {match.max_level}
           </div>
         </div>
 
         <div className="flex items-center gap-2 mb-4">
-          <div className="flex -space-x-2">
+          <div className="flex gap-1.5">
             {participants.slice(0, 4).map((p: any, i: number) => (
               <div key={i} className="w-8 h-8 rounded-full bg-white/10 border-2 border-black flex items-center justify-center text-[10px] font-bold overflow-hidden">
                 {p.profiles?.display_name?.substring(0, 1) || "P"}
@@ -123,19 +134,21 @@ export default function MatchFinderItem({ match, accentColor, onJoinSuccess }: M
 
           {error && <div className="text-red-500 text-[10px] mb-2">{error}</div>}
 
-          <button
-            onClick={handleJoin}
-            disabled={loading || remainingNeeded === 0}
-            className="w-full py-2 rounded-lg text-xs font-bold transition-all"
-            style={{ 
-                backgroundColor: remainingNeeded > 0 ? accentColor : 'transparent',
-                border: remainingNeeded === 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                color: remainingNeeded > 0 ? 'rgb(var(--theme-page))' : 'rgba(255,255,255,0.4)',
-                opacity: loading ? 0.6 : 1
-            }}
-          >
-            {loading ? "Chargement..." : remainingNeeded > 0 ? "REJOINDRE LE MATCH" : "MATCH COMPLET"}
-          </button>
+          {currentUserId !== match.creator_id && (
+            <button
+              onClick={handleJoin}
+              disabled={loading || remainingNeeded === 0}
+              className="w-full py-3 rounded-lg text-sm font-bold transition-all shadow-lg shadow-black/20"
+              style={{ 
+                  backgroundColor: remainingNeeded > 0 ? accentColor : 'transparent',
+                  border: remainingNeeded === 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                  color: remainingNeeded > 0 ? 'rgb(var(--theme-page))' : 'rgba(255,255,255,0.4)',
+                  opacity: loading ? 0.6 : 1
+              }}
+            >
+              {loading ? "Chargement..." : remainingNeeded > 0 ? "REJOINDRE LE MATCH" : "MATCH COMPLET"}
+            </button>
+          )}
         </div>
       )}
     </div>
