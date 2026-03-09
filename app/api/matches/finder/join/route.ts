@@ -70,11 +70,11 @@ export async function POST(req: Request) {
     // 4. Validate Level
     const { data: profile } = await supabase
       .from("profiles")
-      .select("padel_level, display_name, first_name, last_name")
+      .select("niveau_padel, display_name, first_name, last_name")
       .eq("id", user.id)
       .single();
 
-    const userLevel = profile?.padel_level || 1.0;
+    const userLevel = profile?.niveau_padel || 1.0;
     if (userLevel < match.min_level || userLevel > match.max_level) {
         return NextResponse.json({ 
             error: "Vous n'avez pas le niveau requis pour rejoindre ce match",

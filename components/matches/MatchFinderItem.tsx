@@ -116,7 +116,7 @@ export default function MatchFinderItem({ match, accentColor, onJoinSuccess }: M
                     {p.profiles?.display_name || "Joueur"}
                     {p.user_id === match.creator_id && <span className="text-[8px] bg-white text-black px-1 rounded">HÔTE</span>}
                 </div>
-                <div className="text-white/40 text-[10px]">Niv. {p.profiles?.padel_level}</div>
+                <div className="text-white/40 text-[10px]">Niv. {p.profiles?.niveau_padel}</div>
               </div>
             ))}
           </div>

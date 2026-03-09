@@ -43,10 +43,10 @@ export async function GET(req: Request) {
       .from("match_finder")
       .select(`
         *,
-        creator:profiles!match_finder_creator_id_fkey(id, display_name, first_name, last_name, padel_level),
+        creator:profiles!match_finder_creator_id_fkey(id, display_name, first_name, last_name, niveau_padel),
         participants:match_finder_participants(
           user_id,
-          profiles(id, display_name, first_name, last_name, padel_level)
+          profiles(id, display_name, first_name, last_name, niveau_padel)
         )
       `)
       .eq("club_id", clubId)
