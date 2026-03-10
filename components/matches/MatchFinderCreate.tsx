@@ -60,69 +60,65 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
   };
 
   return (
-    <div className="bg-white/5 border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl overflow-hidden">
+    <div className="bg-white/5 border border-white/20 rounded-xl p-3 sm:p-6 shadow-xl overflow-hidden">
       <h3 className="text-lg font-bold mb-4">Créer une annonce de match</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex gap-2">
-          <div className="flex-1 min-w-0">
-            <label className="block text-xs text-white/60 mb-1">Date</label>
-            <input
-              type="date"
-              required
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full bg-white/5 border rounded-lg px-2 sm:px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-              style={isClub ? { border: `1px solid ${effectiveAccentColor}` } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <label className="block text-xs text-white/60 mb-1">Heure</label>
-            <input
-              type="time"
-              required
-              value={formData.time}
-              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              className="w-full bg-white/5 border rounded-lg px-2 sm:px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-              style={isClub ? { border: `1px solid ${effectiveAccentColor}` } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
-            />
-          </div>
+        <div>
+          <label className="block text-xs text-white/60 mb-1">Date</label>
+          <input
+            type="date"
+            required
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            className="w-full bg-white/5 border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+            style={isClub ? { border: `1px solid ${effectiveAccentColor}` } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/60 mb-1">Heure</label>
+          <input
+            type="time"
+            required
+            value={formData.time}
+            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+            className="w-full bg-white/5 border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+            style={isClub ? { border: `1px solid ${effectiveAccentColor}` } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
+          />
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1 min-w-0">
-            <label className="block text-xs text-white/60 mb-1">Niveau minimum ({formData.minLevel})</label>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              step="0.05"
-              value={formData.minLevel}
-              onChange={(e) => setFormData({ ...formData, minLevel: parseFloat(e.target.value) })}
-              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
-              style={{ 
-                accentColor,
-                backgroundColor: isClub ? `rgba(var(--theme-accent-rgb), 0.2)` : undefined,
-                backgroundImage: isClub ? `linear-gradient(90deg, ${effectiveAccentColor} ${(formData.minLevel - 1) * 11.11}%, rgba(255,255,255,0.1) 0%)` : undefined
-              }}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <label className="block text-xs text-white/60 mb-1">Niveau maximum ({formData.maxLevel})</label>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              step="0.05"
-              value={formData.maxLevel}
-              onChange={(e) => setFormData({ ...formData, maxLevel: parseFloat(e.target.value) })}
-              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
-              style={{ 
-                accentColor,
-                backgroundColor: isClub ? `rgba(var(--theme-accent-rgb), 0.2)` : undefined,
-                backgroundImage: isClub ? `linear-gradient(90deg, ${effectiveAccentColor} ${(formData.maxLevel - 1) * 11.11}%, rgba(255,255,255,0.1) 0%)` : undefined
-              }}
-            />
-          </div>
+        <div>
+          <label className="block text-xs text-white/60 mb-1">Niveau minimum ({formData.minLevel})</label>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            step="0.05"
+            value={formData.minLevel}
+            onChange={(e) => setFormData({ ...formData, minLevel: parseFloat(e.target.value) })}
+            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
+            style={{ 
+              accentColor,
+              backgroundColor: isClub ? `rgba(var(--theme-accent-rgb), 0.2)` : undefined,
+              backgroundImage: isClub ? `linear-gradient(90deg, ${effectiveAccentColor} ${(formData.minLevel - 1) * 11.11}%, rgba(255,255,255,0.1) 0%)` : undefined
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-white/60 mb-1">Niveau maximum ({formData.maxLevel})</label>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            step="0.05"
+            value={formData.maxLevel}
+            onChange={(e) => setFormData({ ...formData, maxLevel: parseFloat(e.target.value) })}
+            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
+            style={{ 
+              accentColor,
+              backgroundColor: isClub ? `rgba(var(--theme-accent-rgb), 0.2)` : undefined,
+              backgroundImage: isClub ? `linear-gradient(90deg, ${effectiveAccentColor} ${(formData.maxLevel - 1) * 11.11}%, rgba(255,255,255,0.1) 0%)` : undefined
+            }}
+          />
         </div>
 
         <div>
