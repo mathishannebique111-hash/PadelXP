@@ -122,7 +122,7 @@ export async function getClubBranding(
             .select(
                 "id, name, slug, subdomain, logo_url, banner_url, primary_color, secondary_color, background_color, enabled_features, external_booking_url, is_suspended, subscription_status, has_reservations_option"
             )
-            .eq("subdomain", subdomain)
+            .eq("subdomain", effectiveSubdomain)
             .maybeSingle();
 
         if (error || !data) {
