@@ -11,63 +11,7 @@ export default function ClubSettingsContent() {
     const [confirmText, setConfirmText] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const [hasReservations, setHasReservations] = useState<boolean | null>(null);
-    const [initialLoad, setInitialLoad] = useState(true);
     const router = useRouter();
-
-    // Charger les réglages au montage
-    useState(() => {
-        const loadSettings = async () => {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { data: adminEntry } = await supabase
-                .from("club_admins")
-                .select("club_id")
-                .eq("user_id", user.id)
-                .maybeSingle();
-
-            if (adminEntry?.club_id) {
-                const { data: club } = await supabase
-                    .from("clubs")
-                    .select("has_reservations_option")
-                    .eq("id", adminEntry.club_id)
-                    .maybeSingle();
-                
-                if (club) {
-                    setHasReservations(!!club.has_reservations_option);
-                }
-            }
-            setInitialLoad(false);
-        };
-        loadSettings();
-    });
-
-    const handleToggleReservations = async (enabled: boolean) => {
-        setIsSaving(true);
-        setError(null);
-        try {
-            const response = await fetch("/api/clubs/update-settings", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ has_reservations_option: enabled }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || "Erreur lors de la mise à jour");
-            }
-
-            setHasReservations(enabled);
-            router.refresh(); // Pour mettre à jour le layout (menu)
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setIsSaving(false);
-        }
-    };
 
     const handleDeleteAccount = async () => {
         if (confirmText !== "SUPPRIMER") {
@@ -105,47 +49,10 @@ export default function ClubSettingsContent() {
 
     return (
         <div className="space-y-6">
-            {/* Section Fonctionnalités */}
-            <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
-                <div className="mb-6">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <Database className="w-5 h-5 text-white/70" />
-                        Fonctionnalités
-                    </h2>
-                    <p className="text-xs text-white/50 mt-1">Activez ou désactivez les modules de votre club</p>
-                </div>
-
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
-                        <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded-lg ${hasReservations ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-white/40'}`}>
-                                <Database className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-semibold text-white">Système de réservations</h3>
-                                <p className="text-xs text-white/50 mt-0.5">Permettre aux joueurs de réserver des terrains</p>
-                            </div>
-                        </div>
-                        
-                        <button
-                            onClick={() => handleToggleReservations(!hasReservations)}
-                            disabled={isSaving || initialLoad}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                                hasReservations ? 'bg-blue-600' : 'bg-white/10'
-                            }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                    hasReservations ? 'translate-x-6' : 'translate-x-1'
-                                }`}
-                            />
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-
-            {/* Section Légal & Conformité */}
+            <div>
+                <h1 className="text-2xl font-extrabold text-white">Réglages</h1>
+                <p className="text-sm text-white/60 mt-1">Gérez les paramètres de votre compte club</p>
+            </div>
             <section className="rounded-lg sm:rounded-xl md:rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6">
                 <div className="mb-4">
                     <h2 className="text-lg font-semibold text-white flex items-center gap-2">
