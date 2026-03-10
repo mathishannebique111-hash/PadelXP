@@ -97,9 +97,12 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               max="10"
               step="0.05"
               value={formData.minLevel}
-              onChange={(e) => setFormData({ ...formData, minLevel: parseFloat(e.target.value) })}
               className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
-              style={{ accentColor }}
+              style={{ 
+                accentColor,
+                backgroundColor: isClub ? `rgba(var(--theme-accent-rgb), 0.2)` : undefined,
+                backgroundImage: isClub ? `linear-gradient(90deg, ${effectiveAccentColor} ${(formData.minLevel - 1) * 11.11}%, rgba(255,255,255,0.1) 0%)` : undefined
+              }}
             />
           </div>
           <div>
@@ -110,9 +113,12 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               max="10"
               step="0.05"
               value={formData.maxLevel}
-              onChange={(e) => setFormData({ ...formData, maxLevel: parseFloat(e.target.value) })}
               className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
-              style={{ accentColor }}
+              style={{ 
+                accentColor,
+                backgroundColor: isClub ? `rgba(var(--theme-accent-rgb), 0.2)` : undefined,
+                backgroundImage: isClub ? `linear-gradient(90deg, ${effectiveAccentColor} ${(formData.maxLevel - 1) * 11.11}%, rgba(255,255,255,0.1) 0%)` : undefined
+              }}
             />
           </div>
         </div>
