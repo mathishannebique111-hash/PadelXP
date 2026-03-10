@@ -218,8 +218,8 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                             value={formName}
                             onChange={(e) => setFormName(e.target.value)}
                             placeholder="Les Champions du Dimanche"
-                            className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-4 text-white text-sm font-medium placeholder:text-white/30 focus:outline-none focus:ring-2"
-                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                            className="w-full h-11 rounded-xl bg-white/10 border px-4 text-white text-sm font-medium placeholder:text-white/30 focus:outline-none focus:ring-2"
+                            style={isClub ? { borderColor: 'rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                             maxLength={40}
                         />
                     </div>
@@ -229,8 +229,8 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                         <select
                             value={formFormat}
                             onChange={(e) => handleFormatChange(e.target.value)}
-                            className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
-                            style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                            className="w-full h-11 rounded-xl bg-white/10 border px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
+                            style={isClub ? { borderColor: 'rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                         >
                             <option value="standard">Championnat (Classement global)</option>
                             <option value="divisions">Poules (Montées/Descentes)</option>
@@ -243,8 +243,8 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                             <select
                                 value={formDuration}
                                 onChange={(e) => setFormDuration(Number(e.target.value))}
-                                className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
-                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                                className="w-full h-11 rounded-xl bg-white/10 border px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
+                                style={isClub ? { borderColor: 'rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                             >
                                 {formFormat === "divisions" ? (
                                     <>

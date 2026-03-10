@@ -60,7 +60,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+    <div className="bg-white/5 border border-white/20 rounded-xl p-6 shadow-xl">
       <h3 className="text-lg font-bold mb-4">Créer une annonce de match</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
