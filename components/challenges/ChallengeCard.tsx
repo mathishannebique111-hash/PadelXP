@@ -314,7 +314,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                   </div>
                 )}
                 <span className={`text-sm font-bold ${!isClub ? 'text-white' : ''}`}
-                  style={isClub ? { color: 'var(--theme-accent-contrast)' } : {}}>
+                  style={isClub ? { color: 'rgb(var(--theme-accent))' } : {}}>
                   {challenge.rewardType === "points"
                     ? `${challenge.rewardLabel} pts`
                     : challenge.rewardLabel}

@@ -35,7 +35,7 @@ export default function PageTitle({
             <span
               className="w-1 sm:w-1.5 self-stretch rounded-full flex-shrink-0"
               style={{
-                background: 'linear-gradient(to bottom, rgb(var(--theme-accent, 255, 255, 255)), rgba(var(--theme-accent, 255, 255, 255), 0.3))'
+                background: 'rgb(var(--theme-accent, 255, 255, 255))'
               }}
               aria-hidden="true"
             />

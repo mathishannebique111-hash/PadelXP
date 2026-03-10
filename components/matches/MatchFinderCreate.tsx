@@ -70,7 +70,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-              style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
+              style={{ borderColor: 'rgb(var(--theme-accent))' }}
             />
           </div>
           <div>
@@ -81,7 +81,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               value={formData.time}
               onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-              style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
+              style={{ borderColor: 'rgb(var(--theme-accent))' }}
             />
           </div>
         </div>
