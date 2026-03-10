@@ -11,6 +11,8 @@ interface MatchFinderCreateProps {
 }
 
 export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: MatchFinderCreateProps) {
+  const isClub = typeof document !== 'undefined' && !!document.body.dataset.clubSubdomain;
+  const effectiveAccentColor = accentColor || 'rgb(var(--theme-accent))';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -70,7 +72,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-              style={{ borderColor: 'rgb(var(--theme-accent))' }}
+              style={isClub ? { borderColor: effectiveAccentColor } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
             />
           </div>
           <div>
@@ -81,7 +83,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               value={formData.time}
               onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-              style={{ borderColor: 'rgb(var(--theme-accent))' }}
+              style={isClub ? { borderColor: effectiveAccentColor } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
             />
           </div>
         </div>
@@ -121,7 +123,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
             value={formData.neededPlayers}
             onChange={(e) => setFormData({ ...formData, neededPlayers: parseInt(e.target.value) })}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-            style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
+            style={isClub ? { borderColor: effectiveAccentColor } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
           >
             <option value={1} className="bg-slate-900">1 joueur</option>
             <option value={2} className="bg-slate-900">2 joueurs</option>
@@ -139,7 +141,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Ex: J'ai déjà réservé le terrain n°2..."
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white h-24 resize-none focus:outline-none focus:ring-1"
-            style={{ borderColor: 'rgba(var(--theme-text), 0.2)' }}
+            style={isClub ? { borderColor: effectiveAccentColor } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
           />
         </div>
 

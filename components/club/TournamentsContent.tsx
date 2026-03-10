@@ -326,7 +326,8 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                         backgroundColor: activeTab === "my" ? 'rgb(var(--theme-secondary-accent))' : 'transparent',
                         color: activeTab === "my" 
                             ? 'var(--theme-secondary-accent-contrast, #000000)' 
-                            : 'rgba(var(--theme-text), 0.4)'
+                            : 'rgb(var(--theme-secondary-accent))',
+                        border: activeTab === "my" ? 'none' : '1px solid rgb(var(--theme-secondary-accent))'
                     } : {}}
                 >
                     Mes ligues
@@ -341,7 +342,8 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                         backgroundColor: activeTab === "club" ? 'rgb(var(--theme-secondary-accent))' : 'transparent',
                         color: activeTab === "club" 
                             ? 'var(--theme-secondary-accent-contrast, #000000)' 
-                            : 'rgba(var(--theme-text), 0.4)'
+                            : 'rgb(var(--theme-secondary-accent))',
+                        border: activeTab === "club" ? 'none' : '1px solid rgb(var(--theme-secondary-accent))'
                     } : {}}
                 >
                     Ligues Club
