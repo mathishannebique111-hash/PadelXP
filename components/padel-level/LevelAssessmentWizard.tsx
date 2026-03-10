@@ -454,7 +454,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
                 onClick={handleNext}
                 disabled={!canGoNext}
                 className="flex-1 py-3 rounded-lg sm:rounded-xl text-white font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px]"
-                style={{ backgroundColor: 'rgb(var(--theme-accent))' }}
+                style={{ backgroundColor: 'rgb(var(--theme-accent))', color: 'rgb(var(--theme-page))' }}
               >
                 {currentQuestion === PADEL_QUESTIONS.length - 1 ? (
                   <>
@@ -496,7 +496,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               onClick={handleSaveResult}
               disabled={isSaving || isSaved}
               className="w-full sm:flex-1 py-4 rounded-xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
-              style={{ backgroundColor: 'rgb(var(--theme-accent))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent), 0.4)' }}
+              style={{ backgroundColor: 'rgb(var(--theme-accent))', color: 'rgb(var(--theme-page))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent), 0.4)' }}
             >
               {isSaved ? (
                 <>

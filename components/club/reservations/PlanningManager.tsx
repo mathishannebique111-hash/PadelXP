@@ -61,14 +61,50 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
     const fetchPlanningData = async () => {
         setLoading(true);
         try {
+            // 0. Fetch Club Data (for number_of_courts)
+            const { data: clubData, error: clubError } = await supabase
+                .from("clubs")
+                .select("number_of_courts, opening_hours")
+                .eq("id", clubId)
+                .single();
+
+            if (clubError) throw clubError;
+            const expectedCourts = clubData?.number_of_courts || 0;
+
             // 1. Fetch Courts with their specific opening hours
-            const { data: courtsData, error: courtsError } = await supabase
+            let { data: courtsData, error: courtsError } = await supabase
                 .from("courts")
                 .select("id, name, opening_hours")
                 .eq("club_id", clubId)
                 .order("name");
 
             if (courtsError) throw courtsError;
+            
+            // Auto-provision missing courts if needed
+            if ((courtsData?.length || 0) < expectedCourts) {
+                const missingCount = expectedCourts - (courtsData?.length || 0);
+                const startIndex = (courtsData?.length || 0) + 1;
+                const newCourts = [];
+                for (let i = 0; i < missingCount; i++) {
+                    newCourts.push({
+                        club_id: clubId,
+                        name: `Terrain ${startIndex + i}`,
+                        opening_hours: clubData.opening_hours // Use club default hours if available
+                    });
+                }
+                
+                const { data: createdCourts, error: createError } = await supabase
+                    .from("courts")
+                    .insert(newCourts)
+                    .select();
+                
+                if (createError) {
+                    console.error("Error auto-provisioning courts:", createError);
+                } else if (createdCourts) {
+                    courtsData = [...(courtsData || []), ...createdCourts];
+                }
+            }
+            
             setCourts(courtsData || []);
 
             // 2. Fetch Reservations for selected date

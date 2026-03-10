@@ -9,8 +9,11 @@ interface MatchJoiningContentProps {
   accentColor?: string;
 }
 
-export default function MatchJoiningContent({ clubId, accentColor = "#0C3C94" }: MatchJoiningContentProps) {
+export default function MatchJoiningContent({ clubId, accentColor }: MatchJoiningContentProps) {
   const [activeJoinSubTab, setActiveJoinSubTab] = useState<"list" | "create">("list");
+  
+  // Utiliser la couleur accent du thème par défaut si aucune n'est passée
+  const effectiveAccentColor = accentColor || 'rgb(var(--theme-accent))';
 
   if (!clubId) {
     return (
@@ -27,8 +30,8 @@ export default function MatchJoiningContent({ clubId, accentColor = "#0C3C94" }:
           onClick={() => setActiveJoinSubTab("list")}
           className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${activeJoinSubTab === 'list' ? 'shadow-lg shadow-black/20' : 'hover:bg-white/5'}`}
           style={activeJoinSubTab === 'list' 
-            ? { backgroundColor: accentColor, color: 'rgb(var(--theme-page))' } 
-            : { color: accentColor }
+            ? { backgroundColor: effectiveAccentColor, color: 'rgb(var(--theme-page))' } 
+            : { color: effectiveAccentColor }
           }
         >
           Matchs disponibles
@@ -37,8 +40,8 @@ export default function MatchJoiningContent({ clubId, accentColor = "#0C3C94" }:
           onClick={() => setActiveJoinSubTab("create")}
           className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${activeJoinSubTab === 'create' ? 'shadow-lg shadow-black/20' : 'hover:bg-white/5'}`}
           style={activeJoinSubTab === 'create' 
-            ? { backgroundColor: accentColor, color: 'rgb(var(--theme-page))' } 
-            : { color: accentColor }
+            ? { backgroundColor: effectiveAccentColor, color: 'rgb(var(--theme-page))' } 
+            : { color: effectiveAccentColor }
           }
         >
           Créer une annonce
