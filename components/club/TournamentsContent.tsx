@@ -219,7 +219,7 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                             onChange={(e) => setFormName(e.target.value)}
                             placeholder="Les Champions du Dimanche"
                             className="w-full h-11 rounded-xl bg-white/10 border px-4 text-white text-sm font-medium placeholder:text-white/30 focus:outline-none focus:ring-2"
-                            style={isClub ? { borderColor: 'rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                            style={isClub ? { border: '1px solid rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                             maxLength={40}
                         />
                     </div>
