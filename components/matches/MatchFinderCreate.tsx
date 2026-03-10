@@ -122,8 +122,8 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
           <select
             value={formData.neededPlayers}
             onChange={(e) => setFormData({ ...formData, neededPlayers: parseInt(e.target.value) })}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
-            style={isClub ? { borderColor: effectiveAccentColor } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
+            className="w-full bg-white/5 border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+            style={isClub ? { borderColor: effectiveAccentColor, borderStyle: 'solid', borderWidth: '1px' } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
           >
             <option value={1} className="bg-slate-900">1 joueur</option>
             <option value={2} className="bg-slate-900">2 joueurs</option>
@@ -140,8 +140,8 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Ex: J'ai déjà réservé le terrain n°2..."
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white h-24 resize-none focus:outline-none focus:ring-1"
-            style={isClub ? { borderColor: effectiveAccentColor } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
+            className="w-full bg-white/5 border rounded-lg px-4 py-2 text-sm text-white h-24 resize-none focus:outline-none focus:ring-1"
+            style={isClub ? { borderColor: effectiveAccentColor, borderStyle: 'solid', borderWidth: '1px' } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
           />
         </div>
 
