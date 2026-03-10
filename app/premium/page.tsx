@@ -8,6 +8,7 @@ import { createPremiumCheckoutSession } from "@/app/actions/premium";
 import { useAppleIAP } from "@/lib/hooks/useAppleIAP";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Capacitor } from "@capacitor/core";
 
 export default function PremiumPage() {
     return (

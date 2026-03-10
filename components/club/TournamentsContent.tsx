@@ -229,10 +229,21 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                         <select
                             value={formFormat}
                             onChange={(e) => handleFormatChange(e.target.value)}
-                            style={isClub ? { border: '1px solid rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                            className="w-full h-11 rounded-xl border px-2 text-sm font-medium focus:outline-none focus:ring-2"
+                            style={isClub ? { 
+                                border: '1px solid rgb(var(--theme-secondary-accent))', 
+                                backgroundColor: 'var(--theme-page, #071554)',
+                                color: 'var(--theme-text, #FFFFFF)',
+                                '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' 
+                            } as any : { 
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                borderColor: 'rgba(255,255,255,0.2)', 
+                                color: '#FFFFFF',
+                                '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' 
+                            } as any}
                         >
-                            <option value="standard">Championnat (Classement global)</option>
-                            <option value="divisions">Poules (Montées/Descentes)</option>
+                            <option value="standard" className="bg-slate-900">Championnat (Classement global)</option>
+                            <option value="divisions" className="bg-slate-900">Poules (Montées/Descentes)</option>
                         </select>
                     </div>
 
@@ -247,18 +258,18 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                             >
                                 {formFormat === "divisions" ? (
                                     <>
-                                        <option value={6}>6 sem.</option>
-                                        <option value={8}>8 sem.</option>
-                                        <option value={10}>10 sem.</option>
-                                        <option value={12}>12 sem.</option>
+                                        <option value={6} className="bg-slate-900">6 sem.</option>
+                                        <option value={8} className="bg-slate-900">8 sem.</option>
+                                        <option value={10} className="bg-slate-900">10 sem.</option>
+                                        <option value={12} className="bg-slate-900">12 sem.</option>
                                     </>
                                 ) : (
                                     <>
-                                        <option value={2}>2 sem.</option>
-                                        <option value={3}>3 sem.</option>
-                                        <option value={4}>4 sem.</option>
-                                        <option value={5}>5 sem.</option>
-                                        <option value={6}>6 sem.</option>
+                                        <option value={2} className="bg-slate-900">2 sem.</option>
+                                        <option value={3} className="bg-slate-900">3 sem.</option>
+                                        <option value={4} className="bg-slate-900">4 sem.</option>
+                                        <option value={5} className="bg-slate-900">5 sem.</option>
+                                        <option value={6} className="bg-slate-900">6 sem.</option>
                                     </>
                                 )}
                             </select>
@@ -269,16 +280,22 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                                 value={formFormat === "divisions" ? 3 : formMaxMatches}
                                 onChange={(e) => setFormMaxMatches(Number(e.target.value))}
                                 disabled={formFormat === "divisions"}
-                                className={`w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 ${formFormat === "divisions" ? "opacity-50 cursor-not-allowed" : ""}`}
-                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                                className={`w-full h-11 rounded-xl bg-white/10 border px-2 text-white text-sm font-medium focus:outline-none focus:ring-2 ${formFormat === "divisions" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                style={isClub ? { 
+                                    border: '1px solid rgb(var(--theme-secondary-accent))',
+                                    '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' 
+                                } as any : { 
+                                    borderColor: 'rgba(255,255,255,0.2)',
+                                    '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' 
+                                } as any}
                             >
                                 {formFormat === "divisions" ? (
-                                    <option value={3}>3 / phase</option>
+                                    <option value={3} className="bg-slate-900">3 / phase</option>
                                 ) : (
                                     <>
-                                        <option value={5}>5</option>
-                                        <option value={10}>10</option>
-                                        <option value={15}>15</option>
+                                        <option value={5} className="bg-slate-900">5</option>
+                                        <option value={10} className="bg-slate-900">10</option>
+                                        <option value={15} className="bg-slate-900">15</option>
                                     </>
                                 )}
                             </select>
@@ -288,14 +305,20 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                             <select
                                 value={formMaxPlayers}
                                 onChange={(e) => setFormMaxPlayers(Number(e.target.value))}
-                                className="w-full h-11 rounded-xl bg-white/10 border border-white/20 px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
-                                style={{ '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                                className="w-full h-11 rounded-xl bg-white/10 border px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
+                                style={isClub ? { 
+                                    border: '1px solid rgb(var(--theme-secondary-accent))',
+                                    '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' 
+                                } as any : { 
+                                    borderColor: 'rgba(255,255,255,0.2)',
+                                    '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' 
+                                } as any}
                             >
                                 {formFormat === "divisions" ? (
-                                    [8, 12, 16].map(n => <option key={n} value={n}>{n}</option>)
+                                    [8, 12, 16].map(n => <option key={n} value={n} className="bg-slate-900">{n}</option>)
                                 ) : (
                                     Array.from({ length: 12 }, (_, i) => i + 4).map(n => (
-                                        <option key={n} value={n}>{n}</option>
+                                        <option key={n} value={n} className="bg-slate-900">{n}</option>
                                     ))
                                 )}
                             </select>
