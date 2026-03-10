@@ -229,8 +229,7 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                         <select
                             value={formFormat}
                             onChange={(e) => handleFormatChange(e.target.value)}
-                            className="w-full h-11 rounded-xl bg-white/10 border px-2 text-white text-sm font-medium focus:outline-none focus:ring-2"
-                            style={isClub ? { borderColor: 'rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
+                            style={isClub ? { border: '1px solid rgb(var(--theme-secondary-accent))', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any : { borderColor: 'rgba(255,255,255,0.2)', '--tw-ring-color': 'rgba(var(--theme-secondary-accent, 204, 255, 0), 0.5)' } as any}
                         >
                             <option value="standard">Championnat (Classement global)</option>
                             <option value="divisions">Poules (Montées/Descentes)</option>
