@@ -97,6 +97,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               max="10"
               step="0.05"
               value={formData.minLevel}
+              onChange={(e) => setFormData({ ...formData, minLevel: parseFloat(e.target.value) })}
               className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
               style={{ 
                 accentColor,
@@ -113,6 +114,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               max="10"
               step="0.05"
               value={formData.maxLevel}
+              onChange={(e) => setFormData({ ...formData, maxLevel: parseFloat(e.target.value) })}
               className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/10"
               style={{ 
                 accentColor,
