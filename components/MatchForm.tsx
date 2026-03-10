@@ -1268,8 +1268,8 @@ export default function MatchForm({
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={1}
-                  className={`w-9 h-9 rounded-lg border-2 ${isClub ? '' : 'border-transparent'} bg-white/10 text-base text-white text-center font-bold focus:outline-none`}
-                  style={isClub ? { borderColor: 'rgb(var(--theme-accent))' } : ({ '--tw-ring-color': 'rgb(var(--theme-secondary-accent, 204, 255, 0))', focusBorderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' } as any)}
+                  className={`w-9 h-9 rounded-lg border-2 bg-white/10 text-base text-white text-center font-bold focus:outline-none`}
+                  style={isClub ? { border: '2px solid rgb(var(--theme-accent))' } : ({ '--tw-ring-color': 'rgb(var(--theme-secondary-accent, 204, 255, 0))', focusBorderColor: 'rgb(var(--theme-secondary-accent, 204, 255, 0))', border: '2px solid transparent' } as any)}
                   value={set.team2Score}
                   onChange={(e) => updateSet(index, "team2Score", e.target.value)}
                   placeholder="-"
