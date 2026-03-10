@@ -1215,7 +1215,7 @@ export default function MatchForm({
                   ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
                   : `border bg-white/5 text-white hover:bg-white/10 ${!isClub ? 'border-white/10 hover:border-white/30' : ''}`
                   }`}
-                style={winner === "1" ? { borderColor: !isClub ? '#FFFFFF' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: !isClub ? 'rgba(255,255,255,0.1)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: !isClub ? '#FFFFFF' : 'var(--theme-secondary-accent-contrast, #071554)' } : (isClub ? { borderColor: 'rgba(var(--theme-accent), 0.2)' } : {})}
+                style={winner === "1" ? { borderColor: !isClub ? '#FFFFFF' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: !isClub ? 'rgba(255,255,255,0.1)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: !isClub ? '#FFFFFF' : 'var(--theme-secondary-accent-contrast, #071554)' } : (isClub ? { borderColor: 'rgb(var(--theme-accent))' } : {})}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "1" ? "scale-110" : "group-hover:scale-110"}`} />
@@ -1229,7 +1229,7 @@ export default function MatchForm({
                   ? "shadow-[0_0_10px_rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)]"
                   : "border bg-white/5 text-white hover:bg-white/10"
                   }`}
-                style={winner === "2" ? { borderColor: !isClub ? '#FFFFFF' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: !isClub ? 'rgba(255,255,255,0.1)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: !isClub ? '#FFFFFF' : 'var(--theme-secondary-accent-contrast, #071554)' } : { borderColor: isClub ? 'rgba(var(--theme-accent), 0.2)' : 'rgba(255, 255, 255, 0.1)' }}
+                style={winner === "2" ? { borderColor: !isClub ? '#FFFFFF' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', backgroundColor: !isClub ? 'rgba(255,255,255,0.1)' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: !isClub ? '#FFFFFF' : 'var(--theme-secondary-accent-contrast, #071554)' } : { borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.1)' }}
               >
                 <div className="flex items-center justify-center gap-1.5">
                   <Trophy size={12} className={`transition-transform duration-300 ${winner === "2" ? "scale-110" : "group-hover:scale-110"}`} />
