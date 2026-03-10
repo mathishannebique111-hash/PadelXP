@@ -60,36 +60,36 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
   };
 
   return (
-    <div className="bg-white/5 border border-white/20 rounded-xl p-6 shadow-xl">
+    <div className="bg-white/5 border border-white/20 rounded-xl p-4 sm:p-6 shadow-xl overflow-hidden">
       <h3 className="text-lg font-bold mb-4">Créer une annonce de match</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+        <div className="flex gap-2">
+          <div className="flex-1 min-w-0">
             <label className="block text-xs text-white/60 mb-1">Date</label>
             <input
               type="date"
               required
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full bg-white/5 border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+              className="w-full bg-white/5 border rounded-lg px-2 sm:px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
               style={isClub ? { border: `1px solid ${effectiveAccentColor}` } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
             />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <label className="block text-xs text-white/60 mb-1">Heure</label>
             <input
               type="time"
               required
               value={formData.time}
               onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              className="w-full bg-white/5 border rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
+              className="w-full bg-white/5 border rounded-lg px-2 sm:px-4 py-2 text-sm text-white focus:outline-none focus:ring-1"
               style={isClub ? { border: `1px solid ${effectiveAccentColor}` } : { borderColor: 'rgba(var(--theme-text), 0.2)' }}
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+        <div className="flex gap-3">
+          <div className="flex-1 min-w-0">
             <label className="block text-xs text-white/60 mb-1">Niveau minimum ({formData.minLevel})</label>
             <input
               type="range"
@@ -106,7 +106,7 @@ export default function MatchFinderCreate({ clubId, accentColor, onSuccess }: Ma
               }}
             />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <label className="block text-xs text-white/60 mb-1">Niveau maximum ({formData.maxLevel})</label>
             <input
               type="range"
