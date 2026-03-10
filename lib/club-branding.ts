@@ -49,6 +49,12 @@ const DEFAULT_BRANDING: ClubBranding = {
  * Ex: "localhost:3000" -> null
  */
 export function extractSubdomain(hostname: string | null): string | null {
+    // Override pour le développement
+    const forcedSubdomain = process.env.NEXT_PUBLIC_FORCE_CLUB_SUBDOMAIN;
+    if (forcedSubdomain && forcedSubdomain !== "") {
+        return forcedSubdomain;
+    }
+
     if (!hostname) return null;
 
     // Enlever le port si présent
@@ -100,7 +106,10 @@ export function getContrastColor(hex: string): string {
 export async function getClubBranding(
     subdomain: string | null
 ): Promise<ClubBranding> {
-    if (!subdomain) return DEFAULT_BRANDING;
+    // Priorité au sous-domaine forcé si présent
+    const effectiveSubdomain = process.env.NEXT_PUBLIC_FORCE_CLUB_SUBDOMAIN || subdomain;
+
+    if (!effectiveSubdomain) return DEFAULT_BRANDING;
 
     try {
         const supabase = createClient(

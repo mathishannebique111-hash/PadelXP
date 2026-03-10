@@ -216,6 +216,9 @@ function buildTablePayload(payload: any): SanitisedPayload {
   if ("court_type" in payload) {
     result.court_type = typeof payload.court_type === "string" && payload.court_type.trim() ? payload.court_type.trim() : null;
   }
+  if ("opening_hours" in payload) {
+    result.opening_hours = payload.opening_hours;
+  }
 
   return result;
 }
@@ -367,8 +370,13 @@ export async function POST(request: Request) {
   logger.info({ hasOpeningHoursInBody, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] hasOpeningHoursInBody:");
   logger.info({ openingHoursKeys: body.opening_hours ? Object.keys(body.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] body.opening_hours:");
   
-  const updatePayload = buildTablePayload(body);
+  const updatePayload = buildTablePayload(body) as any;
   const extrasPayload = buildExtras(updatePayload, body);
+  
+  // Ensure opening_hours is in updatePayload if present in body
+  if (hasOpeningHoursInBody) {
+    updatePayload.opening_hours = body.opening_hours;
+  }
   
   logger.info({ openingHoursKeys: extrasPayload.opening_hours ? Object.keys(extrasPayload.opening_hours).length : 0, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] Built extrasPayload opening_hours:");
   logger.info({ isNull: extrasPayload.opening_hours === null, clubId: clubId.substring(0, 8) + "…" }, "[api/clubs/public] extrasPayload.opening_hours is null?");

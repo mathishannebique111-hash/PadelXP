@@ -128,6 +128,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
 
             if (resError) throw resError;
             setReservations(resData as any[] || []);
+            setOpeningHours(clubData.opening_hours); // Track club opening hours
 
         } catch (error: any) {
             console.error("Error fetching planning:", error);
@@ -141,6 +142,32 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
         fetchPlanningData();
     }, [selectedDate, clubId]);
 
+    const normalizeSchedule = (schedule: any, dayKey: string) => {
+        if (!schedule || !schedule[dayKey]) return null;
+        const config = schedule[dayKey];
+        
+        // Format from Reservations Schedule (isOpen, openTime, closeTime)
+        if ('isOpen' in config) {
+            return {
+                isOpen: !!config.isOpen,
+                openTime: config.openTime || "09:00",
+                closeTime: config.closeTime || "22:00"
+            };
+        }
+        
+        // Format from Public Page (closed, open, close)
+        if ('closed' in config || 'open' in config || 'close' in config) {
+            const isClosed = config.closed === true;
+            return {
+                isOpen: !isClosed,
+                openTime: config.open || "09:00",
+                closeTime: config.close || "22:00"
+            };
+        }
+        
+        return null;
+    };
+
     const getMasterTimeline = () => {
         if (courts.length === 0) return [];
 
@@ -152,7 +179,8 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
         let anyOpen = false;
 
         courts.forEach(court => {
-            const config = court.opening_hours?.[dayKey];
+            const config = normalizeSchedule(court.opening_hours, dayKey) || normalizeSchedule(openingHours, dayKey);
+            
             if (config?.isOpen) {
                 anyOpen = true;
                 const [hS, mS] = config.openTime.split(":").map(Number);
@@ -394,7 +422,8 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                                             // Check if this specific 30-min window is already covered by a previous block's rowSpan
                                             if (occupiedSlots.has(courtKey)) return null;
 
-                                            const config = court.opening_hours?.[dayKey];
+                                            const config = normalizeSchedule(court.opening_hours, dayKey) || normalizeSchedule(openingHours, dayKey);
+                                            
                                             if (!config?.isOpen) return <td key={court.id} className="border-b border-white/5 bg-black/20" />;
 
                                             const [hS, mS] = config.openTime.split(":").map(Number);

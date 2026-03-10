@@ -54,7 +54,7 @@ export default function MobileMenu({ hasReservationsOption = false }: { hasReser
     { href: '/dashboard/tournaments', label: 'Tournois', icon: Medal },
     { href: '/dashboard/ligues', label: 'Ligues', icon: Trophy },
     { href: '/dashboard/roles', label: 'Rôles et accès', icon: UserCog },
-    { href: '/dashboard/reservations', label: 'Réservations & Tarifs', icon: Calendar, needsOption: true },
+    { href: '/dashboard/reservations', label: 'Réservations', icon: Calendar, needsOption: true },
     { href: '/dashboard/import-export', label: 'Import / Export', icon: Download },
     { href: '/dashboard/aide', label: 'Aide & Support', icon: HelpCircle },
   ];

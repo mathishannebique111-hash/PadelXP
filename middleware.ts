@@ -33,7 +33,8 @@ const matchSubmitRatelimit = createRatelimit(Ratelimit.slidingWindow(5, "5 m"), 
 
 // Fonction pour détecter l'app mobile Capacitor
 function isCapacitorApp(userAgent: string): boolean {
-  return userAgent.toLowerCase().includes('padelxpcapacitor');
+  const ua = userAgent.toLowerCase();
+  return ua.includes('padelxpcapacitor') || ua.includes('capacitor');
 }
 
 
@@ -114,9 +115,14 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get("host") || "";
   const cleanHost = hostname.split(":")[0];
   const hostParts = cleanHost.split(".");
-  const clubSubdomain = (hostParts.length > 2 && hostParts[0] !== "www")
-    ? hostParts[0]
-    : null;
+  
+  // Support pour l'override en développement
+  const forcedSubdomain = process.env.NEXT_PUBLIC_FORCE_CLUB_SUBDOMAIN;
+  const clubSubdomain = (forcedSubdomain && forcedSubdomain !== "") 
+    ? forcedSubdomain 
+    : (hostParts.length > 2 && hostParts[0] !== "www")
+      ? hostParts[0]
+      : null;
 
   // On stocke le sous-domaine dans les headers de la requête
   // pour que le layout.tsx puisse le lire via headers()
@@ -125,13 +131,16 @@ export async function middleware(req: NextRequest) {
     requestHeaders.set("x-club-subdomain", clubSubdomain);
 
     // Rediriger la racine vers /install pour les sous-domaines de clubs
-    // Sauf si le joueur est en mode PWA standalone (déjà installé)
+    // Sauf si le joueur est en mode PWA standalone (déjà installé) ou dans l'app Capacitor
     if (normalizedPathname === '/' || normalizedPathname === '') {
       const isStandalone = req.headers.get('sec-fetch-dest') === 'document'
         && req.headers.get('sec-fetch-mode') === 'navigate';
+      const userAgent = req.headers.get('user-agent') || '';
+      const isApp = isCapacitorApp(userAgent) || req.headers.get('x-capacitor-request') === 'true';
+      
       // Ne pas rediriger si le referer contient déjà /install (éviter boucle)
       const referer = req.headers.get('referer') || '';
-      if (!referer.includes('/install')) {
+      if (!referer.includes('/install') && !isStandalone && !isApp) {
         const url = req.nextUrl.clone();
         url.pathname = '/install';
         return NextResponse.redirect(url);
