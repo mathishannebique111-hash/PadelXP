@@ -1297,7 +1297,8 @@ export default function MatchForm({
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    className="w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none" style={{ borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
+                    className={`w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none`}
+                    style={isClub ? { borderColor: 'rgb(var(--theme-accent))' } : { borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
                     value={tieBreak.team1Score}
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/g, '');
@@ -1312,7 +1313,8 @@ export default function MatchForm({
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    className="w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none" style={{ borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
+                    className={`w-8 h-8 rounded-lg border bg-white/5 text-sm text-white text-center font-bold focus:outline-none`}
+                    style={isClub ? { borderColor: 'rgb(var(--theme-accent))' } : { borderColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
                     value={tieBreak.team2Score}
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/g, '');
