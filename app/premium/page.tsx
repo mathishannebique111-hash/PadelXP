@@ -183,7 +183,7 @@ function PremiumContent() {
                         </div>
                     </div>
                     <p className="text-[9px] text-slate-600 text-center font-medium">
-                        Renouvellement automatique de 4.99€/mois • Annulation à tout moment dans iTunes
+                        Renouvellement automatique de 4.99€/mois • Annulation à tout moment dans {isApp ? (Capacitor.getPlatform() === 'ios' ? 'iTunes' : 'Google Play') : 'votre compte'}
                     </p>
                 </div>
 

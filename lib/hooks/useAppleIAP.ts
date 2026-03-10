@@ -61,10 +61,13 @@ export const useAppleIAP = () => {
         try {
             if (isInitialized) return;
 
-            addLog("[useAppleIAP] Configuration du store v13...");
+            addLog("[useIAP] Configuration du store v13...");
 
-            const platform = (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE || 'ios-appstore';
-            addLog(`[useAppleIAP] Platform: ${platform}`);
+            const platform = Capacitor.getPlatform() === 'ios' 
+                ? (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE 
+                : (window as any).CdvPurchase?.Platform?.GOOGLE_PLAY;
+                
+            addLog(`[useIAP] Platform detection: ${platform}`);
 
             // 1. Enregistrement des produits possibles
             const productIds = ['premium_monthly'];
@@ -131,37 +134,57 @@ export const useAppleIAP = () => {
     const validatePurchase = async (transaction: any) => {
         setLoading(true);
         try {
-            // En v13, le reçu est souvent dans transaction.parentReceipt.nativeData ou via le store
-            const receipt = transaction.appStoreReceipt ||
-                transaction.parentReceipt?.nativeData?.transactionReceipt ||
-                (window as any).CdvPurchase?.appStoreReceipt; // Fallback possible
+            const platform = Capacitor.getPlatform();
+            
+            // Pour Apple
+            if (platform === 'ios') {
+                const receipt = transaction.appStoreReceipt ||
+                    transaction.parentReceipt?.nativeData?.transactionReceipt ||
+                    (window as any).CdvPurchase?.appStoreReceipt;
 
-            addLog(`[useAppleIAP] Validation du reçu (longueur: ${receipt?.length || 0})`);
+                if (!receipt) {
+                    addLog("[useIAP] Erreur: Reçu Apple manquant.");
+                    toast.error("Le reçu de paiement Apple n'a pas pu être récupéré.");
+                    setLoading(false);
+                    return;
+                }
 
-            if (!receipt) {
-                addLog("[useAppleIAP] Erreur: Reçu manquant dans la transaction.");
-                toast.error("Le reçu de paiement n'a pas pu être récupéré.");
-                setLoading(false);
-                return;
-            }
+                const result = await verifyAppleReceipt(receipt);
+                if (result.success) {
+                    handleSuccess(transaction);
+                } else {
+                    addLog(`[useIAP] Échec validation Apple: ${result.error}`);
+                    toast.error("Échec de validation Apple: " + result.error);
+                }
+            } 
+            // Pour Android
+            else if (platform === 'android') {
+                const { verifyAndroidPurchase } = await import('@/app/actions/android');
+                const result = await verifyAndroidPurchase({
+                    productId: 'premium_monthly',
+                    purchaseToken: transaction.receipt?.purchaseToken || transaction.transactionId
+                });
 
-            const result = await verifyAppleReceipt(receipt);
-
-            if (result.success) {
-                addLog("[useAppleIAP] Validation serveur réussie !");
-                if (typeof transaction.finish === 'function') await transaction.finish();
-                toast.success("Succès ! Vous êtes maintenant Premium.");
-                window.location.href = '/home?premium_success=true';
-            } else {
-                addLog(`[useAppleIAP] Échec validation serveur: ${result.error}`);
-                toast.error("Échec de validation: " + result.error);
-                setLoading(false);
+                if (result.success) {
+                    handleSuccess(transaction);
+                } else {
+                    addLog(`[useIAP] Échec validation Android: ${result.error}`);
+                    toast.error("Échec de validation Android: " + result.error);
+                }
             }
         } catch (e) {
-            addLog(`[useAppleIAP] Erreur réseau validation: ${e}`);
-            toast.error("Erreur réseau lors de la vérification.");
+            addLog(`[useIAP] Erreur validation: ${e}`);
+            toast.error("Erreur lors de la vérification du paiement.");
+        } finally {
             setLoading(false);
         }
+    };
+
+    const handleSuccess = async (transaction: any) => {
+        addLog("[useIAP] Validation réussie !");
+        if (typeof transaction.finish === 'function') await transaction.finish();
+        toast.success("Succès ! Vous êtes maintenant Premium.");
+        window.location.href = '/home?premium_success=true';
     };
 
     const purchasePremium = useCallback(() => {
@@ -244,10 +267,12 @@ export const useAppleIAP = () => {
     }, []);
 
     const manageSubscriptions = useCallback(() => {
-        if (Capacitor.getPlatform() === 'ios') {
+        const platform = Capacitor.getPlatform();
+        if (platform === 'ios') {
             window.location.href = "https://apps.apple.com/account/subscriptions";
+        } else if (platform === 'android') {
+            window.location.href = "https://play.google.com/store/account/subscriptions";
         } else {
-            // Pour Android ou Web (si Stripe portal non dispo)
             toast.info("Veuillez gérer votre abonnement via les paramètres de votre compte.");
         }
     }, []);
