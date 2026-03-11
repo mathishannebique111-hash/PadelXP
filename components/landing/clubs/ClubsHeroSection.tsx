@@ -102,8 +102,8 @@ export default function ClubsHeroSection() {
         >
           {/* Headline principal */}
           <h1 className="text-3xl md:text-5xl lg:text-7xl font-extrabold text-white leading-tight">
-            <span className="block mb-2">Transformez votre club de padel en</span>
-            <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block">
+            <span className="block mb-2 whitespace-nowrap">Transformez votre club de padel en</span>
+            <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block whitespace-nowrap">
               communauté d'élite
             </span>
           </h1>

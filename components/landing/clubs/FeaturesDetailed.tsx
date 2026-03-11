@@ -191,58 +191,58 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Points</div>
-                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>531</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Points</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums text-black">531</div>
               </div>
 
               {/* Matchs */}
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Matchs</div>
-                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>48</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Matchs</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums text-black">48</div>
               </div>
 
               {/* Victoires */}
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Victoires</div>
-                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>41</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Victoires</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums text-black">41</div>
               </div>
 
               {/* Défaites */}
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Défaites</div>
-                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>7</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Défaites</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums text-black">7</div>
               </div>
 
               {/* Sets Gagnés */}
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Sets Gagnés</div>
-                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>82</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Sets Gagnés</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums text-black">82</div>
               </div>
 
               {/* Sets Perdus */}
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Sets Perdus</div>
-                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>14</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Sets Perdus</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums text-black">14</div>
               </div>
 
               {/* Winrate */}
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Winrate</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Winrate</div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
-                  <div className="text-2xl md:text-3xl font-bold text-emerald-500 tabular-nums">85%</div>
+                  <div className="text-2xl md:text-3xl font-bold text-black tabular-nums">85%</div>
                 </div>
               </div>
 
@@ -250,8 +250,8 @@ function RankingFeature() {
               <div
                 className="rounded-lg border-l-2 md:border-l-4 bg-white px-3 py-2 md:px-4 md:py-3 shadow-lg" style={{ borderColor: 'rgb(var(--theme-secondary-accent))' }}
               >
-                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium" style={{ color: 'rgba(var(--theme-text), 0.7)' }}>Badges</div>
-                <div className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: 'var(--theme-text, #172554)' }}>10 / 16</div>
+                <div className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] mb-1 font-medium text-black/70">Badges</div>
+                <div className="text-2xl md:text-3xl font-bold tabular-nums text-black">10 / 16</div>
               </div>
             </div>
           </div>
