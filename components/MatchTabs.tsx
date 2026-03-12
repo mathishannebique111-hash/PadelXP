@@ -222,10 +222,7 @@ function MatchTabsContent({
         ? ((pendingInvitationsCount + pendingChallengesCount) - viewedPartnersCount)
         : 0
     },
-    ...(isClub 
-      ? [{ id: 'rejoindre' as TabType, label: 'Rejoindre' }] 
-      : [{ id: 'oracle' as TabType, label: 'Oracle' }]
-    ),
+    { id: 'rejoindre' as TabType, label: 'Rejoindre' },
   ];
 
   return (
@@ -294,15 +291,9 @@ export default function MatchTabs(props: MatchTabsProps) {
           <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
             <span>Partenaires</span>
           </div>
-          {isClub ? (
-            <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-              <span>Rejoindre</span>
-            </div>
-          ) : (
-            <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
-              <span>Oracle</span>
-            </div>
-          )}
+          <div className="py-3 sm:py-4 text-[11px] sm:text-sm font-semibold text-white/60 text-center flex items-center justify-center">
+            <span>Rejoindre</span>
+          </div>
         </div>
         <div className="mt-8 flex items-center justify-center">
           <PadelLoader />
