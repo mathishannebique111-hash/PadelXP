@@ -82,10 +82,6 @@ export default async function PublicProfilePage({ params }: Props) {
         );
     }
 
-    // Si c'est mon propre profil, rediriger vers /home?tab=profil
-    if (currentUser && profile.id === currentUser.id) {
-        redirect('/home?tab=profil');
-    }
 
     return (
         <div className="min-h-screen bg-slate-900 text-white pb-20">

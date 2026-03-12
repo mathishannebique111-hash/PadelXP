@@ -35,7 +35,7 @@ export default function PageTitle({
             <span
               className="w-1 sm:w-1.5 self-stretch rounded-full flex-shrink-0"
               style={{
-                background: 'rgb(var(--theme-accent, 255, 255, 255))'
+                background: isClub ? 'rgb(var(--theme-accent, 255, 255, 255))' : '#FFFFFF'
               }}
               aria-hidden="true"
             />

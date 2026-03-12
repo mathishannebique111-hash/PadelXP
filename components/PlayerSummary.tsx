@@ -378,7 +378,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             style={{
               animationDelay: '50ms',
               borderLeftWidth: '4px',
-              borderLeftColor: isClub ? 'rgb(var(--theme-page))' : 'rgb(var(--theme-secondary-accent))',
+              borderLeftColor: isClub ? 'rgb(var(--theme-page))' : '#10B981',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)',
               backgroundColor: 'white'
             }}
@@ -395,7 +395,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             style={{
               animationDelay: '50ms',
               borderLeftWidth: '4px',
-              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : '#10B981',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
@@ -409,7 +409,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             style={{
               animationDelay: '100ms',
               borderLeftWidth: '4px',
-              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : '#10B981',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
@@ -423,7 +423,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             style={{
               animationDelay: '150ms',
               borderLeftWidth: '4px',
-              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : '#10B981',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >
@@ -437,7 +437,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
             style={{
               animationDelay: '200ms',
               borderLeftWidth: '4px',
-              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent))',
+              borderLeftColor: isClub ? 'rgb(var(--theme-accent))' : '#10B981',
               borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.1)'
             }}
           >

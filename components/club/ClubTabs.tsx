@@ -70,7 +70,7 @@ function ClubTabsContent({
     return (
         <div className="w-full">
             {/* Onglets */}
-            <div className={`grid grid-cols-4 w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
+            <div className={`grid ${isClub ? 'grid-cols-4' : 'grid-cols-3'} w-full mb-4 sm:mb-6 border-b ${!isClub ? 'border-white/10' : ''}`}
                 style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
                 {tabs.map((tab) => (
                     <button

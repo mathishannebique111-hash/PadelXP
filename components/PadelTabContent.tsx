@@ -127,10 +127,10 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                       }
                     }}
                     className="w-full px-4 py-3 text-[13px] rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
-                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' }}
+                    style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: isClub ? 'rgb(var(--theme-page))' : 'rgb(var(--theme-player-page))', boxShadow: '0 0 15px rgba(var(--theme-secondary-accent, 191,255,0), 0.2)' }}
                   >
                     <Share2 size={14} className="stroke-[3px]" />
-                    PARTAGER MON PROFIL
+                    <span style={{ color: isClub ? 'rgb(var(--theme-page))' : 'rgb(var(--theme-player-page))' }}>PARTAGER MON PROFIL</span>
                   </button>
                 )}
               </div>

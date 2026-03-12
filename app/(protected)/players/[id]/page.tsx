@@ -30,7 +30,7 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
     const { id } = resolvedParams;
 
     logger.info(
-      { playerId: id },
+      JSON.stringify({ playerId: id }),
       "[PlayerProfilePage] Page appelée avec ID"
     );
 
@@ -44,14 +44,14 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
 
     if (userError) {
       logger.error(
-        { error: userError, playerId: id, errorDetails: JSON.stringify(userError) },
+        JSON.stringify({ error: userError, playerId: id, errorDetails: JSON.stringify(userError) }),
         "[PlayerProfilePage] Erreur getUser"
       );
     }
 
     if (!user) {
       logger.warn(
-        { playerId: id },
+        JSON.stringify({ playerId: id }),
         "[PlayerProfilePage] Pas d'utilisateur connecté - retour notFound"
       );
       // Afficher une page d'erreur au lieu de notFound pour debug
@@ -67,7 +67,7 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
     }
 
     logger.info(
-      { userId: user.id.substring(0, 8), playerId: id },
+      JSON.stringify({ userId: user.id.substring(0, 8), playerId: id }),
       "[PlayerProfilePage] Utilisateur connecté trouvé"
     );
 
@@ -80,7 +80,7 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
 
     if (!currentUserProfile) {
       logger.warn(
-        { playerId: id, userId: user.id },
+        JSON.stringify({ playerId: id, userId: user.id }),
         "[PlayerProfilePage] Profil utilisateur connecté non trouvé"
       );
       return notFound();
@@ -90,7 +90,7 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
 
     // 3. Récupérer le profil du joueur ciblé
     logger.info(
-      { playerId: id },
+      JSON.stringify({ playerId: id }),
       "[PlayerProfilePage] Récupération du profil du joueur"
     );
 
@@ -104,12 +104,12 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
     // Si erreur ou pas de résultat, essayer avec le client admin (bypass RLS)
     if (error || !playerProfile) {
       logger.warn(
-        {
+        JSON.stringify({
           playerId: id,
           error: error?.message,
           hasError: !!error,
           hasProfile: !!playerProfile
-        },
+        }),
         "[PlayerProfilePage] Tentative avec client admin (bypass RLS)"
       );
 
@@ -121,12 +121,12 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
 
       if (adminError) {
         logger.error(
-          {
+          JSON.stringify({
             error: adminError,
             playerId: id,
             errorCode: adminError.code,
             errorMessage: adminError.message
-          },
+          }),
           "[PlayerProfilePage] Erreur lors de la récupération du profil (admin)"
         );
         return (
@@ -142,7 +142,7 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
 
       if (!adminPlayerProfile) {
         logger.warn(
-          { playerId: id },
+          JSON.stringify({ playerId: id }),
           "[PlayerProfilePage] Profil non trouvé en base de données (même avec admin)"
         );
         return (
@@ -158,56 +158,20 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
 
       playerProfile = adminPlayerProfile;
       logger.info(
-        { playerId: id },
+        JSON.stringify({ playerId: id }),
         "[PlayerProfilePage] Profil trouvé via client admin"
       );
     }
 
     logger.info(
-      {
+      JSON.stringify({
         playerId: id,
         playerName: playerProfile.display_name || `${playerProfile.first_name} ${playerProfile.last_name}`,
         playerClubId: playerProfile.club_id,
         currentUserClubId: currentUserClubId,
-      },
+      }),
       "[PlayerProfilePage] Profil trouvé"
     );
-
-    // 4. SÉCURITÉ : Vérifier que les deux joueurs sont du même club (si les deux ont un club_id)
-    if (
-      currentUserClubId &&
-      playerProfile.club_id &&
-      playerProfile.club_id !== currentUserClubId
-    ) {
-      logger.warn(
-        { playerId: id, playerClubId: playerProfile.club_id, currentUserClubId },
-        "[PlayerProfilePage] Clubs différents - accès refusé"
-      );
-      // Afficher une page d'erreur au lieu de notFound pour debug
-      return (
-        <div className="min-h-screen bg-slate-900 p-8">
-          <div className="text-white">
-            <h1 className="text-2xl font-bold mb-4">Accès refusé</h1>
-            <p>Vous ne pouvez pas voir le profil d&apos;un joueur d&apos;un autre club.</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Votre club: {currentUserClubId || "Non défini"}
-            </p>
-            <p className="text-sm text-gray-400">
-              Club du joueur: {playerProfile.club_id || "Non défini"}
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    // 5. Ne pas permettre de voir son propre profil (rediriger vers /home)
-    if (playerProfile.id === user.id) {
-      logger.info(
-        { playerId: id },
-        "[PlayerProfilePage] Tentative de voir son propre profil - redirection"
-      );
-      redirect("/home?tab=padel");
-    }
 
     // 6. NOUVEAU : Calculer la compatibilité
     let compatibility = null;
@@ -241,7 +205,7 @@ export default async function PlayerPublicProfilePage({ params }: Props) {
     );
   } catch (error) {
     logger.error(
-      { error, errorMessage: error instanceof Error ? error.message : String(error) },
+      JSON.stringify({ error, errorMessage: error instanceof Error ? error.message : String(error) }),
       "[PlayerProfilePage] Erreur inattendue"
     );
     return notFound();
