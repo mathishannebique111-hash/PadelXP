@@ -62,6 +62,28 @@ export async function POST(request: NextRequest) {
         }
 
         let stripeAccountId = club.stripe_account_id;
+        const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test");
+
+        // Vérifier si l'environnement correspond (Live vs Test)
+        if (stripeAccountId) {
+            try {
+                const account = (await stripe.accounts.retrieve(stripeAccountId)) as any;
+                const environmentMismatch = account.livemode !== !isTestMode;
+                
+                if (environmentMismatch) {
+                    logger.warn("Changement d'environnement Stripe détecté (Live <=> Test). Réinitialisation...", { 
+                        stripeAccountId, 
+                        accountLivemode: account.livemode,
+                        isTestMode 
+                    });
+                    await supabaseAdmin.from("clubs").update({ stripe_account_id: null }).eq("id", club.id);
+                    stripeAccountId = null;
+                }
+            } catch (err) {
+                // Si l'ID est invalide (déjà géré par le catch global mais plus propre ici)
+                stripeAccountId = null;
+            }
+        }
 
         // Si le club n'a pas encore de compte Stripe, en créer un
         if (!stripeAccountId) {
@@ -192,7 +214,15 @@ export async function GET(request: NextRequest) {
 
         // Vérifier le statut du compte chez Stripe
         try {
-            const account = await stripe.accounts.retrieve(club.stripe_account_id);
+            const account = (await stripe.accounts.retrieve(club.stripe_account_id)) as any;
+            const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test");
+
+            // Vérification de l'environnement en GET aussi
+            if (account.livemode !== !isTestMode) {
+                logger.warn("Mismatch environnement en GET, nettoyage...", { stripeAccountId: club.stripe_account_id });
+                await supabaseAdmin.from("clubs").update({ stripe_account_id: null }).eq("id", adminEntry.club_id);
+                return NextResponse.json({ connected: false, reason: "env_mismatch_cleared" });
+            }
 
             return NextResponse.json({
                 connected: true,
