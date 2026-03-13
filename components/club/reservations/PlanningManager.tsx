@@ -132,7 +132,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                     end_time, 
                     status,
                     title,
-                    profiles!created_by (display_name, first_name, last_name),
+                    created_by,
                     reservation_participants (
                         id,
                         user_id,
@@ -140,7 +140,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                         is_organizer
                     )
                 `)
-                .eq("status", "confirmed")
+                .in("status", ["confirmed", "pending_payment"])
                 .gte("start_time", start)
                 .lte("start_time", end);
 
@@ -148,9 +148,10 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
             
             const reservations = resData as any[] || [];
 
-            // 3. Manual profile enrichment for participants
+            // 3. Manual profile enrichment for participants and creator
             const userIds = new Set<string>();
             reservations.forEach(res => {
+                if (res.created_by) userIds.add(res.created_by);
                 res.reservation_participants?.forEach((p: any) => {
                     if (p.user_id) userIds.add(p.user_id);
                 });
@@ -164,6 +165,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
 
                 const profileMap = new Map(profileData?.map((p: any) => [p.id, p]));
                 reservations.forEach(res => {
+                    res.profiles = profileMap.get(res.created_by); // Set creator profile
                     res.reservation_participants?.forEach((p: any) => {
                         p.profiles = profileMap.get(p.user_id);
                     });

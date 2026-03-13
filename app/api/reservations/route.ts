@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
                 user_id: pid,
                 is_organizer: false,
                 amount: 0,
-                payment_status: payment_method === "on_site" ? "paid" : "pending"
+                payment_status: "pending" // Les invités doivent toujours confirmer leur présence
             }))
         ];
 
