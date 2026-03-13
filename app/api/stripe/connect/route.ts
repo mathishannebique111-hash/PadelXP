@@ -27,9 +27,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
         }
 
+        // Vérification des variables d'environnement critiques
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return NextResponse.json({ error: "Config serveur: STRIPE_SECRET_KEY manquante" }, { status: 500 });
+        }
+        if (!process.env.NEXT_PUBLIC_SITE_URL) {
+            return NextResponse.json({ error: "Config serveur: NEXT_PUBLIC_SITE_URL manquante" }, { status: 500 });
+        }
+
         // Vérifier que l'utilisateur est admin d'un club via la table club_admins
         if (!supabaseAdmin) {
-            return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });
+            return NextResponse.json({ error: "Configuration serveur manquante (Supabase Admin)" }, { status: 500 });
         }
 
         const { data: adminEntry } = await supabaseAdmin
@@ -81,7 +89,7 @@ export async function POST(request: NextRequest) {
 
             if (updateError) {
                 logger.error("Erreur sauvegarde stripe_account_id", { error: updateError });
-                return NextResponse.json({ error: "Erreur lors de la sauvegarde" }, { status: 500 });
+                return NextResponse.json({ error: "Erreur lors de la sauvegarde de l'ID Stripe", details: updateError.message }, { status: 500 });
             }
         }
 
@@ -96,17 +104,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ url: accountLink.url });
 
     } catch (error: any) {
-        console.error("=== ERREUR STRIPE CONNECT ===");
-        console.error("Type:", error?.type);
-        console.error("Code:", error?.code);
-        console.error("Message:", error?.message);
-        console.error("Raw:", error?.raw);
-        console.error("Full error:", JSON.stringify(error, null, 2));
-        logger.error("Erreur post Stripe Connect", { error });
+        logger.error("Erreur critique suite clic Connect Stripe", { 
+            message: error?.message,
+            code: error?.code,
+            type: error?.type,
+            stack: error?.stack
+        });
+
         return NextResponse.json({
-            error: "Erreur serveur",
-            details: error?.message || "Unknown error",
-            code: error?.code
+            error: "Erreur lors de l'initialisation Stripe Connect",
+            details: error?.message || "Erreur inconnue",
+            code: error?.code,
+            type: error?.type
         }, { status: 500 });
     }
 }
