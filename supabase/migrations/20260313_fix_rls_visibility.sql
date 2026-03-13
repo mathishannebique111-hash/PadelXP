@@ -1,35 +1,41 @@
 -- =============================================
--- FIX RLS VISIBILITY FOR RESERVATIONS & PARTICIPANTS
+-- FIX RLS VISIBILITY FOR RESERVATIONS & PARTICIPANTS (v2 - Fixed Recursion)
 -- =============================================
 
--- 1. Relax reservation_participants SELECT policy
--- Allow anyone who is a participant of a reservation to see all other participants of that same reservation.
--- Also allow club admins to see all participants of reservations made on their club's courts.
+-- 0. Function to check participation without recursion
+-- SECURITY DEFINER allows bypassing RLS of the table being queried
+CREATE OR REPLACE FUNCTION public.check_is_participant(res_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.reservation_participants
+    WHERE reservation_id = res_id
+    AND user_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- 1. Relax reservation_participants SELECT policy
 DROP POLICY IF EXISTS "res_participants_select_involved" ON reservation_participants;
 
 CREATE POLICY "res_participants_select_involved"
 ON reservation_participants FOR SELECT TO authenticated
 USING (
-  -- L'utilisateur est lui-même un participant de cette réservation
-  reservation_id IN (
-    SELECT rp.reservation_id 
-    FROM reservation_participants rp 
-    WHERE rp.user_id = auth.uid()
-  )
+  -- L'utilisateur est lui-même un participant de cette réservation (via fonction pour éviter la récursion)
+  public.check_is_participant(reservation_id)
   OR 
   -- L'utilisateur est le créateur de la réservation
   EXISTS (
-    SELECT 1 FROM reservations r 
+    SELECT 1 FROM public.reservations r 
     WHERE r.id = reservation_participants.reservation_id 
     AND r.created_by = auth.uid()
   )
   OR
   -- L'utilisateur est admin du club auquel appartient le terrain
   EXISTS (
-    SELECT 1 FROM reservations r
-    JOIN courts c ON c.id = r.court_id
-    JOIN club_admins ca ON ca.club_id::uuid = c.club_id
+    SELECT 1 FROM public.reservations r
+    JOIN public.courts c ON c.id = r.court_id
+    JOIN public.club_admins ca ON ca.club_id::uuid = c.club_id
     WHERE r.id = reservation_participants.reservation_id 
     AND ca.user_id = auth.uid()
   )
@@ -39,7 +45,6 @@ USING (
 -- (Normally reservations_select_all is already USING (true))
 
 -- 3. Fix profiles visibility if needed (profiles should ideally be readable by all authenticated users for lookup)
--- Check if a policy exists, if not, create one or ensure it's open enough.
 DO $$
 BEGIN
     IF NOT EXISTS (

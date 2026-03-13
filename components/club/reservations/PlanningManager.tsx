@@ -184,7 +184,6 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
             });
 
             setReservations(reservationsList);
-;
             setOpeningHours(clubData.opening_hours); // Track club opening hours
 
         } catch (error: any) {
