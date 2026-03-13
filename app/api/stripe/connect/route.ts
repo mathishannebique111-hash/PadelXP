@@ -4,9 +4,15 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { logger } from "@/lib/logger";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2025-10-29.clover",
-});
+// Initialisation de Stripe (déplacée dans les handlers pour éviter le cache d'env)
+const getStripe = () => {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error("STRIPE_SECRET_KEY manquante");
+    }
+    return new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2025-10-29.clover",
+    });
+};
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,6 +26,14 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
 // POST /api/stripe/connect - Créer un compte connecté Stripe et générer le lien d'onboarding
 export async function POST(request: NextRequest) {
     try {
+        const stripe = getStripe();
+        const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test");
+        
+        logger.info("Tentative Connect Stripe", { 
+            mode: isTestMode ? "TEST" : "LIVE",
+            keyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 10) 
+        });
+
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -62,7 +76,6 @@ export async function POST(request: NextRequest) {
         }
 
         let stripeAccountId = club.stripe_account_id;
-        const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test");
 
         // FORCE RESET pour le mode Test : si on est en test mode, on ignore l'ID existant
         // pour repartir sur un compte tout neuf qui affichera obligatoirement les boutons de test.
@@ -183,6 +196,13 @@ export async function POST(request: NextRequest) {
 // GET /api/stripe/connect - Récupérer le statut du compte Stripe du club
 export async function GET(request: NextRequest) {
     try {
+        const stripe = getStripe();
+        const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test");
+        
+        logger.info("Vérification statut Connect Stripe", { 
+            mode: isTestMode ? "TEST" : "LIVE" 
+        });
+
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -218,7 +238,6 @@ export async function GET(request: NextRequest) {
         // Vérifier le statut du compte chez Stripe
         try {
             const account = (await stripe.accounts.retrieve(club.stripe_account_id)) as any;
-            const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test");
 
             // Vérification de l'environnement en GET aussi
             if (account.livemode !== !isTestMode) {
