@@ -317,14 +317,14 @@ export async function POST(request: NextRequest) {
                 user_id: user.id,
                 is_organizer: true,
                 amount: 0,
-                payment_status: payment_method === "on_site" ? "confirmed" : "pending"
+                payment_status: payment_method === "on_site" ? "paid" : "pending"
             },
             ...(participant_ids || []).map((pid: string) => ({
                 reservation_id: reservation.id,
                 user_id: pid,
                 is_organizer: false,
                 amount: 0,
-                payment_status: payment_method === "on_site" ? "confirmed" : "pending"
+                payment_status: payment_method === "on_site" ? "paid" : "pending"
             }))
         ];
 

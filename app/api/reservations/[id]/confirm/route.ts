@@ -36,7 +36,7 @@ export async function POST(
         const { error: updateError } = await supabase
             .from("reservation_participants")
             .update({ 
-                payment_status: 'confirmed',
+                payment_status: 'paid',
                 paid_at: new Date().toISOString()
             })
             .eq("id", participant.id);
@@ -56,7 +56,7 @@ export async function POST(
             .eq("reservation_id", reservationId);
 
         const confirmedCount = (allParticipants || []).filter((p: any) => 
-            p.is_organizer || p.payment_status === 'paid' || p.payment_status === 'confirmed'
+            p.is_organizer || p.payment_status === 'paid'
         ).length;
 
         if (confirmedCount >= 4) {

@@ -137,8 +137,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                         id,
                         user_id,
                         payment_status,
-                        is_organizer,
-                        profiles!user_id (display_name, first_name, last_name, avatar_url)
+                        is_organizer
                     )
                 `)
                 .eq("status", "confirmed")
@@ -146,7 +145,32 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                 .lte("start_time", end);
 
             if (resError) throw resError;
-            setReservations(resData as any[] || []);
+            
+            const reservations = resData as any[] || [];
+
+            // 3. Manual profile enrichment for participants
+            const userIds = new Set<string>();
+            reservations.forEach(res => {
+                res.reservation_participants?.forEach((p: any) => {
+                    if (p.user_id) userIds.add(p.user_id);
+                });
+            });
+
+            if (userIds.size > 0) {
+                const { data: profileData } = await supabase
+                    .from("profiles")
+                    .select("id, first_name, last_name, display_name, avatar_url")
+                    .in("id", Array.from(userIds));
+
+                const profileMap = new Map(profileData?.map((p: any) => [p.id, p]));
+                reservations.forEach(res => {
+                    res.reservation_participants?.forEach((p: any) => {
+                        p.profiles = profileMap.get(p.user_id);
+                    });
+                });
+            }
+
+            setReservations(reservations);
             setOpeningHours(clubData.opening_hours); // Track club opening hours
 
         } catch (error: any) {

@@ -115,7 +115,7 @@ export default function ReservationsListContent() {
     const isReservationValidated = (r: Reservation) => {
         const participants = r.reservation.reservation_participants || [];
         const confirmedCount = participants.filter((p: any) =>
-            p.is_organizer || p.payment_status === 'paid' || p.payment_status === 'confirmed'
+            p.is_organizer || p.payment_status === 'paid'
         ).length;
         return confirmedCount >= 4;
     };
@@ -268,7 +268,7 @@ export default function ReservationsListContent() {
                         const participants = item.reservation.reservation_participants || [];
                         // Compter les participants confirmés (Organisateur ou Payé)
                         const confirmedCount = participants.filter((p: any) =>
-                            p.is_organizer || p.payment_status === 'paid' || p.payment_status === 'confirmed'
+                            p.is_organizer || p.payment_status === 'paid'
                         ).length;
 
                         const isValidated = confirmedCount >= 4;
@@ -320,7 +320,7 @@ export default function ReservationsListContent() {
                                             {participants.map((p: any) => {
                                                 const profileData = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
                                                 const firstName = profileData?.first_name || "Joueur";
-                                                const isConfirmed = p.is_organizer || p.payment_status === 'paid' || p.payment_status === 'confirmed';
+                                                const isConfirmed = p.is_organizer || p.payment_status === 'paid';
 
                                                 return (
                                                     <div key={p.id} className="flex flex-col items-center gap-1">
