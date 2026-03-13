@@ -40,7 +40,10 @@ export default function StripeConnectCard() {
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                alert(data.error || 'Erreur lors de la connexion');
+                const errorMessage = data.details 
+                    ? `${data.error}\n\nDétails : ${data.details}`
+                    : (data.error || 'Erreur lors de la connexion');
+                alert(errorMessage);
                 setConnecting(false);
             }
         } catch (error) {
