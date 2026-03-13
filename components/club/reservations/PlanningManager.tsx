@@ -141,38 +141,50 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                     )
                 `)
                 .in("status", ["confirmed", "pending_payment"])
+                .in("court_id", (courtsData || []).map((c: any) => c.id))
                 .gte("start_time", start)
                 .lte("start_time", end);
 
             if (resError) throw resError;
             
-            const reservations = resData as any[] || [];
+            const rawReservations = resData as any[] || [];
 
-            // 3. Manual profile enrichment for participants and creator
+            // 3. Manual profile enrichment
             const userIds = new Set<string>();
-            reservations.forEach(res => {
+            rawReservations.forEach(res => {
                 if (res.created_by) userIds.add(res.created_by);
                 res.reservation_participants?.forEach((p: any) => {
                     if (p.user_id) userIds.add(p.user_id);
                 });
             });
 
+            let profileMap = new Map();
             if (userIds.size > 0) {
                 const { data: profileData } = await supabase
                     .from("profiles")
                     .select("id, first_name, last_name, display_name, avatar_url")
                     .in("id", Array.from(userIds));
 
-                const profileMap = new Map(profileData?.map((p: any) => [p.id, p]));
-                reservations.forEach(res => {
-                    res.profiles = profileMap.get(res.created_by); // Set creator profile
-                    res.reservation_participants?.forEach((p: any) => {
-                        p.profiles = profileMap.get(p.user_id);
-                    });
-                });
+                profileMap = new Map(profileData?.map((p: any) => [p.id, p]));
             }
 
-            setReservations(reservations);
+            const reservationsList = rawReservations.map(res => {
+                const creatorProfile = profileMap.get(res.created_by);
+                return {
+                    ...res,
+                    profiles: Array.isArray(creatorProfile) ? creatorProfile[0] : creatorProfile,
+                    reservation_participants: (res.reservation_participants || []).map((p: any) => {
+                        const participantProfile = profileMap.get(p.user_id);
+                        return {
+                            ...p,
+                            profiles: Array.isArray(participantProfile) ? participantProfile[0] : participantProfile
+                        };
+                    })
+                };
+            });
+
+            setReservations(reservationsList);
+;
             setOpeningHours(clubData.opening_hours); // Track club opening hours
 
         } catch (error: any) {
