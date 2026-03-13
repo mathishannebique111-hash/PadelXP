@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
 // GET /api/courts?club_id=xxx - Récupérer les terrains d'un club
 export async function GET(request: NextRequest) {
     try {
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { searchParams } = new URL(request.url);
         const clubId = searchParams.get("club_id");
 
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
 // POST /api/courts - Créer un nouveau terrain (admin club uniquement)
 export async function POST(request: NextRequest) {
     try {
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
         if (authError || !user) {

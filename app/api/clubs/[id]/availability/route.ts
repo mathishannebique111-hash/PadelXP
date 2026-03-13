@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
 // GET /api/clubs/[id]/availability?date=YYYY-MM-DD
 export async function GET(
@@ -9,7 +8,7 @@ export async function GET(
 ) {
     try {
         const { id: clubId } = await params;
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { searchParams } = new URL(request.url);
         const date = searchParams.get("date"); // Format: YYYY-MM-DD
 
@@ -45,7 +44,7 @@ export async function GET(
                 status,
                 court_id
             `)
-            .in("court_id", courts.map(c => c.id))
+            .in("court_id", courts.map((c: any) => c.id))
             .gte("start_time", startOfDay)
             .lt("start_time", endOfDay)
             .in("status", ["pending_payment", "confirmed"]);
@@ -56,8 +55,8 @@ export async function GET(
         }
 
         // 3. Générer les créneaux pour chaque terrain
-        const courtsWithAvailability = courts.map(court => {
-            const courtReservations = reservations?.filter(r => r.court_id === court.id) || [];
+        const courtsWithAvailability = courts.map((court: any) => {
+            const courtReservations = reservations?.filter((r: any) => r.court_id === court.id) || [];
             const slots = generateTimeSlots(date, courtReservations);
             return {
                 ...court,

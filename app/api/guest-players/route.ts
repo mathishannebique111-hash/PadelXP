@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
 
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
   // Capitaliser automatiquement le prénom et le nom
   const { firstName, lastName } = capitalizeFullName(rawFirstName, rawLastName);
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import type { Database } from "@/lib/types_db";
 import { logger } from "@/lib/logger";
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     if (!currentUser) {
-      const supabase = createRouteHandlerClient<Database>({ cookies });
+      const supabase = await createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -126,7 +125,7 @@ export async function POST(request: Request) {
           adminUserId = foundUser.id;
         }
       } catch (lookupError) {
-        logger.warn({ adminId: admin_id.substring(0, 8) + "…", error: lookupError }, "[remove-admin] Unable to list users for fallback lookup");
+        logger.warn("[remove-admin] Unable to list users for fallback lookup", { adminId: admin_id.substring(0, 8) + "…", error: lookupError });
       }
     }
 
@@ -136,7 +135,7 @@ export async function POST(request: Request) {
       .eq("id", admin_id);
 
     if (deleteError) {
-      logger.error({ adminId: admin_id.substring(0, 8) + "…", error: deleteError }, "[remove-admin] Error deleting admin");
+      logger.error("[remove-admin] Error deleting admin", { adminId: admin_id.substring(0, 8) + "…", error: deleteError });
       return NextResponse.json(
         { error: "Erreur lors de la suppression" },
         { status: 500 }
@@ -156,20 +155,20 @@ export async function POST(request: Request) {
         const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(adminUserId);
 
         if (deleteUserError) {
-          logger.warn({ adminId: admin_id.substring(0, 8) + "…", userId: adminUserId.substring(0, 8) + "…", error: deleteUserError }, "[remove-admin] Impossible de supprimer l'utilisateur de auth.users");
+          logger.warn("[remove-admin] Impossible de supprimer l'utilisateur de auth.users", { adminId: admin_id.substring(0, 8) + "…", userId: adminUserId.substring(0, 8) + "…", error: deleteUserError });
         } else {
-          logger.info({ adminId: admin_id.substring(0, 8) + "…", emailPreview }, "[remove-admin] Utilisateur supprimé de auth.users");
+          logger.info("[remove-admin] Utilisateur supprimé de auth.users", { adminId: admin_id.substring(0, 8) + "…", emailPreview });
         }
       }
     }
 
-    logger.info({ adminId: admin_id.substring(0, 8) + "…", emailPreview, clubId: currentUserAdmin.club_id.substring(0, 8) + "…" }, "[remove-admin] Admin supprimé du club");
+    logger.info("[remove-admin] Admin supprimé du club", { adminId: admin_id.substring(0, 8) + "…", emailPreview, clubId: currentUserAdmin.club_id.substring(0, 8) + "…" });
     return NextResponse.json({
       success: true,
       message: `${adminToRemove.email} a été retiré des administrateurs`,
     });
   } catch (error: any) {
-    logger.error({ error }, "[remove-admin] Erreur");
+    logger.error("[remove-admin] Erreur", { error });
     return NextResponse.json(
       { error: error.message || "Erreur serveur" },
       { status: 500 }

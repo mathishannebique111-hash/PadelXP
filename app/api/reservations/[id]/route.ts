@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 
 // GET /api/reservations/[id] - Récupérer une réservation spécifique
 export async function GET(
@@ -9,7 +8,7 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
         if (authError || !user) {
@@ -57,7 +56,7 @@ export async function PATCH(
 ) {
     try {
         const { id } = await params;
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
         if (authError || !user) {
@@ -118,7 +117,7 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
-        const supabase = createRouteHandlerClient({ cookies });
+        const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
         if (authError || !user) {
