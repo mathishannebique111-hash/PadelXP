@@ -42,7 +42,11 @@ export async function POST(
             .eq("id", participant.id);
 
         if (updateError) {
-            throw updateError;
+            logger.error("DB Update Error during confirmation", { error: updateError, participantId: participant.id });
+            return NextResponse.json({ 
+                error: "Erreur lors de la mise à jour en base de données",
+                details: updateError.message 
+            }, { status: 500 });
         }
 
         // 3. Vérifier si la réservation doit passer en 'confirmed' (si 4 joueurs ont confirmé/payé)

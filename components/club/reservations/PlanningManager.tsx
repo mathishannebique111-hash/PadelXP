@@ -138,7 +138,7 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                         user_id,
                         payment_status,
                         is_organizer,
-                        profiles:user_id (display_name, first_name, last_name, avatar_url)
+                        profiles!user_id (display_name, first_name, last_name, avatar_url)
                     )
                 `)
                 .eq("status", "confirmed")

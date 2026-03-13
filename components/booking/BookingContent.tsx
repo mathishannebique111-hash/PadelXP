@@ -203,8 +203,8 @@ export default function BookingContent({ clubId }: BookingContentProps) {
                     start_time: slot.start_time,
                     end_time: slot.end_time,
                     participant_ids: [],
-                    total_price: totalPrice, // Security: Server should re-verify this!
-                    payment_method: "stripe"
+                    total_price: 0,
+                    payment_method: "on_site"
                 })
             });
 
@@ -243,35 +243,7 @@ export default function BookingContent({ clubId }: BookingContentProps) {
     const getDayNumber = (date: Date) => new Intl.DateTimeFormat('fr-FR', { day: '2-digit' }).format(date);
     const getMonthName = (date: Date) => new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(date);
 
-    // -- Pricing Display --
-    const getPriceDetails = () => {
-        if (!selectedCourtForSummary || !selectedTimeSlot) return null;
-
-        const courtPriceHour = selectedCourtForSummary.price_hour || DEFAULT_PRICE_PER_HOUR;
-        const slot = selectedCourtForSummary.slots.find(s => s.start_time === selectedTimeSlot);
-        let duration = 1.5; // Default
-        if (slot) {
-            const start = new Date(slot.start_time);
-            const end = new Date(slot.end_time);
-            duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-        }
-
-        const totalPrice = courtPriceHour * duration;
-        const perPlayerPrice = totalPrice / 4;
-
-        // Commission
-        const commission = (perPlayerPrice * COMMISSION_PERCENT) + COMMISSION_FIXED;
-        const totalPerPlayer = perPlayerPrice + commission;
-
-        return {
-            total: totalPrice,
-            perPlayer: perPlayerPrice,
-            commission,
-            totalPerPlayer
-        };
-    };
-
-    const priceDetails = getPriceDetails();
+    const priceDetails = null;
 
 
     return (
@@ -500,30 +472,10 @@ export default function BookingContent({ clubId }: BookingContentProps) {
 
                                     <div className="h-px bg-white/10 my-4" />
 
-                                    {/* Breakdown Calculation */}
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-400">Prix terrain (total)</span>
-                                            <span className="text-white font-medium">{priceDetails.total.toFixed(2)}€</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-gray-400">Votre part (1/4)</span>
-                                            <span className="text-white font-medium">{priceDetails.perPlayer.toFixed(2)}€</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-1.5 text-gray-400">
-                                                <span>Frais de service</span>
-                                                <Info className="w-3 h-3 cursor-help text-gray-500" />
-                                            </div>
-                                            <span className="text-white font-medium">{priceDetails.commission.toFixed(2)}€</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-white/10 my-2" />
-
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-gray-400 font-medium">Total à payer</p>
-                                        <p className="text-2xl font-black text-blue-400">{priceDetails.totalPerPlayer.toFixed(2)}€</p>
+                                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                                        <p className="text-blue-200 text-xs leading-relaxed">
+                                            En confirmant, vous bloquez ce terrain pour votre partie. Les autres joueurs pourront confirmer leur présence depuis l'application.
+                                        </p>
                                     </div>
                                 </div>
 
@@ -546,7 +498,7 @@ export default function BookingContent({ clubId }: BookingContentProps) {
                                                 Validation...
                                             </>
                                         ) : (
-                                            "Payer"
+                                            "Confirmer"
                                         )}
                                     </button>
                                 </div>

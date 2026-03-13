@@ -282,7 +282,7 @@ export async function POST(request: NextRequest) {
             // For now, let's enforce server price
         }
 
-        const finalTotalPrice = calculatedTotalPrice;
+        const finalTotalPrice = 0;
 
         // Créer la réservation
         const { data: reservation, error: reservationError } = await supabase
@@ -316,15 +316,15 @@ export async function POST(request: NextRequest) {
                 reservation_id: reservation.id,
                 user_id: user.id,
                 is_organizer: true,
-                amount: pricePerPerson,
-                payment_status: payment_method === "on_site" ? "paid" : "pending"
+                amount: 0,
+                payment_status: payment_method === "on_site" ? "confirmed" : "pending"
             },
             ...(participant_ids || []).map((pid: string) => ({
                 reservation_id: reservation.id,
                 user_id: pid,
                 is_organizer: false,
-                amount: pricePerPerson,
-                payment_status: payment_method === "on_site" ? "paid" : "pending"
+                amount: 0,
+                payment_status: payment_method === "on_site" ? "confirmed" : "pending"
             }))
         ];
 
