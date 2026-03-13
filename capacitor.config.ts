@@ -3,10 +3,10 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'eu.padelxp.player',
-  appName: 'B14',
+  appName: 'PadelXP',
   webDir: 'public',
   server: {
-    url: 'https://b14.padelxp.eu',
+    url: 'https://padelxp.eu',
     cleartext: true,
     allowNavigation: ['padelxp.eu', '*.padelxp.eu']
   },
