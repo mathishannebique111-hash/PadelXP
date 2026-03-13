@@ -12,8 +12,10 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: reservationId } = await params;
+    let stripeAccountId: string | null = null;
+
     try {
-        const { id: reservationId } = await params;
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -55,7 +57,7 @@ export async function POST(
 
         const reservation = participant.reservation as any;
         const club = reservation.court.club;
-        const stripeAccountId = club.stripe_account_id;
+        stripeAccountId = club.stripe_account_id;
 
         if (!stripeAccountId) {
             return NextResponse.json({ error: "Ce club n'accepte pas les paiements en ligne" }, { status: 400 });
@@ -82,24 +84,17 @@ export async function POST(
             serviceFeeCents = Math.ceil(feeAmount * 100);
         }
 
-        const PADELXP_COMMISSION_CENTS = Math.round(participant.amount * 100 * 0.01);
-        // Note: Stripe Application Fee plafonnée au montant total si nécessaire, mais ici c'est différent.
-        // On veut que PadelXP touche la commission.
-        // Si on utilise destination charges (ce qui semble être le cas via stripeAccount: stripeAccountId),
-        // application_fee_amount est ce que la plateforme (PadelXP) garde.
-
-        // Donc PadelXP garde : Les frais de service (payés par le user en plus) + evt une com sur la part club ? 
-        // L'utilisateur a demandé : "pas de commissions sur les réservations pour les premiums"
-        // Ça sous-entend que pour les non-premium, PadelXP prend ces frais.
-
         const totalApplicationFee = serviceFeeCents;
 
         // Le montant total à payer par l'utilisateur inclut le prix du terrain + frais de service
         const unitAmount = Math.round(participant.amount * 100) + serviceFeeCents;
 
         // 2. Créer la session Stripe Checkout
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
+        const session = await (stripe.checkout.sessions as any).create({
+            // Utiliser les modes de paiement automatiques pour activer Apple Pay / Google Pay
+            automatic_payment_methods: {
+                enabled: true,
+            },
             line_items: [
                 {
                     price_data: {
@@ -133,8 +128,29 @@ export async function POST(
 
         return NextResponse.json({ url: session.url });
 
-    } catch (error) {
-        logger.error("Erreur création session checkout réservation", { error });
-        return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    } catch (error: any) {
+        logger.error("Erreur création session checkout réservation", { 
+            message: error?.message,
+            code: error?.code,
+            type: error?.type,
+            stack: error?.stack,
+            reservationId
+        });
+
+        const isDev = process.env.NODE_ENV === 'development';
+        
+        // Gestion spécifique des erreurs Stripe Connect
+        if (error?.type === 'StripePermissionError' || error?.message?.includes('access to account')) {
+            return NextResponse.json({ 
+                error: "Configuration de paiement du club invalide",
+                details: "Le club doit reconnecter son compte Stripe Connect. L'accès à leur compte a été révoqué ou est mal configuré.",
+                stripe_account_id: stripeAccountId
+            }, { status: 400 });
+        }
+
+        return NextResponse.json({ 
+            error: isDev ? (error?.message || "Erreur serveur") : "Erreur serveur",
+            details: isDev ? error : undefined
+        }, { status: 500 });
     }
 }
