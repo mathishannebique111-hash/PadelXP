@@ -187,7 +187,12 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
             setOpeningHours(clubData.opening_hours); // Track club opening hours
 
         } catch (error: any) {
-            console.error("Error fetching planning:", error);
+            console.error("Error fetching planning:", {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
             toast.error("Erreur lors du chargement du planning");
         } finally {
             setLoading(false);
