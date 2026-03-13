@@ -64,23 +64,26 @@ export async function POST(request: NextRequest) {
         let stripeAccountId = club.stripe_account_id;
         const isTestMode = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test");
 
-        // Vérifier si l'environnement correspond (Live vs Test)
-        if (stripeAccountId) {
+        // FORCE RESET pour le mode Test : si on est en test mode, on ignore l'ID existant
+        // pour repartir sur un compte tout neuf qui affichera obligatoirement les boutons de test.
+        if (isTestMode && stripeAccountId) {
+            logger.info("Mode Test détecté : Forçage d'une nouvelle création de compte pour garantir les boutons de test.");
+            await supabaseAdmin.from("clubs").update({ stripe_account_id: null }).eq("id", club.id);
+            stripeAccountId = null;
+        }
+
+        // Vérifier si l'environnement correspond (Live vs Test) - Pour le mode Live
+        if (!isTestMode && stripeAccountId) {
             try {
                 const account = (await stripe.accounts.retrieve(stripeAccountId)) as any;
-                const environmentMismatch = account.livemode !== !isTestMode;
+                const environmentMismatch = account.livemode !== true; // On attendait du Live
                 
                 if (environmentMismatch) {
-                    logger.warn("Changement d'environnement Stripe détecté (Live <=> Test). Réinitialisation...", { 
-                        stripeAccountId, 
-                        accountLivemode: account.livemode,
-                        isTestMode 
-                    });
+                    logger.warn("Compte Test trouvé en mode Live. Réinitialisation...", { stripeAccountId });
                     await supabaseAdmin.from("clubs").update({ stripe_account_id: null }).eq("id", club.id);
                     stripeAccountId = null;
                 }
             } catch (err) {
-                // Si l'ID est invalide (déjà géré par le catch global mais plus propre ici)
                 stripeAccountId = null;
             }
         }
