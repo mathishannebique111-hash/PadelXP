@@ -94,14 +94,49 @@ export async function POST(request: NextRequest) {
         }
 
         // Créer le lien d'onboarding
-        const accountLink = await stripe.accountLinks.create({
-            account: stripeAccountId,
-            refresh_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/stripe/connect/refresh`,
-            return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/stripe/connect/return`,
-            type: "account_onboarding",
-        });
+        try {
+            const accountLink = await stripe.accountLinks.create({
+                account: stripeAccountId,
+                refresh_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/stripe/connect/refresh`,
+                return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/stripe/connect/return`,
+                type: "account_onboarding",
+            });
 
-        return NextResponse.json({ url: accountLink.url });
+            return NextResponse.json({ url: accountLink.url });
+        } catch (linkError: any) {
+            // RECOVERY : Si l'ID est invalide (compte supprimé chez Stripe ou mauvais environnement)
+            if (linkError.message?.includes("not connected to your platform") || linkError.message?.includes("does not exist")) {
+                logger.warn("ID Stripe invalide détecté, recréation du compte...", { stripeAccountId, clubId: club.id });
+
+                // 1. Supprimer l'ID invalide
+                await supabaseAdmin.from("clubs").update({ stripe_account_id: null }).eq("id", club.id);
+
+                // 2. Créer un nouveau compte
+                const newAccount = await stripe.accounts.create({
+                    type: "express",
+                    country: "FR",
+                    capabilities: {
+                        card_payments: { requested: true },
+                        transfers: { requested: true },
+                    },
+                    business_type: "company",
+                    metadata: { club_id: club.id, club_name: club.name },
+                });
+
+                // 3. Sauvegarder et générer le lien
+                await supabaseAdmin.from("clubs").update({ stripe_account_id: newAccount.id }).eq("id", club.id);
+                
+                const newLink = await stripe.accountLinks.create({
+                    account: newAccount.id,
+                    refresh_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/stripe/connect/refresh`,
+                    return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/stripe/connect/return`,
+                    type: "account_onboarding",
+                });
+
+                return NextResponse.json({ url: newLink.url });
+            }
+            throw linkError;
+        }
 
     } catch (error: any) {
         logger.error("Erreur critique suite clic Connect Stripe", { 
@@ -156,14 +191,23 @@ export async function GET(request: NextRequest) {
         }
 
         // Vérifier le statut du compte chez Stripe
-        const account = await stripe.accounts.retrieve(club.stripe_account_id);
+        try {
+            const account = await stripe.accounts.retrieve(club.stripe_account_id);
 
-        return NextResponse.json({
-            connected: true,
-            details_submitted: account.details_submitted,
-            charges_enabled: account.charges_enabled,
-            payouts_enabled: account.payouts_enabled,
-        });
+            return NextResponse.json({
+                connected: true,
+                details_submitted: account.details_submitted,
+                charges_enabled: account.charges_enabled,
+                payouts_enabled: account.payouts_enabled,
+            });
+        } catch (retrieveError: any) {
+            if (retrieveError.message?.includes("does not exist") || retrieveError.message?.includes("not connected")) {
+                logger.warn("ID Stripe invalide trouvé en GET, nettoyage DB...", { stripeAccountId: club.stripe_account_id });
+                await supabaseAdmin.from("clubs").update({ stripe_account_id: null }).eq("id", adminEntry.club_id);
+                return NextResponse.json({ connected: false, reason: "invalid_id_cleared" });
+            }
+            throw retrieveError;
+        }
 
     } catch (error) {
         logger.error("Erreur get Stripe Connect", { error });
