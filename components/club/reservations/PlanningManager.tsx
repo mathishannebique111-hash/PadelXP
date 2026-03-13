@@ -47,6 +47,18 @@ interface Reservation {
         first_name: string | null;
         last_name: string | null;
     } | null;
+    reservation_participants?: {
+        id: string;
+        user_id: string;
+        payment_status: string;
+        is_organizer: boolean;
+        profiles: {
+            display_name: string | null;
+            first_name: string | null;
+            last_name: string | null;
+            avatar_url: string | null;
+        } | null;
+    }[];
 }
 
 export default function PlanningManager({ clubId }: PlanningManagerProps) {
@@ -120,7 +132,14 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                     end_time, 
                     status,
                     title,
-                    profiles!created_by (display_name, first_name, last_name)
+                    profiles!created_by (display_name, first_name, last_name),
+                    reservation_participants (
+                        id,
+                        user_id,
+                        payment_status,
+                        is_organizer,
+                        profiles:user_id (display_name, first_name, last_name, avatar_url)
+                    )
                 `)
                 .eq("status", "confirmed")
                 .gte("start_time", start)
@@ -569,10 +588,55 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
                                     <span className="text-white/40">Date</span>
                                     <span className="text-white font-medium capitalize">{format(selectedDate, "EEEE d MMMM", { locale: fr })}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
+                                <div className="flex justify-between text-sm border-b border-white/5 pb-2">
                                     <span className="text-white/40">Horaire</span>
                                     <span className="text-white font-medium">{format(blockSlot, "HH:mm")} - {format(addMinutes(blockSlot, blockDuration), "HH:mm")}</span>
                                 </div>
+
+                                {editingReservation?.reservation_participants && editingReservation.reservation_participants.length > 0 && (
+                                    <div className="space-y-3 pt-1">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Joueurs ({editingReservation.reservation_participants.length}/4)</span>
+                                            <span className="text-[10px] text-blue-400 font-medium">Statut</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {editingReservation.reservation_participants.map((p) => {
+                                                const profile = p.profiles;
+                                                const name = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.display_name || "Joueur" : "Joueur";
+                                                const isConfirmed = p.is_organizer || p.payment_status === 'paid' || p.payment_status === 'confirmed';
+
+                                                return (
+                                                    <div key={p.id} className="flex items-center justify-between group/player">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border ${isConfirmed ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-white/40'}`}>
+                                                                {profile?.avatar_url ? (
+                                                                    <img src={profile.avatar_url} alt={name} className="w-full h-full rounded-full object-cover" />
+                                                                ) : (
+                                                                    <span>{name.charAt(0).toUpperCase()}</span>
+                                                                )}
+                                                            </div>
+                                                            <span className={`text-sm ${isConfirmed ? 'text-white' : 'text-white/40'}`}>
+                                                                {name}
+                                                                {p.is_organizer && <span className="ml-1 text-[10px] text-blue-400 font-normal">(Org)</span>}
+                                                            </span>
+                                                        </div>
+                                                        {isConfirmed ? (
+                                                            <div className="flex items-center gap-1 text-green-400 scale-90">
+                                                                <ShieldCheck className="w-3.5 h-3.5" />
+                                                                <span className="text-[10px] font-bold uppercase">Présent</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-1 text-white/20 scale-90">
+                                                                <Clock className="w-3.5 h-3.5" />
+                                                                <span className="text-[10px] font-bold uppercase">En attente</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

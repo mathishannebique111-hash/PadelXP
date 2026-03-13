@@ -47,26 +47,6 @@ export default function ReservationsView({ clubId }: ReservationsViewProps) {
                         <Clock className="w-4 h-4" />
                         Horaires
                     </button>
-                    <button
-                        onClick={() => setActiveTab("pricing")}
-                        className={`${activeTab === "pricing"
-                            ? "border-blue-500 text-blue-400"
-                            : "border-transparent text-white/60 hover:text-white hover:border-white/30"
-                            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors`}
-                    >
-                        <MapPin className="w-4 h-4" />
-                        Tarifs
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("stripe")}
-                        className={`${activeTab === "stripe"
-                            ? "border-blue-500 text-blue-400"
-                            : "border-transparent text-white/60 hover:text-white hover:border-white/30"
-                            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors`}
-                    >
-                        <ShieldCheck className="w-4 h-4" />
-                        Paiements (Stripe)
-                    </button>
                 </nav>
             </div>
 
@@ -82,24 +62,6 @@ export default function ReservationsView({ clubId }: ReservationsViewProps) {
                             Définissez les heures d'ouverture standard de votre club pour chaque terrain.
                         </p>
                         <ScheduleManager clubId={clubId} />
-                    </div>
-                )}
-
-                {activeTab === "pricing" && (
-                    <div className="space-y-6">
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-                            <h3 className="text-lg font-semibold text-white mb-1">Gestion des tarifs par terrain</h3>
-                            <p className="text-white/60 text-sm mb-6">
-                                Définissez les tarifs horaires de base et les tarifs particuliers (heures pleines) pour chacun de vos terrains.
-                            </p>
-                            <CourtsManager clubId={clubId} />
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === "stripe" && (
-                    <div className="max-w-2xl">
-                        <StripeConnectCard />
                     </div>
                 )}
             </div>

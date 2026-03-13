@@ -55,22 +55,22 @@ export default function ReservationsListContent() {
     const [inviting, setInviting] = useState(false);
     const [isPaying, setIsPaying] = useState<string | null>(null);
 
-    const handlePayment = async (reservationId: string) => {
+    const handleConfirmPresence = async (reservationId: string) => {
         setIsPaying(reservationId);
         try {
-            const res = await fetch(`/api/reservations/${reservationId}/checkout`, {
+            const res = await fetch(`/api/reservations/${reservationId}/confirm`, {
                 method: "POST",
             });
             const data = await res.json();
-            if (res.ok && data.url) {
-                window.location.href = data.url;
+            if (res.ok) {
+                loadReservations();
             } else {
-                alert("Erreur: " + (data.error || "Impossible d'initialiser le paiement"));
-                setIsPaying(null);
+                alert("Erreur: " + (data.error || "Impossible de confirmer votre présence"));
             }
         } catch (error) {
             console.error(error);
             alert("Erreur technique");
+        } finally {
             setIsPaying(null);
         }
     };
@@ -366,23 +366,23 @@ export default function ReservationsListContent() {
                                     )}
                                 </Wrapper>
 
-                                {/* Bouton pour payer sa part (Stripe) */}
-                                {filter === "upcoming" && item.reservation.payment_method === 'stripe' && item.payment_status === 'pending' && item.reservation.status === 'pending_payment' && (
+                                {/* Bouton pour confirmer sa présence (Anciennement Stripe) */}
+                                {filter === "upcoming" && item.payment_status === 'pending' && item.reservation.status === 'pending_payment' && (
                                     <div className="mt-4 border-t border-white/10 pt-3">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handlePayment(item.reservation.id);
+                                                handleConfirmPresence(item.reservation.id);
                                             }}
                                             disabled={isPaying === item.reservation.id}
-                                            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white rounded-lg py-2.5 px-4 text-sm font-semibold shadow-lg shadow-green-900/20 transition-all active:scale-[0.98]"
+                                            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-2.5 px-4 text-sm font-semibold shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98]"
                                         >
                                             {isPaying === item.reservation.id ? (
                                                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                             ) : (
                                                 <>
-                                                    <CreditCard className="w-4 h-4" />
-                                                    <span>Payer ma part ({item.amount}€)</span>
+                                                    <Check className="w-4 h-4" />
+                                                    <span>Confirmer ma présence</span>
                                                 </>
                                             )}
                                         </button>
