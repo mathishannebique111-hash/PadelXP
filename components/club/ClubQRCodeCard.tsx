@@ -9,7 +9,7 @@ interface ClubQRCodeCardProps {
 }
 
 export default function ClubQRCodeCard({ clubName, subdomain }: ClubQRCodeCardProps) {
-  const clubUrl = `https://${subdomain}.padelxp.eu`;
+  const clubUrl = `https://${subdomain}.padelxp.eu/install`;
 
   const downloadQRCode = () => {
     const svg = document.getElementById("club-qrcode-svg");
