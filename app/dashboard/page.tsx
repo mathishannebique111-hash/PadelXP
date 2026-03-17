@@ -7,6 +7,7 @@ import PasswordChangeCard from "./PasswordChangeCard";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import { logger } from "@/lib/logger";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
+import ClubQRCodeCard from "@/components/club/ClubQRCodeCard";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -174,6 +175,13 @@ export default async function DashboardHome() {
       <header>
         <PageTitle title="Tableau de bord" subtitle="Bienvenue dans votre espace club / complexe" />
       </header>
+
+      {/* QR Code de l'Application Club */}
+      {club?.slug && (
+        <section className="w-full">
+          <ClubQRCodeCard clubName={club?.name || "Votre Club"} subdomain={club.slug} />
+        </section>
+      )}
 
       {/* Ligues et Challenges */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
