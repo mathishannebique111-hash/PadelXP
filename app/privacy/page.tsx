@@ -76,6 +76,12 @@ export default function PrivacyPage() {
                 <li>Statistiques de jeu</li>
                 <li>Préférences et paramètres du compte</li>
               </ul>
+
+              <h3 className="text-xl font-semibold text-white mt-4 mb-2">2.5. Données de santé et d'activité physique (Health Data)</h3>
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li>Les données d'activité physique (historique des matchs, fréquence de jeu, statistiques sportives) sont collectées exclusivement pour le fonctionnement de l'application (classements et suivi des performances des joueurs).</li>
+                <li>Ces données ne sont <strong>pas vendues à des tiers</strong> et ne sont <strong>pas utilisées à des fins de ciblage publicitaire</strong>.</li>
+              </ul>
             </div>
           </section>
 

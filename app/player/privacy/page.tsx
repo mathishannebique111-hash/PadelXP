@@ -80,6 +80,12 @@ export default function PlayerPrivacyPage() {
                 <li>Code d'invitation utilisé pour rejoindre le club</li>
               </ul>
 
+              <h3 className="text-xl font-semibold text-white mt-4 mb-2">2.5. Données de santé et d'activité physique (Health Data)</h3>
+              <ul className="list-disc list-inside ml-4 space-y-1">
+                <li>Conformément aux règles de Google Play et de l'App Store, nous collectons des données liées à votre activité physique (historique des matchs, statistiques sportives) afin de vous fournir les services de suivi et de classement de l'application.</li>
+                <li>Ces données d'activité physique sont strictement utilisées pour le fonctionnement interne de PadelXP. Elles ne sont <strong>pas vendues</strong> et ne sont <strong>pas utilisées pour de la publicité ciblée</strong>.</li>
+              </ul>
+
               <p className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 mt-4">
                 <strong className="text-blue-300">ℹ️ Important :</strong> Les données de matchs et statistiques
                 que vous enregistrez sont visibles par les autres membres de votre club et les administrateurs
