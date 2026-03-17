@@ -131,16 +131,15 @@ export async function middleware(req: NextRequest) {
     requestHeaders.set("x-club-subdomain", clubSubdomain);
 
     // Rediriger la racine vers /install pour les sous-domaines de clubs
-    // Sauf si le joueur est en mode PWA standalone (déjà installé) ou dans l'app Capacitor
+    // Sauf si le joueur est dans l'app Capacitor
     if (normalizedPathname === '/' || normalizedPathname === '') {
-      const isStandalone = req.headers.get('sec-fetch-dest') === 'document'
-        && req.headers.get('sec-fetch-mode') === 'navigate';
       const userAgent = req.headers.get('user-agent') || '';
       const isApp = isCapacitorApp(userAgent) || req.headers.get('x-capacitor-request') === 'true';
       
       // Ne pas rediriger si le referer contient déjà /install (éviter boucle)
       const referer = req.headers.get('referer') || '';
-      if (!referer.includes('/install') && !isStandalone && !isApp) {
+      // We rely on client-side JS in /install to redirect to /player/signup if already standalone.
+      if (!referer.includes('/install') && !isApp) {
         const url = req.nextUrl.clone();
         url.pathname = '/install';
         return NextResponse.redirect(url);
