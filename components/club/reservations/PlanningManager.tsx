@@ -123,31 +123,36 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
             const start = startOfDay(selectedDate).toISOString();
             const end = endOfDay(selectedDate).toISOString();
 
-            const { data: resData, error: resError } = await supabase
-                .from("reservations")
-                .select(`
-                    id, 
-                    court_id, 
-                    start_time, 
-                    end_time, 
-                    status,
-                    title,
-                    created_by,
-                    reservation_participants (
-                        id,
-                        user_id,
-                        payment_status,
-                        is_organizer
-                    )
-                `)
-                .in("status", ["confirmed", "pending_payment"])
-                .in("court_id", (courtsData || []).map((c: any) => c.id))
-                .gte("start_time", start)
-                .lte("start_time", end);
+            let rawReservations: any[] = [];
+            const courtIds = (courtsData || []).map((c: any) => c.id);
 
-            if (resError) throw resError;
-            
-            const rawReservations = resData as any[] || [];
+            if (courtIds.length > 0) {
+                const { data: resData, error: resError } = await supabase
+                    .from("reservations")
+                    .select(`
+                        id, 
+                        court_id, 
+                        start_time, 
+                        end_time, 
+                        status,
+                        title,
+                        created_by,
+                        reservation_participants (
+                            id,
+                            user_id,
+                            payment_status,
+                            is_organizer
+                        )
+                    `)
+                    .in("status", ["confirmed", "pending_payment"])
+                    .in("court_id", courtIds)
+                    .gte("start_time", start)
+                    .lte("start_time", end);
+
+                if (resError) throw resError;
+                
+                rawReservations = resData as any[] || [];
+            }
 
             // 3. Manual profile enrichment
             const userIds = new Set<string>();
@@ -187,13 +192,16 @@ export default function PlanningManager({ clubId }: PlanningManagerProps) {
             setOpeningHours(clubData.opening_hours); // Track club opening hours
 
         } catch (error: any) {
-            console.error("Error fetching planning:", {
-                message: error.message,
-                details: error.details,
-                hint: error.hint,
-                code: error.code
-            });
-            toast.error("Erreur lors du chargement du planning");
+            // Diagnostic logging
+            const rawTrace = error instanceof Error 
+                ? `${error.name}: ${error.message}\n${error.stack}`
+                : JSON.stringify(error, Object.getOwnPropertyNames(error || {}).concat(Object.keys(error || {})));
+            
+            console.error("Error fetching planning explicitly:", rawTrace);
+            
+            // Extract a readable message if available
+            let errorMsg = `Erreur lors du chargement: ${error?.message || error?.name || JSON.stringify(error)}`;
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }

@@ -30,6 +30,7 @@ BEGIN
     AND user_id = auth.uid()
   );
 END;
+-- CRITICAL: SECURITY DEFINER bypasses RLS to prevent infinite recursion
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 3. Revoke/Grant permissions to ensure they are used correctly
@@ -94,10 +95,24 @@ CREATE POLICY "res_participants_modify_involved"
   ON reservation_participants FOR ALL TO authenticated
   USING (
     user_id = auth.uid()
-    OR public.is_reservation_participant(reservation_id)
+    -- Only allow if the user is the one associated with the record
+    -- Removing the public.is_reservation_participant check entirely from here
+    -- because modifying another participant requires being the creator OR club admin
+    -- Doing this prevents 100% of all circular dependencies on this table.
     OR EXISTS (
-      SELECT 1 FROM reservations r 
+      -- Is the current user the creator of the reservation?
+      SELECT 1 FROM public.reservations r 
       WHERE r.id = reservation_id 
-      AND (r.created_by = auth.uid() OR public.is_club_admin((SELECT c.club_id FROM courts c WHERE c.id = r.court_id)))
+      AND r.created_by = auth.uid()
     )
+    OR public.is_club_admin((
+        -- Is the current user admin of the club?
+        SELECT c.club_id 
+        FROM public.courts c 
+        WHERE c.id = (
+            SELECT r.court_id 
+            FROM public.reservations r 
+            WHERE r.id = reservation_participants.reservation_id
+        )
+    )::text)
   );

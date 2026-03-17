@@ -10,14 +10,30 @@ export async function POST() {
     const email = "contactpadelxp@gmail.com";
 
     try {
-        // Liste les utilisateurs pour voir si l'email existe
-        const { data: { users }, error } = await supabase.auth.admin.listUsers();
+        let adminUser = null;
+        let page = 1;
 
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        // Loop through all pages to ensure we find the admin user even if there are >50 users
+        while (true) {
+            const { data: { users }, error } = await supabase.auth.admin.listUsers({
+                page,
+                perPage: 1000
+            });
+
+            if (error) {
+                return NextResponse.json({ error: error.message }, { status: 500 });
+            }
+
+            if (!users || users.length === 0) break;
+
+            const found = users.find((u) => u.email === email);
+            if (found) {
+                adminUser = found;
+                break;
+            }
+
+            page++;
         }
-
-        const adminUser = users.find((u) => u.email === email);
 
         return NextResponse.json({ exists: !!adminUser });
     } catch (err: any) {
