@@ -96,7 +96,7 @@ export default async function DashboardHome() {
 
   const { data: club } = await supabase
     .from("clubs")
-    .select("name, code_invitation, slug, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count, subscription_status, selected_plan, subscription_started_at, stripe_subscription_id, offer_type")
+    .select("name, code_invitation, slug, subdomain, trial_start, trial_start_date, trial_end_date, trial_current_end_date, auto_extension_unlocked, total_players_count, total_matches_count, dashboard_login_count, subscription_status, selected_plan, subscription_started_at, stripe_subscription_id, offer_type")
     .eq("id", clubId)
     .maybeSingle();
 
@@ -177,9 +177,9 @@ export default async function DashboardHome() {
       </header>
 
       {/* QR Code de l'Application Club */}
-      {club?.slug && (
+      {(club?.subdomain || club?.slug) && (
         <section className="w-full">
-          <ClubQRCodeCard clubName={club?.name || "Votre Club"} subdomain={club.slug} />
+          <ClubQRCodeCard clubName={club?.name || "Votre Club"} subdomain={club.subdomain || club.slug} />
         </section>
       )}
 
