@@ -32,7 +32,9 @@ export default function BottomNavBar() {
     ];
 
     // Ajouter "Réserver" si on est sur l'app PadelXP OU si l'option est activée pour le club
-    if (!isClub || (isClub && branding?.enabled_features?.reservations)) {
+    // (Temporairement désactivé pour l'app PadelXP principale)
+    // if (!isClub || (isClub && branding?.enabled_features?.reservations)) {
+    if (isClub && branding?.enabled_features?.reservations) {
         navItems.push({ href: '/book', label: 'Réserver', icon: <LayoutGrid size={20} />, navKey: 'book' });
     }
 
