@@ -89,7 +89,19 @@ export default function ClubDetailsClient({
 }: ClubDetailsClientProps) {
   const hours = useMemo(() => buildHours(openingHours ?? null), [openingHours]);
 
+  const isClub = typeof document !== 'undefined' &&
+    !!document.body.dataset.clubSubdomain &&
+    document.body.dataset.clubSubdomain !== 'app';
+
   const cardStyle = useMemo(() => {
+    if (isClub) {
+      return {
+        backgroundColor: 'rgb(var(--theme-page))',
+        borderColor: 'rgb(var(--theme-accent))',
+        borderWidth: '1.5px',
+        boxShadow: '0 30px 70px rgba(4,16,46,0.5)',
+      };
+    }
     if (!accent) {
       return {
         backgroundColor: "rgb(var(--theme-page))",
@@ -104,11 +116,7 @@ export default function ClubDetailsClient({
       borderWidth: "1.5px",
       boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
     };
-  }, [accent]);
-
-  const isClub = typeof document !== 'undefined' &&
-    !!document.body.dataset.clubSubdomain &&
-    document.body.dataset.clubSubdomain !== 'app';
+  }, [accent, isClub]);
 
   const contrastColor = useMemo(() => {
     if (accent) return getContrastColor(accent.soft);
