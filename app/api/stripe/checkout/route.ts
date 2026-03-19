@@ -24,6 +24,8 @@ const stripeCheckoutSchema = z.object({
   priceId: z.string().min(1, 'priceId requis').regex(/^price_[a-zA-Z0-9]+$/, 'priceId invalide'),
   mode: z.enum(['subscription', 'payment']).optional(),
   withReservations: z.boolean().optional(),
+  clientReferenceId: z.string().optional(),
+  customerEmail: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -157,6 +159,13 @@ export async function POST(req: NextRequest) {
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/facturation/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/facturation/cancel`,
     };
+
+    if (parsedBody.data.clientReferenceId) {
+      sessionParams.client_reference_id = parsedBody.data.clientReferenceId;
+    }
+    if (parsedBody.data.customerEmail) {
+      sessionParams.customer_email = parsedBody.data.customerEmail;
+    }
 
     // Si on a un trial_end, l'ajouter aux données de subscription.
     // Stripe n'autorise pas trial_period_days à 0 : on l'omet pour éviter l'erreur.

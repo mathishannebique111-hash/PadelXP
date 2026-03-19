@@ -339,38 +339,18 @@ export default function ClientClubIdentityPage() {
   // Choix de l'abonnement
   const [planType, setPlanType] = useState<"less_than_150" | "between_150_500" | "more_than_500">("less_than_150");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-  const [withReservations, setWithReservations] = useState(false);
-
   const PAYMENT_LINKS = {
     less_than_150: {
-      monthly: {
-        without: "https://buy.stripe.com/8x27sE5J4fBVh1n1UN5J602",
-        with: "https://buy.stripe.com/7sY8wIdbwcpJ12pgPH5J608"
-      },
-      annual: {
-        without: "https://buy.stripe.com/7sY4gs7Rc3TddPbgPH5J603",
-        with: "https://buy.stripe.com/14AcMYefA89tcL77f75J609"
-      }
+      monthly: "price_1TCcvK3RWATPTiiqb7307252",
+      annual: "price_1TCcvK3RWATPTiiqDVufc59C"
     },
     between_150_500: {
-      monthly: {
-        without: "https://buy.stripe.com/aFa7sEc7s75pbH30QJ5J604",
-        with: "https://buy.stripe.com/14A00c4F0cpJ26tbvn5J60a"
-      },
-      annual: {
-        without: "https://buy.stripe.com/aFadR2c7sdtNh1narj5J605",
-        with: "https://buy.stripe.com/cNifZagnI89t8uR2YR5J60b"
-      }
+      monthly: "price_1TCcvK3RWATPTiiqfwwbeYq8",
+      annual: "price_1TCcvK3RWATPTiiqBuGz2oQN"
     },
     more_than_500: {
-      monthly: {
-        without: "https://buy.stripe.com/3cIfZab3o0H16mJeHz5J606",
-        with: "https://buy.stripe.com/5kQaEQ8VgexR7qN2YR5J60c"
-      },
-      annual: {
-        without: "https://buy.stripe.com/fZu00c2wSblF9yVgPH5J607",
-        with: "https://buy.stripe.com/9B64gs4F0dtN7qN2YR5J60d"
-      }
+      monthly: "price_1TCcvK3RWATPTiiqHbyrbdwm",
+      annual: "price_1TCcvK3RWATPTiiqppfLC9IL"
     }
   };
 
@@ -499,7 +479,7 @@ export default function ClientClubIdentityPage() {
           primary_color: secondaryColor, // On utilise la couleur d'accent pour les deux
           secondary_color: secondaryColor,
           background_color: backgroundColor,
-          has_reservations_option: withReservations,
+          has_reservations_option: false,
           owner_email: ownerEmail || undefined,
           logo_payload: encodedLogo,
           user_metadata: {
@@ -529,26 +509,31 @@ export default function ClientClubIdentityPage() {
         sessionStorage.removeItem('onboarding_password');
       }
 
-      // REDIRECTION VERS LE LIEN DE PAIEMENT STRIPE CORRESPONDANT
-      const reservationKey = withReservations ? "with" : "without";
-      let stripeUrl = PAYMENT_LINKS[planType][billingCycle][reservationKey];
+      // REDIRECTION VERS L'API STRIPE CHECKOUT
+      const priceId = PAYMENT_LINKS[planType][billingCycle];
       
-      // Ajouter les paramètres pour identifier le club et pré-remplir l'email
-      const params = new URLSearchParams();
-      if (data?.club?.id) params.set("client_reference_id", data.club.id);
-      if (ownerEmail) params.set("prefilled_email", ownerEmail);
+      const checkoutRes = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+              priceId, 
+              mode: 'subscription',
+              withReservations: false,
+              clientReferenceId: data?.club?.id,
+              customerEmail: ownerEmail
+          })
+      });
       
-      if (params.toString()) {
-        stripeUrl += (stripeUrl.includes('?') ? '&' : '?') + params.toString();
-      }
+      if (!checkoutRes.ok) throw new Error("Erreur de génération du lien de paiement");
       
-      await navigator.clipboard.writeText(stripeUrl);
+      const checkoutData = await checkoutRes.json();
+      if (!checkoutData.url) throw new Error("Lien de paiement expiré ou invalide");
       
-      showToast("Compte créé et lien de paiement copié dans le presse-papier !", "success");
+      showToast("Compte créé ! Redirection vers la page de paiement sécurisée...", "success");
 
-      // Redirection vers le dashboard après un court délai
+      // Redirection vers le paiement Stripe après un court délai
       setTimeout(() => {
-        router.push("/dashboard");
+        window.location.href = checkoutData.url;
       }, 1500);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Erreur lors de l'enregistrement");
@@ -944,9 +929,9 @@ export default function ClientClubIdentityPage() {
                 value={planType}
                 onChange={(e) => setPlanType(e.target.value as any)}
               >
-                <option value="less_than_150">Entre 1 et 3 terrains (89€/mois)</option>
-                <option value="between_150_500">Entre 4 et 6 terrains (139€/mois)</option>
-                <option value="more_than_500">7 terrains ou plus (229€/mois)</option>
+                <option value="less_than_150">Entre 1 et 3 terrains (79€/mois)</option>
+                <option value="between_150_500">Entre 4 et 6 terrains (129€/mois)</option>
+                <option value="more_than_500">7 terrains ou plus (199€/mois)</option>
               </select>
             </div>
             <div className="flex-1 space-y-1">
@@ -960,18 +945,7 @@ export default function ClientClubIdentityPage() {
                 <option value="annual">Annuel (-10%)</option>
               </select>
             </div>
-            <div className="flex-1 space-y-1">
-              <label className={labelClass}>Options supplémentaires</label>
-              <div 
-                onClick={() => setWithReservations(!withReservations)}
-                className={`${inputClass} flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors py-[7px]`}
-              >
-                <span className="text-white/70">Option Réservations (+39€/m)</span>
-                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${withReservations ? 'bg-[#0066FF] border-transparent' : 'border-white/20'}`}>
-                  {withReservations && <Plus size={12} className="text-white rotate-45" />}
-                </div>
-              </div>
-            </div>
+
           </div>
 
           <div className="flex flex-col items-center pt-4 border-t border-white/10 gap-2">
@@ -982,7 +956,7 @@ export default function ClientClubIdentityPage() {
               className="w-full max-w-lg py-3 rounded-2xl text-white text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,102,255,0.4)] bg-gradient-to-r from-[#0066FF] to-[#0066FF88] relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              {loading ? "Création du compte..." : "Confirmer l'inscription et copier le lien"}
+              {loading ? "Création du compte..." : "Confirmer l'inscription et régler l'abonnement"}
             </button>
             <div className="text-[9px] text-white/30 font-medium uppercase tracking-[0.1em]">
               En validant, vous acceptez les <span className="text-white/60 underline cursor-pointer">Conditions Générales d'Utilisation</span>.
