@@ -6,10 +6,16 @@ const supabase = createClient(
 );
 
 async function run() {
+  const userId = 'd196d41b-bbd8-4270-837c-eeb7f8dc4804';
+  const badgeCode = 'FirstWin';
+  
   const { data, error } = await supabase
-    .from('profiles')
-    .select('id, first_name, last_name, display_name, email')
-    .or('first_name.ilike.%lilian%,last_name.ilike.%lilian%,display_name.ilike.%lilian%')
+    .from('earned_badges')
+    .upsert(
+      { user_id: userId, badge_code: badgeCode, earned_at: new Date().toISOString() },
+      { onConflict: 'user_id, badge_code' }
+    )
+    .select();
     
   console.log(JSON.stringify({data, error}, null, 2));
 }

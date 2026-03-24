@@ -111,6 +111,7 @@ interface MediaOptions {
   textColor: string;
   borderRadius: number;
   font: string;
+  planeScale: number;
 }
 
 class Media {
@@ -129,6 +130,7 @@ class Media {
   textColor: string;
   borderRadius: number;
   font: string;
+  planeScale: number;
   program!: Program;
   plane!: Mesh;
   title!: Title;
@@ -154,8 +156,8 @@ class Media {
     this.program = new Program(this.gl as unknown as Parameters<typeof Program>[0], {
       depthTest: false,
       depthWrite: false,
-      vertex: `precision highp float;attribute vec3 position;attribute vec2 uv;uniform mat4 modelViewMatrix;uniform mat4 projectionMatrix;uniform float uTime;uniform float uSpeed;varying vec2 vUv;void main(){vUv=uv;vec3 p=position;p.z=(sin(p.x*4.0+uTime)*1.5+cos(p.y*2.0+uTime)*1.5)*(0.1+uSpeed*0.5);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);}`,
-      fragment: `precision highp float;uniform vec2 uImageSizes;uniform vec2 uPlaneSizes;uniform sampler2D tMap;uniform float uBorderRadius;varying vec2 vUv;float rboxSDF(vec2 p,vec2 b,float r){vec2 d=abs(p)-b;return length(max(d,vec2(0.0)))+min(max(d.x,d.y),0.0)-r;}void main(){vec2 ratio=vec2(min((uPlaneSizes.x/uPlaneSizes.y)/(uImageSizes.x/uImageSizes.y),1.0),min((uPlaneSizes.y/uPlaneSizes.x)/(uImageSizes.y/uImageSizes.x),1.0));vec2 uv=vec2(vUv.x*ratio.x+(1.0-ratio.x)*0.5,vUv.y*ratio.y+(1.0-ratio.y)*0.5);vec4 color=texture2D(tMap,uv);float d=rboxSDF(vUv-0.5,vec2(0.5-uBorderRadius),uBorderRadius);float alpha=1.0-smoothstep(-0.002,0.002,d);gl_FragColor=vec4(color.rgb,alpha);}`,
+      vertex: `precision highp float;attribute vec3 position;attribute vec2 uv;uniform mat4 modelViewMatrix;uniform mat4 projectionMatrix;varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+      fragment: `precision highp float;uniform vec2 uImageSizes;uniform vec2 uPlaneSizes;uniform sampler2D tMap;uniform float uBorderRadius;varying vec2 vUv;float rboxSDF(vec2 p,vec2 b,float r){vec2 d=abs(p)-b;return length(max(d,vec2(0.0)))+min(max(d.x,d.y),0.0)-r;}void main(){vec2 ratio=vec2(min((uPlaneSizes.x/uPlaneSizes.y)/(uImageSizes.x/uImageSizes.y),1.0),min((uPlaneSizes.y/uPlaneSizes.x)/(uImageSizes.y/uImageSizes.x),1.0));vec2 uv=vec2(vUv.x*ratio.x+(1.0-ratio.x)*0.5,vUv.y*ratio.y+(1.0-ratio.y)*0.5);vec4 color=texture2D(tMap,uv);float d=rboxSDF(vUv-0.5,vec2(0.5-uBorderRadius),uBorderRadius);float alpha=1.0-smoothstep(-0.002,0.002,d);gl_FragColor=vec4(color.rgb,color.a*alpha);}`,
       uniforms: {
         tMap: { value: texture },
         uPlaneSizes: { value: [0, 0] },
@@ -222,8 +224,8 @@ class Media {
     if (screen) this.screen = screen;
     if (viewport) this.viewport = viewport;
     const scale = this.screen.height / 1500;
-    (this.plane.scale as unknown as { y: number }).y = (this.viewport.height * (900 * scale)) / this.screen.height;
-    (this.plane.scale as unknown as { x: number }).x = (this.viewport.width * (700 * scale)) / this.screen.width;
+    (this.plane.scale as unknown as { y: number }).y = (this.viewport.height * (900 * scale * this.planeScale)) / this.screen.height;
+    (this.plane.scale as unknown as { x: number }).x = (this.viewport.width * (560 * scale * this.planeScale)) / this.screen.width;
     (this.program.uniforms as Record<string, { value: unknown }>).uPlaneSizes.value = [(this.plane.scale as unknown as { x: number }).x, (this.plane.scale as unknown as { y: number }).y];
     this.padding = 2;
     this.width = (this.plane.scale as unknown as { x: number }).x + this.padding;
@@ -259,6 +261,7 @@ class App {
   boundOnTouchDown!: (e: MouseEvent | TouchEvent) => void;
   boundOnTouchMove!: (e: MouseEvent | TouchEvent) => void;
   boundOnTouchUp!: () => void;
+  onSnap?: (index: number) => void;
 
   constructor(
     container: HTMLElement,
@@ -270,6 +273,8 @@ class App {
       font = 'bold 28px sans-serif',
       scrollSpeed = 2,
       scrollEase = 0.05,
+      planeScale = 1,
+      onSnap,
     }: {
       items?: GalleryItem[];
       bend?: number;
@@ -278,10 +283,13 @@ class App {
       font?: string;
       scrollSpeed?: number;
       scrollEase?: number;
+      planeScale?: number;
+      onSnap?: (index: number) => void;
     } = {}
   ) {
     this.container = container;
     this.scrollSpeed = scrollSpeed;
+    this.onSnap = onSnap;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0, position: 0 };
     this.onCheckDebounce = debounce(this.onCheck.bind(this), 200);
     this.createRenderer();
@@ -289,7 +297,7 @@ class App {
     this.createScene();
     this.onResize();
     this.createGeometry();
-    this.createMedias(items, bend, textColor, borderRadius, font);
+    this.createMedias(items, bend, textColor, borderRadius, font, planeScale);
     this.update();
     this.addEventListeners();
   }
@@ -315,7 +323,7 @@ class App {
     this.planeGeometry = new Plane(this.renderer.gl, { heightSegments: 50, widthSegments: 100 });
   }
 
-  createMedias(items?: GalleryItem[], bend = 1, textColor = '#7DC828', borderRadius = 0.05, font = 'bold 28px sans-serif') {
+  createMedias(items?: GalleryItem[], bend = 1, textColor = '#7DC828', borderRadius = 0.05, font = 'bold 28px sans-serif', planeScale = 1) {
     const defaultItems: GalleryItem[] = [
       { image: 'https://picsum.photos/seed/padel1/800/600', text: 'Classement ELO' },
       { image: 'https://picsum.photos/seed/padel2/800/600', text: 'Challenges' },
@@ -342,6 +350,7 @@ class App {
         textColor,
         borderRadius,
         font,
+        planeScale,
       })
     );
   }
@@ -375,6 +384,7 @@ class App {
     const itemIndex = Math.round(Math.abs(this.scroll.target) / width);
     const item = width * itemIndex;
     this.scroll.target = this.scroll.target < 0 ? -item : item;
+    this.onSnap?.(itemIndex);
   }
 
   onResize() {
@@ -404,8 +414,8 @@ class App {
     this.boundOnTouchMove = this.onTouchMove.bind(this);
     this.boundOnTouchUp = this.onTouchUp.bind(this);
     window.addEventListener('resize', this.boundOnResize);
-    window.addEventListener('wheel', this.boundOnWheel);
-    window.addEventListener('mousedown', this.boundOnTouchDown as EventListener);
+    // Only drag triggers the gallery (no wheel)
+    this.container.addEventListener('mousedown', this.boundOnTouchDown as EventListener);
     window.addEventListener('mousemove', this.boundOnTouchMove as EventListener);
     window.addEventListener('mouseup', this.boundOnTouchUp);
     window.addEventListener('touchstart', this.boundOnTouchDown as EventListener);
@@ -416,8 +426,7 @@ class App {
   destroy() {
     cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.boundOnResize);
-    window.removeEventListener('wheel', this.boundOnWheel);
-    window.removeEventListener('mousedown', this.boundOnTouchDown as EventListener);
+    this.container.removeEventListener('mousedown', this.boundOnTouchDown as EventListener);
     window.removeEventListener('mousemove', this.boundOnTouchMove as EventListener);
     window.removeEventListener('mouseup', this.boundOnTouchUp);
     window.removeEventListener('touchstart', this.boundOnTouchDown as EventListener);
@@ -436,6 +445,8 @@ interface CircularGalleryProps {
   font?: string;
   scrollSpeed?: number;
   scrollEase?: number;
+  planeScale?: number;
+  onSnap?: (index: number) => void;
 }
 
 export default function CircularGallery({
@@ -446,14 +457,16 @@ export default function CircularGallery({
   font = 'bold 28px sans-serif',
   scrollSpeed = 2,
   scrollEase = 0.05,
+  planeScale = 1,
+  onSnap,
 }: CircularGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const app = new App(containerRef.current, { items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase });
+    const app = new App(containerRef.current, { items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, planeScale, onSnap });
     return () => app.destroy();
-  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase]);
+  }, [items, bend, textColor, borderRadius, font, scrollSpeed, scrollEase, planeScale, onSnap]);
 
   return <div className="circular-gallery" ref={containerRef} />;
 }

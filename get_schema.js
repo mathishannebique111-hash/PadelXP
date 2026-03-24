@@ -7,11 +7,10 @@ const supabase = createClient(
 
 async function run() {
   const { data, error } = await supabase
-    .from('profiles')
-    .select('id, first_name, last_name, display_name, email')
-    .or('first_name.ilike.%lilian%,last_name.ilike.%lilian%,display_name.ilike.%lilian%')
+    .from('earned_badges')
+    .select('*, badges(*)');
     
-  console.log(JSON.stringify({data, error}, null, 2));
+  console.log(JSON.stringify({data: data?.slice(0, 1), error}, null, 2));
 }
 
 run();

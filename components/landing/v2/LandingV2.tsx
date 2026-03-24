@@ -280,23 +280,49 @@ function TrustBar() {
 
 // ─── Gallery (CircularGallery) ─────────────────────────────────────────────────
 
+const GALLERY_ITEMS = [
+  { image: "/images/Iphone1.png",  text: "Niveau évolutif" },
+  { image: "/images/Iphone2.png",  text: "Classement" },
+  { image: "/images/Iphone3.png",  text: "Challenges" },
+  { image: "/images/Iphone4.png",  text: "Ligues" },
+  { image: "/images/Iphone5.png",  text: "Enregistrement de matchs" },
+  { image: "/images/Iphone6.png",  text: "Historique" },
+  { image: "/images/Iphone7.png",  text: "Trouver son partenaire" },
+  { image: "/images/Iphone8.png",  text: "Trouver son match" },
+  { image: "/images/Iphone9.png",  text: "Statistiques" },
+  { image: "/images/Iphone10.png", text: "Badges" },
+];
+
 function Gallery() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
   return (
-    <section className="overflow-hidden" style={{ paddingTop: "5rem", paddingBottom: "5rem" }}>
+    <section className="overflow-hidden" style={{ paddingTop: "5rem", paddingBottom: "2rem" }}>
       <FadeIn className="text-center mb-4 px-6">
-        <SectionLabel>Aperçu plateforme</SectionLabel>
+        <SectionLabel>Aperçu application marque blanche</SectionLabel>
         <h2 className="text-3xl md:text-5xl font-extrabold text-white mt-4 tracking-tight">
           La plateforme en <span style={{ color: "#7DC828" }}>images</span>
         </h2>
         <p className="text-white/30 text-sm mt-3">Faites glisser pour explorer</p>
       </FadeIn>
-      <div className="relative h-[260px] sm:h-[380px] md:h-[520px]">
+      <div className="text-center mb-4" style={{ minHeight: "1.5rem" }}>
+        <span
+          className="text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300"
+          style={{ color: "#7DC828" }}
+        >
+          {GALLERY_ITEMS[activeIndex]?.text ?? ""}
+        </span>
+      </div>
+      <div className="relative h-[420px] sm:h-[560px] md:h-[720px]">
         <CircularGallery
+          items={GALLERY_ITEMS}
           bend={1}
           textColor="#7DC828"
-          borderRadius={0.08}
+          borderRadius={0}
           scrollSpeed={2}
           scrollEase={0.05}
+          planeScale={1.6}
+          onSnap={setActiveIndex}
         />
       </div>
     </section>
@@ -392,7 +418,7 @@ function Features() {
   const w = useWindowWidth();
   const carouselWidth = Math.min(w - 48, 480);
   return (
-    <section id="features" className="pt-16 md:pt-32" style={{ marginBottom: 0, paddingBottom: 0 }}>
+    <section id="features" className="pt-8 md:pt-16" style={{ marginBottom: 0, paddingBottom: 0 }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <FadeIn className="mb-8 sm:mb-12">
           <SectionLabel>Fonctionnalités</SectionLabel>
