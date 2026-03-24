@@ -23,7 +23,7 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="bg-gradient-to-br from-[#0066FF]/20 to-[#00CC99]/20 rounded-2xl p-8 md:p-12 border-2 border-[#0066FF]/30 text-center"
+          className="bg-gradient-to-br from-[#0066FF]/20 to-[#7DC828]/20 rounded-2xl p-8 md:p-12 border-2 border-[#0066FF]/30 text-center"
         >
           <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6">
             🚀 REJOIGNEZ LES CLUBS / COMPLEXES D'ÉLITE
@@ -56,7 +56,7 @@ export default function FinalCTA() {
           <div className="space-y-4">
             <button
               onClick={() => setIsContactModalOpen(true)}
-              className="block w-full group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105"
+              className="block w-full group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#7DC828] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105"
             >
               <span className="flex items-center justify-center gap-2">
                 <Target className="w-5 h-5" />
@@ -69,7 +69,7 @@ export default function FinalCTA() {
                   →
                 </motion.span>
               </span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#7DC828] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
             </button>
 
             <Link

@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://padelxp.eu',
     cleartext: true,
-    allowNavigation: ['localhost', '127.0.0.1', 'padelxp.eu', '*.padelxp.eu']
+    allowNavigation: ['localhost', '127.0.0.1', 'padelxp.eu', '*.padelxp.eu', 'bastia.padelxp.eu']
   },
   appendUserAgent: 'PadelXPCapacitor',
   ios: {

@@ -21,10 +21,11 @@ import {
   PointLight,
   ACESFilmicToneMapping,
   Plane,
-  Raycaster,
-  TextureLoader
+  Raycaster
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+
+// ─── Three.js Scene ───────────────────────────────────────────────────────────
 
 class ThreeScene {
   #config: any;
@@ -40,9 +41,9 @@ class ThreeScene {
   #postprocessing: any;
   size = { width: 0, height: 0, wWidth: 0, wHeight: 0, ratio: 0, pixelRatio: 0 };
   render = this.#renderScene;
-  onBeforeRender = (time: any) => {};
-  onAfterRender = (time: any) => {};
-  onAfterResize = (size: any) => {};
+  onBeforeRender: (time: any) => void = () => {};
+  onAfterRender: (time: any) => void = () => {};
+  onAfterResize: (size: any) => void = () => {};
   #isIntersecting = false;
   #isAnimating = false;
   isDisposed = false;
@@ -80,12 +81,11 @@ class ThreeScene {
       throw new Error('Three: Missing canvas or id parameter');
     }
     this.canvas.style.display = 'block';
-    const options = {
+    this.renderer = new WebGLRenderer({
       canvas: this.canvas,
-      powerPreference: 'high-performance' as const,
+      powerPreference: 'high-performance',
       ...(this.#config.rendererOptions ?? {})
-    };
-    this.renderer = new WebGLRenderer(options);
+    });
     this.renderer.outputColorSpace = SRGBColorSpace;
   }
 
@@ -130,7 +130,7 @@ class ThreeScene {
   }
 
   resize() {
-    let width, height;
+    let width: number, height: number;
     if (this.#config.size instanceof Object) {
       width = this.#config.size.width;
       height = this.#config.size.height;
@@ -181,11 +181,8 @@ class ThreeScene {
     this.renderer.setSize(this.size.width, this.size.height);
     this.#postprocessing?.setSize(this.size.width, this.size.height);
     let pixelRatio = window.devicePixelRatio;
-    if (this.maxPixelRatio && pixelRatio > this.maxPixelRatio) {
-      pixelRatio = this.maxPixelRatio;
-    } else if (this.minPixelRatio && pixelRatio < this.minPixelRatio) {
-      pixelRatio = this.minPixelRatio;
-    }
+    if (this.maxPixelRatio && pixelRatio > this.maxPixelRatio) pixelRatio = this.maxPixelRatio;
+    else if (this.minPixelRatio && pixelRatio < this.minPixelRatio) pixelRatio = this.minPixelRatio;
     this.renderer.setPixelRatio(pixelRatio);
     this.size.pixelRatio = pixelRatio;
   }
@@ -219,12 +216,10 @@ class ThreeScene {
 
   clear() {
     this.scene.traverse((object: any) => {
-      if (object.isMesh && typeof object.material === 'object' && object.material !== null) {
+      if (object.isMesh && object.material) {
         Object.keys(object.material).forEach(key => {
           const prop = object.material[key];
-          if (prop !== null && typeof prop === 'object' && typeof prop.dispose === 'function') {
-            prop.dispose();
-          }
+          if (prop && typeof prop.dispose === 'function') prop.dispose();
         });
         object.material.dispose();
         object.geometry.dispose();
@@ -244,9 +239,11 @@ class ThreeScene {
   }
 }
 
-const activeInteractions = new Map();
+// ─── Interaction ──────────────────────────────────────────────────────────────
+
+const activeInteractions = new Map<Element, any>();
 const mousePosition = new Vector2();
-let isInteractionListening = false;
+let isListening = false;
 
 function setupInteraction(config: any) {
   const interaction = {
@@ -263,17 +260,15 @@ function setupInteraction(config: any) {
 
   if (!activeInteractions.has(config.domElement)) {
     activeInteractions.set(config.domElement, interaction);
-    if (!isInteractionListening) {
+    if (!isListening) {
       document.body.addEventListener('pointermove', onPointerMove);
       document.body.addEventListener('pointerleave', onPointerLeave);
-      document.body.addEventListener('click', onClick);
-
+      document.body.addEventListener('click', onClickEvent);
       document.body.addEventListener('touchstart', onTouchStart, { passive: false });
       document.body.addEventListener('touchmove', onTouchMove, { passive: false });
       document.body.addEventListener('touchend', onTouchEnd, { passive: false });
       document.body.addEventListener('touchcancel', onTouchEnd, { passive: false });
-
-      isInteractionListening = true;
+      isListening = true;
     }
   }
 
@@ -282,22 +277,19 @@ function setupInteraction(config: any) {
     if (activeInteractions.size === 0) {
       document.body.removeEventListener('pointermove', onPointerMove);
       document.body.removeEventListener('pointerleave', onPointerLeave);
-      document.body.removeEventListener('click', onClick);
-
+      document.body.removeEventListener('click', onClickEvent);
       document.body.removeEventListener('touchstart', onTouchStart);
       document.body.removeEventListener('touchmove', onTouchMove);
       document.body.removeEventListener('touchend', onTouchEnd);
       document.body.removeEventListener('touchcancel', onTouchEnd);
-
-      isInteractionListening = false;
+      isListening = false;
     }
   };
   return interaction;
 }
 
 function onPointerMove(e: PointerEvent) {
-  mousePosition.x = e.clientX;
-  mousePosition.y = e.clientY;
+  mousePosition.set(e.clientX, e.clientY);
   processInteractions();
 }
 
@@ -305,11 +297,8 @@ function processInteractions() {
   for (const [elem, interaction] of activeInteractions) {
     const rect = elem.getBoundingClientRect();
     if (isInsideRect(rect)) {
-      updateInteractionPosition(interaction, rect);
-      if (!interaction.hover) {
-        interaction.hover = true;
-        interaction.onEnter(interaction);
-      }
+      updatePosition(interaction, rect);
+      if (!interaction.hover) { interaction.hover = true; interaction.onEnter(interaction); }
       interaction.onMove(interaction);
     } else if (interaction.hover && !interaction.touching) {
       interaction.hover = false;
@@ -318,39 +307,31 @@ function processInteractions() {
   }
 }
 
-function onClick(e: MouseEvent) {
-  mousePosition.x = e.clientX;
-  mousePosition.y = e.clientY;
+function onClickEvent(e: MouseEvent) {
+  mousePosition.set(e.clientX, e.clientY);
   for (const [elem, interaction] of activeInteractions) {
     const rect = elem.getBoundingClientRect();
-    updateInteractionPosition(interaction, rect);
+    updatePosition(interaction, rect);
     if (isInsideRect(rect)) interaction.onClick(interaction);
   }
 }
 
 function onPointerLeave() {
   for (const interaction of activeInteractions.values()) {
-    if (interaction.hover) {
-      interaction.hover = false;
-      interaction.onLeave(interaction);
-    }
+    if (interaction.hover) { interaction.hover = false; interaction.onLeave(interaction); }
   }
 }
 
 function onTouchStart(e: TouchEvent) {
   if (e.touches.length > 0) {
-    mousePosition.x = e.touches[0].clientX;
-    mousePosition.y = e.touches[0].clientY;
-
+    e.preventDefault();
+    mousePosition.set(e.touches[0].clientX, e.touches[0].clientY);
     for (const [elem, interaction] of activeInteractions) {
       const rect = elem.getBoundingClientRect();
       if (isInsideRect(rect)) {
         interaction.touching = true;
-        updateInteractionPosition(interaction, rect);
-        if (!interaction.hover) {
-          interaction.hover = true;
-          interaction.onEnter(interaction);
-        }
+        updatePosition(interaction, rect);
+        if (!interaction.hover) { interaction.hover = true; interaction.onEnter(interaction); }
         interaction.onMove(interaction);
       }
     }
@@ -359,20 +340,13 @@ function onTouchStart(e: TouchEvent) {
 
 function onTouchMove(e: TouchEvent) {
   if (e.touches.length > 0) {
-    //e.preventDefault(); // allow scrolling
-    mousePosition.x = e.touches[0].clientX;
-    mousePosition.y = e.touches[0].clientY;
-
+    e.preventDefault();
+    mousePosition.set(e.touches[0].clientX, e.touches[0].clientY);
     for (const [elem, interaction] of activeInteractions) {
       const rect = elem.getBoundingClientRect();
-      updateInteractionPosition(interaction, rect);
-
+      updatePosition(interaction, rect);
       if (isInsideRect(rect)) {
-        if (!interaction.hover) {
-          interaction.hover = true;
-          interaction.touching = true;
-          interaction.onEnter(interaction);
-        }
+        if (!interaction.hover) { interaction.hover = true; interaction.touching = true; interaction.onEnter(interaction); }
         interaction.onMove(interaction);
       } else if (interaction.hover && interaction.touching) {
         interaction.onMove(interaction);
@@ -382,44 +356,36 @@ function onTouchMove(e: TouchEvent) {
 }
 
 function onTouchEnd() {
-  for (const [, interaction] of activeInteractions) {
+  for (const interaction of activeInteractions.values()) {
     if (interaction.touching) {
       interaction.touching = false;
-      if (interaction.hover) {
-        interaction.hover = false;
-        interaction.onLeave(interaction);
-      }
+      if (interaction.hover) { interaction.hover = false; interaction.onLeave(interaction); }
     }
   }
 }
 
-function updateInteractionPosition(interaction: any, rect: DOMRect) {
-  const { position, nPosition } = interaction;
-  position.x = mousePosition.x - rect.left;
-  position.y = mousePosition.y - rect.top;
-  nPosition.x = (position.x / rect.width) * 2 - 1;
-  nPosition.y = (-position.y / rect.height) * 2 + 1;
+function updatePosition(interaction: any, rect: DOMRect) {
+  interaction.position.x = mousePosition.x - rect.left;
+  interaction.position.y = mousePosition.y - rect.top;
+  interaction.nPosition.x = (interaction.position.x / rect.width) * 2 - 1;
+  interaction.nPosition.y = (-interaction.position.y / rect.height) * 2 + 1;
 }
 
 function isInsideRect(rect: DOMRect) {
-  const { x, y } = mousePosition;
-  const { left, top, width, height } = rect;
-  return x >= left && x <= left + width && y >= top && y <= top + height;
+  return (
+    mousePosition.x >= rect.left && mousePosition.x <= rect.left + rect.width &&
+    mousePosition.y >= rect.top && mousePosition.y <= rect.top + rect.height
+  );
 }
 
-const { randFloat, randFloatSpread } = MathUtils;
-const vec1 = new Vector3();
-const vec2 = new Vector3();
-const vec3 = new Vector3();
-const vec4 = new Vector3();
-const vec5 = new Vector3();
-const vec6 = new Vector3();
-const vec7 = new Vector3();
-const vec8 = new Vector3();
-const vec9 = new Vector3();
-const vec10 = new Vector3();
+// ─── Physics ──────────────────────────────────────────────────────────────────
 
-class PhysicsSimulation {
+const { randFloat, randFloatSpread } = MathUtils;
+const v1 = new Vector3(), v2 = new Vector3(), v3 = new Vector3();
+const v4 = new Vector3(), v5 = new Vector3(), v6 = new Vector3();
+const v7 = new Vector3(), v8 = new Vector3(), v9 = new Vector3(), v10 = new Vector3();
+
+class Physics {
   config: any;
   positionData: Float32Array;
   velocityData: Float32Array;
@@ -437,15 +403,18 @@ class PhysicsSimulation {
   }
 
   #initPositions() {
-    const { config, positionData } = this;
+    const { config, positionData, velocityData } = this;
     this.center.toArray(positionData, 0);
-    
-    // Setup tennis balls in a random distribution initially
     for (let i = 1; i < config.count; i++) {
       const idx = 3 * i;
-      positionData[idx] = randFloatSpread(2 * config.maxX);
+      // Spread balls across the whole arena
+      positionData[idx]     = randFloatSpread(2 * config.maxX);
       positionData[idx + 1] = randFloatSpread(2 * config.maxY);
-      positionData[idx + 2] = randFloatSpread(1 * config.maxZ); // limit z depth
+      positionData[idx + 2] = randFloatSpread(2 * config.maxZ);
+      // Give every ball a random kick so they're already in motion
+      velocityData[idx]     = randFloatSpread(0.18);
+      velocityData[idx + 1] = randFloat(-0.08, 0.22); // slight upward bias
+      velocityData[idx + 2] = randFloatSpread(0.06);
     }
   }
 
@@ -457,233 +426,216 @@ class PhysicsSimulation {
     }
   }
 
-  update(time: any) {
+  update(time: { delta: number }) {
     const { config, center, positionData, sizeData, velocityData } = this;
-    let startIdx = 0;
-    
-    // The first sphere can be controlled by cursor/touch
+    let start = 0;
+
     if (config.controlSphere0) {
-      startIdx = 1;
-      vec1.fromArray(positionData, 0);
-      vec1.lerp(center, 0.1).toArray(positionData, 0);
-      vec4.set(0, 0, 0).toArray(velocityData, 0);
-    }
-    
-    // Apply gravity and friction
-    for (let i = startIdx; i < config.count; i++) {
-      const baseIdx = 3 * i;
-      vec2.fromArray(positionData, baseIdx);
-      vec5.fromArray(velocityData, baseIdx);
-      
-      // Gravity pulls down
-      vec5.y -= time.delta * config.gravity * sizeData[i] * 50; 
-      
-      vec5.multiplyScalar(config.friction);
-      vec5.clampLength(0, config.maxVelocity);
-      
-      vec2.add(vec5);
-      
-      vec2.toArray(positionData, baseIdx);
-      vec5.toArray(velocityData, baseIdx);
+      start = 1;
+      v1.fromArray(positionData, 0);
+      v1.lerp(center, 0.1).toArray(positionData, 0);
+      v4.set(0, 0, 0).toArray(velocityData, 0);
     }
 
-    // Collision detection and response
-    for (let i = startIdx; i < config.count; i++) {
-      const baseIdx = 3 * i;
-      vec2.fromArray(positionData, baseIdx);
-      vec5.fromArray(velocityData, baseIdx);
+    // Apply gravity + friction
+    for (let i = start; i < config.count; i++) {
+      const base = 3 * i;
+      v2.fromArray(positionData, base);
+      v5.fromArray(velocityData, base);
+      v5.y -= time.delta * config.gravity * sizeData[i];
+      v5.multiplyScalar(config.friction);
+      v5.clampLength(0, config.maxVelocity);
+      v2.add(v5);
+      v2.toArray(positionData, base);
+      v5.toArray(velocityData, base);
+    }
+
+    // Collision resolution
+    for (let i = start; i < config.count; i++) {
+      const base = 3 * i;
+      v2.fromArray(positionData, base);
+      v5.fromArray(velocityData, base);
       const radius = sizeData[i];
 
       for (let j = i + 1; j < config.count; j++) {
-        const otherBaseIdx = 3 * j;
-        vec3.fromArray(positionData, otherBaseIdx);
-        vec6.fromArray(velocityData, otherBaseIdx);
+        const otherBase = 3 * j;
+        v3.fromArray(positionData, otherBase);
+        v6.fromArray(velocityData, otherBase);
         const otherRadius = sizeData[j];
-        
-        vec7.copy(vec3).sub(vec2);
-        const dist = vec7.length();
-        const sumRadius = radius + otherRadius;
-        
-        if (dist < sumRadius) {
-          const overlap = sumRadius - dist;
-          vec8.copy(vec7).normalize().multiplyScalar(0.5 * overlap);
-          
-          vec9.copy(vec8).multiplyScalar(Math.max(vec5.length(), 0.5));
-          vec10.copy(vec8).multiplyScalar(Math.max(vec6.length(), 0.5));
-          
-          vec2.sub(vec8);
-          // Add some bounce energy
-          vec5.sub(vec9).multiplyScalar(config.wallBounce);
-          
-          vec2.toArray(positionData, baseIdx);
-          vec5.toArray(velocityData, baseIdx);
-          
-          vec3.add(vec8);
-          // Add some bounce energy
-          vec6.add(vec10).multiplyScalar(config.wallBounce);
-          
-          vec3.toArray(positionData, otherBaseIdx);
-          vec6.toArray(velocityData, otherBaseIdx);
+        v7.copy(v3).sub(v2);
+        const dist = v7.length();
+        const sumR = radius + otherRadius;
+        if (dist < sumR) {
+          const overlap = sumR - dist;
+          v8.copy(v7).normalize().multiplyScalar(0.5 * overlap);
+          v9.copy(v8).multiplyScalar(Math.max(v5.length(), 1));
+          v10.copy(v8).multiplyScalar(Math.max(v6.length(), 1));
+          v2.sub(v8); v5.sub(v9);
+          v2.toArray(positionData, base); v5.toArray(velocityData, base);
+          v3.add(v8); v6.add(v10);
+          v3.toArray(positionData, otherBase); v6.toArray(velocityData, otherBase);
         }
       }
 
-      // Cursor interaction
+      // Cursor sphere collision
       if (config.controlSphere0) {
-        vec7.copy(vec1).sub(vec2);
-        const dist = vec7.length();
-        const sumRadius0 = radius + sizeData[0];
-        if (dist < sumRadius0) {
-          const overlap = sumRadius0 - dist;
-          vec8.copy(vec7.normalize()).multiplyScalar(overlap);
-          vec9.copy(vec8).multiplyScalar(Math.max(vec5.length(), 2));
-          vec2.sub(vec8);
-          vec5.sub(vec9);
+        v7.copy(v1).sub(v2);
+        const dist = v7.length();
+        const sumR0 = radius + sizeData[0];
+        if (dist < sumR0) {
+          const diff = sumR0 - dist;
+          v8.copy(v7.normalize()).multiplyScalar(diff);
+          v9.copy(v8).multiplyScalar(Math.max(v5.length(), 2));
+          v2.sub(v8); v5.sub(v9);
         }
       }
 
-      // Boundary interactions (walls)
-      if (Math.abs(vec2.x) + radius > config.maxX) {
-        vec2.x = Math.sign(vec2.x) * (config.maxX - radius);
-        vec5.x = -vec5.x * config.wallBounce;
+      // Wall collisions
+      if (Math.abs(v2.x) + radius > config.maxX) {
+        v2.x = Math.sign(v2.x) * (config.maxX - radius);
+        v5.x = -v5.x * config.wallBounce;
       }
-      
-      // Floor and Ceiling
       if (config.gravity === 0) {
-        if (Math.abs(vec2.y) + radius > config.maxY) {
-          vec2.y = Math.sign(vec2.y) * (config.maxY - radius);
-          vec5.y = -vec5.y * config.wallBounce;
+        if (Math.abs(v2.y) + radius > config.maxY) {
+          v2.y = Math.sign(v2.y) * (config.maxY - radius);
+          v5.y = -v5.y * config.wallBounce;
         }
-      } else if (vec2.y - radius < -config.maxY) {
-        // Floor hit
-        vec2.y = -config.maxY + radius;
-        vec5.y = -vec5.y * config.wallBounce;
+      } else if (v2.y - radius < -config.maxY) {
+        v2.y = -config.maxY + radius;
+        v5.y = -v5.y * config.wallBounce;
+      }
+      const maxZ = Math.max(config.maxZ, config.maxSize);
+      if (Math.abs(v2.z) + radius > maxZ) {
+        v2.z = Math.sign(v2.z) * (maxZ - radius);
+        v5.z = -v5.z * config.wallBounce;
       }
 
-      // Z boundary
-      const maxZBoundary = Math.max(config.maxZ, config.maxSize);
-      if (Math.abs(vec2.z) + radius > maxZBoundary) {
-        vec2.z = Math.sign(vec2.z) * (maxZBoundary - radius);
-        vec5.z = -vec5.z * config.wallBounce;
-      }
-
-      vec2.toArray(positionData, baseIdx);
-      vec5.toArray(velocityData, baseIdx);
+      v2.toArray(positionData, base);
+      v5.toArray(velocityData, base);
     }
   }
 }
 
-// Subsurface scattering material inspired by the reference
-class SubsurfaceMaterial extends MeshPhysicalMaterial {
+// ─── Subsurface scattering material ──────────────────────────────────────────
+
+class TennisMaterial extends MeshPhysicalMaterial {
   uniforms: any;
   onBeforeCompile2?: (shader: any) => void;
 
   constructor(options: any) {
     super(options);
     this.uniforms = {
-      thicknessDistortion: { value: 0.1 },
-      thicknessAmbient: { value: 0 },
-      thicknessAttenuation: { value: 0.1 },
-      thicknessPower: { value: 2 },
-      thicknessScale: { value: 10 }
+      thicknessDistortion: { value: 0.15 },
+      thicknessAmbient:    { value: 0.05 },
+      thicknessAttenuation:{ value: 0.2  },
+      thicknessPower:      { value: 2    },
+      thicknessScale:      { value: 12   }
     };
     this.defines.USE_UV = '';
-    
     this.onBeforeCompile = (shader: any) => {
       Object.assign(shader.uniforms, this.uniforms);
       shader.fragmentShader =
-        '\n        uniform float thicknessPower;\n        uniform float thicknessScale;\n        uniform float thicknessDistortion;\n        uniform float thicknessAmbient;\n        uniform float thicknessAttenuation;\n      ' +
-        shader.fragmentShader;
-        
+        `uniform float thicknessPower;
+        uniform float thicknessScale;
+        uniform float thicknessDistortion;
+        uniform float thicknessAmbient;
+        uniform float thicknessAttenuation;
+        ` + shader.fragmentShader;
       shader.fragmentShader = shader.fragmentShader.replace(
         'void main() {',
-        '\n        void RE_Direct_Scattering(const in IncidentLight directLight, const in vec2 uv, const in vec3 geometryPosition, const in vec3 geometryNormal, const in vec3 geometryViewDir, const in vec3 geometryClearcoatNormal, inout ReflectedLight reflectedLight) {\n          vec3 scatteringHalf = normalize(directLight.direction + (geometryNormal * thicknessDistortion));\n          float scatteringDot = pow(saturate(dot(geometryViewDir, -scatteringHalf)), thicknessPower) * thicknessScale;\n          #ifdef USE_COLOR\n            vec3 scatteringIllu = (scatteringDot + thicknessAmbient) * vColor;\n          #else\n            vec3 scatteringIllu = (scatteringDot + thicknessAmbient) * diffuse;\n          #endif\n          reflectedLight.directDiffuse += scatteringIllu * thicknessAttenuation * directLight.color;\n        }\n\n        void main() {\n      '
+        `void RE_Direct_Scattering(const in IncidentLight directLight, const in vec2 uv, const in vec3 geometryPosition, const in vec3 geometryNormal, const in vec3 geometryViewDir, const in vec3 geometryClearcoatNormal, inout ReflectedLight reflectedLight) {
+          vec3 scatteringHalf = normalize(directLight.direction + (geometryNormal * thicknessDistortion));
+          float scatteringDot = pow(saturate(dot(geometryViewDir, -scatteringHalf)), thicknessPower) * thicknessScale;
+          #ifdef USE_COLOR
+            vec3 scatteringIllu = (scatteringDot + thicknessAmbient) * vColor.xyz;
+          #else
+            vec3 scatteringIllu = (scatteringDot + thicknessAmbient) * diffuse;
+          #endif
+          reflectedLight.directDiffuse += scatteringIllu * thicknessAttenuation * directLight.color;
+        }
+        void main() {`
       );
-      
-      const replaceString = ShaderChunk.lights_fragment_begin.replaceAll(
+      const replaced = ShaderChunk.lights_fragment_begin.replaceAll(
         'RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );',
-        '\n          RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );\n          RE_Direct_Scattering(directLight, vUv, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, reflectedLight);\n        '
+        `RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );
+          RE_Direct_Scattering(directLight, vUv, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, reflectedLight);`
       );
-      
-      shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_begin>', replaceString);
+      shader.fragmentShader = shader.fragmentShader.replace('#include <lights_fragment_begin>', replaced);
       if (this.onBeforeCompile2) this.onBeforeCompile2(shader);
     };
   }
 }
 
+// ─── Default config (tennis balls) ───────────────────────────────────────────
+
 const defaultConfig = {
   count: 100,
-  colors: [0xdcf739, 0xc6de33, 0xebfc6f], // Tennis ball colors (yellowish green)
-  ambientColor: 0xffffff,
-  ambientIntensity: 1,
-  lightIntensity: 200,
+  // PadelXP green palette — matches brand identity
+  colors: [0x7DC828, 0x6ab422, 0x9adf3a],
+  ambientColor: 0xeeffcc,
+  ambientIntensity: 1.4,
+  lightIntensity: 160,
   materialParams: {
-    metalness: 0.1,
-    roughness: 0.8, // Tennis balls are rough (felt)
-    clearcoat: 0,
-    clearcoatRoughness: 0
+    metalness: 0.0,
+    roughness: 0.88,
+    clearcoat: 0.05,
+    clearcoatRoughness: 0.5
   },
-  minSize: 0.6, // more uniform size for tennis balls
-  maxSize: 0.9,
-  size0: 1.5, // bigger "cursor" ball
-  gravity: 1.2, // increased gravity for more realistic falling
-  friction: 0.99, // air resistance
-  wallBounce: 0.8, // bounce intensity (bouncy but dampens)
-  maxVelocity: 0.4,
-  maxX: 10,
-  maxY: 10,
+  minSize: 0.55,
+  maxSize: 0.8,
+  size0: 1,
+  gravity: 0.45,        // gentle gravity — balls fall slowly and bounce high
+  friction: 0.9995,     // near-zero air resistance so balls keep bouncing
+  wallBounce: 0.92,     // tennis balls are very bouncy
+  maxVelocity: 0.35,    // enough headroom for energetic bouncing
+  maxX: 5,
+  maxY: 5,
   maxZ: 2,
   controlSphere0: false,
-  followCursor: true
+  followCursor: false
 };
 
-const dummyObject = new Object3D();
+// ─── Color gradient helper ───────────────────────────────────────────────────
 
-class InstancedSpheres extends InstancedMesh {
+function makeGradient(hexColors: number[]) {
+  const colors = hexColors.map(h => new Color(h));
+  return {
+    getColorAt(ratio: number, out = new Color()) {
+      const scaled = Math.max(0, Math.min(1, ratio)) * (colors.length - 1);
+      const idx = Math.floor(scaled);
+      const start = colors[idx];
+      if (idx >= colors.length - 1) { out.copy(start); return out; }
+      const alpha = scaled - idx;
+      const end = colors[idx + 1];
+      out.r = start.r + alpha * (end.r - start.r);
+      out.g = start.g + alpha * (end.g - start.g);
+      out.b = start.b + alpha * (end.b - start.b);
+      return out;
+    }
+  };
+}
+
+// ─── Instanced spheres ────────────────────────────────────────────────────────
+
+const dummy = new Object3D();
+
+class BallpitSpheres extends InstancedMesh {
   config: any;
-  physics: PhysicsSimulation;
+  physics: Physics;
   ambientLight!: AmbientLight;
   light!: PointLight;
 
-  constructor(renderer: WebGLRenderer, configOptions = {}) {
-    const config = { ...defaultConfig, ...configOptions };
-    const pmremGenerator = new PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
-    
-    // Setup texture loader for the tennis ball look
-    const textureLoader = new TextureLoader();
-    let texture: any = null;
-    try {
-        // Attempt to load tennis ball texture, fallback to pure color if fails
-        // We assume we have it in public/images/tennis-ball-texture.jpg
-        texture = textureLoader.load('/images/tennis_ball_texture.webp');
-    } catch(e) {
-        console.error("Could not load texture", e);
-    }
-    
+  constructor(renderer: WebGLRenderer, options: any = {}) {
+    const config = { ...defaultConfig, ...options };
+    const envTexture = new PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture;
     const geometry = new SphereGeometry(1, 32, 32);
-    
-    // Customize material for tennis ball
-    const materialParams: any = { ...config.materialParams };
-    if (texture) {
-       materialParams.map = texture;
-    }
-    
-    const material = new SubsurfaceMaterial(materialParams);
-    
+    const material = new TennisMaterial({ envMap: envTexture, ...config.materialParams });
+    material.envMapRotation.x = -Math.PI / 2;
     super(geometry, material, config.count);
     this.config = config;
-    this.physics = new PhysicsSimulation(config);
+    this.physics = new Physics(config);
     this.#initLights();
     this.setColors(config.colors);
-    
-    // Add random rotations to make the textured balls look natural
-    const rotations = new Float32Array(config.count * 3);
-    for(let i=0; i<config.count; i++) {
-        rotations[i*3] = Math.random() * Math.PI * 2;
-        rotations[i*3+1] = Math.random() * Math.PI * 2;
-        rotations[i*3+2] = Math.random() * Math.PI * 2;
-    }
-    this.userData.rotations = rotations;
   }
 
   #initLights() {
@@ -693,86 +645,65 @@ class InstancedSpheres extends InstancedMesh {
     this.add(this.light);
   }
 
-  setColors(colors: any[]) {
-    if (Array.isArray(colors) && colors.length > 0) {
-      const colorHelper = new Color();
-      
-      for (let i = 0; i < this.config.count; i++) {
-        // Pick a random shade from our tennis ball colors
-        const colorVal = colors[Math.floor(Math.random() * colors.length)];
-        colorHelper.setHex(colorVal);
-        this.setColorAt(i, colorHelper);
-      }
-      if (this.instanceColor) {
-        this.instanceColor.needsUpdate = true;
-      }
+  setColors(hexColors: number[]) {
+    if (!Array.isArray(hexColors) || hexColors.length < 2) return;
+    const gradient = makeGradient(hexColors);
+    for (let i = 0; i < this.count; i++) {
+      this.setColorAt(i, gradient.getColorAt(i / this.count));
+      if (i === 0) this.light.color.copy(gradient.getColorAt(0));
     }
+    if (this.instanceColor) this.instanceColor.needsUpdate = true;
   }
 
-  update(time: any) {
+  update(time: { delta: number }) {
     this.physics.update(time);
-    
-    for (let i = 0; i < this.config.count; i++) {
-      dummyObject.position.fromArray(this.physics.positionData, 3 * i);
-      
-      // Update rotation slightly based on velocity to simulate rolling
-      const velocity = new Vector3().fromArray(this.physics.velocityData, 3 * i);
-      const speed = velocity.length();
-      
-      if (speed > 0.01) {
-          // Axis of rotation is cross product of up vector and velocity
-          const axis = new Vector3(0,1,0).cross(velocity).normalize();
-          dummyObject.rotateOnWorldAxis(axis, speed * 2);
-      }
-      
-      if (i === 0 && this.config.followCursor === false) {
-        dummyObject.scale.setScalar(0);
+    for (let i = 0; i < this.count; i++) {
+      dummy.position.fromArray(this.physics.positionData, 3 * i);
+      if (i === 0 && !this.config.followCursor) {
+        dummy.scale.setScalar(0);
       } else {
-        dummyObject.scale.setScalar(this.physics.sizeData[i]);
+        dummy.scale.setScalar(this.physics.sizeData[i]);
       }
-      
-      dummyObject.updateMatrix();
-      this.setMatrixAt(i, dummyObject.matrix);
-      
-      if (i === 0) {
-        this.light.position.copy(dummyObject.position);
-      }
+      dummy.updateMatrix();
+      this.setMatrixAt(i, dummy.matrix);
+      if (i === 0) this.light.position.copy(dummy.position);
     }
     this.instanceMatrix.needsUpdate = true;
   }
 }
 
-function initBallpitScene(canvas: HTMLCanvasElement, configOptions = {}) {
+// ─── Scene factory ────────────────────────────────────────────────────────────
+
+function createBallpit(canvas: HTMLCanvasElement, options: any = {}) {
   const three = new ThreeScene({
     canvas,
     size: 'parent',
     rendererOptions: { antialias: true, alpha: true }
   });
-  
-  let spheres: InstancedSpheres;
+
+  let spheres: BallpitSpheres;
   three.renderer.toneMapping = ACESFilmicToneMapping;
-  three.camera.position.set(0, 0, 20); // Move camera back
+  three.camera.position.set(0, 0, 20);
   three.camera.lookAt(0, 0, 0);
   three.cameraMaxAspect = 1.5;
   three.resize();
-  
-  setupSpheres(configOptions);
-  
+  init(options);
+
   const raycaster = new Raycaster();
   const plane = new Plane(new Vector3(0, 0, 1), 0);
-  const intersectionPoint = new Vector3();
-  let isPaused = false;
+  const hit = new Vector3();
+  let paused = false;
 
-  // Prevent default touch actions on canvas
   canvas.style.touchAction = 'none';
+  canvas.style.userSelect = 'none';
 
   const interaction = setupInteraction({
     domElement: canvas,
     onMove() {
       raycaster.setFromCamera(interaction.nPosition, three.camera);
       three.camera.getWorldDirection(plane.normal);
-      raycaster.ray.intersectPlane(plane, intersectionPoint);
-      spheres.physics.center.copy(intersectionPoint);
+      raycaster.ray.intersectPlane(plane, hit);
+      spheres.physics.center.copy(hit);
       spheres.config.controlSphere0 = true;
     },
     onLeave() {
@@ -780,19 +711,13 @@ function initBallpitScene(canvas: HTMLCanvasElement, configOptions = {}) {
     }
   });
 
-  function setupSpheres(config: any) {
-    if (spheres) {
-      three.clear();
-      three.scene.remove(spheres);
-    }
-    spheres = new InstancedSpheres(three.renderer, config);
+  function init(config: any) {
+    if (spheres) { three.clear(); three.scene.remove(spheres); }
+    spheres = new BallpitSpheres(three.renderer, config);
     three.scene.add(spheres);
   }
 
-  three.onBeforeRender = (time) => {
-    if (!isPaused) spheres.update(time);
-  };
-
+  three.onBeforeRender = (time) => { if (!paused) spheres.update(time); };
   three.onAfterResize = (size) => {
     spheres.config.maxX = size.wWidth / 2;
     spheres.config.maxY = size.wHeight / 2;
@@ -800,21 +725,13 @@ function initBallpitScene(canvas: HTMLCanvasElement, configOptions = {}) {
 
   return {
     three,
-    get spheres() {
-      return spheres;
-    },
-    setCount(count: number) {
-      setupSpheres({ ...spheres.config, count });
-    },
-    togglePause() {
-      isPaused = !isPaused;
-    },
-    dispose() {
-      interaction.dispose();
-      three.dispose();
-    }
+    get spheres() { return spheres; },
+    togglePause() { paused = !paused; },
+    dispose() { interaction.dispose(); three.dispose(); }
   };
 }
+
+// ─── React component ──────────────────────────────────────────────────────────
 
 interface BallpitProps {
   className?: string;
@@ -823,35 +740,26 @@ interface BallpitProps {
   gravity?: number;
   friction?: number;
   wallBounce?: number;
+  colors?: number[];
 }
 
-export default function Ballpit({ 
-  className = '', 
-  followCursor = true, 
-  ...props 
-}: BallpitProps) {
+export default function Ballpit({ className = '', followCursor = true, ...props }: BallpitProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const instanceRef = useRef<any>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    instanceRef.current = initBallpitScene(canvas, { followCursor, ...props });
-
-    return () => {
-      if (instanceRef.current) {
-        instanceRef.current.dispose();
-      }
-    };
+    instanceRef.current = createBallpit(canvas, { followCursor, ...props });
+    return () => { instanceRef.current?.dispose(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <canvas 
-      className={className} 
-      ref={canvasRef} 
-      style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 1 }} 
+    <canvas
+      className={className}
+      ref={canvasRef}
+      style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
     />
   );
 }

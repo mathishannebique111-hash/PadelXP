@@ -1,0 +1,8 @@
+Model Information:
+* title:	Realistic Tennis Ball (Game Ready PBR)
+* source:	https://sketchfab.com/3d-models/realistic-tennis-ball-game-ready-pbr-b1e4370de79843c2bb1d3d946ffe4434
+* author:	4M CgiWorks (https://sketchfab.com/arshthmoomal)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

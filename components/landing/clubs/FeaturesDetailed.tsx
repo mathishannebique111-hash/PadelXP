@@ -48,7 +48,7 @@ export default function FeaturesDetailed() {
   ];
 
   return (
-    <section className="relative py-12 md:py-24 bg-black">
+    <section id="features" className="relative py-12 md:py-24 bg-black">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -866,11 +866,11 @@ function TournamentsFeature() {
           <div className="flex-1 space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 uppercase tracking-[0.25em]">
               <span className="text-[11px]">TOURNOIS</span>
-              <span className="text-xs text-[#BFFF00]">Arrive bientôt</span>
+              <span className="text-xs text-[#33DDB0]">Arrive bientôt</span>
             </div>
             <h3 className="text-2xl md:text-3xl font-extrabold text-white">
               Organisez vos tournois{" "}
-              <span className="bg-gradient-to-r from-[#BFFF00] to-[#00CC99] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#7DC828] to-[#009970] bg-clip-text text-transparent">
                 en quelques clics
               </span>
             </h3>
@@ -881,15 +881,15 @@ function TournamentsFeature() {
             </p>
             <div className="mt-4 grid gap-3 text-sm text-white/80">
               <div className="flex items-center gap-2">
-                <span className="text-[#BFFF00]">•</span>
+                <span className="text-[#7DC828]">•</span>
                 <span>Création automatique des tableaux de matchs</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#BFFF00]">•</span>
+                <span className="text-[#7DC828]">•</span>
                 <span>Les clubs saisissent les scores directement dans les cases des matchs, tout se met à jour en temps réel</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[#BFFF00]">•</span>
+                <span className="text-[#7DC828]">•</span>
                 <span>Communication simplifiée avec les joueurs : infos clés du tournoi centralisées au même endroit</span>
               </div>
             </div>

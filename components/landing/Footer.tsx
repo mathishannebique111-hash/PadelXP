@@ -2,60 +2,48 @@
 
 import Link from "next/link";
 
+const LINKS = [
+  { label: "À propos",         href: "/about"   },
+  { label: "Mentions légales", href: "/legal"   },
+  { label: "CGV",              href: "/cgv"     },
+  { label: "CGU",              href: "/terms"   },
+  { label: "Confidentialité",  href: "/privacy" },
+  { label: "Cookies",          href: "/cookies" },
+];
+
 export default function Footer() {
   return (
-    <footer className="relative py-12 bg-black border-t border-white/10">
-      <div className="max-w-7xl mx-auto px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex items-center justify-center">
-              <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-32 w-32 md:h-40 md:w-40 object-contain" />
+    <footer className="relative bg-black border-t border-white/6">
+      {/* Top accent */}
+      <div className="h-px bg-[#7DC828]/20" />
+
+      <div className="max-w-6xl mx-auto px-6 md:px-8 py-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+
+          {/* Logo + tagline */}
+          <div className="flex items-center gap-3">
+            <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-12 w-12 object-contain" />
+            <div>
+              <p className="font-bold text-white text-sm">PadelXP</p>
+              <p className="text-white/30 text-xs">Fait par un joueur, pour les joueurs</p>
             </div>
-          </Link>
+          </div>
 
           {/* Links */}
-          <nav className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <Link href="/about" className="text-white/60 hover:text-white transition-colors">
-              À propos
-            </Link>
-
-
-            {/* Séparateur */}
-            <span className="text-white/30">|</span>
-
-            {/* Liens pour clubs */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Link href="/legal" className="text-white/60 hover:text-white transition-colors">
-                Mentions légales
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {LINKS.map(({ label, href }) => (
+              <Link key={href} href={href} className="text-white/35 hover:text-white text-xs transition-colors duration-150">
+                {label}
               </Link>
-              <Link href="/cgv" className="text-white/60 hover:text-white transition-colors">
-                CGV
-              </Link>
-              <Link href="/terms" className="text-white/60 hover:text-white transition-colors">
-                CGU
-              </Link>
-              <Link href="/privacy" className="text-white/60 hover:text-white transition-colors">
-                Confidentialité
-              </Link>
-            </div>
-
-            {/* Liens cookies */}
-            <div className="flex flex-wrap items-center gap-2">
-
-              <Link href="/cookies" className="text-white/60 hover:text-white transition-colors">
-                Cookies
-              </Link>
-            </div>
+            ))}
           </nav>
 
           {/* Copyright */}
-          <div className="text-sm text-white/40 text-center md:text-right">
-            © {new Date().getFullYear()} PadelXP · Fait par un joueur, pour les joueurs
-          </div>
+          <p className="text-white/20 text-xs">
+            © {new Date().getFullYear()} PadelXP
+          </p>
         </div>
       </div>
     </footer>
   );
 }
-

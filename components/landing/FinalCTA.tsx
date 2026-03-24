@@ -26,9 +26,9 @@ export default function FinalCTA() {
         className="absolute inset-0"
         animate={{
           background: [
-            "linear-gradient(135deg, #0066FF 0%, #00CC99 50%, #BFFF00 100%)",
-            "linear-gradient(225deg, #BFFF00 0%, #00CC99 50%, #0066FF 100%)",
-            "linear-gradient(135deg, #0066FF 0%, #00CC99 50%, #BFFF00 100%)",
+            "linear-gradient(135deg, #0066FF 0%, #7DC828 50%, #BFFF00 100%)",
+            "linear-gradient(225deg, #BFFF00 0%, #7DC828 50%, #0066FF 100%)",
+            "linear-gradient(135deg, #0066FF 0%, #7DC828 50%, #BFFF00 100%)",
           ],
         }}
         transition={{

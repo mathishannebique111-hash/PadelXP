@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { AlertTriangle } from 'lucide-react';
+import HideSplashScreen from '@/components/HideSplashScreen';
 
 export default function ClubSuspendedPage() {
     const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
@@ -15,7 +16,7 @@ export default function ClubSuspendedPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-6">
-            <div className="max-w-md w-full text-center space-y-6">
+            <HideSplashScreen />            <div className="max-w-md w-full text-center space-y-6">
                 {/* Logo */}
                 <div className="flex justify-center mb-8">
                     <Image

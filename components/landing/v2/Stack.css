@@ -1,0 +1,46 @@
+.stack-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  perspective: 600px;
+}
+
+/* Outer positioned slot — its entire bounding box shifts with the stack position */
+.card-slot {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* Inner drag wrapper */
+.drag-fill {
+  width: 100%;
+  height: 100%;
+}
+
+.drag-cursor {
+  cursor: grab;
+}
+
+.card {
+  border-radius: 1.75rem;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}

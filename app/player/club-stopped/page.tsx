@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Check, X, CheckCircle, Loader2 } from 'lucide-react';
+import HideSplashScreen from '@/components/HideSplashScreen';
 
 export default function ClubStoppedPage() {
     const router = useRouter();
@@ -61,6 +62,7 @@ export default function ClubStoppedPage() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a2e] flex items-center justify-center">
+                <HideSplashScreen />
                 <Loader2 className="w-8 h-8 text-white/50 animate-spin" />
             </div>
         );
@@ -68,7 +70,7 @@ export default function ClubStoppedPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] to-[#1a1a2e] flex items-center justify-center p-4">
-            <div className="max-w-md w-full">
+            <HideSplashScreen />            <div className="max-w-md w-full">
                 {/* Logo PadelXP */}
                 <div className="text-center mb-8">
                     <img

@@ -179,6 +179,14 @@ export default async function RootLayout({
             </div>
           </div>
         )}
+        <script dangerouslySetInnerHTML={{ __html: `
+          setTimeout(function(){
+            var e=document.getElementById('px-static-splash');
+            if(e){e.style.transition='opacity 0.3s ease-out';e.style.opacity='0';setTimeout(function(){e.style.display='none'},400);}
+            window.dispatchEvent(new CustomEvent('hide-splash-overlay'));
+            if(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.hideSplash){window.webkit.messageHandlers.hideSplash.postMessage('hide');}
+          }, 3000);
+        ` }} />
         <SafeAreas />
         <OfflineWrapper />
         {children}

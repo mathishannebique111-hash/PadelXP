@@ -143,5 +143,20 @@ public class BridgeViewController: CAPBridgeViewController, WKScriptMessageHandl
         self.splashOverlay = overlay
         
         print("PadelXP Native: Splash overlay created")
+        
+        // Fallback: Si le site de prod n'a pas encore la mise à jour (hideSplash)
+        // on cache l'écran de lancement de force après 4 secondes.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
+            guard let self = self, let currentOverlay = self.splashOverlay else { return }
+            print("PadelXP Native: Fallback timeout, hiding splash overlay")
+            UIView.animate(withDuration: 0.3, animations: {
+                currentOverlay.alpha = 0.0
+            }, completion: { _ in
+                currentOverlay.removeFromSuperview()
+                if self.splashOverlay == currentOverlay {
+                    self.splashOverlay = nil
+                }
+            })
+        }
     }
 }

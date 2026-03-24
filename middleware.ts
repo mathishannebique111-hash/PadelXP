@@ -183,16 +183,16 @@ export async function middleware(req: NextRequest) {
 
       if (user) {
         // Utilisateur connecté → aller vers /home
-        logger.info("[Middleware] iOS app: User authenticated, redirecting to /home", { userId: user.id });
+        logger.info("[Middleware] iOS app: User authenticated, rewritng to /home", { userId: user.id });
         const url = req.nextUrl.clone();
         url.pathname = "/home";
-        return NextResponse.redirect(url);
+        return NextResponse.rewrite(url);
       } else {
         // Pas connecté → aller vers /player/signup (inscription)
-        logger.info("[Middleware] iOS app: User not authenticated, redirecting to /player/signup");
+        logger.info("[Middleware] iOS app: User not authenticated, rewriting to /player/signup");
         const url = req.nextUrl.clone();
         url.pathname = "/player/signup";
-        return NextResponse.redirect(url);
+        return NextResponse.rewrite(url);
       }
     }
   }
@@ -401,7 +401,8 @@ export async function middleware(req: NextRequest) {
     "/players",
     "/guest/confirmation", // Allow guest confirmation page
     "/attenteandroid", // Allow Android waitlist page
-    "/googleb3f982bb7d1441cb.html" // Google Search Console verification
+    "/googleb3f982bb7d1441cb.html", // Google Search Console verification
+    "/landingv2" // Landing page v2 (dev)
   ]);
 
   const API_ROUTES_THAT_HANDLE_AUTH = ["/api/matches/", "/api/reviews"];

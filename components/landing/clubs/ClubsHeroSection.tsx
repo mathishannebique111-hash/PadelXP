@@ -3,213 +3,220 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import BadgeIconDisplay from "@/components/BadgeIconDisplay";
-import TierBadge from "@/components/TierBadge";
-import Image from "next/image";
-import { logger } from '@/lib/logger';
-import { Check } from "lucide-react";
 import ClubsContactModal from "@/components/landing/clubs/ClubsContactModal";
+import Ballpit from "@/components/landing/Ballpit";
 
-export default function ClubsHeroSection() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [stats, setStats] = useState({ totalPlayers: 0, clubs: 0, rating: 4.9 });
+const NAV_LINKS = [
+  { label: "Fonctionnalités", href: "#features" },
+  { label: "Tarifs",          href: "#pricing"  },
+  { label: "FAQ",             href: "#faq"      },
+];
+
+function scrollTo(id: string) {
+  document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+function FloatingNav({ onContact }: { onContact: () => void }) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    setIsVisible(true);
-
-    // Récupérer les vraies stats
-    async function fetchStats() {
-      try {
-        const supabase = createClientComponentClient();
-
-        // Compter les joueurs uniques (users + guests)
-        const { count: userCount } = await supabase
-          .from("profiles")
-          .select("id", { count: "exact", head: true });
-
-        const { count: guestCount } = await supabase
-          .from("guest_players")
-          .select("id", { count: "exact", head: true });
-
-        const totalPlayers = (userCount || 0) + (guestCount || 0);
-
-        // Calculer la note moyenne des avis
-        const { data: reviews } = await supabase
-          .from("reviews")
-          .select("rating");
-
-        let avgRating = 4.9;
-        if (reviews && reviews.length > 0) {
-          const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
-          avgRating = Math.round((sum / reviews.length) * 10) / 10;
-        }
-
-        // Estimation du nombre de clubs (pour l'instant, on peut utiliser une estimation basée sur les joueurs)
-        // Plus tard, on pourra ajouter une vraie table clubs
-        const estimatedClubs = Math.max(1, Math.floor(totalPlayers / 200)); // Estimation : 1 club pour 200 joueurs
-
-        setStats({
-          totalPlayers,
-          clubs: estimatedClubs,
-          rating: avgRating
-        });
-      } catch (error) {
-        logger.error("Error fetching stats:", error);
-      }
-    }
-
-    fetchStats();
+    const fn = () => setScrolled(window.scrollY > 30);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
-      <ClubsContactModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
-
-      {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
-
-      {/* Pattern animé */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#0066FF] rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#BFFF00] rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
-
-      {/* Navbar transparente */}
-      <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-24 w-24 md:h-28 md:w-28 object-contain" />
+    <motion.div
+      initial={{ y: -80, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.1 }}
+      className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+    >
+      <motion.div
+        animate={{ width: scrolled ? "min(calc(100% - 2rem), 64rem)" : "auto" }}
+        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        className={`pointer-events-auto flex items-center gap-1 px-3 py-3 rounded-2xl border transition-colors duration-500 ${
+          scrolled ? "bg-black/85 backdrop-blur-2xl border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : "bg-black/30 backdrop-blur-xl border-white/8"
+        }`}
+      >
+        {/* Logo */}
+        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 20 }} className="shrink-0">
+          <Link href="/" className="flex items-center gap-2.5 pl-1 pr-3">
+            <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-14 w-14 object-contain" />
+            <span className="hidden lg:block text-sm font-bold text-white/80 tracking-tight">PadelXP</span>
           </Link>
-          <Link
-            href="/clubs/login"
-            className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#0066FF] to-[#0052CC] text-sm font-semibold text-white hover:shadow-[0_0_20px_rgba(0,102,255,0.5)] transition-all"
-          >
-            Connexion club / complexe
-          </Link>
-        </div>
-      </nav>
+        </motion.div>
 
-      {/* Contenu principal */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 pt-24 md:pt-32 pb-12 md:pb-16 flex flex-col items-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 30 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="space-y-6 md:space-y-8 text-center"
-        >
-          {/* Headline principal */}
-          <h1 className="text-3xl md:text-5xl lg:text-7xl font-extrabold text-white leading-tight">
-            <span className="block mb-2 whitespace-nowrap">Transformez votre club de padel en</span>
-            <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block whitespace-nowrap">
-              communauté d'élite
-            </span>
-          </h1>
+        <div className="w-px h-6 bg-white/12 mx-1 shrink-0" />
 
-          {/* Sous-titre */}
-          <p className="text-lg md:text-xl text-white/80 leading-relaxed max-w-6xl mx-auto">
-            Augmentez votre rétention de 20% en transformant l'expérience de vos joueurs.
-          </p>
-
-          {/* 5 bénéfices clés */}
-          <div className="space-y-6 pt-6 md:pt-8 max-w-4xl mx-auto text-left">
-            <p className="text-lg md:text-xl text-white/60 font-medium text-center mb-6 md:mb-8">
-              Voici ce que vous offrez à vos joueurs en rejoignant l'aventure PadelXP :
-            </p>
-            <div className="grid gap-3 md:gap-4">
-              {[
-                "Suggestions personnalisées de partenaires et de matchs selon leur niveau et leur profil",
-                "Historique de tous leurs matchs joués dans votre club",
-                "Statistiques et classement interne au club mis à jour selon leurs victoires et leurs défaites",
-                "Créez vos challenges tout au long de l'année pour animer votre club et permettre aux joueurs de gagner des points, badges et autres récompenses",
-                "Badges à débloquer grâce aux challenges et aux matchs joués (séries de victoires, nombre de matchs joués...)"
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 * i }}
-                  className="group flex items-start md:items-center gap-4 md:gap-6 p-3 md:p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-[#BFFF00]/50 hover:bg-white/10 transition-all duration-300"
-                >
-                  <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 rounded-full bg-[#BFFF00]/10 border border-[#BFFF00]/20 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#BFFF00]/20 transition-all duration-300">
-                    <Check className="h-5 w-5 md:h-6 md:w-6 text-[#BFFF00]" strokeWidth={3} />
-                  </div>
-                  <span className="text-white/90 text-lg md:text-xl font-medium leading-relaxed">{item}</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* CTA principal */}
-          <div className="pt-6 flex justify-center">
-            <button
-              onClick={() => setIsContactModalOpen(true)}
-              className="inline-block group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#00CC99] to-[#0066FF] text-white font-bold text-lg shadow-[0_0_30px_rgba(0,204,153,0.5)] hover:shadow-[0_0_40px_rgba(0,204,153,0.7)] transition-all duration-300 hover:scale-105"
+        {/* Nav links — répartis uniformément sur toute la largeur */}
+        <div className="hidden md:flex items-center flex-1">
+          {NAV_LINKS.map(({ label, href }, i) => (
+            <motion.button
+              key={href}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 380, damping: 26, delay: 0.18 + i * 0.07 }}
+              onHoverStart={() => setHovered(href)}
+              onHoverEnd={() => setHovered(null)}
+              onClick={() => scrollTo(href)}
+              className="relative flex-1 flex justify-center py-2.5 rounded-xl text-sm font-medium text-white/55 hover:text-white transition-colors duration-150"
             >
-              <span className="flex items-center gap-2">
-                Nous contacter
+              {hovered === href && (
                 <motion.span
-                  className="inline-block"
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  →
-                </motion.span>
-              </span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
-            </button>
-          </div>
+                  layoutId="nav-hover-pill"
+                  className="absolute inset-0 rounded-xl bg-white/8"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">{label}</span>
+            </motion.button>
+          ))}
+        </div>
+
+        <div className="w-px h-6 bg-white/12 mx-1 hidden md:block shrink-0" />
+
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 380, damping: 26, delay: 0.42 }} className="shrink-0">
+          <Link href="/clubs/login" className="px-4 py-2.5 rounded-xl text-sm font-medium text-white/55 hover:text-white hover:bg-white/8 transition-all duration-150 whitespace-nowrap">
+            Connexion
+          </Link>
         </motion.div>
 
-        {/* Flèche de scroll - Positionnée à la place de la bande de confiance */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? [0, 8, 0] : -10 }}
-          transition={{ duration: 1.5, delay: 0.8, repeat: Infinity, ease: "easeInOut" }}
-          className="mt-16 text-center cursor-pointer group"
-          onClick={() => {
-            const nextSection = document.getElementById('problem-solution');
-            nextSection?.scrollIntoView({ behavior: 'smooth' });
-          }}
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 340, damping: 22, delay: 0.5 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="shrink-0"
         >
-          <div className="flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors">
-            <span className="text-sm font-semibold uppercase tracking-wider">Découvrir</span>
-            <motion.svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="drop-shadow-lg"
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <path d="M6 9l6 6 6-6" />
-            </motion.svg>
-          </div>
+          <button onClick={onContact} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#7DC828] text-black hover:bg-[#6ab422] transition-colors duration-150 whitespace-nowrap">
+            Nous contacter
+          </button>
         </motion.div>
-      </div>
-      <style jsx>{`
-        @keyframes gradient {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-        .animate-gradient {
-          background-size: 200% 200%;
-          animation: gradient 3s ease infinite;
-        }
-      `}</style>
-    </section >
+      </motion.div>
+    </motion.div>
   );
 }
 
+export default function ClubsHeroSection() {
+  const [visible, setVisible] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+
+  useEffect(() => { setVisible(true); }, []);
+
+  return (
+    <section className="relative h-screen flex flex-col overflow-hidden bg-black">
+      <ClubsContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} />
+
+      <div className="absolute inset-0 z-0">
+        <Ballpit count={28} gravity={0.45} friction={0.9995} wallBounce={0.92} followCursor={false} />
+      </div>
+
+      {/* Overlay */}
+      <div className="absolute inset-0 z-10 bg-black/50" />
+      {/* Navy corner glow */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] z-10 pointer-events-none" style={{ background: "radial-gradient(circle at top right, rgba(10,31,92,0.35) 0%, transparent 70%)" }} />
+      <div className="absolute bottom-0 left-0 right-0 z-10 h-40 bg-gradient-to-t from-black to-transparent" />
+
+      <FloatingNav onContact={() => setContactOpen(true)} />
+
+      {/* Content */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center px-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 28 }}
+          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="max-w-3xl mx-auto space-y-7"
+        >
+          {/* Tag */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: visible ? 1 : 0, scale: visible ? 1 : 0.9 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#7DC828]/25 bg-[#7DC828]/8 text-[#7DC828] text-xs font-medium tracking-wider uppercase"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7DC828] animate-pulse" />
+            Plateforme de gestion padel
+          </motion.div>
+
+          {/* Headline */}
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-[1.02] tracking-tight">
+            Transformez votre club
+            <br />
+            en <span className="text-[#7DC828]">communauté d'élite</span>
+          </h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: visible ? 1 : 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="text-lg text-white/50 max-w-xl mx-auto leading-relaxed"
+          >
+            Augmentez la rétention de vos joueurs de{" "}
+            <span className="text-white font-semibold">20 %</span> grâce au
+            classement, aux challenges et aux badges.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 12 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+          >
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setContactOpen(true)}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#7DC828] text-black font-bold text-base hover:bg-[#6ab422] transition-colors duration-150"
+            >
+              Commencer gratuitement →
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => scrollTo("#features")}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl border font-semibold text-base transition-all duration-150 text-white/60 hover:text-white"
+            style={{ borderColor: "rgba(10,31,92,0.6)", background: "rgba(10,31,92,0.15)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(10,31,92,1)"; (e.currentTarget as HTMLElement).style.background = "rgba(10,31,92,0.35)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(10,31,92,0.6)"; (e.currentTarget as HTMLElement).style.background = "rgba(10,31,92,0.15)"; }}
+            >
+              Voir les fonctionnalités
+            </motion.button>
+          </motion.div>
+
+          {/* Trust */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: visible ? 1 : 0 }}
+            transition={{ duration: 0.6, delay: 0.65 }}
+            className="flex items-center justify-center gap-5 text-white/30 text-xs"
+          >
+            <span>✓ Sans engagement</span>
+            <span className="w-px h-3 bg-white/15" />
+            <span>✓ Déploiement en 24 h</span>
+            <span className="w-px h-3 bg-white/15" />
+            <span>✓ Support dédié</span>
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Scroll cue */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: visible ? 0.35 : 0, y: [0, 5, 0] }}
+        transition={{ duration: 1.6, delay: 1.1, repeat: Infinity, ease: "easeInOut" }}
+        onClick={() => scrollTo("#problem-solution")}
+        className="relative z-20 mb-7 flex flex-col items-center gap-1.5 text-white hover:opacity-70 transition-opacity"
+      >
+        <span className="text-[10px] uppercase tracking-[0.2em] font-semibold">Découvrir</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </motion.button>
+    </section>
+  );
+}

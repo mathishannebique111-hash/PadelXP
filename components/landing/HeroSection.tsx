@@ -16,10 +16,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
-      {/* Background avec overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,102,255,0.1),transparent)] z-0" />
+    <section className="relative h-screen flex items-center justify-center overflow-hidden">
       
       {/* Animation Ballpit Tennis */}
       <div className="absolute inset-0 z-0">
@@ -28,7 +25,7 @@ export default function HeroSection() {
           gravity={1.2}
           friction={0.99}
           wallBounce={0.8}
-          followCursor={true}
+          followCursor={false}
         />
       </div>
 
@@ -49,7 +46,7 @@ export default function HeroSection() {
                 <span className="hidden sm:inline">Pour les joueurs</span>
                 <span className="sm:hidden">Joueurs</span>
               </span>
-              <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
+              <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#7DC828] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
             </Link>
             <Link
               href="/clubs"
@@ -59,7 +56,7 @@ export default function HeroSection() {
                 <span className="hidden md:inline">Pour les Clubs / Complexes</span>
                 <span className="md:hidden">Clubs</span>
               </span>
-              <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
+              <div className="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#7DC828] opacity-0 group-hover:opacity-15 transition-opacity blur-xl" />
             </Link>
           </div>
         </div>
@@ -91,7 +88,7 @@ export default function HeroSection() {
           <div className="space-y-2 sm:space-y-3 md:space-y-4">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-extrabold text-white leading-tight relative px-2">
               <span className="block">Ta prochaine victoire</span>
-              <span className="bg-gradient-to-r from-[#0066FF] via-[#00CC99] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block">
+              <span className="bg-gradient-to-r from-[#0066FF] via-[#7DC828] to-[#BFFF00] bg-clip-text text-transparent animate-gradient block">
                 commence ici
               </span>
             </h1>
@@ -131,7 +128,7 @@ export default function HeroSection() {
                   →
                 </motion.span>
               </span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#00CC99] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#BFFF00] to-[#7DC828] opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
             </Link>
 
             <Link

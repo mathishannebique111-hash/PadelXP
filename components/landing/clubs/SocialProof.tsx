@@ -92,7 +92,7 @@ export default function SocialProof() {
                 <div className="text-sm text-white/60 mb-2">
                   {testimonial.role}
                 </div>
-                <div className="text-sm font-semibold text-[#00CC99]">
+                <div className="text-sm font-semibold text-[#7DC828]">
                   📊 {testimonial.metric}
                 </div>
               </div>
