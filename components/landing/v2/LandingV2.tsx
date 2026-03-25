@@ -122,8 +122,8 @@ function Hero() {
 
   return (
     <section className="relative h-screen flex flex-col overflow-hidden bg-black">
-      {/* 3D balls — slightly blurred and darkened */}
-      <div className="absolute inset-0 z-0" style={{ filter: "blur(0.8px)" }}><TennisBallpit /></div>
+      {/* 3D balls */}
+      <div className="absolute inset-0 z-0"><TennisBallpit /></div>
 
       {/* Base dark layer */}
       <div className="absolute inset-0 z-[1] bg-black/78" />
@@ -310,7 +310,7 @@ function Gallery() {
           className="text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300"
           style={{ color: "#7DC828" }}
         >
-          {GALLERY_ITEMS[activeIndex]?.text ?? ""}
+          {GALLERY_ITEMS[activeIndex % GALLERY_ITEMS.length]?.text ?? ""}
         </span>
       </div>
       <div className="relative h-[420px] sm:h-[560px] md:h-[720px]">
@@ -834,7 +834,7 @@ export default function LandingV2() {
   const [contactOpen, setContactOpen] = useState(false);
 
   return (
-    <div className="bg-black">
+    <div className="bg-black overflow-x-hidden">
       <ClubsContactModal isOpen={contactOpen} onClose={() => setContactOpen(false)} />
       <CustomCursor />
       <LandingNav onContact={() => setContactOpen(true)} />

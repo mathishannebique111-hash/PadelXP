@@ -3,11 +3,16 @@
 import { useEffect, useState } from "react";
 
 export default function CustomCursor() {
+  const [hasPointer, setHasPointer] = useState(false);
   const [pos, setPos] = useState({ x: -200, y: -200 });
   const [visible, setVisible] = useState(false);
   const [clicking, setClicking] = useState(false);
 
   useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    setHasPointer(mq.matches);
+    if (!mq.matches) return;
+
     const onMove = (e: MouseEvent) => {
       setPos({ x: e.clientX, y: e.clientY });
       setVisible(true);
@@ -28,6 +33,8 @@ export default function CustomCursor() {
       window.removeEventListener("mouseup", onUp);
     };
   }, []);
+
+  if (!hasPointer) return null;
 
   return (
     <>
