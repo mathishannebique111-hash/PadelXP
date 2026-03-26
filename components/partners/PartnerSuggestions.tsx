@@ -662,7 +662,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                             ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                             : "active:scale-95"
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      style={(!isAccepted && !hasSentInvitation && !hasReceivedInvitation) ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: isClub ? 'var(--theme-page)' : '#071554', boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent), 0.2)' : '0 0 10px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' } : {}}
+                      style={(!isAccepted && !hasSentInvitation && !hasReceivedInvitation) ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: isClub ? 'rgb(var(--theme-page))' : '#071554', boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent), 0.2)' : '0 0 10px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' } : {}}
                     >
                       {isInvitingId === player.id ? (
                         <Loader2 size={16} className="animate-spin" style={{ color: 'inherit' }} />

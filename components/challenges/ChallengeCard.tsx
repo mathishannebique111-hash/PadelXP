@@ -350,12 +350,12 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
 
             {/* Barre de progression */}
             <div className={`relative h-3 overflow-hidden rounded-full border ${isClub ? 'shadow-inner' : 'bg-white/20'}`}
-              style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.2)', borderColor: 'var(--theme-accent-contrast)' } : { borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+              style={isClub ? { backgroundColor: 'rgb(var(--theme-accent))', borderColor: 'var(--theme-accent-contrast)' } : { borderColor: 'rgba(255, 255, 255, 0.1)' }}>
               <div
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
                   width: `${percentage}%`,
-                  backgroundColor: isClub ? 'var(--theme-page)' : (challenge.isPremium
+                  backgroundColor: isClub ? 'rgb(var(--theme-page))' : (challenge.isPremium
                     ? '#F59E0B'
                     : 'rgb(var(--theme-accent, 37, 99, 235))'),
                   boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.3)' : (challenge.isPremium
