@@ -184,7 +184,7 @@ function Hero() {
           >
             Augmentez la rétention de vos joueurs de{" "}
             <span style={{ color: "rgba(255,255,255,0.95)", fontWeight: 600 }}>20 %</span>{" "}
-            grâce à une expérience joueur qui crée de l'engagement au quotidien.
+            grâce à une app en marque blanche qui crée de l'engagement au quotidien.
           </motion.p>
 
           <motion.div
@@ -334,6 +334,16 @@ function Gallery() {
 
 const FEATURE_ITEMS = [
   {
+    id: 8,
+    title: "App en marque blanche",
+    description: "Toute l'application sera brandée selon les couleurs et le logo de votre club. Offrez une expérience premium et ultra personnalisée à vos joueurs, où l'identité de votre club est au centre de l'expérience.",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7DC828" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/>
+      </svg>
+    ),
+  },
+  {
     id: 1,
     title: "Niveau évolutif & Statistiques",
     description: "Un niveau calculé en temps réel qui évolue au fur et à mesure des matchs enregistrés et qui reflète vraiment où en est le joueur. Taux de victoire, progression, historique — chaque match compte.",
@@ -400,16 +410,6 @@ const FEATURE_ITEMS = [
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7DC828" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
-      </svg>
-    ),
-  },
-  {
-    id: 8,
-    title: "App en marque blanche",
-    description: "Toute l'application sera brandée selon les couleurs et le logo de votre club. Offrez une expérience premium et ultra personnalisée à vos joueurs, où l'identité de votre club est au centre de l'expérience.",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7DC828" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/>
       </svg>
     ),
   },
