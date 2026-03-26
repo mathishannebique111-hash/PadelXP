@@ -49,22 +49,25 @@ const PRICING = [
   {
     name: "Starter",
     price: "79",
-    desc: "1 à 3 terrains",
-    features: ["Classement ELO", "App joueur brandée", "Challenges & tournois", "Support email"],
+    courtRange: "1-3",
+    courtCount: 3,
+    tagline: "Lancez votre communauté",
     featured: false,
   },
   {
     name: "Pro",
     price: "139",
-    desc: "4 à 6 terrains",
-    features: ["Tout le Starter", "Badges & gamification", "Dashboard analytics", "Support prioritaire", "Intégration réservation"],
+    courtRange: "4-6",
+    courtCount: 6,
+    tagline: "Pour les clubs à fort trafic",
     featured: true,
   },
   {
     name: "Elite",
     price: "199",
-    desc: "7 terrains et plus",
-    features: ["Tout le Pro", "Multi-clubs", "White-label complet", "API & intégrations", "Account manager dédié"],
+    courtRange: "7+",
+    courtCount: 8,
+    tagline: "Multi-clubs & infrastructure complète",
     featured: false,
   },
 ];
@@ -121,7 +124,7 @@ function Hero() {
   useEffect(() => { setReady(true); }, []);
 
   return (
-    <section className="relative h-screen flex flex-col overflow-hidden bg-black">
+    <section className="relative flex flex-col overflow-hidden bg-black" style={{ height: "100svh", minHeight: 580 }}>
       {/* 3D balls */}
       <div className="absolute inset-0 z-0"><TennisBallpit /></div>
 
@@ -146,23 +149,23 @@ function Hero() {
       <div
         className="absolute bottom-0 left-0 right-0 z-[3] pointer-events-none"
         style={{
-          height: "45%",
-          background: "linear-gradient(to top, #000000 0%, #000000 10%, rgba(0,0,0,0.88) 28%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.15) 80%, transparent 100%)",
+          height: "22%",
+          background: "linear-gradient(to top, #000000 0%, rgba(0,0,0,0.6) 40%, transparent 100%)",
         }}
       />
 
-      {/* Spacer to push content below the floating nav bar (~88px) */}
-      <div className="relative z-10 h-24 shrink-0" />
+      {/* Spacer to push content below the floating nav bar */}
+      <div className="relative z-10 h-20 sm:h-24 shrink-0" />
 
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-5 sm:px-6 text-center">
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: ready ? 1 : 0, y: ready ? 0 : 32 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-4xl mx-auto flex flex-col items-center gap-7"
+          className="max-w-4xl mx-auto flex flex-col items-center gap-5 sm:gap-7"
         >
           <h1
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-white leading-[1.0] tracking-[-0.03em]"
+            className="text-[2.1rem] sm:text-5xl md:text-6xl lg:text-8xl font-extrabold text-white leading-[1.05] tracking-[-0.03em]"
             style={{ textShadow: "0 2px 4px rgba(0,0,0,1), 0 8px 40px rgba(0,0,0,0.95)" }}
           >
             Transformez votre club de padel
@@ -176,12 +179,12 @@ function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: ready ? 1 : 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="text-lg md:text-xl max-w-2xl leading-relaxed"
+            className="text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed"
             style={{ color: "rgba(255,255,255,0.82)", textShadow: "0 2px 16px rgba(0,0,0,1), 0 1px 2px rgba(0,0,0,0.9)" }}
           >
             Augmentez la rétention de vos joueurs de{" "}
             <span style={{ color: "rgba(255,255,255,0.95)", fontWeight: 600 }}>20 %</span>{" "}
-            grâce au classement, aux challenges et aux badges.
+            grâce à une expérience joueur qui crée de l'engagement au quotidien.
           </motion.p>
 
           <motion.div
@@ -194,7 +197,7 @@ function Hero() {
               href="https://calendly.com/contactpadelxp/30min"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-8 py-4 rounded-full font-bold text-base text-black transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-center"
+              className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-base text-black transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-center"
               style={{
                 background: "linear-gradient(135deg, #92e830 0%, #7DC828 55%, #69b220 100%)",
                 boxShadow: "0 0 28px rgba(125,200,40,0.45), 0 4px 16px rgba(0,0,0,0.5)",
@@ -204,7 +207,7 @@ function Hero() {
             </a>
             <button
               onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })}
-              className="w-full sm:w-auto px-8 py-4 rounded-full font-semibold text-base transition-all duration-150 text-center"
+              className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-full font-semibold text-sm sm:text-base transition-all duration-150 text-center"
               style={{
                 color: "rgba(255,255,255,0.65)",
                 border: "1px solid rgba(255,255,255,0.14)",
@@ -220,14 +223,12 @@ function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: ready ? 1 : 0 }}
             transition={{ duration: 0.6, delay: 0.65 }}
-            className="flex items-center gap-6 text-xs"
+            className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-xs"
             style={{ color: "rgba(255,255,255,0.50)" }}
           >
             <span>✓ Sans engagement</span>
-            <span className="w-px h-3 bg-white/15 hidden xs:block" />
-            <span className="hidden xs:inline">✓ 14 jours gratuits</span>
-            <span className="w-px h-3 bg-white/15 hidden sm:block" />
-            <span className="hidden sm:inline">✓ Déploiement en 24 h</span>
+            <span className="hidden sm:inline">✓ 14 jours gratuits</span>
+            <span>✓ Déploiement en moins de 48 h</span>
           </motion.div>
         </motion.div>
       </div>
@@ -297,15 +298,15 @@ function Gallery() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <section className="overflow-hidden" style={{ paddingTop: "5rem", paddingBottom: "2rem" }}>
-      <FadeIn className="text-center mb-4 px-6">
+    <section className="overflow-hidden pt-12 sm:pt-20 pb-6 sm:pb-8">
+      <FadeIn className="text-center mb-4 px-4 sm:px-6">
         <SectionLabel>Aperçu application marque blanche</SectionLabel>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white mt-4 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white mt-4 tracking-tight">
           La plateforme en <span style={{ color: "#7DC828" }}>images</span>
         </h2>
         <p className="text-white/30 text-sm mt-3">Faites glisser pour explorer</p>
       </FadeIn>
-      <div className="text-center mb-4" style={{ minHeight: "1.5rem" }}>
+      <div className="text-center mb-3 px-4" style={{ minHeight: "1.5rem" }}>
         <span
           className="text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300"
           style={{ color: "#7DC828" }}
@@ -313,7 +314,7 @@ function Gallery() {
           {GALLERY_ITEMS[activeIndex % GALLERY_ITEMS.length]?.text ?? ""}
         </span>
       </div>
-      <div className="relative h-[420px] sm:h-[560px] md:h-[720px]">
+      <div className="relative h-[360px] sm:h-[500px] md:h-[660px] lg:h-[720px]">
         <CircularGallery
           items={GALLERY_ITEMS}
           bend={1}
@@ -416,14 +417,14 @@ const FEATURE_ITEMS = [
 
 function Features() {
   const w = useWindowWidth();
-  const carouselWidth = Math.min(w - 48, 480);
+  const carouselWidth = Math.min(w - 32, 480);
   return (
-    <section id="features" className="pt-8 md:pt-16" style={{ marginBottom: 0, paddingBottom: 0 }}>
+    <section id="features" className="pt-6 sm:pt-8 md:pt-16" style={{ marginBottom: 0, paddingBottom: 0 }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <FadeIn className="mb-8 sm:mb-12">
+        <FadeIn className="mb-6 sm:mb-12">
           <SectionLabel>Fonctionnalités</SectionLabel>
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white mt-4 tracking-tight leading-tight">
-            <span className="flex flex-wrap items-center gap-x-3 gap-y-2 whitespace-nowrap">
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mt-4 tracking-tight leading-tight">
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
               Tout ce dont votre club a
               <RotatingText
                 texts={["besoin", "envie", "rêvé"]}
@@ -451,7 +452,7 @@ function Features() {
           <Carousel
             items={FEATURE_ITEMS}
             baseWidth={carouselWidth}
-            height={w < 480 ? 380 : 460}
+            height={w < 380 ? 340 : w < 480 ? 380 : 460}
             autoplay={false}
             loop={true}
             round={false}
@@ -466,29 +467,29 @@ function Features() {
 
 function HowItWorks() {
   const w = useWindowWidth();
-  const cardW = w < 480 ? w - 48 : w < 768 ? 400 : w < 1024 ? 460 : 580;
-  const cardH = w < 480 ? 300 : w < 768 ? 360 : w < 1024 ? 400 : 460;
-  const cardDist = w < 768 ? 40 : 60;
-  const cardVertDist = w < 768 ? 45 : 70;
+  const cardW = w < 380 ? w - 32 : w < 480 ? w - 48 : w < 768 ? Math.min(w - 48, 400) : w < 1024 ? 460 : 580;
+  const cardH = w < 380 ? 260 : w < 480 ? 300 : w < 768 ? 360 : w < 1024 ? 400 : 460;
+  const cardDist = w < 480 ? 30 : w < 768 ? 40 : 60;
+  const cardVertDist = w < 480 ? 35 : w < 768 ? 45 : 70;
 
   return (
-    <section id="how-it-works" className="pt-12 pb-16 md:pt-24 md:pb-40">
+    <section id="how-it-works" className="pt-10 pb-12 sm:pt-16 sm:pb-20 md:pt-24 md:pb-40">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-16">
-        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 xl:gap-24">
+        <div className="flex flex-col lg:flex-row items-center gap-8 sm:gap-10 lg:gap-16 xl:gap-24">
 
           {/* Left — text */}
           <div className="flex-1 min-w-0 w-full">
             <SectionLabel>Mise en place</SectionLabel>
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white mt-4 mb-4 sm:mb-6 tracking-tight leading-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mt-4 mb-3 sm:mb-6 tracking-tight leading-tight">
               Opérationnel<br />en 3 étapes
             </h2>
-            <p className="text-white/45 text-base sm:text-lg leading-relaxed max-w-md">
+            <p className="text-white/45 text-sm sm:text-base md:text-lg leading-relaxed max-w-md">
               De l'inscription à vos premiers joueurs actifs en moins de 48 heures.
             </p>
           </div>
 
           {/* Right — CardSwap */}
-          <div className="shrink-0 relative w-full lg:w-auto flex justify-center" style={{ height: cardH + 160 }}>
+          <div className="shrink-0 relative w-full lg:w-auto flex justify-center" style={{ height: cardH + (w < 480 ? 120 : 160) }}>
             <CardSwap
               width={cardW}
               height={cardH}
@@ -501,17 +502,17 @@ function HowItWorks() {
             >
               {HOW_STEPS.map(({ n, title, body, tag }) => (
                 <Card key={n}>
-                  <div className="w-full h-full flex flex-col relative overflow-hidden p-6 sm:p-10 md:p-[2.5rem_3rem]">
+                  <div className="w-full h-full flex flex-col relative overflow-hidden p-5 sm:p-8 md:p-[2.5rem_3rem]">
                     {/* Green top accent */}
                     <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: "linear-gradient(90deg, #7DC828 0%, transparent 75%)" }} />
                     {/* Big background number */}
-                    <span className="absolute right-8 top-4 select-none pointer-events-none font-black" style={{ fontSize: "9rem", lineHeight: 1, color: "rgba(125,200,40,0.12)" }}>{n}</span>
+                    <span className="absolute right-5 sm:right-8 top-3 sm:top-4 select-none pointer-events-none font-black" style={{ fontSize: w < 480 ? "6rem" : "9rem", lineHeight: 1, color: "rgba(125,200,40,0.12)" }}>{n}</span>
                     {/* Tag */}
-                    <span className="text-[10px] font-bold uppercase tracking-[0.28em] mb-6" style={{ color: "rgba(125,200,40,0.65)" }}>{tag}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.28em] mb-4 sm:mb-6" style={{ color: "rgba(125,200,40,0.65)" }}>{tag}</span>
                     {/* Content */}
-                    <div className="w-7 h-[2px] rounded-full mb-5" style={{ background: "#7DC828" }} />
-                    <h3 className="text-2xl font-extrabold text-white mb-4 leading-tight tracking-tight">{title}</h3>
-                    <p className="text-white/55 text-base leading-relaxed">{body}</p>
+                    <div className="w-7 h-[2px] rounded-full mb-4 sm:mb-5" style={{ background: "#7DC828" }} />
+                    <h3 className="text-lg sm:text-2xl font-extrabold text-white mb-3 sm:mb-4 leading-tight tracking-tight">{title}</h3>
+                    <p className="text-white/55 text-sm sm:text-base leading-relaxed">{body}</p>
                   </div>
                 </Card>
               ))}
@@ -530,11 +531,11 @@ function Pricing({ onContact }: { onContact: () => void }) {
   const [annual, setAnnual] = useState(true);
 
   return (
-    <section id="pricing" className="pt-12 md:pt-16 pb-24 md:pb-32 relative" style={{ zIndex: 1 }}>
+    <section id="pricing" className="pt-10 sm:pt-12 md:pt-16 pb-16 sm:pb-24 md:pb-32 relative" style={{ zIndex: 1 }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <FadeIn className="mb-16 text-center">
+        <FadeIn className="mb-10 sm:mb-16 text-center">
           <SectionLabel>Tarifs</SectionLabel>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-4 tracking-tight mb-8">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-4 tracking-tight mb-6 sm:mb-8">
             Simple et transparent
           </h2>
           <div className="inline-flex items-center gap-3 p-1 rounded-full border border-white/8 bg-white/3">
@@ -554,7 +555,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
         </FadeIn>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-          {PRICING.map(({ name, price, desc, features, featured }, i) => {
+          {PRICING.map(({ name, price, courtRange, courtCount, tagline, featured }, i) => {
             const monthly = parseInt(price);
             const displayPrice = annual ? String(Math.round(monthly * 10 / 12)) : String(monthly);
             const annualTotal = annual ? monthly * 10 : null;
@@ -567,7 +568,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
                     style={{ background: "#ffffff", border: "1.5px solid #7DC828", boxShadow: "0 8px 40px rgba(125,200,40,0.18), 0 2px 12px rgba(0,0,0,0.07)" }}>
                     <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, #7DC828 0%, #a3e635 100%)" }} />
                     <div className="flex flex-col p-5 flex-1">
-                      <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} desc={desc} features={features} featured onContact={onContact} isElite={false} />
+                      <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} courtRange={courtRange} courtCount={courtCount} tagline={tagline} featured onContact={onContact} isElite={false} />
                     </div>
                   </div>
                 ) : isElite ? (
@@ -575,7 +576,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
                     style={{ background: "#ffffff", border: "1px solid rgba(10,31,92,0.13)", boxShadow: "0 6px 32px rgba(10,31,92,0.07), 0 2px 8px rgba(0,0,0,0.05)" }}>
                     <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, #0A1F5C 0%, rgba(10,31,92,0.25) 70%, transparent 100%)" }} />
                     <div className="flex flex-col p-5 flex-1">
-                      <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} desc={desc} features={features} featured={false} onContact={onContact} isElite={true} />
+                      <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} courtRange={courtRange} courtCount={courtCount} tagline={tagline} featured={false} onContact={onContact} isElite={true} />
                     </div>
                   </div>
                 ) : (
@@ -583,7 +584,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
                     style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
                     <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, rgba(10,31,92,0.3) 0%, transparent 70%)" }} />
                     <div className="flex flex-col p-5 flex-1">
-                      <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} desc={desc} features={features} featured={false} onContact={onContact} isElite={false} />
+                      <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} courtRange={courtRange} courtCount={courtCount} tagline={tagline} featured={false} onContact={onContact} isElite={false} />
                     </div>
                   </div>
                 )}
@@ -600,23 +601,35 @@ function Pricing({ onContact }: { onContact: () => void }) {
   );
 }
 
+function CourtIcon({ accentColor, size = 20 }: { accentColor: string; size?: number }) {
+  const h = Math.round(size * 1.5);
+  return (
+    <svg width={size} height={h} viewBox="0 0 20 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="18" height="28" rx="2" stroke={accentColor} strokeWidth="1.5" fill={`${accentColor}12`} />
+      <line x1="1" y1="15" x2="19" y2="15" stroke={accentColor} strokeWidth="1" />
+      <line x1="10" y1="1" x2="10" y2="29" stroke={accentColor} strokeWidth="1" />
+      <line x1="1" y1="8" x2="19" y2="8" stroke={accentColor} strokeWidth="0.7" strokeDasharray="2 2" />
+      <line x1="1" y1="22" x2="19" y2="22" stroke={accentColor} strokeWidth="0.7" strokeDasharray="2 2" />
+    </svg>
+  );
+}
+
 function PricingCardContent({
-  name, displayPrice, annualTotal, desc, features, featured, onContact, isElite
+  name, displayPrice, annualTotal, courtRange, courtCount, tagline, featured, onContact, isElite
 }: {
-  name: string; displayPrice: string; annualTotal: number | null; desc: string;
-  features: string[]; featured: boolean; onContact: () => void; isElite: boolean;
+  name: string; displayPrice: string; annualTotal: number | null;
+  courtRange: string; courtCount: number; tagline: string;
+  featured: boolean; onContact: () => void; isElite: boolean;
 }) {
   const accentColor = featured ? "#7DC828" : "#0A1F5C";
   const nameColor = featured ? "#7DC828" : "#0A1F5C";
-  const badgeBg = featured ? "rgba(125,200,40,0.1)" : "rgba(10,31,92,0.07)";
 
   return (
     <div className="flex flex-col h-full">
       {/* Plan header */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3">
           <span className="text-xs font-bold uppercase tracking-[0.22em]" style={{ color: nameColor }}>{name}</span>
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: badgeBg, color: nameColor }}>{desc}</span>
         </div>
         {/* Price */}
         <div className="flex items-end gap-1.5 mb-1">
@@ -636,20 +649,41 @@ function PricingCardContent({
       </div>
 
       {/* Separator */}
-      <div className="w-full h-px mb-4" style={{ background: `linear-gradient(90deg, ${accentColor}50 0%, transparent 80%)` }} />
+      <div className="w-full h-px mb-5" style={{ background: `linear-gradient(90deg, ${accentColor}50 0%, transparent 80%)` }} />
 
-      {/* Features */}
-      <ul className="space-y-2 flex-1 mb-5">
-        {features.map((f, j) => (
-          <li key={j} className="flex items-start gap-2.5 text-sm">
-            <svg className="shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 15 15" fill="none">
-              <circle cx="7.5" cy="7.5" r="7.5" fill={accentColor} fillOpacity="0.12" />
-              <path d="M4.5 7.5L6.5 9.5L10.5 5.5" stroke={accentColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span style={{ color: "rgba(10,31,92,0.7)" }}>{f}</span>
-          </li>
-        ))}
-      </ul>
+      {/* Court visual */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-5 py-4">
+        {/* Big range number */}
+        <div className="text-center">
+          <span
+            className="font-black tracking-[-0.05em] leading-none"
+            style={{ fontSize: "3.5rem", color: "#0A1F5C" }}
+          >
+            {courtRange}
+          </span>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.28em] mt-2"
+            style={{ color: accentColor }}
+          >
+            terrains
+          </p>
+        </div>
+
+        {/* Court icons grid */}
+        <div className="flex flex-wrap justify-center gap-2" style={{ maxWidth: 160 }}>
+          {Array.from({ length: Math.min(courtCount, 9) }).map((_, j) => (
+            <CourtIcon key={j} accentColor={accentColor} size={18} />
+          ))}
+        </div>
+
+        {/* Tagline */}
+        <p className="text-xs text-center px-2 leading-relaxed" style={{ color: "rgba(10,31,92,0.4)" }}>
+          {tagline}
+        </p>
+      </div>
+
+      {/* Separator */}
+      <div className="w-full h-px mt-5 mb-4" style={{ background: `linear-gradient(90deg, ${accentColor}30 0%, transparent 80%)` }} />
 
       {/* CTA */}
       <button
@@ -677,7 +711,7 @@ function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="pt-8 pb-16 relative overflow-hidden">
+    <section id="faq" className="pt-8 sm:pt-10 pb-12 sm:pb-16 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full"
@@ -685,9 +719,9 @@ function FAQ() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 relative">
-        <FadeIn className="mb-10 sm:mb-16 text-center">
+        <FadeIn className="mb-8 sm:mb-16 text-center">
           <SectionLabel>Questions fréquentes</SectionLabel>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mt-4 tracking-tight">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mt-4 tracking-tight">
             Tout ce que vous<br />
             <span className="text-white/25">voulez savoir</span>
           </h2>
@@ -741,10 +775,10 @@ function FAQ() {
                       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                       className="overflow-hidden"
                     >
-                      <div className="px-7 pb-6 flex gap-4">
+                      <div className="px-4 sm:px-7 pb-5 sm:pb-6 flex gap-3 sm:gap-4">
                         {/* Left accent line */}
-                        <div className="w-px shrink-0 ml-[18px]" style={{ background: "rgba(125,200,40,0.25)" }} />
-                        <p className="text-sm text-white/45 leading-relaxed pl-2">{a}</p>
+                        <div className="w-px shrink-0 ml-3 sm:ml-[18px]" style={{ background: "rgba(125,200,40,0.25)" }} />
+                        <p className="text-sm text-white/45 leading-relaxed pl-1 sm:pl-2">{a}</p>
                       </div>
                     </motion.div>
                   )}
@@ -762,7 +796,7 @@ function FAQ() {
 
 function FinalCTA() {
   return (
-    <section className="pt-8 pb-32 relative overflow-hidden">
+    <section className="pt-8 pb-20 sm:pb-32 relative overflow-hidden">
       {/* Antigravity particle background */}
       <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
         <Antigravity
@@ -783,21 +817,21 @@ function FinalCTA() {
           fieldStrength={10}
         />
       </div>
-      <FadeIn className="max-w-4xl mx-auto px-6 text-center flex flex-col items-center relative" style={{ zIndex: 1 }}>
-        <div className="mb-6">
+      <FadeIn className="max-w-4xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center relative" style={{ zIndex: 1 }}>
+        <div className="mb-4 sm:mb-6">
           <SectionLabel>Prêt à démarrer ?</SectionLabel>
         </div>
-        <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-none flex flex-col items-center">
+        <h2 className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-none flex flex-col items-center">
           Votre club mérite
-          <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-32 sm:h-48 md:h-64 lg:h-80 object-contain drop-shadow-[0_0_25px_rgba(125,200,40,0.6)] -mt-8 sm:-mt-12 -mb-4 sm:-mb-8 relative z-10" />
+          <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-24 sm:h-40 md:h-56 lg:h-72 object-contain drop-shadow-[0_0_25px_rgba(125,200,40,0.6)] -mt-5 sm:-mt-10 md:-mt-12 -mb-2 sm:-mb-6 md:-mb-8 relative z-10" />
         </h2>
-        
-        <div className="flex flex-col sm:flex-row items-center relative z-20">
+
+        <div className="flex flex-col sm:flex-row items-center relative z-20 mt-2 sm:mt-0">
           <a
             href="https://calendly.com/contactpadelxp/30min"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-10 py-4 rounded-full font-bold text-base text-black hover:opacity-90 transition-opacity"
+            className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-base text-black hover:opacity-90 transition-opacity text-center"
             style={{ background: "#7DC828" }}
           >
             Démo gratuite →
@@ -812,7 +846,7 @@ function FinalCTA() {
 
 function Footer() {
   return (
-    <footer className="py-12">
+    <footer className="py-8 sm:py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
         <div className="flex items-center gap-3">
           <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-10 w-10 object-contain opacity-70" />
