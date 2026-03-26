@@ -130,16 +130,22 @@ export default function TennisBallpit() {
     const testCtx = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
     if (!testCtx) return;
 
+    const isMobile = window.innerWidth < 768;
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, context: testCtx as WebGLRenderingContext, powerPreference: "high-performance", antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        powerPreference: isMobile ? "default" : "high-performance",
+        antialias: !isMobile,
+        alpha: true,
+      });
     } catch (e) {
       console.warn("[TennisBallpit] init failed:", e);
       return;
     }
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = !isMobile;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);

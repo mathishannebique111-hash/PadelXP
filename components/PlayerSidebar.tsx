@@ -14,7 +14,7 @@ export default function PlayerSidebar() {
       <Link
         href="/settings"
         prefetch={true}
-        className={`relative z-[150] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 transition-all duration-300 cursor-pointer ${isSettingsActive
+        className={`relative z-[150] flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 transition-all duration-300 cursor-pointer drop-shadow-lg ${isSettingsActive
           ? 'text-white'
           : 'text-white/80 hover:text-white'
           }`}

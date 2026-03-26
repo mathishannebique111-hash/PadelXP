@@ -665,15 +665,15 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                       style={(!isAccepted && !hasSentInvitation && !hasReceivedInvitation) ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-secondary-accent, 204, 255, 0))', color: isClub ? 'var(--theme-page)' : '#071554', boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent), 0.2)' : '0 0 10px rgba(var(--theme-secondary-accent, 204, 255, 0), 0.2)' } : {}}
                     >
                       {isInvitingId === player.id ? (
-                        <Loader2 size={16} className="animate-spin" />
+                        <Loader2 size={16} className="animate-spin" style={{ color: 'inherit' }} />
                       ) : isAccepted ? (
-                        <CheckCircle2 size={16} />
+                        <CheckCircle2 size={16} style={{ color: 'inherit' }} />
                       ) : hasSentInvitation ? (
-                        <Clock size={16} />
+                        <Clock size={16} style={{ color: 'inherit' }} />
                       ) : hasReceivedInvitation ? (
-                        <MessageCircle size={16} />
+                        <MessageCircle size={16} style={{ color: 'inherit' }} />
                       ) : (
-                        <UserPlus size={16} className="fill-current" />
+                        <UserPlus size={16} className="fill-current" style={{ color: 'inherit' }} />
                       )}
                     </button>
                   </div>

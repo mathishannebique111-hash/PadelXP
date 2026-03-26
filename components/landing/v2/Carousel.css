@@ -169,3 +169,29 @@
 .carousel-indicator.inactive {
   background-color: rgba(255,255,255,0.2);
 }
+
+@media (max-width: 480px) {
+  .carousel-item-body {
+    padding: 18px;
+  }
+  .carousel-item-title {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  .carousel-icon-container {
+    height: 36px;
+    width: 36px;
+    margin-bottom: 14px;
+  }
+  .carousel-item-divider {
+    margin-bottom: 12px;
+  }
+  .carousel-item-description {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .carousel-item-ghost svg {
+    width: 80px;
+    height: 80px;
+  }
+}

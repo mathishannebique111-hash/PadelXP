@@ -424,7 +424,7 @@ function Features() {
         <FadeIn className="mb-6 sm:mb-12">
           <SectionLabel>Fonctionnalités</SectionLabel>
           <h2 className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mt-4 tracking-tight leading-tight">
-            <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-1 sm:gap-x-3 sm:gap-y-2">
               Tout ce dont votre club a
               <RotatingText
                 texts={["besoin", "envie", "rêvé"]}
@@ -452,7 +452,7 @@ function Features() {
           <Carousel
             items={FEATURE_ITEMS}
             baseWidth={carouselWidth}
-            height={w < 380 ? 340 : w < 480 ? 380 : 460}
+            height={w < 380 ? 430 : w < 480 ? 460 : 460}
             autoplay={false}
             loop={true}
             round={false}
@@ -467,15 +467,15 @@ function Features() {
 
 function HowItWorks() {
   const w = useWindowWidth();
-  const cardW = w < 380 ? w - 32 : w < 480 ? w - 48 : w < 768 ? Math.min(w - 48, 400) : w < 1024 ? 460 : 580;
-  const cardH = w < 380 ? 260 : w < 480 ? 300 : w < 768 ? 360 : w < 1024 ? 400 : 460;
+  const cardW = w < 380 ? w - 24 : w < 480 ? w - 32 : w < 768 ? Math.min(w - 48, 400) : w < 1024 ? 460 : 580;
+  const cardH = w < 380 ? 340 : w < 480 ? 370 : w < 768 ? 360 : w < 1024 ? 400 : 460;
   const cardDist = w < 480 ? 30 : w < 768 ? 40 : 60;
   const cardVertDist = w < 480 ? 35 : w < 768 ? 45 : 70;
 
   return (
     <section id="how-it-works" className="pt-10 pb-12 sm:pt-16 sm:pb-20 md:pt-24 md:pb-40">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-16">
-        <div className="flex flex-col lg:flex-row items-center gap-8 sm:gap-10 lg:gap-16 xl:gap-24">
+        <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-10 lg:gap-16 xl:gap-24">
 
           {/* Left — text */}
           <div className="flex-1 min-w-0 w-full">

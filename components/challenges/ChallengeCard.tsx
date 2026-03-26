@@ -5,7 +5,7 @@ import Image from "next/image";
 import { logger } from '@/lib/logger';
 import { toast } from "sonner";
 import { activatePremium } from "@/app/actions/premium";
-import { Calendar, PartyPopper, Trophy, X, AlertCircle, Clock, Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { Calendar, PartyPopper, Trophy, X, AlertCircle, Clock, Loader2, Sparkles, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import Link from "next/link";
@@ -355,7 +355,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                 className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 shadow-lg`}
                 style={{
                   width: `${percentage}%`,
-                  backgroundColor: isClub ? 'var(--theme-accent-contrast)' : (challenge.isPremium
+                  backgroundColor: isClub ? 'var(--theme-page)' : (challenge.isPremium
                     ? '#F59E0B'
                     : 'rgb(var(--theme-accent, 37, 99, 235))'),
                   boxShadow: isClub ? '0 0 10px rgba(var(--theme-accent-contrast-rgb, 0,0,0), 0.3)' : (challenge.isPremium
@@ -368,7 +368,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
             {/* Indicateur de récompense réclamée */}
             {challenge.rewardClaimed && (
               <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-500/15 px-3 py-2 text-sm font-medium text-blue-300">
-                <span>✅</span>
+                <CheckCircle2 className="h-4 w-4" />
                 <span>Récompense réclamée</span>
               </div>
             )}
@@ -397,7 +397,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
                   ? "bg-gradient-to-r from-yellow-500 to-amber-600 hover:shadow-amber-600/40"
                   : "hover:shadow-blue-600/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
                   }`}
-                style={!(challenge.isPremium && !isPremiumUser) ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))' } : {}}
+                style={!(challenge.isPremium && !isPremiumUser) ? { backgroundColor: 'rgb(var(--theme-accent, 37, 99, 235))', color: isClub ? 'var(--theme-accent-contrast)' : 'white' } : {}}
               >
                 {/* Effet de brillance animé */}
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
@@ -431,7 +431,7 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
               }}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{isCompleted ? "✅" : "❌"}</span>
+                <span className="text-xl">{isCompleted ? <CheckCircle2 className="text-blue-400" /> : <XCircle className="text-red-400" />}</span>
                 <div>
                   <div className={`font-bold ${isCompleted ? "text-blue-300" : "text-red-300"}`}>
                     Challenge terminé
