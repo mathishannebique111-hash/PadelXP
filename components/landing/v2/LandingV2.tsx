@@ -467,8 +467,8 @@ function Features() {
 
 function HowItWorks() {
   const w = useWindowWidth();
-  const cardW = w < 380 ? w - 24 : w < 480 ? w - 32 : w < 768 ? Math.min(w - 48, 400) : w < 1024 ? 460 : 580;
-  const cardH = w < 380 ? 340 : w < 480 ? 370 : w < 768 ? 360 : w < 1024 ? 400 : 460;
+  const cardW = w < 380 ? w - 16 : w < 480 ? w - 20 : w < 768 ? Math.min(w - 48, 400) : w < 1024 ? 460 : 580;
+  const cardH = w < 380 ? 400 : w < 480 ? 430 : w < 768 ? 360 : w < 1024 ? 400 : 460;
   const cardDist = w < 480 ? 30 : w < 768 ? 40 : 60;
   const cardVertDist = w < 480 ? 35 : w < 768 ? 45 : 70;
 
@@ -478,7 +478,7 @@ function HowItWorks() {
         <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-10 lg:gap-16 xl:gap-24">
 
           {/* Left — text */}
-          <div className="flex-1 min-w-0 w-full">
+          <div className="flex-1 min-w-0 w-full text-center lg:text-left flex flex-col items-center lg:items-start">
             <SectionLabel>Mise en place</SectionLabel>
             <h2 className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mt-4 mb-3 sm:mb-6 tracking-tight leading-tight">
               Opérationnel<br />en 3 étapes
@@ -489,7 +489,7 @@ function HowItWorks() {
           </div>
 
           {/* Right — CardSwap */}
-          <div className="shrink-0 relative w-full lg:w-auto flex justify-center" style={{ height: cardH + (w < 480 ? 120 : 160) }}>
+          <div className="shrink-0 relative w-full lg:w-auto flex justify-center" style={{ height: cardH + (w < 480 ? 140 : 160) }}>
             <CardSwap
               width={cardW}
               height={cardH}
