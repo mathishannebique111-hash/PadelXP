@@ -478,7 +478,7 @@ function HowItWorks() {
         <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-10 lg:gap-16 xl:gap-24">
 
           {/* Left — text */}
-          <div className="flex-1 min-w-0 w-full text-center lg:text-left flex flex-col items-center lg:items-start">
+          <div className="flex-1 min-w-0 w-full">
             <SectionLabel>Mise en place</SectionLabel>
             <h2 className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-white mt-4 mb-3 sm:mb-6 tracking-tight leading-tight">
               Opérationnel<br />en 3 étapes
