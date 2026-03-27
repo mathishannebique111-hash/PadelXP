@@ -101,7 +101,7 @@ function ClubsLoginForm() {
       style={{ background: "#04050a" }}
     >
       {/* TennisBallpit — same as hero section */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0, filter: "blur(0.8px)" }}>
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
         <TennisBallpit />
       </div>
       {/* Overlays — same as hero section */}

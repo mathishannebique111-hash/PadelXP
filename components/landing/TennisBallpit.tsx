@@ -127,9 +127,6 @@ export default function TennisBallpit() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const testCtx = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
-    if (!testCtx) return;
-
     const isMobile = window.innerWidth < 768;
     let renderer: THREE.WebGLRenderer;
     try {
