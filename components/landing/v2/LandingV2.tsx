@@ -467,8 +467,8 @@ function Features() {
 
 function HowItWorks() {
   const w = useWindowWidth();
-  const cardW = w < 380 ? w - 16 : w < 480 ? w - 20 : w < 768 ? Math.min(w - 48, 400) : w < 1024 ? 460 : 580;
-  const cardH = w < 380 ? 400 : w < 480 ? 430 : w < 768 ? 360 : w < 1024 ? 400 : 460;
+  const cardW = w < 380 ? w - 56 : w < 480 ? w - 64 : w < 768 ? Math.min(w - 48, 400) : w < 1024 ? 460 : 580;
+  const cardH = w < 380 ? 320 : w < 480 ? 350 : w < 768 ? 360 : w < 1024 ? 400 : 460;
   const cardDist = w < 480 ? 30 : w < 768 ? 40 : 60;
   const cardVertDist = w < 480 ? 35 : w < 768 ? 45 : 70;
 
