@@ -149,7 +149,7 @@ export default function TennisBallpit() {
     camera.position.set(0, 0, 20);
     camera.lookAt(0, 0, 0);
 
-    const cfg = { ...CONFIG };
+    const cfg = { ...CONFIG, count: isMobile ? 35 : CONFIG.count };
     const physics = new Physics(cfg);
 
     const resize = () => {
@@ -165,13 +165,21 @@ export default function TennisBallpit() {
       cfg.maxY = wH / 2;
     };
 
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envMap = pmrem.fromScene(new RoomEnvironment()).texture;
+    let envMap: THREE.Texture | null = null;
+    if (!isMobile) {
+      try {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        envMap = pmrem.fromScene(new RoomEnvironment()).texture;
+        pmrem.dispose();
+      } catch (e) {
+        console.warn("[TennisBallpit] PMREMGenerator failed:", e);
+      }
+    }
     scene.environment = envMap;
-    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-    const pointLight = new THREE.PointLight(0xCDFF00, 50);
+    scene.add(new THREE.AmbientLight(0xffffff, isMobile ? 0.8 : 0.3));
+    const pointLight = new THREE.PointLight(0xCDFF00, isMobile ? 80 : 50);
     pointLight.position.set(0, 0, 5);
-    pointLight.castShadow = true;
+    pointLight.castShadow = false;
     scene.add(pointLight);
 
     const rotations: THREE.Quaternion[] = [];
@@ -224,13 +232,19 @@ export default function TennisBallpit() {
         const geo = mesh.geometry.clone();
         geo.applyMatrix4(mesh.matrixWorld);
         const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-        mat.envMap = envMap; mat.envMapIntensity = 0.5; mat.needsUpdate = true;
+        if (envMap) { mat.envMap = envMap; mat.envMapIntensity = 0.5; } mat.needsUpdate = true;
         const im = new THREE.InstancedMesh(geo, mat, cfg.count);
         im.frustumCulled = false; im.castShadow = true; im.receiveShadow = true;
         instancedMeshes.push(im); container.add(im);
       }
       scene.add(container);
-      resize(); clock.start(); loop();
+      // On mobile, defer resize to next paint frame so parent layout (100svh / inset-0) is fully computed
+      const startLoop = () => { resize(); clock.start(); loop(); };
+      if (isMobile) {
+        requestAnimationFrame(() => requestAnimationFrame(startLoop));
+      } else {
+        startLoop();
+      }
     });
 
     const raycaster = new THREE.Raycaster();
