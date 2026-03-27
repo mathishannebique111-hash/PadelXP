@@ -428,7 +428,7 @@ function Features() {
               Tout ce dont votre club a
               <RotatingText
                 texts={["besoin", "envie", "rêvé"]}
-                mainClassName="px-3 py-1 rounded-xl overflow-hidden justify-center"
+                mainClassName="px-3 py-1 rounded-xl overflow-hidden justify-center self-start sm:self-auto"
                 style={{
                   background: "rgba(125,200,40,0.15)",
                   border: "1px solid rgba(125,200,40,0.35)",
@@ -452,7 +452,7 @@ function Features() {
           <Carousel
             items={FEATURE_ITEMS}
             baseWidth={carouselWidth}
-            height={w < 380 ? 430 : w < 480 ? 460 : 460}
+            height={w < 380 ? 370 : w < 480 ? 400 : 460}
             autoplay={false}
             loop={true}
             round={false}
