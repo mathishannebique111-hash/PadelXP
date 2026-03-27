@@ -489,7 +489,7 @@ function HowItWorks() {
           </div>
 
           {/* Right — CardSwap */}
-          <div className="shrink-0 relative w-full lg:w-auto flex justify-center" style={{ height: cardH + (w < 480 ? 140 : 160) }}>
+          <div className="shrink-0 relative w-full lg:w-auto" style={{ height: cardH + (w < 480 ? 140 : 160) }}>
             <CardSwap
               width={cardW}
               height={cardH}
@@ -567,7 +567,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
                   <div className="relative flex flex-col rounded-[24px] h-full overflow-hidden"
                     style={{ background: "#ffffff", border: "1.5px solid #7DC828", boxShadow: "0 8px 40px rgba(125,200,40,0.18), 0 2px 12px rgba(0,0,0,0.07)" }}>
                     <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, #7DC828 0%, #a3e635 100%)" }} />
-                    <div className="flex flex-col p-5 flex-1">
+                    <div className="flex flex-col p-3 sm:p-5 flex-1">
                       <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} courtRange={courtRange} courtCount={courtCount} tagline={tagline} featured onContact={onContact} isElite={false} />
                     </div>
                   </div>
@@ -575,7 +575,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
                   <div className="relative flex flex-col rounded-[24px] h-full overflow-hidden"
                     style={{ background: "#ffffff", border: "1px solid rgba(10,31,92,0.13)", boxShadow: "0 6px 32px rgba(10,31,92,0.07), 0 2px 8px rgba(0,0,0,0.05)" }}>
                     <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, #0A1F5C 0%, rgba(10,31,92,0.25) 70%, transparent 100%)" }} />
-                    <div className="flex flex-col p-5 flex-1">
+                    <div className="flex flex-col p-3 sm:p-5 flex-1">
                       <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} courtRange={courtRange} courtCount={courtCount} tagline={tagline} featured={false} onContact={onContact} isElite={true} />
                     </div>
                   </div>
@@ -583,7 +583,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
                   <div className="relative flex flex-col rounded-[24px] h-full overflow-hidden"
                     style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
                     <div className="h-[3px] w-full" style={{ background: "linear-gradient(90deg, rgba(10,31,92,0.3) 0%, transparent 70%)" }} />
-                    <div className="flex flex-col p-5 flex-1">
+                    <div className="flex flex-col p-3 sm:p-5 flex-1">
                       <PricingCardContent name={name} displayPrice={displayPrice} annualTotal={annualTotal} courtRange={courtRange} courtCount={courtCount} tagline={tagline} featured={false} onContact={onContact} isElite={false} />
                     </div>
                   </div>
@@ -649,10 +649,10 @@ function PricingCardContent({
       </div>
 
       {/* Separator */}
-      <div className="w-full h-px mb-5" style={{ background: `linear-gradient(90deg, ${accentColor}50 0%, transparent 80%)` }} />
+      <div className="w-full h-px mb-3 sm:mb-5" style={{ background: `linear-gradient(90deg, ${accentColor}50 0%, transparent 80%)` }} />
 
       {/* Court visual */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-5 py-4">
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 sm:gap-5 py-2 sm:py-4">
         {/* Big range number */}
         <div className="text-center">
           <span
@@ -683,7 +683,7 @@ function PricingCardContent({
       </div>
 
       {/* Separator */}
-      <div className="w-full h-px mt-5 mb-4" style={{ background: `linear-gradient(90deg, ${accentColor}30 0%, transparent 80%)` }} />
+      <div className="w-full h-px mt-3 sm:mt-5 mb-3 sm:mb-4" style={{ background: `linear-gradient(90deg, ${accentColor}30 0%, transparent 80%)` }} />
 
       {/* CTA */}
       <button
