@@ -165,7 +165,7 @@ function Hero() {
           className="max-w-4xl mx-auto flex flex-col items-center gap-5 sm:gap-7"
         >
           <h1
-            className="text-[1.7rem] sm:text-[2.8rem] md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.05] tracking-[-0.03em]"
+            className="text-[2.1rem] sm:text-[2.8rem] md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.05] tracking-[-0.03em]"
             style={{ textShadow: "0 2px 4px rgba(0,0,0,1), 0 8px 40px rgba(0,0,0,0.95)" }}
           >
             Transformez votre club de padel
@@ -301,7 +301,7 @@ function Gallery() {
     <section className="overflow-hidden pt-12 sm:pt-20 pb-6 sm:pb-8">
       <FadeIn className="text-center mb-4 px-4 sm:px-6">
         <SectionLabel>Aperçu application marque blanche</SectionLabel>
-        <h2 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 tracking-tight">
           La plateforme en <span style={{ color: "#7DC828" }}>images</span>
         </h2>
         <p className="text-white/30 text-sm mt-3">Faites glisser pour explorer</p>
@@ -423,7 +423,7 @@ function Features() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <FadeIn className="mb-6 sm:mb-12">
           <SectionLabel>Fonctionnalités</SectionLabel>
-          <h2 className="text-[1.6rem] sm:text-3xl md:text-5xl lg:text-6xl font-extrabold text-white mt-4 tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold text-white mt-4 tracking-tight leading-tight">
             <span className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-1 sm:gap-x-3 sm:gap-y-2">
               Tout ce dont votre club a
               <RotatingText
@@ -535,7 +535,7 @@ function Pricing({ onContact }: { onContact: () => void }) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <FadeIn className="mb-10 sm:mb-16 text-center">
           <SectionLabel>Tarifs</SectionLabel>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 tracking-tight mb-6 sm:mb-8">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-extrabold text-white mt-4 tracking-tight mb-6 sm:mb-8">
             Simple et transparent
           </h2>
           <div className="inline-flex items-center gap-3 p-1 rounded-full border border-white/8 bg-white/3">
@@ -721,7 +721,7 @@ function FAQ() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 relative">
         <FadeIn className="mb-8 sm:mb-16 text-center">
           <SectionLabel>Questions fréquentes</SectionLabel>
-          <h2 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mt-4 tracking-tight">
             Tout ce que vous<br />
             <span className="text-white/25">voulez savoir</span>
           </h2>
@@ -821,9 +821,9 @@ function FinalCTA() {
         <div className="mb-4 sm:mb-6">
           <SectionLabel>Prêt à démarrer ?</SectionLabel>
         </div>
-        <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-none flex flex-col items-center">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-none flex flex-col items-center">
           Votre club mérite
-          <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-20 sm:h-32 md:h-48 lg:h-60 xl:h-72 object-contain drop-shadow-[0_0_25px_rgba(125,200,40,0.6)] -mt-4 sm:-mt-8 md:-mt-10 -mb-2 sm:-mb-4 md:-mb-6 relative z-10" />
+          <img src="/images/Logo sans fond.png" alt="PadelXP" className="h-24 sm:h-32 md:h-48 lg:h-60 xl:h-72 object-contain drop-shadow-[0_0_25px_rgba(125,200,40,0.6)] -mt-5 sm:-mt-8 md:-mt-10 -mb-2 sm:-mb-4 md:-mb-6 relative z-10" />
         </h2>
 
         <div className="flex flex-col sm:flex-row items-center relative z-20 mt-2 sm:mt-0">
