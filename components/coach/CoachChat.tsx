@@ -92,7 +92,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
 
   // Setup Web Speech API
   const stoppingRef = useRef(false);
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -108,12 +107,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     let finalTranscript = "";
 
     recognition.onresult = (event: any) => {
-      // Clear silence timer on every new result
-      if (silenceTimerRef.current) {
-        clearTimeout(silenceTimerRef.current);
-        silenceTimerRef.current = null;
-      }
-
       let interim = "";
       finalTranscript = "";
       for (let i = 0; i < event.results.length; i++) {
@@ -125,39 +118,16 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
         }
       }
       setInput(finalTranscript + interim);
-
-      // Start a 2s silence timer after each result — if no new speech, auto-send
-      if (finalTranscript.trim()) {
-        silenceTimerRef.current = setTimeout(() => {
-          stoppingRef.current = true;
-          recognition.stop();
-        }, 2000);
-      }
     };
 
     recognition.onend = () => {
-      if (silenceTimerRef.current) {
-        clearTimeout(silenceTimerRef.current);
-        silenceTimerRef.current = null;
-      }
-
-      // If user manually stopped or silence timer triggered, send the message
       if (stoppingRef.current) {
+        // User manually stopped
         stoppingRef.current = false;
         setIsListening(false);
-        if (finalTranscript.trim()) {
-          setTimeout(() => {
-            const inputEl = document.querySelector<HTMLInputElement>("[data-coach-input]");
-            if (inputEl) {
-              const form = inputEl.closest("form");
-              if (form) form.requestSubmit();
-            }
-          }, 100);
-        }
         finalTranscript = "";
       } else {
-        // Browser stopped recognition unexpectedly (e.g. no speech detected) — restart if still listening
-        // Use a ref check since state may not be updated yet
+        // Browser stopped unexpectedly (no speech, timeout) — restart
         setTimeout(() => {
           if (!stoppingRef.current) {
             try {
@@ -186,7 +156,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
 
     return () => {
       stoppingRef.current = true;
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       try { recognition.abort(); } catch { /* ignore */ }
     };
   }, []);
