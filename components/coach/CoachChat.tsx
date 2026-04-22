@@ -12,6 +12,11 @@ import {
   ChevronDown,
   ArrowRight,
   Crown,
+  Mic,
+  MicOff,
+  Target,
+  Check,
+  X,
 } from "lucide-react";
 import CoachMarkdown from "./CoachMarkdown";
 
@@ -36,6 +41,14 @@ interface UsageInfo {
   remaining: number | null;
 }
 
+interface Goal {
+  id: string;
+  title: string;
+  description: string | null;
+  status: "active" | "completed" | "abandoned";
+  created_at: string;
+}
+
 const SUGGESTIONS = [
   "Comment améliorer ma bandeja ?",
   "Donne-moi un exercice pour le filet",
@@ -57,11 +70,17 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const [showConvDropdown, setShowConvDropdown] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [containerHeight, setContainerHeight] = useState<number | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [showGoals, setShowGoals] = useState(false);
+  const [newGoalInput, setNewGoalInput] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Measure available height dynamically
   useEffect(() => {
@@ -84,6 +103,80 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
       clearTimeout(timer);
     };
   }, [loading]);
+
+  // Setup Web Speech API
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    setVoiceSupported(true);
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = "";
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      // Show real-time transcription in input
+      setInput(finalTranscript + interim);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      // Auto-send if we got a final transcript
+      if (finalTranscript.trim()) {
+        // Small delay to let state update
+        setTimeout(() => {
+          const inputEl = document.querySelector<HTMLInputElement>("[data-coach-input]");
+          if (inputEl) {
+            const form = inputEl.closest("form");
+            if (form) form.requestSubmit();
+          }
+        }, 100);
+      }
+      finalTranscript = "";
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("[CoachChat] Speech recognition error:", event.error);
+      setIsListening(false);
+      finalTranscript = "";
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      try { recognition.abort(); } catch { /* ignore */ }
+    };
+  }, []);
+
+  function toggleVoice() {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      setInput("");
+      setIsListening(true);
+      try {
+        recognitionRef.current.start();
+      } catch {
+        // Already started
+        setIsListening(false);
+      }
+    }
+  }
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -121,15 +214,21 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     }
   }, []);
 
-  // Load conversations + usage on mount
+  // Load conversations + usage + goals on mount
   useEffect(() => {
     async function init() {
       setLoading(true);
       try {
-        const [convRes] = await Promise.all([
+        const [convRes, , goalsRes] = await Promise.all([
           fetch("/api/coach/conversations", { credentials: "include" }),
           refreshUsage(),
+          fetch("/api/coach/goals", { credentials: "include" }),
         ]);
+
+        if (goalsRes.ok) {
+          const { goals: g } = await goalsRes.json();
+          setGoals(g || []);
+        }
 
         if (convRes.ok) {
           const { conversations: convs } = await convRes.json();
@@ -234,6 +333,41 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
       }
     } catch (error) {
       console.error("[CoachChat] Delete error:", error);
+    }
+  }
+
+  async function addGoal() {
+    if (!newGoalInput.trim()) return;
+    try {
+      const res = await fetch("/api/coach/goals", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newGoalInput.trim() }),
+      });
+      if (res.ok) {
+        const { goal } = await res.json();
+        setGoals((prev) => [goal, ...prev]);
+        setNewGoalInput("");
+      }
+    } catch (error) {
+      console.error("[CoachChat] Add goal error:", error);
+    }
+  }
+
+  async function updateGoalStatus(goalId: string, status: "completed" | "abandoned") {
+    try {
+      await fetch("/api/coach/goals", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goalId, status }),
+      });
+      setGoals((prev) =>
+        prev.map((g) => (g.id === goalId ? { ...g, status } : g))
+      );
+    } catch (error) {
+      console.error("[CoachChat] Update goal error:", error);
     }
   }
 
@@ -365,7 +499,87 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
       className="flex flex-col"
       style={containerHeight ? { height: containerHeight } : { height: "calc(100dvh - 14rem)" }}
     >
-      {/* Header: conversation selector */}
+      {/* Coach identity header */}
+      <div className="flex-shrink-0 mb-3 px-1">
+        <h2 className="text-2xl font-extrabold tracking-tight text-white">
+          Salut, moi c&apos;est {coachName}
+        </h2>
+        <p className="text-sm text-white/45 mt-0.5">
+          Ton coach de padel
+        </p>
+      </div>
+
+      {/* Goals section */}
+      <div className="flex-shrink-0 mb-2 px-1">
+        <button
+          onClick={() => setShowGoals(!showGoals)}
+          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/60 transition-colors"
+        >
+          <Target size={12} />
+          <span>Mes objectifs ({goals.filter((g) => g.status === "active").length})</span>
+          <ChevronDown
+            size={12}
+            className={`transition-transform ${showGoals ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {showGoals && (
+          <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-2">
+            {goals.filter((g) => g.status === "active").map((g) => (
+              <div key={g.id} className="flex items-center gap-2">
+                <span className="flex-1 text-xs text-white/70 truncate">{g.title}</span>
+                <button
+                  onClick={() => updateGoalStatus(g.id, "completed")}
+                  className="p-1 rounded text-green-400/60 hover:text-green-400 hover:bg-green-400/10 transition-colors"
+                  title="Objectif atteint"
+                >
+                  <Check size={12} />
+                </button>
+                <button
+                  onClick={() => updateGoalStatus(g.id, "abandoned")}
+                  className="p-1 rounded text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                  title="Abandonner"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+
+            {goals.filter((g) => g.status === "active").length < 5 && (
+              <form
+                onSubmit={(e) => { e.preventDefault(); addGoal(); }}
+                className="flex gap-2 mt-1"
+              >
+                <input
+                  type="text"
+                  value={newGoalInput}
+                  onChange={(e) => setNewGoalInput(e.target.value)}
+                  placeholder="Nouvel objectif..."
+                  className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white placeholder-white/25 focus:outline-none focus:border-blue-400/50"
+                />
+                <button
+                  type="submit"
+                  disabled={!newGoalInput.trim()}
+                  className="rounded-lg bg-blue-500/20 text-blue-300 px-3 py-1.5 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-30 transition-colors"
+                >
+                  Ajouter
+                </button>
+              </form>
+            )}
+
+            {goals.filter((g) => g.status === "completed").length > 0 && (
+              <div className="pt-1 border-t border-white/5">
+                <p className="text-[10px] text-white/25 mb-1">Atteints</p>
+                {goals.filter((g) => g.status === "completed").map((g) => (
+                  <p key={g.id} className="text-[11px] text-white/30 line-through">{g.title}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Conversation selector */}
       <div className="flex-shrink-0 flex items-center gap-2 mb-2 px-1">
         <div ref={dropdownRef} className="relative flex-1">
           <button
@@ -429,13 +643,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
       <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4 space-y-4">
         {isEmpty && !limitReached && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <h2 className="text-2xl font-extrabold tracking-tight text-white mb-1">
-              Salut, moi c&apos;est {coachName}
-            </h2>
-            <p className="text-sm text-white/45 mb-6 max-w-xs">
-              Ton coach de padel. Pose-moi n&apos;importe quelle question !
-            </p>
-
             <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
               {SUGGESTIONS.map((s) => (
                 <button
@@ -557,19 +764,41 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (isListening) {
+              recognitionRef.current?.stop();
+              setIsListening(false);
+            }
             sendMessage();
           }}
           className="flex gap-2"
         >
           <input
             ref={inputRef}
+            data-coach-input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={limitReached ? "Passe Premium pour continuer..." : "Pose ta question au coach..."}
+            placeholder={isListening ? "Parle, j'écoute..." : limitReached ? "Passe Premium pour continuer..." : "Pose ta question au coach..."}
             disabled={isStreaming || limitReached}
-            className="flex-1 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className={`flex-1 rounded-xl border px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors ${
+              isListening
+                ? "border-red-400/50 bg-red-500/10 animate-pulse"
+                : "border-white/15 bg-white/10"
+            }`}
           />
+          {voiceSupported && !isStreaming && !limitReached && (
+            <button
+              type="button"
+              onClick={toggleVoice}
+              className={`flex items-center justify-center w-12 rounded-xl transition-all ${
+                isListening
+                  ? "bg-red-500 text-white shadow-[0_4px_12px_rgba(239,68,68,0.4)] animate-pulse"
+                  : "bg-white/10 text-white/60 hover:text-white hover:bg-white/20"
+              }`}
+            >
+              {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+            </button>
+          )}
           <button
             type="submit"
             disabled={!input.trim() || isStreaming || limitReached}

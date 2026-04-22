@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { type PlayerContext, type PartnerStats, type AdversaryStats } from "./system-prompt";
+import { type PlayerContext, type PartnerStats, type AdversaryStats, type PlayerGoal } from "./system-prompt";
 import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -41,6 +41,7 @@ const EMPTY_CONTEXT: Omit<PlayerContext, "firstName" | "level" | "tier" | "globa
   matchesLastMonth: 0,
   officialPartner: null,
   badges: [],
+  goals: [],
 };
 
 /**
@@ -106,6 +107,15 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
     .select("badge_name, badge_emoji")
     .eq("user_id", userId);
 
+  // 3b. Goals
+  const goalsPromise = admin
+    .from("coach_goals")
+    .select("title, status, created_at")
+    .eq("user_id", userId)
+    .in("status", ["active", "completed"])
+    .order("created_at", { ascending: false })
+    .limit(10);
+
   // 4. Official partner
   const partnerPromise = (async () => {
     const { data: partnerships } = await admin
@@ -151,8 +161,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   logger.info("[coach/player-context] Participations loaded", { count: participations?.length || 0 });
 
   if (!participations || participations.length === 0) {
-    const [clubData, badgesData, officialPartner, levelEvolution] = await Promise.all([
-      clubPromise, badgesPromise, partnerPromise, evolutionPromise,
+    const [clubData, badgesData, officialPartner, levelEvolution, goalsData] = await Promise.all([
+      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise,
     ]);
     return {
       ...baseContext,
@@ -163,6 +173,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
       badges: (badgesData.data || []).map((b: any) => `${b.badge_emoji} ${b.badge_name}`),
       officialPartner,
       levelEvolution,
+      goals: (goalsData.data || []).map((g: any) => ({ title: g.title, status: g.status, createdAt: g.created_at?.slice(0, 10) })),
     };
   }
 
@@ -182,8 +193,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   logger.info("[coach/player-context] Confirmed matches loaded", { count: matches?.length || 0 });
 
   if (!matches || matches.length === 0) {
-    const [clubData, badgesData, officialPartner, levelEvolution] = await Promise.all([
-      clubPromise, badgesPromise, partnerPromise, evolutionPromise,
+    const [clubData, badgesData, officialPartner, levelEvolution, goalsData] = await Promise.all([
+      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise,
     ]);
     return {
       ...baseContext,
@@ -194,6 +205,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
       badges: (badgesData.data || []).map((b: any) => `${b.badge_emoji} ${b.badge_name}`),
       officialPartner,
       levelEvolution,
+      goals: (goalsData.data || []).map((g: any) => ({ title: g.title, status: g.status, createdAt: g.created_at?.slice(0, 10) })),
     };
   }
 
@@ -330,8 +342,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   const winrate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
 
   // Await parallel data
-  const [clubData, badgesData, officialPartner, levelEvolution] = await Promise.all([
-    clubPromise, badgesPromise, partnerPromise, evolutionPromise,
+  const [clubData, badgesData, officialPartner, levelEvolution, goalsData] = await Promise.all([
+    clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise,
   ]);
 
   const context: PlayerContext = {
@@ -353,6 +365,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
     matchesLastMonth,
     officialPartner,
     badges: (badgesData.data || []).map((b: any) => `${b.badge_emoji} ${b.badge_name}`),
+    goals: (goalsData.data || []).map((g: any) => ({ title: g.title, status: g.status, createdAt: g.created_at?.slice(0, 10) })),
   };
 
   logger.info("[coach/player-context] Full context built", {

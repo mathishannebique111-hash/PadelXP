@@ -19,6 +19,12 @@ export interface AdversaryStats {
   winrate: number;
 }
 
+export interface PlayerGoal {
+  title: string;
+  status: string;
+  createdAt: string;
+}
+
 export interface PlayerContext {
   firstName: string;
   level: number; // 0-10
@@ -46,6 +52,7 @@ export interface PlayerContext {
   matchesLastMonth: number;
   officialPartner: string | null; // nom du partenaire officiel
   badges: string[]; // badges débloqués
+  goals: PlayerGoal[]; // objectifs personnalisés
 }
 
 const BASE_PROMPT = `Tu es le Coach IA PadelXP, un entraîneur de padel d'élite avec plus de 20 ans d'expérience au plus haut niveau. Tu as formé des joueurs de World Padel Tour et tu maîtrises parfaitement chaque aspect du padel — technique, tactique, physique, mental et stratégique.
@@ -242,6 +249,13 @@ export function buildSystemPrompt(player: PlayerContext, coachName?: string): st
   // Fréquence récente
   const frequencyStr = `\n- Activité : ${player.matchesThisMonth} match${player.matchesThisMonth > 1 ? "s" : ""} ce mois-ci, ${player.matchesLastMonth} le mois dernier`;
 
+  // Objectifs personnalisés
+  const activeGoals = player.goals.filter(g => g.status === "active");
+  const completedGoals = player.goals.filter(g => g.status === "completed");
+  const goalsStr = activeGoals.length > 0
+    ? `\n\n**Objectifs actifs du joueur :**\n${activeGoals.map(g => `- ${g.title} (fixé le ${g.createdAt})`).join("\n")}${completedGoals.length > 0 ? `\n\nObjectifs déjà atteints : ${completedGoals.map(g => g.title).join(", ")}` : ""}`
+    : "";
+
   const playerContext = `
 
 ## PROFIL COMPLET DU JOUEUR (adapte TOUS tes conseils à ce profil)
@@ -252,7 +266,7 @@ export function buildSystemPrompt(player: PlayerContext, coachName?: string): st
 - Points globaux : ${player.globalPoints}
 - Matchs joués : ${player.totalMatches}
 - Victoires : ${player.wins} | Défaites : ${player.losses} | Winrate : ${player.winrate}%
-- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}
+- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}${goalsStr}
 
 ## INSTRUCTIONS CRITIQUES SUR L'UTILISATION DES DONNÉES
 
@@ -263,7 +277,9 @@ Tu as accès au profil COMPLET de ce joueur ci-dessus. Tu DOIS :
 - Mentionne ses partenaires fréquents et adversaires coriaces quand on parle de stratégie
 - Adapte tes conseils à son niveau ${levelDescription(player.level)} (${player.level.toFixed(1)}/10)
 - Si on te demande "comment je joue ?", "mes stats ?", "mon niveau ?" → utilise TOUTES les données du profil
-- Tu connais ses ${player.totalMatches} matchs, son winrate de ${player.winrate}%, sa série actuelle, ses partenaires, tout.`;
+- Tu connais ses ${player.totalMatches} matchs, son winrate de ${player.winrate}%, sa série actuelle, ses partenaires, tout.
+- Si le joueur a des objectifs actifs, fais-y référence régulièrement et encourage sa progression vers ces objectifs
+- Quand tu donnes des conseils, relie-les aux objectifs du joueur quand c'est pertinent`;
 
   const prompt = BASE_PROMPT.replace("{COACH_NAME}", coachName || "Pablo") + playerContext;
   return prompt;
