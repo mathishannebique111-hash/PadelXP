@@ -398,6 +398,166 @@ export async function POST(req: Request) {
           logger.warn("Revalidation failed after confirmation", { error: (revError as Error).message });
         }
 
+        // === NOTIFICATIONS ENGAGEMENT (isolé, ne bloque jamais) ===
+        if (fullMatch && participants && participants.length > 0) {
+          try {
+            const { notifyUser } = await import("@/lib/notifications/send-push");
+
+            // Récupérer les prénoms pour personnalisation
+            const participantUserIds = participants.map((p: any) => p.user_id);
+            const { data: participantProfiles } = await adminClient
+              .from("profiles")
+              .select("id, first_name, display_name")
+              .in("id", participantUserIds);
+
+            const nameMap = new Map(
+              (participantProfiles || []).map((p: any) => [
+                p.id,
+                p.first_name || (p.display_name ? p.display_name.split(/\s+/)[0] : "Joueur"),
+              ])
+            );
+
+            // --- #1 : Notification "points gagnés" pour chaque joueur ---
+            for (const participant of participants) {
+              const uid = participant.user_id;
+              const firstName = nameMap.get(uid) || "Joueur";
+              const isWinner =
+                (fullMatch.winner_team_id === fullMatch.team1_id && participant.team === 1) ||
+                (fullMatch.winner_team_id === fullMatch.team2_id && participant.team === 2);
+              const wins = isWinner ? 1 : 0;
+              const losses = isWinner ? 0 : 1;
+              const basePoints = wins * 10 + losses * 3;
+
+              if (isWinner) {
+                await notifyUser(uid, "match_points_earned",
+                  "🎉 Victoire !",
+                  `Bravo ${firstName} ! Tu remportes +${basePoints} points. Continue comme ça !`,
+                  { type: "match_points_earned", match_id: matchId, points: basePoints, result: "win" }
+                );
+              } else {
+                await notifyUser(uid, "match_points_earned",
+                  "💪 Match enregistré",
+                  `${firstName}, +${basePoints} points malgré la défaite. La prochaine sera la bonne !`,
+                  { type: "match_points_earned", match_id: matchId, points: basePoints, result: "loss" }
+                );
+              }
+            }
+
+            // --- #3 : Notification "série de victoires" ---
+            for (const participant of participants) {
+              const uid = participant.user_id;
+              const isWinner =
+                (fullMatch.winner_team_id === fullMatch.team1_id && participant.team === 1) ||
+                (fullMatch.winner_team_id === fullMatch.team2_id && participant.team === 2);
+
+              if (!isWinner) continue;
+
+              // Calculer la série de victoires actuelle
+              const { data: recentMatches } = await adminClient
+                .from("match_participants")
+                .select("match_id, team")
+                .eq("user_id", uid)
+                .eq("player_type", "user");
+
+              if (!recentMatches || recentMatches.length === 0) continue;
+
+              const recentMatchIds = recentMatches.map((m: any) => m.match_id);
+              const teamByMatch = new Map(recentMatches.map((m: any) => [m.match_id, m.team]));
+
+              const { data: confirmedMatches } = await adminClient
+                .from("matches")
+                .select("id, winner_team_id, team1_id, team2_id, played_at")
+                .in("id", recentMatchIds)
+                .eq("status", "confirmed")
+                .order("played_at", { ascending: false })
+                .limit(20);
+
+              if (!confirmedMatches) continue;
+
+              let streak = 0;
+              for (const m of confirmedMatches) {
+                const team = teamByMatch.get(m.id);
+                const teamId = team === 1 ? m.team1_id : m.team2_id;
+                if (m.winner_team_id === teamId) {
+                  streak++;
+                } else {
+                  break;
+                }
+              }
+
+              const firstName = nameMap.get(uid) || "Joueur";
+
+              if (streak === 3) {
+                await notifyUser(uid, "win_streak",
+                  "🔥 3 victoires d'affilée !",
+                  `${firstName}, tu es en feu ! 3 victoires consécutives. Qui pourra t'arrêter ?`,
+                  { type: "win_streak", streak: 3 }
+                );
+              } else if (streak === 5) {
+                await notifyUser(uid, "win_streak",
+                  "⚡ 5 victoires d'affilée !",
+                  `Incroyable ${firstName} ! 5 victoires sans défaite, tu domines le padel ! 🏆`,
+                  { type: "win_streak", streak: 5 }
+                );
+              } else if (streak === 10) {
+                await notifyUser(uid, "win_streak",
+                  "👑 10 victoires d'affilée !",
+                  `${firstName}, 10 victoires consécutives ! Tu es une légende. 🐐`,
+                  { type: "win_streak", streak: 10 }
+                );
+              } else if (streak === 7) {
+                await notifyUser(uid, "win_streak",
+                  "💎 7 victoires d'affilée !",
+                  `${firstName}, 7 victoires sans perdre ! Tu es inarrêtable ! 🚀`,
+                  { type: "win_streak", streak: 7 }
+                );
+              }
+            }
+
+            // --- #6 : Notification "ton partenaire a joué" ---
+            for (const participant of participants) {
+              const uid = participant.user_id;
+              const firstName = nameMap.get(uid) || "Joueur";
+
+              // Trouver le partenaire officiel (player_partnerships)
+              const { data: partnerships } = await adminClient
+                .from("player_partnerships")
+                .select("player_id, partner_id")
+                .or(`player_id.eq.${uid},partner_id.eq.${uid}`)
+                .eq("status", "accepted");
+
+              if (!partnerships || partnerships.length === 0) continue;
+
+              for (const p of partnerships) {
+                const partnerId = p.player_id === uid ? p.partner_id : p.player_id;
+
+                // Vérifier que le partenaire n'est PAS dans ce match (sinon pas besoin de notifier)
+                const partnerInMatch = participants.some((part: any) => part.user_id === partnerId);
+                if (partnerInMatch) continue;
+
+                const isWinner =
+                  (fullMatch.winner_team_id === fullMatch.team1_id && participant.team === 1) ||
+                  (fullMatch.winner_team_id === fullMatch.team2_id && participant.team === 2);
+
+                const resultEmoji = isWinner ? "✅" : "😤";
+                const resultText = isWinner ? "a gagné" : "a perdu";
+
+                await notifyUser(partnerId, "partner_match_played",
+                  "🎾 Ton partenaire a joué !",
+                  `${firstName} ${resultText} son dernier match ${resultEmoji}. Et toi, tu joues quand ?`,
+                  { type: "partner_match_played", partner_id: uid, result: isWinner ? "win" : "loss" }
+                );
+              }
+            }
+
+            logger.info("Engagement notifications sent after match confirmation");
+          } catch (notifError) {
+            logger.error("Engagement notifications error (non-blocking)", {
+              error: (notifError as Error).message,
+            });
+          }
+        }
+
         // === LEAGUE POINTS (isolé, ne bloque jamais le match classique) ===
         if (fullMatch?.league_id) {
           try {

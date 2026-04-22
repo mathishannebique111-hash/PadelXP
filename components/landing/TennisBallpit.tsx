@@ -141,8 +141,9 @@ export default function TennisBallpit() {
       return;
     }
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.shadowMap.enabled = !isMobile;
+    renderer.toneMapping = isMobile ? THREE.LinearToneMapping : THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = isMobile ? 1.4 : 1;
+    renderer.shadowMap.enabled = false;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
@@ -222,30 +223,38 @@ export default function TennisBallpit() {
       renderer.render(scene, camera);
     };
 
-    const loader = new GLTFLoader();
-    loader.load("/tennis_ball_model/scene.gltf", (gltf) => {
-      const meshes: THREE.Mesh[] = [];
-      gltf.scene.traverse((child) => { if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh); });
-      const container = new THREE.Group();
-      for (const mesh of meshes) {
-        mesh.updateWorldMatrix(true, false);
-        const geo = mesh.geometry.clone();
-        geo.applyMatrix4(mesh.matrixWorld);
-        const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-        if (envMap) { mat.envMap = envMap; mat.envMapIntensity = 0.5; } mat.needsUpdate = true;
-        const im = new THREE.InstancedMesh(geo, mat, cfg.count);
-        im.frustumCulled = false; im.castShadow = true; im.receiveShadow = true;
-        instancedMeshes.push(im); container.add(im);
-      }
-      scene.add(container);
-      // On mobile, defer resize to next paint frame so parent layout (100svh / inset-0) is fully computed
-      const startLoop = () => { resize(); clock.start(); loop(); };
-      if (isMobile) {
-        requestAnimationFrame(() => requestAnimationFrame(startLoop));
-      } else {
+    const startLoop = () => { resize(); clock.start(); loop(); };
+
+    if (isMobile) {
+      // Mobile: skip GLTF (unreliable on mobile GPUs/networks), use simple spheres that always render
+      const geo = new THREE.SphereGeometry(1, 20, 20);
+      const mat = new THREE.MeshStandardMaterial({ color: 0xCDFF00, roughness: 0.45, metalness: 0.1 });
+      const im = new THREE.InstancedMesh(geo, mat, cfg.count);
+      im.frustumCulled = false;
+      instancedMeshes.push(im);
+      scene.add(im);
+      // Double RAF so parent layout (100svh / inset-0) is fully computed before resize
+      requestAnimationFrame(() => requestAnimationFrame(startLoop));
+    } else {
+      const loader = new GLTFLoader();
+      loader.load("/tennis_ball_model/scene.gltf", (gltf) => {
+        const meshes: THREE.Mesh[] = [];
+        gltf.scene.traverse((child) => { if ((child as THREE.Mesh).isMesh) meshes.push(child as THREE.Mesh); });
+        const container = new THREE.Group();
+        for (const mesh of meshes) {
+          mesh.updateWorldMatrix(true, false);
+          const geo = mesh.geometry.clone();
+          geo.applyMatrix4(mesh.matrixWorld);
+          const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
+          if (envMap) { mat.envMap = envMap; mat.envMapIntensity = 0.5; } mat.needsUpdate = true;
+          const im = new THREE.InstancedMesh(geo, mat, cfg.count);
+          im.frustumCulled = false;
+          instancedMeshes.push(im); container.add(im);
+        }
+        scene.add(container);
         startLoop();
-      }
-    });
+      });
+    }
 
     const raycaster = new THREE.Raycaster();
     const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);

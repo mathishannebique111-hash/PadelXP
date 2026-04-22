@@ -1,7 +1,12 @@
 import { createClient } from '@/lib/supabase/client'
 import { logger, logError } from "@/lib/logger";
 
-export type NotificationType = 'badge' | 'badge_unlocked' | 'level_up' | 'top3' | 'top3_ranking' | 'referral' | 'challenge' | 'match_confirmation'
+export type NotificationType =
+  | 'badge' | 'badge_unlocked' | 'level_up' | 'top3' | 'top3_ranking'
+  | 'referral' | 'challenge' | 'match_confirmation'
+  | 'match_points_earned' | 'win_streak' | 'partner_match_played'
+  | 'challenge_new' | 'challenge_expiring' | 'challenge_progress'
+  | 'inactivity_reminder' | 'weekly_recap'
 
 export interface NotificationData {
   [key: string]: any // Flexible pour stocker n'importe quelles données

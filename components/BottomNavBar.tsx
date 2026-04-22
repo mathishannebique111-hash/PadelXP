@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Swords, Users, LayoutGrid, Trophy } from 'lucide-react';
+import { Home, Swords, Users, LayoutGrid, Trophy, Sparkles } from 'lucide-react';
 import { PushNotificationsService } from '@/lib/notifications/push-notifications';
 import { extractSubdomain, getClubBranding } from '@/lib/club-branding';
 
@@ -29,6 +29,7 @@ export default function BottomNavBar() {
         { href: '/home', label: 'Profil', icon: <Home size={20} />, navKey: 'home' },
         { href: '/match/new', label: 'Matchs', icon: <Swords size={20} />, navKey: 'match' },
         { href: '/club', label: 'Compétition', icon: <Trophy size={20} />, navKey: 'club' },
+        { href: '/coach', label: 'Coach IA', icon: <Sparkles size={20} />, navKey: 'coach' },
     ];
 
     // Ajouter "Réserver" si on est sur l'app PadelXP OU si l'option est activée pour le club
@@ -167,7 +168,8 @@ export default function BottomNavBar() {
         if (pathname === '/home' || pathname?.startsWith('/home')) newIndex = 0;
         else if (pathname === '/match/new' || pathname?.startsWith('/match')) newIndex = 1;
         else if (pathname === '/club' || pathname?.startsWith('/club')) newIndex = 2;
-        else if (pathname === '/book' || pathname?.startsWith('/book') || pathname === '/reservations' || pathname?.startsWith('/reservations')) newIndex = 3;
+        else if (pathname === '/coach' || pathname?.startsWith('/coach')) newIndex = 3;
+        else if (pathname === '/book' || pathname?.startsWith('/book') || pathname === '/reservations' || pathname?.startsWith('/reservations')) newIndex = 4;
         setActiveIndex(newIndex);
     }, [pathname]);
 
