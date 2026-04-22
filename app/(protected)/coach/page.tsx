@@ -16,7 +16,7 @@ export default async function CoachPage() {
   const coachName = getCoachName(user.id);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-2">
+    <div className="coach-page-wrapper mx-auto max-w-2xl px-4">
       <CoachChat userId={user.id} coachName={coachName} />
     </div>
   );

@@ -56,10 +56,34 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const [loading, setLoading] = useState(true);
   const [showConvDropdown, setShowConvDropdown] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const [containerHeight, setContainerHeight] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Measure available height dynamically
+  useEffect(() => {
+    function measure() {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      // Find the bottom nav bar
+      const navBar = document.getElementById("bottom-nav-bar");
+      const navTop = navBar ? navBar.getBoundingClientRect().top : window.innerHeight;
+      // Available height = from top of our container to top of nav bar, with some padding
+      const available = navTop - rect.top - 12;
+      setContainerHeight(Math.max(available, 300));
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    // Re-measure after a short delay to account for layout shifts
+    const timer = setTimeout(measure, 100);
+    return () => {
+      window.removeEventListener("resize", measure);
+      clearTimeout(timer);
+    };
+  }, [loading]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -336,9 +360,13 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-14rem)]">
+    <div
+      ref={containerRef}
+      className="flex flex-col"
+      style={containerHeight ? { height: containerHeight } : { height: "calc(100dvh - 14rem)" }}
+    >
       {/* Header: conversation selector */}
-      <div className="flex items-center gap-2 mb-2 px-1">
+      <div className="flex-shrink-0 flex items-center gap-2 mb-2 px-1">
         <div ref={dropdownRef} className="relative flex-1">
           <button
             onClick={() => setShowConvDropdown(!showConvDropdown)}
@@ -398,7 +426,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4 space-y-4">
         {isEmpty && !limitReached && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <h2 className="text-2xl font-extrabold tracking-tight text-white mb-1">
@@ -510,7 +538,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
       </div>
 
       {/* Input area */}
-      <div className="mt-2 pb-1">
+      <div className="flex-shrink-0 mt-2">
         {/* Limit reached inline paywall */}
         {limitReached && messages.length > 0 && (
           <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 mb-2">
