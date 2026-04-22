@@ -1417,9 +1417,9 @@ export default function MatchForm({
                   {/* Boutons type onglets à la place du select */}
                   <div className="flex bg-white/5 p-1 rounded-xl w-full">
                     {[
-                      { id: 'global', label: '🌐 Global' },
-                      { id: 'guest', label: '✉️ Invité' },
-                      { id: 'anonymous', label: '👤 Anonyme' }
+                      { id: 'global', label: 'Global' },
+                      { id: 'guest', label: 'Invité' },
+                      { id: 'anonymous', label: 'Anonyme' }
                     ].map(tab => (
                       <button
                         key={tab.id}
@@ -1457,10 +1457,9 @@ export default function MatchForm({
                           }
                         }}
                         className={`flex-1 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all ${(activeSlot && scopes[activeSlot as keyof typeof scopes] === tab.id)
-                          ? 'shadow-sm text-[#071554]'
-                          : `bg-white/5 border text-white hover:bg-white/10 ${!isClub ? 'border-white/10' : ''}`
+                          ? 'bg-white text-[#071554] shadow-sm'
+                          : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white'
                           }`}
-                        style={isClub ? { borderColor: 'rgba(var(--theme-accent), 0.2)' } : {}}
                       >
                         {tab.label}
                       </button>

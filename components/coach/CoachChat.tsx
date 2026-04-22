@@ -410,6 +410,10 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     } finally {
       setIsStreaming(false);
       setStreamingContent("");
+      // Reload from DB to ensure consistency (no lost messages)
+      if (activeConvId) {
+        setTimeout(() => loadMessages(activeConvId), 500);
+      }
       inputRef.current?.focus();
     }
   }
