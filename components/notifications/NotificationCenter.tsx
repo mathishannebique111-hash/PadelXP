@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, BellOff, X, CheckCheck, Award, TrendingUp, MessageCircle, AlertCircle, ChevronLeft } from 'lucide-react';
+import { Bell, BellOff, X, CheckCheck, Award, TrendingUp, MessageCircle, AlertCircle, ChevronLeft, Sparkles } from 'lucide-react';
 import { useUser } from '@/lib/hooks/useUser';
 import { useNotifications } from '@/lib/hooks/useNotifications';
 import { markAsRead, markAllAsRead } from '@/lib/notifications';
@@ -210,6 +210,8 @@ export default function NotificationCenter() {
       router.push('/badges');
     } else if (notification.type === 'level_up') {
       router.push('/home?tab=profile');
+    } else if (notification.type === 'coach_debrief' || notification.type === 'coach_message') {
+      router.push('/coach');
     }
 
     handleClose();
@@ -224,6 +226,9 @@ export default function NotificationCenter() {
         return <TrendingUp className="w-10 h-10 text-green-500" />;
       case 'chat':
         return <MessageCircle className="w-10 h-10 text-blue-500" />;
+      case 'coach_debrief':
+      case 'coach_message':
+        return <Sparkles className="w-10 h-10 text-blue-400" />;
       case 'top3':
       case 'top3_ranking':
         return <TrendingUp className="w-10 h-10 text-purple-500" />;

@@ -251,6 +251,35 @@ export async function POST(req: Request) {
 
     logger.info("POST /api/matches/confirm - Confirmation upserted");
 
+    // === DEBRIEF NOTIFICATION (envoyée dès que le joueur confirme, pas besoin d'attendre les 2 équipes) ===
+    try {
+      const { createServerNotification } = await import("@/lib/notifications/send-push");
+
+      // Récupérer le prénom du joueur
+      const { data: confirmingProfile } = await adminClient
+        .from("profiles")
+        .select("first_name, display_name")
+        .eq("id", user.id)
+        .single();
+
+      const playerFirstName = confirmingProfile?.first_name
+        || (confirmingProfile?.display_name ? confirmingProfile.display_name.split(/\s+/)[0] : "Joueur");
+
+      await createServerNotification(
+        user.id,
+        "coach_debrief",
+        "Ton debrief post-match est prêt",
+        `${playerFirstName}, 30 secondes pour améliorer ton prochain match`,
+        { type: "coach_debrief", match_id: matchId, path: "/coach" }
+      );
+
+      logger.info("Debrief notification sent to confirming user", { userId: user.id });
+    } catch (debriefNotifError) {
+      logger.error("Debrief notification error (non-blocking)", {
+        error: (debriefNotifError as Error).message,
+      });
+    }
+
     // Count confirmations
     const { data: confirmations } = await adminClient
       .from("match_confirmations")
@@ -285,6 +314,13 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     const isConfirmed = updatedMatch?.status === 'confirmed';
+    logger.info("POST /api/matches/confirm - Match confirmation check", {
+      isConfirmed,
+      matchStatus: updatedMatch?.status,
+      team1Confirmed,
+      team2Confirmed,
+      confirmationCount,
+    });
 
     if (isConfirmed) {
       // PHASE 5: DISTRIBUTION DES POINTS (Global & Club)
@@ -559,6 +595,10 @@ export async function POST(req: Request) {
         }
 
         // === COACH IA AUTO-MESSAGE (isolé, ne bloque jamais) ===
+        logger.info("Coach IA auto-message block reached", {
+          hasFullMatch: !!fullMatch,
+          participantsCount: participants?.length || 0,
+        });
         if (fullMatch && participants && participants.length > 0) {
           try {
             const { sendCoachAutoMessage } = await import("@/lib/coach/auto-message");
