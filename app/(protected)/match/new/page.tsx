@@ -24,10 +24,6 @@ const MatchJoiningContent = nextDynamic(() => import("@/components/matches/Match
   loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
 });
 
-const OracleTab = nextDynamic(() => import("@/components/OracleTab"), {
-  loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
-});
-
 const BoostContent = nextDynamic(() => import("@/components/BoostContent"), {
   loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
 });
@@ -59,11 +55,10 @@ export default async function NewMatchPage({
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const activeTab = resolvedSearchParams?.tab === 'history' ? 'history' : 
-                    resolvedSearchParams?.tab === 'partners' ? 'partners' : 
-                    resolvedSearchParams?.tab === 'boost' ? 'boost' : 
-                    resolvedSearchParams?.tab === 'rejoindre' ? 'rejoindre' : 
-                    resolvedSearchParams?.tab === 'oracle' ? 'oracle' : 
+  const activeTab = resolvedSearchParams?.tab === 'history' ? 'history' :
+                    resolvedSearchParams?.tab === 'partners' ? 'partners' :
+                    resolvedSearchParams?.tab === 'boost' ? 'boost' :
+                    resolvedSearchParams?.tab === 'rejoindre' ? 'rejoindre' :
                     'record';
 
   if (!user) {
@@ -246,7 +241,7 @@ export default async function NewMatchPage({
                 <span className="text-center whitespace-normal leading-tight">Trouve tes partenaires</span>
               </div>
               <div className="px-1 sm:px-2 py-2 sm:py-3 text-[10px] sm:text-xs font-semibold text-white/60 text-center flex items-center justify-center">
-                <span className="text-center whitespace-normal leading-tight">{isClub ? 'Rejoindre' : 'Oracle'}</span>
+                <span className="text-center whitespace-normal leading-tight">Rejoindre</span>
               </div>
             </div>
             <div className="mt-8 flex items-center justify-center">
@@ -284,11 +279,6 @@ export default async function NewMatchPage({
                 rejoindreContent={
                   <MobileCrashErrorBoundary componentName="Rejoindre">
                     <MatchJoiningContent clubId={clubId || ""} />
-                  </MobileCrashErrorBoundary>
-                }
-                oracleContent={
-                  <MobileCrashErrorBoundary componentName="Oracle">
-                    <OracleTab selfId={user.id} />
                   </MobileCrashErrorBoundary>
                 }
               />

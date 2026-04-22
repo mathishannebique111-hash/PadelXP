@@ -10,12 +10,6 @@ import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 import LeaderboardServer from "@/components/club/LeaderboardServer";
-import OracleTab from "@/components/OracleTab";
-import nextDynamic from "next/dynamic";
-
-const OracleTabDynamic = nextDynamic(() => import("@/components/OracleTab"), {
-  loading: () => <div className="p-4 flex justify-center"><PadelLoader /></div>
-});
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +85,6 @@ export default async function ClubPage({
             }
             challengesContent={<ChallengesContent userId={user.id} clubId={clubId} />}
             tournamentsContent={<TournamentsContent clubId={clubId} />}
-            oracleContent={<OracleTabDynamic selfId={user.id} />}
           />
         </div>
       </div>

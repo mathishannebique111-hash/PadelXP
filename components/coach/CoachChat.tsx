@@ -72,7 +72,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SR) setVoiceSupported(true);
-    // Cleanup on unmount
     return () => {
       isListeningRef.current = false;
       if (recognitionRef.current) {
@@ -82,9 +81,28 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     };
   }, []);
 
-  function startVoice() {
+  function stopVoice() {
+    isListeningRef.current = false;
+    setIsListening(false);
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* */ }
+      recognitionRef.current = null;
+    }
+  }
+
+  async function startVoice() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
+
+    // Request microphone permission first (helps on mobile)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Got permission — stop the stream immediately, SpeechRecognition handles its own audio
+      stream.getTracks().forEach(t => t.stop());
+    } catch {
+      // Permission denied or not available
+      return;
+    }
 
     // Kill any existing instance
     if (recognitionRef.current) {
@@ -94,7 +112,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
 
     const rec = new SR();
     rec.lang = "fr-FR";
-    rec.continuous = false;
+    rec.continuous = true;
     rec.interimResults = true;
 
     rec.onresult = (e: any) => {
@@ -106,41 +124,31 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     };
 
     rec.onend = () => {
-      // If still supposed to listen, start a new session
       if (isListeningRef.current) {
-        try {
-          rec.start();
-        } catch {
-          // Can't restart — stop cleanly
-          isListeningRef.current = false;
-          setIsListening(false);
-          recognitionRef.current = null;
-        }
+        // Auto-restart after a short delay
+        setTimeout(() => {
+          if (isListeningRef.current) {
+            try { rec.start(); } catch { stopVoice(); }
+          }
+        }, 500);
       }
     };
 
     rec.onerror = (e: any) => {
-      // Ignore no-speech and aborted (normal when we stop)
       if (e.error === "no-speech" || e.error === "aborted") return;
       console.error("[Voice]", e.error);
-      isListeningRef.current = false;
-      setIsListening(false);
-      recognitionRef.current = null;
+      stopVoice();
     };
 
     recognitionRef.current = rec;
     isListeningRef.current = true;
     setIsListening(true);
     setInput("");
-    rec.start();
-  }
 
-  function stopVoice() {
-    isListeningRef.current = false;
-    setIsListening(false);
-    if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch { /* */ }
-      recognitionRef.current = null;
+    try {
+      rec.start();
+    } catch {
+      stopVoice();
     }
   }
 
