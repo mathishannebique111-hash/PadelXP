@@ -13,7 +13,7 @@ import {
   ArrowRight,
   Crown,
   Mic,
-  MicOff,
+  Square,
 } from "lucide-react";
 import CoachMarkdown from "./CoachMarkdown";
 
@@ -70,91 +70,85 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
 
   // Setup Web Speech API
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) setVoiceSupported(true);
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SR) setVoiceSupported(true);
+    // Cleanup on unmount
+    return () => {
+      isListeningRef.current = false;
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch { /* */ }
+        recognitionRef.current = null;
+      }
+    };
   }, []);
 
-  function toggleVoice() {
-    if (isListeningRef.current) {
-      // Stop listening
-      isListeningRef.current = false;
-      setIsListening(false);
-      if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch { /* ignore */ }
-      }
+  function startVoice() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+
+    // Kill any existing instance
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch { /* */ }
       recognitionRef.current = null;
-      return;
     }
 
-    // Start listening — create a fresh instance each time
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    const rec = new SR();
+    rec.lang = "fr-FR";
+    rec.continuous = false;
+    rec.interimResults = true;
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = "fr-FR";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
+    rec.onresult = (e: any) => {
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) {
+        text += e.results[i][0].transcript;
+      }
+      setInput(text);
+    };
 
-    let fullText = "";
-
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      fullText = "";
-      for (let i = 0; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          fullText += t;
-        } else {
-          interim += t;
+    rec.onend = () => {
+      // If still supposed to listen, start a new session
+      if (isListeningRef.current) {
+        try {
+          rec.start();
+        } catch {
+          // Can't restart — stop cleanly
+          isListeningRef.current = false;
+          setIsListening(false);
+          recognitionRef.current = null;
         }
       }
-      setInput(fullText + interim);
     };
 
-    recognition.onend = () => {
-      // Only restart if we're still supposed to be listening
-      if (isListeningRef.current) {
-        setTimeout(() => {
-          if (isListeningRef.current && recognitionRef.current === recognition) {
-            try {
-              recognition.start();
-            } catch {
-              isListeningRef.current = false;
-              setIsListening(false);
-              recognitionRef.current = null;
-            }
-          }
-        }, 300);
-      } else {
-        setIsListening(false);
-        recognitionRef.current = null;
-      }
+    rec.onerror = (e: any) => {
+      // Ignore no-speech and aborted (normal when we stop)
+      if (e.error === "no-speech" || e.error === "aborted") return;
+      console.error("[Voice]", e.error);
+      isListeningRef.current = false;
+      setIsListening(false);
+      recognitionRef.current = null;
     };
 
-    recognition.onerror = (event: any) => {
-      if (event.error === "no-speech" || event.error === "aborted") return;
-      if (event.error === "not-allowed") {
-        // Permission denied
-        isListeningRef.current = false;
-        setIsListening(false);
-        recognitionRef.current = null;
-        return;
-      }
-      console.error("[CoachChat] Speech error:", event.error);
-    };
-
-    recognitionRef.current = recognition;
+    recognitionRef.current = rec;
     isListeningRef.current = true;
     setIsListening(true);
     setInput("");
+    rec.start();
+  }
 
-    try {
-      recognition.start();
-    } catch {
-      isListeningRef.current = false;
-      setIsListening(false);
+  function stopVoice() {
+    isListeningRef.current = false;
+    setIsListening(false);
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch { /* */ }
       recognitionRef.current = null;
+    }
+  }
+
+  function toggleVoice() {
+    if (isListeningRef.current) {
+      stopVoice();
+    } else {
+      startVoice();
     }
   }
 
@@ -626,12 +620,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (isListeningRef.current) {
-              isListeningRef.current = false;
-              setIsListening(false);
-              try { recognitionRef.current?.abort(); } catch { /* ignore */ }
-              recognitionRef.current = null;
-            }
+            if (isListeningRef.current) stopVoice();
             sendMessage();
           }}
           className="flex gap-2"
@@ -660,7 +649,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
                   : "bg-white/10 text-white/60 hover:text-white hover:bg-white/20"
               }`}
             >
-              {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+              {isListening ? <Square size={14} /> : <Mic size={18} />}
             </button>
           )}
           <button
