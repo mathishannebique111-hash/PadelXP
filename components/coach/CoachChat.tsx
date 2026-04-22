@@ -60,6 +60,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const [limitReached, setLimitReached] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const isListeningRef = useRef(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -68,12 +69,26 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const recognitionRef = useRef<any>(null);
 
   // Setup Web Speech API
-  const stoppingRef = useRef(false);
-
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) setVoiceSupported(true);
+  }, []);
+
+  function toggleVoice() {
+    if (isListeningRef.current) {
+      // Stop listening
+      isListeningRef.current = false;
+      setIsListening(false);
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch { /* ignore */ }
+      }
+      recognitionRef.current = null;
+      return;
+    }
+
+    // Start listening — create a fresh instance each time
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
-    setVoiceSupported(true);
 
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
@@ -81,77 +96,65 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
-    let finalTranscript = "";
+    let fullText = "";
 
     recognition.onresult = (event: any) => {
       let interim = "";
-      finalTranscript = "";
+      fullText = "";
       for (let i = 0; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
+        const t = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += transcript;
+          fullText += t;
         } else {
-          interim += transcript;
+          interim += t;
         }
       }
-      setInput(finalTranscript + interim);
+      setInput(fullText + interim);
     };
 
     recognition.onend = () => {
-      if (stoppingRef.current) {
-        // User manually stopped
-        stoppingRef.current = false;
-        setIsListening(false);
-        finalTranscript = "";
-      } else {
-        // Browser stopped unexpectedly (no speech, timeout) — restart
+      // Only restart if we're still supposed to be listening
+      if (isListeningRef.current) {
         setTimeout(() => {
-          if (!stoppingRef.current) {
+          if (isListeningRef.current && recognitionRef.current === recognition) {
             try {
               recognition.start();
             } catch {
+              isListeningRef.current = false;
               setIsListening(false);
+              recognitionRef.current = null;
             }
           }
-        }, 100);
+        }, 300);
+      } else {
+        setIsListening(false);
+        recognitionRef.current = null;
       }
     };
 
     recognition.onerror = (event: any) => {
-      if (event.error === "no-speech") {
-        // Silence — just let it continue, onend will restart
+      if (event.error === "no-speech" || event.error === "aborted") return;
+      if (event.error === "not-allowed") {
+        // Permission denied
+        isListeningRef.current = false;
+        setIsListening(false);
+        recognitionRef.current = null;
         return;
       }
-      if (event.error === "aborted") return;
-      console.error("[CoachChat] Speech recognition error:", event.error);
-      stoppingRef.current = true;
-      setIsListening(false);
-      finalTranscript = "";
+      console.error("[CoachChat] Speech error:", event.error);
     };
 
     recognitionRef.current = recognition;
+    isListeningRef.current = true;
+    setIsListening(true);
+    setInput("");
 
-    return () => {
-      stoppingRef.current = true;
-      try { recognition.abort(); } catch { /* ignore */ }
-    };
-  }, []);
-
-  function toggleVoice() {
-    if (!recognitionRef.current) return;
-    if (isListening) {
-      // User clicks stop — send what we have
-      stoppingRef.current = true;
-      recognitionRef.current.stop();
-    } else {
-      setInput("");
-      stoppingRef.current = false;
-      setIsListening(true);
-      try {
-        recognitionRef.current.start();
-      } catch {
-        setIsListening(false);
-      }
+    try {
+      recognition.start();
+    } catch {
+      isListeningRef.current = false;
+      setIsListening(false);
+      recognitionRef.current = null;
     }
   }
 
@@ -619,9 +622,11 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (isListening) {
-              recognitionRef.current?.stop();
+            if (isListeningRef.current) {
+              isListeningRef.current = false;
               setIsListening(false);
+              try { recognitionRef.current?.abort(); } catch { /* ignore */ }
+              recognitionRef.current = null;
             }
             sendMessage();
           }}
