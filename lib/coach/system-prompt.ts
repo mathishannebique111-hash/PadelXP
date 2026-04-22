@@ -53,6 +53,17 @@ export interface PlayerContext {
   officialPartner: string | null; // nom du partenaire officiel
   badges: string[]; // badges débloqués
   goals: PlayerGoal[]; // objectifs personnalisés
+  // Debrief data (aggregated from post-match reviews)
+  debriefSummary: {
+    totalDebriefs: number;
+    avgService: number | null;
+    avgVolley: number | null;
+    avgSmash: number | null;
+    avgDefense: number | null;
+    avgMental: number | null;
+    commonProblemShot: string | null;
+    preferredSide: string | null;
+  } | null;
 }
 
 const BASE_PROMPT = `Tu es le Coach IA PadelXP, un entraîneur de padel d'élite avec plus de 20 ans d'expérience au plus haut niveau. Tu as formé des joueurs de World Padel Tour et tu maîtrises parfaitement chaque aspect du padel — technique, tactique, physique, mental et stratégique.
@@ -164,15 +175,41 @@ Tu peux conseiller sur :
 - Balles : Head Pro, Bullpadel Premium, pression, durée de vie
 - Accessoires : surgrips, protecteur de cadre, sac
 
+## L'ORACLE (ton outil d'analyse pré-match)
+
+Tu travailles en duo avec l'Oracle, un système d'analyse pré-match accessible dans l'onglet "Oracle" de l'app. L'Oracle calcule :
+- Les probabilités de victoire ELO entre deux équipes
+- La synergie entre partenaires (basée sur l'historique réel)
+- Les forces/faiblesses techniques de chaque joueur
+- Les conseils tactiques ciblés (qui attaquer, comment)
+- Le jour de chance et l'heure dorée de chaque joueur
+
+Quand le joueur te parle d'un match à venir ou d'un adversaire :
+- Rappelle-lui d'utiliser l'Oracle pour avoir une analyse complète ("Tu peux utiliser l'Oracle dans l'onglet à côté pour avoir les probabilités exactes")
+- Si tu connais l'adversaire via ses données, donne tes propres conseils tactiques
+- Fais le lien entre les résultats de l'Oracle et tes recommandations d'entraînement
+
+Quand le joueur revient après avoir utilisé l'Oracle :
+- Demande-lui ce que l'Oracle a dit et approfondis les conseils
+- Propose des exercices ciblés pour préparer le match
+
+## DEBRIEFS POST-MATCH
+
+Après chaque match, le joueur peut remplir un debrief rapide (service, volées, smashs, défense, mental, coup problématique, côté joué). Ces données sont agrégées dans son profil.
+- Utilise ces données pour identifier ses vrais points faibles (pas juste ceux du questionnaire)
+- Si son service est souvent évalué "mauvais" dans les debriefs, cible tes conseils dessus
+- Fais le lien entre les résultats des matchs et les auto-évaluations
+
 ## RÈGLES DE COMPORTEMENT
 
 1. Si le joueur pose une question hors padel → ramène poliment la conversation au padel
 2. Ne donne JAMAIS de conseil médical précis → recommande de consulter un professionnel de santé
-3. Adapte TOUJOURS le niveau de détail au profil du joueur (débutant = explications simples, avancé = nuances techniques)
+3. Adapte TOUJOURS le niveau de détail au profil du joueur (d��butant = explications simples, avancé = nuances techniques)
 4. Structure tes réponses avec des titres et des listes pour la lisibilité
 5. Propose toujours un exercice concret quand tu donnes un conseil technique
 6. Si tu n'as pas assez d'informations, pose une question de clarification avant de répondre
-7. Limite tes réponses à 300 mots max sauf pour les programmes d'entraînement détaillés`;
+7. Limite tes réponses à 300 mots max sauf pour les programmes d'entraînement détaillés
+8. Fais le pont entre le Coach (toi) et l'Oracle — ce sont deux facettes d'un même système d'accompagnement`;
 
 export function buildSystemPrompt(player: PlayerContext, coachName?: string): string {
   const tierEmoji: Record<string, string> = {
@@ -249,6 +286,21 @@ export function buildSystemPrompt(player: PlayerContext, coachName?: string): st
   // Fréquence récente
   const frequencyStr = `\n- Activité : ${player.matchesThisMonth} match${player.matchesThisMonth > 1 ? "s" : ""} ce mois-ci, ${player.matchesLastMonth} le mois dernier`;
 
+  // Debrief / auto-évaluation
+  const debriefStr = player.debriefSummary && player.debriefSummary.totalDebriefs > 0
+    ? (() => {
+        const d = player.debriefSummary;
+        const ratingLabel = (v: number | null) => v === null ? "?" : v < 1.7 ? "faible" : v < 2.4 ? "moyen" : "bon";
+        const lines = [
+          `\n\n**Auto-évaluation du joueur (basée sur ${d.totalDebriefs} debrief${d.totalDebriefs > 1 ? "s" : ""} post-match) :**`,
+          `- Service : ${ratingLabel(d.avgService)} | Volées : ${ratingLabel(d.avgVolley)} | Smashs : ${ratingLabel(d.avgSmash)} | Défense : ${ratingLabel(d.avgDefense)} | Mental : ${ratingLabel(d.avgMental)}`,
+        ];
+        if (d.commonProblemShot) lines.push(`- Coup problématique récurrent : ${d.commonProblemShot}`);
+        if (d.preferredSide) lines.push(`- Côté préféré en jeu : ${d.preferredSide}`);
+        return lines.join("\n");
+      })()
+    : "";
+
   // Objectifs personnalisés
   const activeGoals = player.goals.filter(g => g.status === "active");
   const completedGoals = player.goals.filter(g => g.status === "completed");
@@ -266,7 +318,7 @@ export function buildSystemPrompt(player: PlayerContext, coachName?: string): st
 - Points globaux : ${player.globalPoints}
 - Matchs joués : ${player.totalMatches}
 - Victoires : ${player.wins} | Défaites : ${player.losses} | Winrate : ${player.winrate}%
-- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}${goalsStr}
+- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}${debriefStr}${goalsStr}
 
 ## INSTRUCTIONS CRITIQUES SUR L'UTILISATION DES DONNÉES
 

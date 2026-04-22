@@ -42,6 +42,7 @@ const EMPTY_CONTEXT: Omit<PlayerContext, "firstName" | "level" | "tier" | "globa
   officialPartner: null,
   badges: [],
   goals: [],
+  debriefSummary: null,
 };
 
 /**
@@ -107,7 +108,42 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
     .select("badge_name, badge_emoji")
     .eq("user_id", userId);
 
-  // 3b. Goals
+  // 3b. Debriefs (aggregated)
+  const debriefPromise = (async () => {
+    const { data } = await admin
+      .from("match_debriefs")
+      .select("rating_service, rating_volley, rating_smash, rating_defense, rating_mental, problem_shot, side_played")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (!data || data.length === 0) return null;
+    const avg = (key: string) => {
+      const vals = data.map((d: any) => d[key]).filter((v: any) => v !== null);
+      return vals.length > 0 ? Math.round((vals.reduce((a: number, b: number) => a + b, 0) / vals.length) * 100) / 100 : null;
+    };
+    // Most common problem shot
+    const shots = data.map((d: any) => d.problem_shot).filter((s: any) => s && s !== "aucun");
+    const shotCounts = new Map<string, number>();
+    for (const s of shots) { shotCounts.set(s, (shotCounts.get(s) || 0) + 1); }
+    const commonProblemShot = shotCounts.size > 0 ? [...shotCounts.entries()].sort((a, b) => b[1] - a[1])[0][0] : null;
+    // Most common side
+    const sides = data.map((d: any) => d.side_played).filter(Boolean);
+    const sideCounts = new Map<string, number>();
+    for (const s of sides) { sideCounts.set(s, (sideCounts.get(s) || 0) + 1); }
+    const preferredSide = sideCounts.size > 0 ? [...sideCounts.entries()].sort((a, b) => b[1] - a[1])[0][0] : null;
+    return {
+      totalDebriefs: data.length,
+      avgService: avg("rating_service"),
+      avgVolley: avg("rating_volley"),
+      avgSmash: avg("rating_smash"),
+      avgDefense: avg("rating_defense"),
+      avgMental: avg("rating_mental"),
+      commonProblemShot,
+      preferredSide,
+    };
+  })();
+
+  // 3c. Goals
   const goalsPromise = admin
     .from("coach_goals")
     .select("title, status, created_at")
@@ -161,8 +197,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   logger.info("[coach/player-context] Participations loaded", { count: participations?.length || 0 });
 
   if (!participations || participations.length === 0) {
-    const [clubData, badgesData, officialPartner, levelEvolution, goalsData] = await Promise.all([
-      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise,
+    const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData] = await Promise.all([
+      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise,
     ]);
     return {
       ...baseContext,
@@ -174,6 +210,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
       officialPartner,
       levelEvolution,
       goals: (goalsData.data || []).map((g: any) => ({ title: g.title, status: g.status, createdAt: g.created_at?.slice(0, 10) })),
+      debriefSummary: debriefData,
     };
   }
 
@@ -193,8 +230,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   logger.info("[coach/player-context] Confirmed matches loaded", { count: matches?.length || 0 });
 
   if (!matches || matches.length === 0) {
-    const [clubData, badgesData, officialPartner, levelEvolution, goalsData] = await Promise.all([
-      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise,
+    const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData] = await Promise.all([
+      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise,
     ]);
     return {
       ...baseContext,
@@ -206,6 +243,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
       officialPartner,
       levelEvolution,
       goals: (goalsData.data || []).map((g: any) => ({ title: g.title, status: g.status, createdAt: g.created_at?.slice(0, 10) })),
+      debriefSummary: debriefData,
     };
   }
 
@@ -342,8 +380,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   const winrate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
 
   // Await parallel data
-  const [clubData, badgesData, officialPartner, levelEvolution, goalsData] = await Promise.all([
-    clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise,
+  const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData] = await Promise.all([
+    clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise,
   ]);
 
   const context: PlayerContext = {

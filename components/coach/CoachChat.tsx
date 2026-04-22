@@ -58,7 +58,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const [loading, setLoading] = useState(true);
   const [showConvDropdown, setShowConvDropdown] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
-  const [containerHeight, setContainerHeight] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
 
@@ -67,28 +66,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const dropdownRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-
-  // Measure available height dynamically
-  useEffect(() => {
-    function measure() {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      // Find the bottom nav bar
-      const navBar = document.getElementById("bottom-nav-bar");
-      const navTop = navBar ? navBar.getBoundingClientRect().top : window.innerHeight;
-      // Available height = from top of our container to top of nav bar, with some padding
-      const available = navTop - rect.top - 12;
-      setContainerHeight(Math.max(available, 300));
-    }
-    measure();
-    window.addEventListener("resize", measure);
-    // Re-measure after a short delay to account for layout shifts
-    const timer = setTimeout(measure, 100);
-    return () => {
-      window.removeEventListener("resize", measure);
-      clearTimeout(timer);
-    };
-  }, [loading]);
 
   // Setup Web Speech API
   const stoppingRef = useRef(false);
@@ -455,19 +432,8 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   return (
     <div
       ref={containerRef}
-      className="flex flex-col overflow-hidden"
-      style={containerHeight ? { height: containerHeight } : { height: "calc(100dvh - 14rem)" }}
+      className="flex flex-col overflow-hidden h-full"
     >
-      {/* Coach identity header */}
-      <div className="flex-shrink-0 mb-3 px-1">
-        <h2 className="text-2xl font-extrabold tracking-tight text-white">
-          Salut, moi c&apos;est {coachName}
-        </h2>
-        <p className="text-sm text-white/45 mt-0.5">
-          Ton coach de padel
-        </p>
-      </div>
-
       {/* Conversation selector */}
       <div className="flex-shrink-0 flex items-center gap-2 mb-2 px-1 min-w-0">
         <div ref={dropdownRef} className="relative flex-1 min-w-0">
