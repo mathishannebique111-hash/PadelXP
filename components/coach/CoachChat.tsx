@@ -68,13 +68,32 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const containerRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  // Setup Web Speech API
+  // Detect if running in Capacitor app
+  const isCapacitorRef = useRef(false);
+
   useEffect(() => {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SR) setVoiceSupported(true);
+    isCapacitorRef.current = !!(window as any).Capacitor?.isNativePlatform?.();
+
+    if (isCapacitorRef.current) {
+      // Capacitor native — use plugin
+      import("@capacitor-community/speech-recognition").then(({ SpeechRecognition }) => {
+        SpeechRecognition.available().then(({ available }) => {
+          if (available) setVoiceSupported(true);
+        }).catch(() => {});
+      }).catch(() => {});
+    } else {
+      // Web — use Web Speech API
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SR) setVoiceSupported(true);
+    }
+
     return () => {
       isListeningRef.current = false;
-      if (recognitionRef.current) {
+      if (isCapacitorRef.current) {
+        import("@capacitor-community/speech-recognition").then(({ SpeechRecognition }) => {
+          SpeechRecognition.stop().catch(() => {});
+        }).catch(() => {});
+      } else if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch { /* */ }
         recognitionRef.current = null;
       }
@@ -84,60 +103,94 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   function stopVoice() {
     isListeningRef.current = false;
     setIsListening(false);
-    if (recognitionRef.current) {
+    if (isCapacitorRef.current) {
+      import("@capacitor-community/speech-recognition").then(({ SpeechRecognition }) => {
+        SpeechRecognition.stop().catch(() => {});
+      }).catch(() => {});
+    } else if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch { /* */ }
       recognitionRef.current = null;
     }
   }
 
-  function startVoice() {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
+  async function startVoice() {
+    if (isCapacitorRef.current) {
+      // --- Capacitor native speech recognition ---
+      try {
+        const { SpeechRecognition } = await import("@capacitor-community/speech-recognition");
 
-    // Kill any existing instance
-    if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch { /* */ }
-      recognitionRef.current = null;
-    }
+        // Request permission if needed
+        const { permission } = await SpeechRecognition.requestPermissions();
+        if (permission !== "granted") return;
 
-    const rec = new SR();
-    rec.lang = "fr-FR";
-    rec.continuous = true;
-    rec.interimResults = true;
+        isListeningRef.current = true;
+        setIsListening(true);
+        setInput("");
 
-    rec.onresult = (e: any) => {
-      let text = "";
-      for (let i = 0; i < e.results.length; i++) {
-        text += e.results[i][0].transcript;
-      }
-      setInput(text);
-    };
-
-    rec.onend = () => {
-      if (isListeningRef.current) {
-        setTimeout(() => {
-          if (isListeningRef.current) {
-            try { rec.start(); } catch { stopVoice(); }
+        await SpeechRecognition.addListener("partialResults", (data: any) => {
+          if (data.matches && data.matches.length > 0) {
+            setInput(data.matches[0]);
           }
-        }, 500);
+        });
+
+        await SpeechRecognition.start({
+          language: "fr-FR",
+          partialResults: true,
+          popup: false,
+        });
+      } catch (err) {
+        console.error("[Voice/Capacitor]", err);
+        stopVoice();
       }
-    };
+    } else {
+      // --- Web Speech API fallback ---
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) return;
 
-    rec.onerror = (e: any) => {
-      if (e.error === "no-speech" || e.error === "aborted") return;
-      console.error("[Voice]", e.error);
-      stopVoice();
-    };
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch { /* */ }
+        recognitionRef.current = null;
+      }
 
-    recognitionRef.current = rec;
-    isListeningRef.current = true;
-    setIsListening(true);
-    setInput("");
+      const rec = new SR();
+      rec.lang = "fr-FR";
+      rec.continuous = true;
+      rec.interimResults = true;
 
-    try {
-      rec.start();
-    } catch {
-      stopVoice();
+      rec.onresult = (e: any) => {
+        let text = "";
+        for (let i = 0; i < e.results.length; i++) {
+          text += e.results[i][0].transcript;
+        }
+        setInput(text);
+      };
+
+      rec.onend = () => {
+        if (isListeningRef.current) {
+          setTimeout(() => {
+            if (isListeningRef.current) {
+              try { rec.start(); } catch { stopVoice(); }
+            }
+          }, 500);
+        }
+      };
+
+      rec.onerror = (e: any) => {
+        if (e.error === "no-speech" || e.error === "aborted") return;
+        console.error("[Voice/Web]", e.error);
+        stopVoice();
+      };
+
+      recognitionRef.current = rec;
+      isListeningRef.current = true;
+      setIsListening(true);
+      setInput("");
+
+      try {
+        rec.start();
+      } catch {
+        stopVoice();
+      }
     }
   }
 
