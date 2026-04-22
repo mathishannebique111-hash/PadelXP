@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import OpenAI from "openai";
 import { buildSystemPrompt } from "@/lib/coach/system-prompt";
 import { loadPlayerContext } from "@/lib/coach/player-context";
+import { getCoachName } from "@/lib/coach/coach-names";
 import { logger } from "@/lib/logger";
 
 const DAILY_LIMIT = 5;
@@ -136,7 +137,8 @@ export async function POST(req: NextRequest) {
     const history = historyResult.data || [];
 
     // 8. Construire les messages pour OpenAI
-    const systemPrompt = buildSystemPrompt(playerContext);
+    const coachName = getCoachName(user.id);
+    const systemPrompt = buildSystemPrompt(playerContext, coachName);
     const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
       ...history.map((m) => ({

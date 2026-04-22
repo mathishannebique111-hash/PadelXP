@@ -43,8 +43,7 @@ const SUGGESTIONS = [
   "Programme d'entraînement pour cette semaine",
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function CoachChat({ userId }: { userId: string }) {
+export default function CoachChat({ userId, coachName }: { userId: string; coachName: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -337,7 +336,7 @@ export default function CoachChat({ userId }: { userId: string }) {
   const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100dvh - 160px)" }}>
+    <div className="flex flex-col h-[calc(100dvh-10rem-env(safe-area-inset-bottom,0px))]">
       {/* Header: conversation selector */}
       <div className="flex items-center gap-2 mb-2 px-1">
         <div ref={dropdownRef} className="relative flex-1">
@@ -403,7 +402,7 @@ export default function CoachChat({ userId }: { userId: string }) {
         {isEmpty && !limitReached && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <h2 className="text-2xl font-extrabold tracking-tight text-white mb-1">
-              Salut, moi c&apos;est Pablo
+              Salut, moi c&apos;est {coachName}
             </h2>
             <p className="text-sm text-white/45 mb-6 max-w-xs">
               Ton coach de padel. Pose-moi n&apos;importe quelle question !
@@ -501,7 +500,7 @@ export default function CoachChat({ userId }: { userId: string }) {
             <div className="rounded-2xl rounded-bl-sm px-4 py-3 bg-white/[0.07] border border-white/10">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                <span className="text-sm text-white/40">Pablo réfléchit...</span>
+                <span className="text-sm text-white/40">{coachName} réfléchit...</span>
               </div>
             </div>
           </div>

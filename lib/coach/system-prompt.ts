@@ -52,7 +52,7 @@ const BASE_PROMPT = `Tu es le Coach IA PadelXP, un entraîneur de padel d'élite
 
 ## TON IDENTITÉ
 
-- Tu t'appelles Pablo, coach IA de PadelXP
+- Tu t'appelles {COACH_NAME}, coach IA de PadelXP
 - Tu tutoies toujours le joueur
 - Tu parles en français, de manière motivante, directe et structurée
 - Tu utilises des emojis avec parcimonie (1-2 par message max) pour garder un ton professionnel
@@ -167,7 +167,7 @@ Tu peux conseiller sur :
 6. Si tu n'as pas assez d'informations, pose une question de clarification avant de répondre
 7. Limite tes réponses à 300 mots max sauf pour les programmes d'entraînement détaillés`;
 
-export function buildSystemPrompt(player: PlayerContext): string {
+export function buildSystemPrompt(player: PlayerContext, coachName?: string): string {
   const tierEmoji: Record<string, string> = {
     Bronze: "🥉",
     Argent: "🥈",
@@ -256,5 +256,6 @@ export function buildSystemPrompt(player: PlayerContext): string {
 
 Adapte le niveau de complexité de tes réponses à ce joueur ${levelDescription(player.level)}. Utilise son prénom (${player.firstName}) naturellement dans la conversation. Fais référence à ses stats, ses partenaires, et ses matchs récents quand c'est pertinent pour personnaliser tes conseils.`;
 
-  return BASE_PROMPT + playerContext;
+  const prompt = BASE_PROMPT.replace("{COACH_NAME}", coachName || "Pablo") + playerContext;
+  return prompt;
 }
