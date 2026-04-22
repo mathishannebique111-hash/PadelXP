@@ -139,6 +139,16 @@ export async function POST(req: NextRequest) {
     // 8. Construire les messages pour OpenAI
     const coachName = getCoachName(user.id);
     const systemPrompt = buildSystemPrompt(playerContext, coachName);
+
+    logger.info("[coach/chat] Player context summary", {
+      firstName: playerContext.firstName,
+      level: playerContext.level,
+      totalMatches: playerContext.totalMatches,
+      wins: playerContext.wins,
+      recentMatches: playerContext.recentMatches.length,
+      systemPromptLength: systemPrompt.length,
+    });
+
     const openaiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
       ...history.map((m) => ({

@@ -254,7 +254,16 @@ export function buildSystemPrompt(player: PlayerContext, coachName?: string): st
 - Victoires : ${player.wins} | Défaites : ${player.losses} | Winrate : ${player.winrate}%
 - Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}
 
-Adapte le niveau de complexité de tes réponses à ce joueur ${levelDescription(player.level)}. Utilise son prénom (${player.firstName}) naturellement dans la conversation. Fais référence à ses stats, ses partenaires, et ses matchs récents quand c'est pertinent pour personnaliser tes conseils.`;
+## INSTRUCTIONS CRITIQUES SUR L'UTILISATION DES DONNÉES
+
+Tu as accès au profil COMPLET de ce joueur ci-dessus. Tu DOIS :
+- Utiliser son prénom (${player.firstName}) naturellement dans chaque réponse
+- Quand on te demande ses stats, matchs, niveau, partenaires, etc. : RÉPONDS avec les données ci-dessus, ne dis JAMAIS que tu n'as pas accès à ces informations
+- Cite ses derniers matchs avec les scores et les noms quand c'est pertinent
+- Mentionne ses partenaires fréquents et adversaires coriaces quand on parle de stratégie
+- Adapte tes conseils à son niveau ${levelDescription(player.level)} (${player.level.toFixed(1)}/10)
+- Si on te demande "comment je joue ?", "mes stats ?", "mon niveau ?" → utilise TOUTES les données du profil
+- Tu connais ses ${player.totalMatches} matchs, son winrate de ${player.winrate}%, sa série actuelle, ses partenaires, tout.`;
 
   const prompt = BASE_PROMPT.replace("{COACH_NAME}", coachName || "Pablo") + playerContext;
   return prompt;

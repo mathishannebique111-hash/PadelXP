@@ -336,7 +336,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-10rem-env(safe-area-inset-bottom,0px))]">
+    <div className="flex flex-col h-[calc(100dvh-14rem)]">
       {/* Header: conversation selector */}
       <div className="flex items-center gap-2 mb-2 px-1">
         <div ref={dropdownRef} className="relative flex-1">

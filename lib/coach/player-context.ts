@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { type PlayerContext, type PartnerStats, type AdversaryStats } from "./system-prompt";
+import { logger } from "@/lib/logger";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -50,11 +51,16 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   const admin = getAdmin();
 
   // 1. Profil complet
-  const { data: profile } = await admin
+  const { data: profile, error: profileError } = await admin
     .from("profiles")
     .select("first_name, display_name, niveau_padel, global_points, club_id, preferred_side, hand, frequency, best_shot")
     .eq("id", userId)
     .single();
+
+  if (profileError) {
+    logger.error("[coach/player-context] Profile query error", { error: profileError.message, userId });
+  }
+  logger.info("[coach/player-context] Profile loaded", { firstName: profile?.first_name, level: profile?.niveau_padel, clubId: profile?.club_id });
 
   const firstName =
     profile?.first_name ||
@@ -133,11 +139,16 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   })();
 
   // 6. All participations for match stats
-  const { data: participations } = await admin
+  const { data: participations, error: partError } = await admin
     .from("match_participants")
     .select("match_id, team")
     .eq("user_id", userId)
     .eq("player_type", "user");
+
+  if (partError) {
+    logger.error("[coach/player-context] Participations query error", { error: partError.message, userId });
+  }
+  logger.info("[coach/player-context] Participations loaded", { count: participations?.length || 0 });
 
   if (!participations || participations.length === 0) {
     const [clubData, badgesData, officialPartner, levelEvolution] = await Promise.all([
@@ -158,12 +169,17 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   const matchIds = participations.map((p) => p.match_id);
   const teamByMatch = new Map(participations.map((p) => [p.match_id, p.team]));
 
-  const { data: matches } = await admin
+  const { data: matches, error: matchError } = await admin
     .from("matches")
     .select("id, winner_team_id, team1_id, team2_id, score_team1, score_team2, played_at")
     .in("id", matchIds)
     .eq("status", "confirmed")
     .order("played_at", { ascending: false });
+
+  if (matchError) {
+    logger.error("[coach/player-context] Matches query error", { error: matchError.message });
+  }
+  logger.info("[coach/player-context] Confirmed matches loaded", { count: matches?.length || 0 });
 
   if (!matches || matches.length === 0) {
     const [clubData, badgesData, officialPartner, levelEvolution] = await Promise.all([
@@ -318,7 +334,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
     clubPromise, badgesPromise, partnerPromise, evolutionPromise,
   ]);
 
-  return {
+  const context: PlayerContext = {
     ...baseContext,
     totalMatches,
     wins,
@@ -338,4 +354,19 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
     officialPartner,
     badges: (badgesData.data || []).map((b: any) => `${b.badge_emoji} ${b.badge_name}`),
   };
+
+  logger.info("[coach/player-context] Full context built", {
+    firstName: context.firstName,
+    level: context.level,
+    totalMatches: context.totalMatches,
+    wins: context.wins,
+    losses: context.losses,
+    recentMatchesCount: context.recentMatches.length,
+    topPartnersCount: context.topPartners.length,
+    adversariesCount: context.hardestAdversaries.length,
+    clubName: context.clubName,
+    badges: context.badges.length,
+  });
+
+  return context;
 }
