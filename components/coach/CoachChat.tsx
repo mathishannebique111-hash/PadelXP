@@ -91,6 +91,9 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   }, [loading]);
 
   // Setup Web Speech API
+  const stoppingRef = useRef(false);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -98,15 +101,22 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
 
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     let finalTranscript = "";
 
     recognition.onresult = (event: any) => {
+      // Clear silence timer on every new result
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+
       let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      finalTranscript = "";
+      for (let i = 0; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
@@ -114,28 +124,60 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
           interim += transcript;
         }
       }
-      // Show real-time transcription in input
       setInput(finalTranscript + interim);
+
+      // Start a 2s silence timer after each result — if no new speech, auto-send
+      if (finalTranscript.trim()) {
+        silenceTimerRef.current = setTimeout(() => {
+          stoppingRef.current = true;
+          recognition.stop();
+        }, 2000);
+      }
     };
 
     recognition.onend = () => {
-      setIsListening(false);
-      // Auto-send if we got a final transcript
-      if (finalTranscript.trim()) {
-        // Small delay to let state update
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+
+      // If user manually stopped or silence timer triggered, send the message
+      if (stoppingRef.current) {
+        stoppingRef.current = false;
+        setIsListening(false);
+        if (finalTranscript.trim()) {
+          setTimeout(() => {
+            const inputEl = document.querySelector<HTMLInputElement>("[data-coach-input]");
+            if (inputEl) {
+              const form = inputEl.closest("form");
+              if (form) form.requestSubmit();
+            }
+          }, 100);
+        }
+        finalTranscript = "";
+      } else {
+        // Browser stopped recognition unexpectedly (e.g. no speech detected) — restart if still listening
+        // Use a ref check since state may not be updated yet
         setTimeout(() => {
-          const inputEl = document.querySelector<HTMLInputElement>("[data-coach-input]");
-          if (inputEl) {
-            const form = inputEl.closest("form");
-            if (form) form.requestSubmit();
+          if (!stoppingRef.current) {
+            try {
+              recognition.start();
+            } catch {
+              setIsListening(false);
+            }
           }
         }, 100);
       }
-      finalTranscript = "";
     };
 
     recognition.onerror = (event: any) => {
+      if (event.error === "no-speech") {
+        // Silence — just let it continue, onend will restart
+        return;
+      }
+      if (event.error === "aborted") return;
       console.error("[CoachChat] Speech recognition error:", event.error);
+      stoppingRef.current = true;
       setIsListening(false);
       finalTranscript = "";
     };
@@ -143,6 +185,8 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     recognitionRef.current = recognition;
 
     return () => {
+      stoppingRef.current = true;
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       try { recognition.abort(); } catch { /* ignore */ }
     };
   }, []);
@@ -150,15 +194,16 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   function toggleVoice() {
     if (!recognitionRef.current) return;
     if (isListening) {
+      // User clicks stop — send what we have
+      stoppingRef.current = true;
       recognitionRef.current.stop();
-      setIsListening(false);
     } else {
       setInput("");
+      stoppingRef.current = false;
       setIsListening(true);
       try {
         recognitionRef.current.start();
       } catch {
-        // Already started
         setIsListening(false);
       }
     }

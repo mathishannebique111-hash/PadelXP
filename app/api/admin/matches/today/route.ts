@@ -16,7 +16,7 @@ const supabaseAdmin = createAdminClient(
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         // Verify admin status
         const supabase = await createClient();
@@ -26,9 +26,23 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStart = today.toISOString();
+        const url = new URL(request.url);
+        const dateParam = url.searchParams.get('date');
+        
+        let startDate: Date;
+        if (dateParam) {
+            startDate = new Date(dateParam);
+            startDate.setHours(0, 0, 0, 0); // Ensure beginning of day in local time or UTC as passed
+        } else {
+            startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+        }
+        
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+
+        const startIso = startDate.toISOString();
+        const endIso = endDate.toISOString();
 
         // 1. Fetch matches played today
         const { data: matches, error: matchesError } = await supabaseAdmin
@@ -45,7 +59,8 @@ export async function GET() {
                 location_club_id,
                 is_registered_club
             `)
-            .gte('played_at', todayStart)
+            .gte('played_at', startIso)
+            .lt('played_at', endIso)
             .order('played_at', { ascending: false });
 
         if (matchesError) {
