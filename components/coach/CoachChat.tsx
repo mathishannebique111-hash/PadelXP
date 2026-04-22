@@ -337,9 +337,9 @@ export default function CoachChat({ userId }: { userId: string }) {
   const isEmpty = messages.length === 0 && !isStreaming;
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 180px)" }}>
+    <div className="flex flex-col" style={{ height: "calc(100dvh - 160px)" }}>
       {/* Header: conversation selector */}
-      <div className="flex items-center gap-2 mb-3 px-1">
+      <div className="flex items-center gap-2 mb-2 px-1">
         <div ref={dropdownRef} className="relative flex-1">
           <button
             onClick={() => setShowConvDropdown(!showConvDropdown)}
@@ -402,12 +402,11 @@ export default function CoachChat({ userId }: { userId: string }) {
       <div className="flex-1 overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] px-3 py-4 space-y-4">
         {isEmpty && !limitReached && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-4 shadow-[0_8px_24px_rgba(59,130,246,0.3)]">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <h3 className="text-lg font-bold text-white mb-1">Coach IA PadelXP</h3>
-            <p className="text-sm text-white/50 mb-6 max-w-xs">
-              Ton coach personnel expert en padel. Pose-moi n&apos;importe quelle question !
+            <h2 className="text-2xl font-extrabold tracking-tight text-white mb-1">
+              Salut, moi c&apos;est Pablo
+            </h2>
+            <p className="text-sm text-white/45 mb-6 max-w-xs">
+              Ton coach de padel. Pose-moi n&apos;importe quelle question !
             </p>
 
             <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
@@ -502,7 +501,7 @@ export default function CoachChat({ userId }: { userId: string }) {
             <div className="rounded-2xl rounded-bl-sm px-4 py-3 bg-white/[0.07] border border-white/10">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                <span className="text-sm text-white/40">Le coach réfléchit...</span>
+                <span className="text-sm text-white/40">Pablo réfléchit...</span>
               </div>
             </div>
           </div>
@@ -512,7 +511,7 @@ export default function CoachChat({ userId }: { userId: string }) {
       </div>
 
       {/* Input area */}
-      <div className="mt-3">
+      <div className="mt-2 pb-1">
         {/* Limit reached inline paywall */}
         {limitReached && messages.length > 0 && (
           <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 mb-2">

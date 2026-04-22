@@ -558,6 +558,87 @@ export async function POST(req: Request) {
           }
         }
 
+        // === COACH IA AUTO-MESSAGE (isolé, ne bloque jamais) ===
+        if (fullMatch && participants && participants.length > 0) {
+          try {
+            const { sendCoachAutoMessage } = await import("@/lib/coach/auto-message");
+
+            // Récupérer les prénoms si pas déjà fait
+            const participantUserIds = participants.map((p: any) => p.user_id);
+            const { data: coachProfiles } = await adminClient
+              .from("profiles")
+              .select("id, first_name, display_name")
+              .in("id", participantUserIds);
+
+            const coachNameMap = new Map(
+              (coachProfiles || []).map((p: any) => [
+                p.id,
+                p.first_name || (p.display_name ? p.display_name.split(/\s+/)[0] : "Joueur"),
+              ])
+            );
+
+            // Récupérer tous les participants pour les noms
+            const { data: allMatchParticipants } = await adminClient
+              .from("match_participants")
+              .select("user_id, team, player_type")
+              .eq("match_id", matchId)
+              .eq("player_type", "user");
+
+            const score = `${fullMatch.score_team1 ?? "?"}-${fullMatch.score_team2 ?? "?"}`;
+
+            // Récupérer le score détaillé si disponible
+            const { data: matchScoreData } = await adminClient
+              .from("matches")
+              .select("score_team1, score_team2")
+              .eq("id", matchId)
+              .single();
+
+            const finalScore = matchScoreData
+              ? `${matchScoreData.score_team1}-${matchScoreData.score_team2}`
+              : score;
+
+            for (const participant of participants) {
+              const uid = participant.user_id;
+              const firstName = coachNameMap.get(uid) || "Joueur";
+              const playerTeam = participant.team;
+
+              const isWinner =
+                (fullMatch.winner_team_id === fullMatch.team1_id && playerTeam === 1) ||
+                (fullMatch.winner_team_id === fullMatch.team2_id && playerTeam === 2);
+
+              // Trouver le partenaire et les adversaires
+              const teammates = (allMatchParticipants || []).filter(
+                (p: any) => p.team === playerTeam && p.user_id !== uid
+              );
+              const opponents = (allMatchParticipants || []).filter(
+                (p: any) => p.team !== playerTeam
+              );
+
+              const partnerName = teammates.length > 0
+                ? coachNameMap.get(teammates[0].user_id) || null
+                : null;
+              const opponentNames = opponents.map(
+                (o: any) => coachNameMap.get(o.user_id) || "Adversaire"
+              );
+
+              await sendCoachAutoMessage(uid, {
+                matchId,
+                score: finalScore,
+                isWin: isWinner,
+                partnerName,
+                opponentNames,
+                playerFirstName: firstName,
+              });
+            }
+
+            logger.info("Coach IA auto-messages sent after match confirmation");
+          } catch (coachError) {
+            logger.error("Coach IA auto-message error (non-blocking)", {
+              error: (coachError as Error).message,
+            });
+          }
+        }
+
         // === LEAGUE POINTS (isolé, ne bloque jamais le match classique) ===
         if (fullMatch?.league_id) {
           try {

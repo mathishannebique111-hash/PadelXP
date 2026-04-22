@@ -5,6 +5,20 @@
  * Le contexte joueur est injecté dynamiquement à chaque requête.
  */
 
+export interface PartnerStats {
+  name: string;
+  matchesTogether: number;
+  winsTogether: number;
+  winrate: number;
+}
+
+export interface AdversaryStats {
+  name: string;
+  matchesAgainst: number;
+  winsAgainst: number;
+  winrate: number;
+}
+
 export interface PlayerContext {
   firstName: string;
   level: number; // 0-10
@@ -16,14 +30,29 @@ export interface PlayerContext {
   currentStreak: number;
   bestStreak: number;
   globalPoints: number;
-  recentMatches: string[]; // ex: ["V 6-3 6-4", "D 4-6 3-6"]
+  recentMatches: string[]; // ex: ["V 6-3 6-4 avec Paul vs Marc/Lucas", ...]
+  // New enriched data
+  preferredSide: string | null; // gauche / droite
+  hand: string | null; // droitier / gaucher
+  frequency: string | null; // fréquence de jeu déclarée
+  bestShot: string | null; // meilleur coup déclaré
+  clubName: string | null;
+  clubRank: number | null; // position dans le classement du club
+  clubTotalPlayers: number | null;
+  topPartners: PartnerStats[]; // top 3 partenaires
+  hardestAdversaries: AdversaryStats[]; // top 3 adversaires les plus difficiles
+  levelEvolution: { level: number; date: string }[]; // 5 derniers snapshots
+  matchesThisMonth: number;
+  matchesLastMonth: number;
+  officialPartner: string | null; // nom du partenaire officiel
+  badges: string[]; // badges débloqués
 }
 
 const BASE_PROMPT = `Tu es le Coach IA PadelXP, un entraîneur de padel d'élite avec plus de 20 ans d'expérience au plus haut niveau. Tu as formé des joueurs de World Padel Tour et tu maîtrises parfaitement chaque aspect du padel — technique, tactique, physique, mental et stratégique.
 
 ## TON IDENTITÉ
 
-- Tu t'appelles Coach PadelXP
+- Tu t'appelles Pablo, coach IA de PadelXP
 - Tu tutoies toujours le joueur
 - Tu parles en français, de manière motivante, directe et structurée
 - Tu utilises des emojis avec parcimonie (1-2 par message max) pour garder un ton professionnel
@@ -166,9 +195,56 @@ export function buildSystemPrompt(player: PlayerContext): string {
       ? `, série en cours : ${player.currentStreak} victoire${player.currentStreak > 1 ? "s" : ""} consécutive${player.currentStreak > 1 ? "s" : ""}`
       : "";
 
+  // Partenaires fréquents
+  const partnersStr = player.topPartners.length > 0
+    ? `\n\n**Partenaires fréquents :**\n${player.topPartners.map(p => `- ${p.name} : ${p.matchesTogether} matchs ensemble, ${p.winsTogether} victoires (${p.winrate}% winrate)`).join("\n")}`
+    : "";
+
+  // Adversaires difficiles
+  const adversariesStr = player.hardestAdversaries.length > 0
+    ? `\n\n**Adversaires les plus coriaces :**\n${player.hardestAdversaries.map(a => `- ${a.name} : ${a.matchesAgainst} confrontations, ${a.winsAgainst} victoires (${a.winrate}% winrate)`).join("\n")}`
+    : "";
+
+  // Évolution du niveau
+  const evolutionStr = player.levelEvolution.length >= 2
+    ? (() => {
+        const first = player.levelEvolution[0];
+        const last = player.levelEvolution[player.levelEvolution.length - 1];
+        const delta = last.level - first.level;
+        const trend = delta > 0.1 ? "en progression" : delta < -0.1 ? "en baisse" : "stable";
+        return `\n- Tendance récente : ${trend} (${delta > 0 ? "+" : ""}${delta.toFixed(2)} sur les dernières semaines)`;
+      })()
+    : "";
+
+  // Badges
+  const badgesStr = player.badges.length > 0
+    ? `\n- Badges débloqués : ${player.badges.join(", ")}`
+    : "";
+
+  // Préférences de jeu
+  const prefsLines: string[] = [];
+  if (player.preferredSide) prefsLines.push(`Côté préféré : ${player.preferredSide}`);
+  if (player.hand) prefsLines.push(`Main : ${player.hand}`);
+  if (player.bestShot) prefsLines.push(`Meilleur coup : ${player.bestShot}`);
+  if (player.frequency) prefsLines.push(`Fréquence de jeu : ${player.frequency}`);
+  const prefsStr = prefsLines.length > 0 ? `\n- ${prefsLines.join(" | ")}` : "";
+
+  // Club et classement
+  const clubStr = player.clubName
+    ? `\n- Club : ${player.clubName}${player.clubRank && player.clubTotalPlayers ? ` (${player.clubRank}${player.clubRank === 1 ? "er" : "e"} sur ${player.clubTotalPlayers} joueurs)` : ""}`
+    : "";
+
+  // Partenaire officiel
+  const officialPartnerStr = player.officialPartner
+    ? `\n- Partenaire officiel : ${player.officialPartner}`
+    : "";
+
+  // Fréquence récente
+  const frequencyStr = `\n- Activité : ${player.matchesThisMonth} match${player.matchesThisMonth > 1 ? "s" : ""} ce mois-ci, ${player.matchesLastMonth} le mois dernier`;
+
   const playerContext = `
 
-## PROFIL DU JOUEUR (adapte tous tes conseils à ce profil)
+## PROFIL COMPLET DU JOUEUR (adapte TOUS tes conseils à ce profil)
 
 - Prénom : ${player.firstName}
 - Niveau : ${player.level.toFixed(1)}/10 (${levelDescription(player.level)})
@@ -176,9 +252,9 @@ export function buildSystemPrompt(player: PlayerContext): string {
 - Points globaux : ${player.globalPoints}
 - Matchs joués : ${player.totalMatches}
 - Victoires : ${player.wins} | Défaites : ${player.losses} | Winrate : ${player.winrate}%
-- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${recentMatchesStr}
+- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}
 
-Adapte le niveau de complexité de tes réponses à ce joueur ${levelDescription(player.level)}. Utilise son prénom (${player.firstName}) naturellement dans la conversation.`;
+Adapte le niveau de complexité de tes réponses à ce joueur ${levelDescription(player.level)}. Utilise son prénom (${player.firstName}) naturellement dans la conversation. Fais référence à ses stats, ses partenaires, et ses matchs récents quand c'est pertinent pour personnaliser tes conseils.`;
 
   return BASE_PROMPT + playerContext;
 }
