@@ -73,13 +73,17 @@ export async function sendCoachAutoMessage(
       ? ` contre ${details.opponentNames.join(" et ")}`
       : "";
 
-    const message = `${resultEmoji} Hey ${details.playerFirstName} ! Je vois que tu viens d'enregistrer ${resultText} (${details.score})${partnerText}${opponentsText}.
+    const message = `${resultEmoji} Hey ${details.playerFirstName} ! Match enregistré : ${resultText} (${details.score})${partnerText}${opponentsText}.
 
-${details.isWin
-  ? `Bravo pour cette victoire ! Comment s'est passé ce match ? Y a-t-il des points sur lesquels tu as senti que tu pouvais encore progresser, même dans la victoire ?`
-  : `Pas de panique, chaque défaite est une occasion d'apprendre. Comment s'est passé ce match ? Dis-moi ce qui a été difficile et je te donnerai des conseils pour progresser.`}
+Ton **debrief post-match** est prêt ! Réponds à quelques questions rapides pour que je puisse mieux te connaître :
 
-Tu veux qu'on analyse ce match ensemble ? Dis-moi comment tu t'es senti sur le terrain !`;
+- Comment était ton **service** aujourd'hui ?
+- Tes **volées** et tes **smashs** ?
+- Et ton **mental** pendant le match ?
+
+Plus tu me donnes d'infos après tes matchs, plus mes conseils seront précis et personnalisés. ${details.isWin ? "Même dans la victoire, il y a toujours un truc à améliorer !" : "Chaque défaite est une mine d'or d'apprentissage."}
+
+Dis-moi tout, je suis là pour t'aider à progresser !`;
 
     // 3. Insérer le message du coach
     const { error: msgError } = await admin
@@ -108,15 +112,15 @@ Tu veux qu'on analyse ce match ensemble ? Dis-moi comment tu t'es senti sur le t
         .eq("id", conversationId);
     }
 
-    // 5. Envoyer une notification push pour alerter le joueur
+    // 5. Envoyer une notification push (non agressive) pour alerter le joueur
     try {
       const { notifyUser } = await import("@/lib/notifications/send-push");
       await notifyUser(
         userId,
         "coach_message" as any,
-        "🎾 Ton Coach IA a un message pour toi",
-        `${details.playerFirstName}, parlons de ton match ${details.score} ! Ouvre le Coach IA.`,
-        { type: "coach_message", match_id: details.matchId }
+        "Ton debrief post-match est prêt",
+        `${details.playerFirstName}, 30 secondes pour améliorer ton prochain match`,
+        { type: "coach_debrief", match_id: details.matchId, path: "/coach" }
       );
     } catch (notifError) {
       // Non-blocking
