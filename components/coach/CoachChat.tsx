@@ -90,19 +90,9 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     }
   }
 
-  async function startVoice() {
+  function startVoice() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
-
-    // Request microphone permission first (helps on mobile)
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Got permission — stop the stream immediately, SpeechRecognition handles its own audio
-      stream.getTracks().forEach(t => t.stop());
-    } catch {
-      // Permission denied or not available
-      return;
-    }
 
     // Kill any existing instance
     if (recognitionRef.current) {
@@ -125,7 +115,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
 
     rec.onend = () => {
       if (isListeningRef.current) {
-        // Auto-restart after a short delay
         setTimeout(() => {
           if (isListeningRef.current) {
             try { rec.start(); } catch { stopVoice(); }
