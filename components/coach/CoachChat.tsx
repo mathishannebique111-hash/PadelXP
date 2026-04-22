@@ -14,9 +14,6 @@ import {
   Crown,
   Mic,
   MicOff,
-  Target,
-  Check,
-  X,
 } from "lucide-react";
 import CoachMarkdown from "./CoachMarkdown";
 
@@ -39,14 +36,6 @@ interface UsageInfo {
   limit: number;
   isPremium: boolean;
   remaining: number | null;
-}
-
-interface Goal {
-  id: string;
-  title: string;
-  description: string | null;
-  status: "active" | "completed" | "abandoned";
-  created_at: string;
 }
 
 const SUGGESTIONS = [
@@ -72,9 +61,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   const [containerHeight, setContainerHeight] = useState<number | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [showGoals, setShowGoals] = useState(false);
-  const [newGoalInput, setNewGoalInput] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -219,16 +205,10 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     async function init() {
       setLoading(true);
       try {
-        const [convRes, , goalsRes] = await Promise.all([
+        const [convRes] = await Promise.all([
           fetch("/api/coach/conversations", { credentials: "include" }),
           refreshUsage(),
-          fetch("/api/coach/goals", { credentials: "include" }),
         ]);
-
-        if (goalsRes.ok) {
-          const { goals: g } = await goalsRes.json();
-          setGoals(g || []);
-        }
 
         if (convRes.ok) {
           const { conversations: convs } = await convRes.json();
@@ -333,41 +313,6 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
       }
     } catch (error) {
       console.error("[CoachChat] Delete error:", error);
-    }
-  }
-
-  async function addGoal() {
-    if (!newGoalInput.trim()) return;
-    try {
-      const res = await fetch("/api/coach/goals", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newGoalInput.trim() }),
-      });
-      if (res.ok) {
-        const { goal } = await res.json();
-        setGoals((prev) => [goal, ...prev]);
-        setNewGoalInput("");
-      }
-    } catch (error) {
-      console.error("[CoachChat] Add goal error:", error);
-    }
-  }
-
-  async function updateGoalStatus(goalId: string, status: "completed" | "abandoned") {
-    try {
-      await fetch("/api/coach/goals", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ goalId, status }),
-      });
-      setGoals((prev) =>
-        prev.map((g) => (g.id === goalId ? { ...g, status } : g))
-      );
-    } catch (error) {
-      console.error("[CoachChat] Update goal error:", error);
     }
   }
 
@@ -496,7 +441,7 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
   return (
     <div
       ref={containerRef}
-      className="flex flex-col"
+      className="flex flex-col overflow-hidden"
       style={containerHeight ? { height: containerHeight } : { height: "calc(100dvh - 14rem)" }}
     >
       {/* Coach identity header */}
@@ -509,82 +454,12 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
         </p>
       </div>
 
-      {/* Goals section */}
-      <div className="flex-shrink-0 mb-2 px-1">
-        <button
-          onClick={() => setShowGoals(!showGoals)}
-          className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/60 transition-colors"
-        >
-          <Target size={12} />
-          <span>Mes objectifs ({goals.filter((g) => g.status === "active").length})</span>
-          <ChevronDown
-            size={12}
-            className={`transition-transform ${showGoals ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {showGoals && (
-          <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-2">
-            {goals.filter((g) => g.status === "active").map((g) => (
-              <div key={g.id} className="flex items-center gap-2">
-                <span className="flex-1 text-xs text-white/70 truncate">{g.title}</span>
-                <button
-                  onClick={() => updateGoalStatus(g.id, "completed")}
-                  className="p-1 rounded text-green-400/60 hover:text-green-400 hover:bg-green-400/10 transition-colors"
-                  title="Objectif atteint"
-                >
-                  <Check size={12} />
-                </button>
-                <button
-                  onClick={() => updateGoalStatus(g.id, "abandoned")}
-                  className="p-1 rounded text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                  title="Abandonner"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-
-            {goals.filter((g) => g.status === "active").length < 5 && (
-              <form
-                onSubmit={(e) => { e.preventDefault(); addGoal(); }}
-                className="flex gap-2 mt-1"
-              >
-                <input
-                  type="text"
-                  value={newGoalInput}
-                  onChange={(e) => setNewGoalInput(e.target.value)}
-                  placeholder="Nouvel objectif..."
-                  className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white placeholder-white/25 focus:outline-none focus:border-blue-400/50"
-                />
-                <button
-                  type="submit"
-                  disabled={!newGoalInput.trim()}
-                  className="rounded-lg bg-blue-500/20 text-blue-300 px-3 py-1.5 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-30 transition-colors"
-                >
-                  Ajouter
-                </button>
-              </form>
-            )}
-
-            {goals.filter((g) => g.status === "completed").length > 0 && (
-              <div className="pt-1 border-t border-white/5">
-                <p className="text-[10px] text-white/25 mb-1">Atteints</p>
-                {goals.filter((g) => g.status === "completed").map((g) => (
-                  <p key={g.id} className="text-[11px] text-white/30 line-through">{g.title}</p>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Conversation selector */}
-      <div className="flex-shrink-0 flex items-center gap-2 mb-2 px-1">
-        <div ref={dropdownRef} className="relative flex-1">
+      <div className="flex-shrink-0 flex items-center gap-2 mb-2 px-1 min-w-0">
+        <div ref={dropdownRef} className="relative flex-1 min-w-0">
           <button
             onClick={() => setShowConvDropdown(!showConvDropdown)}
-            className="flex items-center gap-2 w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors"
+            className="flex items-center gap-2 w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors overflow-hidden"
           >
             <span className="truncate flex-1 text-left">
               {activeConv?.title || "Nouvelle conversation"}
