@@ -42,6 +42,7 @@ const EMPTY_CONTEXT: Omit<PlayerContext, "firstName" | "level" | "tier" | "globa
   officialPartner: null,
   badges: [],
   goals: [],
+  lastOracleAnalysis: null,
   debriefSummary: null,
 };
 
@@ -108,7 +109,19 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
     .select("badge_name, badge_emoji")
     .eq("user_id", userId);
 
-  // 3b. Debriefs (aggregated)
+  // 3b. Latest Oracle analysis
+  const oraclePromise = (async () => {
+    const { data } = await admin
+      .from("oracle_analyses")
+      .select("summary")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data?.summary || null;
+  })();
+
+  // 3c. Debriefs (aggregated)
   const debriefPromise = (async () => {
     const { data } = await admin
       .from("match_debriefs")
@@ -197,8 +210,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   logger.info("[coach/player-context] Participations loaded", { count: participations?.length || 0 });
 
   if (!participations || participations.length === 0) {
-    const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData] = await Promise.all([
-      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise,
+    const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData, oracleAnalysis] = await Promise.all([
+      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise, oraclePromise,
     ]);
     return {
       ...baseContext,
@@ -210,6 +223,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
       officialPartner,
       levelEvolution,
       goals: (goalsData.data || []).map((g: any) => ({ title: g.title, status: g.status, createdAt: g.created_at?.slice(0, 10) })),
+      lastOracleAnalysis: oracleAnalysis,
       debriefSummary: debriefData,
     };
   }
@@ -230,8 +244,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   logger.info("[coach/player-context] Confirmed matches loaded", { count: matches?.length || 0 });
 
   if (!matches || matches.length === 0) {
-    const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData] = await Promise.all([
-      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise,
+    const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData, oracleAnalysis] = await Promise.all([
+      clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise, oraclePromise,
     ]);
     return {
       ...baseContext,
@@ -243,6 +257,7 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
       officialPartner,
       levelEvolution,
       goals: (goalsData.data || []).map((g: any) => ({ title: g.title, status: g.status, createdAt: g.created_at?.slice(0, 10) })),
+      lastOracleAnalysis: oracleAnalysis,
       debriefSummary: debriefData,
     };
   }
@@ -380,8 +395,8 @@ export async function loadPlayerContext(userId: string): Promise<PlayerContext> 
   const winrate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
 
   // Await parallel data
-  const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData] = await Promise.all([
-    clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise,
+  const [clubData, badgesData, officialPartner, levelEvolution, goalsData, debriefData, oracleAnalysis] = await Promise.all([
+    clubPromise, badgesPromise, partnerPromise, evolutionPromise, goalsPromise, debriefPromise, oraclePromise,
   ]);
 
   const context: PlayerContext = {

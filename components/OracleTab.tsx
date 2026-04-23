@@ -70,7 +70,7 @@ export interface OraclePredictionResult {
     };
 }
 
-export default function OracleTab({ selfId }: { selfId: string }) {
+export default function OracleTab({ selfId, onAskCoach }: { selfId: string; onAskCoach?: (message: string) => void }) {
     const [isPremium, setIsPremium] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
     const [simulating, setSimulating] = useState(false);
@@ -199,11 +199,48 @@ export default function OracleTab({ selfId }: { selfId: string }) {
         if ('error' in prediction) {
             toast.error(prediction.error);
         } else {
-            setResult(prediction as any);
+            const pred = prediction as OraclePredictionResult;
+            setResult(pred as any);
             setActiveInsightTab(selfId);
+
+            // Save analysis to DB for Coach IA context
+            try {
+                const summary = buildOracleSummary(pred, selectedPlayers);
+                fetch("/api/coach/oracle-analysis", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ summary, rawData: { team1WinProb: pred.team1.winProbability, team2WinProb: pred.team2.winProbability } }),
+                });
+            } catch { /* non-blocking */ }
         }
         setSimulating(false);
     };
+
+    function buildOracleSummary(pred: OraclePredictionResult, players: Record<string, any>): string {
+        const t1Names = pred.team1.players.map((p: any) => p.display_name || p.first_name || "?").join(" & ");
+        const t2Names = pred.team2.players.map((p: any) => p.display_name || p.first_name || "?").join(" & ");
+        const lines = [
+            `Analyse Oracle du ${new Date().toLocaleDateString("fr-FR")} :`,
+            `${t1Names} (${Math.round(pred.team1.winProbability)}%) vs ${t2Names} (${Math.round(pred.team2.winProbability)}%)`,
+            `Synergie équipe 1 : ${pred.team1.synergy.score}/100 — ${pred.team1.synergy.reason}`,
+            `Synergie équipe 2 : ${pred.team2.synergy.score}/100 — ${pred.team2.synergy.reason}`,
+        ];
+        if (pred.tacticalTarget?.team1Target) {
+            lines.push(`Cible tactique pour ton équipe : ${pred.team1.players.find((p: any) => p.id !== selfId)?.display_name || "partenaire"} doit attaquer ${pred.tacticalTarget.team1Target.reason}`);
+        }
+        if (pred.tacticalTarget?.team2Target) {
+            lines.push(`Cible tactique adverse : ${pred.tacticalTarget.team2Target.reason}`);
+        }
+        const selfInsight = pred.playerInsights.find(i => i.userId === selfId);
+        if (selfInsight) {
+            if (selfInsight.strengths.length > 0) lines.push(`Tes forces : ${selfInsight.strengths.join(", ")}`);
+            if (selfInsight.weaknesses.length > 0) lines.push(`Tes faiblesses : ${selfInsight.weaknesses.join(", ")}`);
+            if (selfInsight.luckyDay) lines.push(`Ton jour de chance : ${selfInsight.luckyDay}`);
+            if (selfInsight.goldenHour) lines.push(`Ton heure dorée : ${selfInsight.goldenHour}`);
+        }
+        return lines.join("\n");
+    }
 
     const handleUpgrade = () => {
         router.push(`/premium?returnPath=${window.location.pathname}?tab=oracle`);
@@ -359,12 +396,27 @@ export default function OracleTab({ selfId }: { selfId: string }) {
                                         Lancer l'Oracle
                                     </button>
                                 ) : (
-                                    <button
-                                        onClick={() => setResult(null)}
-                                        className="h-14 px-8 rounded-2xl bg-white/10 text-white font-bold text-sm border border-white/10 hover:bg-white/20 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
-                                    >
-                                        Nouvelle Simulation
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setResult(null)}
+                                            className="h-14 px-6 rounded-2xl bg-white/10 text-white font-bold text-sm border border-white/10 hover:bg-white/20 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+                                        >
+                                            Nouvelle Simulation
+                                        </button>
+                                        {onAskCoach && result && (
+                                            <button
+                                                onClick={() => {
+                                                    const summary = buildOracleSummary(result, selectedPlayers);
+                                                    const msg = `L'Oracle vient d'analyser mon prochain match. Voici les résultats :\n\n${summary}\n\nQu'est-ce que tu me conseilles comme stratégie et comme préparation ?`;
+                                                    onAskCoach(msg);
+                                                }}
+                                                className="h-14 px-6 rounded-2xl bg-blue-500/20 text-blue-300 font-bold text-sm border border-blue-400/30 hover:bg-blue-500/30 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Sparkles className="w-4 h-4" />
+                                                Demander au coach
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </motion.div>
                         )}

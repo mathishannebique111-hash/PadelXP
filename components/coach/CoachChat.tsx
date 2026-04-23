@@ -45,7 +45,14 @@ const SUGGESTIONS = [
   "Programme d'entraînement pour cette semaine",
 ];
 
-export default function CoachChat({ userId, coachName }: { userId: string; coachName: string }) {
+interface CoachChatProps {
+  userId: string;
+  coachName: string;
+  pendingMessage?: string | null;
+  onPendingMessageConsumed?: () => void;
+}
+
+export default function CoachChat({ userId, coachName, pendingMessage, onPendingMessageConsumed }: CoachChatProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -290,6 +297,14 @@ export default function CoachChat({ userId, coachName }: { userId: string; coach
     if (!activeConvId) return;
     loadMessages(activeConvId);
   }, [activeConvId]);
+
+  // Auto-send pending message from Oracle
+  useEffect(() => {
+    if (pendingMessage && activeConvId && !isStreaming && !loading) {
+      sendMessage(pendingMessage);
+      onPendingMessageConsumed?.();
+    }
+  }, [pendingMessage, activeConvId, loading]);
 
   // Auto-scroll on new messages or streaming
   useEffect(() => {

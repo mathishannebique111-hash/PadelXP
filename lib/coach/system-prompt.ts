@@ -54,6 +54,9 @@ export interface PlayerContext {
   badges: string[]; // badges débloqués
   goals: PlayerGoal[]; // objectifs personnalisés
   // Debrief data (aggregated from post-match reviews)
+  // Latest Oracle analysis
+  lastOracleAnalysis: string | null;
+  // Debrief data
   debriefSummary: {
     totalDebriefs: number;
     avgService: number | null;
@@ -184,14 +187,20 @@ Tu travailles en duo avec l'Oracle, un système d'analyse pré-match accessible 
 - Les conseils tactiques ciblés (qui attaquer, comment)
 - Le jour de chance et l'heure dorée de chaque joueur
 
-Quand le joueur te parle d'un match à venir ou d'un adversaire :
-- Rappelle-lui d'utiliser l'Oracle pour avoir une analyse complète ("Tu peux utiliser l'Oracle dans l'onglet à côté pour avoir les probabilités exactes")
-- Si tu connais l'adversaire via ses données, donne tes propres conseils tactiques
-- Fais le lien entre les résultats de l'Oracle et tes recommandations d'entraînement
+**IMPORTANT : Si une "Dernière analyse Oracle" est présente dans le profil du joueur, tu DOIS :**
+- La citer naturellement dans tes réponses quand le joueur parle de match, d'adversaire ou de stratégie
+- Utiliser les probabilités pour contextualiser ("L'Oracle te donne 62% de chances, c'est jouable mais il faut être tactique")
+- Exploiter les faiblesses détectées pour donner des conseils concrets ("L'Oracle a détecté que ton adversaire est faible au filet — force les volées croisées")
+- Proposer des exercices ciblés basés sur les forces/faiblesses Oracle
+- Ne dis JAMAIS "je n'ai pas accès aux données de l'Oracle" si elles sont dans ton contexte
 
-Quand le joueur revient après avoir utilisé l'Oracle :
-- Demande-lui ce que l'Oracle a dit et approfondis les conseils
-- Propose des exercices ciblés pour préparer le match
+Quand le joueur te parle d'un match à venir SANS analyse Oracle récente :
+- Suggère-lui d'utiliser l'Oracle ("Switch sur l'onglet Oracle à côté pour avoir les probas exactes, je pourrai ensuite t'aider à préparer ta stratégie")
+
+Quand le joueur clique "Demander au coach" depuis l'Oracle :
+- Tu reçois le résumé complet de l'analyse — donne une stratégie détaillée et personnalisée
+- Propose un plan de match concret (comment commencer, qui cibler, quel rythme adopter)
+- Recommande des exercices d'échauffement spécifiques au match
 
 ## DEBRIEFS POST-MATCH
 
@@ -286,6 +295,11 @@ export function buildSystemPrompt(player: PlayerContext, coachName?: string): st
   // Fréquence récente
   const frequencyStr = `\n- Activité : ${player.matchesThisMonth} match${player.matchesThisMonth > 1 ? "s" : ""} ce mois-ci, ${player.matchesLastMonth} le mois dernier`;
 
+  // Dernière analyse Oracle
+  const oracleStr = player.lastOracleAnalysis
+    ? `\n\n**Dernière analyse Oracle (pré-match) :**\n${player.lastOracleAnalysis}`
+    : "";
+
   // Debrief / auto-évaluation
   const debriefStr = player.debriefSummary && player.debriefSummary.totalDebriefs > 0
     ? (() => {
@@ -318,7 +332,7 @@ export function buildSystemPrompt(player: PlayerContext, coachName?: string): st
 - Points globaux : ${player.globalPoints}
 - Matchs joués : ${player.totalMatches}
 - Victoires : ${player.wins} | Défaites : ${player.losses} | Winrate : ${player.winrate}%
-- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}${debriefStr}${goalsStr}
+- Meilleure série : ${player.bestStreak} victoire${player.bestStreak > 1 ? "s" : ""} d'affilée${streakStr}${evolutionStr}${prefsStr}${clubStr}${officialPartnerStr}${frequencyStr}${badgesStr}${recentMatchesStr}${partnersStr}${adversariesStr}${oracleStr}${debriefStr}${goalsStr}
 
 ## INSTRUCTIONS CRITIQUES SUR L'UTILISATION DES DONNÉES
 
