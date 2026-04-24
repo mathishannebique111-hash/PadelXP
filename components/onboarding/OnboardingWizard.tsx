@@ -602,7 +602,7 @@ export default function OnboardingWizard() {
                     type="text"
                     inputMode="numeric"
                     maxLength={5}
-                    placeholder="Code postal (ex: 75015 ou 1000)"
+                    placeholder="Code postal"
                     value={postalCode}
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/g, '').slice(0, 5);
