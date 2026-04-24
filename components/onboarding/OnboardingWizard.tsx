@@ -631,7 +631,7 @@ export default function OnboardingWizard() {
               <div className="space-y-3 pt-4">
                 <button
                   onClick={handlePostalCodeContinue}
-                  disabled={postalCode.length !== 5 || !city}
+                  disabled={(postalCode.length !== 4 && postalCode.length !== 5) || !city}
                   className="w-full py-4 rounded-xl font-bold text-white text-lg shadow-lg shadow-blue-500/30 transition-all active:scale-95 hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100"
                   style={{ background: "linear-gradient(135deg, #0066FF 0%, #0055DD 100%)" }}
                 >
