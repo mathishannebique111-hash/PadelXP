@@ -252,16 +252,39 @@ export default function OnboardingWizard() {
     checkUser();
   }, [router]);
 
-  // Auto-fetch city from postal code via French API
+  // Auto-fetch city from postal code (France 5 digits, Belgique 4 digits)
   const fetchCityFromPostalCode = useCallback(async (code: string) => {
-    if (code.length !== 5) { setCity(""); return; }
+    if (code.length !== 5 && code.length !== 4) { setCity(""); return; }
     setCityLoading(true);
     try {
-      const res = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${code}&fields=nom&limit=1`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.length > 0) setCity(data[0].nom);
-        else setCity("");
+      if (code.length === 5) {
+        // France
+        const res = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${code}&fields=nom&limit=5`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.length > 0) setCity(data[0].nom);
+          else setCity("");
+        }
+      } else {
+        // Belgique (4 digits) — use zippopotam API + fallback
+        let found = false;
+        try {
+          const res = await fetch(`https://api.zippopotam.us/BE/${code}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.places?.length > 0) {
+              setCity(data.places[0]["place name"]);
+              found = true;
+            }
+          }
+        } catch { /* fallback */ }
+        if (!found) {
+          // Dynamic import of Belgian fallback data
+          const { lookupCity } = await import("@/lib/utils/city-lookup");
+          const result = await lookupCity(code);
+          if (result) setCity(result.city);
+          else setCity("");
+        }
       }
     } catch { setCity(""); }
     finally { setCityLoading(false); }
@@ -579,7 +602,7 @@ export default function OnboardingWizard() {
                     type="text"
                     inputMode="numeric"
                     maxLength={5}
-                    placeholder="Code postal (ex: 75015)"
+                    placeholder="Code postal (ex: 75015 ou 1000)"
                     value={postalCode}
                     onChange={(e) => {
                       const v = e.target.value.replace(/\D/g, '').slice(0, 5);

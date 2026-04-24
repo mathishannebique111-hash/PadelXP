@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com",
           "img-src 'self' data: https: blob: https://maps.gstatic.com https://maps.googleapis.com",
           "font-src 'self' data: https://fonts.gstatic.com",
-          "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://js.stripe.com https://*.upstash.io https://geo.api.gouv.fr https://maps.googleapis.com",
+          "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://js.stripe.com https://*.upstash.io https://geo.api.gouv.fr https://api.zippopotam.us https://maps.googleapis.com",
           "frame-src https://js.stripe.com",
           "object-src 'none'",
           "base-uri 'self'",

@@ -69,6 +69,10 @@ const DEPARTMENT_TO_REGION: Record<string, string> = {
     "04": "PAC", "05": "PAC", "06": "PAC", "13": "PAC", "83": "PAC", "84": "PAC",
     // DOM-TOM
     "971": "DOM", "972": "DOM", "973": "DOM", "974": "DOM", "976": "DOM",
+    // Belgique — provinces
+    "BRU": "BEL", "VLB": "BEL", "WBR": "BEL", "ANT": "BEL",
+    "LIM": "BEL", "OVL": "BEL", "WVL": "BEL", "HAI": "BEL",
+    "LIE": "BEL", "LUX": "BEL", "NAM": "BEL",
 };
 
 export const REGION_LABELS: Record<string, string> = {
@@ -86,6 +90,7 @@ export const REGION_LABELS: Record<string, string> = {
     "PDL": "Pays de la Loire",
     "PAC": "Provence-Alpes-Côte d'Azur",
     "DOM": "Outre-Mer",
+    "BEL": "Belgique",
 };
 
 /**
@@ -104,6 +109,11 @@ export function getDepartmentFromPostalCode(postalCode: string): string | null {
     // DOM-TOM: 3 digit prefix
     if (trimmed.startsWith("97")) {
         return trimmed.substring(0, 3);
+    }
+    // Belgian postal code (4 digits) — return province code
+    if (trimmed.length === 4) {
+        const { getBelgianProvinceFromPostalCode } = require("@/lib/utils/city-lookup");
+        return getBelgianProvinceFromPostalCode(trimmed);
     }
     // Standard: first 2 digits
     return trimmed.substring(0, 2);
