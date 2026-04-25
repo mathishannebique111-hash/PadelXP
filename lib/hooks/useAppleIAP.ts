@@ -131,20 +131,61 @@ export const useAppleIAP = () => {
         }
     };
 
+    const extractAppleReceipt = (transaction: any): string | undefined => {
+        // cordova-plugin-purchase v13 (CdvPurchase) exposes the unified App Store receipt
+        // at transaction.parentReceipt.nativeData.appStoreReceipt. Older paths kept as fallbacks.
+        const candidates = [
+            transaction?.nativeData?.appStoreReceipt,
+            transaction?.parentReceipt?.nativeData?.appStoreReceipt,
+            transaction?.appStoreReceipt,
+            transaction?.parentReceipt?.nativeData?.transactionReceipt,
+        ];
+        for (const c of candidates) {
+            if (typeof c === 'string' && c.length > 0) return c;
+        }
+
+        // Fallback: walk the store's local receipts to find any iOS receipt.
+        const store = (window as any).CdvPurchase?.store || (window as any).store;
+        const localReceipts = store?.localReceipts;
+        if (Array.isArray(localReceipts)) {
+            for (const r of localReceipts) {
+                const platform = r?.platform || r?.type;
+                if (platform === 'ios-appstore' || platform === 'apple-appstore') {
+                    const data = r?.nativeData?.appStoreReceipt;
+                    if (typeof data === 'string' && data.length > 0) return data;
+                }
+            }
+        }
+
+        // Last-resort: AppleAppStore adapter global
+        const adapterReceipt = (window as any).CdvPurchase?.AppleAppStore?.AppStore?.appStoreReceipt;
+        if (typeof adapterReceipt === 'string' && adapterReceipt.length > 0) return adapterReceipt;
+
+        return undefined;
+    };
+
     const validatePurchase = async (transaction: any) => {
         setLoading(true);
         try {
             const platform = Capacitor.getPlatform();
-            
+
             // Pour Apple
             if (platform === 'ios') {
-                const receipt = transaction.appStoreReceipt ||
-                    transaction.parentReceipt?.nativeData?.transactionReceipt ||
-                    (window as any).CdvPurchase?.appStoreReceipt;
+                const receipt = extractAppleReceipt(transaction);
 
                 if (!receipt) {
-                    addLog("[useIAP] Erreur: Reçu Apple manquant.");
-                    toast.error("Le reçu de paiement Apple n'a pas pu être récupéré.");
+                    const store = (window as any).CdvPurchase?.store || (window as any).store;
+                    const diag = {
+                        txKeys: transaction ? Object.keys(transaction) : [],
+                        hasParent: !!transaction?.parentReceipt,
+                        parentKeys: transaction?.parentReceipt ? Object.keys(transaction.parentReceipt) : [],
+                        nativeKeys: transaction?.parentReceipt?.nativeData ? Object.keys(transaction.parentReceipt.nativeData) : [],
+                        localReceipts: store?.localReceipts?.length ?? 0,
+                    };
+                    addLog(`[useIAP] Reçu Apple manquant. Diagnostic: ${JSON.stringify(diag)}`);
+                    // IMPORTANT: do NOT finish() the transaction so Apple can replay it later
+                    // (on app restart or via restorePurchases) once the plugin exposes the receipt.
+                    toast.error("Reçu introuvable. Patientez quelques instants puis utilisez « Restaurer mes achats ».");
                     setLoading(false);
                     return;
                 }
@@ -154,9 +195,10 @@ export const useAppleIAP = () => {
                     handleSuccess(transaction);
                 } else {
                     addLog(`[useIAP] Échec validation Apple: ${result.error}`);
-                    toast.error("Échec de validation Apple: " + result.error);
+                    // Do NOT finish() on failure — let Apple replay the transaction so it can be retried.
+                    toast.error("Validation impossible: " + result.error + ". Réessayez via « Restaurer mes achats ».");
                 }
-            } 
+            }
             // Pour Android
             else if (platform === 'android') {
                 const { verifyAndroidPurchase } = await import('@/app/actions/android');
