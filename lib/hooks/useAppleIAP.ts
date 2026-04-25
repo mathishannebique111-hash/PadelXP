@@ -151,12 +151,9 @@ export const useAppleIAP = () => {
                     if (p.id === 'premium_monthly') {
                         addLog(`[IAP] Produit: ${p.id} - ${p.pricing?.price || 'n/a'} - valid=${p.valid} - state=${p.state} - owned=${p.owned}`);
                         setProduct(p);
-
-                        // If product is already owned (restored), validate immediately
-                        if (p.owned) {
-                            addLog("[IAP] Produit déjà possédé ! Validation auto...");
-                            validateAndActivate(undefined);
-                        }
+                        // Do NOT auto-validate on owned — the Apple ID subscription
+                        // belongs to the device, not the PadelXP account.
+                        // Only validate on explicit purchase or restore.
                     }
                 })
                 .approved((transaction: any) => {
