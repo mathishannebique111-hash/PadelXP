@@ -113,11 +113,21 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   if (subscription.metadata?.type === 'player_premium') {
     const userId = subscription.metadata.userId;
     if (userId && supabaseAdmin) {
-      const { error } = await supabaseAdmin.from('profiles').update({ is_premium: true }).eq('id', userId);
+      const premiumUntil = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { error } = await supabaseAdmin.from('profiles').update({
+        is_premium: true,
+        premium_until: premiumUntil,
+        premium_since: new Date().toISOString(),
+        payment_method: 'stripe',
+      }).eq('id', userId);
+
       if (error) {
         logger.error(`[webhook-stripe] Error enabling premium for user ${userId}`, { error });
       } else {
-        logger.info(`[webhook-stripe] Enabled premium for user ${userId} via subscription.created`);
+        logger.info(`[webhook-stripe] Enabled premium for user ${userId} until ${premiumUntil}`);
       }
     }
     return;
@@ -144,8 +154,17 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     const userId = subscription.metadata.userId;
     if (userId && supabaseAdmin) {
       const isActive = subscription.status === 'active' || subscription.status === 'trialing';
-      await supabaseAdmin.from('profiles').update({ is_premium: isActive }).eq('id', userId);
-      logger.info(`[webhook-stripe] Updated premium status for user ${userId} to ${isActive}`);
+      const premiumUntil = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null;
+
+      await supabaseAdmin.from('profiles').update({
+        is_premium: isActive,
+        premium_until: isActive ? premiumUntil : null,
+        payment_method: 'stripe',
+      }).eq('id', userId);
+
+      logger.info(`[webhook-stripe] Updated premium for user ${userId}: active=${isActive}, until=${premiumUntil}`);
     }
     return;
   }
@@ -172,7 +191,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   if (subscription.metadata?.type === 'player_premium') {
     const userId = subscription.metadata.userId;
     if (userId && supabaseAdmin) {
-      await supabaseAdmin.from('profiles').update({ is_premium: false }).eq('id', userId);
+      await supabaseAdmin.from('profiles').update({
+        is_premium: false,
+        premium_until: null,
+      }).eq('id', userId);
       logger.info(`[webhook-stripe] Disabled premium for user ${userId}`);
     }
     return;
@@ -216,11 +238,18 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   if (session.metadata?.type === 'player_premium') {
     const userId = session.metadata.userId;
     if (userId && supabaseAdmin) {
-      const { error } = await supabaseAdmin.from('profiles').update({ is_premium: true }).eq('id', userId);
+      const premiumUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabaseAdmin.from('profiles').update({
+        is_premium: true,
+        premium_until: premiumUntil,
+        premium_since: new Date().toISOString(),
+        payment_method: 'stripe',
+      }).eq('id', userId);
+
       if (error) {
         logger.error(`[webhook-stripe] Error enabling premium for user ${userId} via checkout.completed`, { error });
       } else {
-        logger.info(`[webhook-stripe] Enabled premium for user ${userId} via checkout.completed`);
+        logger.info(`[webhook-stripe] Enabled premium for user ${userId} via checkout.completed until ${premiumUntil}`);
       }
     }
   }
