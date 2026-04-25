@@ -289,21 +289,67 @@ export const useAppleIAP = () => {
             return;
         }
 
+        setLoading(true);
         try {
-            setLoading(true);
             addLog("[useAppleIAP] Restauration des achats...");
             toast.info("Recherche de vos achats en cours...", { duration: 4000 });
 
-            await store.restorePurchases();
+            // 1. Ask Apple to refresh receipts and replay unfinished transactions.
+            //    On v13 this triggers .approved events for active subs (handled by validatePurchase).
+            try {
+                if (typeof store.restorePurchases === 'function') {
+                    await store.restorePurchases();
+                }
+            } catch (e) {
+                addLog(`[useAppleIAP] store.restorePurchases a levé: ${e}`);
+            }
 
-            // On laisse un petit délai pour que la validation serveur ait le temps de répondre
-            setTimeout(() => {
-                setLoading(false);
-            }, 3000);
+            // 2. Force a refresh to repopulate localReceipts (v13).
+            try {
+                if (typeof store.update === 'function') {
+                    await store.update();
+                }
+            } catch (e) {
+                addLog(`[useAppleIAP] store.update a levé: ${e}`);
+            }
 
+            // 3. Wait a moment for any approval events to be processed.
+            await new Promise(resolve => setTimeout(resolve, 2500));
+
+            // 4. Manual recovery: read the unified iOS receipt directly from the device
+            //    and send it to the backend. This handles the case where .approved didn't
+            //    fire (e.g. transaction stuck after a previously failed validation).
+            const platform = Capacitor.getPlatform();
+            if (platform === 'ios') {
+                const receipt = extractAppleReceipt({});
+                addLog(`[useAppleIAP] Récupération manuelle: receipt ${receipt ? 'trouvé (' + receipt.length + ' chars)' : 'absent'}`);
+
+                if (receipt) {
+                    const result = await verifyAppleReceipt(receipt);
+                    if (result.success) {
+                        addLog("[useAppleIAP] Récupération manuelle: premium activé.");
+                        toast.success("Succès ! Vous êtes maintenant Premium.");
+                        window.location.href = '/home?premium_success=true';
+                        return;
+                    } else {
+                        addLog(`[useAppleIAP] Récupération manuelle échouée: ${result.error}`);
+                        toast.error("Aucun abonnement actif trouvé: " + result.error);
+                    }
+                } else {
+                    const localReceipts = store?.localReceipts;
+                    const diag = {
+                        adapters: Array.isArray(store?.adapters) ? store.adapters.map((a: any) => a?.id) : 'n/a',
+                        localReceipts: Array.isArray(localReceipts) ? localReceipts.length : 'n/a',
+                        firstReceiptKeys: Array.isArray(localReceipts) && localReceipts[0] ? Object.keys(localReceipts[0]) : [],
+                    };
+                    addLog(`[useAppleIAP] Aucun reçu local. Diag: ${JSON.stringify(diag)}`);
+                    toast.error("Aucun achat trouvé sur cet appareil. Si vous avez payé, contactez le support.");
+                }
+            }
         } catch (error: any) {
             addLog(`[useAppleIAP] Erreur lors de la restauration: ${error}`);
             toast.error("Erreur lors de la restauration.");
+        } finally {
             setLoading(false);
         }
     }, []);
