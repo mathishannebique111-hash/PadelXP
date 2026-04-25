@@ -10,7 +10,6 @@ import { createClient } from "@/lib/supabase/client";
 import { PushNotificationsService } from "@/lib/notifications/push-notifications";
 import { showToast } from "@/components/ui/Toast";
 
-import { useAppleIAP } from "@/lib/hooks/useAppleIAP";
 import { CreditCard } from "lucide-react";
 
 export default function SettingsContent() {
@@ -18,7 +17,12 @@ export default function SettingsContent() {
   const [isActivating, setIsActivating] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const supabase = createClient();
-  const { isApp, manageSubscriptions } = useAppleIAP();
+  const isApp = typeof window !== 'undefined' && !!(window as any).Capacitor?.isNativePlatform?.();
+  const manageSubscriptions = () => {
+    const platform = (window as any).Capacitor?.getPlatform?.();
+    if (platform === 'ios') window.location.href = "https://apps.apple.com/account/subscriptions";
+    else if (platform === 'android') window.location.href = "https://play.google.com/store/account/subscriptions";
+  };
 
   useEffect(() => {
     const checkUserStatus = async () => {

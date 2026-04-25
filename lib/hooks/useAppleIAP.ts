@@ -19,6 +19,7 @@ export const useAppleIAP = () => {
     const [debugLogs, setDebugLogs] = useState<string[]>([]);
     const [product, setProduct] = useState<any>(null);
     const storeRef = useRef<any>(null);
+    const userInitiatedRef = useRef(false); // Only validate when user clicks buy/restore
 
     const addLog = useCallback((msg: string) => {
         console.log(msg);
@@ -157,8 +158,17 @@ export const useAppleIAP = () => {
                     }
                 })
                 .approved((transaction: any) => {
-                    addLog(`[IAP] Transaction approuvée: ${transaction.transactionId || 'unknown'}`);
-                    validateAndActivate(transaction);
+                    addLog(`[IAP] Transaction approuvée: ${transaction.transactionId || 'unknown'}, userInitiated=${userInitiatedRef.current}`);
+                    // Only validate if user explicitly clicked buy or restore
+                    // Otherwise the store fires .approved() on init for existing subscriptions
+                    // which would activate premium for the wrong PadelXP account
+                    if (userInitiatedRef.current) {
+                        validateAndActivate(transaction);
+                    } else {
+                        addLog("[IAP] Ignoré: transaction non initiée par l'utilisateur");
+                        // Still finish the transaction to clear the queue
+                        if (typeof transaction.finish === 'function') transaction.finish();
+                    }
                 })
                 .verified((receipt: any) => {
                     addLog("[IAP] Receipt vérifié par le plugin.");
@@ -235,6 +245,7 @@ export const useAppleIAP = () => {
         }
 
         setLoading(true);
+        userInitiatedRef.current = true;
         try {
             const prod = store.get('premium_monthly');
             if (!prod) {
@@ -272,6 +283,7 @@ export const useAppleIAP = () => {
         }
 
         setLoading(true);
+        userInitiatedRef.current = true;
         addLog("[IAP] Restauration des achats...");
         toast.info("Recherche de vos achats...", { duration: 4000 });
 
