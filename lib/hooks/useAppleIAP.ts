@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { verifyAppleReceipt } from '@/app/actions/apple';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
@@ -18,267 +18,305 @@ export const useAppleIAP = () => {
     const [isApp, setIsApp] = useState(false);
     const [debugLogs, setDebugLogs] = useState<string[]>([]);
     const [product, setProduct] = useState<any>(null);
+    const storeRef = useRef<any>(null);
 
-    const addLog = (msg: string) => {
+    const addLog = useCallback((msg: string) => {
         console.log(msg);
-        setDebugLogs(prev => [...prev.slice(-19), msg]); // Garder les 20 derniers logs
-    };
-
-    useEffect(() => {
-        // Détecter si on est dans l'app via Capacitor
-        try {
-            const isNative = Capacitor.isNativePlatform();
-            addLog(`[useAppleIAP] Initial check - isNative: ${isNative}, Platform: ${Capacitor.getPlatform()}`);
-
-            if (isNative) {
-                setIsApp(true);
-
-                // On boucle jusqu'à trouver le store ou abandonner après 10s
-                let attempts = 0;
-                const interval = setInterval(() => {
-                    attempts++;
-                    const store = (window as any).CdvPurchase?.store || (window as any).store;
-
-                    addLog(`[useAppleIAP] Attempt ${attempts}: store found? ${!!store}`);
-
-                    if (store) {
-                        clearInterval(interval);
-                        initStore(store);
-                    } else if (attempts >= 20) { // 10 secondes (20 * 500ms)
-                        clearInterval(interval);
-                        addLog("[useAppleIAP] Abandon : Store introuvable après 10s.");
-                    }
-                }, 500);
-
-                return () => clearInterval(interval);
-            }
-        } catch (err) {
-            addLog(`[useAppleIAP] Error during initialization: ${err}`);
-        }
+        setDebugLogs(prev => [...prev.slice(-29), msg]);
     }, []);
 
-    const initStore = (store: any) => {
-        try {
-            if (isInitialized) return;
+    /**
+     * Extracts the App Store receipt from ANY possible location.
+     * cordova-plugin-purchase v13 stores it in various places depending on the flow.
+     */
+    const extractReceipt = useCallback((transaction?: any): string => {
+        const CdvPurchase = (window as any).CdvPurchase;
+        const store = storeRef.current;
 
-            addLog("[useIAP] Configuration du store v13...");
+        // Try all known paths (ordered by likelihood)
+        const paths = [
+            // v13 application receipt (the most reliable)
+            () => store?.applicationReceipt?.nativeData?.appStoreReceipt,
+            // CdvPurchase global receipt
+            () => CdvPurchase?.store?.applicationReceipt?.nativeData?.appStoreReceipt,
+            // Transaction-level receipt
+            () => transaction?.appStoreReceipt,
+            () => transaction?.parentReceipt?.nativeData?.appStoreReceipt,
+            () => transaction?.parentReceipt?.nativeData?.transactionReceipt,
+            () => transaction?.nativeData?.appStoreReceipt,
+            () => transaction?.receipt,
+            // Legacy global
+            () => CdvPurchase?.appStoreReceipt,
+            // Local receipts array
+            () => store?.localReceipts?.[0]?.nativeData?.appStoreReceipt,
+        ];
 
-            const platform = Capacitor.getPlatform() === 'ios' 
-                ? (window as any).CdvPurchase?.Platform?.APPLE_APPSTORE 
-                : (window as any).CdvPurchase?.Platform?.GOOGLE_PLAY;
-                
-            addLog(`[useIAP] Platform detection: ${platform}`);
-
-            // 1. Enregistrement des produits possibles
-            const productIds = ['premium_monthly'];
-            productIds.forEach(id => {
-                store.register({
-                    id: id,
-                    type: (window as any).CdvPurchase?.ProductType?.PAID_SUBSCRIPTION || 'paid subscription',
-                    platform: platform,
-                });
-            });
-
-            // 2. Gestionnaires d'événements v13 (syntaxe sans argument dans .when())
-            store.when()
-                .productUpdated((p: any) => {
-                    if (productIds.includes(p.id)) {
-                        addLog(`[useAppleIAP] Produit chargé: ${p.id} - ${p.title} - ${p.pricing?.price || 'n/a'} - Valide: ${p.valid} - État: ${p.state}`);
-                        setProduct(p);
-                    }
-                })
-                .approved((transaction: any) => {
-                    addLog(`[useAppleIAP] Transaction approuvée: ${transaction.transactionId}`);
-                    if (transaction.products.some((p: any) => productIds.includes(p.id))) {
-                        validatePurchase(transaction);
-                    }
-                })
-                .verified((receipt: any) => {
-                    addLog("[useAppleIAP] Reçu vérifié serveur.");
-                    if (typeof receipt.finish === 'function') receipt.finish();
-                });
-
-            // Gérer les erreurs
-            store.error((error: any) => {
-                const errStr = JSON.stringify(error);
-                addLog(`[useAppleIAP] Store Error: ${errStr}`);
-                if (loading) toast.error("Erreur Apple Pay: " + (error.message || "inconnue"));
-                setLoading(false);
-            });
-
-            store.ready(() => {
-                addLog("[useAppleIAP] Store prêt (Ready).");
-                setIsInitialized(true);
-            });
-
-            // 3. Initialisation v13 (Remplace refresh)
-            addLog("[useAppleIAP] Appel de store.initialize...");
-            store.initialize([platform]).then((errors: any) => {
-                if (errors && errors.length > 0) {
-                    addLog(`[useAppleIAP] Erreurs init: ${JSON.stringify(errors)}`);
-                } else {
-                    addLog("[useAppleIAP] store.initialize OK");
+        for (let i = 0; i < paths.length; i++) {
+            try {
+                const receipt = paths[i]();
+                if (receipt && typeof receipt === 'string' && receipt.length > 100) {
+                    addLog(`[IAP] Receipt trouvé via path ${i} (${receipt.length} chars)`);
+                    return receipt;
                 }
-            }).catch((err: any) => {
-                addLog(`[useAppleIAP] store.initialize CRASH: ${err}`);
-            });
-
-        } catch (err: any) {
-            const errorMessage = JSON.stringify(err, Object.getOwnPropertyNames(err));
-            addLog(`[useAppleIAP] Erreur fatale init: ${errorMessage}`);
-            toast.error("Erreur IAP Init: " + errorMessage);
-            setLoading(false);
+            } catch { /* ignore */ }
         }
-    };
 
-    const validatePurchase = async (transaction: any) => {
+        addLog("[IAP] Aucun receipt trouvé dans les paths connus");
+        return "";
+    }, [addLog]);
+
+    /**
+     * Validate a purchase with our server.
+     * Called both for new purchases AND restore flows.
+     */
+    const validateAndActivate = useCallback(async (transaction?: any) => {
         setLoading(true);
+        addLog("[IAP] Début validation...");
+
         try {
             const platform = Capacitor.getPlatform();
 
-            // Pour Apple
             if (platform === 'ios') {
-                // Try ALL possible receipt locations in cordova-plugin-purchase v13
-                const receipt =
-                    transaction.appStoreReceipt ||
-                    transaction.parentReceipt?.nativeData?.appStoreReceipt ||
-                    transaction.parentReceipt?.nativeData?.transactionReceipt ||
-                    (window as any).CdvPurchase?.store?.applicationReceipt?.nativeData?.appStoreReceipt ||
-                    (window as any).CdvPurchase?.appStoreReceipt ||
-                    transaction.nativeData?.appStoreReceipt ||
-                    transaction.receipt;
+                const receipt = extractReceipt(transaction);
+                addLog(`[IAP] Envoi au serveur (receipt: ${receipt ? receipt.length + ' chars' : 'vide'})...`);
 
-                addLog(`[useIAP] Receipt trouvé: ${receipt ? `oui (${receipt.length} chars)` : 'NON'}`);
+                const result = await verifyAppleReceipt(receipt);
+                addLog(`[IAP] Réponse serveur: success=${result.success}, error=${result.error || 'none'}`);
 
-                // Log all available paths for debugging
-                addLog(`[useIAP] Chemins disponibles: appStoreReceipt=${!!transaction.appStoreReceipt}, parentReceipt=${!!transaction.parentReceipt}, CdvPurchase.appStoreReceipt=${!!(window as any).CdvPurchase?.appStoreReceipt}, applicationReceipt=${!!(window as any).CdvPurchase?.store?.applicationReceipt}`);
-
-                // Even without receipt, try to validate (fallback will activate premium)
-                const result = await verifyAppleReceipt(receipt || "");
                 if (result.success) {
-                    handleSuccess(transaction);
+                    addLog("[IAP] Premium activé !");
+                    // Finish the transaction so Apple doesn't keep retrying
+                    if (transaction && typeof transaction.finish === 'function') {
+                        try { await transaction.finish(); } catch { /* ok */ }
+                    }
+                    toast.success("Succès ! Vous êtes maintenant Premium.");
+                    window.location.href = '/home?premium_success=true';
+                    return;
                 } else {
-                    addLog(`[useIAP] Échec validation Apple: ${result.error}`);
-                    toast.error("Échec de validation Apple: " + result.error);
+                    toast.error("Échec de validation: " + (result.error || "erreur inconnue"));
                 }
-            }
-            // Pour Android
-            else if (platform === 'android') {
+            } else if (platform === 'android') {
                 const { verifyAndroidPurchase } = await import('@/app/actions/android');
                 const result = await verifyAndroidPurchase({
                     productId: 'premium_monthly',
-                    purchaseToken: transaction.receipt?.purchaseToken || transaction.transactionId
+                    purchaseToken: transaction?.receipt?.purchaseToken || transaction?.transactionId || ''
                 });
 
                 if (result.success) {
-                    handleSuccess(transaction);
+                    if (transaction && typeof transaction.finish === 'function') {
+                        try { await transaction.finish(); } catch { /* ok */ }
+                    }
+                    toast.success("Succès ! Vous êtes maintenant Premium.");
+                    window.location.href = '/home?premium_success=true';
+                    return;
                 } else {
-                    addLog(`[useIAP] Échec validation Android: ${result.error}`);
-                    toast.error("Échec de validation Android: " + result.error);
+                    toast.error("Échec de validation Android: " + (result.error || "erreur inconnue"));
                 }
             }
-        } catch (e) {
-            addLog(`[useIAP] Erreur validation: ${e}`);
+        } catch (e: any) {
+            addLog(`[IAP] Erreur validation: ${e.message || e}`);
             toast.error("Erreur lors de la vérification du paiement.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [addLog, extractReceipt]);
 
-    const handleSuccess = async (transaction: any) => {
-        addLog("[useIAP] Validation réussie !");
-        if (typeof transaction.finish === 'function') await transaction.finish();
-        toast.success("Succès ! Vous êtes maintenant Premium.");
-        window.location.href = '/home?premium_success=true';
-    };
+    /**
+     * Initialize the store and set up event handlers.
+     */
+    const initStore = useCallback((store: any) => {
+        if (storeRef.current) return; // Already initialized
+        storeRef.current = store;
 
+        addLog("[IAP] Configuration du store v13...");
+
+        try {
+            const CdvPurchase = (window as any).CdvPurchase;
+            const platform = Capacitor.getPlatform() === 'ios'
+                ? CdvPurchase?.Platform?.APPLE_APPSTORE
+                : CdvPurchase?.Platform?.GOOGLE_PLAY;
+
+            addLog(`[IAP] Platform: ${platform}`);
+
+            // Register products
+            store.register({
+                id: 'premium_monthly',
+                type: CdvPurchase?.ProductType?.PAID_SUBSCRIPTION || 'paid subscription',
+                platform: platform,
+            });
+
+            // Event handlers
+            store.when()
+                .productUpdated((p: any) => {
+                    if (p.id === 'premium_monthly') {
+                        addLog(`[IAP] Produit: ${p.id} - ${p.pricing?.price || 'n/a'} - valid=${p.valid} - state=${p.state} - owned=${p.owned}`);
+                        setProduct(p);
+
+                        // If product is already owned (restored), validate immediately
+                        if (p.owned) {
+                            addLog("[IAP] Produit déjà possédé ! Validation auto...");
+                            validateAndActivate(undefined);
+                        }
+                    }
+                })
+                .approved((transaction: any) => {
+                    addLog(`[IAP] Transaction approuvée: ${transaction.transactionId || 'unknown'}`);
+                    validateAndActivate(transaction);
+                })
+                .verified((receipt: any) => {
+                    addLog("[IAP] Receipt vérifié par le plugin.");
+                    if (typeof receipt.finish === 'function') receipt.finish();
+                })
+                .finished((transaction: any) => {
+                    addLog(`[IAP] Transaction terminée: ${transaction.transactionId || 'unknown'}`);
+                });
+
+            store.error((error: any) => {
+                addLog(`[IAP] Store Error: ${JSON.stringify(error)}`);
+                setLoading(false);
+            });
+
+            store.ready(() => {
+                addLog("[IAP] Store prêt.");
+                setIsInitialized(true);
+            });
+
+            // Initialize
+            addLog("[IAP] Initialisation...");
+            store.initialize([platform]).then((errors: any) => {
+                if (errors?.length > 0) {
+                    addLog(`[IAP] Erreurs init: ${JSON.stringify(errors)}`);
+                } else {
+                    addLog("[IAP] Init OK");
+                }
+            }).catch((err: any) => {
+                addLog(`[IAP] Init crash: ${err}`);
+            });
+
+        } catch (err: any) {
+            addLog(`[IAP] Erreur fatale init: ${err.message || err}`);
+            toast.error("Erreur d'initialisation des achats");
+            setLoading(false);
+        }
+    }, [addLog, validateAndActivate]);
+
+    // Detect native platform and initialize store
+    useEffect(() => {
+        try {
+            const isNative = Capacitor.isNativePlatform();
+            addLog(`[IAP] isNative=${isNative}, platform=${Capacitor.getPlatform()}`);
+
+            if (!isNative) return;
+            setIsApp(true);
+
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                const store = (window as any).CdvPurchase?.store;
+
+                if (store) {
+                    clearInterval(interval);
+                    initStore(store);
+                } else if (attempts >= 20) {
+                    clearInterval(interval);
+                    addLog("[IAP] Store introuvable après 10s");
+                }
+            }, 500);
+
+            return () => clearInterval(interval);
+        } catch (err) {
+            addLog(`[IAP] Init error: ${err}`);
+        }
+    }, [addLog, initStore]);
+
+    // Purchase premium
     const purchasePremium = useCallback(() => {
-        const store = (window as any).CdvPurchase?.store || (window as any).store;
-
+        const store = storeRef.current;
         if (!store) {
-            addLog("[useAppleIAP] Store non trouvé au clic.");
             toast.error("Le service d'achat n'est pas encore prêt.");
             return;
         }
 
         setLoading(true);
         try {
-            const productId = 'premium_monthly';
-            const productToBuy = store.get(productId);
-
-            if (!productToBuy) {
-                addLog(`[useAppleIAP] Produit introuvable: ${productId}`);
-                toast.error("Produit introuvable sur le store.");
+            const prod = store.get('premium_monthly');
+            if (!prod) {
+                addLog("[IAP] Produit introuvable");
+                toast.error("Produit introuvable.");
                 setLoading(false);
                 return;
             }
 
-            // Diagnostic profond
-            try {
-                addLog(`[useAppleIAP] Diagnostic produit: ${productToBuy.id}`);
-                const productShort = {
-                    id: productToBuy.id,
-                    state: productToBuy.state,
-                    valid: productToBuy.valid,
-                    canPurchase: productToBuy.canPurchase,
-                    offersCount: productToBuy.offers?.length || 0
-                };
-                addLog(`[useAppleIAP] Détails: ${JSON.stringify(productShort)}`);
-            } catch (e) {
-                addLog(`[useAppleIAP] Erreur log détails: ${e}`);
-            }
+            addLog(`[IAP] Produit: id=${prod.id}, valid=${prod.valid}, canPurchase=${prod.canPurchase}, offers=${prod.offers?.length || 0}`);
 
-            const offer = productToBuy.getOffer();
+            const offer = prod.getOffer();
             if (!offer) {
-                addLog(`[useAppleIAP] Aucune offre trouvée pour ${productToBuy.id}. État: ${productToBuy.state}`);
-                toast.error("Offre non disponible actuellement.");
+                addLog("[IAP] Aucune offre disponible");
+                toast.error("Offre non disponible.");
                 setLoading(false);
                 return;
             }
 
-            addLog(`[useAppleIAP] Lancement order sur offre: ${offer.id} (Type: ${offer.type})`);
+            addLog(`[IAP] Achat: offre ${offer.id}`);
             store.order(offer);
         } catch (err: any) {
-            addLog(`[useAppleIAP] store.order failed: ${err}`);
-            toast.error("Impossible d'ouvrir la fenêtre d'achat.");
+            addLog(`[IAP] Erreur order: ${err}`);
+            toast.error("Impossible d'ouvrir le paiement.");
             setLoading(false);
         }
-    }, [loading, addLog]);
+    }, [addLog]);
 
+    // Restore purchases
     const restorePurchases = useCallback(async () => {
-        const store = (window as any).CdvPurchase?.store || (window as any).store;
+        const store = storeRef.current;
         if (!store) {
             toast.error("Le service d'achat n'est pas prêt.");
             return;
         }
 
+        setLoading(true);
+        addLog("[IAP] Restauration des achats...");
+        toast.info("Recherche de vos achats...", { duration: 4000 });
+
         try {
-            setLoading(true);
-            addLog("[useAppleIAP] Restauration des achats...");
-            toast.info("Recherche de vos achats en cours...", { duration: 4000 });
-
             await store.restorePurchases();
+            addLog("[IAP] restorePurchases() appelé, attente de la réponse...");
 
-            // On laisse un petit délai pour que la validation serveur ait le temps de répondre
-            setTimeout(() => {
-                setLoading(false);
+            // Wait a bit for the store to process, then check if product is owned
+            setTimeout(async () => {
+                const prod = store.get('premium_monthly');
+                addLog(`[IAP] Après restore: owned=${prod?.owned}, state=${prod?.state}`);
+
+                if (prod?.owned) {
+                    addLog("[IAP] Produit possédé après restore, validation...");
+                    await validateAndActivate(undefined);
+                } else {
+                    // Try to validate with whatever receipt we have anyway
+                    const receipt = extractReceipt();
+                    if (receipt) {
+                        addLog("[IAP] Receipt trouvé après restore, tentative de validation...");
+                        await validateAndActivate(undefined);
+                    } else {
+                        addLog("[IAP] Aucun achat trouvé à restaurer");
+                        toast.info("Aucun achat premium trouvé à restaurer.");
+                        setLoading(false);
+                    }
+                }
             }, 3000);
-
         } catch (error: any) {
-            addLog(`[useAppleIAP] Erreur lors de la restauration: ${error}`);
+            addLog(`[IAP] Erreur restore: ${error}`);
             toast.error("Erreur lors de la restauration.");
             setLoading(false);
         }
-    }, []);
+    }, [addLog, validateAndActivate, extractReceipt]);
 
+    // Manage subscriptions
     const manageSubscriptions = useCallback(() => {
         const platform = Capacitor.getPlatform();
         if (platform === 'ios') {
             window.location.href = "https://apps.apple.com/account/subscriptions";
         } else if (platform === 'android') {
             window.location.href = "https://play.google.com/store/account/subscriptions";
-        } else {
-            toast.info("Veuillez gérer votre abonnement via les paramètres de votre compte.");
         }
     }, []);
 
