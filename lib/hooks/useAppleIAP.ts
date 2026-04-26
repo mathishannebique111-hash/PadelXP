@@ -55,10 +55,36 @@ export const useAppleIAP = () => {
                 addLog(`[IAP] Server result: success=${result.success}, error=${result.error || 'none'}`);
                 return result.success;
             } else if (platform === 'android') {
+                // Extract purchaseToken from various v13 locations
+                let purchaseToken = '';
+                try {
+                    // v13: nativePurchase has the token directly
+                    purchaseToken = transaction?.nativePurchase?.purchaseToken
+                        || transaction?.purchaseToken
+                        || '';
+
+                    // receipt might be a JSON string containing the token
+                    if (!purchaseToken && transaction?.receipt) {
+                        try {
+                            const parsed = typeof transaction.receipt === 'string'
+                                ? JSON.parse(transaction.receipt)
+                                : transaction.receipt;
+                            purchaseToken = parsed?.purchaseToken || parsed?.purchase_token || '';
+                        } catch { /* not JSON */ }
+                    }
+
+                    // Fallback to transactionId
+                    if (!purchaseToken) {
+                        purchaseToken = transaction?.transactionId || '';
+                    }
+                } catch { /* */ }
+
+                addLog(`[IAP] Android purchaseToken: ${purchaseToken ? purchaseToken.slice(0, 20) + '...' : 'EMPTY'}`);
+
                 const { verifyAndroidPurchase } = await import('@/app/actions/android');
                 const result = await verifyAndroidPurchase({
                     productId: 'premium_monthly',
-                    purchaseToken: transaction?.receipt?.purchaseToken || transaction?.transactionId || ''
+                    purchaseToken,
                 });
                 return result.success;
             }
@@ -95,7 +121,16 @@ export const useAppleIAP = () => {
                     }
                 })
                 .approved((transaction: any) => {
-                    addLog(`[IAP] APPROVED: ${transaction.transactionId || '?'}, userInitiated=${userInitiatedRef.current}`);
+                    addLog(`[IAP] APPROVED: txId=${transaction.transactionId || '?'}, userInitiated=${userInitiatedRef.current}, platform=${Capacitor.getPlatform()}`);
+
+                    // Log transaction structure for debugging (truncated)
+                    try {
+                        const keys = Object.keys(transaction).filter(k => typeof transaction[k] !== 'function');
+                        addLog(`[IAP] Transaction keys: ${keys.join(', ')}`);
+                        if (transaction.nativePurchase) {
+                            addLog(`[IAP] nativePurchase keys: ${Object.keys(transaction.nativePurchase).join(', ')}`);
+                        }
+                    } catch { /* */ }
 
                     if (!userInitiatedRef.current) {
                         addLog("[IAP] Not user initiated, finishing silently");
