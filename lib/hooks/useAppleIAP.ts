@@ -121,13 +121,15 @@ export const useAppleIAP = () => {
 
                             if (success) {
                                 addLog("[IAP] SUCCESS! Redirecting...");
-                                toast.success("Succès ! Vous êtes maintenant Premium.");
+                                toast.success("Succès ! Vous êtes maintenant Premium.", { duration: 2000 });
                                 setLoading(false);
                                 userInitiatedRef.current = false;
-                                // Use setTimeout to ensure toast shows before redirect
+                                // Wait for toast, then force full reload to trigger PremiumSuccessNotifier
                                 setTimeout(() => {
-                                    window.location.href = '/home?premium_success=true';
-                                }, 500);
+                                    window.location.replace('/home?premium_success=true');
+                                    // Force reload in case replace doesn't trigger a full navigation in Capacitor
+                                    setTimeout(() => window.location.reload(), 300);
+                                }, 1500);
                             } else {
                                 addLog("[IAP] Server validation failed");
                                 toast.error("Échec de la validation. Contactez le support.");
@@ -252,10 +254,13 @@ export const useAppleIAP = () => {
                     addLog("[IAP] Receipt found after restore, validating...");
                     const success = await serverValidate(receipt);
                     if (success) {
-                        toast.success("Succès ! Votre premium a été restauré.");
+                        toast.success("Succès ! Votre premium a été restauré.", { duration: 2000 });
+                        setLoading(false);
+                        userInitiatedRef.current = false;
                         setTimeout(() => {
-                            window.location.href = '/home?premium_success=true';
-                        }, 500);
+                            window.location.replace('/home?premium_success=true');
+                            setTimeout(() => window.location.reload(), 300);
+                        }, 1500);
                         return;
                     }
                 }
