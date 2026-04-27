@@ -337,6 +337,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Impossible d'enregistrer le challenge" }, { status: 500 });
   }
 
+  // Notify club members immediately
+  try {
+    const { createServerNotification, sendPushNotification } = await import("@/lib/notifications/send-push");
+
+    const { data: clubMembers } = await supabaseAdmin
+      .from("user_clubs")
+      .select("user_id")
+      .eq("club_id", clubId);
+
+    const memberIds = (clubMembers || []).map((m: any) => m.user_id);
+    if (memberIds.length > 0) {
+      const { data: memberProfiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, first_name, display_name")
+        .in("id", memberIds);
+
+      const reward = record.reward_type === "points"
+        ? `${record.reward_label} points`
+        : `le badge ${record.reward_label}`;
+
+      for (const profile of (memberProfiles || [])) {
+        const firstName = profile.first_name || (profile.display_name ? profile.display_name.split(/\s+/)[0] : "Joueur");
+        await createServerNotification(
+          profile.id,
+          "challenge_new",
+          "🆕 Nouveau challenge !",
+          `${firstName}, nouveau défi : "${record.title}". Remporte ${reward} en relevant le challenge !`,
+          { type: "challenge_new", challenge_id: record.id, challenge_title: record.title }
+        );
+        sendPushNotification(
+          profile.id,
+          "🆕 Nouveau challenge !",
+          `${firstName}, nouveau défi : "${record.title}". Remporte ${reward} !`,
+          { type: "challenge_new", challenge_id: record.id }
+        ).catch(() => {});
+      }
+    }
+  } catch (notifErr) {
+    logger.error("[clubs/challenges] Notification error (non-blocking):", notifErr);
+  }
+
   return NextResponse.json({
     challenge: {
       id: record.id,

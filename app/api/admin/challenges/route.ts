@@ -184,6 +184,38 @@ export async function POST(req: Request) {
             .from(BUCKET)
             .upload(GLOBAL_KEY, blob, { upsert: true, contentType: "application/json" });
 
+        // Notify ALL users immediately (global challenge)
+        try {
+            const { createServerNotification, sendPushNotification } = await import("@/lib/notifications/send-push");
+
+            const { data: allProfiles } = await serviceClient
+                .from("profiles")
+                .select("id, first_name, display_name");
+
+            const reward = newChallenge.reward_type === "points"
+                ? `${newChallenge.reward_label} points`
+                : `le badge ${newChallenge.reward_label}`;
+
+            for (const profile of (allProfiles || [])) {
+                const firstName = profile.first_name || (profile.display_name ? profile.display_name.split(/\s+/)[0] : "Joueur");
+                await createServerNotification(
+                    profile.id,
+                    "challenge_new",
+                    "🆕 Nouveau challenge !",
+                    `${firstName}, nouveau défi : "${newChallenge.title}". Remporte ${reward} en relevant le challenge !`,
+                    { type: "challenge_new", challenge_id: newChallenge.id, challenge_title: newChallenge.title }
+                );
+                sendPushNotification(
+                    profile.id,
+                    "🆕 Nouveau challenge !",
+                    `${firstName}, nouveau défi : "${newChallenge.title}". Remporte ${reward} !`,
+                    { type: "challenge_new", challenge_id: newChallenge.id }
+                ).catch(() => {});
+            }
+        } catch (notifErr) {
+            console.error("[admin/challenges] Notification error (non-blocking):", notifErr);
+        }
+
         return NextResponse.json({
             challenge: {
                 id: newChallenge.id,
@@ -194,7 +226,7 @@ export async function POST(req: Request) {
                 rewardType: newChallenge.reward_type,
                 rewardLabel: newChallenge.reward_label,
                 createdAt: newChallenge.created_at,
-                status: "upcoming" // Simply default to upcoming/active based on dates, frontend handles logic
+                status: "upcoming"
             },
             ok: true
         });
