@@ -321,7 +321,22 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
         .eq("conversation_id", convId)
         .order("created_at", { ascending: true });
 
-      setMessages((data as Message[]) || []);
+      const dbMessages = (data as Message[]) || [];
+
+      // Merge: keep optimistic messages (temp-*, assistant-*) that aren't in DB yet
+      setMessages((prev) => {
+        // If loading a different conversation, just replace
+        if (prev.length === 0) return dbMessages;
+
+        const dbIds = new Set(dbMessages.map((m) => m.id));
+        // Keep optimistic messages that haven't been saved to DB yet
+        const optimistic = prev.filter(
+          (m) => (m.id.startsWith("temp-") || m.id.startsWith("assistant-")) && !dbIds.has(m.id)
+        );
+
+        // DB messages + any remaining optimistic ones at the end
+        return [...dbMessages, ...optimistic];
+      });
     } catch (error) {
       console.error("[CoachChat] Load messages error:", error);
     }
@@ -469,10 +484,6 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
     } finally {
       setIsStreaming(false);
       setStreamingContent("");
-      // Reload from DB to ensure consistency (no lost messages)
-      if (activeConvId) {
-        setTimeout(() => loadMessages(activeConvId), 500);
-      }
       inputRef.current?.focus();
     }
   }
