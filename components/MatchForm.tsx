@@ -47,10 +47,31 @@ export default function MatchForm({
   const router = useRouter();
   const { refreshOnboarding } = useOnboarding();
   const [matchCount, setMatchCount] = useState(initialMatchCount);
+  const matchCountChecked = useRef(false);
   const searchParams = useSearchParams();
   const supabase = createClient();
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
   const [showFirstMatchPopup, setShowFirstMatchPopup] = useState(false);
+
+  // Check real match count on mount (server prop may be stale)
+  useEffect(() => {
+    if (matchCountChecked.current) return;
+    matchCountChecked.current = true;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { count } = await supabase
+          .from("match_participants")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("player_type", "user");
+        if (count !== null && count > 0 && matchCount === 0) {
+          setMatchCount(count);
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [supabase, matchCount]);
 
   // Show first match popup when redirected from level evaluation
   useEffect(() => {

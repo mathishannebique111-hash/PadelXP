@@ -41,7 +41,7 @@ export function OnboardingProvider({
 
   const refreshOnboarding = useCallback(async () => {
     try {
-      const res = await fetch("/api/player/onboarding-status", { credentials: "include" });
+      const res = await fetch("/api/player/onboarding-status", { credentials: "include", cache: "no-store" });
       if (res.ok) {
         const data: OnboardingStatus = await res.json();
         setSteps(data);
