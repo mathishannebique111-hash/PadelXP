@@ -1,0 +1,32 @@
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+export interface OnboardingStatus {
+  accountCreated: boolean; // always true (user exists)
+  levelEvaluated: boolean;
+  firstMatchPlayed: boolean;
+}
+
+/**
+ * Server-side: fetch onboarding status for a user in a single query.
+ * Called from the protected layout for SSR pre-fetch.
+ */
+export async function getOnboardingStatus(userId: string): Promise<OnboardingStatus> {
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("niveau_padel, matchs_joues")
+    .eq("id", userId)
+    .single();
+
+  return {
+    accountCreated: true,
+    levelEvaluated: profile?.niveau_padel != null,
+    firstMatchPlayed: (profile?.matchs_joues ?? 0) > 0,
+  };
+}

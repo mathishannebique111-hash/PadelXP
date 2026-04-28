@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { Trophy, ChevronRight } from "lucide-react";
 import { useChallenge } from "@/contexts/ChallengeContext";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export default function ChallengeHighlightBar() {
     const { challenge, loading } = useChallenge();
+    const onboarding = useOnboarding();
 
+    // Hide challenge bar until onboarding is complete
+    if (!onboarding.isComplete) return null;
     if (loading || !challenge) return null;
 
     // Calcul du pourcentage pour la barre de progression

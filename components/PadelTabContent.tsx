@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Share2, Lightbulb, ArrowRight } from "lucide-react";
 import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
 import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 import { PlayerPartnerCard } from "@/components/mobile/PlayerPartnerCard";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 interface PadelTabContentProps {
   profile: any;
@@ -12,6 +14,8 @@ interface PadelTabContentProps {
 
 export default function PadelTabContent({ profile }: PadelTabContentProps) {
   const [showWizard, setShowWizard] = useState(false);
+  const router = useRouter();
+  const { refreshOnboarding } = useOnboarding();
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
   const isLightBg = typeof window !== 'undefined' && document.documentElement.classList.contains('club-light-bg');
 
@@ -39,7 +43,11 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
           <LevelAssessmentWizard
             forceStart={true}
             onCancel={() => setShowWizard(false)}
-            onComplete={() => setShowWizard(false)}
+            onComplete={() => {
+              setShowWizard(false);
+              refreshOnboarding();
+              router.push('/match/new?tab=record');
+            }}
           />
         )}
       </div>

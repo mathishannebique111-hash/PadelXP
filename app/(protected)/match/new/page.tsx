@@ -75,11 +75,12 @@ export default async function NewMatchPage({
   let clubSlug: string | null = null;
   let clubName: string | null = null;
   let niveauPadel: number | null = null;
+  let matchsJoues: number = 0;
 
   try {
     const { data: adminProfile, error: adminProfileError } = await supabaseAdmin
       .from("profiles")
-      .select("club_id, club_slug, niveau_padel, clubs(name)")
+      .select("club_id, club_slug, niveau_padel, matchs_joues, clubs(name)")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -97,6 +98,7 @@ export default async function NewMatchPage({
       clubSlug = adminProfile.club_slug || null;
       clubName = (adminProfile.clubs as any)?.name || null;
       niveauPadel = adminProfile.niveau_padel || null;
+      matchsJoues = (adminProfile as any).matchs_joues ?? 0;
     } else {
       logger.warn("[Match/New] No profile found for user via admin client", {
         userId: user.id,
@@ -255,7 +257,7 @@ export default async function NewMatchPage({
                 initialBadgeCounts={initialBadgeCounts}
                 recordContent={
                   <MobileCrashErrorBoundary componentName="Formulaire Match">
-                    <MatchForm selfId={user.id} initialHasLevel={niveauPadel !== null} />
+                    <MatchForm selfId={user.id} initialHasLevel={niveauPadel !== null} matchCount={matchsJoues} />
                   </MobileCrashErrorBoundary>
                 }
                 historyContent={

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
+import OnboardingProgressBar from "@/components/onboarding/OnboardingProgressBar";
 
 type TabType = 'record' | 'history' | 'partners' | 'boost' | 'rejoindre';
 
@@ -259,6 +260,8 @@ function MatchTabsContent({
         ))}
       </div>
 
+      {/* Onboarding bar — shown on all tabs */}
+      <OnboardingProgressBar />
       {/* Challenge bar — hidden on record tab to save space */}
       {currentTab !== 'record' && <ChallengeHighlightBar />}
 

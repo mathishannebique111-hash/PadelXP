@@ -22,6 +22,7 @@ import nextDynamic from "next/dynamic";
 import { headers } from "next/headers";
 import { extractSubdomain } from "@/lib/club-branding";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
+import OnboardingProgressBar from "@/components/onboarding/OnboardingProgressBar";
 
 import PremiumStats from "@/components/club/PremiumStats";
 import JoinClubSection from "@/components/club/JoinClubSection";
@@ -233,6 +234,7 @@ export default async function HomePage({
               />
             </div>
 
+            <OnboardingProgressBar />
             <ChallengeHighlightBar />
 
             <PlayerProfileTabs

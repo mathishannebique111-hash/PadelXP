@@ -13,6 +13,7 @@ import { logger } from '@/lib/logger';
 import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search } from "lucide-react";
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
 import PlayerSlotSquare from "./PlayerSlotSquare";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { createPortal } from "react-dom";
 import LevelAssessmentWizard from "./padel-level/LevelAssessmentWizard";
 import MatchTabBlockingOverlay from "./MatchTabBlockingOverlay";
@@ -36,12 +37,15 @@ const schema = z.object({
 
 export default function MatchForm({
   selfId,
-  initialHasLevel = true
+  initialHasLevel = true,
+  matchCount = 0,
 }: {
   selfId: string;
   initialHasLevel?: boolean;
+  matchCount?: number;
 }) {
   const router = useRouter();
+  const { refreshOnboarding } = useOnboarding();
   const searchParams = useSearchParams();
   const supabase = createClient();
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
@@ -870,6 +874,9 @@ export default function MatchForm({
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
 
+          // Refresh onboarding progress (step 2 → 3)
+          refreshOnboarding();
+
           // Forcer le rechargement du classement
           if (typeof window !== "undefined") {
             console.log('[MatchForm] ✅ Match enregistré ! Rechargement du classement...');
@@ -1430,12 +1437,16 @@ export default function MatchForm({
                           const newScope = tab.id as 'global' | 'guest' | 'anonymous';
 
                           if (newScope === 'anonymous') {
-                            // Vérifier limite 1 anonyme
-                            const hasAnonymous = Object.values(selectedPlayers).some(
+                            // Limite : 3 anonymes pour le 1er match, 2 ensuite
+                            const anonymousLimit = matchCount === 0 ? 3 : 2;
+                            const anonymousCount = Object.values(selectedPlayers).filter(
                               (p) => p && p.display_name === 'Joueur Anonyme'
-                            );
-                            if (hasAnonymous) {
-                              alert("Vous avez déjà choisi un joueur anonyme");
+                            ).length;
+                            if (anonymousCount >= anonymousLimit) {
+                              alert(anonymousLimit === 3
+                                ? "Vous avez atteint la limite de 3 joueurs anonymes pour votre premier match"
+                                : "Vous ne pouvez choisir que 2 joueurs anonymes maximum"
+                              );
                               return;
                             }
                             const anonymousPlayer: PlayerSearchResult = {

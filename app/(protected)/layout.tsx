@@ -13,6 +13,8 @@ import ToastContainer from '@/components/ui/Toast';
 import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNotifier';
 import { createClient } from '@/lib/supabase/server';
 import { getPlayerChallenges } from '@/lib/challenges';
+import { getOnboardingStatus } from '@/lib/onboarding';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { extractSubdomain, getClubBranding } from '@/lib/club-branding';
 import { syncUserClubProfile, getUserClubInfo } from '@/lib/utils/club-utils';
 import { getClubLogoPublicUrl } from '@/lib/utils/club-logo-utils';
@@ -28,21 +30,26 @@ export default async function PlayerAccountLayout({
 
   let initialChallenge = null;
   let isPremiumUser = false;
+  let initialOnboardingStatus = null;
 
   if (user) {
     try {
-      const result = await getPlayerChallenges(user.id);
-      isPremiumUser = result.isPremiumUser;
+      const [challengeResult, onboardingResult] = await Promise.all([
+        getPlayerChallenges(user.id),
+        getOnboardingStatus(user.id),
+      ]);
 
-      // Trouver le premier challenge actif à mettre en avant (logique identique au Provider)
-      const activeChallenge = (result.challenges || []).find(c => {
+      isPremiumUser = challengeResult.isPremiumUser;
+      initialOnboardingStatus = onboardingResult;
+
+      const activeChallenge = (challengeResult.challenges || []).find(c => {
         if (c.isPremium && !isPremiumUser) return false;
         return c.status === "active" && !c.rewardClaimed;
       });
 
       initialChallenge = activeChallenge || null;
     } catch (e) {
-      console.error("[PlayerAccountLayout] Failed to pre-fetch challenges", e);
+      console.error("[PlayerAccountLayout] Failed to pre-fetch challenges/onboarding", e);
     }
   }
 
@@ -87,6 +94,7 @@ export default async function PlayerAccountLayout({
         }}
       />
       <PopupQueueProvider>
+        <OnboardingProvider initialStatus={initialOnboardingStatus}>
         <ChallengeProvider initialChallenge={initialChallenge} initialIsPremiumUser={isPremiumUser}>
           <div
             className="relative min-h-screen overflow-hidden"
@@ -135,6 +143,7 @@ export default async function PlayerAccountLayout({
           {/* Barre de navigation en bas */}
           <BottomNavBar />
         </ChallengeProvider>
+        </OnboardingProvider>
       </PopupQueueProvider>
     </>
   );

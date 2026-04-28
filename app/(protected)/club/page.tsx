@@ -9,6 +9,7 @@ import { getUserClubInfo } from "@/lib/utils/club-utils";
 import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
+import OnboardingProgressBar from "@/components/onboarding/OnboardingProgressBar";
 import LeaderboardServer from "@/components/club/LeaderboardServer";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +75,7 @@ export default async function ClubPage({
           <PageTitle title="Espace Compétition" />
         </div>
 
+        <OnboardingProgressBar />
         <ChallengeHighlightBar />
 
         <div className="mt-4 sm:mt-6">
