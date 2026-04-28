@@ -49,12 +49,10 @@ export function OnboardingProvider({
     } catch { /* ignore */ }
   }, []);
 
-  // If no initialStatus provided, fetch client-side
+  // Always fetch client-side to get fresh data (server cache may be stale)
   useEffect(() => {
-    if (!initialStatus) {
-      refreshOnboarding();
-    }
-  }, [initialStatus, refreshOnboarding]);
+    refreshOnboarding();
+  }, [refreshOnboarding]);
 
   return (
     <OnboardingCtx.Provider value={{ steps, isComplete, loading: false, currentStep, refreshOnboarding }}>
