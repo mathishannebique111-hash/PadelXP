@@ -22,7 +22,7 @@ export default function MatchTabBlockingOverlay({ type, onEvaluate }: MatchTabBl
             <button
                 onClick={onEvaluate}
                 className="px-8 py-4 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center min-w-[200px] uppercase tracking-wider"
-                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: 'var(--theme-player-page, #071554)', boxShadow: '0 0 30px rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
+                style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))', color: '#071554', boxShadow: '0 0 30px rgba(var(--theme-secondary-accent, 191,255,0), 0.3)' }}
             >
                 Évaluer mon niveau
             </button>
