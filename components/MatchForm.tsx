@@ -947,11 +947,13 @@ export default function MatchForm({
             router.refresh();
           }, 500);
 
-          // Redirection automatique seulement si pas d'avertissement
-          setTimeout(() => {
-            logger.info("🔄 Redirecting to match history...");
-            router.push("/match/new?tab=history");
-          }, 2000);
+          // Redirection automatique seulement si pas premier match et pas d'avertissement
+          if (matchCount > 0) {
+            setTimeout(() => {
+              logger.info("🔄 Redirecting to match history...");
+              router.push("/match/new?tab=history");
+            }, 2000);
+          }
         }
 
         setLoading(false);
@@ -1047,16 +1049,56 @@ export default function MatchForm({
       {/* Notification de succès */}
       {showSuccess && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl">
-            <div className="text-center">
-              <div className="mb-4 flex items-center justify-center">
-                <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
+          {matchCount === 0 ? (
+            /* First match celebration */
+            <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl max-w-sm overflow-hidden">
+              {/* Confetti effect */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {[...Array(20)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-2 h-2 rounded-full animate-bounce"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      backgroundColor: ['#FFD700', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'][i % 6],
+                      animationDelay: `${Math.random() * 2}s`,
+                      animationDuration: `${1 + Math.random() * 2}s`,
+                      opacity: 0.7,
+                    }}
+                  />
+                ))}
               </div>
-              <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistré avec succès !</h2>
-              <p className="text-sm text-gray-500">Une notification a été envoyée aux joueurs de ce match.</p>
-              <div className="mt-4 text-xs text-gray-400">Redirection vers l'historique...</div>
+              <div className="text-center relative z-10">
+                <div className="text-6xl mb-4">🏆</div>
+                <h2 className="mb-2 text-2xl font-extrabold text-gray-900">Premier match enregistre !</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                  Tu es maintenant classe parmi les joueurs de PadelXP. Continue a enregistrer tes matchs pour grimper dans le classement !
+                </p>
+                <button
+                  onClick={() => {
+                    setShowSuccess(false);
+                    router.push("/match/new?tab=history");
+                  }}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-400 active:scale-[0.97] transition-all shadow-lg"
+                >
+                  Voir mon classement
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* Normal success */
+            <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl">
+              <div className="text-center">
+                <div className="mb-4 flex items-center justify-center">
+                  <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
+                </div>
+                <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistre avec succes !</h2>
+                <p className="text-sm text-gray-500">Une notification a ete envoyee aux joueurs de ce match.</p>
+                <div className="mt-4 text-xs text-gray-400">Redirection vers l&apos;historique...</div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
