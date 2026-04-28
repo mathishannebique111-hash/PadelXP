@@ -141,10 +141,10 @@ function PlayerProfileTabsContent({
 
       {/* Bandeau Premium */}
       {!isPremium && (
-        <Link href="/premium" className="block mb-4">
+        <Link href="/premium" className="block mb-4 active:scale-[0.97] transition-transform">
           <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border border-amber-500/25">
             <div className="min-w-0">
-              <span className="text-xs font-bold text-amber-400">Passe Premium</span>
+              <span className="text-sm font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-400">Pass Premium</span>
               <p className="text-[11px] text-amber-200/60 leading-tight mt-0.5 truncate">Utilisation illimitée du Coach IA, stats avancées, challenges et badges exclusifs...</p>
             </div>
             <ArrowRight size={16} className="text-amber-400 flex-shrink-0" />
