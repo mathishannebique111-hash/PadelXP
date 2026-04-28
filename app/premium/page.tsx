@@ -52,14 +52,14 @@ function PremiumContent() {
 
     const features = [
         {
+            icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
+            title: "Coach IA",
+            description: "Accès illimité à votre coach personnel. Conseils tactiques, programmes d'entraînement et analyse de vos matchs avec l'Oracle intégré."
+        },
+        {
             icon: <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
             title: "Statistiques avancées",
             description: "Analysez votre jeu avec des graphiques détaillés, suivez votre évolution et identifiez vos points forts."
-        },
-        {
-            icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
-            title: "Le Système Oracle",
-            description: "Anticipez l'issue de vos matchs avec notre IA prédictive et obtenez des analyses stratégiques uniques."
         },
         {
             icon: <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,

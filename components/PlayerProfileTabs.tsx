@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 type TabType = 'profil' | 'stats' | 'badges' | 'club';
 
@@ -30,10 +32,20 @@ function PlayerProfileTabsContent({
   const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
   const [pendingPartnershipRequestsCount, setPendingPartnershipRequestsCount] = useState(initialPendingRequestsCount);
   const [loadedTabs, setLoadedTabs] = useState<Set<TabType>>(new Set([initialTab]));
+  const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
+    // Check premium status
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from('profiles').select('is_premium').eq('id', user.id).single();
+        setIsPremium(data?.is_premium || false);
+      }
+    })();
+
     // Si on n'a pas reçu de count initial (ou si on veut rafraichir), on charge
     if (initialPendingRequestsCount === 0) {
       loadPendingPartnershipRequestsCount();
@@ -127,8 +139,21 @@ function PlayerProfileTabsContent({
         ))}
       </div>
 
+      {/* Bandeau Premium */}
+      {!isPremium && (
+        <Link href="/premium" className="block mb-4">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border border-amber-500/25">
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-amber-400">Passe Premium</span>
+              <p className="text-[11px] text-amber-200/60 leading-tight mt-0.5 truncate">Utilisation illimitée du Coach IA, stats avancées, challenges et badges exclusifs...</p>
+            </div>
+            <ArrowRight size={16} className="text-amber-400 flex-shrink-0" />
+          </div>
+        </Link>
+      )}
+
       {/* Contenu des onglets - LAZY LOADED pour éviter de charger PlayerSummary/etc si pas utile */}
-      <div className="mt-4 sm:mt-6">
+      <div className="mt-2 sm:mt-4">
         <div style={{ display: currentTab === 'profil' ? 'block' : 'none' }}>
           {profilContent}
         </div>
