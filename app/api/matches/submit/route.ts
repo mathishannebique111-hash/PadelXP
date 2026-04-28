@@ -623,6 +623,27 @@ export async function POST(req: Request) {
       logger.info("Auto-confirmation created for match creator", { matchId: match.id, userId: user.id });
     }
 
+    // 1b. Auto-confirm guest/anonymous players (they can't confirm themselves)
+    const guestParticipantsForConfirm = participants.filter(p => p.player_type === 'guest' && p.guest_player_id);
+    if (guestParticipantsForConfirm.length > 0) {
+      for (const gp of guestParticipantsForConfirm) {
+        try {
+          await supabaseAdmin
+            .from("match_confirmations")
+            .insert({
+              match_id: match.id,
+              guest_player_id: gp.guest_player_id,
+              confirmed: true,
+              confirmed_at: new Date().toISOString(),
+              confirmation_token: crypto.randomUUID()
+            });
+        } catch (guestConfErr) {
+          logger.error("Error auto-confirming guest player", { error: (guestConfErr as Error).message, guestId: gp.guest_player_id });
+        }
+      }
+      logger.info("Auto-confirmed guest players", { count: guestParticipantsForConfirm.length, matchId: match.id });
+    }
+
     // 2. Récupérer le nom du joueur qui enregistre pour les notifications
     const { data: creatorProfile } = await supabaseAdmin
       .from("profiles")
