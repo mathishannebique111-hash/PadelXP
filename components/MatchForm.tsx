@@ -1430,14 +1430,6 @@ export default function MatchForm({
                           const newScope = tab.id as 'global' | 'guest' | 'anonymous';
 
                           if (newScope === 'anonymous') {
-                            // Vérifier limite 1 anonyme
-                            const hasAnonymous = Object.values(selectedPlayers).some(
-                              (p) => p && p.display_name === 'Joueur Anonyme'
-                            );
-                            if (hasAnonymous) {
-                              alert("Vous avez déjà choisi un joueur anonyme");
-                              return;
-                            }
                             const anonymousPlayer: PlayerSearchResult = {
                               id: crypto.randomUUID(),
                               first_name: 'Joueur',

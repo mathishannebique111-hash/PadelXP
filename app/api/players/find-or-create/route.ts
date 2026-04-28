@@ -99,10 +99,14 @@ export async function POST(request: NextRequest) {
     logger.info('[find-or-create] Profile/Club:', { clubId: clubId || 'NONE' });
 
     const normalizedQuery = playerName.trim().toLowerCase();
+    // Anonymous players are always created as a fresh guest row so multiple
+    // anonymous slots in the same match don't collide on a shared id (the
+    // submit endpoint requires unique guest_player_ids).
+    const isAnonymous = normalizedQuery === 'joueur anonyme';
 
 
     // 1. Si un email est fourni, rechercher globalement d'abord
-    if (email && email.trim()) {
+    if (email && email.trim() && !isAnonymous) {
       const searchEmail = email.trim().toLowerCase();
 
       // Rechercher un utilisateur existant (prioritaire)
@@ -154,27 +158,30 @@ export async function POST(request: NextRequest) {
     const searchPattern = `%${normalizedQuery.replace(/'/g, "''")}%`;
 
     // Rechercher d'abord un membre du même club (inscrit)
-    const { data: clubMembers } = await supabaseAdmin
-      .from('profiles')
-      .select('id, display_name, first_name, last_name, club_id, email')
-      .eq('club_id', clubId)
-      .or(
-        `display_name.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern}`
-      )
-      .limit(5);
+    // Skip for anonymous: we never want to bind "Joueur Anonyme" to a real user.
+    if (!isAnonymous) {
+      const { data: clubMembers } = await supabaseAdmin
+        .from('profiles')
+        .select('id, display_name, first_name, last_name, club_id, email')
+        .eq('club_id', clubId)
+        .or(
+          `display_name.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern}`
+        )
+        .limit(5);
 
-    if (clubMembers && clubMembers.length > 0) {
-      const member = clubMembers[0];
-      const displayName = member.display_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Joueur';
-      return NextResponse.json({
-        player: {
-          id: member.id,
-          display_name: displayName,
-          email: member.email || null,
-          type: 'user',
-          was_created: false,
-        },
-      });
+      if (clubMembers && clubMembers.length > 0) {
+        const member = clubMembers[0];
+        const displayName = member.display_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Joueur';
+        return NextResponse.json({
+          player: {
+            id: member.id,
+            display_name: displayName,
+            email: member.email || null,
+            type: 'user',
+            was_created: false,
+          },
+        });
+      }
     }
 
     // Aucun joueur inscrit trouvé: créer un joueur invité unique
@@ -187,13 +194,17 @@ export async function POST(request: NextRequest) {
     const { firstName, lastName } = capitalizeFullName(rawFirstName, rawLastName || '');
 
     // CHECK DUPLICATE GUEST BY NAME FOR THIS USER
-    const { data: existingGuestByName } = await supabaseAdmin
-      .from('guest_players')
-      .select('id, first_name, last_name, email')
-      .eq('first_name', firstName)
-      .eq('last_name', lastName)
-      .eq('invited_by_user_id', user.id)
-      .maybeSingle();
+    // Skip for anonymous so each anonymous slot gets its own guest row
+    // (otherwise the submit endpoint rejects the match for duplicate guest ids).
+    const { data: existingGuestByName } = isAnonymous
+      ? { data: null }
+      : await supabaseAdmin
+          .from('guest_players')
+          .select('id, first_name, last_name, email')
+          .eq('first_name', firstName)
+          .eq('last_name', lastName)
+          .eq('invited_by_user_id', user.id)
+          .maybeSingle();
 
     if (existingGuestByName) {
       logger.info('[players/find-or-create] Found existing guest by name', { guestId: existingGuestByName.id, name: `${firstName} ${lastName}` });
