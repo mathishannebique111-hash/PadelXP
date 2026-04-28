@@ -118,26 +118,71 @@ export class PushNotificationsService {
             const data = notification.notification.data;
             if (!data) return;
 
-            // Redirection basée sur le contenu de la data
-            // Invitations de joueurs
-            if (data.invitation_id || (data.type && data.type.includes("match_invitation"))) {
-                window.location.href = "/player/partners";
+            const type = data.type || "";
+
+            // Challenges
+            if (type === "challenge_new" || type === "challenge_expiring" || type === "challenge_progress") {
+                window.location.href = "/club?tab=challenges";
             }
-            // Défis d'équipe
-            else if (data.challenge_id || (data.type && data.type.includes("team_challenge"))) {
-                window.location.href = "/player/matches";
+            // Match confirmations & results
+            else if (type === "match_confirmation" || type === "match_validated" || type === "match_refusal_warning" || type === "match_points_earned") {
+                window.location.href = "/match/new?tab=history";
             }
-            // Demandes de partenariat
-            else if (data.partnership_id || (data.type && data.type.includes("partnership"))) {
-                window.location.href = "/player/partners";
+            // Win streak / weekly recap / inactivity
+            else if (type === "win_streak" || type === "weekly_recap" || type === "inactivity_reminder") {
+                window.location.href = "/home?tab=stats";
             }
-            // Badges / Niveaux
-            else if (data.badge_id || (data.type && data.type.includes("badge"))) {
-                window.location.href = "/player/profile";
+            // Partner played
+            else if (type === "partner_match_played") {
+                window.location.href = "/match/new?tab=partners";
             }
-            // Match validé -> Historique
+            // Match invitations
+            else if (type.includes("match_invitation")) {
+                window.location.href = "/match/new?tab=history";
+            }
+            // Team challenges
+            else if (type.includes("team_challenge")) {
+                window.location.href = "/match/new?tab=partners";
+            }
+            // Partnerships
+            else if (type.includes("partnership")) {
+                window.location.href = "/home?tab=profil";
+            }
+            // Badges
+            else if (type === "badge" || type === "badge_unlocked") {
+                window.location.href = "/home?tab=badges";
+            }
+            // Level up
+            else if (type === "level_up") {
+                window.location.href = "/home?tab=profil";
+            }
+            // Top 3 ranking
+            else if (type === "top3" || type === "top3_ranking") {
+                window.location.href = "/club";
+            }
+            // Coach IA
+            else if (type === "coach_debrief" || type === "coach_message") {
+                window.location.href = "/coach";
+            }
+            // Reservations
+            else if (type.includes("reservation")) {
+                window.location.href = "/book";
+            }
+            // Referral
+            else if (type === "referral") {
+                window.location.href = "/home?tab=profil";
+            }
+            // Fallback: if data has a path, use it
+            else if (data.path) {
+                window.location.href = data.path;
+            }
+            // Match with match_id → history
             else if (data.match_id) {
-                window.location.href = "/player/history";
+                window.location.href = "/match/new?tab=history";
+            }
+            // Default
+            else {
+                window.location.href = "/home";
             }
         });
     }
