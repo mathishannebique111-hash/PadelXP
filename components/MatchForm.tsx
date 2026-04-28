@@ -52,6 +52,7 @@ export default function MatchForm({
   const supabase = createClient();
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
   const [showFirstMatchPopup, setShowFirstMatchPopup] = useState(false);
+  const [wasFirstMatch, setWasFirstMatch] = useState(false);
 
   // Check real match count on mount (server prop may be stale)
   useEffect(() => {
@@ -532,6 +533,7 @@ export default function MatchForm({
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const matchCountAtSubmit = matchCount;
     logger.info("🚀 Form submission started");
     const newErrors: Record<string, string> = {};
     setErrors({});
@@ -933,6 +935,7 @@ export default function MatchForm({
           }
 
           // Refresh onboarding progress (step 2 → 3) and update local match count
+          if (matchCountAtSubmit === 0) setWasFirstMatch(true);
           refreshOnboarding();
           setMatchCount(prev => prev + 1);
 
@@ -976,7 +979,7 @@ export default function MatchForm({
           }, 500);
 
           // Redirection automatique seulement si pas premier match et pas d'avertissement
-          if (matchCount > 0) {
+          if (matchCountAtSubmit > 0) {
             setTimeout(() => {
               logger.info("🔄 Redirecting to match history...");
               router.push("/match/new?tab=history");
@@ -1077,7 +1080,7 @@ export default function MatchForm({
       {/* Notification de succès */}
       {showSuccess && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          {matchCount === 0 ? (
+          {wasFirstMatch ? (
             /* First match celebration */
             <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl max-w-sm overflow-hidden">
               {/* Confetti effect */}
