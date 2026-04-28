@@ -46,6 +46,29 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // If user has no conversations, check if onboarding guide should be sent
+    if (!conversations || conversations.length === 0) {
+      try {
+        const { getOnboardingStatus } = await import("@/lib/onboarding");
+        const status = await getOnboardingStatus(user.id);
+
+        if (!status.firstMatchPlayed) {
+          // User hasn't played a match yet — send onboarding guide
+          const { sendCoachOnboardingGuide } = await import("@/lib/coach/welcome-message");
+          await sendCoachOnboardingGuide(user.id);
+
+          // Re-fetch conversations to include the new one
+          const { data: updatedConvs } = await admin
+            .from("coach_conversations")
+            .select("id, title, created_at, updated_at")
+            .eq("user_id", user.id)
+            .order("updated_at", { ascending: false });
+
+          return NextResponse.json({ conversations: updatedConvs || [] });
+        }
+      } catch { /* non-blocking */ }
+    }
+
     return NextResponse.json({ conversations: conversations || [] });
   } catch (error) {
     return NextResponse.json(

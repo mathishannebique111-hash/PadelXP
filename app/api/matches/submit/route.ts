@@ -1052,6 +1052,22 @@ export async function POST(req: Request) {
       logger.error("Badge check on submit error (non-blocking)", { error: (badgeErr as Error).message });
     }
 
+    // === COACH WELCOME after first match (non-blocking) ===
+    try {
+      const { data: profileCheck } = await supabaseAdmin
+        .from("profiles")
+        .select("matchs_joues")
+        .eq("id", user.id)
+        .single();
+      // matchs_joues is updated by trigger AFTER this insert, so if it's 0 or null now, this is the first match
+      if ((profileCheck?.matchs_joues ?? 0) <= 1) {
+        const { sendCoachWelcomeAfterFirstMatch } = await import("@/lib/coach/welcome-message");
+        await sendCoachWelcomeAfterFirstMatch(user.id);
+      }
+    } catch (welcomeErr) {
+      logger.error("Coach welcome error (non-blocking)", { error: (welcomeErr as Error).message });
+    }
+
     logger.info("Match submission completed successfully", {
       matchId: match.id
     }); // ✅ REMPLACÉ

@@ -11,6 +11,7 @@ import HideSplashScreen from '@/components/HideSplashScreen';
 import GlobalNotificationListener from '@/components/notifications/GlobalNotificationListener';
 import ToastContainer from '@/components/ui/Toast';
 import PremiumSuccessNotifier from '@/components/notifications/PremiumSuccessNotifier';
+import InAppToast from '@/components/notifications/InAppToast';
 import { createClient } from '@/lib/supabase/server';
 import { getPlayerChallenges } from '@/lib/challenges';
 import { getOnboardingStatus } from '@/lib/onboarding';
@@ -139,6 +140,8 @@ export default async function PlayerAccountLayout({
             <PopupQueueRenderer />
             {/* Toast notifications */}
             <ToastContainer />
+            {/* Vinted-style in-app toast for coach messages */}
+            <InAppToast />
           </div>
           {/* Barre de navigation en bas */}
           <BottomNavBar />
