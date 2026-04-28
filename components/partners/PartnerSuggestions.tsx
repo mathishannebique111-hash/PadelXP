@@ -484,7 +484,7 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
                   }`}
                 style={filterScope === 'dept' ? { backgroundColor: isClub ? 'rgb(var(--theme-accent))' : 'rgb(var(--theme-accent, 37, 99, 235))', color: 'var(--theme-accent-contrast, white)' } : {}}
               >
-                Département
+                Département / Province
               </button>
             </div>
           </div>
@@ -498,9 +498,9 @@ export default function PartnerSuggestions({ initialSuggestions = [], userClubId
               <div className="relative flex-1 sm:w-48">
                 <input
                   type="text"
-                  placeholder="Dpt (ex: 80)"
+                  placeholder="Dpt (ex: 75, BRU, LIE)"
                   value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                  onChange={(e) => setDepartmentFilter(e.target.value.toUpperCase())}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       fetchSuggestions(departmentFilter, 'dept');
