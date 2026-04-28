@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logger } from '@/lib/logger';
 import PadelLoader from "@/components/ui/PadelLoader";
 import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
+import OnboardingProgressBar from "@/components/onboarding/OnboardingProgressBar";
 import { redirect } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import { headers } from "next/headers";
@@ -229,6 +230,7 @@ export default async function NewMatchPage({
         <div className="mb-1 sm:mb-2">
           <PageTitle title="Matchs" subtitle={clubName ? `Club : ${clubName}` : undefined} />
         </div>
+        <OnboardingProgressBar />
         <Suspense fallback={
           <div className="w-full">
             <div className={`grid ${isClub ? 'grid-cols-4' : 'grid-cols-4'} w-full mb-2 sm:mb-4 border-b border-white/10`}>

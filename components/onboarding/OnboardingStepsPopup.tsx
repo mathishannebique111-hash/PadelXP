@@ -26,13 +26,13 @@ export default function OnboardingStepsPopup({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center" onClick={onClose}>
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0 }} onClick={onClose}>
+      {/* Backdrop — covers everything including safe areas */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
 
       {/* Panel */}
       <div
-        className="relative z-10 w-full max-w-sm mx-4 mb-24 sm:mb-0 rounded-2xl border border-white/10 bg-[#0a1a4a] p-5 shadow-2xl animate-in slide-in-from-bottom-4 fade-in duration-300"
+        className="relative z-10 w-full max-w-sm mx-4 rounded-2xl border border-white/10 bg-[#0a1a4a] p-5 shadow-2xl animate-in zoom-in-95 fade-in duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
