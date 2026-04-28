@@ -26,7 +26,11 @@ export default function OnboardingStepsPopup({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0 }} onClick={onClose}>
+    <div
+      className="fixed z-[99999] flex items-center justify-center"
+      style={{ top: "calc(-1 * env(safe-area-inset-top, 0px))", left: 0, right: 0, bottom: "calc(-1 * env(safe-area-inset-bottom, 0px))" }}
+      onClick={onClose}
+    >
       {/* Backdrop — covers everything including safe areas */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
 
