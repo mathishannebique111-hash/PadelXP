@@ -25,9 +25,9 @@ const defaultStatus: OnboardingStatus = { accountCreated: true, levelEvaluated: 
 
 const OnboardingCtx = createContext<OnboardingState>({
   steps: defaultStatus,
-  isComplete: true, // default true to avoid flash
+  isComplete: false,
   loading: true,
-  currentStep: 4,
+  currentStep: 2,
   refreshOnboarding: async () => {},
 });
 
@@ -83,8 +83,11 @@ export function OnboardingProvider({
     }
   }, [initialStatus, cachedComplete, refreshOnboarding]);
 
+  // isComplete: true only if localStorage says so OR actual steps are all done
+  const resolvedComplete = cachedComplete === true || isComplete;
+
   return (
-    <OnboardingCtx.Provider value={{ steps, isComplete: cachedComplete === true || isComplete, loading, currentStep, refreshOnboarding }}>
+    <OnboardingCtx.Provider value={{ steps, isComplete: resolvedComplete, loading: loading && cachedComplete === null, currentStep, refreshOnboarding }}>
       {children}
     </OnboardingCtx.Provider>
   );
