@@ -227,7 +227,6 @@ export default async function NewMatchPage({
         <div className="mb-1 sm:mb-2">
           <PageTitle title="Matchs" subtitle={clubName ? `Club : ${clubName}` : undefined} />
         </div>
-        <ChallengeHighlightBar />
         <Suspense fallback={
           <div className="w-full">
             <div className={`grid ${isClub ? 'grid-cols-4' : 'grid-cols-4'} w-full mb-2 sm:mb-4 border-b border-white/10`}>

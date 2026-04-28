@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
+import ChallengeHighlightBar from "@/components/challenges/ChallengeHighlightBar";
 
 type TabType = 'record' | 'history' | 'partners' | 'boost' | 'rejoindre';
 
@@ -258,9 +259,12 @@ function MatchTabsContent({
         ))}
       </div>
 
+      {/* Challenge bar — hidden on record tab to save space */}
+      {currentTab !== 'record' && <ChallengeHighlightBar />}
+
       {/* Contenu des onglets — seul l'onglet actif est monté pour éviter
           la cascade de requêtes API simultanées (= 429 Too Many Requests) */}
-      <div className="mt-2 sm:mt-6">
+      <div className={currentTab === 'record' ? 'mt-1' : 'mt-2 sm:mt-6'}>
         {currentTab === 'record' && recordContent}
         {currentTab === 'history' && historyContent}
         {currentTab === 'partners' && partnersContent}
