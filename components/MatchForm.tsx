@@ -386,6 +386,25 @@ export default function MatchForm({
             niveau_padel: profileData.niveau_padel,
           });
 
+          // Pre-fill 3 anonymous players for first match
+          if (matchCount === 0) {
+            const level = profileData.niveau_padel || 4;
+            const makeAnon = () => ({
+              id: crypto.randomUUID(),
+              first_name: 'Joueur',
+              last_name: 'Anonyme',
+              display_name: 'Joueur Anonyme',
+              type: 'guest' as const,
+              email: null,
+              niveau_padel: level,
+            });
+            setSelectedPlayers({ partner: makeAnon(), opp1: makeAnon(), opp2: makeAnon() });
+            setPartnerName('Joueur Anonyme');
+            setOpp1Name('Joueur Anonyme');
+            setOpp2Name('Joueur Anonyme');
+            setScopes({ partner: 'anonymous', opp1: 'anonymous', opp2: 'anonymous' });
+          }
+
           // Pre-fill club location if available and not already set
           if (profileData.club_name && !unregisteredClubName) {
             setUnregisteredClubName(profileData.club_name);
