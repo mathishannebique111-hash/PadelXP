@@ -201,13 +201,13 @@ export async function POST(req: Request) {
                 await createServerNotification(
                     profile.id,
                     "challenge_new",
-                    "🆕 Nouveau challenge !",
+                    "Nouveau challenge !",
                     `${firstName}, nouveau défi : "${newChallenge.title}". Remporte ${reward} en relevant le challenge !`,
                     { type: "challenge_new", challenge_id: newChallenge.id, challenge_title: newChallenge.title }
                 );
                 sendPushNotification(
                     profile.id,
-                    "🆕 Nouveau challenge !",
+                    "Nouveau challenge !",
                     `${firstName}, nouveau défi : "${newChallenge.title}". Remporte ${reward} !`,
                     { type: "challenge_new", challenge_id: newChallenge.id }
                 ).catch(() => {});

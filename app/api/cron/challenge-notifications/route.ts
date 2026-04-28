@@ -284,13 +284,13 @@ export async function GET(req: NextRequest) {
         await createServerNotification(
           userId,
           "challenge_new",
-          "🆕 Nouveau challenge !",
+          "Nouveau challenge !",
           `${firstName}, nouveau défi : "${c.title}". Remporte ${reward} en relevant le challenge !`,
           { type: "challenge_new", challenge_id: c.id, challenge_title: c.title }
         );
         await sendPushNotification(
           userId,
-          "🆕 Nouveau challenge !",
+          "Nouveau challenge !",
           `${firstName}, nouveau défi : "${c.title}". Remporte ${reward} !`,
           { type: "challenge_new", challenge_id: c.id }
         );
