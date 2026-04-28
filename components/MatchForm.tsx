@@ -1075,15 +1075,19 @@ export default function MatchForm({
                 ))}
               </div>
               <div className="text-center relative z-10">
-                <div className="text-6xl mb-4">🏆</div>
-                <h2 className="mb-2 text-2xl font-extrabold text-gray-900">Premier match enregistre !</h2>
+                <div className="mb-4 flex justify-center">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center">
+                    <Trophy size={32} className="text-white" />
+                  </div>
+                </div>
+                <h2 className="mb-2 text-2xl font-extrabold text-gray-900">Premier match enregistré !</h2>
                 <p className="text-sm text-gray-600 mb-6">
-                  Tu es maintenant classe parmi les joueurs de PadelXP. Continue a enregistrer tes matchs pour grimper dans le classement !
+                  Tu es maintenant classé parmi les joueurs de PadelXP. Continue à enregistrer tes matchs pour grimper dans le classement !
                 </p>
                 <button
                   onClick={() => {
                     setShowSuccess(false);
-                    router.push("/match/new?tab=history");
+                    router.push("/club?tab=classement");
                   }}
                   className="w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-400 active:scale-[0.97] transition-all shadow-lg"
                 >
@@ -1098,8 +1102,8 @@ export default function MatchForm({
                 <div className="mb-4 flex items-center justify-center">
                   <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
                 </div>
-                <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistre avec succes !</h2>
-                <p className="text-sm text-gray-500">Une notification a ete envoyee aux joueurs de ce match.</p>
+                <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistré avec succès !</h2>
+                <p className="text-sm text-gray-500">Une notification a été envoyée aux joueurs de ce match.</p>
                 <div className="mt-4 text-xs text-gray-400">Redirection vers l&apos;historique...</div>
               </div>
             </div>
