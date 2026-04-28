@@ -5,6 +5,7 @@ import {
   sendPushNotification,
   createServerNotification,
 } from "@/lib/notifications/send-push";
+import { getCoachName } from "@/lib/coach/coach-names";
 
 export const dynamic = "force-dynamic";
 
@@ -246,7 +247,7 @@ export async function GET(req: NextRequest) {
       const activity = userActivity.get(userId);
 
       if (activity && activity.matchCount > 0) {
-        // --- #12 : Résumé hebdomadaire ---
+        // --- Résumé hebdomadaire via Coach IA ---
         if (alreadyNotified.has(`${userId}:weekly_recap`)) continue;
 
         const losses = activity.matchCount - activity.wins;
@@ -254,38 +255,80 @@ export async function GET(req: NextRequest) {
           (activity.wins / activity.matchCount) * 100
         );
         const rank = clubRankMap.get(userId);
+        const coachName = getCoachName(userId);
+        const matchWord = activity.matchCount > 1 ? "matchs" : "match";
 
-        let rankPart = "";
+        // Build coach recap message
+        let rankLine = "";
         if (rank) {
-          if (rank <= 3) rankPart = ` Tu es ${rank === 1 ? "1er" : `${rank}ème`} au club 🏆`;
-          else if (rank <= 10) rankPart = ` Tu es ${rank}ème au club 💪`;
-          else rankPart = ` Classement club : ${rank}ème`;
+          rankLine = rank <= 3
+            ? `\nTu es actuellement **${rank === 1 ? "1er" : `${rank}ème`}** au classement de ton club. Belle position !`
+            : `\nTon classement club : **${rank}ème**. ${rank <= 10 ? "Tu es dans le top 10, continue !" : "Il y a de la marge pour monter !"}`;
         }
 
-        const matchWord = activity.matchCount > 1 ? "matchs" : "match";
-        const winEmoji =
-          winRate >= 75 ? "🔥" : winRate >= 50 ? "👏" : "💪";
+        let performanceLine = "";
+        if (winRate >= 75) performanceLine = "Semaine exceptionnelle, tu es en feu !";
+        else if (winRate >= 50) performanceLine = "Bon ratio cette semaine, tu es sur la bonne voie.";
+        else performanceLine = "Semaine compliquée, mais chaque match est une occasion d'apprendre.";
 
+        const recapMessage = `Salut ${firstName}, voici ton recap de la semaine :
+
+**${activity.matchCount} ${matchWord}** joué${activity.matchCount > 1 ? "s" : ""} cette semaine — **${activity.wins} victoire${activity.wins > 1 ? "s" : ""}** et **${losses} défaite${losses > 1 ? "s" : ""}** (${winRate}% de winrate).
+
+${performanceLine}${rankLine}
+
+${winRate >= 50
+  ? "Continue sur cette lancée la semaine prochaine ! Tu veux qu'on travaille un point précis ?"
+  : "On en parle ? Dis-moi ce qui t'a posé problème et je te donnerai des pistes pour progresser."}`;
+
+        // Create or find coach conversation "Recap de la semaine"
+        try {
+          // Find existing recap conversation or create one
+          const { data: existingConv } = await supabase
+            .from("coach_conversations")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("title", "Recap de la semaine")
+            .limit(1)
+            .maybeSingle();
+
+          let convId: string;
+          if (existingConv) {
+            convId = existingConv.id;
+          } else {
+            const { data: newConv } = await supabase
+              .from("coach_conversations")
+              .insert({ user_id: userId, title: "Recap de la semaine" })
+              .select("id")
+              .single();
+            convId = newConv!.id;
+          }
+
+          // Insert coach message
+          await supabase.from("coach_messages").insert({
+            conversation_id: convId,
+            role: "assistant",
+            content: recapMessage,
+          });
+        } catch (convErr) {
+          logger.warn(`[weekly-recap] Coach conversation error for ${userId}`, { error: (convErr as Error).message });
+        }
+
+        // Send notification referencing coach name
         await createServerNotification(
           userId,
           "weekly_recap",
-          "📊 Ton résumé de la semaine",
-          `${firstName}, cette semaine : ${activity.matchCount} ${matchWord} joué${activity.matchCount > 1 ? "s" : ""}, ${activity.wins} victoire${activity.wins > 1 ? "s" : ""} (${winRate}%) ${winEmoji}.${rankPart}`,
-          {
-            type: "weekly_recap",
-            matches: activity.matchCount,
-            wins: activity.wins,
-            losses,
-            win_rate: winRate,
-            club_rank: rank || null,
-          }
+          `${coachName} a prepare ton recap`,
+          `${firstName}, ${coachName} a analyse ta semaine. Ouvre le Coach IA pour voir ton recap !`,
+          { type: "weekly_recap", path: "/coach" }
         );
-        await sendPushNotification(
+        sendPushNotification(
           userId,
-          "📊 Résumé de la semaine",
-          `${firstName} : ${activity.matchCount} ${matchWord}, ${activity.wins}V/${losses}D (${winRate}%) ${winEmoji}${rankPart}`,
+          `${coachName} a prepare ton recap`,
+          `${firstName}, ${coachName} a analyse ta semaine de padel. Decouvre ton recap !`,
           { type: "weekly_recap" }
-        );
+        ).catch(() => {});
+
         sentRecap++;
       } else {
         // --- #11 : Rappel d'inactivité ---
