@@ -4,6 +4,7 @@ import CookieConsent from "@/components/cookies/CookieConsent";
 import SafeAreas from './components/SafeAreas';
 import OfflineWrapper from "@/components/OfflineWrapper";
 import SplashOverlay from "@/components/SplashOverlay";
+import BackButtonHandler from "@/components/BackButtonHandler";
 import { Toaster } from "sonner";
 import { headers } from "next/headers";
 import { extractSubdomain, getClubBranding, hexToRgbTriplet, getContrastColor } from "@/lib/club-branding";
@@ -166,6 +167,8 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${isApp ? 'is-app' : ''} text-white min-h-screen`} style={{ backgroundColor: subdomain ? branding.background_color : '#172554' }} data-is-app={isApp ? 'true' : 'false'} data-club-subdomain={subdomain || ''} suppressHydrationWarning>
+        {/* Gestion du bouton retour Android */}
+        <BackButtonHandler />
         {/* L'overlay React vient en dernier pour gérer la transition */}
         <SplashOverlay isApp={isApp} clubLogoUrl={logoUrl} clubPrimaryColor={subdomain ? branding.primary_color : null} clubBackgroundColor={subdomain ? branding.background_color : null} clubName={subdomain ? branding.name : null} />
 
