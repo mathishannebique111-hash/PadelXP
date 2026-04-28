@@ -203,15 +203,71 @@ export default function NotificationCenter() {
 
     // Navigation selon le type
     const data = typeof notification.data === 'string' ? JSON.parse(notification.data) : notification.data;
+    const type = notification.type;
 
-    if (notification.type === 'chat' && data?.conversation_id) {
-      router.push(`/chat/${data.conversation_id}`);
-    } else if (notification.type === 'badge' || notification.type === 'badge_unlocked') {
-      router.push('/badges');
-    } else if (notification.type === 'level_up') {
-      router.push('/home?tab=profile');
-    } else if (notification.type === 'coach_debrief' || notification.type === 'coach_message') {
+    // Challenges
+    if (type === 'challenge_new' || type === 'challenge_expiring' || type === 'challenge_progress' || type === 'challenge') {
+      router.push('/club?tab=challenges');
+    }
+    // Match confirmations & results
+    else if (type === 'match_confirmation' || type === 'match_validated' || type === 'match_refusal_warning' || type === 'match_points_earned') {
+      router.push('/match/new?tab=history');
+    }
+    // Win streak
+    else if (type === 'win_streak') {
+      router.push('/home?tab=stats');
+    }
+    // Partner played
+    else if (type === 'partner_match_played') {
+      router.push('/match/new?tab=partners');
+    }
+    // Partnerships
+    else if (type === 'partnership_request' || type === 'partnership_accepted' || type === 'partnership_declined') {
+      router.push('/home?tab=profil');
+    }
+    // Match proposals & invitations
+    else if (type === 'match_proposal' || type === 'match_accepted' || type === 'match_declined' || type === 'match_invitation_received' || type === 'match_invitation_accepted' || type === 'match_invitation_refused' || type === 'match_invitation_expired') {
+      router.push('/match/new?tab=history');
+    }
+    // Team challenges
+    else if (type === 'team_challenge_received' || type === 'team_challenge_accepted_step' || type === 'team_challenge_accepted_final' || type === 'team_challenge_refused' || type === 'team_challenge_expired' || type === 'team_challenge_reminder') {
+      router.push('/match/new?tab=partners');
+    }
+    // Badges
+    else if (type === 'badge' || type === 'badge_unlocked') {
+      router.push('/home?tab=badges');
+    }
+    // Level up
+    else if (type === 'level_up') {
+      router.push('/home?tab=profil');
+    }
+    // Top 3 ranking
+    else if (type === 'top3' || type === 'top3_ranking') {
+      router.push('/club');
+    }
+    // Coach IA
+    else if (type === 'coach_debrief' || type === 'coach_message') {
       router.push('/coach');
+    }
+    // Reservations
+    else if (type === 'reservation_created' || type === 'reservation_confirmed' || type === 'reservation_cancelled' || type === 'reservation_expired' || type === 'reservation_payment_reminder') {
+      router.push('/book');
+    }
+    // Weekly recap & inactivity
+    else if (type === 'weekly_recap' || type === 'inactivity_reminder') {
+      router.push('/home?tab=stats');
+    }
+    // Referral
+    else if (type === 'referral') {
+      router.push('/home?tab=profil');
+    }
+    // Chat
+    else if (type === 'chat' && data?.conversation_id) {
+      router.push(`/chat/${data.conversation_id}`);
+    }
+    // Default
+    else {
+      router.push('/home');
     }
 
     handleClose();
