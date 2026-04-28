@@ -87,7 +87,7 @@ export function OnboardingProvider({
   const resolvedComplete = cachedComplete === true || isComplete;
 
   return (
-    <OnboardingCtx.Provider value={{ steps, isComplete: resolvedComplete, loading: loading && cachedComplete === null, currentStep, refreshOnboarding }}>
+    <OnboardingCtx.Provider value={{ steps, isComplete: resolvedComplete, loading: false, currentStep, refreshOnboarding }}>
       {children}
     </OnboardingCtx.Provider>
   );

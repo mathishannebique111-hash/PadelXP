@@ -14,7 +14,7 @@ export default function OnboardingProgressBar() {
   const { isComplete, loading, currentStep } = useOnboarding();
   const [showPopup, setShowPopup] = useState(false);
 
-  if (loading || isComplete) return null;
+  if (isComplete) return null;
 
   // Steps completed: step 1 is always done, so completed = currentStep - 1
   const completed = currentStep - 1; // 1 if on step 2, 2 if on step 3
