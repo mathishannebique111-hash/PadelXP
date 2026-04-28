@@ -321,8 +321,8 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
           type="button"
           whileTap={{ scale: 0.95 }}
           onClick={() => setHasStarted(true)}
-          className="w-full py-3 sm:py-4 rounded-xl text-black font-semibold text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px]"
-          style={{ backgroundColor: 'rgb(var(--theme-accent))' }}
+          className="w-full py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base flex items-center justify-center gap-2 min-h-[44px]"
+          style={{ backgroundColor: 'rgb(var(--theme-secondary-accent, var(--theme-accent)))', color: '#071554' }}
         >
           {hasProgress ? "Reprendre le questionnaire" : "Commencer l'évaluation"}
           <ChevronRight size={18} />
