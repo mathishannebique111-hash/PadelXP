@@ -568,23 +568,23 @@ export default function MatchForm({
         return;
       }
 
-      // Validation de la localisation STRICTE
-      // On force l'utilisation de Google Maps (ou d'un club enregistré via la recherche, mais ici on simplifie)
-      // Si unregisteredClubCity est vide, c'est que l'utilisateur a juste tapé du texte sans sélectionner une suggestion avec ville
-      if (!unregisteredClubName.trim() || !unregisteredClubCity.trim()) {
-        logger.warn("❌ Validation failed: Missing valid location selection");
-        const msg = !unregisteredClubName.trim()
-          ? "Le nom du club est requis"
-          : "Veuillez sélectionner un lieu dans la liste déroulante";
+      // Validation de la localisation STRICTE (skip pour le premier match)
+      if (matchCount > 0) {
+        if (!unregisteredClubName.trim() || !unregisteredClubCity.trim()) {
+          logger.warn("❌ Validation failed: Missing valid location selection");
+          const msg = !unregisteredClubName.trim()
+            ? "Le nom du club est requis"
+            : "Veuillez sélectionner un lieu dans la liste déroulante";
 
-        setErrorMessage(msg);
-        setErrors((prev) => ({
-          ...prev,
-          unregisteredClubName: !unregisteredClubName.trim() ? msg : "",
-          unregisteredClubCity: !unregisteredClubCity.trim() ? "La ville est requise" : ""
-        }));
-        setLoading(false);
-        return;
+          setErrorMessage(msg);
+          setErrors((prev) => ({
+            ...prev,
+            unregisteredClubName: !unregisteredClubName.trim() ? msg : "",
+            unregisteredClubCity: !unregisteredClubCity.trim() ? "La ville est requise" : ""
+          }));
+          setLoading(false);
+          return;
+        }
       }
 
       logger.info("🔧 Preparing players data...");
