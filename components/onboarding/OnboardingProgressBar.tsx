@@ -11,28 +11,49 @@ const STEP_LABELS: Record<number, string> = {
 };
 
 export default function OnboardingProgressBar() {
-  const { isComplete, loading, currentStep } = useOnboarding();
+  const { isComplete, loading, currentStep, refreshOnboarding } = useOnboarding();
   const [showPopup, setShowPopup] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [pointsAwarded, setPointsAwarded] = useState(false);
 
-  if (isComplete) return null;
+  // When onboarding just completed, show 100% briefly then hide
+  useEffect(() => {
+    if (isComplete && !pointsAwarded) {
+      setShowCompleted(true);
+      setPointsAwarded(true);
 
-  // Steps completed: step 1 is always done, so completed = currentStep - 1
-  const completed = currentStep - 1; // 1 if on step 2, 2 if on step 3
-  const percentage = Math.round((completed / 3) * 100);
-  const label = STEP_LABELS[currentStep] || "Complète ton profil";
+      // Award 20 bonus points
+      (async () => {
+        try {
+          await fetch("/api/player/onboarding-reward", { method: "POST", credentials: "include" });
+        } catch { /* non-blocking */ }
+      })();
+
+      // Hide after 3 seconds
+      setTimeout(() => {
+        setShowCompleted(false);
+      }, 3000);
+    }
+  }, [isComplete, pointsAwarded]);
+
+  if (isComplete && !showCompleted) return null;
+
+  const completed = isComplete ? 3 : currentStep - 1;
+  const percentage = isComplete ? 100 : Math.round((completed / 3) * 100);
+  const label = isComplete ? "Onboarding terminé ! +20 points" : (STEP_LABELS[currentStep] || "Complète ton profil");
 
   const isClub = typeof window !== "undefined" && !!document.body.dataset.clubSubdomain;
 
   return (
     <>
       <button
-        onClick={() => setShowPopup(true)}
+        onClick={() => !isComplete && setShowPopup(true)}
         className="block w-full mb-4 sm:mb-6 animate-in slide-in-from-top-4 fade-in duration-500 group relative text-left"
       >
         {/* Glow */}
         <div
           className="absolute inset-0 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-          style={{ backgroundColor: "rgba(59, 130, 246, 0.08)" }}
+          style={{ backgroundColor: isComplete ? "rgba(16, 185, 129, 0.1)" : "rgba(59, 130, 246, 0.08)" }}
         />
 
         {/* Frame — more prominent than ChallengeHighlightBar */}
