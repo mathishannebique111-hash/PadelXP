@@ -46,7 +46,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
             onComplete={() => {
               setShowWizard(false);
               refreshOnboarding();
-              router.push('/match/new?tab=record');
+              router.push('/match/new?tab=record&first_match=true');
             }}
           />
         )}

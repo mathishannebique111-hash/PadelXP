@@ -49,6 +49,18 @@ export default function MatchForm({
   const searchParams = useSearchParams();
   const supabase = createClient();
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+  const [showFirstMatchPopup, setShowFirstMatchPopup] = useState(false);
+
+  // Show first match popup when redirected from level evaluation
+  useEffect(() => {
+    if (searchParams?.get('first_match') === 'true') {
+      setShowFirstMatchPopup(true);
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('first_match');
+      window.history.replaceState(null, '', url.toString());
+    }
+  }, [searchParams]);
 
   const [partnerName, setPartnerName] = useState("");
   const [opp1Name, setOpp1Name] = useState("");
@@ -968,6 +980,29 @@ export default function MatchForm({
 
   return (
     <div className="relative h-full flex flex-col">
+      {/* First Match Popup */}
+      {showFirstMatchPopup && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center" onClick={() => setShowFirstMatchPopup(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative z-10 w-full max-w-sm mx-4 rounded-2xl border border-blue-400/20 bg-[#0a1a4a] p-6 shadow-2xl animate-in zoom-in-95 fade-in duration-300 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-4xl mb-4">🎾</div>
+            <h3 className="text-lg font-bold text-white mb-3">Enregistre ton premier match !</h3>
+            <p className="text-sm text-white/60 leading-relaxed mb-6">
+              Pas besoin de mettre d&apos;autres joueurs pour l&apos;instant, tu peux mettre 3 joueurs anonymes et voir déjà ton classement et ton niveau bouger !
+            </p>
+            <button
+              onClick={() => setShowFirstMatchPopup(false)}
+              className="w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-400 active:scale-[0.97] transition-all shadow-lg shadow-blue-500/25"
+            >
+              J&apos;enregistre
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Assessment Wizard Overlay */}
       {showAssessment && (
         <LevelAssessmentWizard
