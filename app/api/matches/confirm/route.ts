@@ -677,6 +677,19 @@ export async function POST(req: Request) {
               error: (coachError as Error).message,
             });
           }
+
+        // === BADGE CHECK (isolé, ne bloque jamais) ===
+        if (participants && participants.length > 0) {
+          try {
+            const { checkAndNotifyNewBadges } = await import("@/lib/badge-notifications");
+            for (const p of participants) {
+              await checkAndNotifyNewBadges(p.user_id);
+            }
+            logger.info("Badge checks completed after match confirmation");
+          } catch (badgeErr) {
+            logger.error("Badge check error (non-blocking)", { error: (badgeErr as Error).message });
+          }
+        }
         }
 
         // === LEAGUE POINTS (isolé, ne bloque jamais le match classique) ===

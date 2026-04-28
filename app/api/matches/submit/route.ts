@@ -1044,6 +1044,14 @@ export async function POST(req: Request) {
       logger.error("Coach debrief on submit error (non-blocking)", { error: (coachErr as Error).message });
     }
 
+    // === BADGE CHECK (non-blocking) ===
+    try {
+      const { checkAndNotifyNewBadges } = await import("@/lib/badge-notifications");
+      await checkAndNotifyNewBadges(user.id);
+    } catch (badgeErr) {
+      logger.error("Badge check on submit error (non-blocking)", { error: (badgeErr as Error).message });
+    }
+
     logger.info("Match submission completed successfully", {
       matchId: match.id
     }); // ✅ REMPLACÉ

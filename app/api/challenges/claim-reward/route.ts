@@ -338,6 +338,27 @@ export async function POST(req: Request) {
       }
 
       logger.info("[claim-reward] ✅ Challenge badge created successfully", { badgeEmoji, badgeName });
+
+      // Send badge unlocked notification
+      try {
+        const { createServerNotification, sendPushNotification } = await import("@/lib/notifications/send-push");
+        const { data: profile } = await supabaseAdmin.from("profiles").select("first_name, display_name").eq("id", user.id).single();
+        const firstName = profile?.first_name || (profile?.display_name ? profile.display_name.split(/\s+/)[0] : "Joueur");
+
+        await createServerNotification(
+          user.id,
+          "badge_unlocked",
+          "Badge debloque !",
+          `${firstName}, tu as debloque le badge "${badgeName}" !`,
+          { badge_name: badgeName, badge_icon: badgeEmoji, badge_description: `Challenge: ${badgeName}` }
+        );
+        sendPushNotification(
+          user.id,
+          "Badge debloque !",
+          `${firstName}, tu as debloque "${badgeName}" !`,
+          { type: "badge_unlocked", badge_name: badgeName }
+        ).catch(() => {});
+      } catch { /* non-blocking */ }
     }
 
     // 5) Enregistrer la récompense comme attribuée
