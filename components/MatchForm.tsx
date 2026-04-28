@@ -597,14 +597,18 @@ export default function MatchForm({
         { key: 'opp2' as const, player: opp2 },
       ];
 
+      let anonIndex = 1;
       for (const { key, player } of playersToCheck) {
         if (player && player.display_name === 'Joueur Anonyme' && player.type === 'guest') {
           try {
+            // Each anonymous player must be unique — use numbered names
+            const anonName = `Joueur Anonyme ${anonIndex}`;
+            anonIndex++;
             const res = await fetch('/api/players/find-or-create', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
-              body: JSON.stringify({ playerName: 'Joueur Anonyme' }),
+              body: JSON.stringify({ playerName: anonName }),
             });
             if (res.ok) {
               const { player: createdPlayer } = await res.json();
