@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import PadelLoader from "@/components/ui/PadelLoader";
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 
 type TabType = 'profil' | 'stats' | 'badges' | 'club';
 
@@ -33,6 +34,7 @@ function PlayerProfileTabsContent({
   const [pendingPartnershipRequestsCount, setPendingPartnershipRequestsCount] = useState(initialPendingRequestsCount);
   const [loadedTabs, setLoadedTabs] = useState<Set<TabType>>(new Set([initialTab]));
   const [isPremium, setIsPremium] = useState(true); // default true to avoid flash
+  const { steps: onboardingSteps } = useOnboarding();
   const supabase = createClient();
   const router = useRouter();
 
@@ -139,8 +141,8 @@ function PlayerProfileTabsContent({
         ))}
       </div>
 
-      {/* Bandeau Premium */}
-      {!isPremium && (
+      {/* Bandeau Premium — seulement après avoir évalué son niveau */}
+      {!isPremium && onboardingSteps.levelEvaluated && (
         <Link href="/premium" className="block mb-4 active:scale-[0.97] transition-transform">
           <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border border-amber-500/25">
             <div className="min-w-0">
