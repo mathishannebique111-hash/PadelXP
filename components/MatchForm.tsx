@@ -38,7 +38,7 @@ const schema = z.object({
 export default function MatchForm({
   selfId,
   initialHasLevel = true,
-  matchCount = 0,
+  matchCount: initialMatchCount = 0,
 }: {
   selfId: string;
   initialHasLevel?: boolean;
@@ -46,6 +46,7 @@ export default function MatchForm({
 }) {
   const router = useRouter();
   const { refreshOnboarding } = useOnboarding();
+  const [matchCount, setMatchCount] = useState(initialMatchCount);
   const searchParams = useSearchParams();
   const supabase = createClient();
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
@@ -910,8 +911,9 @@ export default function MatchForm({
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
 
-          // Refresh onboarding progress (step 2 → 3)
+          // Refresh onboarding progress (step 2 → 3) and update local match count
           refreshOnboarding();
+          setMatchCount(prev => prev + 1);
 
           // Forcer le rechargement du classement
           if (typeof window !== "undefined") {

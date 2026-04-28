@@ -18,15 +18,23 @@ export async function getOnboardingStatus(userId: string): Promise<OnboardingSta
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("niveau_padel, matchs_joues")
-    .eq("id", userId)
-    .single();
+  const [profileRes, matchRes] = await Promise.all([
+    admin
+      .from("profiles")
+      .select("niveau_padel")
+      .eq("id", userId)
+      .single(),
+    admin
+      .from("match_participants")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("player_type", "user")
+      .limit(1),
+  ]);
 
   return {
     accountCreated: true,
-    levelEvaluated: profile?.niveau_padel != null,
-    firstMatchPlayed: (profile?.matchs_joues ?? 0) > 0,
+    levelEvaluated: profileRes.data?.niveau_padel != null,
+    firstMatchPlayed: (matchRes.data?.length ?? 0) > 0,
   };
 }
