@@ -249,6 +249,10 @@ export default function NotificationCenter() {
     else if (type === 'coach_debrief' || type === 'coach_message') {
       router.push('/coach');
     }
+    // First match reminder
+    else if (type === 'first_match_reminder') {
+      router.push('/match/new?tab=record');
+    }
     // Reservations
     else if (type === 'reservation_created' || type === 'reservation_confirmed' || type === 'reservation_cancelled' || type === 'reservation_expired' || type === 'reservation_payment_reminder') {
       router.push('/book');
@@ -285,6 +289,8 @@ export default function NotificationCenter() {
       case 'coach_debrief':
       case 'coach_message':
         return <Sparkles className="w-10 h-10 text-blue-400" />;
+      case 'first_match_reminder':
+        return <TrendingUp className="w-10 h-10 text-green-400" />;
       case 'top3':
       case 'top3_ranking':
         return <TrendingUp className="w-10 h-10 text-purple-500" />;
