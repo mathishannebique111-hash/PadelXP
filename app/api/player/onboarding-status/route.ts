@@ -24,6 +24,7 @@ export async function GET() {
   }
 
   const status = await getOnboardingStatus(user.id);
+  console.log("[onboarding-status]", user.id.substring(0, 8), JSON.stringify(status));
   return NextResponse.json(status, {
     headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
   });

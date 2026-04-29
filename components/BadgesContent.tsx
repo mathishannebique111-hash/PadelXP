@@ -189,7 +189,10 @@ export default async function BadgesContent() {
     matches = filteredMp.filter((p: any) => !!byId[p.match_id]).length;
   }
 
-  const points = wins * 10 + losses * 3;
+  let onboardingBonus = 0;
+  const { data: obCheck } = await supabase.from("profiles").select("onboarding_reward_claimed").eq("id", user.id).single();
+  if (obCheck?.onboarding_reward_claimed === true) onboardingBonus = 20;
+  const points = wins * 10 + losses * 3 + onboardingBonus;
   const streak = await calculateStreak(supabase, user.id);
 
   const stats: PlayerStats = { wins, losses, matches, points, streak, referralCount };

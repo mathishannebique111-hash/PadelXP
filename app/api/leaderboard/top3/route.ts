@@ -210,6 +210,14 @@ export async function GET() {
 
     const hasReview = new Set((reviewers || []).map((r: any) => r.user_id));
 
+    // Étape 6b: Calculer le bonus onboarding
+    const { data: onboardingRewardUsers } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .in("id", playerUserIds)
+      .eq("onboarding_reward_claimed", true);
+    const hasOnboardingReward = new Set((onboardingRewardUsers || []).map((r: any) => r.id));
+
     // Étape 7: Calculer les points avec boosts
     const playersForBoostCalculation = playerUserIds.map((userId) => {
       const stats = byPlayer[userId];
@@ -218,8 +226,8 @@ export async function GET() {
         wins: stats.wins,
         losses: stats.losses,
         winMatches: winMatchesByPlayer.get(userId) || new Set<string>(),
-        bonus: hasReview.has(userId) ? 10 : 0,
-        challengePoints: 0, // Pas de challenge points dans le top3 API
+        bonus: (hasReview.has(userId) ? 10 : 0) + (hasOnboardingReward.has(userId) ? 20 : 0),
+        challengePoints: 0,
       };
     });
 

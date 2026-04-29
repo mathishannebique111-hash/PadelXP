@@ -4,66 +4,67 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export interface OnboardingStatus {
-  accountCreated: boolean; // always true (user exists)
+  accountCreated: boolean;
   levelEvaluated: boolean;
   firstMatchPlayed: boolean;
   rewardClaimed: boolean;
 }
 
-/**
- * Server-side: fetch onboarding status for a user.
- * Called from the protected layout for SSR pre-fetch.
- */
 export async function getOnboardingStatus(userId: string): Promise<OnboardingStatus> {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const [profileRes, matchRes, rewardNotifRes] = await Promise.all([
-    admin
-      .from("profiles")
-      .select("niveau_padel, onboarding_reward_claimed")
-      .eq("id", userId)
-      .single(),
-    admin
-      .from("match_participants")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("player_type", "user")
-      .limit(1),
-    // Fallback: check notifications table (onboarding_reward OR system with matching data)
-    admin
-      .from("notifications")
-      .select("id")
-      .eq("user_id", userId)
-      .or('type.eq.onboarding_reward,data->>type.eq.onboarding_reward')
-      .limit(1),
-  ]);
-
-  // If profile query failed (e.g. column doesn't exist), try without the new column
+  // Query 1: profile (with fallback if onboarding_reward_claimed column missing)
   let levelEvaluated = false;
-  let rewardClaimedFromProfile = false;
+  let rewardClaimedProfile = false;
 
-  if (profileRes.data) {
-    levelEvaluated = profileRes.data.niveau_padel != null;
-    rewardClaimedFromProfile = (profileRes.data as any).onboarding_reward_claimed === true;
-  } else if (profileRes.error) {
-    // Column might not exist — retry with just niveau_padel
-    const { data: fallbackProfile } = await admin
+  const { data: profileData, error: profileError } = await admin
+    .from("profiles")
+    .select("niveau_padel, onboarding_reward_claimed")
+    .eq("id", userId)
+    .single();
+
+  if (profileData) {
+    levelEvaluated = profileData.niveau_padel != null;
+    rewardClaimedProfile = profileData.onboarding_reward_claimed === true;
+  } else if (profileError) {
+    // Column might not exist, retry without it
+    const { data: fallback } = await admin
       .from("profiles")
       .select("niveau_padel")
       .eq("id", userId)
       .single();
-    levelEvaluated = fallbackProfile?.niveau_padel != null;
+    levelEvaluated = fallback?.niveau_padel != null;
   }
 
-  // rewardClaimed = profile flag OR notification exists (belt and suspenders)
-  const rewardClaimedFromNotif = (rewardNotifRes.data?.length ?? 0) > 0;
+  // Query 2: match participation
+  const { data: matchData } = await admin
+    .from("match_participants")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("player_type", "user")
+    .limit(1);
 
-  return {
+  const firstMatchPlayed = (matchData?.length ?? 0) > 0;
+
+  // Query 3: reward notification (simple type check, no JSONB syntax)
+  let rewardClaimedNotif = false;
+  const { data: notifData } = await admin
+    .from("notifications")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("type", "onboarding_reward")
+    .limit(1);
+
+  rewardClaimedNotif = (notifData?.length ?? 0) > 0;
+
+  const result = {
     accountCreated: true,
     levelEvaluated,
-    firstMatchPlayed: (matchRes.data?.length ?? 0) > 0,
-    rewardClaimed: rewardClaimedFromProfile || rewardClaimedFromNotif,
+    firstMatchPlayed,
+    rewardClaimed: rewardClaimedProfile || rewardClaimedNotif,
   };
+
+  return result;
 }

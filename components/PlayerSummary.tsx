@@ -233,6 +233,17 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
     }
   }
 
+  // Bonus onboarding (+20 points)
+  let onboardingBonus = 0;
+  const { data: onboardingCheck } = await supabaseAdmin
+    .from("profiles")
+    .select("onboarding_reward_claimed")
+    .eq("id", profileId)
+    .single();
+  if (onboardingCheck?.onboarding_reward_claimed === true) {
+    onboardingBonus = 20;
+  }
+
   logger.info("[PlayerSummary] Before calculatePointsWithBoosts:", {
     wins,
     losses,
@@ -250,7 +261,7 @@ export default async function PlayerSummary({ profileId, isClub: providedIsClub 
     filteredMp.map((p: any) => p.match_id),
     winMatches,
     profileId,
-    reviewsBonus,
+    reviewsBonus + onboardingBonus,
     challengePoints
   );
 
