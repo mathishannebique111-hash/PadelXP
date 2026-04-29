@@ -209,8 +209,14 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
     }
   }
 
+  const lastMessageRef = useRef<HTMLDivElement>(null);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const scrollToLastMessage = useCallback(() => {
+    lastMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
   // Close dropdown on outside click
@@ -306,10 +312,14 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
     }
   }, [pendingMessage, activeConvId, loading]);
 
-  // Auto-scroll on new messages or streaming
+  // Auto-scroll: during streaming → follow to bottom; on new message → show top of last message
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamingContent, scrollToBottom]);
+    if (isStreaming) {
+      scrollToBottom();
+    } else if (messages.length > 0) {
+      scrollToLastMessage();
+    }
+  }, [messages, streamingContent, isStreaming, scrollToBottom, scrollToLastMessage]);
 
   async function loadMessages(convId: string) {
     try {
@@ -615,9 +625,10 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
         )}
 
         {/* Messages */}
-        {messages.map((msg) => (
+        {messages.map((msg, idx) => (
           <div
             key={msg.id}
+            ref={idx === messages.length - 1 ? lastMessageRef : undefined}
             className={`flex items-start gap-2.5 ${
               msg.role === "user" ? "flex-row-reverse" : ""
             }`}

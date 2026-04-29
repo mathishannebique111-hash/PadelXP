@@ -221,7 +221,7 @@ function MatchTabsContent({
         ? ((pendingInvitationsCount + pendingChallengesCount) - viewedPartnersCount)
         : 0
     },
-    { id: 'rejoindre' as TabType, label: 'Rejoindre' },
+    // { id: 'rejoindre' as TabType, label: 'Rejoindre' }, // Hidden temporarily — club-related
   ];
 
   return (
