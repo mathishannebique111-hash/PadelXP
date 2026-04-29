@@ -154,20 +154,20 @@ export default function LevelResultContent({ result }: Props) {
                 </motion.div>
             </div>
 
-            {/* Progression vers niveau suivant */}
+            {/* Progression vers niveau suivant — même style que l'onglet profil */}
             {result.niveau < 10 && (
-                <div className="bg-slate-950/40 rounded-2xl p-4 border border-white/5">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">
+                <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-[11px] sm:text-xs text-gray-400">
                             Vers niveau {result.niveau + 1}
                         </span>
-                        <span className="text-sm font-black" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
+                        <span className="text-xs sm:text-sm font-semibold" style={{ color: 'rgb(var(--theme-secondary-accent))' }}>
                             {Math.round(result.nextLevelProgress)}%
                         </span>
                     </div>
-                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-slate-700 rounded-full overflow-hidden">
                         <motion.div
-                            className="h-full bg-gradient-to-r from-blue-500"
+                            className="h-full"
                             style={{ backgroundColor: 'rgb(var(--theme-secondary-accent))' }}
                             initial={{ width: 0 }}
                             animate={{ width: `${result.nextLevelProgress}%` }}
