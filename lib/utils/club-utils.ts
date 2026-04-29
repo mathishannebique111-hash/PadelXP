@@ -490,16 +490,24 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     });
   });
 
-  const { data: reviewsData } = await supabaseAdmin
-    .from("reviews")
-    .select("user_id")
-    .in("user_id", memberIds);
+  const [{ data: reviewsData }, { data: onboardingBonusData }] = await Promise.all([
+    supabaseAdmin
+      .from("reviews")
+      .select("user_id")
+      .in("user_id", memberIds),
+    supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .in("id", memberIds)
+      .eq("onboarding_reward_claimed", true),
+  ]);
 
   const reviewBonusIds = new Set<string>((reviewsData || []).map((r) => r.user_id));
+  const onboardingBonusIds = new Set<string>((onboardingBonusData || []).map((r) => r.id));
 
   const leaderboard = Array.from(memberStats.values()).map((member) => {
     const basePoints = member.wins * 10 + member.losses * 3;
-    const bonus = reviewBonusIds.has(member.id) ? 10 : 0;
+    const bonus = (reviewBonusIds.has(member.id) ? 10 : 0) + (onboardingBonusIds.has(member.id) ? 20 : 0);
     const points = basePoints + bonus;
     member.points = points;
 

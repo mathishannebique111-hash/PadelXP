@@ -24,8 +24,6 @@ export async function GET() {
   }
 
   const status = await getOnboardingStatus(user.id);
-  // Ensure rewardClaimed is always present for backward compat
-  if (status.rewardClaimed === undefined) (status as any).rewardClaimed = false;
   return NextResponse.json(status, {
     headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
   });

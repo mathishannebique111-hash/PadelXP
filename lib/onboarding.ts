@@ -19,10 +19,10 @@ export async function getOnboardingStatus(userId: string): Promise<OnboardingSta
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const [profileRes, matchRes, rewardRes] = await Promise.all([
+  const [profileRes, matchRes] = await Promise.all([
     admin
       .from("profiles")
-      .select("niveau_padel")
+      .select("niveau_padel, onboarding_reward_claimed")
       .eq("id", userId)
       .single(),
     admin
@@ -31,18 +31,12 @@ export async function getOnboardingStatus(userId: string): Promise<OnboardingSta
       .eq("user_id", userId)
       .eq("player_type", "user")
       .limit(1),
-    admin
-      .from("notifications")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("type", "onboarding_reward")
-      .limit(1),
   ]);
 
   return {
     accountCreated: true,
     levelEvaluated: profileRes.data?.niveau_padel != null,
     firstMatchPlayed: (matchRes.data?.length ?? 0) > 0,
-    rewardClaimed: (rewardRes.data?.length ?? 0) > 0,
+    rewardClaimed: profileRes.data?.onboarding_reward_claimed === true,
   };
 }
