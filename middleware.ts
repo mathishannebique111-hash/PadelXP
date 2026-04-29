@@ -357,6 +357,7 @@ export async function middleware(req: NextRequest) {
     "/api/challenges/",
     "/api/player/",
     "/api/referrals/",
+    "/api/cron/",        // Cron jobs have their own auth (x-vercel-cron / CRON_SECRET)
     "/api/admin/check",  // Allow check API
     "/api/admin/create", // Allow create API
     "/api/guest/",       // Allow guest API
