@@ -164,35 +164,40 @@ export async function middleware(req: NextRequest) {
     // LOGIQUE DE REDIRECTION POUR L'APP iOS
     // Sur la page racine "/", vérifier l'auth et rediriger
     if (normalizedPathname === "/" || normalizedPathname === "") {
-      // Créer un client Supabase pour vérifier l'authentification
-      const supabaseForApp = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get(name: string) {
-              return req.cookies.get(name)?.value;
+      try {
+        const supabaseForApp = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              get(name: string) {
+                return req.cookies.get(name)?.value;
+              },
+              set() { },
+              remove() { },
             },
-            set() { },
-            remove() { },
-          },
+          }
+        );
+
+        const { data: { user } } = await supabaseForApp.auth.getUser();
+
+        if (user) {
+          logger.info("[Middleware] iOS app: User authenticated, rewriting to /home", { userId: user.id });
+          const url = req.nextUrl.clone();
+          url.pathname = "/home";
+          return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+        } else {
+          logger.info("[Middleware] iOS app: User not authenticated, rewriting to /player/signup");
+          const url = req.nextUrl.clone();
+          url.pathname = "/player/signup";
+          return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
         }
-      );
-
-      const { data: { user } } = await supabaseForApp.auth.getUser();
-
-      if (user) {
-        // Utilisateur connecté → aller vers /home
-        logger.info("[Middleware] iOS app: User authenticated, rewritng to /home", { userId: user.id });
-        const url = req.nextUrl.clone();
-        url.pathname = "/home";
-        return NextResponse.rewrite(url);
-      } else {
-        // Pas connecté → aller vers /player/signup (inscription)
-        logger.info("[Middleware] iOS app: User not authenticated, rewriting to /player/signup");
+      } catch (e) {
+        console.error("[Middleware] iOS app auth check failed", e);
+        // Fallback: rewrite to signup on error
         const url = req.nextUrl.clone();
         url.pathname = "/player/signup";
-        return NextResponse.rewrite(url);
+        return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
       }
     }
   }
