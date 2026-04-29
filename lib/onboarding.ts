@@ -38,10 +38,10 @@ export async function getOnboardingStatus(userId: string): Promise<OnboardingSta
     levelEvaluated = fallback?.niveau_padel != null;
   }
 
-  // Query 2: match participation
+  // Query 2: match participation (table has no "id" column — use match_id)
   const { data: matchData } = await admin
     .from("match_participants")
-    .select("id")
+    .select("match_id")
     .eq("user_id", userId)
     .eq("player_type", "user")
     .limit(1);

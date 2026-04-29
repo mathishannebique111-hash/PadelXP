@@ -36,10 +36,10 @@ export async function GET() {
     .eq("id", user.id)
     .single();
 
-  // Check 2: match_participants
+  // Check 2: match_participants (no "id" column — use match_id)
   const matchQuery = await admin
     .from("match_participants")
-    .select("id")
+    .select("match_id")
     .eq("user_id", user.id)
     .eq("player_type", "user")
     .limit(1);
