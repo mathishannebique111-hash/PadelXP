@@ -922,6 +922,12 @@ export default function MatchForm({
           // Afficher l'erreur de boost mais ne pas bloquer le match
         }
 
+        // Always update onboarding + match count on successful submission
+        if (matchCountAtSubmit === 0) setWasFirstMatch(true);
+        markFirstMatchPlayed();
+        refreshOnboarding();
+        setMatchCount(prev => prev + 1);
+
         // Afficher un avertissement si des joueurs ont atteint la limite
         if (data.warning) {
           logger.warn("⚠️ Warning:", data.warning);
@@ -933,12 +939,6 @@ export default function MatchForm({
           if (data.boostApplied && data.boostPointsInfo) {
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
-
-          // Refresh onboarding progress and update local match count
-          if (matchCountAtSubmit === 0) setWasFirstMatch(true);
-          markFirstMatchPlayed();
-          refreshOnboarding();
-          setMatchCount(prev => prev + 1);
 
           // Forcer le rechargement du classement
           if (typeof window !== "undefined") {

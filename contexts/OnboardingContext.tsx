@@ -46,7 +46,12 @@ export function OnboardingProvider({
       const res = await fetch("/api/player/onboarding-status", { credentials: "include", cache: "no-store" });
       if (res.ok) {
         const data: OnboardingStatus = await res.json();
-        setSteps(data);
+        // Merge: steps can only go forward (true), never revert to false
+        setSteps(prev => ({
+          accountCreated: prev.accountCreated || data.accountCreated,
+          levelEvaluated: prev.levelEvaluated || data.levelEvaluated,
+          firstMatchPlayed: prev.firstMatchPlayed || data.firstMatchPlayed,
+        }));
       }
     } catch { /* ignore */ }
   }, []);
