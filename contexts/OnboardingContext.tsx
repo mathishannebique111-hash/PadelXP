@@ -10,15 +10,16 @@ interface OnboardingState {
   currentStep: number;
   refreshOnboarding: () => Promise<void>;
   markFirstMatchPlayed: () => void;
+  markRewardClaimed: () => void;
 }
 
 function computeStep(s: OnboardingStatus): number {
   if (!s.levelEvaluated) return 2;
   if (!s.firstMatchPlayed) return 3;
-  return 4;
+  return 3; // cap at 3 (never show 4/3)
 }
 
-const defaultStatus: OnboardingStatus = { accountCreated: true, levelEvaluated: false, firstMatchPlayed: false };
+const defaultStatus: OnboardingStatus = { accountCreated: true, levelEvaluated: false, firstMatchPlayed: false, rewardClaimed: false };
 
 const OnboardingCtx = createContext<OnboardingState>({
   steps: defaultStatus,
@@ -27,6 +28,7 @@ const OnboardingCtx = createContext<OnboardingState>({
   currentStep: 2,
   refreshOnboarding: async () => {},
   markFirstMatchPlayed: () => {},
+  markRewardClaimed: () => {},
 });
 
 export function OnboardingProvider({
@@ -51,6 +53,7 @@ export function OnboardingProvider({
           accountCreated: prev.accountCreated || data.accountCreated,
           levelEvaluated: prev.levelEvaluated || data.levelEvaluated,
           firstMatchPlayed: prev.firstMatchPlayed || data.firstMatchPlayed,
+          rewardClaimed: prev.rewardClaimed || data.rewardClaimed,
         }));
       }
     } catch { /* ignore */ }
@@ -60,13 +63,17 @@ export function OnboardingProvider({
     setSteps(prev => ({ ...prev, firstMatchPlayed: true }));
   }, []);
 
+  const markRewardClaimed = useCallback(() => {
+    setSteps(prev => ({ ...prev, rewardClaimed: true }));
+  }, []);
+
   // Always fetch client-side to get fresh data (server cache may be stale)
   useEffect(() => {
     refreshOnboarding();
   }, [refreshOnboarding]);
 
   return (
-    <OnboardingCtx.Provider value={{ steps, isComplete, loading: false, currentStep, refreshOnboarding, markFirstMatchPlayed }}>
+    <OnboardingCtx.Provider value={{ steps, isComplete, loading: false, currentStep, refreshOnboarding, markFirstMatchPlayed, markRewardClaimed }}>
       {children}
     </OnboardingCtx.Provider>
   );

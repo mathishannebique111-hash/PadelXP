@@ -9,8 +9,8 @@ export default function ChallengeHighlightBar() {
     const { challenge, loading } = useChallenge();
     const onboarding = useOnboarding();
 
-    // Hide challenge bar until onboarding is complete
-    if (!onboarding.isComplete) return null;
+    // Hide challenge bar until onboarding is complete AND reward claimed
+    if (!onboarding.isComplete || !onboarding.steps.rewardClaimed) return null;
     if (loading || !challenge) return null;
 
     // Calcul du pourcentage pour la barre de progression
