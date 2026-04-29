@@ -32,16 +32,30 @@ export async function POST() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Dedup: check profile field (most reliable)
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("onboarding_reward_claimed, global_points, club_id")
-    .eq("id", user.id)
-    .single();
+  // Dedup: check notification table (always works, no column dependency)
+  const { data: existingNotif } = await admin
+    .from("notifications")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("type", "onboarding_reward")
+    .limit(1);
 
-  if (profile?.onboarding_reward_claimed) {
+  if (existingNotif && existingNotif.length > 0) {
+    // Also try to set the profile flag if it wasn't set (migration catch-up)
+    await admin
+      .from("profiles")
+      .update({ onboarding_reward_claimed: true })
+      .eq("id", user.id)
+      .catch(() => {});
     return NextResponse.json({ already_awarded: true });
   }
+
+  // Also check profile flag as secondary dedup
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("global_points, club_id")
+    .eq("id", user.id)
+    .single();
 
   // Award points atomically via RPC
   const { error: rpcError } = await admin.rpc('increment_global_points', {
@@ -59,15 +73,12 @@ export async function POST() {
       .eq("id", user.id);
   }
 
-  // Mark reward as claimed on the profile (reliable flag, no CHECK constraint issues)
-  const { error: updateError } = await admin
+  // Mark reward as claimed on profile (best-effort, column might not exist yet)
+  await admin
     .from("profiles")
     .update({ onboarding_reward_claimed: true })
-    .eq("id", user.id);
-
-  if (updateError) {
-    logger.error("[onboarding-reward] Failed to mark reward as claimed", updateError);
-  }
+    .eq("id", user.id)
+    .catch(() => {});
 
   // Also update club points if user has a club
   if (profile?.club_id) {
@@ -96,8 +107,9 @@ export async function POST() {
     }
   }
 
-  // Also create notification for history (best-effort, don't block on failure)
-  await admin.from("notifications").insert({
+  // Create dedup notification — THIS is the reliable marker
+  // Try with onboarding_reward type first, fallback to system type
+  const { error: notifError } = await admin.from("notifications").insert({
     user_id: user.id,
     type: "onboarding_reward",
     title: "Onboarding terminé",
@@ -105,7 +117,21 @@ export async function POST() {
     data: { type: "onboarding_reward", points: REWARD_POINTS },
     is_read: true,
     read: true,
-  }).catch((err) => { logger.warn("[onboarding-reward] Notification insert failed", err); });
+  });
+
+  if (notifError) {
+    logger.warn("[onboarding-reward] Notification insert failed with onboarding_reward type, trying system", notifError);
+    // Fallback: use 'system' type which is always in the CHECK constraint
+    await admin.from("notifications").insert({
+      user_id: user.id,
+      type: "system",
+      title: "Onboarding terminé",
+      message: `+${REWARD_POINTS} points pour avoir complété ton onboarding !`,
+      data: { type: "onboarding_reward", points: REWARD_POINTS },
+      is_read: true,
+      read: true,
+    }).catch(e => logger.error("[onboarding-reward] System notification also failed", e));
+  }
 
   logger.info(`[onboarding-reward] Awarded ${REWARD_POINTS} points to ${user.id.substring(0, 8)}...`);
 

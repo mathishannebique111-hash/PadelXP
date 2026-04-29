@@ -490,20 +490,31 @@ export async function getClubDashboardData(clubId: string | null, clubSlug?: str
     });
   });
 
-  const [{ data: reviewsData }, { data: onboardingBonusData }] = await Promise.all([
+  const [{ data: reviewsData }, { data: onboardingBonusProfileData }, { data: onboardingBonusNotifData }] = await Promise.all([
     supabaseAdmin
       .from("reviews")
       .select("user_id")
       .in("user_id", memberIds),
+    // Check profile column (might not exist yet)
     supabaseAdmin
       .from("profiles")
       .select("id")
       .in("id", memberIds)
       .eq("onboarding_reward_claimed", true),
+    // Fallback: check notifications table (always works)
+    supabaseAdmin
+      .from("notifications")
+      .select("user_id")
+      .in("user_id", memberIds)
+      .eq("type", "onboarding_reward"),
   ]);
 
   const reviewBonusIds = new Set<string>((reviewsData || []).map((r) => r.user_id));
-  const onboardingBonusIds = new Set<string>((onboardingBonusData || []).map((r) => r.id));
+  // Merge both sources: profile column OR notification
+  const onboardingBonusIds = new Set<string>([
+    ...((onboardingBonusProfileData || []).map((r) => r.id)),
+    ...((onboardingBonusNotifData || []).map((r) => r.user_id)),
+  ]);
 
   const leaderboard = Array.from(memberStats.values()).map((member) => {
     const basePoints = member.wins * 10 + member.losses * 3;
