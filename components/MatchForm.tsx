@@ -1168,9 +1168,9 @@ export default function MatchForm({
         error={errorMessage}
       />
 
-      {/* Message d'information sur la limite de 2 matchs par jour */}
+      {/* Message d'information sur la limite de 2 matchs par jour — caché pour le premier match */}
       {
-        showMatchLimitInfo === true && (
+        showMatchLimitInfo === true && matchCount > 0 && (
           <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 text-2xl">ℹ️</div>

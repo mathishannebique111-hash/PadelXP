@@ -36,7 +36,8 @@ export default function OnboardingProgressBar() {
     }
   }, [isComplete, pointsAwarded]);
 
-  if (isComplete && !showCompleted) return null;
+  // Hide only after the 100% animation has been shown and dismissed
+  if (isComplete && pointsAwarded && !showCompleted) return null;
 
   const completed = isComplete ? 3 : currentStep - 1;
   const percentage = isComplete ? 100 : Math.round((completed / 3) * 100);
