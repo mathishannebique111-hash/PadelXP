@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       logger.error({ err: reviewsError }, '[RGPD Delete] Erreur suppression avis');
     }
 
-    // 7. Supprimer les challenges
+    // 7. Supprimer les challenges et récompenses
     const { error: challengesError } = await supabaseAdmin
       .from('player_challenges')
       .delete()
@@ -141,6 +141,32 @@ export async function POST(req: NextRequest) {
     if (challengesError) {
       logger.error({ err: challengesError }, '[RGPD Delete] Erreur suppression challenges');
     }
+
+    await supabaseAdmin
+      .from('challenge_rewards')
+      .delete()
+      .eq('user_id', user.id)
+      .then(({ error }) => { if (error) logger.error({ err: error }, '[RGPD Delete] Erreur suppression challenge_rewards'); });
+
+    // 7b. Dissocier les réservations et tournois créés par l'utilisateur (SET NULL, pas delete)
+    await supabaseAdmin
+      .from('reservations')
+      .update({ created_by: null })
+      .eq('created_by', user.id)
+      .then(({ error }) => { if (error) logger.error({ err: error }, '[RGPD Delete] Erreur dissociation reservations'); });
+
+    await supabaseAdmin
+      .from('tournaments')
+      .update({ created_by: null })
+      .eq('created_by', user.id)
+      .then(({ error }) => { if (error) logger.error({ err: error }, '[RGPD Delete] Erreur dissociation tournaments'); });
+
+    // 7c. Supprimer les conversations coach IA
+    await supabaseAdmin
+      .from('coach_conversations')
+      .delete()
+      .eq('user_id', user.id)
+      .then(({ error }) => { if (error) logger.error({ err: error }, '[RGPD Delete] Erreur suppression coach_conversations'); });
 
     // 8. Supprimer les droits d'admin du club
     if (clubId) {
