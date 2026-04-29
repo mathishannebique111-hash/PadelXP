@@ -27,18 +27,31 @@ export async function GET(req: NextRequest) {
   try {
     const now = new Date();
 
-    // Users who signed up at least 24h ago (up to 7 days), have evaluated level but 0 matches
-    // Wide window ensures we catch up if cron was down for several days
+    // Users who signed up at least 24h ago (up to 30 days), have evaluated level but 0 matches
+    // Only users with push notifications enabled (have at least one push token)
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
+    // 1. Get users with push tokens
+    const { data: usersWithTokens } = await admin
+      .from("push_tokens")
+      .select("user_id");
+    const pushEnabledIds = [...new Set((usersWithTokens || []).map(t => t.user_id).filter(Boolean))];
+
+    if (pushEnabledIds.length === 0) {
+      logger.info("[cron/first-match-reminder] No users with push tokens");
+      return NextResponse.json({ sent: 0 });
+    }
+
+    // 2. Find eligible users among those with push tokens
     const { data: eligibleUsers, error } = await admin
       .from("profiles")
       .select("id, first_name, display_name, niveau_padel, matchs_joues, created_at")
-      .not("niveau_padel", "is", null)          // Has evaluated level
+      .in("id", pushEnabledIds)                  // Has push notifications enabled
+      .not("niveau_padel", "is", null)           // Has evaluated level
       .or("matchs_joues.is.null,matchs_joues.eq.0")  // No matches played
-      .gte("created_at", sevenDaysAgo)           // Signed up within 7 days
-      .lte("created_at", twentyFourHoursAgo);   // But at least 24h ago
+      .gte("created_at", thirtyDaysAgo)          // Signed up within 30 days
+      .lte("created_at", twentyFourHoursAgo);    // But at least 24h ago
 
     if (error) {
       logger.error("[cron/first-match-reminder] Query error", { error: error.message });
