@@ -91,47 +91,54 @@ export default async function HomePage({
   let pendingPartnershipRequestSender: { first_name: string; last_name: string } | null = null;
 
   if (user) {
-    // 2. Paralléliser récupération Profil + Club et Partenariats
-    const [profileResult, partnershipsResult] = await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("*, clubs(*)")
-        .eq("id", user.id)
-        .maybeSingle(),
-      supabase
-        .from('player_partnerships')
-        .select('player_id, status')
-        .eq('partner_id', user.id)
-        .eq('status', 'pending')
-    ]);
+    try {
+      // 2. Paralléliser récupération Profil + Club et Partenariats
+      const [profileResult, partnershipsResult] = await Promise.all([
+        supabaseAdmin
+          .from("profiles")
+          .select("*, clubs(*)")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from('player_partnerships')
+          .select('player_id, status')
+          .eq('partner_id', user.id)
+          .eq('status', 'pending')
+      ]);
 
-    profile = profileResult.data;
+      profile = profileResult.data;
 
-    if (!profile) {
-      const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Joueur";
-      const { data: insertedData } = await supabase.from("profiles").insert({ id: user.id, display_name: displayName }).select().single();
-      profile = insertedData || { id: user.id, display_name: displayName };
-    }
-
-    if (profile?.is_admin) redirect("/admin/messages");
-    if (profile && !profile.has_completed_onboarding) redirect("/player/onboarding");
-
-    if (profile?.club_id && profile.clubs) {
-      const club = profile.clubs;
-      clubName = club.name;
-      clubLogoUrl = getClubLogoPublicUrl(club.logo_url);
-    }
-
-    if (partnershipsResult.data && partnershipsResult.data.length > 0) {
-      pendingPartnershipRequestsCount = partnershipsResult.data.length;
-      const firstRequest = partnershipsResult.data[0];
-      const { data: senderHelper } = await supabase.from('profiles').select('first_name, last_name').eq('id', firstRequest.player_id).single();
-      if (senderHelper) {
-        pendingPartnershipRequestSender = {
-          first_name: senderHelper.first_name || '',
-          last_name: senderHelper.last_name || ''
-        };
+      if (!profile) {
+        const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Joueur";
+        const { data: insertedData } = await supabase.from("profiles").insert({ id: user.id, display_name: displayName }).select().single();
+        profile = insertedData || { id: user.id, display_name: displayName };
       }
+
+      if (profile?.is_admin) redirect("/admin/messages");
+      if (profile && !profile.has_completed_onboarding) redirect("/player/onboarding");
+
+      if (profile?.club_id && profile.clubs) {
+        const club = profile.clubs;
+        clubName = club.name;
+        clubLogoUrl = getClubLogoPublicUrl(club.logo_url);
+      }
+
+      if (partnershipsResult.data && partnershipsResult.data.length > 0) {
+        pendingPartnershipRequestsCount = partnershipsResult.data.length;
+        const firstRequest = partnershipsResult.data[0];
+        const { data: senderHelper } = await supabase.from('profiles').select('first_name, last_name').eq('id', firstRequest.player_id).single();
+        if (senderHelper) {
+          pendingPartnershipRequestSender = {
+            first_name: senderHelper.first_name || '',
+            last_name: senderHelper.last_name || ''
+          };
+        }
+      }
+    } catch (e: any) {
+      // Re-throw Next.js redirect errors (they use throw internally)
+      if (e?.digest?.startsWith('NEXT_REDIRECT')) throw e;
+      console.error("[HomePage] Failed to fetch user data", e);
+      // profile stays null — page will render in degraded mode
     }
   }
 

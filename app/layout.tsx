@@ -10,20 +10,25 @@ import { headers } from "next/headers";
 import { extractSubdomain, getClubBranding, hexToRgbTriplet, getContrastColor } from "@/lib/club-branding";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const headersList = await headers();
-  const host = headersList.get('host') || '';
-  const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
-  const branding = await getClubBranding(subdomain);
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host') || '';
+    const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
+    const branding = await getClubBranding(subdomain);
 
-  return {
-    title: subdomain ? branding.name : "PadelXP",
-    description: subdomain ? `Application officielle de ${branding.name}` : "Leaderboards, rangs, badges et ligues pour complexes de padel",
-    icons: {
-      icon: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
-      shortcut: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
-      apple: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
-    },
-  };
+    return {
+      title: subdomain ? branding.name : "PadelXP",
+      description: subdomain ? `Application officielle de ${branding.name}` : "Leaderboards, rangs, badges et ligues pour complexes de padel",
+      icons: {
+        icon: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
+        shortcut: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
+        apple: subdomain && branding.logo_url ? branding.logo_url : "/images/flavicon.png",
+      },
+    };
+  } catch (e) {
+    console.error("[RootLayout] generateMetadata crashed", e);
+    return { title: "PadelXP", description: "Leaderboards, rangs, badges et ligues pour complexes de padel" };
+  }
 }
 
 export const dynamic = "force-dynamic";
@@ -41,7 +46,13 @@ export default async function RootLayout({
   // ==========================================
   const host = headersList.get('host') || '';
   const subdomain = headersList.get('x-club-subdomain') || extractSubdomain(host);
-  const branding = await getClubBranding(subdomain);
+  let branding;
+  try {
+    branding = await getClubBranding(subdomain);
+  } catch (e) {
+    console.error("[RootLayout] getClubBranding crashed", e);
+    branding = { name: "PadelXP", slug: "", subdomain: null, id: "", logo_url: null, banner_url: null, primary_color: "#0066FF", secondary_color: "#CCFF00", background_color: "#172554", enabled_features: { rankings: true, challenges: true, reservations: false, boost: true, leagues: true }, external_booking_url: null, has_reservations_option: false };
+  }
   const logoUrl = subdomain && branding.logo_url ? branding.logo_url : "/images/Logo sans fond.png";
 
   // Convertir les couleurs hex en triplets RGB pour les variables CSS
