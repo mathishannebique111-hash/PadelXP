@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Rocket, ChevronRight } from "lucide-react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import OnboardingStepsPopup from "./OnboardingStepsPopup";
