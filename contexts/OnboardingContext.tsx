@@ -9,6 +9,7 @@ interface OnboardingState {
   loading: boolean;
   currentStep: number;
   refreshOnboarding: () => Promise<void>;
+  markFirstMatchPlayed: () => void;
 }
 
 function computeStep(s: OnboardingStatus): number {
@@ -25,6 +26,7 @@ const OnboardingCtx = createContext<OnboardingState>({
   loading: false,
   currentStep: 2,
   refreshOnboarding: async () => {},
+  markFirstMatchPlayed: () => {},
 });
 
 export function OnboardingProvider({
@@ -49,13 +51,17 @@ export function OnboardingProvider({
     } catch { /* ignore */ }
   }, []);
 
+  const markFirstMatchPlayed = useCallback(() => {
+    setSteps(prev => ({ ...prev, firstMatchPlayed: true }));
+  }, []);
+
   // Always fetch client-side to get fresh data (server cache may be stale)
   useEffect(() => {
     refreshOnboarding();
   }, [refreshOnboarding]);
 
   return (
-    <OnboardingCtx.Provider value={{ steps, isComplete, loading: false, currentStep, refreshOnboarding }}>
+    <OnboardingCtx.Provider value={{ steps, isComplete, loading: false, currentStep, refreshOnboarding, markFirstMatchPlayed }}>
       {children}
     </OnboardingCtx.Provider>
   );

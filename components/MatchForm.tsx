@@ -45,7 +45,7 @@ export default function MatchForm({
   matchCount?: number;
 }) {
   const router = useRouter();
-  const { refreshOnboarding } = useOnboarding();
+  const { refreshOnboarding, markFirstMatchPlayed } = useOnboarding();
   const [matchCount, setMatchCount] = useState(initialMatchCount);
   const matchCountChecked = useRef(false);
   const searchParams = useSearchParams();
@@ -934,8 +934,9 @@ export default function MatchForm({
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
 
-          // Refresh onboarding progress (step 2 → 3) and update local match count
+          // Refresh onboarding progress and update local match count
           if (matchCountAtSubmit === 0) setWasFirstMatch(true);
+          markFirstMatchPlayed();
           refreshOnboarding();
           setMatchCount(prev => prev + 1);
 
