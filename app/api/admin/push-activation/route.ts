@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     users: toSend.map(u => ({
       id: u.id.substring(0, 8) + "...",
       name: u.first_name || u.display_name,
-      level: u.niveau_padel?.toFixed(1),
+      level: u.niveau_padel?.toFixed(2),
     })),
   });
 }
@@ -94,10 +94,10 @@ export async function POST(req: NextRequest) {
   let sent = 0;
   for (const user of toSend) {
     const firstName = user.first_name || (user.display_name ? user.display_name.split(/\s+/)[0] : "Joueur");
-    const level = user.niveau_padel?.toFixed(1) || "?";
+    const level = user.niveau_padel?.toFixed(2) || "?";
 
     const title = "Ton classement t'attend";
-    const message = `${firstName}, tu es niveau ${level} — enregistre ton premier match pour activer ton classement et débloquer tes premiers badges !`;
+    const message = `${firstName}, tu es niveau ${level} — enregistre ton premier match pour faire évoluer ton niveau et ton classement !`;
 
     // In-app notification (dedup marker)
     await admin.from("notifications").insert({

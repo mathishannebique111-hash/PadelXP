@@ -164,8 +164,8 @@ export class PushNotificationsService {
             else if (type === "coach_debrief" || type === "coach_message") {
                 window.location.href = "/coach";
             }
-            // First match reminder
-            else if (type === "first_match_reminder") {
+            // First match reminder & push activation
+            else if (type === "first_match_reminder" || type === "push_activation") {
                 window.location.href = "/match/new?tab=record";
             }
             // Reservations
