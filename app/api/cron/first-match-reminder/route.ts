@@ -27,16 +27,17 @@ export async function GET(req: NextRequest) {
   try {
     const now = new Date();
 
-    // Users who signed up between 24h and 48h ago, have evaluated level but 0 matches
+    // Users who signed up at least 24h ago (up to 7 days), have evaluated level but 0 matches
+    // Wide window ensures we catch up if cron was down for several days
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data: eligibleUsers, error } = await admin
       .from("profiles")
       .select("id, first_name, display_name, niveau_padel, matchs_joues, created_at")
       .not("niveau_padel", "is", null)          // Has evaluated level
       .or("matchs_joues.is.null,matchs_joues.eq.0")  // No matches played
-      .gte("created_at", fortyEightHoursAgo)    // Signed up within 48h
+      .gte("created_at", sevenDaysAgo)           // Signed up within 7 days
       .lte("created_at", twentyFourHoursAgo);   // But at least 24h ago
 
     if (error) {
