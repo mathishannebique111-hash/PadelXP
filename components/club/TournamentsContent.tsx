@@ -354,22 +354,7 @@ export default function TournamentsContent({ clubId }: { clubId?: string | null 
                 >
                     Mes ligues
                 </button>
-                <button
-                    onClick={() => setActiveTab("club")}
-                    className={`flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === "club"
-                        ? (isClub ? "shadow-md" : "bg-white/10 text-white text-opacity-100")
-                        : (isClub ? "" : "text-white/40 hover:text-white/60")
-                        }`}
-                    style={isClub ? {
-                        backgroundColor: activeTab === "club" ? 'rgb(var(--theme-secondary-accent))' : 'transparent',
-                        color: activeTab === "club" 
-                            ? 'var(--theme-secondary-accent-contrast, #000000)' 
-                            : 'rgb(var(--theme-secondary-accent))',
-                        border: activeTab === "club" ? 'none' : '1px solid rgb(var(--theme-secondary-accent))'
-                    } : {}}
-                >
-                    Ligues Club
-                </button>
+                {/* Ligues Club filter — hidden temporarily, will re-enable later */}
             </div>
 
             {/* Liste des ligues */}

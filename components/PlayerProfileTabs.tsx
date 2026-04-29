@@ -100,7 +100,7 @@ function PlayerProfileTabsContent({
     { id: 'profil' as TabType, label: 'Profil', badge: pendingPartnershipRequestsCount },
     { id: 'stats' as TabType, label: 'Stats' },
     { id: 'badges' as TabType, label: 'Badges' },
-    { id: 'club' as TabType, label: 'Club' },
+    // { id: 'club' as TabType, label: 'Club' }, // Hidden temporarily — will re-enable later
   ];
 
   return (

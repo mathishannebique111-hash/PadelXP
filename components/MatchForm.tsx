@@ -592,8 +592,8 @@ export default function MatchForm({
         return;
       }
 
-      // Validation de la localisation STRICTE (skip pour le premier match)
-      if (matchCount > 0) {
+      // Validation de la localisation — désactivée temporairement (lieu caché)
+      if (false) {
         if (!unregisteredClubName.trim() || !unregisteredClubCity.trim()) {
           logger.warn("❌ Validation failed: Missing valid location selection");
           const msg = !unregisteredClubName.trim()
@@ -1197,8 +1197,8 @@ export default function MatchForm({
 
       {/* Logic for calculating players level */}
       <form onSubmit={onSubmit} className={`space-y-3 pb-2 transition-all duration-500 ${!hasLevel ? 'blur-sm pointer-events-none select-none grayscale-[0.3]' : ''}`}>
-        {/* Lieu du match (Google Maps Direct) — caché pour le premier match */}
-        {matchCount > 0 && <div className="mb-1">
+        {/* Lieu du match (Google Maps Direct) — caché temporairement pour tous les matchs */}
+        {false && <div className="mb-1">
           <label className="mb-0.5 ml-1 block text-[8px] font-black uppercase tracking-widest" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' }}>Lieu du match</label>
           <div className="animate-in fade-in slide-in-from-top-1 duration-200">
             <GooglePlacesAutocomplete

@@ -129,24 +129,7 @@ export default function ChallengesList({ challenges, isPremiumUser = false, hasC
           <Globe size={14} />
           <span>Général</span>
         </button>
-        <button
-          onClick={() => setActiveTab('club')}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap border ${activeTab === 'club'
-            ? 'shadow-lg ring-2 ring-offset-2'
-            : (isClub ? 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border-[rgb(var(--theme-accent))]' : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white border-white/20')
-            }`}
-          style={activeTab === 'club' ? {
-            backgroundColor: 'rgb(var(--theme-accent))',
-            color: 'var(--theme-accent-contrast, var(--theme-player-page, #172554))',
-            boxShadow: '0 0 15px rgba(var(--theme-accent), 0.25)',
-            border: 'none',
-            '--tw-ring-color': 'rgb(var(--theme-accent))',
-            '--tw-ring-offset-color': 'rgb(var(--theme-page))'
-          } as any : {}}
-        >
-          <MapPin size={14} />
-          <span>Mon Club</span>
-        </button>
+        {/* Mon Club filter — hidden temporarily, will re-enable later */}
       </div>
 
       {filteredChallenges.length === 0 ? (
