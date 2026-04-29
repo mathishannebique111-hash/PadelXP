@@ -44,9 +44,9 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
             forceStart={true}
             onCancel={() => setShowWizard(false)}
             onComplete={() => {
-              setShowWizard(false);
               refreshOnboarding();
-              router.push('/match/new?tab=record&first_match=true');
+              // Replace instead of push for seamless transition (no back to profile)
+              router.replace('/match/new?tab=record&first_match=true');
             }}
           />
         )}

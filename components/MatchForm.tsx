@@ -1044,7 +1044,7 @@ export default function MatchForm({
             <div className="text-4xl mb-4">🎾</div>
             <h3 className="text-lg font-bold text-white mb-3">Enregistre ton premier match !</h3>
             <p className="text-sm text-white/60 leading-relaxed mb-6">
-              Pas besoin de mettre d&apos;autres joueurs pour l&apos;instant, tu peux mettre 3 joueurs anonymes et voir déjà ton classement et ton niveau bouger !
+              3 joueurs anonymes ont déjà été ajoutés à la partie. Il ne te reste plus qu&apos;à remplir le score !
             </p>
             <button
               onClick={() => setShowFirstMatchPopup(false)}
