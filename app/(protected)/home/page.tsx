@@ -136,47 +136,54 @@ export default async function HomePage({
   }
 
   // Fallback final Club Info
-  if ((!clubName || !clubLogoUrl) && !profile?.club_id) {
-    // Usage très rare ou legacy
-    const clubInfo = await getUserClubInfo();
-    clubName = clubName ?? clubInfo.clubName ?? null;
-    clubLogoUrl = clubLogoUrl ?? clubInfo.clubLogoUrl ?? null;
+  try {
+    if ((!clubName || !clubLogoUrl) && !profile?.club_id) {
+      const clubInfo = await getUserClubInfo();
+      clubName = clubName ?? clubInfo.clubName ?? null;
+      clubLogoUrl = clubLogoUrl ?? clubInfo.clubLogoUrl ?? null;
+    }
+  } catch (e) {
+    console.error("[HomePage] Failed to fetch fallback club info", e);
   }
 
   // 4. Fetch full club object for ClubProfileClient if needed
   let fullClubData: any = null;
-  if (profile?.club_id) {
-    const [clubRecordResult, extras] = await Promise.all([
-      supabaseAdmin
-        .from("clubs")
-        .select("*")
-        .eq("id", profile.club_id)
-        .maybeSingle(),
-      getClubPublicExtras(profile.club_id)
-    ]);
+  try {
+    if (profile?.club_id) {
+      const [clubRecordResult, extras] = await Promise.all([
+        supabaseAdmin
+          .from("clubs")
+          .select("*")
+          .eq("id", profile.club_id)
+          .maybeSingle(),
+        getClubPublicExtras(profile.club_id)
+      ]);
 
-    const clubRecord = clubRecordResult.data;
-    if (clubRecord) {
-      const addressLineParts: string[] = [];
-      const addressValue = clubRecord.address ?? extras?.address ?? null;
-      const postalValue = clubRecord.postal_code ?? extras?.postal_code ?? null;
-      const cityValue = clubRecord.city ?? extras?.city ?? null;
+      const clubRecord = clubRecordResult.data;
+      if (clubRecord) {
+        const addressLineParts: string[] = [];
+        const addressValue = clubRecord.address ?? extras?.address ?? null;
+        const postalValue = clubRecord.postal_code ?? extras?.postal_code ?? null;
+        const cityValue = clubRecord.city ?? extras?.city ?? null;
 
-      if (addressValue) addressLineParts.push(addressValue);
-      if (postalValue) addressLineParts.push(postalValue);
-      if (cityValue) addressLineParts.push(cityValue);
+        if (addressValue) addressLineParts.push(addressValue);
+        if (postalValue) addressLineParts.push(postalValue);
+        if (cityValue) addressLineParts.push(cityValue);
 
-      fullClubData = {
-        ...clubRecord,
-        description: extras?.description ?? null,
-        address_line: addressLineParts.length ? addressLineParts.join(" · ") : null,
-        phone: clubRecord.phone ?? extras?.phone ?? null,
-        website: clubRecord.website ?? extras?.website ?? null,
-        number_of_courts: clubRecord.number_of_courts ?? extras?.number_of_courts ?? null,
-        court_type: clubRecord.court_type ?? extras?.court_type ?? null,
-        opening_hours: extras?.opening_hours ?? null,
-      };
+        fullClubData = {
+          ...clubRecord,
+          description: extras?.description ?? null,
+          address_line: addressLineParts.length ? addressLineParts.join(" · ") : null,
+          phone: clubRecord.phone ?? extras?.phone ?? null,
+          website: clubRecord.website ?? extras?.website ?? null,
+          number_of_courts: clubRecord.number_of_courts ?? extras?.number_of_courts ?? null,
+          court_type: clubRecord.court_type ?? extras?.court_type ?? null,
+          opening_hours: extras?.opening_hours ?? null,
+        };
+      }
     }
+  } catch (e) {
+    console.error("[HomePage] Failed to fetch club data", e);
   }
 
   // Fallback Profile Display

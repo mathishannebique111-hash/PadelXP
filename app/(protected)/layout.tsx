@@ -61,28 +61,26 @@ export default async function PlayerAccountLayout({
 
   let publicLogoUrl = null;
 
-  if (subdomain) {
-    const clubBranding = await getClubBranding(subdomain);
-    if (clubBranding && clubBranding.id) {
-      // Le logo du club du sous-domaine est prioritaire
-      publicLogoUrl = getClubLogoPublicUrl(clubBranding.logo_url);
-      
-      // Si l'utilisateur est connecté, on synchronise son profil avec le club du domaine actuel
-      if (user) {
-        await syncUserClubProfile(user.id, clubBranding.id, clubBranding.slug);
+  try {
+    if (subdomain) {
+      const clubBranding = await getClubBranding(subdomain);
+      if (clubBranding && clubBranding.id) {
+        publicLogoUrl = getClubLogoPublicUrl(clubBranding.logo_url);
+
+        if (user) {
+          await syncUserClubProfile(user.id, clubBranding.id, clubBranding.slug);
+        }
+      }
+    } else {
+      const { clubLogoUrl, clubId } = await getUserClubInfo(user);
+      publicLogoUrl = clubLogoUrl ? getClubLogoPublicUrl(clubLogoUrl) : null;
+
+      if (user && !clubId) {
+        await syncUserClubProfile(user.id, null, null);
       }
     }
-  } else {
-    // Si pas de sous-domaine (PadelXP principal), on utilise les infos du profil si elles existent
-    const { clubLogoUrl, clubId } = await getUserClubInfo(user);
-    publicLogoUrl = clubLogoUrl ? getClubLogoPublicUrl(clubLogoUrl) : null;
-    
-    // Si l'utilisateur est sur l'app principale mais que getUserClubInfo 
-    // a détecté que son club n'existe plus (ou s'il n'en a plus), 
-    // on s'assure que son profil est bien synchronisé en mode "sans club"
-    if (user && !clubId) {
-      await syncUserClubProfile(user.id, null, null);
-    }
+  } catch (e) {
+    console.error("[PlayerAccountLayout] Failed to fetch club branding", e);
   }
 
   return (

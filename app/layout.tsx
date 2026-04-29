@@ -128,6 +128,16 @@ export default async function RootLayout({
         <style
           dangerouslySetInnerHTML={{
             __html: `
+              /* CSS-only fallback: hide splash overlays after 5s even if JS fails */
+              @keyframes splash-fade-out {
+                0% { opacity: 1; }
+                100% { opacity: 0; pointer-events: none; visibility: hidden; }
+              }
+              #css-splash-overlay,
+              #px-static-splash {
+                animation: splash-fade-out 0.4s ease-out 5s forwards;
+              }
+
               html.is-app [data-hamburger-button],
               body.is-app [data-hamburger-button],
               [data-is-app="true"] [data-hamburger-button] {
@@ -135,12 +145,12 @@ export default async function RootLayout({
                 position: fixed !important;
                 z-index: 100000 !important;
               }
-              
+
               html.is-app, body.is-app {
                 --sat: 65px !important;
                 --sab: 20px !important;
               }
-              
+
               html, body {
                 background-color: ${subdomain ? branding.background_color : '#172554'} !important;
                 --sab: ${isApp ? '20px' : '0px'};
@@ -213,6 +223,8 @@ export default async function RootLayout({
           setTimeout(function(){
             var e=document.getElementById('px-static-splash');
             if(e){e.style.transition='opacity 0.3s ease-out';e.style.opacity='0';setTimeout(function(){e.style.display='none'},400);}
+            var s=document.getElementById('css-splash-overlay');
+            if(s){s.style.transition='opacity 0.3s ease-out';s.style.opacity='0';s.style.pointerEvents='none';setTimeout(function(){s.style.display='none'},400);}
             window.dispatchEvent(new CustomEvent('hide-splash-overlay'));
             if(window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.hideSplash){window.webkit.messageHandlers.hideSplash.postMessage('hide');}
           }, 3000);
