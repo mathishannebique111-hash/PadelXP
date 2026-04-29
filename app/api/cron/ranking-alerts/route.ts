@@ -123,7 +123,7 @@ function buildNotification(
 export async function GET(req: NextRequest) {
   const isVercelCron = req.headers.get("x-vercel-cron") === "1";
   const authToken = req.headers.get("authorization")?.replace("Bearer ", "");
-  const isManualAuthorized = authToken === process.env.CRON_SECRET;
+  const isManualAuthorized = authToken === process.env.CRON_SECRET || authToken === process.env.SUBSCRIPTION_CRON_SECRET;
 
   if (!isVercelCron && !isManualAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
