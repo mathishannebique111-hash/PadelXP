@@ -40,11 +40,17 @@ export default function OnboardingProgressBar() {
   const handleClaimReward = async () => {
     setClaiming(true);
     try {
-      await fetch("/api/player/onboarding-reward", { method: "POST", credentials: "include" });
-    } catch { /* non-blocking */ }
-    markRewardClaimed();
+      const res = await fetch("/api/player/onboarding-reward", { method: "POST", credentials: "include" });
+      if (res.ok) {
+        markRewardClaimed();
+        setShowRewardPopup(false);
+      } else {
+        console.error("[OnboardingProgressBar] Reward API failed", res.status);
+      }
+    } catch (e) {
+      console.error("[OnboardingProgressBar] Reward API error", e);
+    }
     setClaiming(false);
-    setShowRewardPopup(false);
   };
 
   return (
