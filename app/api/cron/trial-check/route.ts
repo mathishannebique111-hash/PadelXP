@@ -5,16 +5,9 @@ import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.SUBSCRIPTION_CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  // 1) Autoriser les appels venant de Vercel Cron
   const isVercelCron = req.headers.get("x-vercel-cron") === "1";
-
-  // 2) Autoriser aussi les appels manuels avec le CRON_SECRET
   const authToken = req.headers.get("authorization")?.replace("Bearer ", "");
-  const isManualAuthorized = authToken === process.env.CRON_SECRET;
+  const isManualAuthorized = authToken === process.env.CRON_SECRET || authToken === process.env.SUBSCRIPTION_CRON_SECRET;
 
   if (!isVercelCron && !isManualAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

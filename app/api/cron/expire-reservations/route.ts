@@ -6,11 +6,11 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function GET(request: NextRequest) {
     try {
-        // Vérifier le token d'autorisation pour les appels cron
-        const authHeader = request.headers.get("authorization");
-        const cronSecret = process.env.CRON_SECRET;
+        const isVercelCron = request.headers.get("x-vercel-cron") === "1";
+        const authToken = request.headers.get("authorization")?.replace("Bearer ", "");
+        const isManualAuthorized = authToken === process.env.CRON_SECRET;
 
-        if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+        if (!isVercelCron && !isManualAuthorized) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 

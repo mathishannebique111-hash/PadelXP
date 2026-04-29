@@ -9,11 +9,11 @@ export const dynamic = "force-dynamic";
  * Tourne quotidiennement. Vérifie premium_until < maintenant.
  */
 export async function GET(req: Request) {
-  // Verify cron secret
-  const authHeader = req.headers.get("authorization");
-  const cronSecret = process.env.SUBSCRIPTION_CRON_SECRET || process.env.CRON_SECRET;
+  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
+  const authToken = req.headers.get("authorization")?.replace("Bearer ", "");
+  const isManualAuthorized = authToken === process.env.CRON_SECRET || authToken === process.env.SUBSCRIPTION_CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!isVercelCron && !isManualAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
