@@ -33,10 +33,10 @@ export async function POST() {
   );
 
   try {
-    // Dedup: check profile flag first, then notifications
+    // Dedup check
     const { data: profile } = await admin
       .from("profiles")
-      .select("onboarding_reward_claimed, global_points, club_id")
+      .select("onboarding_reward_claimed, points")
       .eq("id", user.id)
       .single();
 
@@ -44,70 +44,30 @@ export async function POST() {
       return NextResponse.json({ already_awarded: true });
     }
 
-    // Secondary dedup: check notifications
-    const { data: existingNotif } = await admin
-      .from("notifications")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("type", "onboarding_reward")
-      .limit(1);
+    // Award points — SAME way as challenge rewards: profiles.points
+    const currentPoints = profile?.points || 0;
+    const newPoints = currentPoints + REWARD_POINTS;
 
-    if (existingNotif && existingNotif.length > 0) {
-      // Fix state: set the profile flag too
-      await admin.from("profiles").update({ onboarding_reward_claimed: true }).eq("id", user.id);
-      return NextResponse.json({ already_awarded: true });
-    }
-
-    // Award points atomically via RPC
-    const { error: rpcError } = await admin.rpc('increment_global_points', {
-      p_user_id: user.id,
-      p_points: REWARD_POINTS
-    });
-
-    if (rpcError) {
-      logger.warn("[onboarding-reward] RPC failed, using fallback", rpcError);
-      const newPoints = (profile?.global_points || 0) + REWARD_POINTS;
-      await admin.from("profiles").update({ global_points: newPoints }).eq("id", user.id);
-    }
-
-    // Mark reward as claimed on profile
     const { error: updateError } = await admin
       .from("profiles")
-      .update({ onboarding_reward_claimed: true })
+      .update({ points: newPoints, onboarding_reward_claimed: true })
       .eq("id", user.id);
 
     if (updateError) {
-      logger.error("[onboarding-reward] Failed to set onboarding_reward_claimed", updateError);
+      logger.error("[onboarding-reward] Update failed", updateError);
+      return NextResponse.json({ error: "Erreur lors de l'ajout des points" }, { status: 500 });
     }
 
-    // Also update club points if user has a club
-    if (profile?.club_id) {
-      const { error: clubRpcError } = await admin.rpc('increment_club_points', {
-        p_user_id: user.id,
-        p_club_id: profile.club_id,
-        p_points: REWARD_POINTS
-      });
+    // Verify write
+    const { data: verify } = await admin
+      .from("profiles")
+      .select("points")
+      .eq("id", user.id)
+      .single();
 
-      if (clubRpcError) {
-        logger.warn("[onboarding-reward] Club RPC failed, using fallback", clubRpcError);
-        const { data: userClub } = await admin
-          .from("user_clubs")
-          .select("club_points")
-          .eq("user_id", user.id)
-          .eq("club_id", profile.club_id)
-          .maybeSingle();
+    logger.info(`[onboarding-reward] Awarded ${REWARD_POINTS} pts to ${user.id.substring(0, 8)}... (${currentPoints} -> ${verify?.points})`);
 
-        if (userClub) {
-          await admin
-            .from("user_clubs")
-            .update({ club_points: (userClub.club_points || 0) + REWARD_POINTS })
-            .eq("user_id", user.id)
-            .eq("club_id", profile.club_id);
-        }
-      }
-    }
-
-    // Create dedup notification
+    // Create notification (best-effort)
     const { error: notifError } = await admin.from("notifications").insert({
       user_id: user.id,
       type: "onboarding_reward",
@@ -119,22 +79,9 @@ export async function POST() {
 
     if (notifError) {
       logger.warn("[onboarding-reward] Notification insert failed", notifError);
-      // Fallback: try system type
-      const { error: fallbackError } = await admin.from("notifications").insert({
-        user_id: user.id,
-        type: "system",
-        title: "Onboarding terminé",
-        message: `+${REWARD_POINTS} points pour avoir complété ton onboarding !`,
-        data: { type: "onboarding_reward", points: REWARD_POINTS },
-        is_read: true,
-      });
-      if (fallbackError) {
-        logger.error("[onboarding-reward] System notification also failed", fallbackError);
-      }
     }
 
-    logger.info(`[onboarding-reward] Awarded ${REWARD_POINTS} points to ${user.id.substring(0, 8)}...`);
-    return NextResponse.json({ success: true, points: REWARD_POINTS });
+    return NextResponse.json({ success: true, points: newPoints });
 
   } catch (error: any) {
     logger.error("[onboarding-reward] Unexpected error", { error: error?.message || String(error) });
