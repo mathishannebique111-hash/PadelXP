@@ -29,42 +29,59 @@ export async function GET() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Check 1: profile columns
-  const profileQuery = await admin
+  // Read current state
+  const { data: profileBefore, error: readError } = await admin
     .from("profiles")
     .select("niveau_padel, onboarding_reward_claimed, global_points, has_completed_onboarding")
     .eq("id", user.id)
     .single();
 
-  // Check 2: match_participants (no "id" column — use match_id)
-  const matchQuery = await admin
+  // Test write: try to set onboarding_reward_claimed = true and global_points += 20
+  const { error: writeError } = await admin
+    .from("profiles")
+    .update({ onboarding_reward_claimed: true, global_points: (profileBefore?.global_points || 0) + 20 })
+    .eq("id", user.id);
+
+  // Test RPC
+  const { error: rpcError } = await admin.rpc('increment_global_points', {
+    p_user_id: user.id,
+    p_points: 0  // add 0 just to test if RPC works
+  });
+
+  // Read after write
+  const { data: profileAfter, error: readAfterError } = await admin
+    .from("profiles")
+    .select("niveau_padel, onboarding_reward_claimed, global_points, has_completed_onboarding")
+    .eq("id", user.id)
+    .single();
+
+  // Test notification insert
+  const { error: notifError } = await admin.from("notifications").insert({
+    user_id: user.id,
+    type: "onboarding_reward",
+    title: "test",
+    message: "test",
+    data: { type: "onboarding_reward" },
+    is_read: true,
+  });
+
+  // Match participants
+  const { data: matchData, error: matchError } = await admin
     .from("match_participants")
     .select("match_id")
     .eq("user_id", user.id)
     .eq("player_type", "user")
     .limit(1);
 
-  // Check 3: notification with type onboarding_reward
-  const notifQuery = await admin
-    .from("notifications")
-    .select("id, type, data")
-    .eq("user_id", user.id)
-    .eq("type", "onboarding_reward")
-    .limit(5);
-
-  // Check 4: notification with type system and data onboarding_reward
-  const systemNotifQuery = await admin
-    .from("notifications")
-    .select("id, type, data")
-    .eq("user_id", user.id)
-    .eq("type", "system")
-    .limit(5);
-
   return NextResponse.json({
     userId: user.id,
-    profile: { data: profileQuery.data, error: profileQuery.error?.message || null },
-    matchParticipants: { count: matchQuery.data?.length ?? 0, error: matchQuery.error?.message || null },
-    onboardingRewardNotif: { data: notifQuery.data, error: notifQuery.error?.message || null },
-    systemNotifs: { data: systemNotifQuery.data, error: systemNotifQuery.error?.message || null },
+    before: profileBefore,
+    readError: readError?.message || null,
+    writeError: writeError?.message || null,
+    rpcError: rpcError?.message || null,
+    after: profileAfter,
+    readAfterError: readAfterError?.message || null,
+    notifInsertError: notifError?.message || null,
+    matchParticipants: { count: matchData?.length ?? 0, error: matchError?.message || null },
   }, { headers: { "Cache-Control": "no-store" } });
 }
