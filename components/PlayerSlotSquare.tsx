@@ -1,6 +1,6 @@
 "use client";
 
-import { UserPlus, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import Image from "next/image";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 
@@ -29,14 +29,8 @@ export default function PlayerSlotSquare({
     niveau_padel,
     showTilde = false,
 }: PlayerSlotSquareProps) {
-    const initials = player
-        ? `${player.first_name?.[0] || ""}${player.last_name?.[0] || ""}`.toUpperCase()
-        : "";
-
-    // Afficher "Invité" uniquement si c'est un guest et que ce n'est pas un joueur anonyme
-    const showGuestLabel = player?.type === 'guest' && player?.display_name !== 'Joueur Anonyme';
-
     const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
+    const showGuestLabel = player?.type === 'guest' && player?.display_name !== 'Joueur Anonyme';
 
     return (
         <div className={`relative flex flex-col items-center gap-1 ${className}`}>
@@ -49,26 +43,23 @@ export default function PlayerSlotSquare({
                 type="button"
                 onClick={onClick}
                 disabled={isFixed}
-                className={`relative aspect-square w-full rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1 overflow-hidden
-          ${isFixed
+                className={`relative aspect-square w-full rounded-xl transition-all duration-200 flex flex-col items-center justify-center overflow-hidden
+                    ${isFixed
                         ? `bg-white/5 border cursor-default ${!isClub ? 'border-white/10' : ''}`
                         : player
-                            ? "bg-white border-white shadow-lg shadow-white/10"
-                            : "bg-white/5 border-dashed transition-colors shadow-inner club-light-bg-boost-border"
+                            ? "bg-white border border-white/80 shadow-lg shadow-white/5"
+                            : "bg-white/[0.03] border border-dashed border-white/20 hover:bg-white/[0.06] hover:border-white/30"
                     }
-          ${isWinner ? (isClub ? "ring-2 ring-offset-2 ring-offset-[rgb(var(--theme-page))] ring-[rgb(var(--theme-accent))]" : "ring-2 ring-offset-2 ring-offset-[#071554]") : ""}
-        `}
-                style={(!player && !isFixed) ? { borderColor: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' } : (player && isWinner && isClub) ? { borderColor: 'rgb(var(--theme-accent))' } : undefined}
+                    ${isWinner ? (isClub ? "ring-2 ring-offset-2 ring-offset-[rgb(var(--theme-page))] ring-[rgb(var(--theme-accent))]" : "ring-2 ring-offset-2 ring-offset-[#071554]") : ""}
+                `}
+                style={isFixed && isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : undefined}
             >
                 {player ? (
                     <>
                         {onRemove && !isOwner && (
                             <div
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onRemove();
-                                }}
-                                className="absolute top-1 right-1 z-20 p-1 bg-red-500 rounded-full text-white shadow-md hover:scale-110 active:scale-95 transition-all"
+                                onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                                className="absolute top-1 right-1 z-20 p-0.5 bg-red-500/90 rounded-full text-white hover:scale-110 active:scale-95 transition-all"
                             >
                                 <Plus size={10} className="rotate-45" />
                             </div>
@@ -84,56 +75,36 @@ export default function PlayerSlotSquare({
                                 />
                             ) : (
                                 <div className="flex items-center justify-center w-full h-full text-slate-400">
-                                    {/* Use Player icon to match Leaderboard style */}
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="w-2/3 h-2/3"
-                                    >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-2/3 h-2/3">
                                         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                                         <circle cx="12" cy="7" r="4" />
                                     </svg>
                                 </div>
                             )}
                         </div>
-                        <div className="px-1 text-center w-full space-y-0.5">
-                            <div className="leading-none">
-                                <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-bold truncate`}>
-                                    {player.first_name}
+                        <div className="px-1 text-center w-full">
+                            <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-bold truncate leading-tight`}>
+                                {player.first_name}
+                            </p>
+                            <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-black truncate uppercase leading-tight`}>
+                                {player.last_name}
+                            </p>
+                            {(niveau_padel || player.niveau_padel) && (
+                                <p className={`text-[7px] sm:text-[8px] font-bold ${isFixed ? '' : 'text-blue-600'} leading-none mt-0.5`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}>
+                                    {showTilde && "~"}{(niveau_padel || player.niveau_padel)?.toFixed(1)}
                                 </p>
-                                <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-black truncate uppercase`}>
-                                    {player.last_name}
-                                </p>
-                            </div>
-
-                            {/* Affichage du niveau */}
-                            <div className={`text-[7px] sm:text-[9px] font-black italic ${isFixed ? '' : 'text-blue-600'} leading-none`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent, 204, 255, 0))' } : {}}>
-                                {showTilde && <span className="mr-0.5">~</span>}
-                                {niveau_padel ? niveau_padel.toFixed(2) : (player.niveau_padel ? player.niveau_padel.toFixed(2) : '')}
-                            </div>
+                            )}
                         </div>
                     </>
                 ) : (
-                    <div className="flex flex-col items-center gap-1">
-                        <Plus size={18} className="text-white/40" />
-                        <span className="text-white/60 text-[8px] font-medium uppercase tracking-tighter">
-                            Ajouter
-                        </span>
-                    </div>
+                    <Plus size={20} strokeWidth={1.5} className="text-white/25" />
                 )}
             </button>
-            <div className="flex flex-col items-center gap-0">
+            {label && (
                 <span className="text-[9px] sm:text-xs font-black text-white uppercase tracking-widest leading-none">
                     {label}
                 </span>
-            </div>
-        </div >
+            )}
+        </div>
     );
 }

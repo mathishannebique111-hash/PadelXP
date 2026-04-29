@@ -227,8 +227,8 @@ function MatchTabsContent({
   return (
     <div className="w-full h-full">
       {/* Onglets */}
-      <div className={`grid grid-cols-4 w-full mb-2 sm:mb-4 border-b ${!isClub ? 'border-white/10' : ''}`}
-        style={isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}}>
+      <div className={`grid w-full mb-2 sm:mb-4 border-b ${!isClub ? 'border-white/10' : ''}`}
+        style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)`, ...(isClub ? { borderColor: 'rgba(var(--theme-text), 0.1)' } : {}) }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -264,7 +264,7 @@ function MatchTabsContent({
 
       {/* Contenu des onglets — seul l'onglet actif est monté pour éviter
           la cascade de requêtes API simultanées (= 429 Too Many Requests) */}
-      <div className={currentTab === 'record' ? 'mt-1' : 'mt-2 sm:mt-6'}>
+      <div className={currentTab === 'record' ? 'mt-3' : 'mt-2 sm:mt-6'}>
         {currentTab === 'record' && recordContent}
         {currentTab === 'history' && historyContent}
         {currentTab === 'partners' && partnersContent}
