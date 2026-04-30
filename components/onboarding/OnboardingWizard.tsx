@@ -195,11 +195,12 @@ export default function OnboardingWizard() {
   useEffect(() => {
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const sb = createClient();
+        const { data: { user } } = await sb.auth.getUser();
         if (user) setCoachName(getCoachName(user.id));
       } catch { /* fallback to Pablo */ }
     })();
-  }, [supabase]);
+  }, []);
 
   // Nouvel état pour gérer l'affichage des étapes spéciales
   const [showIdentityStep, setShowIdentityStep] = useState(false);
