@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Check, Save, RefreshCw, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Save, RefreshCw, Sparkles, Swords } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   PADEL_QUESTIONS,
@@ -505,33 +505,25 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
             <motion.button
               type="button"
               whileTap={{ scale: 0.95 }}
-              onClick={handleSaveResult}
-              disabled={isSaving || isSaved}
+              onClick={async () => {
+                if (!isSaved) await handleSaveResult();
+                if (onComplete) onComplete(result);
+              }}
+              disabled={isSaving}
               className="w-full sm:flex-1 py-4 rounded-xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
               style={{ backgroundColor: 'rgb(var(--theme-accent))', color: 'rgb(var(--theme-page))', boxShadow: '0 10px 15px -3px rgba(var(--theme-accent), 0.4)' }}
             >
-              {isSaved ? (
-                <>
-                  <Check size={18} />
-                  <span>NIVEAU ENREGISTRÉ</span>
-                </>
-              ) : (
-                <>
-                  <Save size={18} />
-                  <span>{isSaving ? "CHARGEMENT..." : "ENREGISTRER MON NIVEAU"}</span>
-                </>
-              )}
+              <Swords size={18} />
+              <span>{isSaving ? "CHARGEMENT..." : "ENREGISTRER MON PREMIER MATCH"}</span>
             </motion.button>
 
             {result && (
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  if (!isSaved) handleSaveResult();
-                  const strengths = result.strengths?.join(", ") || "";
-                  const weaknesses = result.weaknesses?.join(", ") || "";
-                  const msg = `Mon niveau vient d'être évalué à ${result.niveau}/10. Points forts : ${strengths}. Axes d'amélioration : ${weaknesses}. Fais-moi un retour complet sur mon profil avec mes points forts, axes d'amélioration, et des conseils technique, tactique et mental. Propose-moi ensuite d'aller enregistrer mon premier match.`;
+                onClick={async () => {
+                  if (!isSaved) await handleSaveResult();
+                  const msg = `Je viens d'évaluer mon niveau, il est de ${result.niveau}/10. Fais-moi un retour complet sur mon profil avec mes points forts, mes axes d'amélioration et des conseils techniques, tactiques et mentaux.`;
                   router.push(`/coach?msg=${encodeURIComponent(msg)}`);
                 }}
                 className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-white/10 text-white/80 hover:bg-white/15 transition-all border border-white/10"

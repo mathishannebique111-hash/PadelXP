@@ -77,10 +77,12 @@ export default function MatchForm({
     })();
   }, [supabase, matchCount]);
 
-  // Show first match popup when redirected from level evaluation
+  // Show first match popup when first time on record tab (no matches yet)
   useEffect(() => {
-    if (searchParams?.get('first_match') === 'true') {
+    if (matchCount === 0 && hasLevel) {
       setShowFirstMatchPopup(true);
+    }
+    if (searchParams?.get('first_match') === 'true') {
       // Clean URL
       const url = new URL(window.location.href);
       url.searchParams.delete('first_match');
