@@ -50,7 +50,7 @@ export default function LevelResultContent({ result }: Props) {
             </div>
 
             {/* Graphique radar */}
-            <div className="bg-slate-950/30 border border-white/5 rounded-2xl p-4 md:p-6 shadow-xl">
+            <div className="bg-slate-950/30 border border-white/5 rounded-2xl p-2 md:p-3 shadow-xl max-w-xs mx-auto">
                 <LevelRadarChart breakdown={result.breakdown} />
             </div>
         </div>

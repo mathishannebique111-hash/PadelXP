@@ -26,7 +26,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
         <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(var(--theme-secondary-accent, 191,255,0), 0.1)' }}>
           <Lightbulb size={32} style={{ color: 'rgb(var(--theme-secondary-accent))' }} />
         </div>
-        <h3 className="text-xl font-bold text-white mb-6">Évalue ton niveau et enregistre ton premier match !</h3>
+        <h3 className="text-xl font-bold text-white mb-6">Commençons par évaluer ton niveau !</h3>
         <button
           onClick={() => setShowWizard(true)}
           className="px-6 py-3 font-black rounded-xl transition-all shadow-lg active:scale-95"

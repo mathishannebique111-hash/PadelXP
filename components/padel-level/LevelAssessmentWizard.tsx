@@ -523,13 +523,12 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               )}
             </motion.button>
 
-            {isSaved && result && (
+            {result && (
               <motion.button
                 type="button"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
+                  if (!isSaved) handleSaveResult();
                   const strengths = result.strengths?.join(", ") || "";
                   const weaknesses = result.weaknesses?.join(", ") || "";
                   const msg = `Mon niveau vient d'être évalué à ${result.niveau}/10. Points forts : ${strengths}. Axes d'amélioration : ${weaknesses}. Fais-moi un retour complet sur mon profil avec mes points forts, axes d'amélioration, et des conseils technique, tactique et mental. Propose-moi ensuite d'aller enregistrer mon premier match.`;
