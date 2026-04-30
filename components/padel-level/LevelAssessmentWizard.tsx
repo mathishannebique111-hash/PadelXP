@@ -236,15 +236,6 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
           console.error("[LevelAssessmentWizard] Erreur nettoyage progression:", error);
         }
 
-        // Fermer le wizard après un court délai
-        setTimeout(() => {
-          setIsCompleted(false);
-          setHasStarted(false);
-          setCurrentQuestion(0);
-          setResponses({});
-          setResult(null);
-          if (onComplete) onComplete(result);
-        }, 1500);
       }
     } catch (error) {
       console.error("[LevelAssessmentWizard] Erreur sauvegarde niveau:", error);
