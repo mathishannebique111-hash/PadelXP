@@ -447,8 +447,9 @@ export default function OnboardingWizard() {
             >
               {/* Coach intro + question */}
               <div className="text-center space-y-3">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                  Salut, je suis {coachName}, je suis là pour t&apos;accompagner dans ton aventure padel !
+                <h1 className="text-xl sm:text-2xl font-bold text-white leading-relaxed">
+                  Salut, je suis {coachName}, ton coach IA.<br />
+                  Je suis là pour t&apos;accompagner dans ton aventure padel !
                 </h1>
                 <p className="text-sm text-white/50">
                   {question.title}
