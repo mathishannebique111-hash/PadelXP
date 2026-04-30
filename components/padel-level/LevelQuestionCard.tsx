@@ -37,7 +37,7 @@ export default function LevelQuestionCard({
   return (
     <div className="w-full">
       {/* Question - tighter for mobile */}
-      <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 sm:mb-3 leading-tight">
+      <h2 className="text-base sm:text-lg font-bold text-white mb-4 sm:mb-5 leading-tight">
         {question.question}
       </h2>
 

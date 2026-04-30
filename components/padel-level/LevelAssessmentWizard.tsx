@@ -36,6 +36,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
   const [result, setResult] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [playerFirstName, setPlayerFirstName] = useState("");
 
   // Charger la progression sauvegardée au montage et après reconnexion
   useEffect(() => {
@@ -46,9 +47,13 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("questionnaire_progress")
+          .select("questionnaire_progress, first_name, display_name")
           .eq("id", user.id)
           .maybeSingle();
+
+        if (profile) {
+          setPlayerFirstName(profile.first_name || profile.display_name?.split(' ')[0] || "");
+        }
 
         if (profileError) {
           console.error("[LevelAssessmentWizard] Erreur chargement profil:", profileError);
@@ -381,6 +386,11 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
         </div>
 
         <div className="max-w-3xl mx-auto">
+          {!isCompleted && playerFirstName && (
+            <p className="text-sm text-white/40 text-center mb-3">
+              Évaluons ton niveau ensemble, <span className="text-white/60">{playerFirstName}</span>
+            </p>
+          )}
           <LevelProgressBar
             progress={isCompleted ? 100 : progress}
             currentStep={isCompleted ? PADEL_QUESTIONS.length : currentQuestion + 1}
