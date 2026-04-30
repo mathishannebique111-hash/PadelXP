@@ -1302,7 +1302,7 @@ export default function MatchForm({
 
         {/* Coach prompt */}
         <p className="text-[13px] text-white/40 text-center mb-4 max-w-sm mx-auto">
-          <span className="text-white/60 font-semibold">{coachName}</span> — Enregistre ton match, je t&apos;analyse tout ça juste après
+          <span className="text-white/60 font-semibold">{selfProfile?.first_name || "Hey"}</span>, enregistre ton match, {coachName} t&apos;analyse tout ça juste après
         </p>
 
         {/* Redesigned Player Selection */}
