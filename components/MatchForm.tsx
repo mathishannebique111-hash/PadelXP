@@ -135,6 +135,11 @@ export default function MatchForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [matchResult, setMatchResult] = useState<{
+    levelBefore: number; levelAfter: number;
+    pointsBefore: number; pointsAfter: number;
+    rank: number | null;
+  } | null>(null);
   // État pour le message d'information sur la limite de 2 matchs par jour
   // Initialiser à null pour éviter le flash, puis vérifier localStorage
   const [showMatchLimitInfo, setShowMatchLimitInfo] = useState<boolean | null>(null);
@@ -409,8 +414,8 @@ export default function MatchForm({
             niveau_padel: profileData.niveau_padel,
           });
 
-          // Pre-fill 3 anonymous players for first match
-          if (matchCount === 0) {
+          // Pre-fill 3 anonymous players for all matches
+          {
             const level = profileData.niveau_padel || 4;
             const makeAnon = () => ({
               id: crypto.randomUUID(),
@@ -539,6 +544,18 @@ export default function MatchForm({
     setErrors({});
     setErrorMessage(null);
     setLoading(true);
+
+    // Capture level/points BEFORE submission for the result popup
+    let levelBefore = 0;
+    let pointsBefore = 0;
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const { data: preProfile } = await supabase.from("profiles").select("niveau_padel, points").eq("id", currentUser.id).single();
+        levelBefore = preProfile?.niveau_padel || 0;
+        pointsBefore = preProfile?.points || 0;
+      }
+    } catch { /* non-blocking */ }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -940,52 +957,34 @@ export default function MatchForm({
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
 
-          // Forcer le rechargement du classement
-          if (typeof window !== "undefined") {
-            console.log('[MatchForm] ✅ Match enregistré ! Rechargement du classement...');
+          // Fetch updated stats for the result popup
+          let levelAfter = levelBefore;
+          let pointsAfter = pointsBefore;
+          let rank: number | null = null;
+          try {
+            // Small delay to let ELO calculation + confirmation triggers complete
+            await new Promise(r => setTimeout(r, 1500));
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (currentUser) {
+              const { data: postProfile } = await supabase.from("profiles").select("niveau_padel, points").eq("id", currentUser.id).single();
+              levelAfter = postProfile?.niveau_padel || levelBefore;
+              pointsAfter = postProfile?.points || pointsBefore;
+            }
+          } catch { /* non-blocking */ }
 
-            // Marquer le timestamp du match dans localStorage (pour le polling et cross-tab)
+          setMatchResult({ levelBefore, levelAfter, pointsBefore, pointsAfter, rank });
+
+          if (typeof window !== "undefined") {
             const matchTime = Date.now();
             localStorage.setItem('lastMatchTime', matchTime.toString());
             localStorage.setItem('matchSubmitted', 'true');
-
-            // Dispatch l'événement custom (pour les composants sur la même page)
-            const event = new CustomEvent("matchSubmitted", {
-              detail: {
-                timestamp: matchTime,
-                matchId: data.match?.id
-              }
-            });
-            window.dispatchEvent(event);
-
-            // Forcer le rechargement de toutes les pages Next.js
-            router.refresh();
-
-            // Forcer le rechargement de la page /home si elle est ouverte dans un autre onglet
-            // En utilisant un événement storage (fonctionne cross-tab)
-            setTimeout(() => {
-              localStorage.removeItem('matchSubmitted');
-            }, 100);
-
-            console.log('[MatchForm] ✅ Rechargement déclenché');
+            window.dispatchEvent(new CustomEvent("matchSubmitted", { detail: { timestamp: matchTime, matchId: data.matchId } }));
+            setTimeout(() => localStorage.removeItem('matchSubmitted'), 100);
           }
 
           setShowSuccess(true);
           setLoading(false);
-
-          // Forcer le rechargement de la page /home pour mettre à jour le classement
-          // Attendre un peu pour que le match soit bien sauvegardé en DB
-          setTimeout(() => {
-            router.refresh();
-          }, 500);
-
-          // Redirection automatique seulement si pas premier match et pas d'avertissement
-          if (matchCountAtSubmit > 0) {
-            setTimeout(() => {
-              logger.info("🔄 Redirecting to match history...");
-              router.push("/match/new?tab=history");
-            }, 2000);
-          }
+          router.refresh();
         }
 
         setLoading(false);
@@ -1044,7 +1043,7 @@ export default function MatchForm({
             <div className="text-4xl mb-4">🎾</div>
             <h3 className="text-lg font-bold text-white mb-3">Enregistre ton premier match !</h3>
             <p className="text-sm text-white/60 leading-relaxed mb-6">
-              3 joueurs anonymes ont déjà été ajoutés à la partie. Il ne te reste plus qu&apos;à remplir le score !
+              3 joueurs anonymes ont été ajoutés. Ajuste leur niveau si besoin et remplis le score !
             </p>
             <button
               onClick={() => setShowFirstMatchPopup(false)}
@@ -1081,60 +1080,66 @@ export default function MatchForm({
       {/* Notification de succès */}
       {showSuccess && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          {wasFirstMatch ? (
-            /* First match celebration */
-            <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl max-w-sm overflow-hidden">
-              {/* Confetti effect */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {[...Array(20)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-2 h-2 rounded-full animate-bounce"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      backgroundColor: ['#FFD700', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'][i % 6],
-                      animationDelay: `${Math.random() * 2}s`,
-                      animationDuration: `${1 + Math.random() * 2}s`,
-                      opacity: 0.7,
-                    }}
-                  />
-                ))}
+          <div className="relative mx-4 rounded-2xl border border-white/10 bg-[#0a1a4a] p-6 shadow-2xl max-w-sm w-full animate-in zoom-in-95 fade-in duration-300">
+            <div className="text-center">
+              {/* Ball animation */}
+              <div className="mb-5 flex justify-center">
+                <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
               </div>
-              <div className="text-center relative z-10">
-                <div className="mb-4 flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center">
-                    <Trophy size={32} className="text-white" />
+
+              <h2 className="mb-1 text-xl font-extrabold text-white">
+                {wasFirstMatch ? "Premier match enregistré !" : "Match enregistré !"}
+              </h2>
+              <p className="text-xs text-white/50 mb-5">
+                {winner === "1" ? "Victoire" : "Défaite"} — {sets.map(s => `${s.team1Score}-${s.team2Score}`).join(" / ")}
+              </p>
+
+              {/* Stats evolution */}
+              {matchResult && (
+                <div className="space-y-2.5 mb-5">
+                  {/* Level */}
+                  <div className="flex items-center justify-between rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3">
+                    <span className="text-xs text-white/50 font-medium">Niveau</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white/60">{matchResult.levelBefore.toFixed(2)}</span>
+                      <span className="text-white/30">→</span>
+                      <span className="text-sm font-bold text-white">{matchResult.levelAfter.toFixed(2)}</span>
+                      {matchResult.levelAfter !== matchResult.levelBefore && (
+                        <span className={`text-xs font-bold ${matchResult.levelAfter > matchResult.levelBefore ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {matchResult.levelAfter > matchResult.levelBefore ? '+' : ''}{(matchResult.levelAfter - matchResult.levelBefore).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Points */}
+                  <div className="flex items-center justify-between rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3">
+                    <span className="text-xs text-white/50 font-medium">Points</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white/60">{matchResult.pointsBefore}</span>
+                      <span className="text-white/30">→</span>
+                      <span className="text-sm font-bold text-white">{matchResult.pointsAfter}</span>
+                      {matchResult.pointsAfter !== matchResult.pointsBefore && (
+                        <span className="text-xs font-bold text-emerald-400">
+                          +{matchResult.pointsAfter - matchResult.pointsBefore}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <h2 className="mb-2 text-2xl font-extrabold text-gray-900">Premier match enregistré !</h2>
-                <p className="text-sm text-gray-600 mb-6">
-                  Tu es maintenant classé parmi les joueurs de PadelXP. Continue à enregistrer tes matchs pour grimper dans le classement !
-                </p>
-                <button
-                  onClick={() => {
-                    setShowSuccess(false);
-                    router.push("/club?tab=classement");
-                  }}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-400 active:scale-[0.97] transition-all shadow-lg"
-                >
-                  Voir mon classement
-                </button>
-              </div>
+              )}
+
+              <button
+                onClick={() => {
+                  setShowSuccess(false);
+                  setMatchResult(null);
+                }}
+                className="w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-400 active:scale-[0.97] transition-all"
+              >
+                Continuer
+              </button>
             </div>
-          ) : (
-            /* Normal success */
-            <div className="relative mx-4 rounded-2xl bg-white p-8 shadow-2xl">
-              <div className="text-center">
-                <div className="mb-4 flex items-center justify-center">
-                  <BadgeIconDisplay icon="🎾" size={64} className="flex-shrink-0" />
-                </div>
-                <h2 className="mb-2 text-2xl font-bold text-gray-900">Match enregistré avec succès !</h2>
-                <p className="text-sm text-gray-500">Une notification a été envoyée aux joueurs de ce match.</p>
-                <div className="mt-4 text-xs text-gray-400">Redirection vers l&apos;historique...</div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -1282,8 +1287,12 @@ export default function MatchForm({
                   <PlayerSlotSquare
                     label=""
                     player={selectedPlayers.partner}
-                    niveau_padel={selectedPlayers.partner?.type === 'user' ? selectedPlayers.partner?.niveau_padel : averageLevel}
-                    showTilde={selectedPlayers.partner?.type === 'guest'}
+                    niveau_padel={selectedPlayers.partner?.type === 'user' ? selectedPlayers.partner?.niveau_padel : (selectedPlayers.partner?.niveau_padel || averageLevel)}
+                    showTilde={selectedPlayers.partner?.type === 'guest' && selectedPlayers.partner?.display_name !== 'Joueur Anonyme'}
+                    isAnonymous={selectedPlayers.partner?.display_name === 'Joueur Anonyme'}
+                    onLevelChange={(level) => {
+                      setSelectedPlayers(prev => prev.partner ? { ...prev, partner: { ...prev.partner, niveau_padel: level } } : prev);
+                    }}
                     onClick={() => {
                       setActiveSlot('partner');
                       setIsSearchModalOpen(true);
@@ -1313,8 +1322,12 @@ export default function MatchForm({
                   <PlayerSlotSquare
                     label=""
                     player={selectedPlayers.opp1}
-                    niveau_padel={selectedPlayers.opp1?.type === 'user' ? selectedPlayers.opp1?.niveau_padel : averageLevel}
-                    showTilde={selectedPlayers.opp1?.type === 'guest'}
+                    niveau_padel={selectedPlayers.opp1?.type === 'user' ? selectedPlayers.opp1?.niveau_padel : (selectedPlayers.opp1?.niveau_padel || averageLevel)}
+                    showTilde={selectedPlayers.opp1?.type === 'guest' && selectedPlayers.opp1?.display_name !== 'Joueur Anonyme'}
+                    isAnonymous={selectedPlayers.opp1?.display_name === 'Joueur Anonyme'}
+                    onLevelChange={(level) => {
+                      setSelectedPlayers(prev => prev.opp1 ? { ...prev, opp1: { ...prev.opp1, niveau_padel: level } } : prev);
+                    }}
                     onClick={() => {
                       setActiveSlot('opp1');
                       setIsSearchModalOpen(true);
@@ -1324,8 +1337,12 @@ export default function MatchForm({
                   <PlayerSlotSquare
                     label=""
                     player={selectedPlayers.opp2}
-                    niveau_padel={selectedPlayers.opp2?.type === 'user' ? selectedPlayers.opp2?.niveau_padel : averageLevel}
-                    showTilde={selectedPlayers.opp2?.type === 'guest'}
+                    niveau_padel={selectedPlayers.opp2?.type === 'user' ? selectedPlayers.opp2?.niveau_padel : (selectedPlayers.opp2?.niveau_padel || averageLevel)}
+                    showTilde={selectedPlayers.opp2?.type === 'guest' && selectedPlayers.opp2?.display_name !== 'Joueur Anonyme'}
+                    isAnonymous={selectedPlayers.opp2?.display_name === 'Joueur Anonyme'}
+                    onLevelChange={(level) => {
+                      setSelectedPlayers(prev => prev.opp2 ? { ...prev, opp2: { ...prev.opp2, niveau_padel: level } } : prev);
+                    }}
                     onClick={() => {
                       setActiveSlot('opp2');
                       setIsSearchModalOpen(true);
@@ -1569,16 +1586,13 @@ export default function MatchForm({
                           const newScope = tab.id as 'global' | 'guest' | 'anonymous';
 
                           if (newScope === 'anonymous') {
-                            // Limite : 3 anonymes pour le 1er match, 2 ensuite
-                            const anonymousLimit = matchCount === 0 ? 3 : 2;
+                            // Limite : 3 anonymes pour tous les matchs
+                            const anonymousLimit = 3;
                             const anonymousCount = Object.values(selectedPlayers).filter(
                               (p) => p && p.display_name === 'Joueur Anonyme'
                             ).length;
                             if (anonymousCount >= anonymousLimit) {
-                              alert(anonymousLimit === 3
-                                ? "Vous avez atteint la limite de 3 joueurs anonymes pour votre premier match"
-                                : "Vous ne pouvez choisir que 2 joueurs anonymes maximum"
-                              );
+                              alert("Vous avez atteint la limite de 3 joueurs anonymes");
                               return;
                             }
                             const anonymousPlayer: PlayerSearchResult = {

@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Plus, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 
@@ -9,12 +10,20 @@ interface PlayerSlotSquareProps {
     label: string;
     onClick?: () => void;
     onRemove?: () => void;
+    onLevelChange?: (level: number) => void;
     isFixed?: boolean;
     isOwner?: boolean;
     className?: string;
     isWinner?: boolean;
     niveau_padel?: number | null;
     showTilde?: boolean;
+    isAnonymous?: boolean;
+}
+
+// Levels from 2.0 to 10.0 in 0.2 increments
+const LEVEL_OPTIONS: number[] = [];
+for (let l = 2.0; l <= 10.0; l = Math.round((l + 0.2) * 10) / 10) {
+    LEVEL_OPTIONS.push(l);
 }
 
 export default function PlayerSlotSquare({
@@ -22,15 +31,25 @@ export default function PlayerSlotSquare({
     label,
     onClick,
     onRemove,
+    onLevelChange,
     isFixed = false,
     isOwner = false,
     className = "",
     isWinner = false,
     niveau_padel,
     showTilde = false,
+    isAnonymous = false,
 }: PlayerSlotSquareProps) {
     const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
     const showGuestLabel = player?.type === 'guest' && player?.display_name !== 'Joueur Anonyme';
+    const [showLevelPicker, setShowLevelPicker] = useState(false);
+
+    const displayLevel = niveau_padel || player?.niveau_padel;
+
+    const handleLevelSelect = (level: number) => {
+        setShowLevelPicker(false);
+        onLevelChange?.(level);
+    };
 
     return (
         <div className={`relative flex flex-col items-center gap-1 ${className}`}>
@@ -89,10 +108,20 @@ export default function PlayerSlotSquare({
                             <p className={`${isFixed ? 'text-white' : 'text-[#071554]'} text-[8px] sm:text-[10px] font-black truncate uppercase leading-tight`}>
                                 {player.last_name}
                             </p>
-                            {(niveau_padel || player.niveau_padel) && (
-                                <p className={`text-[7px] sm:text-[8px] font-bold ${isFixed ? '' : 'text-blue-600'} leading-none mt-0.5`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}>
-                                    {showTilde && "~"}{(niveau_padel || player.niveau_padel)?.toFixed(1)}
-                                </p>
+                            {displayLevel && (
+                                isAnonymous && onLevelChange ? (
+                                    <div
+                                        onClick={(e) => { e.stopPropagation(); setShowLevelPicker(true); }}
+                                        className="inline-flex items-center gap-0.5 mt-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 cursor-pointer hover:bg-blue-100 active:scale-95 transition-all"
+                                    >
+                                        <span className="text-[8px] sm:text-[9px] font-bold text-blue-600">{displayLevel.toFixed(1)}</span>
+                                        <ChevronDown size={8} className="text-blue-400" />
+                                    </div>
+                                ) : (
+                                    <p className={`text-[7px] sm:text-[8px] font-bold ${isFixed ? '' : 'text-blue-600'} leading-none mt-0.5`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}>
+                                        {showTilde && "~"}{displayLevel.toFixed(1)}
+                                    </p>
+                                )
                             )}
                         </div>
                     </>
@@ -104,6 +133,35 @@ export default function PlayerSlotSquare({
                 <span className="text-[9px] sm:text-xs font-black text-white uppercase tracking-widest leading-none">
                     {label}
                 </span>
+            )}
+
+            {/* Level picker overlay */}
+            {showLevelPicker && (
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center" onClick={() => setShowLevelPicker(false)}>
+                    <div className="absolute inset-0 bg-black/60" />
+                    <div className="relative z-10 w-full max-w-xs mx-4 rounded-2xl border border-white/10 bg-[#0a1a4a] p-4 shadow-2xl animate-in zoom-in-95 fade-in duration-200" onClick={(e) => e.stopPropagation()}>
+                        <p className="text-sm font-bold text-white mb-3 text-center">Niveau du joueur</p>
+                        <div className="grid grid-cols-5 gap-1.5 max-h-[50vh] overflow-y-auto">
+                            {LEVEL_OPTIONS.map((level) => {
+                                const isSelected = displayLevel !== undefined && Math.abs(displayLevel - level) < 0.05;
+                                return (
+                                    <button
+                                        key={level}
+                                        type="button"
+                                        onClick={() => handleLevelSelect(level)}
+                                        className={`py-2 rounded-lg text-xs font-bold transition-all active:scale-95 ${
+                                            isSelected
+                                                ? 'bg-blue-500 text-white shadow-lg'
+                                                : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                        }`}
+                                    >
+                                        {level.toFixed(1)}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
