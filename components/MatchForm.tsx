@@ -1297,6 +1297,16 @@ export default function MatchForm({
           </div>
         )}
 
+        {/* Coach prompt */}
+        <div className="flex items-start gap-2.5 mb-4 max-w-sm mx-auto">
+          <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-white" />
+          </div>
+          <p className="text-[13px] text-white/60 leading-snug pt-0.5">
+            Enregistre ton match et je t&apos;analyse tout ça juste après
+          </p>
+        </div>
+
         {/* Redesigned Player Selection */}
         <div className="my-1">
           <div className="flex flex-col gap-1 max-w-sm mx-auto">
