@@ -142,8 +142,8 @@ export default function MatchForm({
   const [showSuccess, setShowSuccess] = useState(false);
   const [matchResult, setMatchResult] = useState<{
     levelBefore: number; levelAfter: number;
-    pointsBefore: number; pointsAfter: number;
-    rank: number | null;
+    pointsGained: number;
+    isWin: boolean;
   } | null>(null);
   // État pour le message d'information sur la limite de 2 matchs par jour
   // Initialiser à null pour éviter le flash, puis vérifier localStorage
@@ -550,15 +550,13 @@ export default function MatchForm({
     setErrorMessage(null);
     setLoading(true);
 
-    // Capture level/points BEFORE submission for the result popup
+    // Capture level BEFORE submission for the result popup
     let levelBefore = 0;
-    let pointsBefore = 0;
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
-        const { data: preProfile } = await supabase.from("profiles").select("niveau_padel, points").eq("id", currentUser.id).single();
+        const { data: preProfile } = await supabase.from("profiles").select("niveau_padel").eq("id", currentUser.id).single();
         levelBefore = preProfile?.niveau_padel || 0;
-        pointsBefore = preProfile?.points || 0;
       }
     } catch { /* non-blocking */ }
 
@@ -962,22 +960,21 @@ export default function MatchForm({
             successMessage += ` Boost appliqué : ${data.boostPointsInfo.before} → ${data.boostPointsInfo.after} points (+30%) !`;
           }
 
-          // Fetch updated stats for the result popup
+          // Fetch updated level for the result popup
+          const isWin = winner === "1";
+          const pointsGained = isWin ? 10 : 3;
           let levelAfter = levelBefore;
-          let pointsAfter = pointsBefore;
-          let rank: number | null = null;
           try {
-            // Small delay to let ELO calculation + confirmation triggers complete
-            await new Promise(r => setTimeout(r, 1500));
+            // Wait for ELO calculation + confirmation triggers to complete
+            await new Promise(r => setTimeout(r, 2000));
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (currentUser) {
-              const { data: postProfile } = await supabase.from("profiles").select("niveau_padel, points").eq("id", currentUser.id).single();
+              const { data: postProfile } = await supabase.from("profiles").select("niveau_padel").eq("id", currentUser.id).single();
               levelAfter = postProfile?.niveau_padel || levelBefore;
-              pointsAfter = postProfile?.points || pointsBefore;
             }
           } catch { /* non-blocking */ }
 
-          setMatchResult({ levelBefore, levelAfter, pointsBefore, pointsAfter, rank });
+          setMatchResult({ levelBefore, levelAfter, pointsGained, isWin });
 
           if (typeof window !== "undefined") {
             const matchTime = Date.now();
@@ -1119,17 +1116,10 @@ export default function MatchForm({
 
                   {/* Points */}
                   <div className="flex items-center justify-between rounded-xl bg-white/[0.06] border border-white/10 px-4 py-3">
-                    <span className="text-xs text-white/50 font-medium">Points</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-white/60">{matchResult.pointsBefore}</span>
-                      <span className="text-white/30">→</span>
-                      <span className="text-sm font-bold text-white">{matchResult.pointsAfter}</span>
-                      {matchResult.pointsAfter !== matchResult.pointsBefore && (
-                        <span className="text-xs font-bold text-emerald-400">
-                          +{matchResult.pointsAfter - matchResult.pointsBefore}
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-xs text-white/50 font-medium">Classement</span>
+                    <span className="text-sm font-bold text-emerald-400">
+                      +{matchResult.pointsGained} pts
+                    </span>
                   </div>
                 </div>
               )}

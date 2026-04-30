@@ -514,7 +514,7 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
                 whileTap={{ scale: 0.95 }}
                 onClick={async () => {
                   if (!isSaved) await handleSaveResult();
-                  const msg = `Je viens d'évaluer mon niveau, il est de ${result.niveau}/10. Fais-moi un retour complet sur mon profil basé sur mes réponses au questionnaire avec mes points forts et mes axes d'amélioration. Pas de conseils techniques, tactiques ou mentaux, juste les points forts et axes d'amélioration. Termine en me proposant d'enregistrer mon premier match avec [ACTION:match].`;
+                  const msg = `Je viens d'évaluer mon niveau, il est de ${result.niveau}/10. Fais-moi un retour complet sur mon profil basé sur mes réponses au questionnaire avec mes points forts et mes axes d'amélioration.`;
                   router.push(`/coach?msg=${encodeURIComponent(msg)}`);
                 }}
                 className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-white/10 text-white/80 hover:bg-white/15 transition-all border border-white/10"

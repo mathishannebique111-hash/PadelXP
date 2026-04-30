@@ -15,7 +15,10 @@ function getAdmin() {
  * Send the coach welcome message when onboarding is completed (first match registered).
  * Creates a new conversation "Bienvenue" with an intro + debrief questions.
  */
-export async function sendCoachWelcomeAfterFirstMatch(userId: string): Promise<void> {
+export async function sendCoachWelcomeAfterFirstMatch(
+  userId: string,
+  matchDetails?: { score: string; isWin: boolean }
+): Promise<void> {
   const admin = getAdmin();
 
   try {
@@ -52,9 +55,11 @@ export async function sendCoachWelcomeAfterFirstMatch(userId: string): Promise<v
       return;
     }
 
-    const message = `Salut ${firstName} ! Je suis ${coachName}, ton coach personnel.
+    const resultText = matchDetails
+      ? `${matchDetails.isWin ? "Victoire" : "Défaite"} ${matchDetails.score} — a`
+      : "A";
 
-Analysons ton premier match ! Comment tu t'es senti sur le terrain ?
+    const message = `${matchDetails?.isWin ? "🎉" : "💪"} ${firstName}, premier match enregistré ! ${resultText}nalysons ça ensemble.
 
 - Comment était ton **service** aujourd'hui ?
 - Tes **volées** au filet, tu les sentais bien ?

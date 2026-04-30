@@ -1004,65 +1004,73 @@ export async function POST(req: Request) {
     }
 
 
-    // === COACH IA : Notification debrief post-match (non-bloquant) ===
+    // === COACH IA : Message post-match (non-bloquant) ===
     try {
-      const { createServerNotification } = await import("@/lib/notifications/send-push");
       const playerFirstName = creatorProfile?.first_name
         || (creatorProfile?.display_name ? creatorProfile.display_name.split(/\s+/)[0] : "Joueur");
-
-      await createServerNotification(
-        user.id,
-        "coach_debrief",
-        "Ton debrief post-match est prêt",
-        `${playerFirstName}, 30 secondes pour améliorer ton prochain match`,
-        { type: "coach_debrief", match_id: match.id, path: "/coach" }
-      );
-
-      // Insérer un message du coach dans la conversation
-      const { sendCoachAutoMessage } = await import("@/lib/coach/auto-message");
-
       const playerTeamNum = participants.find(p => p.user_id === user.id)?.team;
       const isWinner = playerTeamNum === 1
         ? winner_team_id === team1_id
         : winner_team_id === team2_id;
+      const matchScore = score_details || `${score_team1}-${score_team2}`;
 
-      const teammates = participants.filter(p => p.team === playerTeamNum && p.user_id !== user.id && p.player_type === "user");
-      const opponents = participants.filter(p => p.team !== playerTeamNum && p.player_type === "user");
+      // Check if this is the first match
+      const { data: profileCheck } = await supabaseAdmin
+        .from("profiles")
+        .select("matchs_joues")
+        .eq("id", user.id)
+        .single();
+      const isFirstMatch = (profileCheck?.matchs_joues ?? 0) <= 1;
 
-      // Récupérer les noms des autres joueurs
-      const otherIds = [...teammates, ...opponents].map(p => p.user_id).filter(id => id !== "00000000-0000-0000-0000-000000000000");
-      let partnerName: string | null = null;
-      const opponentNames: string[] = [];
+      if (isFirstMatch) {
+        // First match → welcome message with score (single message, no debrief duplicate)
+        const { sendCoachWelcomeAfterFirstMatch } = await import("@/lib/coach/welcome-message");
+        await sendCoachWelcomeAfterFirstMatch(user.id, { score: matchScore, isWin: isWinner });
+      } else {
+        // Subsequent matches → standard debrief
+        const { sendCoachAutoMessage } = await import("@/lib/coach/auto-message");
+        const { createServerNotification } = await import("@/lib/notifications/send-push");
 
-      if (otherIds.length > 0) {
-        const { data: otherProfiles } = await supabaseAdmin
-          .from("profiles")
-          .select("id, first_name, display_name")
-          .in("id", otherIds);
+        await createServerNotification(
+          user.id,
+          "coach_debrief",
+          "Ton debrief post-match est prêt",
+          `${playerFirstName}, 30 secondes pour améliorer ton prochain match`,
+          { type: "coach_debrief", match_id: match.id, path: "/coach" }
+        );
 
-        const nameOf = (id: string) => {
-          const p = otherProfiles?.find((pr: any) => pr.id === id);
-          return p?.first_name || (p?.display_name ? p.display_name.split(/\s+/)[0] : null);
-        };
+        const teammates = participants.filter(p => p.team === playerTeamNum && p.user_id !== user.id && p.player_type === "user");
+        const opponents = participants.filter(p => p.team !== playerTeamNum && p.player_type === "user");
+        const otherIds = [...teammates, ...opponents].map(p => p.user_id).filter(id => id !== "00000000-0000-0000-0000-000000000000");
+        let partnerName: string | null = null;
+        const opponentNames: string[] = [];
 
-        if (teammates.length > 0) partnerName = nameOf(teammates[0].user_id) || null;
-        for (const o of opponents) {
-          opponentNames.push(nameOf(o.user_id) || "Adversaire");
+        if (otherIds.length > 0) {
+          const { data: otherProfiles } = await supabaseAdmin
+            .from("profiles")
+            .select("id, first_name, display_name")
+            .in("id", otherIds);
+          const nameOf = (id: string) => {
+            const p = otherProfiles?.find((pr: any) => pr.id === id);
+            return p?.first_name || (p?.display_name ? p.display_name.split(/\s+/)[0] : null);
+          };
+          if (teammates.length > 0) partnerName = nameOf(teammates[0].user_id) || null;
+          for (const o of opponents) opponentNames.push(nameOf(o.user_id) || "Adversaire");
         }
+
+        await sendCoachAutoMessage(user.id, {
+          matchId: match.id,
+          score: matchScore,
+          isWin: isWinner,
+          partnerName,
+          opponentNames,
+          playerFirstName,
+        });
       }
 
-      await sendCoachAutoMessage(user.id, {
-        matchId: match.id,
-        score: score_details || `${score_team1}-${score_team2}`,
-        isWin: isWinner,
-        partnerName,
-        opponentNames,
-        playerFirstName,
-      });
-
-      logger.info("Coach debrief notification + auto-message sent on match submit", { matchId: match.id });
+      logger.info("Coach post-match message sent", { matchId: match.id, isFirstMatch });
     } catch (coachErr) {
-      logger.error("Coach debrief on submit error (non-blocking)", { error: (coachErr as Error).message });
+      logger.error("Coach post-match error (non-blocking)", { error: (coachErr as Error).message });
     }
 
     // === BADGE CHECK (non-blocking) ===
@@ -1071,22 +1079,6 @@ export async function POST(req: Request) {
       await checkAndNotifyNewBadges(user.id);
     } catch (badgeErr) {
       logger.error("Badge check on submit error (non-blocking)", { error: (badgeErr as Error).message });
-    }
-
-    // === COACH WELCOME after first match (non-blocking) ===
-    try {
-      const { data: profileCheck } = await supabaseAdmin
-        .from("profiles")
-        .select("matchs_joues")
-        .eq("id", user.id)
-        .single();
-      // matchs_joues is updated by trigger AFTER this insert, so if it's 0 or null now, this is the first match
-      if ((profileCheck?.matchs_joues ?? 0) <= 1) {
-        const { sendCoachWelcomeAfterFirstMatch } = await import("@/lib/coach/welcome-message");
-        await sendCoachWelcomeAfterFirstMatch(user.id);
-      }
-    } catch (welcomeErr) {
-      logger.error("Coach welcome error (non-blocking)", { error: (welcomeErr as Error).message });
     }
 
     logger.info("Match submission completed successfully", {

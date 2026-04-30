@@ -119,7 +119,7 @@ export default function PlayerSlotSquare({
                                     </div>
                                 ) : (
                                     <p className={`text-[7px] sm:text-[8px] font-bold ${isFixed ? '' : 'text-blue-600'} leading-none mt-0.5`} style={isFixed ? { color: 'rgb(var(--theme-secondary-accent))' } : {}}>
-                                        {showTilde && "~"}{displayLevel.toFixed(1)}
+                                        {showTilde && "~"}{isFixed ? displayLevel.toFixed(2) : displayLevel.toFixed(1)}
                                     </p>
                                 )
                             )}
