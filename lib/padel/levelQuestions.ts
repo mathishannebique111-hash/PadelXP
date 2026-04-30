@@ -52,7 +52,7 @@ export const PADEL_QUESTIONS: Question[] = [
   {
     id: 3,
     category: "technique",
-    question: "Qualité de votre service ?",
+    question: "Qualité de ton service ?",
     options: [
       { label: "Basique, souvent dans le filet", points: 1 },
       { label: "Régulier mais prévisible", points: 3 },
@@ -100,7 +100,7 @@ export const PADEL_QUESTIONS: Question[] = [
   {
     id: 7,
     category: "technique",
-    question: "Quel est votre coup le plus fiable sous pression ?",
+    question: "Quel est ton coup le plus fiable sous pression ?",
     options: [
       { label: "Aucun coup particulier", points: 1 },
       { label: "Le coup droit à plat", points: 3 },
@@ -173,7 +173,7 @@ export const PADEL_QUESTIONS: Question[] = [
   {
     id: 13,
     category: "tactique",
-    question: "Votre ratio Risque / Réussite ?",
+    question: "Ton ratio Risque / Réussite ?",
     options: [
       { label: "Je tente le coup gagnant dès que je touche la balle (Beaucoup de fautes)", points: 2 },
       { label: "Je n'ose pas attaquer, je renvoie juste la balle (Jeu passif)", points: 4 },
@@ -187,7 +187,7 @@ export const PADEL_QUESTIONS: Question[] = [
   {
     id: 14,
     category: "experience",
-    question: "Quel est votre passé sportif (Sports de raquette) ?",
+    question: "Quel est ton passé sportif (Sports de raquette) ?",
     options: [
       { label: "Aucun ou sport collectif", points: 0 },
       { label: "Badminton / Squash / Tennis de Table (Loisir)", points: 2 },
@@ -239,7 +239,7 @@ export const PADEL_QUESTIONS: Question[] = [
   {
     id: 18,
     category: "experience",
-    question: "Votre classement FFT (Estimation ou Réel) ?",
+    question: "Ton classement FFT (Estimation ou Réel) ?",
     options: [
       { label: "Non classé / Débutant", points: 0 },
       { label: "Au-delà de la 20 000ème place", points: 3 },

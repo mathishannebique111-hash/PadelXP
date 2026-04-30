@@ -192,13 +192,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                   </div>
                 )}
 
-              <button
-                type="button"
-                onClick={() => setShowWizard(true)}
-                className="w-full px-4 py-3 text-[13px] rounded-xl border border-white/10 bg-white/5 text-white/50 font-bold hover:bg-white/10 transition-all active:scale-95"
-              >
-                REFAIRE L'ÉVALUATION
-              </button>
+              {/* Bouton refaire l'évaluation — caché temporairement */}
             </div>
           </div>
         </div>

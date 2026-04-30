@@ -523,16 +523,6 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               )}
             </motion.button>
 
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.95 }}
-              onClick={handleRetake}
-              className="w-full sm:w-auto px-6 py-4 rounded-xl border border-white/10 text-white/60 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-white/5 transition-colors"
-            >
-              <RefreshCw size={14} />
-              <span>Refaire</span>
-            </motion.button>
-
             {isSaved && result && (
               <motion.button
                 type="button"

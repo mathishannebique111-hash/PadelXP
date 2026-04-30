@@ -1302,7 +1302,7 @@ export default function MatchForm({
 
         {/* Coach prompt */}
         <p className="text-[13px] text-white/40 text-center mb-4 max-w-sm mx-auto">
-          <span className="text-white/60 font-semibold">{selfProfile?.first_name || "Hey"}</span>, enregistre ton match, je t&apos;analyse tout ça juste après
+          <span className="text-white/60 font-semibold">{selfProfile?.first_name || "Hey"}</span>, enregistre ton match et je l&apos;analyse !
         </p>
 
         {/* Redesigned Player Selection */}
@@ -1389,10 +1389,7 @@ export default function MatchForm({
               </div>
             </div>
           </div>
-          {/* Note explicative très petite */}
-          <p className="mt-1 text-center text-[7px] italic font-bold" style={{ color: isClub ? 'rgb(var(--theme-accent))' : 'rgba(255, 255, 255, 0.4)' }}>
-            *Niveau des invités basé sur la moyenne des matchs.
-          </p>
+          {/* Note explicative — cachée temporairement */}
         </div>
 
         <div className="space-y-2">
