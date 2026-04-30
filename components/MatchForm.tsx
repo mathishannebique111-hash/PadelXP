@@ -14,6 +14,7 @@ import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search, Sparkle
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
 import PlayerSlotSquare from "./PlayerSlotSquare";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { getCoachName } from "@/lib/coach/coach-names";
 import { createPortal } from "react-dom";
 import LevelAssessmentWizard from "./padel-level/LevelAssessmentWizard";
 import MatchTabBlockingOverlay from "./MatchTabBlockingOverlay";
@@ -46,6 +47,7 @@ export default function MatchForm({
 }) {
   const router = useRouter();
   const { refreshOnboarding, markFirstMatchPlayed } = useOnboarding();
+  const [coachName, setCoachName] = useState("Pablo");
   const [matchCount, setMatchCount] = useState(initialMatchCount);
   const matchCountChecked = useRef(false);
   const searchParams = useSearchParams();
@@ -62,6 +64,7 @@ export default function MatchForm({
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        setCoachName(getCoachName(user.id));
         const { count } = await supabase
           .from("match_participants")
           .select("id", { count: "exact", head: true })
@@ -1298,14 +1301,9 @@ export default function MatchForm({
         )}
 
         {/* Coach prompt */}
-        <div className="flex items-start gap-2.5 mb-4 max-w-sm mx-auto">
-          <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
-          </div>
-          <p className="text-[13px] text-white/60 leading-snug pt-0.5">
-            Enregistre ton match et je t&apos;analyse tout ça juste après
-          </p>
-        </div>
+        <p className="text-[13px] text-white/40 text-center mb-4 max-w-sm mx-auto">
+          <span className="text-white/60 font-semibold">{coachName}</span> — Enregistre ton match, je t&apos;analyse tout ça juste après
+        </p>
 
         {/* Redesigned Player Selection */}
         <div className="my-1">

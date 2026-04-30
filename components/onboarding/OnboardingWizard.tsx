@@ -28,6 +28,7 @@ import {
 import { PushNotificationsService } from "@/lib/notifications/push-notifications";
 import { createClient } from "@/lib/supabase/client";
 import { capitalizeFullName } from "@/lib/utils/name-utils";
+import { getCoachName } from "@/lib/coach/coach-names";
 
 type OnboardingAnswers = {
   level: "beginner" | "leisure" | "regular" | "competition" | null;
@@ -54,8 +55,7 @@ interface Question {
 const questions: Question[] = [
   {
     id: 0,
-    title: "Quel est votre niveau de pratique ?",
-    subtitle: "Aidez-nous à mieux vous connaître",
+    title: "Quel est ton niveau de pratique ?",
     options: [
       {
         value: "beginner",
@@ -85,8 +85,7 @@ const questions: Question[] = [
   },
   {
     id: 1,
-    title: "Quel côté préférez-vous ?",
-    subtitle: "Votre position favorite sur le terrain",
+    title: "Quel côté tu préfères ?",
     options: [
       {
         value: "left",
@@ -107,8 +106,7 @@ const questions: Question[] = [
   },
   {
     id: 2,
-    title: "Quelle est votre main forte ?",
-    subtitle: "Pour adapter nos recommandations",
+    title: "Quelle est ta main forte ?",
     options: [
       {
         value: "right",
@@ -124,8 +122,7 @@ const questions: Question[] = [
   },
   {
     id: 3,
-    title: "À quelle fréquence jouez-vous ?",
-    subtitle: "Pour personnaliser votre expérience",
+    title: "À quelle fréquence tu joues ?",
     options: [
       {
         value: "monthly",
@@ -151,8 +148,7 @@ const questions: Question[] = [
   },
   {
     id: 4,
-    title: "Quel est votre coup signature ?",
-    subtitle: "Votre spécialité sur le terrain",
+    title: "Quel est ton coup signature ?",
     options: [
       {
         value: "smash",
@@ -192,6 +188,18 @@ export default function OnboardingWizard() {
     frequency: null,
     best_shot: null,
   });
+
+  const [coachName, setCoachName] = useState("Pablo");
+
+  // Fetch coach name from userId
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) setCoachName(getCoachName(user.id));
+      } catch { /* fallback to Pablo */ }
+    })();
+  }, [supabase]);
 
   // Nouvel état pour gérer l'affichage des étapes spéciales
   const [showIdentityStep, setShowIdentityStep] = useState(false);
@@ -436,16 +444,14 @@ export default function OnboardingWizard() {
               transition={{ duration: 0.3 }}
               className="w-full max-w-md space-y-8"
             >
-              {/* Titre et sous-titre */}
-              <div className="text-center space-y-2">
+              {/* Coach intro + question */}
+              <div className="text-center space-y-3">
+                <p className="text-sm text-white/50">
+                  {coachName}, ton coach IA, va t&apos;accompagner dans ton aventure padel
+                </p>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">
                   {question.title}
                 </h1>
-                {question.subtitle && (
-                  <p className="text-sm sm:text-base text-white/70">
-                    {question.subtitle}
-                  </p>
-                )}
               </div>
 
               {/* Options */}

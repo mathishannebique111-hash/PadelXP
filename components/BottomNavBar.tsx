@@ -165,7 +165,7 @@ export default function BottomNavBar() {
     // Update active index
     useEffect(() => {
         let newIndex = -1; // Default to no active tab
-        if (pathname === '/home' || pathname?.startsWith('/home')) newIndex = 0;
+        if (pathname === '/' || pathname === '/home' || pathname?.startsWith('/home')) newIndex = 0;
         else if (pathname === '/match/new' || pathname?.startsWith('/match')) newIndex = 1;
         else if (pathname === '/club' || pathname?.startsWith('/club')) newIndex = 2;
         else if (pathname === '/coach' || pathname?.startsWith('/coach')) newIndex = 3;
