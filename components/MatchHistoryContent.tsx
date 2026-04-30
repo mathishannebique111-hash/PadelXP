@@ -3,8 +3,9 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import PendingMatchesSection from "@/components/PendingMatchesSection";
+import MatchDebriefButton from "@/components/MatchDebriefButton";
 import { logger } from '@/lib/logger';
-import { Trophy, Check, X, MapPin } from "lucide-react";
+import { Trophy, Check, X, MapPin, Sparkles } from "lucide-react";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,11 +34,12 @@ export default async function MatchHistoryContent() {
   // Récupérer le club_id et le statut premium de l'utilisateur
   const { data: userProfile } = await supabase
     .from("profiles")
-    .select("club_id, is_premium")
+    .select("club_id, is_premium, first_name, display_name")
     .eq("id", user.id)
     .maybeSingle();
 
   const isPremium = userProfile?.is_premium || false;
+  const playerFirstName = userProfile?.first_name || userProfile?.display_name?.split(' ')[0] || "Joueur";
   let userClubId = userProfile?.club_id || null;
 
   if (!userClubId) {
@@ -226,9 +228,17 @@ export default async function MatchHistoryContent() {
 
       <div className="space-y-4 pb-12">
         {finalMatches.length > 0 && (
-          <h3 className="text-base font-semibold text-white ml-1 mb-1">
-            Matchs validés
-          </h3>
+          <>
+            <h3 className="text-base font-semibold text-white ml-1 mb-1">
+              Matchs validés
+            </h3>
+            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-blue-500/[0.06] border border-blue-400/15">
+              <Sparkles size={14} className="text-blue-400 flex-shrink-0" />
+              <p className="text-[12px] text-white/50">
+                <span className="text-white/70 font-medium">{playerFirstName}</span>, clique sur un match pour le débriefer avec ton coach
+              </p>
+            </div>
+          </>
         )}
         {finalMatches.map((match: any) => {
           const participants = participantsByMatch[match.id] || [];
@@ -357,6 +367,12 @@ export default async function MatchHistoryContent() {
                   </div>
                 </div>
               )}
+
+              {/* Bouton débriefer */}
+              <MatchDebriefButton
+                score={match.score_details || `${match.score_team1}-${match.score_team2}`}
+                isWin={won}
+              />
             </div>
           );
         })}

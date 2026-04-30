@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Share2, Lightbulb, ArrowRight } from "lucide-react";
+import { Share2, Sparkles } from "lucide-react";
 import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
 import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 import { PlayerPartnerCard } from "@/components/mobile/PlayerPartnerCard";
@@ -165,34 +165,13 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
                 </div>
               )}
 
-              {profile.niveau_recommendations &&
-                Array.isArray(profile.niveau_recommendations) &&
-                profile.niveau_recommendations.length > 0 && (
-                  <div className="bg-slate-900/40 rounded-xl p-3 sm:p-4">
-                    <h4 className="text-xs sm:text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                      <Lightbulb size={16} className="text-white" />
-                      Recommandations
-                    </h4>
-                    <ul className="space-y-1.5">
-                      {profile.niveau_recommendations.map(
-                        (rec: string, i: number) => (
-                          <li
-                            key={i}
-                            className="text-[11px] sm:text-xs text-gray-300 flex items-start gap-1.5"
-                          >
-                            <ArrowRight
-                              size={12}
-                              className="flex-shrink-0 mt-0.5" style={{ color: 'rgb(var(--theme-secondary-accent))' }}
-                            />
-                            <span>{rec}</span>
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                )}
-
-              {/* Bouton refaire l'évaluation — caché temporairement */}
+              <button
+                onClick={() => router.push(`/coach?msg=${encodeURIComponent("Tu as besoin de conseils ? Dis-moi tout !")}`)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold bg-white/[0.06] border border-white/10 text-white/70 hover:bg-white/10 transition-all active:scale-[0.97]"
+              >
+                <Sparkles size={14} />
+                Demander des conseils
+              </button>
             </div>
           </div>
         </div>

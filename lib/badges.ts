@@ -90,3 +90,37 @@ export function getBadges(stats: PlayerStats): Badge[] {
   return result;
 }
 
+/** Returns the easiest next badge to unlock based on current stats */
+export function getNextBadge(stats: PlayerStats): { badge: Badge; hint: string } | null {
+  const { wins, losses, matches, points, streak } = stats;
+  const obtained = getBadges(stats);
+  const obtainedTitles = new Set(obtained.map(b => b.title));
+
+  // Candidates sorted by proximity (easiest first)
+  const candidates: { badge: Badge; hint: string; distance: number }[] = [];
+
+  if (!obtainedTitles.has("Première victoire")) {
+    candidates.push({ badge: ALL_BADGES[0], hint: "Gagne ton premier match", distance: 1 });
+  }
+  if (!obtainedTitles.has("Série de 3")) {
+    candidates.push({ badge: ALL_BADGES[1], hint: `Encore ${Math.max(0, 3 - streak)} victoire${3 - streak > 1 ? "s" : ""} d'affilée`, distance: 3 - streak });
+  }
+  if (!obtainedTitles.has("Meilleur scoreur") && obtainedTitles.has("Première victoire")) {
+    candidates.push({ badge: ALL_BADGES[4], hint: `${100 - points} points restants`, distance: 100 - points });
+  }
+  if (!obtainedTitles.has("En progression") && obtainedTitles.has("Première victoire")) {
+    const diff = wins - losses;
+    candidates.push({ badge: ALL_BADGES[8], hint: `${5 - diff} victoire${5 - diff > 1 ? "s" : ""} d'avance à prendre`, distance: 5 - diff });
+  }
+  if (!obtainedTitles.has("Marathonien") && matches < 50) {
+    candidates.push({ badge: ALL_BADGES[3], hint: `${50 - matches} matchs restants`, distance: 50 - matches });
+  }
+  if (!obtainedTitles.has("Série de 5") && obtainedTitles.has("Série de 3")) {
+    candidates.push({ badge: ALL_BADGES[2], hint: `Encore ${Math.max(0, 5 - streak)} victoire${5 - streak > 1 ? "s" : ""} d'affilée`, distance: 5 - streak });
+  }
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => a.distance - b.distance);
+  return { badge: candidates[0].badge, hint: candidates[0].hint };
+}
+

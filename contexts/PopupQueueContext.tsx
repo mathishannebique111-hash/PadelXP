@@ -11,6 +11,8 @@ export interface BadgePopupData {
   title: string;
   description: string;
   badgeId: string;
+  nextBadgeTitle?: string;
+  nextBadgeHint?: string;
 }
 
 export interface LevelUpPopupData {
