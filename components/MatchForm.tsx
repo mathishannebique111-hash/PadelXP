@@ -1146,9 +1146,7 @@ export default function MatchForm({
                   onClick={() => {
                     setShowSuccess(false);
                     setMatchResult(null);
-                    const score = sets.map(s => `${s.team1Score}-${s.team2Score}`).join(" / ");
-                    const result = winner === "1" ? "gagné" : "perdu";
-                    router.push(`/coach?msg=${encodeURIComponent(`J'ai ${result} mon match ${score}. Analyse mon match et donne-moi des conseils pour progresser.`)}`);
+                    router.push("/coach");
                   }}
                   className={`w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2 ${wasFirstMatch ? 'bg-white/10 text-white/80 hover:bg-white/15' : 'bg-blue-500 text-white hover:bg-blue-400'}`}
                 >
