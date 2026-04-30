@@ -596,7 +596,7 @@ export default function OnboardingWizard() {
             >
               <div className="text-center space-y-2">
                 {firstName.trim() && (
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-8">
                     Enchanté {firstName.trim()} !
                   </h1>
                 )}
