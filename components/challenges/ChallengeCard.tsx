@@ -129,6 +129,8 @@ export default function ChallengeCard({ challenge, isPremiumUser = false, onRewa
         setRewardValue(data.rewardValue);
         setShowCongrats(true);
         window.dispatchEvent(new CustomEvent('challengeRewardClaimed'));
+        // Refresh server components to update points in PlayerSummary/leaderboard immediately
+        router.refresh();
 
         // Masquer le pop-up après 8 secondes (mais peut être fermé manuellement avant)
         const timeout = setTimeout(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Rocket, ChevronRight, Gift, Check, X } from "lucide-react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import OnboardingStepsPopup from "./OnboardingStepsPopup";
@@ -12,6 +13,7 @@ const STEP_LABELS: Record<number, string> = {
 
 export default function OnboardingProgressBar() {
   const { isComplete, currentStep, steps, markRewardClaimed } = useOnboarding();
+  const router = useRouter();
   const [showPopup, setShowPopup] = useState(false);
   const [showRewardPopup, setShowRewardPopup] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -44,6 +46,8 @@ export default function OnboardingProgressBar() {
       if (res.ok) {
         markRewardClaimed();
         setShowRewardPopup(false);
+        // Refresh server components to update points in PlayerSummary/leaderboard
+        router.refresh();
       } else {
         console.error("[OnboardingProgressBar] Reward API failed", res.status);
       }

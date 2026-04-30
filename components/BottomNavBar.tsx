@@ -242,14 +242,14 @@ export default function BottomNavBar() {
                                 // Ne pas effacer les badges ici, on laisse les pages gérer le "vu" par onglet
                             }}
                         >
-                            <div className="relative flex flex-col items-center" style={{ color: '#000000' }}>
+                            <div className="relative flex flex-col items-center transition-all duration-200" style={{ color: isActive ? 'rgb(var(--theme-accent))' : 'rgba(0,0,0,0.45)' }}>
                                 {item.icon}
                                 {showBadge && (
                                     <span className="absolute -top-1 -right-3 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
                                         {badgeCount > 9 ? '9+' : badgeCount}
                                     </span>
                                 )}
-                                <span className={`text-[9px] font-semibold mt-0.5 transition-all duration-200 ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+                                <span className={`text-[9px] mt-0.5 transition-all duration-200 ${isActive ? 'font-extrabold' : 'font-medium'}`}>
                                     {item.label}
                                 </span>
                             </div>
