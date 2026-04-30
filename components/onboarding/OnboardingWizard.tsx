@@ -540,10 +540,10 @@ export default function OnboardingWizard() {
             >
               <div className="text-center space-y-2">
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                  Comment vous appelez-vous ?
+                  Comment tu t&apos;appelles ?
                 </h1>
                 <p className="text-sm sm:text-base text-white/70">
-                  Pour que vos partenaires puissent vous reconnaître
+                  Pour que tes partenaires puissent te reconnaître
                 </p>
               </div>
 
@@ -594,11 +594,16 @@ export default function OnboardingWizard() {
               className="w-full max-w-md space-y-8"
             >
               <div className="text-center space-y-2">
+                {firstName.trim() && (
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                    Enchanté {firstName.trim()} !
+                  </h1>
+                )}
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                  Où jouez-vous ?
+                  Où joues-tu ?
                 </h1>
                 <p className="text-sm sm:text-base text-white/70">
-                  Pour vous classer parmi les joueurs de votre zone
+                  Pour te classer parmi les joueurs de ta zone
                 </p>
               </div>
 
