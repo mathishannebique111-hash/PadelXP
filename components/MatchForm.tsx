@@ -10,7 +10,7 @@ import type { PlayerSearchResult } from "@/lib/utils/player-utils";
 import BadgeIconDisplay from "./BadgeIconDisplay";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 import { logger } from '@/lib/logger';
-import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search } from "lucide-react";
+import { Trophy, Zap, Mail, Globe, ChevronDown, MapPin, X, Plus, Search, Sparkles } from "lucide-react";
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
 import PlayerSlotSquare from "./PlayerSlotSquare";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -1129,15 +1129,44 @@ export default function MatchForm({
                 </div>
               )}
 
-              <button
-                onClick={() => {
-                  setShowSuccess(false);
-                  setMatchResult(null);
-                }}
-                className="w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-400 active:scale-[0.97] transition-all"
-              >
-                Continuer
-              </button>
+              <div className="space-y-2">
+                {wasFirstMatch && (
+                  <button
+                    onClick={() => {
+                      setShowSuccess(false);
+                      setMatchResult(null);
+                      router.push("/club?tab=classement");
+                    }}
+                    className="w-full py-3 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-400 active:scale-[0.97] transition-all"
+                  >
+                    Voir mon classement
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setShowSuccess(false);
+                    setMatchResult(null);
+                    const score = sets.map(s => `${s.team1Score}-${s.team2Score}`).join(" / ");
+                    const result = winner === "1" ? "gagné" : "perdu";
+                    router.push(`/coach?msg=${encodeURIComponent(`J'ai ${result} mon match ${score}. Analyse mon match et donne-moi des conseils pour progresser.`)}`);
+                  }}
+                  className={`w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2 ${wasFirstMatch ? 'bg-white/10 text-white/80 hover:bg-white/15' : 'bg-blue-500 text-white hover:bg-blue-400'}`}
+                >
+                  <Sparkles size={16} />
+                  Analyser avec le coach
+                </button>
+                {!wasFirstMatch && (
+                  <button
+                    onClick={() => {
+                      setShowSuccess(false);
+                      setMatchResult(null);
+                    }}
+                    className="w-full py-2.5 rounded-xl text-sm text-white/40 hover:text-white/60 transition-all"
+                  >
+                    Continuer
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

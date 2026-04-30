@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Check, Save, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Save, RefreshCw, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   PADEL_QUESTIONS,
   CATEGORY_INFO,
@@ -25,6 +26,7 @@ interface Props {
 
 export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart = false }: Props) {
   const supabase = createClient();
+  const router = useRouter();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [hasStarted, setHasStarted] = useState(forceStart);
   const [responses, setResponses] = useState<
@@ -520,6 +522,25 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               <RefreshCw size={14} />
               <span>Refaire</span>
             </motion.button>
+
+            {isSaved && result && (
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  const strengths = result.strengths?.join(", ") || "";
+                  const weaknesses = result.weaknesses?.join(", ") || "";
+                  const msg = `Mon niveau vient d'être évalué à ${result.niveau}/10. Points forts : ${strengths}. Axes d'amélioration : ${weaknesses}. Fais-moi un retour complet sur mon profil avec mes points forts, axes d'amélioration, et des conseils technique, tactique et mental. Propose-moi ensuite d'aller enregistrer mon premier match.`;
+                  router.push(`/coach?msg=${encodeURIComponent(msg)}`);
+                }}
+                className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-white/10 text-white/80 hover:bg-white/15 transition-all border border-white/10"
+              >
+                <Sparkles size={16} />
+                Analyser mon niveau avec le coach
+              </motion.button>
+            )}
           </div>
         )}
       </div>

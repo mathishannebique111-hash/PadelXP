@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import CoachChat from "./CoachChat";
 import CoachPageTabs from "./CoachPageTabs";
@@ -18,6 +19,20 @@ export default function CoachPageWrapper({ userId, coachName }: { userId: string
   const [activeTab, setActiveTab] = useState<"coach" | "oracle">("coach");
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const tabRef = useRef<{ setTab: (tab: "coach" | "oracle") => void }>(null);
+  const searchParams = useSearchParams();
+  const urlMsgConsumed = useRef(false);
+
+  // Read ?msg= from URL and set as pending message (one-time)
+  useEffect(() => {
+    if (urlMsgConsumed.current) return;
+    const msg = searchParams.get("msg");
+    if (msg) {
+      urlMsgConsumed.current = true;
+      setPendingMessage(msg);
+      // Clean URL without reload
+      window.history.replaceState(null, '', '/coach');
+    }
+  }, [searchParams]);
 
   // Called by OracleTab when user clicks "Demander au coach"
   const handleAskCoach = useCallback((message: string) => {

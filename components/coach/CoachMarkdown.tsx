@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { Swords } from "lucide-react";
 
 /**
  * Rendu markdown léger pour les réponses du coach IA.
@@ -122,6 +124,22 @@ export default function CoachMarkdown({ content }: { content: string }) {
         listBuffer = { type: "ol", items: [] };
       }
       listBuffer.items.push(inlineFormat(itemText));
+      continue;
+    }
+
+    // Action button: [ACTION:match] → clickable button to register a match
+    if (trimmed.includes("[ACTION:match]")) {
+      flushList();
+      elements.push(
+        <Link
+          key={key++}
+          href="/match/new?tab=record"
+          className="flex items-center justify-center gap-2 w-full py-3 mt-2 mb-1 rounded-xl font-bold text-sm bg-blue-500 hover:bg-blue-400 text-white active:scale-[0.97] transition-all"
+        >
+          <Swords size={16} />
+          Enregistrer mon premier match
+        </Link>
+      );
       continue;
     }
 
