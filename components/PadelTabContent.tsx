@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Share2, Sparkles } from "lucide-react";
+import { Share2, Sparkles, Lightbulb } from "lucide-react";
 import LevelAssessmentWizard from "@/components/padel-level/LevelAssessmentWizard";
 import PadelProfileSection from "@/components/onboarding/PadelProfileSection";
 import { PlayerPartnerCard } from "@/components/mobile/PlayerPartnerCard";
