@@ -29,14 +29,19 @@ export async function POST(req: NextRequest) {
   const results: { email: string; status: string }[] = [];
 
   for (const email of emails) {
-    // Find user by email
-    const { data: users } = await admin.auth.admin.listUsers();
-    const user = users?.users?.find(u => u.email === email);
+    // Find user by email via profiles table (auth.admin.listUsers paginates at 50)
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
 
-    if (!user) {
+    if (!profile) {
       results.push({ email, status: "user_not_found" });
       continue;
     }
+
+    const user = { id: profile.id };
 
     // Create in-app notification
     const { error: notifError } = await admin.from("notifications").insert({
