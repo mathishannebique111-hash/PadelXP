@@ -166,7 +166,7 @@ export default function PadelTabContent({ profile }: PadelTabContentProps) {
               )}
 
               <button
-                onClick={() => router.push(`/coach?msg=${encodeURIComponent("Tu as besoin de conseils ? Dis-moi tout !")}`)}
+                onClick={() => router.push(`/coach?msg=${encodeURIComponent("J'ai besoin de conseils pour progresser.")}`)}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold bg-white/[0.06] border border-white/10 text-white/70 hover:bg-white/10 transition-all active:scale-[0.97]"
               >
                 <Sparkles size={14} />
