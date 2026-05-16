@@ -21,6 +21,19 @@ const supabaseAdmin = SUPABASE_URL && SERVICE_ROLE_KEY
 
 export type LeaderboardScope = "club" | "department" | "region" | "national";
 
+/**
+ * All region codes that belong to Belgium
+ */
+const BELGIAN_REGIONS = new Set(["BEL"]);
+
+/**
+ * Determines the country from a region code
+ */
+export function getCountryFromRegion(regionCode: string | null): "FR" | "BE" {
+    if (regionCode && BELGIAN_REGIONS.has(regionCode)) return "BE";
+    return "FR";
+}
+
 export type GeoLeaderboardEntry = {
     rank: number;
     user_id: string;
@@ -194,8 +207,22 @@ export async function calculateGeoLeaderboard(
                     query = query.eq("region_code", userProfile.region_code);
                 }
             }
+        } else if (scope === "national") {
+            // National = filter by country (FR or BE) based on user's region
+            const userCountry = getCountryFromRegion(userProfile?.region_code || null);
+            if (userCountry === "BE") {
+                // Belgian national: only players in Belgian regions
+                const belgianDepts = Object.entries(DEPARTMENT_TO_REGION)
+                    .filter(([_, region]) => BELGIAN_REGIONS.has(region))
+                    .map(([dept, _]) => dept);
+                query = query.in("department_code", belgianDepts);
+                logger.info("[calculateGeoLeaderboard] National Belgium filter", { departmentsCount: belgianDepts.length });
+            } else {
+                // French national: only non-Belgian players (region_code != BEL or null)
+                query = query.not("region_code", "eq", "BEL");
+                logger.info("[calculateGeoLeaderboard] National France filter (excluding Belgium)");
+            }
         }
-        // "national" = no geo filter
 
         const { data: profiles, error: profilesError } = await query;
 

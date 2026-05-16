@@ -123,6 +123,14 @@ export default function PlayerLegalPage() {
                 Le droit applicable est le droit français. Les tribunaux français sont compétents
                 pour connaître de tout litige relatif à l'utilisation du site.
               </p>
+              <p>
+                <strong>Pour les utilisateurs résidant en Belgique :</strong> Conformément au droit européen de la consommation,
+                les dispositions impératives du droit belge de protection des consommateurs s'appliquent.
+                Vous pouvez également saisir le Service de Médiation pour le Consommateur
+                (Boulevard du Roi Albert II 8 Bte 1, 1000 Bruxelles — <a href="https://mediationconsommateur.be" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">mediationconsommateur.be</a>)
+                ou la plateforme européenne de règlement en ligne des litiges
+                (<a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">ec.europa.eu/consumers/odr</a>).
+              </p>
             </div>
           </section>
 

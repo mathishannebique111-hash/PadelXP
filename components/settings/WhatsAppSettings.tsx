@@ -57,9 +57,15 @@ export default function WhatsAppSettings() {
     // Nettoyer le numéro (garder seulement les chiffres et le +)
     let cleaned = phoneNumber.replace(/[^0-9+]/g, "");
 
-    // Si ça commence par 0, on assume France (+33)
+    // Ajouter l'indicatif si le numéro commence par 0 (sans +)
     if (cleaned.startsWith("0")) {
-      cleaned = "+33" + cleaned.slice(1);
+      // Belgique: 04xx = mobile belge
+      if (cleaned.startsWith("04") && cleaned.length === 10) {
+        cleaned = "+32" + cleaned.slice(1);
+      } else {
+        // France par défaut
+        cleaned = "+33" + cleaned.slice(1);
+      }
     }
 
     // Vérifier si ça ressemble à un numéro
@@ -179,7 +185,7 @@ export default function WhatsAppSettings() {
                 type="tel"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Votre numéro (ex: 06 12 34 56 78)"
+                placeholder="Votre numéro (ex: 06 12 34 56 78 ou +32 475 12 34 56)"
                 className="w-full bg-white/5 border border-white/20 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
               />
             </div>

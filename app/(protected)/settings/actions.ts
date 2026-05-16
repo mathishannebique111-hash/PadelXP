@@ -19,7 +19,7 @@ export async function updateLocation(postalCode: string, city: string) {
     const trimmedPostal = postalCode.trim();
     const trimmedCity = city.trim();
 
-    if (trimmedPostal.length !== 5 || !trimmedCity) {
+    if ((trimmedPostal.length !== 5 && trimmedPostal.length !== 4) || !trimmedCity) {
         throw new Error("Code postal et ville requis");
     }
 

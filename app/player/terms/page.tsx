@@ -320,6 +320,14 @@ export default function PlayerTermsPage() {
                 de saisir un médiateur de la consommation en cas de litige, dont les coordonnées vous
                 seront communiquées sur demande.
               </p>
+              <p>
+                <strong>Pour les utilisateurs résidant en Belgique :</strong> Conformément au Règlement (CE) n°593/2008 (Rome I),
+                les dispositions impératives du droit belge de protection des consommateurs restent applicables.
+                En cas de litige, vous pouvez saisir le Service de Médiation pour le Consommateur
+                (Boulevard du Roi Albert II 8 Bte 1, 1000 Bruxelles — <a href="https://mediationconsommateur.be" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">mediationconsommateur.be</a>)
+                ou utiliser la plateforme européenne de règlement en ligne des litiges
+                (<a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">ec.europa.eu/consumers/odr</a>).
+              </p>
             </div>
           </section>
 
@@ -353,6 +361,14 @@ export default function PlayerTermsPage() {
               <p>
                 <strong>Annulation :</strong> Vous pouvez annuler votre abonnement à tout moment. L'accès aux
                 fonctionnalités Premium continuera jusqu'à la fin de la période de facturation en cours.
+              </p>
+              <p>
+                <strong>Droit de rétractation :</strong> Conformément à la directive européenne 2011/83/UE,
+                vous disposez d'un délai de 14 jours à compter de la souscription pour exercer votre droit
+                de rétractation, sans avoir à justifier de motifs ni à payer de pénalités. Passé ce délai,
+                ou si vous avez commencé à utiliser les fonctionnalités Premium pendant cette période avec
+                votre accord exprès, le droit de rétractation ne pourra plus être exercé. Pour exercer ce
+                droit, contactez-nous à contact@padelxp.com.
               </p>
             </div>
           </section>

@@ -164,8 +164,9 @@ export default function PlayerCookiesPage() {
             <h2 className="text-2xl font-bold text-white mb-4">5. Cookies strictement nécessaires</h2>
             <div className="space-y-2 text-white/80">
               <p>
-                Conformément à la réglementation (Directive ePrivacy et CNIL), les cookies
-                strictement nécessaires au fonctionnement du site ne nécessitent pas votre
+                Conformément à la réglementation européenne (Directive ePrivacy) et aux recommandations
+                des autorités nationales de protection des données (CNIL en France, APD en Belgique),
+                les cookies strictement nécessaires au fonctionnement du site ne nécessitent pas votre
                 consentement. Il s'agit notamment de :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
@@ -213,7 +214,8 @@ export default function PlayerCookiesPage() {
                 Pour plus d'informations sur les cookies et leur gestion, vous pouvez consulter :
               </p>
               <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>Le site de la CNIL : <a href="https://www.cnil.fr/fr/cookies-et-autres-traceurs" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">cnil.fr</a></li>
+                <li>Le site de la CNIL (France) : <a href="https://www.cnil.fr/fr/cookies-et-autres-traceurs" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">cnil.fr</a></li>
+                <li>Le site de l'APD (Belgique) : <a href="https://www.autoriteprotectiondonnees.be" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">autoriteprotectiondonnees.be</a></li>
                 <li>Notre{" "}
                   <Link href="/player/privacy" className="text-white underline hover:text-white/80">
                     Politique de Confidentialité pour joueurs

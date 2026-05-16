@@ -233,15 +233,22 @@ export default function PlayerPrivacyPage() {
             <div className="space-y-2 text-white/80">
               <p>
                 Si vous estimez que le traitement de vos données personnelles constitue une violation du RGPD,
-                vous avez le droit d'introduire une réclamation auprès de la Commission Nationale de
-                l'Informatique et des Libertés (CNIL) :
+                vous avez le droit d'introduire une réclamation auprès de l'autorité de protection des données
+                compétente :
               </p>
               <p>
-                <strong>CNIL</strong><br />
+                <strong>Pour les résidents français — CNIL</strong><br />
                 3 Place de Fontenoy - TSA 80715<br />
                 75334 Paris Cedex 07<br />
                 Téléphone : 01 53 73 22 22<br />
-                Site web : www.cnil.fr
+                Site web : <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">www.cnil.fr</a>
+              </p>
+              <p>
+                <strong>Pour les résidents belges — Autorité de Protection des Données (APD)</strong><br />
+                Rue de la Presse 35<br />
+                1000 Bruxelles, Belgique<br />
+                Téléphone : +32 2 274 48 00<br />
+                Site web : <a href="https://www.autoriteprotectiondonnees.be" target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-white/80">www.autoriteprotectiondonnees.be</a>
               </p>
             </div>
           </section>

@@ -111,8 +111,8 @@ export default function LocationSettings() {
         const trimmedPostalCode = postalCode.trim();
         const trimmedCity = city.trim();
 
-        if (trimmedPostalCode.length !== 5) {
-            setError("Le code postal doit contenir 5 chiffres");
+        if (trimmedPostalCode.length !== 5 && trimmedPostalCode.length !== 4) {
+            setError("Le code postal doit contenir 4 ou 5 chiffres");
             return;
         }
 
@@ -178,11 +178,12 @@ export default function LocationSettings() {
                             value={postalCode}
                             onChange={(e) => {
                                 const v = e.target.value.replace(/\D/g, '').slice(0, 5);
+                                setError(null);
                                 setPostalCode(v);
                                 fetchCityFromPostalCode(v);
                             }}
                             className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent tabular-nums"
-                            placeholder="75000"
+                            placeholder="75000 ou 1000"
                         />
                     </div>
                     <div>
@@ -203,7 +204,7 @@ export default function LocationSettings() {
                 </div>
 
                 <p className="text-xs text-white/40">
-                    Ces informations définissent votre département ({postalCode ? postalCode.substring(0, 2) : "--"}) pour les classements.
+                    Ces informations définissent votre zone ({postalCode ? (postalCode.length === 4 ? "Belgique" : `département ${postalCode.substring(0, 2)}`) : "--"}) pour les classements.
                 </p>
 
                 {error && (
@@ -221,8 +222,8 @@ export default function LocationSettings() {
 
                 <button
                     onClick={handleSave}
-                    disabled={!hasChanges || saving || postalCode.length !== 5 || !city}
-                    className={`flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 rounded-lg font-medium transition-all ${hasChanges && !saving && postalCode.length === 5 && city
+                    disabled={!hasChanges || saving || (postalCode.length !== 5 && postalCode.length !== 4) || !city}
+                    className={`flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 rounded-lg font-medium transition-all ${hasChanges && !saving && (postalCode.length === 5 || postalCode.length === 4) && city
                         ? "bg-blue-600 hover:bg-blue-700 text-white"
                         : "bg-white/10 text-white/40 cursor-not-allowed"
                         }`}

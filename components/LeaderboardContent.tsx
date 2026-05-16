@@ -50,6 +50,7 @@ export default function LeaderboardContent({
   const [profilesFirstNameMap, setProfilesFirstNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialFirstNameMap)));
   const [profilesLastNameMap, setProfilesLastNameMap] = useState<Map<string, string>>(new Map(Object.entries(initialLastNameMap)));
   const [scope, setScope] = useState<'club' | 'department' | 'region' | 'national'>('department');
+  const [nationalLabel, setNationalLabel] = useState<string>('National');
   const isClub = typeof window !== 'undefined' && !!document.body.dataset.clubSubdomain;
 
   // Cache state: stores data for each scope
@@ -115,6 +116,11 @@ export default function LeaderboardContent({
             }
           }
         });
+
+        // Update national label if API returns userCountry
+        if (data.userCountry && targetScope === 'national') {
+          setNationalLabel(data.userCountry === 'BE' ? 'Belgique' : 'France');
+        }
 
         return {
           leaderboard: leaderboardWithRank,
@@ -307,7 +313,7 @@ export default function LeaderboardContent({
             { key: 'club' as const, label: 'Club', icon: Search },
             { key: 'department' as const, label: 'Département', icon: MapPin },
             { key: 'region' as const, label: 'Région', icon: MapIcon },
-            { key: 'national' as const, label: 'France', icon: Globe },
+            { key: 'national' as const, label: nationalLabel, icon: Globe },
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}
