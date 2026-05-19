@@ -10,6 +10,7 @@ import { Map as MapIcon, Search, ArrowRight } from 'lucide-react';
 import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
+import ShareRankStoryButton from '@/components/story/ShareRankStoryButton';
 
 interface LeaderboardEntry {
   rank: number;
@@ -335,6 +336,31 @@ export default function LeaderboardContent({
           ))}
         </div>
       )}
+
+      {/* Share rank as story */}
+      {currentUserId && leaderboard.length > 0 && (() => {
+        const myEntry = leaderboard.find(e => e.user_id === currentUserId);
+        if (!myEntry) return null;
+        const scopeLabels: Record<string, string> = { club: 'Club', department: 'Département', region: 'Région', national: nationalLabel };
+        return (
+          <div className="flex justify-center mb-2">
+            <ShareRankStoryButton
+              rankData={{
+                playerName: myEntry.player_name,
+                rank: myEntry.rank,
+                points: myEntry.points,
+                totalMatches: myEntry.matches,
+                wins: myEntry.wins,
+                losses: myEntry.losses,
+                scope: scopeLabels[scope] || scope,
+                top3: leaderboard.slice(0, 3).map(e => ({ name: e.player_name, points: e.points })),
+                niveauPadel: myEntry.niveau_padel,
+              }}
+            />
+          </div>
+        );
+      })()}
+
       {leaderboard.length >= 5 && (
         <div className="mb-6 sm:mb-8">
           <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">

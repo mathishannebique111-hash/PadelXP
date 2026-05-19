@@ -6,6 +6,7 @@ import PendingMatchesSection from "@/components/PendingMatchesSection";
 import MatchDebriefButton from "@/components/MatchDebriefButton";
 import { logger } from '@/lib/logger';
 import { Trophy, Check, X, MapPin, Sparkles } from "lucide-react";
+import ShareMatchStoryButton from "@/components/story/ShareMatchStoryButton";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -368,11 +369,39 @@ export default async function MatchHistoryContent() {
                 </div>
               )}
 
-              {/* Bouton débriefer */}
-              <MatchDebriefButton
-                score={match.score_details || `${match.score_team1}-${match.score_team2}`}
-                isWin={won}
-              />
+              {/* Actions: Debrief + Share */}
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex-1">
+                <MatchDebriefButton
+                  score={match.score_details || `${match.score_team1}-${match.score_team2}`}
+                  isWin={won}
+                />
+                </div>
+                <ShareMatchStoryButton
+                  matchData={{
+                    isWin: won,
+                    scoreTeam1: match.score_team1 || 0,
+                    scoreTeam2: match.score_team2 || 0,
+                    scoreDetails: match.score_details || undefined,
+                    team1Players: team1.map((p: any) => {
+                      if (p.player_type === "guest") {
+                        return p.guest_players ? `${p.guest_players.first_name || ""} ${p.guest_players.last_name || ""}`.trim() || "Invité" : "Invité";
+                      }
+                      return p.profiles?.display_name || "Joueur";
+                    }),
+                    team2Players: team2.map((p: any) => {
+                      if (p.player_type === "guest") {
+                        return p.guest_players ? `${p.guest_players.first_name || ""} ${p.guest_players.last_name || ""}`.trim() || "Invité" : "Invité";
+                      }
+                      return p.profiles?.display_name || "Joueur";
+                    }),
+                    userTeam: userTeam as 1 | 2,
+                    date: dateStr,
+                    location: match.location_club_id ? locationNamesMap.get(match.location_club_id) : undefined,
+                    playerName: userProfile?.display_name || userProfile?.first_name || "Joueur",
+                  }}
+                />
+              </div>
             </div>
           );
         })}
