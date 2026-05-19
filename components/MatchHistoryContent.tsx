@@ -370,13 +370,11 @@ export default async function MatchHistoryContent() {
               )}
 
               {/* Actions: Debrief + Share */}
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex-1">
+              <div>
                 <MatchDebriefButton
                   score={match.score_details || `${match.score_team1}-${match.score_team2}`}
                   isWin={won}
                 />
-                </div>
                 <ShareMatchStoryButton
                   matchData={{
                     isWin: won,

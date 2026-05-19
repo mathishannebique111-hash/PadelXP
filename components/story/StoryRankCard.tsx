@@ -66,9 +66,11 @@ const StoryRankCard = forwardRef<HTMLDivElement, { data: StoryRankData }>(
         />
 
         {/* Logo */}
-        <div style={{ marginTop: 120, marginBottom: 60, fontSize: 48, fontWeight: 900, letterSpacing: 8, opacity: 0.6 }}>
-          PADELXP
-        </div>
+        <img
+          src="/padelxp-logo-transparent.png"
+          alt="PadelXP"
+          style={{ height: 60, marginTop: 120, marginBottom: 60, opacity: 0.6, objectFit: "contain" }}
+        />
 
         {/* Scope label */}
         <div

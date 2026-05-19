@@ -41,11 +41,15 @@ export async function shareStoryImage(element: HTMLElement, fileName: string = "
   }
 
   // Fallback: download
+  downloadBlob(blob, fileName);
+  return true;
+}
+
+export function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
-  return true;
 }
