@@ -71,7 +71,7 @@ const StoryMatchCard = forwardRef<HTMLDivElement, { data: StoryMatchData }>(
         <img
           src="/padelxp-logo-transparent.png"
           alt="PadelXP"
-          style={{ height: 160, position: "absolute", top: 80, opacity: 0.6, objectFit: "contain" }}
+          style={{ height: 160, marginBottom: 40, opacity: 0.6, objectFit: "contain" }}
         />
 
         {/* Result badge */}
