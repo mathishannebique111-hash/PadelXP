@@ -11,6 +11,8 @@ import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
 import ShareRankStoryButton from '@/components/story/ShareRankStoryButton';
+import SeasonBanner from '@/components/seasons/SeasonBanner';
+import type { SeasonData } from '@/components/seasons/SeasonBanner';
 
 interface LeaderboardEntry {
   rank: number;
@@ -32,6 +34,7 @@ interface LeaderboardContentProps {
   currentUserId?: string;
   userClubId?: string | null;
   hideFilters?: boolean;
+  activeSeason?: SeasonData | null;
 }
 
 /**
@@ -45,6 +48,7 @@ export default function LeaderboardContent({
   currentUserId,
   userClubId,
   hideFilters = false,
+  activeSeason,
 }: LeaderboardContentProps) {
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(initialLeaderboard);
@@ -305,8 +309,21 @@ export default function LeaderboardContent({
     return 'Bronze';
   };
 
+  // Find current user rank for season banner
+  const currentUserRank = currentUserId
+    ? leaderboard.find(e => e.user_id === currentUserId)?.rank
+    : undefined;
+
   return (
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
+      {/* Season banner */}
+      {activeSeason && activeSeason.status === 'active' && (
+        <SeasonBanner
+          season={activeSeason}
+          currentUserRank={currentUserRank}
+        />
+      )}
+
       {/* Scope filter tabs */}
       {!hideFilters && (
         <div className="flex items-center justify-center gap-1 px-1">

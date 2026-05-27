@@ -38,7 +38,10 @@ export type LeaderboardEntry = {
  * @param clubId - ID du club
  * @returns Le leaderboard trié par points décroissants
  */
-export async function calculatePlayerLeaderboard(clubId: string | null): Promise<LeaderboardEntry[]> {
+export async function calculatePlayerLeaderboard(
+  clubId: string | null,
+  seasonDateRange?: { start: string; end: string }
+): Promise<LeaderboardEntry[]> {
   if (!clubId || !supabaseAdmin) {
     if (!supabaseAdmin) {
       logger.warn("[calculatePlayerLeaderboard] Supabase admin client not configured");
@@ -123,11 +126,19 @@ export async function calculatePlayerLeaderboard(clubId: string | null): Promise
       }).sort((a, b) => b.points - a.points).map((entry, index) => ({ ...entry, rank: index + 1 }));
     }
 
-    const { data: allMatches, error: matchesError } = await supabaseAdmin
+    let matchesQuery = supabaseAdmin
       .from("matches")
       .select("id, winner_team_id, team1_id, team2_id, played_at, created_at")
       .in("id", uniqueMatchIds)
       .eq("status", "confirmed");
+
+    if (seasonDateRange) {
+      matchesQuery = matchesQuery
+        .gte("played_at", seasonDateRange.start)
+        .lte("played_at", seasonDateRange.end + "T23:59:59.999Z");
+    }
+
+    const { data: allMatches, error: matchesError } = await matchesQuery;
 
     if (matchesError) {
       logger.error("[calculatePlayerLeaderboard] Error fetching matches", { error: matchesError.message });

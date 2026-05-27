@@ -3,6 +3,7 @@ import ClientLogout from "./ClientLogout";
 import MobileMenu from "./MobileMenu";
 import { redirect } from "next/navigation";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
+import { canSeeSeasons } from "@/lib/feature-flags";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import ClubHeader from "./ClubHeader";
@@ -69,6 +70,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let clubTrialCurrentEndDate: string | null = null;
   let clubSubscriptionStatus: string | null = null;
   let hasReservationsOption = false;
+  let hasSeasonsOption = false;
 
   // Vérifier d'abord si l'utilisateur est un admin de club
   if (supabaseAdmin) {
@@ -122,6 +124,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       hasReservationsOption = !!clubRow.has_reservations_option;
     }
   }
+
+  // Check if user can see seasons feature
+  hasSeasonsOption = canSeeSeasons(user.email);
 
   // Fallback: utiliser les métadonnées du propriétaire du club
   if (supabaseAdmin && (!clubName || !clubLogo) && clubId) {
@@ -236,7 +241,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ` }} />
       {/* Menu hamburger et volet latéral (visible sur tous les écrans) */}
       <Suspense fallback={null}>
-        <MobileMenu hasReservationsOption={hasReservationsOption ?? false} />
+        <MobileMenu hasReservationsOption={hasReservationsOption ?? false} hasSeasonsOption={hasSeasonsOption} />
       </Suspense>
 
       {/* Dynamic gradient overlay + parallax halos */}

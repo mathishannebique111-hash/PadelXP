@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import { calculateGeoLeaderboard } from "@/lib/utils/geo-leaderboard-utils";
+import { canSeeSeasons } from "@/lib/feature-flags";
 import LeaderboardContent from "@/components/LeaderboardContent";
 
 const supabaseAdmin = createAdminClient(
@@ -21,9 +22,34 @@ interface LeaderboardServerProps {
 }
 
 export default async function LeaderboardServer({ userId, clubId }: LeaderboardServerProps) {
+    // Check if user can see seasons
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const showSeasons = canSeeSeasons(user?.email);
+
+    // Fetch active season if feature flag is on and user has a club
+    let activeSeason = null;
+    let seasonDateRange: { start: string; end: string } | undefined;
+
+    if (showSeasons && clubId) {
+        const { data: season } = await supabaseAdmin
+            .from("seasons")
+            .select("*, season_rewards(*)")
+            .eq("club_id", clubId)
+            .eq("status", "active")
+            .order("start_date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (season) {
+            activeSeason = season;
+            seasonDateRange = { start: season.start_date, end: season.end_date };
+        }
+    }
+
     // Récupérer le leaderboard approprié (Club ou Département)
     const leaderboardRaw = clubId
-        ? await calculatePlayerLeaderboard(clubId)
+        ? await calculatePlayerLeaderboard(clubId, seasonDateRange)
         : await calculateGeoLeaderboard(userId, "department");
 
     const leaderboard = leaderboardRaw.map((player, index) => ({
@@ -59,6 +85,7 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
             initialProfilesLastNameMap={profilesLastNameMap}
             currentUserId={userId}
             userClubId={clubId}
+            activeSeason={activeSeason}
         />
     );
 }

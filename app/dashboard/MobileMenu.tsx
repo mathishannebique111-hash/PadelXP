@@ -19,10 +19,11 @@ import {
   Download,
   HelpCircle,
   Settings,
-  Calendar
+  Calendar,
+  Flame
 } from 'lucide-react';
 
-export default function MobileMenu({ hasReservationsOption = false }: { hasReservationsOption?: boolean }) {
+export default function MobileMenu({ hasReservationsOption = false, hasSeasonsOption = false }: { hasReservationsOption?: boolean; hasSeasonsOption?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { hasUnread } = useUnreadClubMessages();
@@ -51,6 +52,7 @@ export default function MobileMenu({ hasReservationsOption = false }: { hasReser
     { href: '/dashboard/historique', label: 'Historique des matchs', icon: History },
     { href: '/dashboard/page-club', label: 'Page publique du club', icon: Globe },
     { href: '/dashboard/challenges', label: 'Challenges', icon: Target },
+    { href: '/dashboard/seasons', label: 'Saisons', icon: Flame, needsSeasonsOption: true },
     { href: '/dashboard/tournaments', label: 'Tournois', icon: Medal },
     { href: '/dashboard/ligues', label: 'Ligues', icon: Trophy },
     { href: '/dashboard/roles', label: 'Rôles et accès', icon: UserCog },
@@ -59,7 +61,11 @@ export default function MobileMenu({ hasReservationsOption = false }: { hasReser
     { href: '/dashboard/aide', label: 'Aide & Support', icon: HelpCircle },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => !item.needsOption || hasReservationsOption);
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.needsOption && !hasReservationsOption) return false;
+    if ((item as any).needsSeasonsOption && !hasSeasonsOption) return false;
+    return true;
+  });
 
   return (
     <>
