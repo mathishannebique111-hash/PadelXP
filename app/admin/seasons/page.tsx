@@ -40,6 +40,7 @@ interface Season {
   start_date: string;
   end_date: string;
   status: SeasonStatus;
+  countries: string[];
   created_at: string;
   season_rewards: SeasonReward[];
   season_results?: SeasonResult[];
@@ -101,6 +102,7 @@ export default function SeasonsPage() {
   const [newName, setNewName] = useState("");
   const [newDuration, setNewDuration] = useState(60);
   const [newStartDate, setNewStartDate] = useState("");
+  const [newCountries, setNewCountries] = useState<string[]>(["FR", "BE"]);
   const [newRewards, setNewRewards] = useState([
     { rank: 1, reward_label: "", reward_description: "", reward_image_url: "" },
     { rank: 2, reward_label: "", reward_description: "", reward_image_url: "" },
@@ -154,7 +156,7 @@ export default function SeasonsPage() {
           name: newName,
           start_date: newStartDate,
           end_date: computedEndDate,
-          duration_days: newDuration,
+          countries: newCountries,
           rewards,
         }),
       });
@@ -167,6 +169,7 @@ export default function SeasonsPage() {
       setNewName("");
       setNewStartDate("");
       setNewDuration(60);
+      setNewCountries(["FR", "BE"]);
       setNewRewards([
         { rank: 1, reward_label: "", reward_description: "", reward_image_url: "" },
         { rank: 2, reward_label: "", reward_description: "", reward_image_url: "" },
@@ -272,7 +275,7 @@ export default function SeasonsPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-center gap-3">
                     <Clock className="w-5 h-5 text-amber-400" />
                     <div>
@@ -285,6 +288,13 @@ export default function SeasonsPage() {
                     <div>
                       <p className="text-xs text-white/50">Recompenses</p>
                       <p className="text-lg font-bold text-white">{activeSeason.season_rewards?.length || 0} / 3</p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-center gap-3">
+                    <span className="text-xl">{(activeSeason.countries || []).map((c: string) => c === "FR" ? "🇫🇷" : "🇧🇪").join(" ")}</span>
+                    <div>
+                      <p className="text-xs text-white/50">Pays</p>
+                      <p className="text-sm font-bold text-white">{(activeSeason.countries || []).map((c: string) => c === "FR" ? "France" : "Belgique").join(", ")}</p>
                     </div>
                   </div>
                 </div>
@@ -385,6 +395,37 @@ export default function SeasonsPage() {
                       Fin automatique le <span className="text-white/70 font-semibold">{formatDate(computedEndDate)}</span> ({newDuration} jours)
                     </p>
                   )}
+                </div>
+
+                {/* Country selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">Pays eligibles</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { code: "FR", label: "France", flag: "🇫🇷" },
+                      { code: "BE", label: "Belgique", flag: "🇧🇪" },
+                    ].map(c => {
+                      const selected = newCountries.includes(c.code);
+                      return (
+                        <button key={c.code} type="button"
+                          onClick={() => {
+                            if (selected && newCountries.length <= 1) return;
+                            setNewCountries(prev => selected ? prev.filter(x => x !== c.code) : [...prev, c.code]);
+                          }}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                            selected
+                              ? "bg-amber-500/20 border-amber-400/40 text-amber-200"
+                              : "bg-white/5 border-white/15 text-white/40 hover:bg-white/10"
+                          }`}>
+                          <span className="text-lg">{c.flag}</span>
+                          {c.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-white/40">
+                    {newCountries.length === 2 ? "Deux classements separes avec des recompenses distinctes par pays" : `Classement uniquement pour ${newCountries.includes("FR") ? "la France" : "la Belgique"}`}
+                  </p>
                 </div>
 
                 {/* Rewards */}

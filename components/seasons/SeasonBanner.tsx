@@ -18,6 +18,7 @@ export interface SeasonData {
   start_date: string;
   end_date: string;
   status: 'upcoming' | 'active' | 'completed';
+  countries: string[];
   season_rewards: SeasonReward[];
 }
 

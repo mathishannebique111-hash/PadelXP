@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     if (!isAdmin(user.email)) return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
     const body = await request.json();
-    const { name, start_date, end_date, rewards } = body;
+    const { name, start_date, end_date, rewards, countries } = body;
 
     if (!name || !start_date || !end_date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -67,7 +67,10 @@ export async function POST(request: Request) {
 
     const { data: season, error } = await supabaseAdmin
       .from("seasons")
-      .insert({ name, start_date, end_date, status, created_by: user.id })
+      .insert({
+        name, start_date, end_date, status, created_by: user.id,
+        countries: countries || ["FR", "BE"],
+      })
       .select()
       .single();
 
