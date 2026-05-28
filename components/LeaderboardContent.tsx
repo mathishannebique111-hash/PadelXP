@@ -35,6 +35,9 @@ interface LeaderboardContentProps {
   userClubId?: string | null;
   hideFilters?: boolean;
   activeSeason?: SeasonData | null;
+  completedSeason?: SeasonData | null;
+  completedSeasonResults?: any[];
+  upcomingSeason?: SeasonData | null;
   userCountry?: 'FR' | 'BE';
 }
 
@@ -50,6 +53,9 @@ export default function LeaderboardContent({
   userClubId,
   hideFilters = false,
   activeSeason,
+  completedSeason,
+  completedSeasonResults,
+  upcomingSeason,
   userCountry,
 }: LeaderboardContentProps) {
   const router = useRouter();
@@ -318,11 +324,29 @@ export default function LeaderboardContent({
 
   return (
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
-      {/* Season banner */}
-      {activeSeason && activeSeason.status === 'active' && (
+      {/* Season banner — always visible when there's season data */}
+      {activeSeason && (
         <SeasonBanner
           season={activeSeason}
+          mode="active"
           currentUserRank={currentUserRank}
+          userCountry={userCountry}
+        />
+      )}
+      {!activeSeason && completedSeason && (
+        <SeasonBanner
+          season={completedSeason}
+          mode="completed"
+          winners={completedSeasonResults}
+          currentUserId={currentUserId}
+          userCountry={userCountry}
+          upcomingSeason={upcomingSeason}
+        />
+      )}
+      {!activeSeason && !completedSeason && upcomingSeason && (
+        <SeasonBanner
+          season={upcomingSeason}
+          mode="upcoming"
           userCountry={userCountry}
         />
       )}

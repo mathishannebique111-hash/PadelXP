@@ -39,12 +39,16 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
         userCountry = getCountryFromRegion(userProfile?.region_code || null);
     }
 
-    // Fetch active global season if feature flag is on
+    // Fetch season data (active, or most recent completed, or upcoming)
     let activeSeason = null;
+    let completedSeason = null;
+    let upcomingSeason = null;
     let seasonDateRange: { start: string; end: string } | undefined;
+    let completedSeasonResults: any[] = [];
 
     if (showSeasons) {
-        const { data: season } = await supabaseAdmin
+        // 1. Check for active season
+        const { data: active } = await supabaseAdmin
             .from("seasons")
             .select("*, season_rewards(*)")
             .eq("status", "active")
@@ -52,9 +56,44 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
             .limit(1)
             .maybeSingle();
 
-        if (season) {
-            activeSeason = season;
-            seasonDateRange = { start: season.start_date, end: season.end_date };
+        if (active) {
+            activeSeason = active;
+            seasonDateRange = { start: active.start_date, end: active.end_date };
+        } else {
+            // 2. Check for most recent completed season
+            const { data: completed } = await supabaseAdmin
+                .from("seasons")
+                .select("*, season_rewards(*)")
+                .eq("status", "completed")
+                .order("end_date", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (completed) {
+                completedSeason = completed;
+                // Fetch top 3 results for user's country
+                const { data: results } = await supabaseAdmin
+                    .from("season_results")
+                    .select("*, profiles:user_id(first_name, last_name, display_name, avatar_url)")
+                    .eq("season_id", completed.id)
+                    .eq("country", userCountry)
+                    .order("final_rank")
+                    .limit(3);
+                completedSeasonResults = results || [];
+            }
+
+            // 3. Check for upcoming season
+            const { data: upcoming } = await supabaseAdmin
+                .from("seasons")
+                .select("*, season_rewards(*)")
+                .eq("status", "upcoming")
+                .order("start_date", { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+            if (upcoming) {
+                upcomingSeason = upcoming;
+            }
         }
     }
 
@@ -97,6 +136,9 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
             currentUserId={userId}
             userClubId={clubId}
             activeSeason={activeSeason}
+            completedSeason={completedSeason}
+            completedSeasonResults={completedSeasonResults}
+            upcomingSeason={upcomingSeason}
             userCountry={userCountry}
         />
     );
