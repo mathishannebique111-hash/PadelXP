@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Trophy, Clock, Plus, ChevronDown, ChevronUp, Gift,
+  Trophy, Clock, Plus, ChevronDown, ChevronUp, Gift, Calendar,
   X, Check, AlertTriangle, History, Crown, StopCircle,
   Image as ImageIcon,
 } from "lucide-react";
@@ -338,6 +338,62 @@ export default function SeasonsPage() {
                     {finalizingId === activeSeason.id ? "Arret..." : <><StopCircle className="w-4 h-4" /> Arreter la saison</>}
                   </button>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* ====== SAISONS A VENIR ====== */}
+          {upcomingSeasons.length > 0 && (
+            <section className="rounded-2xl border border-blue-400/20 bg-blue-500/5 p-6">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+                <Calendar className="w-5 h-5 text-blue-400" />
+                Saison à venir
+              </h2>
+              <div className="space-y-3">
+                {upcomingSeasons.map(season => {
+                  const startDate = new Date(season.start_date);
+                  const daysUntil = Math.ceil((startDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div key={season.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-white">{season.name}</h3>
+                        <span className="text-[10px] font-bold text-blue-300 bg-blue-400/15 border border-blue-400/30 rounded-full px-2.5 py-0.5">
+                          Dans {daysUntil > 0 ? `${daysUntil}j` : "quelques heures"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/50 mb-3">
+                        {new Date(season.start_date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long" })}
+                        {" → "}
+                        {new Date(season.end_date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                        {" — "}
+                        {(season.countries || []).map((c: string) => c === "FR" ? "🇫🇷" : "🇧🇪").join(" ")}
+                      </p>
+                      {season.season_rewards?.length > 0 && (
+                        <div className="flex items-center gap-3 mb-3">
+                          {[...season.season_rewards].sort((a, b) => a.rank - b.rank).map(r => (
+                            <div key={r.id} className="flex items-center gap-1">
+                              <span className="text-sm">{medalEmojis[r.rank - 1]}</span>
+                              <span className="text-[10px] text-white/60">{r.reward_label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        onClick={async () => {
+                          if (!confirm("Supprimer cette saison à venir ?")) return;
+                          try {
+                            const res = await fetch(`/api/seasons/${season.id}`, { method: "DELETE" });
+                            if (res.ok) await loadSeasons();
+                            else setError("Erreur lors de la suppression");
+                          } catch { setError("Erreur lors de la suppression"); }
+                        }}
+                        className="text-xs text-red-400/70 hover:text-red-300 transition-colors"
+                      >
+                        Supprimer cette saison
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}
