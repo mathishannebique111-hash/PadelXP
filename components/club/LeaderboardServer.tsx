@@ -27,15 +27,14 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
     const { data: { user } } = await supabase.auth.getUser();
     const showSeasons = canSeeSeasons(user?.email);
 
-    // Fetch active season if feature flag is on and user has a club
+    // Fetch active global season if feature flag is on
     let activeSeason = null;
     let seasonDateRange: { start: string; end: string } | undefined;
 
-    if (showSeasons && clubId) {
+    if (showSeasons) {
         const { data: season } = await supabaseAdmin
             .from("seasons")
             .select("*, season_rewards(*)")
-            .eq("club_id", clubId)
             .eq("status", "active")
             .order("start_date", { ascending: false })
             .limit(1)
