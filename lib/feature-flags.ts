@@ -1,5 +1,6 @@
 const SEASON_BETA_EMAILS = [
   "capucine@gmail.com",
+  "contactpadelxp@gmail.com",
 ] as const;
 
 type SeasonBetaEmail = (typeof SEASON_BETA_EMAILS)[number];

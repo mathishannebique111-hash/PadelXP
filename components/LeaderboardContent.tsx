@@ -328,7 +328,6 @@ export default function LeaderboardContent({
       {!hideFilters && (
         <div className="flex items-center justify-center gap-1 px-1">
           {[
-            { key: 'club' as const, label: 'Club', icon: Search },
             { key: 'department' as const, label: 'Département', icon: MapPin },
             { key: 'region' as const, label: 'Région', icon: MapIcon },
             { key: 'national' as const, label: nationalLabel, icon: Globe },
