@@ -345,11 +345,9 @@ function DetailModal({ season, sortedRewards, totalDays, countryLabel, currentUs
               {sortedRewards.map((reward) => (
                 <div key={reward.id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
                   {reward.reward_image_url ? (
-                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
-                      <img src={reward.reward_image_url} alt={reward.reward_label} className="w-full h-full object-cover" />
-                    </div>
+                    <img src={reward.reward_image_url} alt={reward.reward_label} className="w-16 h-16 object-contain flex-shrink-0" />
                   ) : (
-                    <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 flex items-center justify-center flex-shrink-0">
                       <span className="text-2xl">{medalEmojis[reward.rank - 1]}</span>
                     </div>
                   )}
@@ -420,9 +418,7 @@ function CompletedModal({ season, sortedRewards, winners, currentUserWin, userRe
             {userReward && (
               <div className="mt-3 flex items-center gap-3 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">
                 {userReward.reward_image_url ? (
-                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
-                    <img src={userReward.reward_image_url} alt={userReward.reward_label} className="w-full h-full object-cover" />
-                  </div>
+                  <img src={userReward.reward_image_url} alt={userReward.reward_label} className="w-14 h-14 object-contain flex-shrink-0" />
                 ) : (
                   <span className="text-3xl">{medalEmojis[userReward.rank - 1]}</span>
                 )}
