@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Trophy, Gift, Clock, ChevronRight } from 'lucide-react';
-import SeasonRewardModal from './SeasonRewardModal';
+import { Trophy, Gift, Clock, ChevronRight, X } from 'lucide-react';
 
 export interface SeasonReward {
   id: string;
@@ -25,7 +24,7 @@ export interface SeasonData {
 interface SeasonBannerProps {
   season: SeasonData;
   currentUserRank?: number;
-  clubName?: string;
+  userCountry?: 'FR' | 'BE';
 }
 
 function useCountdown(endDate: string) {
@@ -44,9 +43,8 @@ function useCountdown(endDate: string) {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-  if (days <= 0 && hours <= 48) {
-    return { label: `${hours}h`, urgent: true };
-  }
+  if (days <= 0) return { label: `${hours}h`, urgent: true };
+  if (days <= 2) return { label: `${days}j ${hours}h`, urgent: true };
 
   return { label: `J-${days}`, urgent: days <= 3 };
 }
@@ -55,18 +53,17 @@ function useProgress(startDate: string, endDate: string) {
   const start = new Date(startDate).getTime();
   const end = new Date(endDate + 'T23:59:59').getTime();
   const now = Date.now();
-
   const total = end - start;
   if (total <= 0) return 100;
-
-  const elapsed = now - start;
-  return Math.min(100, Math.max(0, (elapsed / total) * 100));
+  return Math.min(100, Math.max(0, ((now - start) / total) * 100));
 }
 
 const medalEmojis = ['🥇', '🥈', '🥉'];
+const countryLabels: Record<string, string> = { FR: 'francais', BE: 'belge' };
+const countryFlags: Record<string, string> = { FR: '🇫🇷', BE: '🇧🇪' };
 
-export default function SeasonBanner({ season, currentUserRank, clubName }: SeasonBannerProps) {
-  const [selectedReward, setSelectedReward] = useState<SeasonReward | null>(null);
+export default function SeasonBanner({ season, currentUserRank, userCountry = 'FR' }: SeasonBannerProps) {
+  const [showDetail, setShowDetail] = useState(false);
   const countdown = useCountdown(season.end_date);
   const progress = useProgress(season.start_date, season.end_date);
 
@@ -75,122 +72,180 @@ export default function SeasonBanner({ season, currentUserRank, clubName }: Seas
     [season.season_rewards]
   );
 
+  const totalDays = Math.ceil(
+    (new Date(season.end_date + 'T23:59:59').getTime() - new Date(season.start_date).getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const countryLabel = countryLabels[userCountry] || userCountry;
+
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-amber-500/10 via-white/5 to-purple-500/10 backdrop-blur-sm p-4 sm:p-5 mb-4 sm:mb-6">
-        {/* Subtle shine effect */}
+      {/* Compact banner — clickable */}
+      <button
+        onClick={() => setShowDetail(true)}
+        className="relative w-full overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-amber-500/10 via-white/5 to-purple-500/10 backdrop-blur-sm p-3.5 sm:p-4 mb-4 sm:mb-6 text-left transition-all active:scale-[0.99]"
+      >
         <div className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute -top-1/2 -left-1/2 w-full h-full opacity-[0.07]"
-            style={{
-              background: 'radial-gradient(circle at center, rgba(255,215,0,0.8), transparent 70%)',
-            }}
-          />
+          <div className="absolute -top-1/2 -left-1/2 w-full h-full opacity-[0.06]" style={{ background: 'radial-gradient(circle at center, rgba(255,215,0,0.8), transparent 70%)' }} />
         </div>
 
         <div className="relative z-10">
-          {/* Header: Season name + countdown */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-400" />
-              <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
-                {season.name}
-              </h3>
+          {/* Row 1: title + countdown */}
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <Trophy className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-extrabold text-white truncate">{season.name}</span>
             </div>
-            <div
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                countdown.urgent
-                  ? 'bg-red-500/20 text-red-300 border border-red-400/30'
-                  : 'bg-white/10 text-white/80 border border-white/15'
-              }`}
-            >
-              <Clock className="w-3 h-3" />
-              <span>{countdown.label}</span>
+            <div className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold flex-shrink-0 ${
+              countdown.urgent ? 'bg-red-500/20 text-red-300 border border-red-400/30' : 'bg-white/10 text-white/70 border border-white/15'
+            }`}>
+              <Clock className="w-2.5 h-2.5" />
+              {countdown.label}
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="mb-4">
-            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${progress}%`,
-                  background: 'linear-gradient(90deg, rgba(251,191,36,0.8), rgba(245,158,11,0.9), rgba(217,119,6,1))',
-                  boxShadow: '0 0 12px rgba(251,191,36,0.4)',
-                }}
-              />
-            </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-[10px] text-white/40 font-medium">
-                {new Date(season.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-              </span>
-              <span className="text-[10px] text-white/40 font-medium">
-                {new Date(season.end_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-              </span>
+          {/* Row 2: progress bar */}
+          <div className="mb-2">
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full rounded-full" style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(90deg, rgba(251,191,36,0.8), rgba(245,158,11,0.9), rgba(217,119,6,1))',
+                boxShadow: '0 0 8px rgba(251,191,36,0.3)',
+              }} />
             </div>
           </div>
 
-          {/* Rewards preview */}
-          {sortedRewards.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Gift className="w-3.5 h-3.5 text-amber-400/80" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
-                  A gagner
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {sortedRewards.map((reward) => (
-                  <button
-                    key={reward.id}
-                    onClick={() => setSelectedReward(reward)}
-                    className="group relative flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-2.5 sm:p-3 transition-all hover:bg-white/10 hover:border-white/20 active:scale-[0.97]"
-                  >
-                    {reward.reward_image_url ? (
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-white/10">
-                        <img
-                          src={reward.reward_image_url}
-                          alt={reward.reward_label}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-xl sm:text-2xl">{medalEmojis[reward.rank - 1]}</span>
-                    )}
-                    <span className="text-[9px] sm:text-[10px] font-semibold text-white/70 text-center line-clamp-2 leading-tight">
-                      {reward.reward_label}
-                    </span>
-                    <ChevronRight className="absolute top-1.5 right-1.5 w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Current user rank hint */}
-          {currentUserRank && currentUserRank <= 5 && (
-            <div className="mt-3 pt-3 border-t border-white/10 text-center">
-              <span className="text-xs text-white/60">
-                Tu es actuellement{' '}
-                <span className={`font-bold ${currentUserRank <= 3 ? 'text-amber-400' : 'text-white'}`}>
-                  {currentUserRank === 1 ? '1er' : `${currentUserRank}e`}
-                </span>
-                {currentUserRank <= 3 ? ' — dans le top !' : ` — encore ${currentUserRank - 3} place${currentUserRank - 3 > 1 ? 's' : ''} !`}
+          {/* Row 3: rewards hint + rank */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Gift className="w-3 h-3 text-amber-400/70" />
+              <span className="text-[10px] sm:text-xs text-white/50">
+                {sortedRewards.length > 0 ? `${sortedRewards.length} recompense${sortedRewards.length > 1 ? 's' : ''} a gagner` : 'Recompenses a venir'}
               </span>
+              <ChevronRight className="w-3 h-3 text-white/30" />
             </div>
-          )}
+            {currentUserRank && (
+              <span className="text-[10px] sm:text-xs text-white/60">
+                {currentUserRank <= 3 ? (
+                  <span className="text-amber-400 font-bold">{medalEmojis[currentUserRank - 1]} Top {countryLabel}</span>
+                ) : (
+                  <>
+                    <span className="font-bold text-white">{currentUserRank}e</span> {countryLabel}
+                  </>
+                )}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      </button>
 
-      {/* Reward detail modal */}
-      {selectedReward && (
-        <SeasonRewardModal
-          reward={selectedReward}
-          currentUserRank={currentUserRank}
-          clubName={clubName}
-          onClose={() => setSelectedReward(null)}
-        />
+      {/* Detail modal — rules + rewards */}
+      {showDetail && (
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDetail(false)} />
+
+          <div className="relative w-full max-w-md sm:rounded-3xl rounded-t-3xl border border-white/15 bg-gradient-to-b from-[#1a1a2e] to-[#0d0d1a] p-5 sm:p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
+            <button onClick={() => setShowDetail(false)} className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+              <X className="w-4 h-4 text-white/60" />
+            </button>
+
+            {/* Header */}
+            <div className="text-center mb-5">
+              <Trophy className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+              <h2 className="text-lg font-extrabold text-white">{season.name}</h2>
+              <p className="text-xs text-white/40 mt-1">
+                {new Date(season.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })}
+                {' — '}
+                {new Date(season.end_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+
+            {/* Rules */}
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 mb-5 space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-white/50">Comment ca marche</h3>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3">
+                  <span className="text-sm mt-0.5">📅</span>
+                  <p className="text-sm text-white/70">
+                    La saison dure <span className="text-white font-semibold">{totalDays} jours</span>. Seuls les matchs joues pendant cette periode comptent.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-sm mt-0.5">🏆</span>
+                  <p className="text-sm text-white/70">
+                    Le classement est base sur le <span className="text-white font-semibold">classement national</span> {(season.countries || []).map(c => countryFlags[c]).join(' ')}.
+                    Chaque victoire rapporte <span className="text-white font-semibold">10 pts</span>, chaque defaite <span className="text-white font-semibold">3 pts</span>.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-sm mt-0.5">🎯</span>
+                  <p className="text-sm text-white/70">
+                    Enregistre un maximum de matchs pour grimper dans le classement. Max <span className="text-white font-semibold">2 matchs par jour</span> comptabilises.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-sm mt-0.5">🎁</span>
+                  <p className="text-sm text-white/70">
+                    Le <span className="text-white font-semibold">Top 3</span> a la fin de la saison remporte des recompenses !
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Rewards */}
+            {sortedRewards.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-1.5">
+                  <Gift className="w-3.5 h-3.5 text-amber-400" />
+                  Recompenses a gagner
+                </h3>
+                <div className="space-y-3">
+                  {sortedRewards.map((reward) => (
+                    <div key={reward.id} className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+                      {reward.reward_image_url && (
+                        <div className="w-full h-40 bg-white/5">
+                          <img src={reward.reward_image_url} alt={reward.reward_label} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <div className="p-3.5">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-lg">{medalEmojis[reward.rank - 1]}</span>
+                          <span className="text-sm font-bold text-white">{reward.reward_label}</span>
+                        </div>
+                        {reward.reward_description && (
+                          <p className="text-xs text-white/50 leading-relaxed">{reward.reward_description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Current rank */}
+            {currentUserRank && (
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                {currentUserRank <= 3 ? (
+                  <p className="text-sm font-bold text-amber-400">
+                    {medalEmojis[currentUserRank - 1]} Tu es {currentUserRank === 1 ? '1er' : `${currentUserRank}e`} au classement {countryLabel} !
+                  </p>
+                ) : (
+                  <p className="text-sm text-white/70">
+                    Tu es <span className="font-bold text-white">{currentUserRank}e</span> au classement {countryLabel}
+                    {currentUserRank <= 5 && (
+                      <> — <span className="text-amber-400 font-semibold">encore {currentUserRank - 3} place{currentUserRank - 3 > 1 ? 's' : ''}</span> !</>
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <button onClick={() => setShowDetail(false)}
+              className="mt-5 w-full rounded-xl bg-white/10 border border-white/15 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors">
+              Fermer
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

@@ -35,6 +35,7 @@ interface LeaderboardContentProps {
   userClubId?: string | null;
   hideFilters?: boolean;
   activeSeason?: SeasonData | null;
+  userCountry?: 'FR' | 'BE';
 }
 
 /**
@@ -49,6 +50,7 @@ export default function LeaderboardContent({
   userClubId,
   hideFilters = false,
   activeSeason,
+  userCountry,
 }: LeaderboardContentProps) {
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(initialLeaderboard);
@@ -321,6 +323,7 @@ export default function LeaderboardContent({
         <SeasonBanner
           season={activeSeason}
           currentUserRank={currentUserRank}
+          userCountry={userCountry}
         />
       )}
 

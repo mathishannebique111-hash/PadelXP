@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import { calculateGeoLeaderboard } from "@/lib/utils/geo-leaderboard-utils";
 import { canSeeSeasons } from "@/lib/feature-flags";
+import { getCountryFromRegion } from "@/lib/utils/geo-leaderboard-utils";
 import LeaderboardContent from "@/components/LeaderboardContent";
 
 const supabaseAdmin = createAdminClient(
@@ -26,6 +27,17 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const showSeasons = canSeeSeasons(user?.email);
+
+    // Determine user's country
+    let userCountry: "FR" | "BE" = "FR";
+    if (showSeasons) {
+        const { data: userProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("region_code")
+            .eq("id", userId)
+            .maybeSingle();
+        userCountry = getCountryFromRegion(userProfile?.region_code || null);
+    }
 
     // Fetch active global season if feature flag is on
     let activeSeason = null;
@@ -85,6 +97,7 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
             currentUserId={userId}
             userClubId={clubId}
             activeSeason={activeSeason}
+            userCountry={userCountry}
         />
     );
 }
