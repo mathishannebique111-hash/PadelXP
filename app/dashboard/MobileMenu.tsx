@@ -45,7 +45,7 @@ export default function MobileMenu({ hasReservationsOption = false, hasSeasonsOp
     };
   }, [isOpen]);
 
-  const menuItems = [
+  const menuItems: Array<{ href: string; label: string; icon: any; needsOption?: boolean; needsSeasonsOption?: boolean }> = [
     { href: '/dashboard', label: 'Accueil', icon: Home },
     { href: '/dashboard/membres', label: 'Membres', icon: Users },
     { href: '/dashboard/classement', label: 'Classement', icon: Trophy },
@@ -63,7 +63,7 @@ export default function MobileMenu({ hasReservationsOption = false, hasSeasonsOp
 
   const filteredMenuItems = menuItems.filter(item => {
     if (item.needsOption && !hasReservationsOption) return false;
-    if ((item as any).needsSeasonsOption && !hasSeasonsOption) return false;
+    if (item.needsSeasonsOption && !hasSeasonsOption) return false;
     return true;
   });
 
