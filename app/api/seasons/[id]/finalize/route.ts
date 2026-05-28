@@ -30,7 +30,11 @@ export async function POST(
       .single();
 
     if (seasonError || !season) return NextResponse.json({ error: "Season not found" }, { status: 404 });
-    if (season.status === "completed") return NextResponse.json({ error: "Season already finalized" }, { status: 400 });
+
+    // If already completed, clear old results and re-finalize
+    if (season.status === "completed") {
+      await supabaseAdmin.from("season_results").delete().eq("season_id", id);
+    }
 
     const countries: string[] = season.countries || ["FR", "BE"];
     const dateRange = { start: season.start_date, end: season.end_date };
@@ -51,10 +55,19 @@ export async function POST(
       }));
 
       if (resultRows.length > 0) {
+        // Try with country first, fallback without if column doesn't exist
         const { error: insertError } = await supabaseAdmin
           .from("season_results")
           .insert(resultRows);
-        if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+
+        if (insertError) {
+          // Retry without country column
+          const rowsWithoutCountry = resultRows.map(({ country: _, ...rest }) => rest);
+          const { error: retryError } = await supabaseAdmin
+            .from("season_results")
+            .insert(rowsWithoutCountry);
+          if (retryError) return NextResponse.json({ error: retryError.message }, { status: 500 });
+        }
       }
 
       allResults.push({

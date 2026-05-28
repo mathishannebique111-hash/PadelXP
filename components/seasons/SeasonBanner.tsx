@@ -206,15 +206,19 @@ export default function SeasonBanner({
                   </div>
                   <span className="text-[10px] font-bold text-emerald-300 bg-emerald-400/15 border border-emerald-400/30 rounded-full px-2.5 py-0.5">Terminée</span>
                 </div>
-                {/* Mini podium */}
-                <div className="flex items-center gap-3 justify-center">
-                  {winners.slice(0, 3).map((w, i) => (
-                    <div key={w.user_id} className="flex items-center gap-1.5">
-                      <span className="text-sm">{medalEmojis[i]}</span>
-                      <span className="text-[10px] sm:text-xs text-white/70 font-semibold">{getWinnerName(w)}</span>
-                    </div>
-                  ))}
-                </div>
+                {/* Mini podium or message */}
+                {winners.length > 0 ? (
+                  <div className="flex items-center gap-3 justify-center">
+                    {winners.slice(0, 3).map((w, i) => (
+                      <div key={w.user_id} className="flex items-center gap-1.5">
+                        <span className="text-sm">{medalEmojis[i]}</span>
+                        <span className="text-[10px] sm:text-xs text-white/70 font-semibold">{getWinnerName(w)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-white/50 text-center">La saison est terminée. Voir les détails.</p>
+                )}
               </div>
             )}
 
@@ -432,29 +436,64 @@ function CompletedModal({ season, sortedRewards, winners, currentUserWin, userRe
         )}
 
         {/* Podium */}
-        <div className="mb-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 mb-3">Podium {countryLabel}</h3>
-          <div className="space-y-2">
-            {winners.slice(0, 3).map((w, i) => {
-              const reward = sortedRewards.find(r => r.rank === w.final_rank);
-              return (
-                <div key={w.user_id} className={`flex items-center gap-3 rounded-xl p-3 ${i === 0 ? 'border-2 border-amber-400/20 bg-amber-500/5' : 'border border-white/10 bg-white/5'}`}>
-                  <span className="text-xl">{medalEmojis[i]}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate">{getWinnerName(w)}</p>
-                    <p className="text-[10px] text-white/40">{w.final_points} pts</p>
-                  </div>
-                  {reward && (
-                    <div className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-2 py-1">
-                      <Gift className="w-3 h-3 text-amber-400" />
-                      <span className="text-[10px] font-semibold text-white/60 max-w-[80px] truncate">{reward.reward_label}</span>
+        {winners.length > 0 ? (
+          <div className="mb-5">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 mb-3">Podium {countryLabel}</h3>
+            <div className="space-y-2">
+              {winners.slice(0, 3).map((w, i) => {
+                const reward = sortedRewards.find(r => r.rank === w.final_rank);
+                return (
+                  <div key={w.user_id} className={`flex items-center gap-3 rounded-xl p-3 ${i === 0 ? 'border-2 border-amber-400/20 bg-amber-500/5' : 'border border-white/10 bg-white/5'}`}>
+                    <span className="text-xl">{medalEmojis[i]}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{getWinnerName(w)}</p>
+                      <p className="text-[10px] text-white/40">{w.final_points} pts</p>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                    {reward && (
+                      <div className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-2 py-1">
+                        <Gift className="w-3 h-3 text-amber-400" />
+                        <span className="text-[10px] font-semibold text-white/60 max-w-[80px] truncate">{reward.reward_label}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+            <p className="text-sm text-white/50">Aucun résultat enregistré pour cette saison.</p>
+          </div>
+        )}
+
+        {/* Rewards recap */}
+        {sortedRewards.length > 0 && (
+          <div className="mb-5 space-y-2.5">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-1.5">
+              <Gift className="w-3.5 h-3.5 text-amber-400" /> Récompenses de la saison
+            </h3>
+            {sortedRewards.map((reward) => (
+              <div key={reward.id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                {reward.reward_image_url ? (
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+                    <img src={reward.reward_image_url} alt={reward.reward_label} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-14 h-14 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl">{medalEmojis[reward.rank - 1]}</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-sm">{medalEmojis[reward.rank - 1]}</span>
+                    <span className="text-sm font-bold text-white truncate">{reward.reward_label}</span>
+                  </div>
+                  {reward.reward_description && <p className="text-[11px] text-white/50 leading-relaxed line-clamp-2">{reward.reward_description}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Upcoming season teaser */}
         {upcomingSeason && (
