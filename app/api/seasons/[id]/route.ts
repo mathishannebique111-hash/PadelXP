@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { canSeeSeasons } from "@/lib/feature-flags";
+import { isAdmin } from "@/lib/admin-auth";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +21,7 @@ export async function GET(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
 
     const { data: season, error } = await supabaseAdmin
       .from("seasons")
@@ -45,7 +46,7 @@ export async function PUT(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
 
     const body = await request.json();
     const { name, start_date, end_date, status } = body;
@@ -80,7 +81,7 @@ export async function DELETE(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
 
     const { error } = await supabaseAdmin
       .from("seasons")

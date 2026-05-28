@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { canSeeSeasons } from "@/lib/feature-flags";
+import { isAdmin } from "@/lib/admin-auth";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 
 const supabaseAdmin = createAdminClient(
@@ -22,7 +23,7 @@ export async function POST(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
 
     // Fetch the season
     const { data: season, error: seasonError } = await supabaseAdmin
@@ -39,13 +40,13 @@ export async function POST(
       return NextResponse.json({ error: "Season already finalized" }, { status: 400 });
     }
 
-    // Verify user is club admin
-    const { data: adminCheck } = await supabaseAdmin
+    // Verify user is club admin or global admin
+    const { data: adminCheck } = !isAdmin(user.email) ? await supabaseAdmin
       .from("club_admins")
       .select("id")
       .eq("user_id", user.id)
       .eq("club_id", season.club_id)
-      .maybeSingle();
+      .maybeSingle() : { data: { id: 'global-admin' } };
 
     if (!adminCheck) {
       return NextResponse.json({ error: "Not a club admin" }, { status: 403 });

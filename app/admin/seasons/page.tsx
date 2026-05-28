@@ -6,7 +6,8 @@ import {
   X, Check, AlertTriangle, History, Crown,
   Image as ImageIcon,
 } from "lucide-react";
-import PageTitle from "../PageTitle";
+import PageTitle from "@/components/PageTitle";
+import { createClient } from "@/lib/supabase/client";
 
 type SeasonStatus = "upcoming" | "active" | "completed";
 
@@ -77,7 +78,14 @@ function progressPercent(startDate: string, endDate: string) {
 
 const medalEmojis = ["🥇", "🥈", "🥉"];
 
+interface Club {
+  id: string;
+  name: string;
+}
+
 export default function SeasonsPage() {
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [selectedClubId, setSelectedClubId] = useState<string>("");
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,11 +112,38 @@ export default function SeasonsPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   }, []);
 
+  // Load clubs list
+  useEffect(() => {
+    async function fetchClubs() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("clubs")
+          .select("id, name")
+          .order("name");
+        if (data && data.length > 0) {
+          setClubs(data);
+          if (!selectedClubId) {
+            setSelectedClubId(data[0].id);
+          }
+        }
+      } catch {
+        // Silent
+      }
+    }
+    fetchClubs();
+  }, []);
+
   const loadSeasons = useCallback(async () => {
+    if (!selectedClubId) {
+      setSeasons([]);
+      setIsLoading(false);
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
-      const res = await fetch("/api/seasons", { cache: "no-store" });
+      const res = await fetch(`/api/seasons?club_id=${selectedClubId}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Erreur lors du chargement");
       const data = await res.json();
       setSeasons(data.seasons || []);
@@ -117,7 +152,7 @@ export default function SeasonsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedClubId]);
 
   useEffect(() => { loadSeasons(); }, [loadSeasons]);
 
@@ -133,25 +168,8 @@ export default function SeasonsPage() {
       setIsSubmitting(true);
       setError(null);
 
-      let clubId: string | null = null;
-      if (seasons.length > 0) {
-        // Fetch from an existing season
-        const detailRes = await fetch(`/api/seasons/${seasons[0].id}`);
-        const detailData = await detailRes.json();
-        clubId = detailData.season?.club_id;
-      }
-
-      if (!clubId) {
-        // Fetch user profile to get club_id
-        const meRes = await fetch("/api/player/profile", { credentials: "include" });
-        if (meRes.ok) {
-          const meData = await meRes.json();
-          clubId = meData.profile?.club_id || meData.clubId;
-        }
-      }
-
-      if (!clubId) {
-        setError("Impossible de determiner votre club");
+      if (!selectedClubId) {
+        setError("Veuillez selectionner un club");
         return;
       }
 
@@ -164,7 +182,7 @@ export default function SeasonsPage() {
           name: newName,
           start_date: newStartDate,
           end_date: newEndDate,
-          club_id: clubId,
+          club_id: selectedClubId,
           rewards,
         }),
       });
@@ -264,7 +282,24 @@ export default function SeasonsPage() {
 
   return (
     <div className="space-y-6">
-      <PageTitle title="Saisons" subtitle="Gerez les saisons de votre club, configurez les recompenses et suivez le classement." />
+      <PageTitle title="Saisons" subtitle="Gerez les saisons par club, configurez les recompenses et suivez le classement." />
+
+      {/* Club selector */}
+      <div className="flex items-center gap-3">
+        <label className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">Club</label>
+        <select
+          value={selectedClubId}
+          onChange={e => setSelectedClubId(e.target.value)}
+          className="flex-1 max-w-md rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+        >
+          {clubs.length === 0 && <option value="">Chargement...</option>}
+          {clubs.map(club => (
+            <option key={club.id} value={club.id} className="bg-slate-900 text-white">
+              {club.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {error && (
         <div className="rounded-2xl border border-rose-400/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 flex items-center gap-2">

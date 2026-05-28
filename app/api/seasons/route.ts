@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { canSeeSeasons } from "@/lib/feature-flags";
+import { isAdmin } from "@/lib/admin-auth";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,26 +12,32 @@ const supabaseAdmin = createAdminClient(
 
 export const dynamic = "force-dynamic";
 
-// GET: list seasons for the user's club
-export async function GET() {
+// GET: list seasons — accepts ?club_id= param, or falls back to user's club
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ seasons: [] });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ seasons: [] });
 
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("club_id")
-      .eq("id", user.id)
-      .maybeSingle();
+    const { searchParams } = new URL(request.url);
+    let clubId = searchParams.get("club_id");
 
-    if (!profile?.club_id) return NextResponse.json({ seasons: [] });
+    if (!clubId) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("club_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      clubId = profile?.club_id || null;
+    }
+
+    if (!clubId) return NextResponse.json({ seasons: [] });
 
     const { data: seasons, error } = await supabaseAdmin
       .from("seasons")
       .select("*, season_rewards(*)")
-      .eq("club_id", profile.club_id)
+      .eq("club_id", clubId)
       .order("start_date", { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -47,7 +54,7 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
 
     const body = await request.json();
     const { name, start_date, end_date, club_id, rewards } = body;
@@ -56,16 +63,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Verify user is club admin
-    const { data: adminCheck } = await supabaseAdmin
-      .from("club_admins")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("club_id", club_id)
-      .maybeSingle();
+    // Verify user is club admin or global admin
+    if (!isAdmin(user.email)) {
+      const { data: adminCheck } = await supabaseAdmin
+        .from("club_admins")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("club_id", club_id)
+        .maybeSingle();
 
-    if (!adminCheck) {
-      return NextResponse.json({ error: "Not a club admin" }, { status: 403 });
+      if (!adminCheck) {
+        return NextResponse.json({ error: "Not a club admin" }, { status: 403 });
+      }
     }
 
     // Check no overlapping seasons

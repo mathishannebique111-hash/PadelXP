@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { canSeeSeasons } from "@/lib/feature-flags";
+import { isAdmin } from "@/lib/admin-auth";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +21,7 @@ export async function GET(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ results: [] });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ results: [] });
 
     const { data: results, error } = await supabaseAdmin
       .from("season_results")

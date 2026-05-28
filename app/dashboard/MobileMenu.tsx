@@ -19,11 +19,10 @@ import {
   Download,
   HelpCircle,
   Settings,
-  Calendar,
-  Flame
+  Calendar
 } from 'lucide-react';
 
-export default function MobileMenu({ hasReservationsOption = false, hasSeasonsOption = false }: { hasReservationsOption?: boolean; hasSeasonsOption?: boolean }) {
+export default function MobileMenu({ hasReservationsOption = false }: { hasReservationsOption?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { hasUnread } = useUnreadClubMessages();
@@ -45,14 +44,13 @@ export default function MobileMenu({ hasReservationsOption = false, hasSeasonsOp
     };
   }, [isOpen]);
 
-  const menuItems: Array<{ href: string; label: string; icon: any; needsOption?: boolean; needsSeasonsOption?: boolean }> = [
+  const menuItems = [
     { href: '/dashboard', label: 'Accueil', icon: Home },
     { href: '/dashboard/membres', label: 'Membres', icon: Users },
     { href: '/dashboard/classement', label: 'Classement', icon: Trophy },
     { href: '/dashboard/historique', label: 'Historique des matchs', icon: History },
     { href: '/dashboard/page-club', label: 'Page publique du club', icon: Globe },
     { href: '/dashboard/challenges', label: 'Challenges', icon: Target },
-    { href: '/dashboard/seasons', label: 'Saisons', icon: Flame, needsSeasonsOption: true },
     { href: '/dashboard/tournaments', label: 'Tournois', icon: Medal },
     { href: '/dashboard/ligues', label: 'Ligues', icon: Trophy },
     { href: '/dashboard/roles', label: 'Rôles et accès', icon: UserCog },
@@ -61,11 +59,7 @@ export default function MobileMenu({ hasReservationsOption = false, hasSeasonsOp
     { href: '/dashboard/aide', label: 'Aide & Support', icon: HelpCircle },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => {
-    if (item.needsOption && !hasReservationsOption) return false;
-    if (item.needsSeasonsOption && !hasSeasonsOption) return false;
-    return true;
-  });
+  const filteredMenuItems = menuItems.filter(item => !item.needsOption || hasReservationsOption);
 
   return (
     <>

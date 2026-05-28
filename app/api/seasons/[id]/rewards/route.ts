@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { canSeeSeasons } from "@/lib/feature-flags";
+import { isAdmin } from "@/lib/admin-auth";
 
 const supabaseAdmin = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +21,7 @@ export async function GET(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ rewards: [] });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ rewards: [] });
 
     const { data: rewards } = await supabaseAdmin
       .from("season_rewards")
@@ -43,7 +44,7 @@ export async function POST(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!canSeeSeasons(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
+    if (!canSeeSeasons(user.email) && !isAdmin(user.email)) return NextResponse.json({ error: "Feature not available" }, { status: 403 });
 
     const body = await request.json();
     const { rank, reward_label, reward_description, reward_image_url } = body;
