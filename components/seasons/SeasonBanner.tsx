@@ -38,7 +38,7 @@ function useCountdown(endDate: string) {
   const end = new Date(endDate + 'T23:59:59');
   const diff = end.getTime() - now.getTime();
 
-  if (diff <= 0) return { label: 'Terminee', urgent: true };
+  if (diff <= 0) return { label: 'Terminée', urgent: true };
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -59,8 +59,7 @@ function useProgress(startDate: string, endDate: string) {
 }
 
 const medalEmojis = ['🥇', '🥈', '🥉'];
-const countryLabels: Record<string, string> = { FR: 'francais', BE: 'belge' };
-const countryFlags: Record<string, string> = { FR: '🇫🇷', BE: '🇧🇪' };
+const countryLabels: Record<string, string> = { FR: 'français', BE: 'belge' };
 
 export default function SeasonBanner({ season, currentUserRank, userCountry = 'FR' }: SeasonBannerProps) {
   const [showDetail, setShowDetail] = useState(false);
@@ -77,6 +76,18 @@ export default function SeasonBanner({ season, currentUserRank, userCountry = 'F
   );
 
   const countryLabel = countryLabels[userCountry] || userCountry;
+
+  // Hide bottom nav when modal is open
+  useEffect(() => {
+    const nav = document.getElementById('bottom-nav-bar');
+    if (!nav) return;
+    if (showDetail) {
+      nav.style.display = 'none';
+    } else {
+      nav.style.display = '';
+    }
+    return () => { nav.style.display = ''; };
+  }, [showDetail]);
 
   return (
     <>
@@ -105,7 +116,7 @@ export default function SeasonBanner({ season, currentUserRank, userCountry = 'F
           </div>
 
           {/* Row 2: progress bar */}
-          <div className="mb-2">
+          <div className="mb-2.5">
             <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div className="h-full rounded-full" style={{
                 width: `${progress}%`,
@@ -115,14 +126,14 @@ export default function SeasonBanner({ season, currentUserRank, userCountry = 'F
             </div>
           </div>
 
-          {/* Row 3: rewards hint + rank */}
+          {/* Row 3: rewards CTA + rank */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Gift className="w-3 h-3 text-amber-400/70" />
-              <span className="text-[10px] sm:text-xs text-white/50">
-                {sortedRewards.length > 0 ? `${sortedRewards.length} recompense${sortedRewards.length > 1 ? 's' : ''} a gagner` : 'Recompenses a venir'}
+            <div className="flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-400/25 px-2.5 py-1">
+              <Gift className="w-3 h-3 text-amber-400" />
+              <span className="text-[10px] sm:text-xs font-bold text-amber-300">
+                {sortedRewards.length} récompense{sortedRewards.length > 1 ? 's' : ''} à gagner
               </span>
-              <ChevronRight className="w-3 h-3 text-white/30" />
+              <ChevronRight className="w-3 h-3 text-amber-400/50" />
             </div>
             {currentUserRank && (
               <span className="text-[10px] sm:text-xs text-white/60">
@@ -141,11 +152,11 @@ export default function SeasonBanner({ season, currentUserRank, userCountry = 'F
 
       {/* Detail modal — rules + rewards */}
       {showDetail && (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[999999] flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDetail(false)} />
 
-          <div className="relative w-full max-w-md sm:rounded-3xl rounded-t-3xl border border-white/15 bg-gradient-to-b from-[#1a1a2e] to-[#0d0d1a] p-5 sm:p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
-            <button onClick={() => setShowDetail(false)} className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+          <div className="relative w-full max-w-md sm:rounded-3xl rounded-t-3xl border border-white/15 bg-gradient-to-b from-[#1a1a2e] to-[#0d0d1a] p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setShowDetail(false)} className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10">
               <X className="w-4 h-4 text-white/60" />
             </button>
 
@@ -162,31 +173,31 @@ export default function SeasonBanner({ season, currentUserRank, userCountry = 'F
 
             {/* Rules */}
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 mb-5 space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-white/50">Comment ca marche</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-white/50">Comment ça marche</h3>
               <div className="space-y-2.5">
                 <div className="flex items-start gap-3">
                   <span className="text-sm mt-0.5">📅</span>
                   <p className="text-sm text-white/70">
-                    La saison dure <span className="text-white font-semibold">{totalDays} jours</span>. Seuls les matchs joues pendant cette periode comptent.
+                    La saison dure <span className="text-white font-semibold">{totalDays} jours</span>. Seuls les matchs joués pendant cette période comptent.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-sm mt-0.5">🏆</span>
                   <p className="text-sm text-white/70">
-                    Le classement est base sur le <span className="text-white font-semibold">classement national</span> {(season.countries || []).map(c => countryFlags[c]).join(' ')}.
-                    Chaque victoire rapporte <span className="text-white font-semibold">10 pts</span>, chaque defaite <span className="text-white font-semibold">3 pts</span>.
+                    Le classement est basé sur le <span className="text-white font-semibold">classement national</span>.
+                    Chaque victoire rapporte <span className="text-white font-semibold">10 pts</span>, chaque défaite <span className="text-white font-semibold">3 pts</span>.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-sm mt-0.5">🎯</span>
                   <p className="text-sm text-white/70">
-                    Enregistre un maximum de matchs pour grimper dans le classement. Max <span className="text-white font-semibold">2 matchs par jour</span> comptabilises.
+                    Enregistre un maximum de matchs pour grimper dans le classement. Max <span className="text-white font-semibold">2 matchs par jour</span> comptabilisés.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="text-sm mt-0.5">🎁</span>
                   <p className="text-sm text-white/70">
-                    Le <span className="text-white font-semibold">Top 3</span> a la fin de la saison remporte des recompenses !
+                    Le <span className="text-white font-semibold">Top 3</span> à la fin de la saison remporte des récompenses !
                   </p>
                 </div>
               </div>
@@ -197,23 +208,27 @@ export default function SeasonBanner({ season, currentUserRank, userCountry = 'F
               <div className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-1.5">
                   <Gift className="w-3.5 h-3.5 text-amber-400" />
-                  Recompenses a gagner
+                  Récompenses à gagner
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {sortedRewards.map((reward) => (
-                    <div key={reward.id} className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
-                      {reward.reward_image_url && (
-                        <div className="w-full h-40 bg-white/5">
+                    <div key={reward.id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                      {reward.reward_image_url ? (
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
                           <img src={reward.reward_image_url} alt={reward.reward_label} className="w-full h-full object-cover" />
                         </div>
+                      ) : (
+                        <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+                          <span className="text-2xl">{medalEmojis[reward.rank - 1]}</span>
+                        </div>
                       )}
-                      <div className="p-3.5">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-lg">{medalEmojis[reward.rank - 1]}</span>
-                          <span className="text-sm font-bold text-white">{reward.reward_label}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-sm">{medalEmojis[reward.rank - 1]}</span>
+                          <span className="text-sm font-bold text-white truncate">{reward.reward_label}</span>
                         </div>
                         {reward.reward_description && (
-                          <p className="text-xs text-white/50 leading-relaxed">{reward.reward_description}</p>
+                          <p className="text-[11px] text-white/50 leading-relaxed line-clamp-2">{reward.reward_description}</p>
                         )}
                       </div>
                     </div>
