@@ -99,8 +99,9 @@ export default async function ClubClassementPage({
           </div>
         </div>
 
-        {/* Leaderboard — same component as dashboard */}
+        {/* Leaderboard — same component as dashboard, key forces remount on refresh */}
         <LeaderboardContent
+          key={Date.now()}
           initialLeaderboard={leaderboard}
           initialProfilesFirstNameMap={profilesFirstNameMap}
           initialProfilesLastNameMap={profilesLastNameMap}

@@ -610,7 +610,7 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
               Limite atteinte pour aujourd&apos;hui
             </h3>
             <p className="text-sm text-white/50 mb-6 max-w-xs">
-              Tu as utilisé tes 5 messages gratuits. Passe Premium pour un accès
+              Tu as utilisé tes 3 messages gratuits. Passe Premium pour un accès
               illimité à ton coach IA.
             </p>
             <button
@@ -693,7 +693,7 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
         {limitReached && messages.length > 0 && (
           <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 mb-2">
             <p className="text-xs text-amber-200/80">
-              Limite de 5 messages atteinte pour aujourd&apos;hui
+              Limite de 3 messages atteinte pour aujourd&apos;hui
             </p>
             <button
               onClick={handleUpgrade}
@@ -754,7 +754,7 @@ export default function CoachChat({ userId, coachName, pendingMessage, onPending
 
         {/* Usage counter */}
         {usage && !usage.isPremium && !limitReached && (
-          <p className="text-center text-[11px] text-white/30 mt-2">
+          <p className="text-center text-[11px] text-white/30 mt-1">
             {usage.remaining} message{(usage.remaining ?? 0) > 1 ? "s" : ""} restant
             {(usage.remaining ?? 0) > 1 ? "s" : ""} aujourd&apos;hui
           </p>
