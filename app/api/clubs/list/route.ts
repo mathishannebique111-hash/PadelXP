@@ -63,11 +63,13 @@ export async function GET() {
 
     logger.info("[API /clubs/list] Raw data received", { clubsCount: data.length });
 
-    // Filtrer les clubs supprimés/désactivés
+    // Filtrer les clubs supprimés/désactivés + ne garder que les clubs ouverts aux inscriptions
+    const ALLOWED_SUBDOMAINS = ["padelsquare4340"];
     const activeClubs = (data || []).filter((club: any) => {
       const status = club?.status ?? null;
       if (status && status !== "active") return false;
-      return true;
+      const subdomain = club?.subdomain || club?.slug || "";
+      return ALLOWED_SUBDOMAINS.includes(subdomain);
     });
 
     // Normaliser les données pour gérer différents formats
