@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
+import { isAdmin } from "@/lib/admin-auth";
 import { updateEngagementMetrics, checkAutoExtensionEligibility, grantAutoExtension } from "@/lib/trial-hybrid";
 import { revalidatePath } from "next/cache";
 
@@ -383,6 +384,7 @@ export async function POST(request: Request) {
         const profilePayload = {
           ...updatedRows,
           display_name: updatedRows.display_name || fullName,
+          is_admin: existing.is_admin || isAdmin(user.email),
         };
 
         if (clubIdForUser) {
@@ -499,7 +501,7 @@ export async function POST(request: Request) {
         club_slug: existing.club_slug ?? clubSlugForUser ?? null,
         display_name: existing.display_name || fullName,
         has_completed_onboarding: existing.has_completed_onboarding ?? false,
-        is_admin: existing.is_admin ?? false,
+        is_admin: existing.is_admin || isAdmin(user.email),
       },
     });
   }
