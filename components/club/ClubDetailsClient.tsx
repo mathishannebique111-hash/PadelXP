@@ -104,8 +104,8 @@ export default function ClubDetailsClient({
     }
     if (!accent) {
       return {
-        backgroundColor: "rgb(var(--theme-page))",
-        borderColor: "rgb(var(--theme-accent))",
+        backgroundColor: "rgba(255,255,255,0.05)",
+        borderColor: "rgba(255,255,255,0.15)",
         borderWidth: "1.5px",
         boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
       };
@@ -213,13 +213,13 @@ export default function ClubDetailsClient({
             <h2 className="text-xs font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.9)' }}>Infrastructure</h2>
             <div className="grid gap-2 text-sm mt-5">
               {infrastructure.length === 0 ? (
-                <div className="rounded-lg border border-white/18 bg-white/10 px-2 py-1.5 text-center text-[10px] text-white/60">
+                <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-center text-[10px] text-white/40">
                   Non renseigné
                 </div>
               ) : (
                 infrastructure.map((item) => (
                   <div key={item.label} className="flex items-center justify-between rounded-lg border px-2 py-1.5"
-                    style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.1)', color: contrastColor, borderColor: 'var(--theme-accent)' } : { backgroundColor: 'white', color: '#071554', borderColor: 'transparent' }}>
+                    style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.1)', color: contrastColor, borderColor: 'var(--theme-accent)' } : { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)', borderColor: 'rgba(255,255,255,0.15)' }}>
                     <span className="uppercase tracking-[0.2em] text-[10px] font-bold">{item.label}</span>
                     <span className="font-extrabold text-xs">{item.value}</span>
                   </div>

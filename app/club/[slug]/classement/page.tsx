@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import LeaderboardContent from "@/components/LeaderboardContent";
+import Podium from "@/components/Podium";
 import AutoRefresh from "./AutoRefresh";
 import Image from "next/image";
 
@@ -50,6 +51,7 @@ export default async function ClubClassementPage({
 
   const totalPlayers = leaderboard.length;
   const totalMatches = leaderboard.reduce((sum, p) => sum + p.matches, 0);
+  const top3 = leaderboard.slice(0, 3);
 
   // Fetch first/last name maps for display
   const profilesFirstNameMap: Record<string, string> = {};
@@ -75,7 +77,7 @@ export default async function ClubClassementPage({
   return (
     <div className="min-h-screen bg-[#04050a] text-white px-4 sm:px-6 py-8 sm:py-12">
       <AutoRefresh intervalMs={30_000} />
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Club Header */}
         <div className="flex items-center gap-4">
           {clubLogoUrl && (
@@ -99,7 +101,12 @@ export default async function ClubClassementPage({
           </div>
         </div>
 
-        {/* Leaderboard — same component as dashboard, key forces remount on refresh */}
+        {/* Top 3 Podium */}
+        {top3.length > 0 && (
+          <Podium key={`podium-${Date.now()}`} top3={top3} />
+        )}
+
+        {/* Full leaderboard — same component as dashboard, key forces remount on refresh */}
         <LeaderboardContent
           key={Date.now()}
           initialLeaderboard={leaderboard}
