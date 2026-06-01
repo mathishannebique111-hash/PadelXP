@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Trophy, Clock, Plus, ChevronDown, ChevronUp, Gift, Calendar,
   X, Check, AlertTriangle, History, Crown, StopCircle,
-  Image as ImageIcon,
+  Image as ImageIcon, Building2,
 } from "lucide-react";
 import PageTitle from "@/components/PageTitle";
 
@@ -34,6 +34,12 @@ interface SeasonResult {
   };
 }
 
+interface Club {
+  id: string;
+  name: string;
+  subdomain: string;
+}
+
 interface Season {
   id: string;
   name: string;
@@ -42,6 +48,8 @@ interface Season {
   status: SeasonStatus;
   countries: string[];
   created_at: string;
+  club_id: string;
+  clubs?: Club | null;
   season_rewards: SeasonReward[];
   season_results?: SeasonResult[];
 }
@@ -92,6 +100,7 @@ const DURATION_PRESETS = [
 
 export default function SeasonsPage() {
   const [seasons, setSeasons] = useState<Season[]>([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -100,6 +109,7 @@ export default function SeasonsPage() {
 
   // Create form state
   const [newName, setNewName] = useState("");
+  const [newClubId, setNewClubId] = useState("");
   const [newDuration, setNewDuration] = useState(60);
   const [newStartDate, setNewStartDate] = useState("");
   const [newCountries, setNewCountries] = useState<string[]>(["FR", "BE"]);
@@ -122,10 +132,17 @@ export default function SeasonsPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await fetch("/api/seasons", { cache: "no-store" });
-      if (!res.ok) throw new Error("Erreur lors du chargement");
-      const data = await res.json();
-      setSeasons(data.seasons || []);
+      const [seasonsRes, clubsRes] = await Promise.all([
+        fetch("/api/seasons", { cache: "no-store" }),
+        fetch("/api/admin/clubs-list", { cache: "no-store" }),
+      ]);
+      if (!seasonsRes.ok) throw new Error("Erreur lors du chargement");
+      const seasonsData = await seasonsRes.json();
+      setSeasons(seasonsData.seasons || []);
+      if (clubsRes.ok) {
+        const clubsData = await clubsRes.json();
+        setClubs(clubsData.clubs || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -141,7 +158,7 @@ export default function SeasonsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || !newStartDate || !newName.trim()) return;
+    if (isSubmitting || !newStartDate || !newName.trim() || !newClubId) return;
 
     try {
       setIsSubmitting(true);
@@ -157,6 +174,7 @@ export default function SeasonsPage() {
           start_date: newStartDate,
           end_date: computedEndDate,
           countries: newCountries,
+          club_id: newClubId,
           rewards,
         }),
       });
@@ -167,6 +185,7 @@ export default function SeasonsPage() {
       }
 
       setNewName("");
+      setNewClubId("");
       setNewStartDate("");
       setNewDuration(60);
       setNewCountries(["FR", "BE"]);
@@ -236,11 +255,11 @@ export default function SeasonsPage() {
     } catch { /* silent */ } finally { setUploadingRank(null); }
   };
 
-  const isFormValid = newName.trim() && newStartDate && newDuration > 0;
+  const isFormValid = newName.trim() && newStartDate && newDuration > 0 && newClubId;
 
   return (
     <div className="space-y-6">
-      <PageTitle title="Saisons" subtitle="Lancez des saisons globales pour tous les joueurs de l'application." />
+      <PageTitle title="Saisons" subtitle="Lancez des saisons par club. Chaque saison est visible uniquement par les joueurs du club selectionne." />
 
       {error && (
         <div className="rounded-2xl border border-rose-400/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 flex items-center gap-2">
@@ -267,7 +286,10 @@ export default function SeasonsPage() {
                     </div>
                     <div>
                       <h2 className="text-lg font-bold text-white">{activeSeason.name}</h2>
-                      <p className="text-xs text-white/50">{formatDate(activeSeason.start_date)} → {formatDate(activeSeason.end_date)}</p>
+                      <p className="text-xs text-white/50">
+                        {activeSeason.clubs?.name && <><Building2 className="w-3 h-3 inline mr-1" />{activeSeason.clubs.name} — </>}
+                        {formatDate(activeSeason.start_date)} → {formatDate(activeSeason.end_date)}
+                      </p>
                     </div>
                   </div>
                   <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider border ${statusBadge("active").classes}`}>
@@ -362,6 +384,7 @@ export default function SeasonsPage() {
                         </span>
                       </div>
                       <p className="text-xs text-white/50 mb-3">
+                        {season.clubs?.name && <><Building2 className="w-3 h-3 inline mr-1" />{season.clubs.name} — </>}
                         {new Date(season.start_date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long" })}
                         {" → "}
                         {new Date(season.end_date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
@@ -417,6 +440,25 @@ export default function SeasonsPage() {
                   <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
                     placeholder="Ex. Saison 1 - Ete 2026"
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40" required />
+                </div>
+
+                {/* Club selector */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">Club</label>
+                  <select
+                    value={newClubId}
+                    onChange={e => setNewClubId(e.target.value)}
+                    className="w-full max-w-md rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                    required
+                  >
+                    <option value="" className="bg-zinc-900">Selectionnez un club...</option>
+                    {clubs.map(club => (
+                      <option key={club.id} value={club.id} className="bg-zinc-900">
+                        {club.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-white/40">La saison ne sera visible que par les joueurs de ce club</p>
                 </div>
 
                 {/* Duration presets */}
@@ -555,7 +597,10 @@ export default function SeasonsPage() {
                           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><Crown className="w-4 h-4 text-amber-400" /></div>
                           <div>
                             <h3 className="font-semibold text-white text-sm">{season.name}</h3>
-                            <p className="text-[10px] text-white/40 mt-0.5">{formatDate(season.start_date)} → {formatDate(season.end_date)}</p>
+                            <p className="text-[10px] text-white/40 mt-0.5">
+                              {season.clubs?.name && <>{season.clubs.name} — </>}
+                              {formatDate(season.start_date)} → {formatDate(season.end_date)}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">

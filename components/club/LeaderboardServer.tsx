@@ -46,12 +46,13 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
     let seasonDateRange: { start: string; end: string } | undefined;
     let completedSeasonResults: any[] = [];
 
-    if (showSeasons) {
-        // 1. Check for active season
+    if (showSeasons && clubId) {
+        // 1. Check for active season for this club
         const { data: active } = await supabaseAdmin
             .from("seasons")
             .select("*, season_rewards(*)")
             .eq("status", "active")
+            .eq("club_id", clubId)
             .order("start_date", { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -60,20 +61,22 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
             activeSeason = active;
             seasonDateRange = { start: active.start_date, end: active.end_date };
         } else {
-            // 2. Check for most recent completed season
+            // 2. Check for most recent completed season for this club
             const { data: completed } = await supabaseAdmin
                 .from("seasons")
                 .select("*, season_rewards(*)")
                 .eq("status", "completed")
+                .eq("club_id", clubId)
                 .order("end_date", { ascending: false })
                 .limit(1)
                 .maybeSingle();
 
-            // 3. Check for upcoming season
+            // 3. Check for upcoming season for this club
             const { data: upcoming } = await supabaseAdmin
                 .from("seasons")
                 .select("*, season_rewards(*)")
                 .eq("status", "upcoming")
+                .eq("club_id", clubId)
                 .order("start_date", { ascending: true })
                 .limit(1)
                 .maybeSingle();

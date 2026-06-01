@@ -16,7 +16,7 @@ function canAccess(email: string | undefined | null) {
   return canSeeSeasons(email) || isAdmin(email);
 }
 
-// GET: list all global seasons
+// GET: list all seasons (admin sees all, with club info)
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -26,7 +26,7 @@ export async function GET() {
 
     const { data: seasons, error } = await supabaseAdmin
       .from("seasons")
-      .select("*, season_rewards(*)")
+      .select("*, season_rewards(*), clubs(id, name, subdomain)")
       .order("start_date", { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -45,20 +45,21 @@ export async function POST(request: Request) {
     if (!isAdmin(user.email)) return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
     const body = await request.json();
-    const { name, start_date, end_date, rewards, countries } = body;
+    const { name, start_date, end_date, rewards, countries, club_id } = body;
 
-    if (!name || !start_date || !end_date) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!name || !start_date || !end_date || !club_id) {
+      return NextResponse.json({ error: "Missing required fields (name, dates, club_id)" }, { status: 400 });
     }
 
-    // Check no overlapping active/upcoming seasons
+    // Check no overlapping active/upcoming seasons for this club
     const { data: overlapping } = await supabaseAdmin
       .from("seasons")
       .select("id")
+      .eq("club_id", club_id)
       .in("status", ["active", "upcoming"]);
 
     if (overlapping && overlapping.length > 0) {
-      return NextResponse.json({ error: "Une saison active ou a venir existe deja. Finalisez-la d'abord." }, { status: 409 });
+      return NextResponse.json({ error: "Une saison active ou a venir existe deja pour ce club. Finalisez-la d'abord." }, { status: 409 });
     }
 
     // Determine status
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
       .insert({
         name, start_date, end_date, status, created_by: user.id,
         countries: countries || ["FR", "BE"],
+        club_id,
       })
       .select()
       .single();

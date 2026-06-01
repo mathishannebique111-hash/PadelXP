@@ -18,10 +18,20 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!canSeeSeasons(user.email)) return NextResponse.json({ season: null });
 
+    // Get player's club_id
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("club_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!profile?.club_id) return NextResponse.json({ season: null });
+
     const { data: season } = await supabaseAdmin
       .from("seasons")
       .select("*, season_rewards(*)")
       .eq("status", "active")
+      .eq("club_id", profile.club_id)
       .order("start_date", { ascending: false })
       .limit(1)
       .maybeSingle();
