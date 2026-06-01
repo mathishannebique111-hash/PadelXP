@@ -2,7 +2,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
-import LeaderboardContent from "@/components/LeaderboardContent";
+import PublicLeaderboard from "./PublicLeaderboard";
 import AutoRefresh from "./AutoRefresh";
 import Image from "next/image";
 
@@ -99,13 +99,12 @@ export default async function ClubClassementPage({
           </div>
         </div>
 
-        {/* Full leaderboard — same component as dashboard, key forces remount on refresh */}
-        <LeaderboardContent
+        {/* Leaderboard with podium — same visual as the app */}
+        <PublicLeaderboard
           key={Date.now()}
-          initialLeaderboard={leaderboard}
-          initialProfilesFirstNameMap={profilesFirstNameMap}
-          initialProfilesLastNameMap={profilesLastNameMap}
-          hideFilters={true}
+          leaderboard={leaderboard}
+          profilesFirstNameMap={profilesFirstNameMap}
+          profilesLastNameMap={profilesLastNameMap}
         />
       </div>
     </div>
