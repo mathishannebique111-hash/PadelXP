@@ -8,6 +8,7 @@ import BadgeIconDisplay from "@/components/BadgeIconDisplay";
 import { logger } from "@/lib/logger";
 import { getUserClubInfo } from "@/lib/utils/club-utils";
 import ClubQRCodeCard from "@/components/club/ClubQRCodeCard";
+import InvitationCodeCard from "./InvitationCodeCard";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -182,6 +183,11 @@ export default async function DashboardHome() {
           <ClubQRCodeCard clubName={club?.name || "Votre Club"} subdomain={club.subdomain || club.slug} />
         </section>
       )}
+
+      {/* Code d'invitation */}
+      <section>
+        <InvitationCodeCard code={club?.code_invitation ?? null} slug={club?.slug ?? null} />
+      </section>
 
       {/* Ligues et Challenges */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
