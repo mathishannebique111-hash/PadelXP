@@ -366,6 +366,7 @@ export async function middleware(req: NextRequest) {
     "/api/manifest",     // Allow PWA manifest (white-label)
     "/.well-known/",     // Allow Digital Asset Links and Apple Site Association
     "/share",            // Public profile sharing card
+    "/club/",            // Public club pages (leaderboard TV display, etc.)
     "/_next/",
     "/images/",
     "/onboarding/",
