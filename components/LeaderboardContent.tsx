@@ -6,7 +6,7 @@ import { Eye } from 'lucide-react';
 import { User } from 'lucide-react';
 import { MapPin } from 'lucide-react';
 import { Globe } from 'lucide-react';
-import { Map as MapIcon, Search, ArrowRight } from 'lucide-react';
+import { Map as MapIcon, Search, ArrowRight, Users } from 'lucide-react';
 import RankBadge from './RankBadge';
 import TierBadge from './TierBadge';
 import { logger } from '@/lib/logger';
@@ -355,6 +355,7 @@ export default function LeaderboardContent({
       {!hideFilters && (
         <div className="flex items-center justify-center gap-1 px-1">
           {[
+            { key: 'club' as const, label: 'Club', icon: Users },
             { key: 'department' as const, label: 'Département', icon: MapPin },
             { key: 'region' as const, label: 'Région', icon: MapIcon },
             { key: 'national' as const, label: nationalLabel, icon: Globe },
