@@ -96,8 +96,8 @@ export default function ClubDetailsClient({
   const cardStyle = useMemo(() => {
     if (isClub) {
       return {
-        backgroundColor: 'rgb(var(--theme-page))',
-        borderColor: 'rgb(var(--theme-accent))',
+        backgroundColor: 'rgba(var(--theme-accent), 0.08)',
+        borderColor: 'rgba(var(--theme-accent), 0.3)',
         borderWidth: '1.5px',
         boxShadow: '0 30px 70px rgba(4,16,46,0.5)',
       };
@@ -219,7 +219,7 @@ export default function ClubDetailsClient({
               ) : (
                 infrastructure.map((item) => (
                   <div key={item.label} className="flex items-center justify-between rounded-lg border px-2 py-1.5"
-                    style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.1)', color: contrastColor, borderColor: 'var(--theme-accent)' } : { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)', borderColor: 'rgba(255,255,255,0.15)' }}>
+                    style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.12)', color: contrastColor, borderColor: 'rgba(var(--theme-accent), 0.35)' } : { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)', borderColor: 'rgba(255,255,255,0.15)' }}>
                     <span className="uppercase tracking-[0.2em] text-[10px] font-bold">{item.label}</span>
                     <span className="font-extrabold text-xs">{item.value}</span>
                   </div>
@@ -240,11 +240,10 @@ export default function ClubDetailsClient({
           {hours.map((item) => (
             <div
               key={item.key}
-              className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-semibold tracking-wide ${item.isClosed ? "border-rose-400/45 bg-rose-500/15 text-rose-100" : "border-emerald-400/45 bg-emerald-500/15 text-emerald-50"}`}
-              style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.05)', borderColor: 'var(--theme-accent)' } : {}}
+              className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-semibold tracking-wide ${item.isClosed ? "border-rose-400/30 bg-rose-500/10 text-rose-200" : "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"}`}
             >
-              <span className="uppercase tracking-[0.25em]" style={{ color: isClub ? contrastColor : 'white' }}>{item.label}</span>
-              <span style={{ color: isClub ? contrastColor : 'white' }}>{item.value}</span>
+              <span className="uppercase tracking-[0.25em]">{item.label}</span>
+              <span>{item.value}</span>
             </div>
           ))}
         </div>
