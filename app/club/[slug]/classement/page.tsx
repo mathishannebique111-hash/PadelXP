@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils";
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import LeaderboardContent from "@/components/LeaderboardContent";
+import AutoRefresh from "./AutoRefresh";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +74,7 @@ export default async function ClubClassementPage({
 
   return (
     <div className="min-h-screen bg-[#04050a] text-white px-4 sm:px-6 py-8 sm:py-12">
+      <AutoRefresh intervalMs={30_000} />
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Club Header */}
         <div className="flex items-center gap-4">
