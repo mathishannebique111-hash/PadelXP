@@ -94,27 +94,11 @@ export default function ClubDetailsClient({
     document.body.dataset.clubSubdomain !== 'app';
 
   const cardStyle = useMemo(() => {
-    if (isClub) {
-      return {
-        backgroundColor: 'rgba(var(--theme-accent), 0.08)',
-        borderColor: 'rgba(var(--theme-accent), 0.3)',
-        borderWidth: '1.5px',
-        boxShadow: '0 30px 70px rgba(4,16,46,0.5)',
-      };
-    }
-    if (!accent) {
-      return {
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderColor: "rgba(255,255,255,0.15)",
-        borderWidth: "1.5px",
-        boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
-      };
-    }
     return {
-      backgroundColor: accent.soft,
-      borderColor: accent.base,
-      borderWidth: "1.5px",
-      boxShadow: "0 30px 70px rgba(4,16,46,0.5)",
+      backgroundColor: '#172554',
+      borderColor: 'rgba(255,255,255,0.15)',
+      borderWidth: '1.5px',
+      boxShadow: '0 30px 70px rgba(4,16,46,0.5)',
     };
   }, [accent, isClub]);
 
@@ -144,20 +128,19 @@ export default function ClubDetailsClient({
       {/* Coordonnées + Infrastructure - Combined Frame */}
       <section
         className="rounded-2xl border p-5 shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
-        style={{ ...cardStyle, color: isClub ? contrastColor : 'white' }}
+        style={{ ...cardStyle, color: 'white' }}
       >
         <div className="grid grid-cols-2 gap-4">
           {/* Coordonnées Column */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.9)' }}>Coordonnées</h2>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90">Coordonnées</h2>
               {website ? (
                 <a
                   href={website.startsWith("http") ? website : `https://${website}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[10px] font-semibold uppercase tracking-wide hover:opacity-100"
-                  style={isClub ? { color: 'var(--theme-accent)', opacity: 0.8 } : { color: 'rgba(255,255,255,0.7)' }}
+                  className="text-[10px] font-semibold uppercase tracking-wide text-white/70 hover:text-white transition-colors"
                 >
                   Site ↗
                 </a>
@@ -173,15 +156,13 @@ export default function ClubDetailsClient({
                     width={18}
                     height={18}
                     className="flex-shrink-0"
-                    style={{
-                      filter: isClub && contrastColor === '#000000' ? 'invert(1) contrast(1.2)' : 'contrast(1.2) brightness(1.1)'
-                    }}
+                    style={{ filter: 'contrast(1.2) brightness(1.1)' }}
                     unoptimized
                   />
-                  <span className="font-medium leading-4 text-xs" style={{ color: isClub ? contrastColor : 'rgba(255,255,255,0.9)' }}>{addressLine}</span>
+                  <span className="font-medium leading-4 text-xs text-white/90">{addressLine}</span>
                 </div>
               ) : (
-                <div className="rounded-lg border px-2 py-1.5 text-center text-[10px]" style={{ backgroundColor: isClub ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', borderColor: isClub ? 'rgba(var(--theme-accent), 0.2)' : 'rgba(255,255,255,0.2)', color: isClub ? contrastColor : 'rgba(255,255,255,0.6)' }}>
+                <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-center text-[10px] text-white/40">
                   Adresse non renseignée
                 </div>
               )}
@@ -193,15 +174,12 @@ export default function ClubDetailsClient({
                     width={18}
                     height={18}
                     className="flex-shrink-0"
-                    style={{
-                      filter: isClub && contrastColor === '#000000' ? 'invert(1)' : 'none'
-                    }}
                     unoptimized
                   />
-                  <span className="font-medium tracking-wide text-xs" style={{ color: isClub ? contrastColor : 'rgba(255,255,255,0.9)' }}>{phone}</span>
+                  <span className="font-medium tracking-wide text-xs text-white/90">{phone}</span>
                 </div>
               ) : (
-                <div className="rounded-lg border px-2 py-1.5 text-center text-[10px]" style={{ backgroundColor: isClub ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', borderColor: isClub ? 'rgba(var(--theme-accent), 0.2)' : 'rgba(255,255,255,0.2)', color: isClub ? contrastColor : 'rgba(255,255,255,0.6)' }}>
+                <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-center text-[10px] text-white/40">
                   Téléphone non renseigné
                 </div>
               )}
@@ -210,7 +188,7 @@ export default function ClubDetailsClient({
 
           {/* Infrastructure Column */}
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.9)' }}>Infrastructure</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] mb-4 text-white/90">Infrastructure</h2>
             <div className="grid gap-2 text-sm mt-5">
               {infrastructure.length === 0 ? (
                 <div className="rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-center text-[10px] text-white/40">
@@ -219,7 +197,7 @@ export default function ClubDetailsClient({
               ) : (
                 infrastructure.map((item) => (
                   <div key={item.label} className="flex items-center justify-between rounded-lg border px-2 py-1.5"
-                    style={isClub ? { backgroundColor: 'rgba(var(--theme-accent), 0.12)', color: contrastColor, borderColor: 'rgba(var(--theme-accent), 0.35)' } : { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)', borderColor: 'rgba(255,255,255,0.15)' }}>
+                    style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.9)', borderColor: 'rgba(255,255,255,0.15)' }}>
                     <span className="uppercase tracking-[0.2em] text-[10px] font-bold">{item.label}</span>
                     <span className="font-extrabold text-xs">{item.value}</span>
                   </div>
@@ -233,9 +211,9 @@ export default function ClubDetailsClient({
       {/* Horaires d'ouverture */}
       <section
         className="rounded-2xl border p-5 shadow-[0_30px_70px_rgba(4,16,46,0.5)]"
-        style={{ ...cardStyle, color: isClub ? contrastColor : 'white' }}
+        style={{ ...cardStyle, color: 'white' }}
       >
-        <h2 className="text-sm font-semibold uppercase tracking-[0.3em]" style={{ color: isClub ? `${contrastColor}E6` : 'rgba(255,255,255,0.9)' }}>Horaires d'ouverture</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">Horaires d'ouverture</h2>
         <div className="mt-4 space-y-2 text-sm">
           {hours.map((item) => (
             <div
