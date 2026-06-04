@@ -47,19 +47,26 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, start_date, end_date, rewards, countries, club_id } = body;
 
-    if (!name || !start_date || !end_date || !club_id) {
-      return NextResponse.json({ error: "Missing required fields (name, dates, club_id)" }, { status: 400 });
+    if (!name || !start_date || !end_date) {
+      return NextResponse.json({ error: "Missing required fields (name, dates)" }, { status: 400 });
     }
 
-    // Check no overlapping active/upcoming seasons for this club
-    const { data: overlapping } = await supabaseAdmin
+    // Check no overlapping active/upcoming seasons for this scope (club or global)
+    let overlapQuery = supabaseAdmin
       .from("seasons")
       .select("id")
-      .eq("club_id", club_id)
       .in("status", ["active", "upcoming"]);
 
+    if (club_id) {
+      overlapQuery = overlapQuery.eq("club_id", club_id);
+    } else {
+      overlapQuery = overlapQuery.is("club_id", null);
+    }
+
+    const { data: overlapping } = await overlapQuery;
+
     if (overlapping && overlapping.length > 0) {
-      return NextResponse.json({ error: "Une saison active ou a venir existe deja pour ce club. Finalisez-la d'abord." }, { status: 409 });
+      return NextResponse.json({ error: club_id ? "Une saison active ou a venir existe deja pour ce club. Finalisez-la d'abord." : "Une saison globale active ou a venir existe deja. Finalisez-la d'abord." }, { status: 409 });
     }
 
     // Determine status
@@ -71,7 +78,7 @@ export async function POST(request: Request) {
       .insert({
         name, start_date, end_date, status, created_by: user.id,
         countries: countries || ["FR", "BE"],
-        club_id,
+        club_id: club_id || null,
       })
       .select()
       .single();

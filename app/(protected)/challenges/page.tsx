@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logger } from '@/lib/logger';
 import { extractSubdomain } from "@/lib/club-branding";
+import { canSeeSeasons } from "@/lib/feature-flags";
+import ChallengesSeasonBanner from "@/components/seasons/ChallengesSeasonBanner";
 
 interface PlayerChallenge {
   id: string;
@@ -254,6 +256,45 @@ export default async function PlayerChallengesPage() {
   const subdomain = requestHeaders.get('x-club-subdomain') || (host ? extractSubdomain(host) : null);
   const isClub = !!subdomain;
 
+  // Fetch active season for banner
+  let activeSeason = null;
+  if (user && canSeeSeasons(user.email)) {
+    try {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("club_id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      // Try club-specific season first, then global
+      if (profile?.club_id) {
+        const { data: clubSeason } = await supabaseAdmin
+          .from("seasons")
+          .select("*, season_rewards(*)")
+          .eq("status", "active")
+          .eq("club_id", profile.club_id)
+          .order("start_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        activeSeason = clubSeason;
+      }
+
+      if (!activeSeason) {
+        const { data: globalSeason } = await supabaseAdmin
+          .from("seasons")
+          .select("*, season_rewards(*)")
+          .eq("status", "active")
+          .is("club_id", null)
+          .order("start_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        activeSeason = globalSeason;
+      }
+    } catch (err) {
+      logger.error("[PlayerChallengesPage] Error fetching season", err);
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       {!isClub && (
@@ -274,6 +315,10 @@ export default async function PlayerChallengesPage() {
         <div className="mb-6">
           <PageTitle title="Challenges" />
         </div>
+
+        {activeSeason && (
+          <ChallengesSeasonBanner season={activeSeason} />
+        )}
 
         {(challengePoints > 0 || challengeBadgesCount > 0) && (
           <div className="mb-6 flex justify-center">

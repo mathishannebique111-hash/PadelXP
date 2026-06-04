@@ -25,16 +25,32 @@ export async function GET() {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (!profile?.club_id) return NextResponse.json({ season: null });
+    // Try club-specific season first, then global
+    let season = null;
 
-    const { data: season } = await supabaseAdmin
-      .from("seasons")
-      .select("*, season_rewards(*)")
-      .eq("status", "active")
-      .eq("club_id", profile.club_id)
-      .order("start_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (profile?.club_id) {
+      const { data: clubSeason } = await supabaseAdmin
+        .from("seasons")
+        .select("*, season_rewards(*)")
+        .eq("status", "active")
+        .eq("club_id", profile.club_id)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      season = clubSeason;
+    }
+
+    if (!season) {
+      const { data: globalSeason } = await supabaseAdmin
+        .from("seasons")
+        .select("*, season_rewards(*)")
+        .eq("status", "active")
+        .is("club_id", null)
+        .order("start_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      season = globalSeason;
+    }
 
     return NextResponse.json({ season: season || null });
   } catch {

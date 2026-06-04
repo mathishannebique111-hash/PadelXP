@@ -48,7 +48,7 @@ interface Season {
   status: SeasonStatus;
   countries: string[];
   created_at: string;
-  club_id: string;
+  club_id: string | null;
   clubs?: Club | null;
   season_rewards: SeasonReward[];
   season_results?: SeasonResult[];
@@ -158,7 +158,7 @@ export default function SeasonsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || !newStartDate || !newName.trim() || !newClubId) return;
+    if (isSubmitting || !newStartDate || !newName.trim()) return;
 
     try {
       setIsSubmitting(true);
@@ -174,7 +174,7 @@ export default function SeasonsPage() {
           start_date: newStartDate,
           end_date: computedEndDate,
           countries: newCountries,
-          club_id: newClubId,
+          club_id: newClubId || null,
           rewards,
         }),
       });
@@ -255,11 +255,11 @@ export default function SeasonsPage() {
     } catch { /* silent */ } finally { setUploadingRank(null); }
   };
 
-  const isFormValid = newName.trim() && newStartDate && newDuration > 0 && newClubId;
+  const isFormValid = newName.trim() && newStartDate && newDuration > 0;
 
   return (
     <div className="space-y-6">
-      <PageTitle title="Saisons" subtitle="Lancez des saisons par club. Chaque saison est visible uniquement par les joueurs du club selectionne." />
+      <PageTitle title="Saisons" subtitle="Lancez des saisons globales ou restreintes a un club. Sans club, la saison est visible par tous les joueurs." />
 
       {error && (
         <div className="rounded-2xl border border-rose-400/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 flex items-center gap-2">
@@ -442,23 +442,22 @@ export default function SeasonsPage() {
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40" required />
                 </div>
 
-                {/* Club selector */}
+                {/* Club selector (optional) */}
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">Club</label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">Club <span className="normal-case tracking-normal text-white/30">(facultatif)</span></label>
                   <select
                     value={newClubId}
                     onChange={e => setNewClubId(e.target.value)}
                     className="w-full max-w-md rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                    required
                   >
-                    <option value="" className="bg-zinc-900">Selectionnez un club...</option>
+                    <option value="" className="bg-zinc-900">Tous les joueurs (saison globale)</option>
                     {clubs.map(club => (
                       <option key={club.id} value={club.id} className="bg-zinc-900">
                         {club.name}
                       </option>
                     ))}
                   </select>
-                  <p className="text-[10px] text-white/40">La saison ne sera visible que par les joueurs de ce club</p>
+                  <p className="text-[10px] text-white/40">{newClubId ? "La saison ne sera visible que par les joueurs de ce club" : "La saison sera visible par tous les joueurs"}</p>
                 </div>
 
                 {/* Duration presets */}
