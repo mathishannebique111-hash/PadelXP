@@ -46,54 +46,55 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
     let seasonDateRange: { start: string; end: string } | undefined;
     let completedSeasonResults: any[] = [];
 
-    if (showSeasons && clubId) {
-        // 1. Check for active season for this club
-        const { data: active } = await supabaseAdmin
-            .from("seasons")
-            .select("*, season_rewards(*)")
-            .eq("status", "active")
-            .eq("club_id", clubId)
-            .order("start_date", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+    if (showSeasons) {
+        // Helper to find a season: try club-specific first, then global
+        async function findSeason(status: string, order: { col: string; asc: boolean }) {
+            if (clubId) {
+                const { data: clubSeason } = await supabaseAdmin
+                    .from("seasons")
+                    .select("*, season_rewards(*)")
+                    .eq("status", status)
+                    .eq("club_id", clubId)
+                    .order(order.col, { ascending: order.asc })
+                    .limit(1)
+                    .maybeSingle();
+                if (clubSeason) return clubSeason;
+            }
+            const { data: globalSeason } = await supabaseAdmin
+                .from("seasons")
+                .select("*, season_rewards(*)")
+                .eq("status", status)
+                .is("club_id", null)
+                .order(order.col, { ascending: order.asc })
+                .limit(1)
+                .maybeSingle();
+            return globalSeason;
+        }
+
+        // 1. Check for active season
+        const active = await findSeason("active", { col: "start_date", asc: false });
 
         if (active) {
             activeSeason = active;
             seasonDateRange = { start: active.start_date, end: active.end_date };
         } else {
-            // 2. Check for most recent completed season for this club
-            const { data: completed } = await supabaseAdmin
-                .from("seasons")
-                .select("*, season_rewards(*)")
-                .eq("status", "completed")
-                .eq("club_id", clubId)
-                .order("end_date", { ascending: false })
-                .limit(1)
-                .maybeSingle();
+            // 2. Check for most recent completed season
+            const completed = await findSeason("completed", { col: "end_date", asc: false });
 
-            // 3. Check for upcoming season for this club
-            const { data: upcoming } = await supabaseAdmin
-                .from("seasons")
-                .select("*, season_rewards(*)")
-                .eq("status", "upcoming")
-                .eq("club_id", clubId)
-                .order("start_date", { ascending: true })
-                .limit(1)
-                .maybeSingle();
+            // 3. Check for upcoming season
+            const upcoming = await findSeason("upcoming", { col: "start_date", asc: true });
 
             if (upcoming) {
                 upcomingSeason = upcoming;
             }
 
             if (completed) {
-                // Show completed banner for 24h after end, or if no upcoming season
                 const endedAt = new Date(completed.end_date + 'T23:59:59').getTime();
                 const hoursSinceEnd = (Date.now() - endedAt) / (1000 * 60 * 60);
                 const showCompleted = hoursSinceEnd < 24 || !upcomingSeason;
 
                 if (showCompleted) {
                     completedSeason = completed;
-                    // Fetch all results (top 10 + current user)
                     const { data: results } = await supabaseAdmin
                         .from("season_results")
                         .select("*, profiles:user_id(first_name, last_name, display_name, avatar_url)")
@@ -102,7 +103,6 @@ export default async function LeaderboardServer({ userId, clubId }: LeaderboardS
                         .limit(10);
                     completedSeasonResults = results || [];
 
-                    // If current user not in top 10, fetch their result too
                     const userInResults = completedSeasonResults.some((r: any) => r.user_id === userId);
                     if (!userInResults) {
                         const { data: userResult } = await supabaseAdmin
