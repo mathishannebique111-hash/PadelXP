@@ -606,43 +606,154 @@ export async function POST(req: Request) {
     }
 
     // ======= SYSTÈME DE CONFIRMATION IN-APP =======
-    // 1. Créer la confirmation automatique pour le joueur qui enregistre
-    const { error: confirmError } = await supabaseAdmin
-      .from("match_confirmations")
-      .insert({
-        match_id: match.id,
-        user_id: user.id,
-        confirmed: true,
-        confirmed_at: new Date().toISOString(),
-        confirmation_token: crypto.randomUUID()
-      });
+    // Auto-confirm ALL participants (users + guests) so the match is immediately confirmed
+    // The DB trigger check_match_confirmation_status will set status='confirmed' once both teams have a confirmation.
+    const now = new Date().toISOString();
 
-    if (confirmError) {
-      logger.error("Error creating auto-confirmation", { error: confirmError.message });
-    } else {
-      logger.info("Auto-confirmation created for match creator", { matchId: match.id, userId: user.id });
-    }
-
-    // 1b. Auto-confirm guest/anonymous players (they can't confirm themselves)
-    const guestParticipantsForConfirm = participants.filter(p => p.player_type === 'guest' && p.guest_player_id);
-    if (guestParticipantsForConfirm.length > 0) {
-      for (const gp of guestParticipantsForConfirm) {
-        try {
-          await supabaseAdmin
-            .from("match_confirmations")
-            .insert({
-              match_id: match.id,
-              guest_player_id: gp.guest_player_id,
-              confirmed: true,
-              confirmed_at: new Date().toISOString(),
-              confirmation_token: crypto.randomUUID()
-            });
-        } catch (guestConfErr) {
-          logger.error("Error auto-confirming guest player", { error: (guestConfErr as Error).message, guestId: gp.guest_player_id });
-        }
+    // 1. Auto-confirm all user participants
+    const userParticipantsForConfirm = participants.filter(p => p.player_type === 'user' && p.user_id);
+    for (const up of userParticipantsForConfirm) {
+      try {
+        await supabaseAdmin
+          .from("match_confirmations")
+          .insert({
+            match_id: match.id,
+            user_id: up.user_id,
+            confirmed: true,
+            confirmed_at: now,
+            confirmation_token: crypto.randomUUID()
+          });
+      } catch (userConfErr) {
+        logger.error("Error auto-confirming user", { error: (userConfErr as Error).message, userId: up.user_id });
       }
+    }
+    logger.info("Auto-confirmed all user participants", { count: userParticipantsForConfirm.length, matchId: match.id });
+
+    // 2. Auto-confirm guest/anonymous players (they can't confirm themselves)
+    const guestParticipantsForConfirm = participants.filter(p => p.player_type === 'guest' && p.guest_player_id);
+    for (const gp of guestParticipantsForConfirm) {
+      try {
+        await supabaseAdmin
+          .from("match_confirmations")
+          .insert({
+            match_id: match.id,
+            guest_player_id: gp.guest_player_id,
+            confirmed: true,
+            confirmed_at: now,
+            confirmation_token: crypto.randomUUID()
+          });
+      } catch (guestConfErr) {
+        logger.error("Error auto-confirming guest player", { error: (guestConfErr as Error).message, guestId: gp.guest_player_id });
+      }
+    }
+    if (guestParticipantsForConfirm.length > 0) {
       logger.info("Auto-confirmed guest players", { count: guestParticipantsForConfirm.length, matchId: match.id });
     }
+
+    // ======= POINTS DISTRIBUTION (match is now auto-confirmed by DB trigger) =======
+    try {
+      const userParticipantsForPoints = participants.filter(p => p.player_type === 'user' && p.user_id);
+      const { calculatePointsWithBoosts } = await import("@/lib/utils/boost-points-utils");
+
+      for (const participant of userParticipantsForPoints) {
+        const userId = participant.user_id;
+        let isWinner = false;
+        if (winner_team_id === team1_id && participant.team === 1) isWinner = true;
+        else if (winner_team_id === team2_id && participant.team === 2) isWinner = true;
+
+        const wins = isWinner ? 1 : 0;
+        const losses = isWinner ? 0 : 1;
+        const winMatches = isWinner ? new Set([match.id]) : new Set<string>();
+        const matchPoints = await calculatePointsWithBoosts(wins, losses, [match.id], winMatches, userId);
+
+        logger.info("Points calculated for user", { userId: userId.slice(0, 8) + "…", isWinner, matchPoints });
+
+        // Global points
+        const { error: rpcError } = await supabaseAdmin.rpc('increment_global_points', {
+          p_user_id: userId,
+          p_points: matchPoints
+        });
+        if (rpcError) {
+          logger.warn("RPC increment_global_points failed, falling back to get/set", rpcError);
+          const { data: profile } = await supabaseAdmin.from("profiles").select("global_points").eq("id", userId).single();
+          const newPoints = (profile?.global_points || 0) + matchPoints;
+          await supabaseAdmin.from("profiles").update({ global_points: newPoints }).eq("id", userId);
+        }
+
+        // Club points
+        const { data: userProfile } = await supabaseAdmin.from("profiles").select("club_id").eq("id", userId).single();
+        if (userProfile?.club_id) {
+          const { error: clubRpcError } = await supabaseAdmin.rpc('increment_club_points', {
+            p_user_id: userId,
+            p_club_id: userProfile.club_id,
+            p_points: matchPoints
+          });
+          if (clubRpcError) {
+            logger.warn("RPC increment_club_points failed, falling back", clubRpcError);
+            const { data: uc } = await supabaseAdmin.from("user_clubs").select("club_points").eq("user_id", userId).eq("club_id", userProfile.club_id).maybeSingle();
+            if (uc) {
+              await supabaseAdmin.from("user_clubs").update({ club_points: (uc.club_points || 0) + matchPoints }).eq("user_id", userId).eq("club_id", userProfile.club_id);
+            }
+          }
+        }
+      }
+      logger.info("Points distribution completed", { matchId: match.id });
+
+      // League points
+      if (leagueId) {
+        try {
+          const { processLeagueMatchStats } = await import("@/lib/utils/league-match-utils");
+          await processLeagueMatchStats(
+            supabaseAdmin,
+            match.id,
+            leagueId,
+            userParticipantsForPoints,
+            winner_team_id,
+            { team1_id, team2_id }
+          );
+          logger.info("League points distributed", { leagueId, matchId: match.id });
+        } catch (leagueError) {
+          logger.error("League stats error (non-blocking)", { error: (leagueError as Error).message });
+        }
+      }
+
+      // Engagement notifications (points earned + streaks)
+      try {
+        const { notifyUser } = await import("@/lib/notifications/send-push");
+        const participantUserIds = userParticipantsForPoints.map(p => p.user_id);
+        const { data: participantProfiles } = await supabaseAdmin
+          .from("profiles")
+          .select("id, first_name, display_name")
+          .in("id", participantUserIds);
+
+        const nameMap = new Map(
+          (participantProfiles || []).map((p: any) => [
+            p.id,
+            p.first_name || (p.display_name ? p.display_name.split(/\s+/)[0] : "Joueur"),
+          ])
+        );
+
+        for (const participant of userParticipantsForPoints) {
+          const uid = participant.user_id;
+          const firstName = nameMap.get(uid) || "Joueur";
+          const isWinner =
+            (winner_team_id === team1_id && participant.team === 1) ||
+            (winner_team_id === team2_id && participant.team === 2);
+          const basePoints = isWinner ? 10 : 3;
+
+          if (isWinner) {
+            await notifyUser(uid, "match_points_earned", "🎉 Victoire !", `Bravo ${firstName} ! Tu remportes +${basePoints} points. Continue comme ça !`, { type: "match_points_earned", match_id: match.id, points: basePoints, result: "win" });
+          } else {
+            await notifyUser(uid, "match_points_earned", "💪 Match enregistré", `${firstName}, +${basePoints} points malgré la défaite. La prochaine sera la bonne !`, { type: "match_points_earned", match_id: match.id, points: basePoints, result: "loss" });
+          }
+        }
+      } catch (notifErr) {
+        logger.error("Engagement notifications error (non-blocking)", { error: (notifErr as Error).message });
+      }
+    } catch (distError) {
+      logger.error("Error distributing points on submit", { error: (distError as Error).message });
+    }
+    // ==================================================================
 
     // 2. Récupérer le nom du joueur qui enregistre pour les notifications
     const { data: creatorProfile } = await supabaseAdmin
@@ -655,15 +766,10 @@ export async function POST(req: Request) {
       `${creatorProfile?.first_name || ''} ${creatorProfile?.last_name || ''}`.trim() ||
       'Un joueur';
 
-    // 3. Envoyer des notifications aux 3 autres joueurs (users uniquement, pas guests)
+    // 3. Notify other players that the match has been registered and confirmed
     const otherUserPlayers = participants
       .filter(p => p.player_type === 'user' && p.user_id !== user.id)
       .map(p => p.user_id);
-
-    logger.info("Target players for notifications", {
-      count: otherUserPlayers.length,
-      playerIds: otherUserPlayers.map(id => id.slice(0, 8) + "...")
-    });
 
     for (const otherUserId of otherUserPlayers) {
       try {
@@ -671,9 +777,9 @@ export async function POST(req: Request) {
           .from('notifications')
           .insert({
             user_id: otherUserId,
-            type: 'match_confirmation',
+            type: 'match_validated',
             title: 'Match enregistré',
-            message: `Un match a été enregistré avec votre nom par ${creatorName}, confirmez-le !`,
+            message: `${creatorName} a enregistré un match. Les points ont été ajoutés au classement.`,
             data: {
               match_id: match.id,
               creator_id: user.id,
@@ -682,9 +788,8 @@ export async function POST(req: Request) {
             is_read: false,
             read: false
           });
-        logger.info("Match confirmation notification sent", { userId: otherUserId, matchId: match.id });
       } catch (notifError) {
-        logger.error("Error sending match confirmation notification", {
+        logger.error("Error sending match notification", {
           userId: otherUserId,
           error: (notifError as Error).message
         });
