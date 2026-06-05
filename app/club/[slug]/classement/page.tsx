@@ -4,6 +4,7 @@ import { calculatePlayerLeaderboard } from "@/lib/utils/player-leaderboard-utils
 import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import PublicLeaderboard from "./PublicLeaderboard";
 import AutoRefresh from "./AutoRefresh";
+import SeasonCountdown from "./SeasonCountdown";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,16 @@ export default async function ClubClassementPage({
   const clubId = club.id as string;
   const clubName = (club.name as string) || slug.toUpperCase();
   const clubLogoUrl = getClubLogoPublicUrl(club.logo_url as string | null);
+
+  // Fetch active season for this club
+  const { data: activeSeason } = await supabaseAdmin
+    .from("seasons")
+    .select("id, name, end_date")
+    .eq("club_id", clubId)
+    .eq("status", "active")
+    .order("start_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   // Use the exact same leaderboard calculation as the dashboard
   const leaderboardRaw = await calculatePlayerLeaderboard(clubId);
@@ -108,6 +119,12 @@ export default async function ClubClassementPage({
               {totalMatches} match{totalMatches !== 1 ? "s" : ""}
             </p>
           </div>
+          {activeSeason?.end_date && (
+            <SeasonCountdown
+              endDate={activeSeason.end_date as string}
+              seasonName={activeSeason.name as string}
+            />
+          )}
         </div>
 
         {/* Leaderboard with podium — same visual as the app */}
