@@ -1,8 +1,11 @@
 "use client";
 
 import { User, Eye } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import RankBadge from "@/components/RankBadge";
 import TierBadge from "@/components/TierBadge";
+
+const DOWNLOAD_URL = "https://padelxp.eu/download";
 
 interface LeaderboardEntry {
   rank: number;
@@ -245,6 +248,54 @@ export default function PublicLeaderboard({
           </table>
         </div>
       </div>
+
+      {/* QR Code section */}
+      {leaderboard.length <= 3 ? (
+        /* Few players: big centered CTA */
+        <div className="mt-10 sm:mt-14 flex flex-col items-center text-center px-4">
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight max-w-lg">
+            Tu veux participer au classement et gagner des récompenses ?
+          </h3>
+          <p className="text-white/50 text-sm sm:text-base mt-3 max-w-md">
+            Scanne le QR code et enregistre tes matchs sur l&apos;application PadelXP
+          </p>
+          <div className="mt-6 sm:mt-8 bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
+            <QRCodeSVG
+              value={DOWNLOAD_URL}
+              size={200}
+              level="H"
+              includeMargin={false}
+              bgColor="#ffffff"
+              fgColor="#000000"
+            />
+          </div>
+          <p className="mt-3 text-xs text-white/30">
+            Redirige automatiquement vers l&apos;App Store ou Google Play
+          </p>
+        </div>
+      ) : (
+        /* Enough players: QR code bottom-left */
+        <div className="mt-8 sm:mt-10 flex items-end gap-4 sm:gap-5">
+          <div className="bg-white rounded-xl p-3 shadow-lg">
+            <QRCodeSVG
+              value={DOWNLOAD_URL}
+              size={120}
+              level="H"
+              includeMargin={false}
+              bgColor="#ffffff"
+              fgColor="#000000"
+            />
+          </div>
+          <div className="pb-1">
+            <p className="text-sm sm:text-base font-semibold text-white">
+              Rejoins le classement
+            </p>
+            <p className="text-xs sm:text-sm text-white/40 mt-0.5">
+              Scanne pour télécharger PadelXP
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
