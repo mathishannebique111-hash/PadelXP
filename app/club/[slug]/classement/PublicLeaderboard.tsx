@@ -152,7 +152,7 @@ export default function PublicLeaderboard({
                         )}
                       </div>
                       <h3
-                        className={`font-extrabold mb-2 sm:mb-3 md:mb-4 text-center text-gray-900 leading-tight line-clamp-2 ${
+                        className={`font-extrabold text-center text-gray-900 leading-tight line-clamp-2 ${
                           index === 0
                             ? "text-sm sm:text-base md:text-lg lg:text-xl"
                             : "text-xs sm:text-sm md:text-base lg:text-lg"
@@ -161,6 +161,13 @@ export default function PublicLeaderboard({
                         {finalFirstName || "Joueur"}
                         {lastNameInitial ? " " + lastNameInitial + "." : ""}
                       </h3>
+                      <p className="mt-1.5 sm:mt-2 text-[8px] sm:text-[10px] md:text-xs text-center leading-tight text-gray-500 font-medium line-clamp-2">
+                        {index === 0
+                          ? "3 parties offertes + 3 mois Premium"
+                          : index === 1
+                          ? "2 parties offertes + 3 mois Premium"
+                          : "1 tube de balles + 3 mois Premium"}
+                      </p>
                     </div>
                   </div>
                 );
