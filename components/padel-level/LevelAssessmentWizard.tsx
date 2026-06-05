@@ -512,15 +512,19 @@ export default function LevelAssessmentWizard({ onComplete, onCancel, forceStart
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.95 }}
+                disabled={isSaving}
                 onClick={async () => {
-                  if (!isSaved) await handleSaveResult();
+                  if (!isSaved) {
+                    await handleSaveResult();
+                  }
                   const msg = `Je viens d'évaluer mon niveau, il est de ${result.niveau}/10. Fais-moi un retour complet sur mon profil basé sur mes réponses au questionnaire avec mes points forts et mes axes d'amélioration.`;
-                  router.push(`/coach?msg=${encodeURIComponent(msg)}`);
+                  // Full navigation to force server re-render when user comes back
+                  window.location.href = `/coach?msg=${encodeURIComponent(msg)}`;
                 }}
-                className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-white/10 text-white/80 hover:bg-white/15 transition-all border border-white/10"
+                className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-white/10 text-white/80 hover:bg-white/15 transition-all border border-white/10 disabled:opacity-50"
               >
                 <Sparkles size={16} />
-                Analyser mon niveau avec le coach
+                <span>{isSaving ? "CHARGEMENT..." : "Analyser mon niveau avec le coach"}</span>
               </motion.button>
             )}
           </div>
