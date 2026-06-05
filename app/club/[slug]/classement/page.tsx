@@ -96,7 +96,7 @@ export default async function ClubClassementPage({
                 alt={clubName}
                 width={72}
                 height={72}
-                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-contain"
+                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl object-cover shadow-lg"
                 unoptimized
               />
             ) : clubLogoUrl ? (
