@@ -44,6 +44,30 @@ export default function PublicLeaderboard({
 
   return (
     <div>
+      {/* QR Code top-left when 3+ players */}
+      {leaderboard.length >= 3 && (
+        <div className="mb-6 flex items-center gap-3">
+          <div className="bg-white rounded-lg p-2 shadow-md shrink-0">
+            <QRCodeSVG
+              value={DOWNLOAD_URL}
+              size={72}
+              level="H"
+              includeMargin={false}
+              bgColor="#ffffff"
+              fgColor="#000000"
+            />
+          </div>
+          <div>
+            <p className="text-xs sm:text-sm font-semibold text-white leading-tight">
+              Rejoins le classement et gagne des récompenses
+            </p>
+            <p className="text-[10px] sm:text-xs text-white/40 mt-0.5">
+              Scanne pour télécharger PadelXP
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top 3 Podium */}
       {leaderboard.length >= 3 && (
         <div className="mb-6 sm:mb-8">
@@ -276,9 +300,8 @@ export default function PublicLeaderboard({
         </div>
       </div>
 
-      {/* QR Code section */}
-      {leaderboard.length <= 3 ? (
-        /* Few players: big centered CTA */
+      {/* QR Code big CTA when < 3 players */}
+      {leaderboard.length < 3 && (
         <div className="mt-10 sm:mt-14 flex flex-col items-center text-center px-4">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight max-w-lg">
             Tu veux participer au classement et gagner des récompenses ?
@@ -299,28 +322,6 @@ export default function PublicLeaderboard({
           <p className="mt-3 text-xs text-white/30">
             Redirige automatiquement vers l&apos;App Store ou Google Play
           </p>
-        </div>
-      ) : (
-        /* Enough players: QR code bottom-left */
-        <div className="mt-8 sm:mt-10 flex items-end gap-4 sm:gap-5">
-          <div className="bg-white rounded-xl p-3 shadow-lg">
-            <QRCodeSVG
-              value={DOWNLOAD_URL}
-              size={120}
-              level="H"
-              includeMargin={false}
-              bgColor="#ffffff"
-              fgColor="#000000"
-            />
-          </div>
-          <div className="pb-1">
-            <p className="text-sm sm:text-base font-semibold text-white">
-              Rejoins le classement
-            </p>
-            <p className="text-xs sm:text-sm text-white/40 mt-0.5">
-              Scanne pour télécharger PadelXP
-            </p>
-          </div>
         </div>
       )}
     </div>
