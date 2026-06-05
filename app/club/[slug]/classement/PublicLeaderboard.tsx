@@ -254,7 +254,7 @@ export default function PublicLeaderboard({
                       {player.rank === 1 ? (
                         <span className="text-yellow-600 font-semibold">3 parties offertes + 3 mois d&apos;abonnement premium PadelXP</span>
                       ) : player.rank === 2 ? (
-                        <span className="text-slate-500 font-semibold">1 partie offerte + 3 mois d&apos;abonnement premium PadelXP</span>
+                        <span className="text-slate-500 font-semibold">2 parties offertes + 3 mois d&apos;abonnement premium PadelXP</span>
                       ) : player.rank === 3 ? (
                         <span className="text-orange-700 font-semibold">1 tube de balles + 3 mois d&apos;abonnement premium PadelXP</span>
                       ) : (

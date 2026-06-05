@@ -91,7 +91,7 @@ export default function AffichePrint({ clubName, clubLogoUrl }: AffichePrintProp
               </div>
               <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 print:py-3">
                 <span className="text-xl">&#129352;</span>
-                <span className="text-sm print:text-base font-semibold text-gray-700">1 partie offerte + 3 mois d&apos;abonnement premium PadelXP</span>
+                <span className="text-sm print:text-base font-semibold text-gray-700">2 parties offertes + 3 mois d&apos;abonnement premium PadelXP</span>
               </div>
               <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 print:py-3">
                 <span className="text-xl">&#129353;</span>
