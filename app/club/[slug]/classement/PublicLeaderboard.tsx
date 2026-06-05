@@ -246,11 +246,11 @@ export default function PublicLeaderboard({
                     </td>
                     <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center border-l border-gray-200 first:border-l-0">
                       {player.rank === 1 ? (
-                        <span className="text-yellow-600 font-semibold">3 parties offertes + 3 mois Premium</span>
+                        <span className="text-yellow-600 font-semibold">3 parties offertes + 3 mois d&apos;abonnement premium PadelXP</span>
                       ) : player.rank === 2 ? (
-                        <span className="text-slate-500 font-semibold">1 tube de balles + 3 mois Premium</span>
+                        <span className="text-slate-500 font-semibold">1 partie offerte + 3 mois d&apos;abonnement premium PadelXP</span>
                       ) : player.rank === 3 ? (
-                        <span className="text-orange-700 font-semibold">1 partie offerte + 3 mois Premium</span>
+                        <span className="text-orange-700 font-semibold">1 tube de balles + 3 mois d&apos;abonnement premium PadelXP</span>
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
@@ -266,31 +266,39 @@ export default function PublicLeaderboard({
       {/* QR Code section */}
       {leaderboard.length <= 3 ? (
         /* Few players: big centered CTA */
-        <div className="mt-10 sm:mt-14 flex flex-col items-center text-center px-4">
+        <div className="mt-10 sm:mt-14 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-8 sm:p-12 flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-5">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" />
+            </svg>
+          </div>
           <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight max-w-lg">
             Tu veux participer au classement et gagner des récompenses ?
           </h3>
           <p className="text-white/50 text-sm sm:text-base mt-3 max-w-md">
             Scanne le QR code et enregistre tes matchs sur l&apos;application PadelXP
           </p>
-          <div className="mt-6 sm:mt-8 bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
+          <div className="mt-8 bg-white rounded-2xl p-5 sm:p-6 shadow-[0_0_40px_rgba(34,197,94,0.15),0_8px_32px_rgba(0,0,0,0.3)] ring-2 ring-green-500/20">
             <QRCodeSVG
               value={DOWNLOAD_URL}
-              size={200}
+              size={220}
               level="H"
               includeMargin={false}
               bgColor="#ffffff"
               fgColor="#000000"
             />
           </div>
-          <p className="mt-3 text-xs text-white/30">
-            Redirige automatiquement vers l&apos;App Store ou Google Play
-          </p>
+          <div className="mt-5 flex items-center gap-2 text-xs text-white/40">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="7" height="7" x="14" y="3" rx="1" /><path d="M10 21V8a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H3" />
+            </svg>
+            <span>Redirige automatiquement vers l&apos;App Store ou Google Play</span>
+          </div>
         </div>
       ) : (
         /* Enough players: QR code bottom-left */
-        <div className="mt-8 sm:mt-10 flex items-end gap-4 sm:gap-5">
-          <div className="bg-white rounded-xl p-3 shadow-lg">
+        <div className="mt-8 sm:mt-10 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.06] to-transparent p-5 sm:p-6 flex items-center gap-5 sm:gap-6">
+          <div className="bg-white rounded-xl p-3 shadow-[0_0_30px_rgba(34,197,94,0.12),0_4px_16px_rgba(0,0,0,0.25)] ring-1 ring-green-500/20 shrink-0">
             <QRCodeSVG
               value={DOWNLOAD_URL}
               size={120}
@@ -300,13 +308,19 @@ export default function PublicLeaderboard({
               fgColor="#000000"
             />
           </div>
-          <div className="pb-1">
-            <p className="text-sm sm:text-base font-semibold text-white">
+          <div>
+            <p className="text-base sm:text-lg font-bold text-white">
               Rejoins le classement
             </p>
-            <p className="text-xs sm:text-sm text-white/40 mt-0.5">
-              Scanne pour télécharger PadelXP
+            <p className="text-sm text-white/45 mt-1">
+              Scanne le QR code pour télécharger PadelXP et enregistrer tes matchs
             </p>
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-white/30">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="7" height="7" x="14" y="3" rx="1" /><path d="M10 21V8a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H3" />
+              </svg>
+              <span>iPhone &amp; Android</span>
+            </div>
           </div>
         </div>
       )}

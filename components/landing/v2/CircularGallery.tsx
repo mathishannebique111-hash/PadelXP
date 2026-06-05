@@ -91,7 +91,7 @@ class Title {
     const textH = (this.plane.scale as unknown as { y: number }).y * 0.14;
     const textW = textH * aspect;
     (this.mesh.scale as unknown as { set: (x: number, y: number, z: number) => void }).set(textW, textH, 1);
-    (this.mesh.position as unknown as { y: number }).y = -(this.plane.scale as unknown as { y: number }).y * 0.5 - textH * 0.5 - 0.05;
+    (this.mesh.position as unknown as { y: number }).y = -(this.plane.scale as unknown as { y: number }).y * 0.5 - textH * 0.5 + 0.02;
     (this.mesh as unknown as { setParent: (p: Mesh) => void }).setParent(this.plane);
   }
 }
@@ -225,7 +225,7 @@ class Media {
     if (viewport) this.viewport = viewport;
     const scale = this.screen.height / 1500;
     (this.plane.scale as unknown as { y: number }).y = (this.viewport.height * (900 * scale * this.planeScale)) / this.screen.height;
-    (this.plane.scale as unknown as { x: number }).x = (this.viewport.width * (560 * scale * this.planeScale)) / this.screen.width;
+    (this.plane.scale as unknown as { x: number }).x = (this.plane.scale as unknown as { y: number }).y * (1024 / 2090);
     (this.program.uniforms as Record<string, { value: unknown }>).uPlaneSizes.value = [(this.plane.scale as unknown as { x: number }).x, (this.plane.scale as unknown as { y: number }).y];
     this.padding = 2;
     this.width = (this.plane.scale as unknown as { x: number }).x + this.padding;
