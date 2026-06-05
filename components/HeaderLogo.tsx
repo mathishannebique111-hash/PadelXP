@@ -26,6 +26,7 @@ export default function HeaderLogo({ logoUrl }: HeaderLogoProps) {
                     fill
                     className={isClubLogo ? "object-contain drop-shadow-lg" : "object-contain"}
                     priority
+                    unoptimized={isClubLogo}
                 />
             </div>
         </div>
