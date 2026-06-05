@@ -266,39 +266,31 @@ export default function PublicLeaderboard({
       {/* QR Code section */}
       {leaderboard.length <= 3 ? (
         /* Few players: big centered CTA */
-        <div className="mt-10 sm:mt-14 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-8 sm:p-12 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-5">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" />
-            </svg>
-          </div>
+        <div className="mt-10 sm:mt-14 flex flex-col items-center text-center px-4">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white leading-tight max-w-lg">
             Tu veux participer au classement et gagner des récompenses ?
           </h3>
           <p className="text-white/50 text-sm sm:text-base mt-3 max-w-md">
             Scanne le QR code et enregistre tes matchs sur l&apos;application PadelXP
           </p>
-          <div className="mt-8 bg-white rounded-2xl p-5 sm:p-6 shadow-[0_0_40px_rgba(34,197,94,0.15),0_8px_32px_rgba(0,0,0,0.3)] ring-2 ring-green-500/20">
+          <div className="mt-6 sm:mt-8 bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
             <QRCodeSVG
               value={DOWNLOAD_URL}
-              size={220}
+              size={200}
               level="H"
               includeMargin={false}
               bgColor="#ffffff"
               fgColor="#000000"
             />
           </div>
-          <div className="mt-5 flex items-center gap-2 text-xs text-white/40">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="7" height="7" x="14" y="3" rx="1" /><path d="M10 21V8a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H3" />
-            </svg>
-            <span>Redirige automatiquement vers l&apos;App Store ou Google Play</span>
-          </div>
+          <p className="mt-3 text-xs text-white/30">
+            Redirige automatiquement vers l&apos;App Store ou Google Play
+          </p>
         </div>
       ) : (
         /* Enough players: QR code bottom-left */
-        <div className="mt-8 sm:mt-10 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.06] to-transparent p-5 sm:p-6 flex items-center gap-5 sm:gap-6">
-          <div className="bg-white rounded-xl p-3 shadow-[0_0_30px_rgba(34,197,94,0.12),0_4px_16px_rgba(0,0,0,0.25)] ring-1 ring-green-500/20 shrink-0">
+        <div className="mt-8 sm:mt-10 flex items-end gap-4 sm:gap-5">
+          <div className="bg-white rounded-xl p-3 shadow-lg">
             <QRCodeSVG
               value={DOWNLOAD_URL}
               size={120}
@@ -308,19 +300,13 @@ export default function PublicLeaderboard({
               fgColor="#000000"
             />
           </div>
-          <div>
-            <p className="text-base sm:text-lg font-bold text-white">
+          <div className="pb-1">
+            <p className="text-sm sm:text-base font-semibold text-white">
               Rejoins le classement
             </p>
-            <p className="text-sm text-white/45 mt-1">
-              Scanne le QR code pour télécharger PadelXP et enregistrer tes matchs
+            <p className="text-xs sm:text-sm text-white/40 mt-0.5">
+              Scanne pour télécharger PadelXP
             </p>
-            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-white/30">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="7" height="7" x="14" y="3" rx="1" /><path d="M10 21V8a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1H3" />
-              </svg>
-              <span>iPhone &amp; Android</span>
-            </div>
           </div>
         </div>
       )}

@@ -73,21 +73,32 @@ export default async function ClubClassementPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#04050a] text-white px-4 sm:px-6 py-8 sm:py-12">
+    <div className="min-h-screen bg-[#071554] text-white px-4 sm:px-6 py-8 sm:py-12">
       <AutoRefresh intervalMs={30_000} />
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Club Header */}
-        <div className="flex items-center gap-4">
-          {clubLogoUrl && (
+        {/* Logos + Club Header */}
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className="flex items-center justify-center gap-4 sm:gap-5">
+            {clubLogoUrl && (
+              <Image
+                src={clubLogoUrl}
+                alt={clubName}
+                width={72}
+                height={72}
+                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-contain bg-white/5 border border-white/10 p-1"
+                unoptimized
+              />
+            )}
+            <span className="text-white/20 text-2xl font-thin">&times;</span>
             <Image
-              src={clubLogoUrl}
-              alt={clubName}
-              width={64}
-              height={64}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-contain bg-white/5 border border-white/10 p-1"
+              src="/images/Logo sans fond.png"
+              alt="PadelXP"
+              width={72}
+              height={72}
+              className="w-16 h-16 sm:w-[72px] sm:h-[72px] object-contain"
               unoptimized
             />
-          )}
+          </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               {clubName}
