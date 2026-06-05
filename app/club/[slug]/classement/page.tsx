@@ -84,11 +84,11 @@ export default async function ClubClassementPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#071554] text-white px-4 sm:px-6 py-8 sm:py-12">
+    <div className="min-h-screen bg-[#071554] text-white px-3 sm:px-6 py-4 sm:py-8">
       <AutoRefresh intervalMs={30_000} />
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-4">
         {/* Header: logos right-aligned */}
-        <div className="flex items-center justify-end gap-3 sm:gap-4">
+        <div className="flex items-center justify-end gap-2.5 sm:gap-3">
           {slug === "padelsquare4340" ? (
             <Image
               src="/images/logo-padel-square.webp"
@@ -108,13 +108,13 @@ export default async function ClubClassementPage({
               unoptimized
             />
           ) : null}
-          <span className="text-white/15 text-xl font-thin">&times;</span>
+          <span className="text-white text-lg font-light">&#x2715;</span>
           <Image
             src="/images/Logo sans fond.png"
             alt="PadelXP"
-            width={80}
-            height={80}
-            className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+            width={96}
+            height={96}
+            className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
             unoptimized
           />
         </div>

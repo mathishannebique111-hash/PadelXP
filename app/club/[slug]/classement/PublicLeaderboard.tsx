@@ -46,8 +46,8 @@ export default function PublicLeaderboard({
     <div>
       {/* QR Code top-left when 3+ players */}
       {leaderboard.length >= 3 && (
-        <div className="mb-6 flex items-start gap-3">
-          <div className="bg-white rounded-xl p-2 shadow-lg shrink-0">
+        <div className="mb-6 flex flex-col items-start w-fit">
+          <div className="bg-white rounded-xl p-2 shadow-lg">
             <QRCodeSVG
               value={DOWNLOAD_URL}
               size={88}
@@ -57,14 +57,9 @@ export default function PublicLeaderboard({
               fgColor="#000000"
             />
           </div>
-          <div className="pt-1">
-            <p className="text-sm font-bold text-white leading-snug">
-              Rejoins le classement et gagne des récompenses
-            </p>
-            <p className="text-xs text-white/40 mt-1">
-              Scanne pour télécharger PadelXP
-            </p>
-          </div>
+          <p className="text-[11px] font-semibold text-white/70 mt-2 leading-tight max-w-[100px]">
+            Scanne pour rejoindre le classement
+          </p>
         </div>
       )}
 
