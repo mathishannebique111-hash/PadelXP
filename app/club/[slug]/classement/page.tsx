@@ -87,8 +87,8 @@ export default async function ClubClassementPage({
     <div className="min-h-screen bg-[#071554] text-white px-3 sm:px-6 py-4 sm:py-8">
       <AutoRefresh intervalMs={30_000} />
       <div className="max-w-5xl mx-auto space-y-4">
-        {/* Header: logos right-aligned */}
-        <div className="flex items-center justify-end gap-2.5 sm:gap-3">
+        {/* Logos centered */}
+        <div className="flex items-center justify-center gap-3 sm:gap-4">
           {slug === "padelsquare4340" ? (
             <Image
               src="/images/logo-padel-square.webp"
@@ -119,22 +119,15 @@ export default async function ClubClassementPage({
           />
         </div>
 
-        {/* Title + stats + countdown */}
-        <div className="text-center -mt-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {clubName}
-          </h1>
-          <p className="text-sm text-white/50 mt-0.5">
-            {totalPlayers} joueur{totalPlayers !== 1 ? "s" : ""} &middot;{" "}
-            {totalMatches} match{totalMatches !== 1 ? "s" : ""}
-          </p>
-          {activeSeason?.end_date && (
+        {/* Countdown */}
+        {activeSeason?.end_date && (
+          <div className="text-center">
             <SeasonCountdown
               endDate={activeSeason.end_date as string}
               seasonName={activeSeason.name as string}
             />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Leaderboard with podium — same visual as the app */}
         <PublicLeaderboard

@@ -46,19 +46,19 @@ export default function PublicLeaderboard({
     <div>
       {/* QR Code top-left when 3+ players */}
       {leaderboard.length >= 3 && (
-        <div className="mb-6 flex flex-col items-start w-fit">
-          <div className="bg-white rounded-xl p-2 shadow-lg">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="bg-white rounded-lg p-1.5 shadow-md shrink-0">
             <QRCodeSVG
               value={DOWNLOAD_URL}
-              size={88}
+              size={64}
               level="H"
               includeMargin={false}
               bgColor="#ffffff"
               fgColor="#000000"
             />
           </div>
-          <p className="text-[11px] font-semibold text-white/70 mt-2 leading-tight max-w-[100px]">
-            Scanne pour rejoindre le classement
+          <p className="text-xs sm:text-sm font-semibold text-white/60 leading-snug">
+            Scanne pour rejoindre le classement et gagner des récompenses
           </p>
         </div>
       )}
