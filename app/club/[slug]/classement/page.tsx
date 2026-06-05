@@ -113,9 +113,9 @@ export default async function ClubClassementPage({
             <Image
               src="/images/Logo sans fond.png"
               alt="PadelXP"
-              width={72}
-              height={72}
-              className="w-16 h-16 sm:w-[72px] sm:h-[72px] object-contain"
+              width={96}
+              height={96}
+              className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
               unoptimized
             />
           </div>
