@@ -87,47 +87,47 @@ export default async function ClubClassementPage({
     <div className="min-h-screen bg-[#071554] text-white px-4 sm:px-6 py-8 sm:py-12">
       <AutoRefresh intervalMs={30_000} />
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Logos + Club Header */}
-        <div className="flex flex-col items-center text-center gap-4">
-          <div className="flex items-center justify-center gap-4 sm:gap-5">
-            {slug === "padelsquare4340" ? (
-              <Image
-                src="/images/logo-padel-square.webp"
-                alt={clubName}
-                width={72}
-                height={72}
-                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-2xl object-cover shadow-lg"
-                unoptimized
-              />
-            ) : clubLogoUrl ? (
-              <Image
-                src={clubLogoUrl}
-                alt={clubName}
-                width={72}
-                height={72}
-                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-contain bg-white/5 border border-white/10 p-1"
-                unoptimized
-              />
-            ) : null}
-            <span className="text-white/20 text-2xl font-thin">&times;</span>
+        {/* Header: logos right-aligned */}
+        <div className="flex items-center justify-end gap-3 sm:gap-4">
+          {slug === "padelsquare4340" ? (
             <Image
-              src="/images/Logo sans fond.png"
-              alt="PadelXP"
-              width={96}
-              height={96}
-              className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
+              src="/images/logo-padel-square.webp"
+              alt={clubName}
+              width={56}
+              height={56}
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shadow-lg"
               unoptimized
             />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {clubName}
-            </h1>
-            <p className="text-sm text-white/50 mt-0.5">
-              {totalPlayers} joueur{totalPlayers !== 1 ? "s" : ""} &middot;{" "}
-              {totalMatches} match{totalMatches !== 1 ? "s" : ""}
-            </p>
-          </div>
+          ) : clubLogoUrl ? (
+            <Image
+              src={clubLogoUrl}
+              alt={clubName}
+              width={56}
+              height={56}
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-contain bg-white/5 border border-white/10 p-1"
+              unoptimized
+            />
+          ) : null}
+          <span className="text-white/15 text-xl font-thin">&times;</span>
+          <Image
+            src="/images/Logo sans fond.png"
+            alt="PadelXP"
+            width={80}
+            height={80}
+            className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+            unoptimized
+          />
+        </div>
+
+        {/* Title + stats + countdown */}
+        <div className="text-center -mt-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            {clubName}
+          </h1>
+          <p className="text-sm text-white/50 mt-0.5">
+            {totalPlayers} joueur{totalPlayers !== 1 ? "s" : ""} &middot;{" "}
+            {totalMatches} match{totalMatches !== 1 ? "s" : ""}
+          </p>
           {activeSeason?.end_date && (
             <SeasonCountdown
               endDate={activeSeason.end_date as string}
