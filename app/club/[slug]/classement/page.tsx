@@ -92,7 +92,7 @@ export default async function ClubClassementPage({
           <div className="flex items-center justify-center gap-4 sm:gap-5">
             {slug === "padelsquare4340" ? (
               <Image
-                src="/images/Logo Padel Square.webp"
+                src="/images/logo-padel-square.webp"
                 alt={clubName}
                 width={72}
                 height={72}
