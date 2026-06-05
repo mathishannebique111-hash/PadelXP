@@ -244,8 +244,16 @@ export default function PublicLeaderboard({
                     <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">
                       {player.points}
                     </td>
-                    <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center text-gray-400 border-l border-gray-200 first:border-l-0">
-                      -
+                    <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center border-l border-gray-200 first:border-l-0">
+                      {player.rank === 1 ? (
+                        <span className="text-yellow-600 font-semibold">3 parties offertes + 3 mois Premium</span>
+                      ) : player.rank === 2 ? (
+                        <span className="text-slate-500 font-semibold">1 tube de balles + 3 mois Premium</span>
+                      ) : player.rank === 3 ? (
+                        <span className="text-orange-700 font-semibold">1 partie offerte + 3 mois Premium</span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 );
