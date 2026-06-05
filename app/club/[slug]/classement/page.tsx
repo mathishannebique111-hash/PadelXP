@@ -5,6 +5,7 @@ import { getClubLogoPublicUrl } from "@/lib/utils/club-logo-utils";
 import PublicLeaderboard from "./PublicLeaderboard";
 import AutoRefresh from "./AutoRefresh";
 import SeasonCountdown from "./SeasonCountdown";
+import QRCodeBlock from "./QRCodeBlock";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";
@@ -87,36 +88,39 @@ export default async function ClubClassementPage({
     <div className="min-h-screen bg-[#071554] text-white px-3 sm:px-6 py-4 sm:py-8">
       <AutoRefresh intervalMs={30_000} />
       <div className="max-w-5xl mx-auto space-y-4">
-        {/* Logos centered */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4">
-          {slug === "padelsquare4340" ? (
+        {/* Header: logos left, QR code right */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {slug === "padelsquare4340" ? (
+              <Image
+                src="/images/logo-padel-square.webp"
+                alt={clubName}
+                width={56}
+                height={56}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shadow-lg"
+                unoptimized
+              />
+            ) : clubLogoUrl ? (
+              <Image
+                src={clubLogoUrl}
+                alt={clubName}
+                width={56}
+                height={56}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-contain bg-white/5 border border-white/10 p-1"
+                unoptimized
+              />
+            ) : null}
+            <span className="text-white text-lg font-light">&#x2715;</span>
             <Image
-              src="/images/logo-padel-square.webp"
-              alt={clubName}
-              width={56}
-              height={56}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shadow-lg"
+              src="/images/Logo sans fond.png"
+              alt="PadelXP"
+              width={96}
+              height={96}
+              className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
               unoptimized
             />
-          ) : clubLogoUrl ? (
-            <Image
-              src={clubLogoUrl}
-              alt={clubName}
-              width={56}
-              height={56}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-contain bg-white/5 border border-white/10 p-1"
-              unoptimized
-            />
-          ) : null}
-          <span className="text-white text-lg font-light">&#x2715;</span>
-          <Image
-            src="/images/Logo sans fond.png"
-            alt="PadelXP"
-            width={96}
-            height={96}
-            className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
-            unoptimized
-          />
+          </div>
+          <QRCodeBlock />
         </div>
 
         {/* Countdown */}
