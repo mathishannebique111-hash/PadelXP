@@ -16,12 +16,14 @@ interface Player {
   club_id: string;
   created_at: string;
   matchs_joues: number | null;
+  niveau_padel: number | null;
   city: string | null;
   postal_code: string | null;
   clubs: {
     name: string;
   };
   push_tokens: Array<{ id: string }>;
+  coach_messages_count: number;
 }
 
 interface Club {
@@ -167,8 +169,10 @@ export default function PlayersListClient({
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Nom</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Niveau</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Localisation</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Matchs</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Coach IA</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Club</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Notifications</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Inscription</th>
@@ -177,7 +181,7 @@ export default function PlayersListClient({
             <tbody className="divide-y divide-white/5">
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
+                  <td colSpan={9} className="px-6 py-16 text-center">
                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Users className="w-8 h-8 text-slate-500" />
                     </div>
@@ -200,6 +204,15 @@ export default function PlayersListClient({
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{player.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {player.niveau_padel ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                            {Number(player.niveau_padel).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">-</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                         {player.city && player.postal_code
                           ? `${player.city} (${player.postal_code})`
@@ -209,6 +222,15 @@ export default function PlayersListClient({
                         <span className="font-bold text-white">
                           {player.matchs_joues || 0}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {player.coach_messages_count > 0 ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            {player.coach_messages_count} msg
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">0</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                         {player.clubs?.name ? (

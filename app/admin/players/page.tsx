@@ -32,7 +32,7 @@ export default async function AdminPlayersPage({
   // Build query
   let playersQuery = supabaseAdmin
     .from('profiles')
-    .select('id, display_name, first_name, last_name, email, avatar_url, club_id, created_at, matchs_joues, city, postal_code, clubs(name), push_tokens(id)');
+    .select('id, display_name, first_name, last_name, email, avatar_url, club_id, created_at, matchs_joues, niveau_padel, city, postal_code, clubs(name), push_tokens(id)');
 
   // Filter by club if specified
   if (searchParams?.club && searchParams.club !== 'all') {
@@ -47,13 +47,27 @@ export default async function AdminPlayersPage({
     console.error('Error fetching players:', error);
   }
 
+  // Fetch coach message counts per user
+  const { data: coachCounts } = await supabaseAdmin
+    .from('coach_messages')
+    .select('conversation_id, coach_conversations!inner(user_id)')
+    .eq('role', 'user');
+
+  const coachMessageMap = new Map<string, number>();
+  (coachCounts || []).forEach((msg) => {
+    const conv = msg.coach_conversations as unknown as { user_id: string };
+    const userId = conv.user_id;
+    coachMessageMap.set(userId, (coachMessageMap.get(userId) || 0) + 1);
+  });
+
   // Filter out club admin accounts
   const filteredPlayers = (players || []).filter((player) => {
     const playerEmail = player.email?.toLowerCase();
     return playerEmail && !clubEmails.has(playerEmail);
   }).map(player => ({
     ...player,
-    clubs: Array.isArray(player.clubs) ? player.clubs[0] : player.clubs
+    clubs: Array.isArray(player.clubs) ? player.clubs[0] : player.clubs,
+    coach_messages_count: coachMessageMap.get(player.id) || 0,
   }));
 
   return (
