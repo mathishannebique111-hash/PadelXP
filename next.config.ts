@@ -18,6 +18,18 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.apple.com', // Rare mais possible pour Apple ID
       },
+      {
+        protocol: 'https',
+        hostname: 'padelxp.eu',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.padelxp.eu',
+      },
+      {
+        protocol: 'https',
+        hostname: 'padel-xp.vercel.app',
+      },
     ],
   },
   outputFileTracingRoot: path.join(process.cwd()),
