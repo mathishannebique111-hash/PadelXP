@@ -90,14 +90,25 @@ export default async function ClubClassementPage({
         {/* Logos + Club Header */}
         <div className="flex flex-col items-center text-center gap-4">
           <div className="flex items-center justify-center gap-4 sm:gap-5">
-            <Image
-              src="/images/Logo Padel Square.webp"
-              alt={clubName}
-              width={72}
-              height={72}
-              className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-contain"
-              unoptimized
-            />
+            {slug === "padelsquare4340" ? (
+              <Image
+                src="/images/Logo Padel Square.webp"
+                alt={clubName}
+                width={72}
+                height={72}
+                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-contain"
+                unoptimized
+              />
+            ) : clubLogoUrl ? (
+              <Image
+                src={clubLogoUrl}
+                alt={clubName}
+                width={72}
+                height={72}
+                className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-xl object-contain bg-white/5 border border-white/10 p-1"
+                unoptimized
+              />
+            ) : null}
             <span className="text-white/20 text-2xl font-thin">&times;</span>
             <Image
               src="/images/Logo sans fond.png"
