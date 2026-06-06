@@ -184,13 +184,13 @@ export default function PublicLeaderboard({
 
         const renderTable = (players: LeaderboardEntry[]) => (
           <div className="rounded-xl border-2 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl flex-1 min-w-0 overflow-hidden">
-            <table className="w-full divide-y divide-gray-200">
+            <table className="w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-200">
                 <tr>
                   <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 whitespace-nowrap w-8 sm:w-10">
                     #
                   </th>
-                  <th className="px-1 py-1 text-left text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap">
+                  <th className="px-1 py-1 text-left text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-[45%]">
                     Joueur
                   </th>
                   <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-8 sm:w-12">
@@ -216,7 +216,7 @@ export default function PublicLeaderboard({
                       <td className="px-1 py-0.5 sm:py-1 text-center w-8 sm:w-10">
                         <RankBadge rank={player.rank} size="sm" className="w-4 h-4 sm:w-6 sm:h-6" />
                       </td>
-                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-gray-900 border-l border-gray-200 max-w-[60px] sm:max-w-[100px]">
+                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-gray-900 border-l border-gray-200 overflow-hidden">
                         <span className="truncate block">
                           <strong>{finalFirstName || "Joueur"}</strong>
                           {finalLastName
