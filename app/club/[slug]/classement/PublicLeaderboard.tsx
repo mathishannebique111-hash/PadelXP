@@ -46,15 +46,15 @@ export default function PublicLeaderboard({
     <div>
       {/* Top 3 Podium */}
       {leaderboard.length >= 3 && (
-        <div className="mb-3 sm:mb-6">
-          <div className="mb-2 sm:mb-3 flex items-center justify-center gap-2 sm:gap-3">
+        <div className="mb-2 sm:mb-4">
+          <div className="mb-1.5 sm:mb-2 flex items-center justify-center gap-2 sm:gap-3">
             <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
               Top joueurs du moment
             </span>
             <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
           </div>
-          <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-2 sm:mt-4">
+          <div className="flex items-end justify-center gap-1.5 sm:gap-2 md:gap-3 mt-1 sm:mt-2">
             {(() => {
               const top3 = leaderboard.slice(0, 3);
               const reordered = [top3[1], top3[0], top3[2]];
@@ -67,7 +67,6 @@ export default function PublicLeaderboard({
                   "border-slate-400/80",
                   "border-orange-600/80",
                 ];
-                const borderWidth = "border-2 sm:border-2 md:border-2";
                 const shineClass =
                   index === 0
                     ? "podium-gold"
@@ -109,28 +108,28 @@ export default function PublicLeaderboard({
 
                 const sizeClass =
                   index === 0
-                    ? "max-w-[105px] sm:max-w-[150px] md:max-w-[200px] lg:max-w-[240px]"
-                    : "max-w-[95px] sm:max-w-[130px] md:max-w-[180px] lg:max-w-[220px]";
+                    ? "max-w-[90px] sm:max-w-[120px] md:max-w-[160px]"
+                    : "max-w-[80px] sm:max-w-[110px] md:max-w-[140px]";
 
                 return (
                   <div
                     key={player.user_id}
-                    className={`${shineClass} ${borderWidth} ${borderColors[index]} rounded-2xl p-2 sm:p-2.5 md:p-3 lg:p-4 shadow-lg relative overflow-hidden flex-1 ${sizeClass}`}
+                    className={`${shineClass} border-2 ${borderColors[index]} rounded-xl p-1.5 sm:p-2 md:p-2.5 shadow-lg relative overflow-hidden flex-1 ${sizeClass}`}
                     style={bgGradients[index]}
                   >
-                    <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
-                      <span className="text-base sm:text-lg md:text-xl lg:text-2xl">
+                    <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 z-30">
+                      <span className="text-sm sm:text-base md:text-lg">
                         {medalEmojis[index]}
                       </span>
                     </div>
-                    <div className="relative z-10 pt-2 sm:pt-3 md:pt-4">
-                      <div className="flex justify-center mb-1.5 sm:mb-2">
+                    <div className="relative z-10 pt-1 sm:pt-2">
+                      <div className="flex justify-center mb-1 sm:mb-1.5">
                         {player.avatar_url ? (
                           <div
                             className={`relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/80 shadow-lg ${
                               index === 0
-                                ? "w-11 h-11 sm:w-16 sm:h-16 md:w-20 md:h-20"
-                                : "w-9 h-9 sm:w-14 sm:h-14 md:w-16 md:h-16"
+                                ? "w-8 h-8 sm:w-12 sm:h-12 md:w-14 md:h-14"
+                                : "w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12"
                             }`}
                           >
                             <img
@@ -143,8 +142,8 @@ export default function PublicLeaderboard({
                           <div
                             className={`relative flex-shrink-0 flex items-center justify-center bg-slate-200 rounded-full overflow-hidden shadow-lg ${
                               index === 0
-                                ? "w-11 h-11 sm:w-16 sm:h-16 md:w-20 md:h-20"
-                                : "w-9 h-9 sm:w-14 sm:h-14 md:w-16 md:h-16"
+                                ? "w-8 h-8 sm:w-12 sm:h-12 md:w-14 md:h-14"
+                                : "w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12"
                             }`}
                           >
                             <User className="text-slate-400 w-2/3 h-2/3" />
@@ -154,14 +153,14 @@ export default function PublicLeaderboard({
                       <h3
                         className={`font-extrabold text-center text-gray-900 leading-tight line-clamp-1 ${
                           index === 0
-                            ? "text-xs sm:text-sm md:text-base lg:text-lg"
-                            : "text-[11px] sm:text-xs md:text-sm lg:text-base"
+                            ? "text-[10px] sm:text-xs md:text-sm"
+                            : "text-[9px] sm:text-[11px] md:text-xs"
                         }`}
                       >
                         {finalFirstName || "Joueur"}
                         {lastNameInitial ? " " + lastNameInitial + "." : ""}
                       </h3>
-                      <p className="mt-1 sm:mt-1.5 text-[7px] sm:text-[9px] md:text-xs text-center leading-tight text-gray-500 font-medium line-clamp-2">
+                      <p className="mt-0.5 sm:mt-1 text-[6px] sm:text-[8px] md:text-[10px] text-center leading-tight text-gray-500 font-medium line-clamp-2">
                         {index === 0
                           ? "3 parties offertes + 3 mois Premium"
                           : index === 1
@@ -184,21 +183,21 @@ export default function PublicLeaderboard({
         const rightCol = top20.slice(10, 20);
 
         const renderTable = (players: LeaderboardEntry[]) => (
-          <div className="overflow-x-auto rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide flex-1">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="rounded-xl border-2 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl flex-1 min-w-0 overflow-hidden">
+            <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-200">
                 <tr>
-                  <th className="px-1 sm:px-2 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-200 whitespace-nowrap w-10 sm:w-14">
-                    Rang
+                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 whitespace-nowrap w-8 sm:w-10">
+                    #
                   </th>
-                  <th className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
+                  <th className="px-1 py-1 text-left text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap">
                     Joueur
                   </th>
-                  <th className="px-1 sm:px-2 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
-                    Matchs
+                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-8 sm:w-12">
+                    M
                   </th>
-                  <th className="px-1 sm:px-2 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
-                    Points
+                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-10 sm:w-14">
+                    Pts
                   </th>
                 </tr>
               </thead>
@@ -214,40 +213,23 @@ export default function PublicLeaderboard({
                     lastName || nameParts.slice(1).join(" ");
                   return (
                     <tr key={player.user_id}>
-                      <td className="px-1 sm:px-2 py-1 sm:py-1.5 text-center border-l border-gray-200 first:border-l-0 w-10 sm:w-14">
-                        <RankBadge rank={player.rank} size="sm" className="w-5 h-5 sm:w-7 sm:h-7" />
+                      <td className="px-1 py-0.5 sm:py-1 text-center w-8 sm:w-10">
+                        <RankBadge rank={player.rank} size="sm" className="w-4 h-4 sm:w-6 sm:h-6" />
                       </td>
-                      <td className="px-1.5 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          {player.avatar_url ? (
-                            <div className="relative w-5 h-5 sm:w-8 sm:h-8 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
-                              <img
-                                src={player.avatar_url}
-                                alt={finalFirstName || "Joueur"}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="relative w-5 h-5 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center border border-gray-200">
-                              <User className="text-slate-400 w-2/3 h-2/3" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <span className="truncate block">
-                              <strong>{finalFirstName || "Joueur"}</strong>
-                              {finalLastName
-                                ? " " +
-                                  finalLastName.charAt(0).toUpperCase() +
-                                  "."
-                                : ""}
-                            </span>
-                          </div>
-                        </div>
+                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-gray-900 border-l border-gray-200 max-w-[60px] sm:max-w-[100px]">
+                        <span className="truncate block">
+                          <strong>{finalFirstName || "Joueur"}</strong>
+                          {finalLastName
+                            ? " " +
+                              finalLastName.charAt(0).toUpperCase() +
+                              "."
+                            : ""}
+                        </span>
                       </td>
-                      <td className="px-1 sm:px-2 py-1 sm:py-1.5 text-[9px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0">
+                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-center tabular-nums text-gray-900 border-l border-gray-200 w-8 sm:w-12">
                         {player.matches}
                       </td>
-                      <td className="px-1 sm:px-2 py-1 sm:py-1.5 text-[9px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">
+                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-center tabular-nums text-gray-900 border-l border-gray-200 font-semibold w-10 sm:w-14">
                         {player.points}
                       </td>
                     </tr>
