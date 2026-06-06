@@ -177,104 +177,105 @@ export default function PublicLeaderboard({
         </div>
       )}
 
-      {/* Full table */}
-      <div className="overflow-hidden">
-        <div className="px-3 sm:px-4 md:px-5 pt-2 sm:pt-3 md:pt-4">
-          <div className="mb-2 sm:mb-3 flex items-center justify-center gap-2 sm:gap-3">
-            <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
-              Classement global
-            </span>
-            <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
-          </div>
-        </div>
-        <div className="overflow-x-auto rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="px-1 sm:px-2 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-200 whitespace-nowrap w-12 sm:w-16">
-                  Rang
-                </th>
-                <th className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap min-w-[100px] sm:min-w-[180px]">
-                  Joueur
-                </th>
-                <th className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
-                  Matchs
-                </th>
-                <th className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
-                  Points
-                </th>
-                <th className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
-                  Récompense
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {leaderboard.map((player) => {
-                const firstName = firstNameMap.get(player.user_id) || "";
-                const lastName = lastNameMap.get(player.user_id) || "";
-                const nameParts = player.player_name
-                  ? player.player_name.trim().split(" ")
-                  : [];
-                const finalFirstName = firstName || nameParts[0] || "";
-                const finalLastName =
-                  lastName || nameParts.slice(1).join(" ");
-                return (
-                  <tr key={player.user_id}>
-                    <td className="px-1 sm:px-2 py-2 sm:py-3 text-center border-l border-gray-200 first:border-l-0 w-12 sm:w-16">
-                      <RankBadge rank={player.rank} size="sm" className="w-6 h-6 sm:w-8 sm:h-8" />
-                    </td>
-                    <td className="px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-[10px] sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0 min-w-[100px] sm:min-w-[180px]">
-                      <div className="flex items-center gap-1.5 sm:gap-3">
-                        {player.avatar_url ? (
-                          <div className="relative w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
-                            <img
-                              src={player.avatar_url}
-                              alt={finalFirstName || "Joueur"}
-                              className="w-full h-full object-cover"
-                            />
+      {/* Full table — top 20 split into two columns */}
+      {(() => {
+        const top20 = leaderboard.slice(0, 20);
+        const leftCol = top20.slice(0, 10);
+        const rightCol = top20.slice(10, 20);
+
+        const renderTable = (players: LeaderboardEntry[]) => (
+          <div className="overflow-x-auto rounded-2xl border-2 sm:border-4 border-white/70 bg-white/5 backdrop-blur-sm shadow-xl scrollbar-hide flex-1">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="px-1 sm:px-2 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 bg-gray-200 whitespace-nowrap w-10 sm:w-14">
+                    Rang
+                  </th>
+                  <th className="px-1.5 sm:px-3 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
+                    Joueur
+                  </th>
+                  <th className="px-1 sm:px-2 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
+                    Matchs
+                  </th>
+                  <th className="px-1 sm:px-2 py-1.5 sm:py-2 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-gray-900 border-l border-gray-200 first:border-l-0 whitespace-nowrap">
+                    Points
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {players.map((player) => {
+                  const firstName = firstNameMap.get(player.user_id) || "";
+                  const lastName = lastNameMap.get(player.user_id) || "";
+                  const nameParts = player.player_name
+                    ? player.player_name.trim().split(" ")
+                    : [];
+                  const finalFirstName = firstName || nameParts[0] || "";
+                  const finalLastName =
+                    lastName || nameParts.slice(1).join(" ");
+                  return (
+                    <tr key={player.user_id}>
+                      <td className="px-1 sm:px-2 py-1 sm:py-1.5 text-center border-l border-gray-200 first:border-l-0 w-10 sm:w-14">
+                        <RankBadge rank={player.rank} size="sm" className="w-5 h-5 sm:w-7 sm:h-7" />
+                      </td>
+                      <td className="px-1.5 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-sm text-gray-900 border-l border-gray-200 first:border-l-0">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          {player.avatar_url ? (
+                            <div className="relative w-5 h-5 sm:w-8 sm:h-8 flex-shrink-0 rounded-full overflow-hidden border border-gray-200">
+                              <img
+                                src={player.avatar_url}
+                                alt={finalFirstName || "Joueur"}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="relative w-5 h-5 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center border border-gray-200">
+                              <User className="text-slate-400 w-2/3 h-2/3" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <span className="truncate block">
+                              <strong>{finalFirstName || "Joueur"}</strong>
+                              {finalLastName
+                                ? " " +
+                                  finalLastName.charAt(0).toUpperCase() +
+                                  "."
+                                : ""}
+                            </span>
                           </div>
-                        ) : (
-                          <div className="relative w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center border border-gray-200">
-                            <User className="text-slate-400 w-2/3 h-2/3" />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <span className="truncate block">
-                            <strong>{finalFirstName || "Joueur"}</strong>
-                            {finalLastName
-                              ? " " +
-                                finalLastName.charAt(0).toUpperCase() +
-                                "."
-                              : ""}
-                          </span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0">
-                      {player.matches}
-                    </td>
-                    <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">
-                      {player.points}
-                    </td>
-                    <td className="px-1 sm:px-3 md:px-4 py-2 sm:py-3 text-[10px] sm:text-sm text-center border-l border-gray-200 first:border-l-0">
-                      {player.rank === 1 ? (
-                        <span className="text-yellow-600 font-semibold">3 parties offertes + 3 mois d&apos;abonnement premium PadelXP</span>
-                      ) : player.rank === 2 ? (
-                        <span className="text-slate-500 font-semibold">2 parties offertes + 3 mois d&apos;abonnement premium PadelXP</span>
-                      ) : player.rank === 3 ? (
-                        <span className="text-orange-700 font-semibold">1 tube de balles + 3 mois d&apos;abonnement premium PadelXP</span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      </td>
+                      <td className="px-1 sm:px-2 py-1 sm:py-1.5 text-[9px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0">
+                        {player.matches}
+                      </td>
+                      <td className="px-1 sm:px-2 py-1 sm:py-1.5 text-[9px] sm:text-sm text-center tabular-nums text-gray-900 border-l border-gray-200 first:border-l-0 font-semibold">
+                        {player.points}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+
+        return (
+          <div className="overflow-hidden">
+            <div className="px-3 sm:px-4 md:px-5 pt-2 sm:pt-3">
+              <div className="mb-2 sm:mb-3 flex items-center justify-center gap-2 sm:gap-3">
+                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
+                  Classement global
+                </span>
+                <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
+              </div>
+            </div>
+            <div className="flex gap-2 sm:gap-3">
+              {renderTable(leftCol)}
+              {rightCol.length > 0 && renderTable(rightCol)}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* QR Code big CTA when < 3 players */}
       {leaderboard.length < 3 && (
