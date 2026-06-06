@@ -85,9 +85,9 @@ export default async function ClubClassementPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#071554] text-white px-3 sm:px-6 py-4 sm:py-8">
+    <div className="min-h-screen bg-[#071554] text-white px-3 sm:px-6 py-2 sm:py-6">
       <AutoRefresh intervalMs={30_000} />
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-2 sm:space-y-4">
         {/* Header: logos left, QR code right */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3">

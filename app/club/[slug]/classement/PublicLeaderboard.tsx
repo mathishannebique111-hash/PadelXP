@@ -46,15 +46,15 @@ export default function PublicLeaderboard({
     <div>
       {/* Top 3 Podium */}
       {leaderboard.length >= 3 && (
-        <div className="mb-6 sm:mb-8">
-          <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+        <div className="mb-3 sm:mb-6">
+          <div className="mb-2 sm:mb-3 flex items-center justify-center gap-2 sm:gap-3">
             <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
               Top joueurs du moment
             </span>
             <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
           </div>
-          <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-4 sm:mt-6">
+          <div className="flex items-end justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-2 sm:mt-4">
             {(() => {
               const top3 = leaderboard.slice(0, 3);
               const reordered = [top3[1], top3[0], top3[2]];
@@ -109,28 +109,28 @@ export default function PublicLeaderboard({
 
                 const sizeClass =
                   index === 0
-                    ? "max-w-[120px] sm:max-w-[160px] md:max-w-[200px] lg:max-w-[240px]"
-                    : "max-w-[110px] sm:max-w-[140px] md:max-w-[180px] lg:max-w-[220px]";
+                    ? "max-w-[105px] sm:max-w-[150px] md:max-w-[200px] lg:max-w-[240px]"
+                    : "max-w-[95px] sm:max-w-[130px] md:max-w-[180px] lg:max-w-[220px]";
 
                 return (
                   <div
                     key={player.user_id}
-                    className={`${shineClass} ${borderWidth} ${borderColors[index]} rounded-2xl p-2.5 sm:p-3 md:p-4 lg:p-5 shadow-lg relative overflow-hidden flex-1 ${sizeClass}`}
+                    className={`${shineClass} ${borderWidth} ${borderColors[index]} rounded-2xl p-2 sm:p-2.5 md:p-3 lg:p-4 shadow-lg relative overflow-hidden flex-1 ${sizeClass}`}
                     style={bgGradients[index]}
                   >
                     <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 z-30">
-                      <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl">
+                      <span className="text-base sm:text-lg md:text-xl lg:text-2xl">
                         {medalEmojis[index]}
                       </span>
                     </div>
-                    <div className="relative z-10 pt-3 sm:pt-4 md:pt-5">
-                      <div className="flex justify-center mb-2 sm:mb-3">
+                    <div className="relative z-10 pt-2 sm:pt-3 md:pt-4">
+                      <div className="flex justify-center mb-1.5 sm:mb-2">
                         {player.avatar_url ? (
                           <div
                             className={`relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/80 shadow-lg ${
                               index === 0
-                                ? "w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24"
-                                : "w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20"
+                                ? "w-11 h-11 sm:w-16 sm:h-16 md:w-20 md:h-20"
+                                : "w-9 h-9 sm:w-14 sm:h-14 md:w-16 md:h-16"
                             }`}
                           >
                             <img
@@ -143,8 +143,8 @@ export default function PublicLeaderboard({
                           <div
                             className={`relative flex-shrink-0 flex items-center justify-center bg-slate-200 rounded-full overflow-hidden shadow-lg ${
                               index === 0
-                                ? "w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24"
-                                : "w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20"
+                                ? "w-11 h-11 sm:w-16 sm:h-16 md:w-20 md:h-20"
+                                : "w-9 h-9 sm:w-14 sm:h-14 md:w-16 md:h-16"
                             }`}
                           >
                             <User className="text-slate-400 w-2/3 h-2/3" />
@@ -152,16 +152,16 @@ export default function PublicLeaderboard({
                         )}
                       </div>
                       <h3
-                        className={`font-extrabold text-center text-gray-900 leading-tight line-clamp-2 ${
+                        className={`font-extrabold text-center text-gray-900 leading-tight line-clamp-1 ${
                           index === 0
-                            ? "text-sm sm:text-base md:text-lg lg:text-xl"
-                            : "text-xs sm:text-sm md:text-base lg:text-lg"
+                            ? "text-xs sm:text-sm md:text-base lg:text-lg"
+                            : "text-[11px] sm:text-xs md:text-sm lg:text-base"
                         }`}
                       >
                         {finalFirstName || "Joueur"}
                         {lastNameInitial ? " " + lastNameInitial + "." : ""}
                       </h3>
-                      <p className="mt-1.5 sm:mt-2 text-[8px] sm:text-[10px] md:text-xs text-center leading-tight text-gray-500 font-medium line-clamp-2">
+                      <p className="mt-1 sm:mt-1.5 text-[7px] sm:text-[9px] md:text-xs text-center leading-tight text-gray-500 font-medium line-clamp-2">
                         {index === 0
                           ? "3 parties offertes + 3 mois Premium"
                           : index === 1
@@ -179,8 +179,8 @@ export default function PublicLeaderboard({
 
       {/* Full table */}
       <div className="overflow-hidden">
-        <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 md:pt-5">
-          <div className="mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+        <div className="px-3 sm:px-4 md:px-5 pt-2 sm:pt-3 md:pt-4">
+          <div className="mb-2 sm:mb-3 flex items-center justify-center gap-2 sm:gap-3">
             <span className="h-px w-5 sm:w-8 md:w-10 bg-gray-300" />
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold text-white shadow-sm">
               Classement global
