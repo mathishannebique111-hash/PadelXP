@@ -190,14 +190,14 @@ export default function PublicLeaderboard({
                   <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 whitespace-nowrap w-8 sm:w-10">
                     #
                   </th>
-                  <th className="px-1 py-1 text-left text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-[45%]">
+                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-[45%]">
                     Joueur
                   </th>
-                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-8 sm:w-12">
-                    M
+                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap">
+                    Matchs
                   </th>
-                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap w-10 sm:w-14">
-                    Pts
+                  <th className="px-1 py-1 text-center text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-900 border-l border-gray-300 whitespace-nowrap">
+                    Points
                   </th>
                 </tr>
               </thead>
@@ -216,7 +216,7 @@ export default function PublicLeaderboard({
                       <td className="px-1 py-0.5 sm:py-1 text-center w-8 sm:w-10">
                         <RankBadge rank={player.rank} size="sm" className="w-4 h-4 sm:w-6 sm:h-6" />
                       </td>
-                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-gray-900 border-l border-gray-200 overflow-hidden">
+                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-center text-gray-900 border-l border-gray-200 overflow-hidden">
                         <span className="truncate block">
                           <strong>{finalFirstName || "Joueur"}</strong>
                           {finalLastName
@@ -226,10 +226,10 @@ export default function PublicLeaderboard({
                             : ""}
                         </span>
                       </td>
-                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-center tabular-nums text-gray-900 border-l border-gray-200 w-8 sm:w-12">
+                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-center tabular-nums text-gray-900 border-l border-gray-200">
                         {player.matches}
                       </td>
-                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-center tabular-nums text-gray-900 border-l border-gray-200 font-semibold w-10 sm:w-14">
+                      <td className="px-1 py-0.5 sm:py-1 text-[8px] sm:text-xs text-center tabular-nums text-gray-900 border-l border-gray-200 font-semibold">
                         {player.points}
                       </td>
                     </tr>
