@@ -180,7 +180,7 @@ export async function GET(req: Request) {
       .map(([date, stats]) => ({
         date,
         ...stats,
-        readRate: stats.sent > 0 ? Math.round((stats.read / stats.sent) * 100) : 0,
+        clickRate: stats.sent > 0 ? Math.round((stats.clicked / stats.sent) * 100) : 0,
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 

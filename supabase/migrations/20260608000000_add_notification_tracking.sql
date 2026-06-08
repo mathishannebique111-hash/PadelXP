@@ -1,6 +1,10 @@
 -- Add clicked_at to distinguish actual clicks from bulk mark-as-read
 ALTER TABLE notifications ADD COLUMN IF NOT EXISTS clicked_at TIMESTAMPTZ;
 
+-- Backfill: for existing read notifications, set clicked_at to created_at
+-- Best approximation we have for historical data
+UPDATE notifications SET clicked_at = created_at WHERE is_read = true AND clicked_at IS NULL;
+
 -- Index for analytics queries
 CREATE INDEX IF NOT EXISTS idx_notifications_clicked_at ON notifications (clicked_at) WHERE clicked_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_notifications_type_created ON notifications (type, created_at);
