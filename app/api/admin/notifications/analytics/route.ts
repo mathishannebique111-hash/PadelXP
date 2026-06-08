@@ -136,7 +136,8 @@ export async function GET(req: Request) {
           email: profile?.email || "",
           clubId: profile?.club_id || null,
           ...stats,
-          openRate: stats.sent > 0 ? Math.round((stats.clicked / stats.sent) * 100) : 0,
+          readRate: stats.sent > 0 ? Math.round((stats.read / stats.sent) * 100) : 0,
+          clickRate: stats.sent > 0 ? Math.round((stats.clicked / stats.sent) * 100) : 0,
         };
       })
       .sort((a, b) => b.sent - a.sent);
@@ -157,19 +158,21 @@ export async function GET(req: Request) {
       .map(([type, stats]) => ({
         type,
         ...stats,
-        openRate: stats.sent > 0 ? Math.round((stats.clicked / stats.sent) * 100) : 0,
+        readRate: stats.sent > 0 ? Math.round((stats.read / stats.sent) * 100) : 0,
+        clickRate: stats.sent > 0 ? Math.round((stats.clicked / stats.sent) * 100) : 0,
       }))
       .sort((a, b) => b.sent - a.sent);
 
     // Daily stats for chart
-    const dailyStats = new Map<string, { sent: number; clicked: number }>();
+    const dailyStats = new Map<string, { sent: number; read: number; clicked: number }>();
     for (const n of filteredNotifications) {
       const day = n.created_at.split("T")[0];
       if (!dailyStats.has(day)) {
-        dailyStats.set(day, { sent: 0, clicked: 0 });
+        dailyStats.set(day, { sent: 0, read: 0, clicked: 0 });
       }
       const stats = dailyStats.get(day)!;
       stats.sent++;
+      if (n.is_read) stats.read++;
       if (n.clicked_at) stats.clicked++;
     }
 
@@ -177,7 +180,7 @@ export async function GET(req: Request) {
       .map(([date, stats]) => ({
         date,
         ...stats,
-        openRate: stats.sent > 0 ? Math.round((stats.clicked / stats.sent) * 100) : 0,
+        readRate: stats.sent > 0 ? Math.round((stats.read / stats.sent) * 100) : 0,
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 

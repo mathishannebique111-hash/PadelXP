@@ -20,7 +20,8 @@ interface PlayerStat {
   sent: number;
   read: number;
   clicked: number;
-  openRate: number;
+  readRate: number;
+  clickRate: number;
 }
 
 interface TypeStat {
@@ -28,14 +29,16 @@ interface TypeStat {
   sent: number;
   read: number;
   clicked: number;
-  openRate: number;
+  readRate: number;
+  clickRate: number;
 }
 
 interface DailyStat {
   date: string;
   sent: number;
+  read: number;
   clicked: number;
-  openRate: number;
+  readRate: number;
 }
 
 interface Club {
@@ -89,7 +92,7 @@ const TYPE_LABELS: Record<string, string> = {
   system: 'Systeme',
 };
 
-type SortField = 'sent' | 'clicked' | 'openRate' | 'fullName';
+type SortField = 'sent' | 'read' | 'readRate' | 'fullName';
 type SortDir = 'asc' | 'desc';
 
 export default function AdminNotificationsPage() {
@@ -221,23 +224,23 @@ export default function AdminNotificationsPage() {
             color="blue"
           />
           <StatCard
-            icon={<MousePointerClick className="w-5 h-5" />}
-            label="Cliquees"
-            value={overview.totalClicked.toLocaleString()}
-            sub={`${overview.clickRate}% taux de clic`}
-            color="green"
-          />
-          <StatCard
             icon={<TrendingUp className="w-5 h-5" />}
-            label="Lues (total)"
+            label="Lues"
             value={overview.totalRead.toLocaleString()}
             sub={`${overview.readRate}% taux de lecture`}
-            color="purple"
+            color="green"
           />
           <StatCard
             icon={<Users className="w-5 h-5" />}
             label="Joueurs touches"
             value={overview.uniqueUsers.toLocaleString()}
+            color="purple"
+          />
+          <StatCard
+            icon={<MousePointerClick className="w-5 h-5" />}
+            label="Clics precis"
+            value={overview.totalClicked.toLocaleString()}
+            sub={overview.totalClicked > 0 ? `${overview.clickRate}% taux de clic` : 'Donnees en cours de collecte'}
             color="amber"
           />
         </div>
@@ -250,7 +253,7 @@ export default function AdminNotificationsPage() {
           <div className="flex items-end gap-1 h-40">
             {dailyStats.map(d => {
               const h = (d.sent / maxDailySent) * 100;
-              const clickH = d.sent > 0 ? (d.clicked / d.sent) * h : 0;
+              const readH = d.sent > 0 ? (d.read / d.sent) * h : 0;
               return (
                 <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative min-w-0">
                   <div className="w-full flex flex-col justify-end" style={{ height: '140px' }}>
@@ -261,7 +264,7 @@ export default function AdminNotificationsPage() {
                       />
                       <div
                         className="w-full bg-green-500 rounded-t absolute bottom-0"
-                        style={{ height: `${Math.max(clickH, 0)}px` }}
+                        style={{ height: `${Math.max(readH, 0)}px` }}
                       />
                     </div>
                   </div>
@@ -269,7 +272,7 @@ export default function AdminNotificationsPage() {
                   <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-xs text-white whitespace-nowrap z-10 shadow-xl">
                     <div className="font-medium">{new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div>
                     <div className="text-blue-400">{d.sent} envoyees</div>
-                    <div className="text-green-400">{d.clicked} cliquees ({d.openRate}%)</div>
+                    <div className="text-green-400">{d.read} lues ({d.readRate}%)</div>
                   </div>
                 </div>
               );
@@ -281,7 +284,7 @@ export default function AdminNotificationsPage() {
           </div>
           <div className="flex gap-4 mt-3 text-xs">
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-500/30" /> Envoyees</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500" /> Cliquees</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500" /> Lues</span>
           </div>
         </div>
       )}
@@ -295,8 +298,8 @@ export default function AdminNotificationsPage() {
               <tr className="border-b border-white/10">
                 <th className="text-left py-3 px-3 text-slate-400 font-medium">Type</th>
                 <th className="text-right py-3 px-3 text-slate-400 font-medium">Envoyees</th>
-                <th className="text-right py-3 px-3 text-slate-400 font-medium">Cliquees</th>
-                <th className="text-right py-3 px-3 text-slate-400 font-medium">Taux clic</th>
+                <th className="text-right py-3 px-3 text-slate-400 font-medium">Lues</th>
+                <th className="text-right py-3 px-3 text-slate-400 font-medium">Taux lecture</th>
                 <th className="text-left py-3 px-3 text-slate-400 font-medium w-40"></th>
               </tr>
             </thead>
@@ -307,17 +310,17 @@ export default function AdminNotificationsPage() {
                     {TYPE_LABELS[t.type] || t.type}
                   </td>
                   <td className="py-3 px-3 text-right text-slate-300">{t.sent}</td>
-                  <td className="py-3 px-3 text-right text-slate-300">{t.clicked}</td>
+                  <td className="py-3 px-3 text-right text-slate-300">{t.read}</td>
                   <td className="py-3 px-3 text-right">
-                    <RateBadge rate={t.openRate} />
+                    <RateBadge rate={t.readRate} />
                   </td>
                   <td className="py-3 px-3">
                     <div className="w-full bg-slate-700 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${
-                          t.openRate >= 50 ? 'bg-green-500' : t.openRate >= 20 ? 'bg-amber-500' : 'bg-red-500'
+                          t.readRate >= 50 ? 'bg-green-500' : t.readRate >= 20 ? 'bg-amber-500' : 'bg-red-500'
                         }`}
-                        style={{ width: `${t.openRate}%` }}
+                        style={{ width: `${t.readRate}%` }}
                       />
                     </div>
                   </td>
@@ -362,8 +365,8 @@ export default function AdminNotificationsPage() {
               <tr className="border-b border-white/10">
                 <SortableHeader field="fullName" label="Joueur" currentSort={sortField} dir={sortDir} onSort={handleSort} align="left" />
                 <SortableHeader field="sent" label="Envoyees" currentSort={sortField} dir={sortDir} onSort={handleSort} />
-                <SortableHeader field="clicked" label="Cliquees" currentSort={sortField} dir={sortDir} onSort={handleSort} />
-                <SortableHeader field="openRate" label="Taux clic" currentSort={sortField} dir={sortDir} onSort={handleSort} />
+                <SortableHeader field="read" label="Lues" currentSort={sortField} dir={sortDir} onSort={handleSort} />
+                <SortableHeader field="readRate" label="Taux lecture" currentSort={sortField} dir={sortDir} onSort={handleSort} />
               </tr>
             </thead>
             <tbody>
@@ -374,9 +377,9 @@ export default function AdminNotificationsPage() {
                     <div className="text-slate-500 text-xs">{p.email}</div>
                   </td>
                   <td className="py-3 px-3 text-right text-slate-300">{p.sent}</td>
-                  <td className="py-3 px-3 text-right text-slate-300">{p.clicked}</td>
+                  <td className="py-3 px-3 text-right text-slate-300">{p.read}</td>
                   <td className="py-3 px-3 text-right">
-                    <RateBadge rate={p.openRate} />
+                    <RateBadge rate={p.readRate} />
                   </td>
                 </tr>
               ))}
