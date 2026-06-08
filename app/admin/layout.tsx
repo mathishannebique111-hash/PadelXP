@@ -138,6 +138,7 @@ export default function AdminLayout({
     { href: '/admin/players', icon: Users, label: 'Joueurs' },
     { href: '/admin/challenges', icon: Trophy, label: 'Challenges' },
     { href: '/admin/seasons', icon: Flame, label: 'Saisons' },
+    { href: '/admin/notifications', icon: Bell, label: 'Notifications' },
     { href: '/admin/messages', icon: MessageSquare, label: 'Messagerie' },
     { href: '/admin/settings', icon: Settings, label: 'Paramètres' },
   ];

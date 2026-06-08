@@ -201,6 +201,13 @@ export default function NotificationCenter() {
       }
     }
 
+    // Track click for analytics (fire-and-forget)
+    fetch('/api/notifications/track-click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationId: notification.id }),
+    }).catch(() => {});
+
     // Navigation selon le type
     const data = typeof notification.data === 'string' ? JSON.parse(notification.data) : notification.data;
     const type = notification.type;

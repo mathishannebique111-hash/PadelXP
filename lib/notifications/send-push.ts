@@ -50,13 +50,13 @@ export async function createServerNotification(
   title: string,
   message: string,
   data?: Record<string, any>
-): Promise<boolean> {
+): Promise<string | null> {
   try {
     const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { error } = await adminClient.from("notifications").insert({
+    const { data: row, error } = await adminClient.from("notifications").insert({
       user_id: userId,
       type,
       title,
@@ -64,7 +64,7 @@ export async function createServerNotification(
       data: data || {},
       is_read: false,
       read: false,
-    });
+    }).select("id").single();
 
     if (error) {
       logger.error("[send-push] Failed to create in-app notification", {
@@ -72,16 +72,16 @@ export async function createServerNotification(
         type,
         error: error.message,
       });
-      return false;
+      return null;
     }
-    return true;
+    return row?.id || null;
   } catch (error) {
     logger.error("[send-push] Unexpected error creating notification", {
       userId,
       type,
       error: error instanceof Error ? error.message : String(error),
     });
-    return false;
+    return null;
   }
 }
 
@@ -96,17 +96,19 @@ export async function notifyUser(
   message: string,
   data?: Record<string, any>
 ): Promise<void> {
-  await Promise.allSettled([
-    createServerNotification(userId, type, title, message, data),
-    sendPushNotification(
-      userId,
-      title,
-      message,
-      data
-        ? Object.fromEntries(
-            Object.entries(data).map(([k, v]) => [k, String(v)])
-          )
-        : undefined
-    ),
-  ]);
+  // Create in-app notification first to get its ID
+  const notificationId = await createServerNotification(userId, type, title, message, data);
+
+  // Send push with notification_id for click tracking
+  const pushData = data
+    ? Object.fromEntries(
+        Object.entries(data).map(([k, v]) => [k, String(v)])
+      )
+    : {};
+
+  if (notificationId) {
+    pushData.notification_id = notificationId;
+  }
+
+  await sendPushNotification(userId, title, message, pushData).catch(() => {});
 }

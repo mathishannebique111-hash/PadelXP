@@ -118,6 +118,15 @@ export class PushNotificationsService {
             const data = notification.notification.data;
             if (!data) return;
 
+            // Track click for analytics (fire-and-forget)
+            if (data.notification_id) {
+                fetch('/api/notifications/track-click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notificationId: data.notification_id }),
+                }).catch(() => {});
+            }
+
             const type = data.type || "";
 
             // Challenges
