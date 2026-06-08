@@ -99,7 +99,7 @@ export default function AdminNotificationsPage() {
   const [typeStats, setTypeStats] = useState<TypeStat[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState<number | null>(null);
   const [clubId, setClubId] = useState('');
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('sent');
@@ -113,7 +113,8 @@ export default function AdminNotificationsPage() {
   async function fetchData() {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ days: String(days) });
+      const params = new URLSearchParams();
+      if (days) params.set('days', String(days));
       if (clubId) params.set('clubId', clubId);
 
       const res = await fetch(`/api/admin/notifications/analytics?${params}`);
@@ -186,10 +187,11 @@ export default function AdminNotificationsPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <select
-          value={days}
-          onChange={e => setDays(Number(e.target.value))}
+          value={days ?? ''}
+          onChange={e => setDays(e.target.value ? Number(e.target.value) : null)}
           className="bg-slate-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
+          <option value="">Depuis le debut</option>
           <option value={7}>7 derniers jours</option>
           <option value={14}>14 derniers jours</option>
           <option value={30}>30 derniers jours</option>

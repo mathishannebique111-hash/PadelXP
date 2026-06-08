@@ -51,40 +51,60 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const days = parseInt(searchParams.get("days") || "30");
+    const days = searchParams.get("days"); // null = depuis le début
     const clubId = searchParams.get("clubId");
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-    // Get all notifications in the period
-    let query = supabaseAdmin
-      .from("notifications")
-      .select("id, user_id, type, is_read, clicked_at, created_at")
-      .gte("created_at", since)
-      .order("created_at", { ascending: false });
+    // Fetch all notifications with pagination (Supabase default limit = 1000)
+    const PAGE_SIZE = 1000;
+    let allNotifications: any[] = [];
+    let page = 0;
+    let hasMore = true;
 
-    const { data: notifications, error } = await query;
-    if (error) {
-      console.error("Error fetching notifications:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    while (hasMore) {
+      let query = supabaseAdmin
+        .from("notifications")
+        .select("id, user_id, type, is_read, clicked_at, created_at")
+        .order("created_at", { ascending: false })
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      if (days) {
+        const since = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000).toISOString();
+        query = query.gte("created_at", since);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("Error fetching notifications:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      allNotifications = allNotifications.concat(data || []);
+      hasMore = (data?.length || 0) === PAGE_SIZE;
+      page++;
     }
+
+    const notifications = allNotifications;
 
     // Get user profiles for display
     const userIds = [...new Set((notifications || []).map((n: any) => n.user_id))];
 
     let profiles: any[] = [];
     if (userIds.length > 0) {
-      // Filter by club if specified
-      let profileQuery = supabaseAdmin
-        .from("profiles")
-        .select("id, full_name, email, club_id")
-        .in("id", userIds);
+      // Paginate profiles (Supabase .in() also has 1000 limit)
+      for (let i = 0; i < userIds.length; i += PAGE_SIZE) {
+        const batch = userIds.slice(i, i + PAGE_SIZE);
+        let profileQuery = supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, email, club_id")
+          .in("id", batch);
 
-      if (clubId) {
-        profileQuery = profileQuery.eq("club_id", clubId);
+        if (clubId) {
+          profileQuery = profileQuery.eq("club_id", clubId);
+        }
+
+        const { data: profilesData } = await profileQuery;
+        profiles = profiles.concat(profilesData || []);
       }
-
-      const { data: profilesData } = await profileQuery;
-      profiles = profilesData || [];
     }
 
     const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
