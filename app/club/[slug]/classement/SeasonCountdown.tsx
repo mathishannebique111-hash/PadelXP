@@ -40,7 +40,7 @@ export default function SeasonCountdown({ endDate, seasonName }: SeasonCountdown
   }
 
   return (
-    <div className="mt-3 flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-1">
       <p className="text-xs font-semibold uppercase tracking-widest text-white/40">
         {seasonName} — Temps restant
       </p>

@@ -88,7 +88,7 @@ export default async function ClubClassementPage({
     <div className="min-h-screen bg-[#071554] text-white px-3 sm:px-6 py-2 sm:py-6">
       <AutoRefresh intervalMs={30_000} />
       <div className="max-w-5xl mx-auto space-y-2 sm:space-y-4">
-        {/* Header: logos left, QR code right */}
+        {/* Header: logos left, countdown center, QR code right */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3">
             {slug === "padelsquare4340" ? (
@@ -120,18 +120,16 @@ export default async function ClubClassementPage({
               unoptimized
             />
           </div>
+          {activeSeason?.end_date && (
+            <div className="flex-1 flex justify-center">
+              <SeasonCountdown
+                endDate={activeSeason.end_date as string}
+                seasonName={activeSeason.name as string}
+              />
+            </div>
+          )}
           <QRCodeBlock />
         </div>
-
-        {/* Countdown */}
-        {activeSeason?.end_date && (
-          <div className="text-center">
-            <SeasonCountdown
-              endDate={activeSeason.end_date as string}
-              seasonName={activeSeason.name as string}
-            />
-          </div>
-        )}
 
         {/* Leaderboard with podium — same visual as the app */}
         <PublicLeaderboard
