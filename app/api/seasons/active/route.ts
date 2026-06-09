@@ -25,15 +25,18 @@ export async function GET() {
       .eq("id", user.id)
       .maybeSingle();
 
-    // Try club-specific season first, then global
+    // Try club-specific season first, then global (date-based detection)
+    const today = new Date().toISOString().split("T")[0];
     let season = null;
 
     if (profile?.club_id) {
       const { data: clubSeason } = await supabaseAdmin
         .from("seasons")
         .select("*, season_rewards(*)")
-        .eq("status", "active")
+        .in("status", ["active", "upcoming"])
         .eq("club_id", profile.club_id)
+        .lte("start_date", today)
+        .gte("end_date", today)
         .order("start_date", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -44,8 +47,10 @@ export async function GET() {
       const { data: globalSeason } = await supabaseAdmin
         .from("seasons")
         .select("*, season_rewards(*)")
-        .eq("status", "active")
+        .in("status", ["active", "upcoming"])
         .is("club_id", null)
+        .lte("start_date", today)
+        .gte("end_date", today)
         .order("start_date", { ascending: false })
         .limit(1)
         .maybeSingle();
