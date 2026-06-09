@@ -1,11 +1,11 @@
-import LandingV2 from "@/components/landing/v2/LandingV2";
+import PlayerLanding from "@/components/landing/PlayerLanding";
 import HideSplashScreen from "@/components/HideSplashScreen";
 
 export default function Home() {
   return (
     <>
       <HideSplashScreen />
-      <LandingV2 />
+      <PlayerLanding />
     </>
   );
 }
