@@ -46,7 +46,7 @@ export default async function ClubClassementPage({
   // Fetch active season for this club
   const { data: activeSeason } = await supabaseAdmin
     .from("seasons")
-    .select("id, name, end_date")
+    .select("name, end_date")
     .eq("club_id", clubId)
     .eq("status", "active")
     .order("start_date", { ascending: false })
