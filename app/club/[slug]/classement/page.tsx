@@ -43,12 +43,15 @@ export default async function ClubClassementPage({
   const clubName = (club.name as string) || slug.toUpperCase();
   const clubLogoUrl = getClubLogoPublicUrl(club.logo_url as string | null);
 
-  // Fetch active season for this club
+  // Fetch active season for this club (date-based: start_date <= today <= end_date)
+  const today = new Date().toISOString().split("T")[0];
   const { data: activeSeason } = await supabaseAdmin
     .from("seasons")
     .select("name, end_date")
     .eq("club_id", clubId)
-    .eq("status", "active")
+    .in("status", ["active", "upcoming"])
+    .lte("start_date", today)
+    .gte("end_date", today)
     .order("start_date", { ascending: false })
     .limit(1)
     .maybeSingle();
